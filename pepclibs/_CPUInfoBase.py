@@ -27,6 +27,7 @@ from pepclibs._CPUInfoBaseTypes import CPUInfoTypeDict
 if typing.TYPE_CHECKING:
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepclibs._CPUInfoBaseTypes import CPUInfoKeyType, ScopeNameType
+    from pepclibs._CPUInfoBaseTypes import HybridCPUsTypeDict, HybridCPUsKeyType
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
@@ -67,25 +68,30 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         # Online CPU numbers.
         self._cpus: set[int] = set()
         # Set of online and offline CPUs.
-        self._all_cpus: set[int] | None = None
+        self._all_cpus: set[int] = set()
         # Dictionary of P-core/E-core CPUs.
-        self._hybrid_cpus = None
+        self._hybrid_cpus: HybridCPUsTypeDict = {}
 
-        # Per-package compute die numbers (dies which have CPUs) and I/O die numbers (dies which do
-        # not have CPUs). Dictionaries with package numbers as key and set of die numbers as values.
-        self._compute_dies = {}
-        self._io_dies = {}
+        # Per-package compute die numbers (dies with CPUs) and I/O die numbers (dies without CPUs).
+        self._compute_dies: dict[int, int] = {}
+        self._io_dies: dict[int, int] = {}
 
-        # The topology dictionary. See 'get_topology()' for more information.
-        self._topology = {}
+        # The topology dictionary.
+        self._topology: dict[ScopeNameType, list] = {}
+
         # Some CPUs have been brought online or offline, the topology data structures should be
         # updated.
         self._must_update_topology = False
-        # Stores all initialized topology levels.
-        self._initialized_levels = set()
 
-        # We are going to sort topology by level, this map specifies how each is sorted. Note, core
-        # and die numbers are per-package, therefore we always sort them by package first.
+        # Topology scopes that have been already initialized.
+        self._initialized_scopes: set[str] = set()
+
+        # The topology dictionary is a dictionary of lists, where each list contains dictionaries
+        # with the topology information for each CPU. The elements of the list are sorted by the
+        # scope names in the order specified in the sorting map.
+        #
+        # Note, in older kernels core numbers are per-package, and die numbers are always
+        # per-package. The sorting map takes this into account by sorting by package first.
         self._sorting_map = {"CPU":     ("CPU",),
                              "core":    ("package", "core", "CPU"),
                              "module":  ("module", "CPU"),
@@ -105,10 +111,17 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
     def close(self):
         """Uninitialize the class object."""
+
         ClassHelpers.close(self, close_attrs=("_uncfreq_obj", "_pliobj", "_msr", "_pman"))
 
-    def _get_msr(self):
-        """Returns an 'MSR.MSR()' object."""
+    def _get_msr(self) -> MSR.MSR:
+        """
+        Return an instance of the 'MSR.MSR' object for interacting with Model-Specific Registers
+        (MSRs).
+
+        Returns:
+            An instance of the 'MSR.MSR' object.
+        """
 
         if not self._msr:
             # Disable caching to exclude usage of the 'cpuinfo' object by the 'MSR' module, which
@@ -117,8 +130,14 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
         return self._msr
 
-    def _get_pliobj(self):
-        """Returns a 'PMLogicalId.PMLogicalID()' object."""
+    def _get_pliobj(self) -> PMLogicalId.PMLogicalId | None:
+        """
+        Return a 'PMLogicalId.PMLogicalId' object if MSR_PM_LOGICAL_ID is supported by the target
+        platform, otherwise return None.
+
+        Returns:
+            The 'PMLogicalId.PMLogicalId' object or None.
+        """
 
         if not self._pliobj:
             if not self._pli_msr_supported:
@@ -133,8 +152,13 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
         return self._pliobj
 
-    def _get_uncfreq_obj(self):
-        """Return an '_UncoreFreqSysfs' object."""
+    def _get_uncfreq_obj(self) -> _UncoreFreq.UncoreFreqSysfs | None:
+        """
+        Return an instance of '_UncoreFreq.UncoreFreqSysfs' if uncore frequency is supported.
+
+        Returns:
+            The '_UncoreFreq.UncoreFreqSysfs' object or None.
+        """
 
         if not self._uncfreq_supported:
             return None
@@ -317,23 +341,23 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
                 if tline["CPU"] in new_online_cpus:
                     tinfo[tline["CPU"]] = tline
 
-            if "package" in self._initialized_levels or "core" in self._initialized_levels:
+            if "package" in self._initialized_scopes or "core" in self._initialized_scopes:
                 self._add_cores_and_packages(tinfo, online)
-            if "module" in self._initialized_levels:
+            if "module" in self._initialized_scopes:
                 self._add_modules(tinfo, online)
-            if "die" in self._initialized_levels:
+            if "die" in self._initialized_scopes:
                 self._add_compute_dies(tinfo, online)
-            if "node" in self._initialized_levels:
+            if "node" in self._initialized_scopes:
                 self._add_nodes(tinfo)
 
             topology = list(tinfo.values())
 
-            if "die" in self._initialized_levels:
+            if "die" in self._initialized_scopes:
                 self._add_io_dies(topology)
-            elif "die" in self._initialized_levels:
+            elif "die" in self._initialized_scopes:
                 self._add_io_dies_from_cache(topology)
 
-            for order in self._initialized_levels:
+            for order in self._initialized_scopes:
                 self._sort_topology(topology, order)
 
         self._must_update_topology = False
@@ -350,7 +374,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
         levels = set(levels)
         levels.update(set(self._sorting_map[order]))
-        levels -= self._initialized_levels
+        levels -= self._initialized_scopes
 
         if not levels:
             # The topology for the necessary levels has already been built, just return it.
@@ -376,19 +400,25 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
         if "die" in levels:
             self._add_io_dies(topology)
-        elif "die" in self._initialized_levels:
+        elif "die" in self._initialized_scopes:
             self._add_io_dies_from_cache(topology)
 
-        self._initialized_levels.update(levels)
-        for level in self._initialized_levels:
+        self._initialized_scopes.update(levels)
+        for level in self._initialized_scopes:
             self._sort_topology(topology, level)
 
         return self._topology[order]
 
-    def _read_range(self, path):
+    def _read_range(self, path: Path | str) -> list[int]:
         """
-        Read a file that is expected to contain a comma separated list of integer numbers or
-        integer number rangees. Parse the contents of the file and return it as a list of integers.
+        Read a file containing a comma-separated list of integers or integer ranges, and return a
+        list of integers.
+
+        Args:
+            path: Path to the file to read.
+
+        Returns:
+            List of integers parsed from the file.
         """
 
         str_of_ranges = self._pman.read_file(path)
@@ -396,22 +426,39 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         what = f"contents of file at '{path}'{self._pman.hostmsg}"
         return Trivial.split_csv_line_int(str_of_ranges.strip(), what=what)
 
-    def _get_online_cpus_set(self):
-        """Return online CPU numbers as a set."""
+    def _get_online_cpus_set(self) -> set[int]:
+        """
+        Return the set of conline CPU numbers.
+
+        Returns:
+            A set containing the online CPU numbers.
+        """
 
         if not self._cpus:
             self._cpus = set(self._read_range("/sys/devices/system/cpu/online"))
+
         return self._cpus
 
-    def _get_all_cpus_set(self):
-        """Return online and offline CPU numbers as a set."""
+    def _get_all_cpus_set(self) -> set[int]:
+        """
+        Return a set of all CPU numbers, including both online and offline CPUs.
+
+        Returns:
+            A set containing all CPU numbers present in the system.
+        """
 
         if not self._all_cpus:
             self._all_cpus = set(self._read_range("/sys/devices/system/cpu/present"))
+
         return self._all_cpus
 
     def _get_cpu_info(self) -> CPUInfoTypeDict:
-        """Get general CPU information (model, architecture, etc)."""
+        """
+        Collect and return general CPU information such as model, and architecture.
+
+        Returns:
+            CPUInfoTypeDict: The CPU information dictionary.
+        """
 
         cpuinfo: CPUInfoTypeDict = {}
 
@@ -464,12 +511,16 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         cpuinfo["vfm"] = CPUModels.make_vfm(cpuinfo["vendor"], cpuinfo["family"], cpuinfo["model"])
         return cpuinfo
 
-    def _get_cpu_description(self):
-        """Build and return a string identifying and describing the processor."""
+    def _get_cpu_description(self) -> str:
+        """
+        Build and return a human-readable string describing the processor.
 
+        Returns:
+            A string describing the processor, including codename for supported Intel CPUs.
+        """
+
+        # Some pre-release Intel CPUs are labeled as "GENUINE INTEL", hence 'lower()' is used.
         if "genuine intel" in self.info["modelname"].lower():
-            # Pre-release firmware on Intel CPU describes them as "Genuine Intel" (sometimes in
-            # upper case), which is not very helpful.
             cpudescr = f"Intel processor model {self.info['model']:#x}"
 
             for info in CPUModels.MODELS.values():
@@ -481,21 +532,30 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
         return cpudescr
 
-    def _get_hybrid_cpus(self):
-        """Build and return the hybrid CPUs dictionary."""
+    def _get_hybrid_cpus(self) -> HybridCPUsTypeDict:
+        """
+        Build and return a dictionary mapping hybrid CPU types to their corresponding CPU numbers.
 
-        self._hybrid_cpus = {}
-        for arch, name in (("atom", "ecore_cpus"), ("core", "pcore_cpus")):
-            self._hybrid_cpus[name] = self._read_range(f"/sys/devices/cpu_{arch}/cpus")
+        Returns:
+            A dictionary where keys are hybrid CPU types (such as 'ecores' and 'pcores') and values
+            are the corresponding CPU numbers.
+        """
+
+        if self._hybrid_cpus:
+            return self._hybrid_cpus
+
+        iterator: dict[HybridCPUsKeyType, str] = {"ecores": "atom", "pcores": "core"}
+        for hybrid_type, arch in iterator.items():
+            self._hybrid_cpus[hybrid_type] = self._read_range(f"/sys/devices/cpu_{arch}/cpus")
+
         return self._hybrid_cpus
 
     def _cpus_hotplugged(self):
         """
-        Must be called when a CPU goes online or offline. Drop cached numbers and force re-reading
-        topology-related sysfs files.
+        Handle CPU hotplug events by resetting cached CPU and topology information.
         """
 
-        self._cpus = None
-        self._hybrid_cpus = None
+        self._cpus = set()
+        self._hybrid_cpus = {}
         if self._topology:
             self._must_update_topology = True

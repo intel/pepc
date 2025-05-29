@@ -1062,7 +1062,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
                                     f"{self.cpudescr} is not a hybrid processor")
 
         hybrid_cpus = self._get_hybrid_cpus()
-        return (list(hybrid_cpus["ecore_cpus"]), list(hybrid_cpus["pcore_cpus"]))
+        return (list(hybrid_cpus["ecores"]), list(hybrid_cpus["pcores"]))
 
     def get_cache_info(self):
         """
