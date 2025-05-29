@@ -191,7 +191,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
                 self._validate_level(lvl, name="topology level")
 
         self._validate_level(order, name="order")
-        topology = self._get_topology(levels=levels, order=order)
+        topology = self._get_topology(levels, order=order)
         return copy.deepcopy(topology)
 
     def _get_level_nums(self, sublvl, lvl, nums, order=None):
@@ -256,7 +256,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         result = {}
         valid_nums = set()
 
-        for tline in self._get_topology(levels=(lvl, sublvl), order=order):
+        for tline in self._get_topology((lvl, sublvl), order=order):
             if tline[lvl] == NA:
                 continue
             valid_nums.add(tline[lvl])
@@ -395,7 +395,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
             levels = SCOPE_NAMES
 
         tline = None
-        for tline in self._get_topology(levels=levels):
+        for tline in self._get_topology(levels):
             if cpu == tline["CPU"]:
                 break
         else:
@@ -649,7 +649,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         cpu2index = {} # CPU number -> core siblings index map.
         core = pkg = index = None
 
-        for tline in self._get_topology(levels=("CPU", "core", "package"), order="core"):
+        for tline in self._get_topology(("CPU", "core", "package"), order="core"):
             cpu = tline["CPU"]
             if tline["core"] != core or tline["package"] != pkg:
                 core = tline["core"]
@@ -706,7 +706,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         cpu2index = {} # CPU number -> module siblings index map.
         module = pkg = index = None
 
-        for tline in self._get_topology(levels=("CPU", "module", "package"), order="module"):
+        for tline in self._get_topology(("CPU", "module", "package"), order="module"):
             cpu = tline["CPU"]
             if tline["module"] != module or tline["package"] != pkg:
                 module = tline["module"]

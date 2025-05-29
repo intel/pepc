@@ -16,6 +16,7 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import re
 import typing
+from typing import Iterable
 import contextlib
 from pathlib import Path
 from pepclibs import _UncoreFreq, CPUModels
@@ -51,6 +52,8 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
                   process manager is created.
         """
 
+        _LOG.debug("Initializing the '%s' class object", self.__class__.__name__)
+
         # A short CPU description string.
         self.cpudescr = None
 
@@ -73,11 +76,11 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         self._hybrid_cpus: HybridCPUsTypeDict = {}
 
         # Per-package compute die numbers (dies with CPUs) and I/O die numbers (dies without CPUs).
-        self._compute_dies: dict[int, int] = {}
-        self._io_dies: dict[int, int] = {}
+        self._compute_dies: dict[int, set[int]] = {}
+        self._io_dies: dict[int, set[int]] = {}
 
         # The topology dictionary.
-        self._topology: dict[ScopeNameType, list] = {}
+        self._topology: dict[ScopeNameType, list[dict[ScopeNameType, int]]] = {}
 
         # Some CPUs have been brought online or offline, the topology data structures should be
         # updated.
@@ -87,17 +90,19 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         self._initialized_scopes: set[str] = set()
 
         # The topology dictionary is a dictionary of lists, where each list contains dictionaries
-        # with the topology information for each CPU. The elements of the list are sorted by the
-        # scope names in the order specified in the sorting map.
+        # with the topology information for each CPU (this dictionary is also called a "topology
+        # line", or "tline"). The elements of the list are sorted by the scope names in the order
+        # specified in the sorting map.
         #
         # Note, in older kernels core numbers are per-package, and die numbers are always
         # per-package. The sorting map takes this into account by sorting by package first.
-        self._sorting_map = {"CPU":     ("CPU",),
-                             "core":    ("package", "core", "CPU"),
-                             "module":  ("module", "CPU"),
-                             "die":     ("package", "die", "CPU"),
-                             "node":    ("node", "CPU"),
-                             "package": ("package", "CPU")}
+        self._sorting_map: dict[ScopeNameType, tuple[ScopeNameType, ...]] = \
+            {"CPU":     ("CPU",),
+             "core":    ("package", "core", "CPU"),
+             "module":  ("module", "CPU"),
+             "die":     ("package", "die", "CPU"),
+             "node":    ("node", "CPU"),
+             "package": ("package", "CPU")}
 
         self._hybrid_sysfs_base = Path("/sys/devices/cpu_atom/cpus")
 
@@ -111,6 +116,8 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
     def close(self):
         """Uninitialize the class object."""
+
+        _LOG.debug("Closing the '%s' class object", self.__class__.__name__)
 
         ClassHelpers.close(self, close_attrs=("_uncfreq_obj", "_pliobj", "_msr", "_pman"))
 
@@ -126,6 +133,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         if not self._msr:
             # Disable caching to exclude usage of the 'cpuinfo' object by the 'MSR' module, which
             # happens when 'MSR' module uses 'PerCPUCache'.
+            _LOG.debug("Creating an instance of 'MSR.MSR' with cache disabled")
             self._msr = MSR.MSR(self, pman=self._pman, enable_cache=False)
 
         return self._msr
@@ -144,6 +152,8 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
                 return None
 
             msr = self._get_msr()
+
+            _LOG.debug("Creating an instance of 'PMLogicalId.PMLogicalId'")
 
             try:
                 self._pliobj = PMLogicalId.PMLogicalId(pman=self._pman, cpuinfo=self, msr=msr)
@@ -164,6 +174,8 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
             return None
 
         if not self._uncfreq_obj:
+            _LOG.debug("Creating an instance of '_UncoreFreq.UncoreFreqSysfs'")
+
             try:
                 self._uncfreq_obj = _UncoreFreq.UncoreFreqSysfs(self, pman=self._pman)
             except ErrorNotSupported:
@@ -171,23 +183,53 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
         return self._uncfreq_obj
 
-    def _add_cores_and_packages(self, tinfo, cpus):
-        """Adds core and package numbers for CPUs 'cpus' to 'tinfo'."""
+    def _add_cores_and_packages(self,
+                                cputopo: dict[int, dict[ScopeNameType, int]],
+                                cpus: Iterable[int]):
+        """
+        Add core and package numbers for the specified CPUs to the provided CPU topology dictionary.
 
-        def _get_number(start, lines, index):
-            """Check that line with index 'index' starts with 'start', and return its value."""
+        Exctract the core and package numbers from the '/proc/cpuinfo'.
+
+        Args:
+            cputopo: The CPU topology dictionary to update with core and package information.
+            cpus: An iterable collection of CPU numbers for which to add core and package numbers.
+        """
+
+        def _get_number(start: str, lines: list[str], index: int) -> int:
+            """
+            Validate that a '/proc/cpuinfo' line at the specified index starts with the given
+            prefix, extract and return its integer value.
+
+            Args:
+                start: The expected prefix at the beginning of the line.
+                lines: The list of lines to search through.
+                index: The index of the line to check.
+
+            Returns:
+                The integer value found after the ':' character in the specified line.
+            """
 
             try:
                 line = lines[index]
             except IndexError:
-                raise Error(f"there are to few lines in '/proc/cpuinfo' for CPU '{cpu}'") from None
+                lines_count = len(lines)
+                lines_str = "\n".join(lines)
+                lines_str = Error(lines_str).indent(2)
+                raise Error(f"There are to few lines in '/proc/cpuinfo' for CPU '{cpu}'.\n"
+                            f"Expected at least {index + 1} lines, got {lines_count}.\n"
+                            f"The lines:\n{lines_str}") from None
 
             if not line.startswith(start):
-                raise Error(f"line {index + 1} for CPU {cpu} in '/proc/cpuinfo' is not \"{start}\"")
+                raise Error(f"Expected line {index + 1} for CPU {cpu} in '/proc/cpuinfo' to start "
+                            f"with \"{start}\", got:\n{line!r}.")
 
-            return Trivial.str_to_int(line.partition(":")[2], what=start)
+            return Trivial.str_to_int(line.partition(":")[2],
+                                      what=f"value of '{start}' from '/proc/cpuinfo'")
 
-        info = {}
+        _LOG.debug("Reading CPU topology information from '/proc/cpuinfo'")
+
+        info: dict[int, list[str]] = {}
         for data in self._pman.read_file("/proc/cpuinfo").strip().split("\n\n"):
             lines = data.split("\n")
             cpu = _get_number("processor", lines, 0)
@@ -198,8 +240,8 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
                 raise Error(f"CPU {cpu} is missing from '/proc/cpuinfo'")
 
             lines = info[cpu]
-            tinfo[cpu]["package"] = _get_number("physical id", lines, 9)
-            tinfo[cpu]["core"] = _get_number("core id", lines, 11)
+            cputopo[cpu]["package"] = _get_number("physical id", lines, 9)
+            cputopo[cpu]["core"] = _get_number("core id", lines, 11)
 
     def _add_modules(self, tinfo, cpus):
         """Adds module numbers for CPUs 'cpus' to 'tinfo'"""
@@ -362,48 +404,58 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
         self._must_update_topology = False
 
-    def _get_topology(self, levels, order="CPU"):
+    def _get_topology(self, scopes: Iterable[ScopeNameType], order: ScopeNameType = "CPU"):
         """
-        Build and return topology list, refer to 'get_topology()' for more information. For
-        optimization purposes, try to build only the necessary parts of the topology - only the
-        levels in 'levels'.
+        Build and return a topology list for the specified scopes and order.
+
+        Args:
+            scopes: Topology scopes to include.
+            order: Topology sorting order. Defaults to "CPU".
+
+        Returns:
+            A list representing the CPU topology, sorted according to the specified order and
+            including the requested scopes.
         """
 
         if self._must_update_topology:
             self._update_topology()
 
-        levels = set(levels)
-        levels.update(set(self._sorting_map[order]))
-        levels -= self._initialized_scopes
+        scopes_set = set(scopes)
+        scopes_set.update(set(self._sorting_map[order]))
+        scopes_set -= self._initialized_scopes
 
-        if not levels:
-            # The topology for the necessary levels has already been built, just return it.
+        if not scopes_set:
+            # The topology for the necessary scopes has already been built, just return it.
             return self._topology[order]
 
+        # A prelimitary CPU topology dictionary. They keys are CPU numbers, and the values are the
+        # topology lines.
+        cputopo: dict[int, dict[ScopeNameType, int]]
+
         if not self._topology:
-            tinfo = {cpu: {"CPU": cpu} for cpu in self._get_online_cpus_set()}
+            cputopo = {cpu: {"CPU": cpu} for cpu in self._get_online_cpus_set()}
         else:
-            tinfo = {tline["CPU"]: tline for tline in self._topology["CPU"] if tline["CPU"] != NA}
+            cputopo = {tline["CPU"]: tline for tline in self._topology["CPU"] if tline["CPU"] != NA}
 
         cpus = self._get_online_cpus_set()
-        self._add_cores_and_packages(tinfo, cpus)
-        levels.update({"package", "core"})
+        self._add_cores_and_packages(cputopo, cpus)
+        scopes_set.update({"package", "core"})
 
-        if "module" in levels:
-            self._add_modules(tinfo, cpus)
-        if "die" in levels:
-            self._add_compute_dies(tinfo, cpus)
-        if "node" in levels:
-            self._add_nodes(tinfo)
+        if "module" in scopes_set:
+            self._add_modules(cputopo, cpus)
+        if "die" in scopes_set:
+            self._add_compute_dies(cputopo, cpus)
+        if "node" in scopes_set:
+            self._add_nodes(cputopo)
 
-        topology = list(tinfo.values())
+        topology = list(cputopo.values())
 
-        if "die" in levels:
+        if "die" in scopes_set:
             self._add_io_dies(topology)
         elif "die" in self._initialized_scopes:
             self._add_io_dies_from_cache(topology)
 
-        self._initialized_scopes.update(levels)
+        self._initialized_scopes.update(scopes_set)
         for level in self._initialized_scopes:
             self._sort_topology(topology, level)
 
@@ -421,10 +473,12 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
             List of integers parsed from the file.
         """
 
-        str_of_ranges = self._pman.read_file(path)
+        str_of_ranges = self._pman.read_file(path).strip()
+
+        _LOG.debug("Read CPU numbers from '%s'%s: %s", path, self._pman.hostmsg, str_of_ranges)
 
         what = f"contents of file at '{path}'{self._pman.hostmsg}"
-        return Trivial.split_csv_line_int(str_of_ranges.strip(), what=what)
+        return Trivial.split_csv_line_int(str_of_ranges, what=what)
 
     def _get_online_cpus_set(self) -> set[int]:
         """
@@ -459,6 +513,8 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         Returns:
             CPUInfoTypeDict: The CPU information dictionary.
         """
+
+        _LOG.debug("Building CPU information")
 
         cpuinfo: CPUInfoTypeDict = {}
 
@@ -544,6 +600,8 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         if self._hybrid_cpus:
             return self._hybrid_cpus
 
+        _LOG.debug("Reading hybrid CPUs information from sysfs")
+
         iterator: dict[HybridCPUsKeyType, str] = {"ecores": "atom", "pcores": "core"}
         for hybrid_type, arch in iterator.items():
             self._hybrid_cpus[hybrid_type] = self._read_range(f"/sys/devices/cpu_{arch}/cpus")
@@ -554,6 +612,8 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         """
         Handle CPU hotplug events by resetting cached CPU and topology information.
         """
+
+        _LOG.debug("Clearing cashed CPU information")
 
         self._cpus = set()
         self._hybrid_cpus = {}
