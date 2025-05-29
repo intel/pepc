@@ -1044,7 +1044,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         raise NotImplementedError("ProcessManagerBase.open()")
 
-    def read_file(self, path: Path) -> str:
+    def read_file(self, path: Path | str) -> str:
         """
         Read a file.
 
