@@ -184,7 +184,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         return self._uncfreq_obj
 
     def _add_cores_and_packages(self,
-                                cputopo: dict[int, dict[ScopeNameType, int]],
+                                cpu_tdict: dict[int, dict[ScopeNameType, int]],
                                 cpus: Iterable[int]):
         """
         Add core and package numbers for the specified CPUs to the provided CPU topology dictionary.
@@ -192,7 +192,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         Exctract the core and package numbers from the '/proc/cpuinfo'.
 
         Args:
-            cputopo: The CPU topology dictionary to update with core and package information.
+            cpu_tdict: The CPU topology dictionary to update with core and package information.
             cpus: An iterable collection of CPU numbers for which to add core and package numbers.
         """
 
@@ -240,19 +240,30 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
                 raise Error(f"CPU {cpu} is missing from '/proc/cpuinfo'")
 
             lines = info[cpu]
-            cputopo[cpu]["package"] = _get_number("physical id", lines, 9)
-            cputopo[cpu]["core"] = _get_number("core id", lines, 11)
+            cpu_tdict[cpu]["package"] = _get_number("physical id", lines, 9)
+            cpu_tdict[cpu]["core"] = _get_number("core id", lines, 11)
 
-    def _add_modules(self, tinfo, cpus):
-        """Adds module numbers for CPUs 'cpus' to 'tinfo'"""
+    def _add_modules(self, cpu_tdict: dict[int, dict[ScopeNameType, int]], cpus: Iterable[int]):
+        """
+        Add module numbers for the specified CPUs to the CPU topology dictionary.
+
+        Module numbers are read from the sysfs files under
+        '/sys/devices/system/cpu/cpu<cpu>/cache/index2/'.
+
+        Args:
+            cpu_tdict: The CPU topology dictionary to update with module information.
+            cpus: CPU numbers for which to add module numbers.
+        """
+
+        _LOG.debug("Reading CPU module information from sysfs")
 
         no_cache_info = False
         for cpu in cpus:
-            if "module" in tinfo[cpu]:
+            if "module" in cpu_tdict[cpu]:
                 continue
 
             if no_cache_info:
-                tinfo[cpu]["module"] = tinfo[cpu]["core"]
+                cpu_tdict[cpu]["module"] = cpu_tdict[cpu]["core"]
                 continue
 
             base = Path(f"/sys/devices/system/cpu/cpu{cpu}")
@@ -260,10 +271,10 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
                 data = self._pman.read_file(base / "cache/index2/id")
             except ErrorNotFound as err:
                 if not no_cache_info:
-                    _LOG.debug("no CPU cache topology info found%s:\n%s.",
+                    _LOG.debug("No CPU cache topology info found%s:\n%s.",
                                self._pman.hostmsg, err.indent(2))
                     no_cache_info = True
-                    tinfo[cpu]["module"] = tinfo[cpu]["core"]
+                    cpu_tdict[cpu]["module"] = cpu_tdict[cpu]["core"]
                     continue
 
             module = Trivial.str_to_int(data, what="module number")
@@ -271,16 +282,34 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
             for sibling in siblings:
                 # Suppress 'KeyError' in case the 'shared_cpu_list' file included an offline CPU.
                 with contextlib.suppress(KeyError):
-                    tinfo[sibling]["module"] = module
+                    cpu_tdict[sibling]["module"] = module
 
-    def _add_compute_dies(self, tinfo, cpus):
-        """Adds die numbers for CPUs 'cpus' to 'tinfo'"""
+    def _add_compute_dies(self,
+                          cpu_tdict: dict[int, dict[ScopeNameType, int]],
+                          cpus: Iterable[int]):
+        """
+        Add compute die numbers for the specified CPUs to the CPU topology dictionary.
 
-        def _add_compute_die(tinfo, cpu, die):
-            """Add compute die number 'die'."""
+        Compute die numbers are read from either 'MSR_PM_LOGICAL_ID' MSR or from the sysfs
+        files under '/sys/devices/system/cpu/cpu<cpu>/topology/'.
 
-            tinfo[cpu]["die"] = die
-            package = tinfo[cpu]["package"]
+        Args:
+            cpu_tdict: The CPU topology dictionary to update with compute die information.
+            cpus: CPU numbers for which to add compute die numbers.
+        """
+
+        def _add_compute_die(cpu_tdict: dict[int, dict[ScopeNameType, int]], cpu: int, die: int):
+            """
+            Add a compute die number to the CPU topology dictionary.
+
+            Args:
+                cpu_tdict: The CPU topology dictionary to update.
+                cpu: The CPU number to which the die number should be added.
+                die: The compute die number to add.
+            """
+
+            cpu_tdict[cpu]["die"] = die
+            package = cpu_tdict[cpu]["package"]
             if package not in self._compute_dies:
                 self._compute_dies[package] = set()
                 # Initialize the I/O dies cache at the same time.
@@ -289,11 +318,13 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
         pli_obj = self._get_pliobj()
         if pli_obj:
+            _LOG.debug("Reading compute die information from 'MSR_PM_LOGICAL_ID'")
             for cpu, die in pli_obj.read_feature("domain_id", cpus=cpus):
-                _add_compute_die(tinfo, cpu, die)
+                _add_compute_die(cpu_tdict, cpu, die)
         else:
+            _LOG.debug("Reading compute die information from sysfs")
             for cpu in cpus:
-                if "die" in tinfo[cpu]:
+                if "die" in cpu_tdict[cpu]:
                     continue
 
                 base = Path(f"/sys/devices/system/cpu/cpu{cpu}")
@@ -303,10 +334,20 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
                 for _ in siblings:
                     # Suppress 'KeyError' in case the 'die_cpus_list' file included an offline CPU.
                     with contextlib.suppress(KeyError):
-                        _add_compute_die(tinfo, cpu, die)
+                        _add_compute_die(cpu_tdict, cpu, die)
 
-    def _add_nodes(self, tinfo):
-        """Adds NUMA node numbers to 'tinfo'."""
+    def _add_nodes(self, cpu_tdict: dict[int, dict[ScopeNameType, int]]):
+        """
+        Assign NUMA node numbers for specified CPUs in the CPU topology dictionary.
+
+        NUMA node numbers are read from the sysfs files under
+        '/sys/devices/system/node/node<node>/cpulist'.
+
+        Args:
+            cpu_tdict: Dictionary mapping CPU identifiers to their attributes.
+        """
+
+        _LOG.debug("Reading NUMA node information from sysfs")
 
         nodes = self._read_range("/sys/devices/system/node/online")
         for node in nodes:
@@ -314,14 +355,24 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
             for cpu in cpus:
                 # Suppress 'KeyError' in case the 'cpulist' file included an offline CPU.
                 with contextlib.suppress(KeyError):
-                    tinfo[cpu]["node"] = node
+                    cpu_tdict[cpu]["node"] = node
 
-    def _add_io_dies(self, topology):
-        """Add I/O dies to the 'topology' topology table (list of dictionaries)."""
+    def _add_io_dies(self, tlines: list[dict[ScopeNameType, int]]):
+        """
+        Add I/O dies to the topology table.
+
+        I/O dies information is obtained from the uncore frequency driver. However, a better
+        solution would be to read it from TPMI.
+
+        Args:
+            tlines: The topology table (list of dictionaries) to which I/O dies should be added.
+        """
 
         uncfreq_obj = self._get_uncfreq_obj()
         if not uncfreq_obj:
             return
+
+        _LOG.debug("Reading I/O dies information from uncore frequency driver")
 
         # The 'UncoreFreqSysfs' class is I/O dies-aware.
         dies_info = uncfreq_obj.get_dies_info()
@@ -343,12 +394,12 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
                     tline[key] = NA
                 tline["package"] = package
                 tline["die"] = die
-                topology.append(tline)
+                tlines.append(tline)
 
                 # Cache the I/O die number.
                 self._io_dies[package].add(die)
 
-    def _add_io_dies_from_cache(self, topology):
+    def _add_io_dies_from_cache(self, tlines):
         """Append the cached I/O dies to the 'topology' topology table (list of dictionaries)."""
 
         for package, pkg_dies in self._io_dies.items():
@@ -362,13 +413,13 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
                     tline[key] = NA
                 tline["package"] = package
                 tline["die"] = die
-                topology.append(tline)
+                tlines.append(tline)
 
-    def _sort_topology(self, topology, order):
+    def _sort_topology(self, tlines, order):
         """Sorts and save the topology list by 'order' in sorting map"""
 
         skeys = self._sorting_map[order]
-        self._topology[order] = sorted(topology, key=lambda tline: tuple(tline[s] for s in skeys))
+        self._topology[order] = sorted(tlines, key=lambda tline: tuple(tline[s] for s in skeys))
 
     def _update_topology(self):
         """Update topology information with online/offline CPUs."""
@@ -392,15 +443,15 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
             if "node" in self._initialized_scopes:
                 self._add_nodes(tinfo)
 
-            topology = list(tinfo.values())
+            tlines = list(tinfo.values())
 
             if "die" in self._initialized_scopes:
-                self._add_io_dies(topology)
+                self._add_io_dies(tlines)
             elif "die" in self._initialized_scopes:
-                self._add_io_dies_from_cache(topology)
+                self._add_io_dies_from_cache(tlines)
 
             for order in self._initialized_scopes:
-                self._sort_topology(topology, order)
+                self._sort_topology(tlines, order)
 
         self._must_update_topology = False
 
@@ -428,36 +479,41 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
             # The topology for the necessary scopes has already been built, just return it.
             return self._topology[order]
 
+        _LOG.debug("Building CPU topology for scopes %s, order '%s'",
+                   ", ".join(scopes), order)
+
         # A prelimitary CPU topology dictionary. They keys are CPU numbers, and the values are the
         # topology lines.
-        cputopo: dict[int, dict[ScopeNameType, int]]
+        cpu_tdict: dict[int, dict[ScopeNameType, int]]
 
         if not self._topology:
-            cputopo = {cpu: {"CPU": cpu} for cpu in self._get_online_cpus_set()}
+            cpu_tdict = {cpu: {"CPU": cpu} for cpu in self._get_online_cpus_set()}
         else:
-            cputopo = {tline["CPU"]: tline for tline in self._topology["CPU"] if tline["CPU"] != NA}
+            cpu_tdict = {tline["CPU"]: tline for tline in self._topology["CPU"] if tline["CPU"] != NA}
 
         cpus = self._get_online_cpus_set()
-        self._add_cores_and_packages(cputopo, cpus)
+        self._add_cores_and_packages(cpu_tdict, cpus)
         scopes_set.update({"package", "core"})
 
         if "module" in scopes_set:
-            self._add_modules(cputopo, cpus)
+            self._add_modules(cpu_tdict, cpus)
         if "die" in scopes_set:
-            self._add_compute_dies(cputopo, cpus)
+            self._add_compute_dies(cpu_tdict, cpus)
         if "node" in scopes_set:
-            self._add_nodes(cputopo)
+            self._add_nodes(cpu_tdict)
 
-        topology = list(cputopo.values())
+        # I/O dies do not have CPUs, so 'cpu_tdict' is not a suitable data structure for them. Use a
+        # list of topology lines (tlines) instead.
+        tlines = list(cpu_tdict.values())
 
         if "die" in scopes_set:
-            self._add_io_dies(topology)
+            self._add_io_dies(tlines)
         elif "die" in self._initialized_scopes:
-            self._add_io_dies_from_cache(topology)
+            self._add_io_dies_from_cache(tlines)
 
         self._initialized_scopes.update(scopes_set)
         for level in self._initialized_scopes:
-            self._sort_topology(topology, level)
+            self._sort_topology(tlines, level)
 
         return self._topology[order]
 
