@@ -82,20 +82,16 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         # The topology dictionary.
         self._topology: dict[ScopeNameType, list[dict[ScopeNameType, int]]] = {}
 
-        # Some CPUs have been brought online or offline, the topology data structures should be
-        # updated.
-        self._must_update_topology = False
-
         # Topology scopes that have been already initialized.
-        self._initialized_scopes: set[str] = set()
+        self._initialized_snames: set[str] = set()
 
-        # The topology dictionary is a dictionary of lists, where each list contains dictionaries
-        # with the topology information for each CPU (this dictionary is also called a "topology
-        # line", or "tline"). The elements of the list are sorted by the scope names in the order
-        # specified in the sorting map.
+        # The topology dictionary is a dictionary of lists where keys are scope names. The values
+        # are lists of topology lines (tlines) sorted in the key order (or more precisely, in the
+        # order specified by the sorting map).
         #
-        # Note, in older kernels core numbers are per-package, and die numbers are always
-        # per-package. The sorting map takes this into account by sorting by package first.
+        # Note, die numbers are relative to the package, and core numbers are relative to the
+        # package in older kernels. For this reason, the die and core topology lines are sorted by
+        # package first, then by die/core.
         self._sorting_map: dict[ScopeNameType, tuple[ScopeNameType, ...]] = \
             {"CPU":     ("CPU",),
              "core":    ("package", "core", "CPU"),
@@ -399,120 +395,68 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
                 # Cache the I/O die number.
                 self._io_dies[package].add(die)
 
-    def _add_io_dies_from_cache(self, tlines):
-        """Append the cached I/O dies to the 'topology' topology table (list of dictionaries)."""
-
-        for package, pkg_dies in self._io_dies.items():
-            for die in pkg_dies:
-                tline = {}
-                for key in SCOPE_NAMES:
-                    # At this point the topology table lines may not even include some levels (e.g.,
-                    # "numa" may not be there). But they may be added later. Add them for the I/O
-                    # die topology table lines now, so that later the lines would not need # to be
-                    # updated.
-                    tline[key] = NA
-                tline["package"] = package
-                tline["die"] = die
-                tlines.append(tline)
-
     def _sort_topology(self, tlines, order):
         """Sorts and save the topology list by 'order' in sorting map"""
 
         skeys = self._sorting_map[order]
         self._topology[order] = sorted(tlines, key=lambda tline: tuple(tline[s] for s in skeys))
 
-    def _update_topology(self):
-        """Update topology information with online/offline CPUs."""
-
-        new_online_cpus = self._get_online_cpus_set()
-        old_online_cpus = {tline["CPU"] for tline in self._topology["CPU"]}
-        if new_online_cpus != old_online_cpus:
-            online = list(new_online_cpus - old_online_cpus)
-
-            tinfo = {cpu: {"CPU": cpu} for cpu in online}
-            for tline in self._topology["CPU"]:
-                if tline["CPU"] in new_online_cpus:
-                    tinfo[tline["CPU"]] = tline
-
-            if "package" in self._initialized_scopes or "core" in self._initialized_scopes:
-                self._add_cores_and_packages(tinfo, online)
-            if "module" in self._initialized_scopes:
-                self._add_modules(tinfo, online)
-            if "die" in self._initialized_scopes:
-                self._add_compute_dies(tinfo, online)
-            if "node" in self._initialized_scopes:
-                self._add_nodes(tinfo)
-
-            tlines = list(tinfo.values())
-
-            if "die" in self._initialized_scopes:
-                self._add_io_dies(tlines)
-            elif "die" in self._initialized_scopes:
-                self._add_io_dies_from_cache(tlines)
-
-            for order in self._initialized_scopes:
-                self._sort_topology(tlines, order)
-
-        self._must_update_topology = False
-
-    def _get_topology(self, scopes: Iterable[ScopeNameType], order: ScopeNameType = "CPU"):
+    def _get_topology(self, snames: Iterable[ScopeNameType], order: ScopeNameType = "CPU"):
         """
-        Build and return a topology list for the specified scopes and order.
+        Build and return the topology table for the specified scopes and sorted in the specified
+        order.
 
         Args:
-            scopes: Topology scopes to include.
+            scopes: Topology scope names to include to the topology table.
             order: Topology sorting order. Defaults to "CPU".
 
         Returns:
-            A list representing the CPU topology, sorted according to the specified order and
-            including the requested scopes.
+            The topology table for the specified scopes and order. The topology table is a
+            a list of topology lines, which are dictionaries where keys are scope names and
+            values are the corresponding scope numbers (e.g., CPU numbers, core numbers, etc.).
         """
 
-        if self._must_update_topology:
-            self._update_topology()
+        snames_set = set(snames)
+        snames_set.update(set(self._sorting_map[order]))
+        snames_set -= self._initialized_snames
 
-        scopes_set = set(scopes)
-        scopes_set.update(set(self._sorting_map[order]))
-        scopes_set -= self._initialized_scopes
-
-        if not scopes_set:
+        if not snames_set:
             # The topology for the necessary scopes has already been built, just return it.
             return self._topology[order]
 
         _LOG.debug("Building CPU topology for scopes %s, order '%s'",
-                   ", ".join(scopes), order)
+                   ", ".join(snames), order)
 
         # A prelimitary CPU topology dictionary. They keys are CPU numbers, and the values are the
         # topology lines.
         cpu_tdict: dict[int, dict[ScopeNameType, int]]
 
+        cpus = self._get_online_cpus_set()
+
         if not self._topology:
-            cpu_tdict = {cpu: {"CPU": cpu} for cpu in self._get_online_cpus_set()}
+            cpu_tdict = {cpu: {"CPU": cpu} for cpu in cpus}
         else:
             cpu_tdict = {tline["CPU"]: tline for tline in self._topology["CPU"] if tline["CPU"] != NA}
 
-        cpus = self._get_online_cpus_set()
         self._add_cores_and_packages(cpu_tdict, cpus)
-        scopes_set.update({"package", "core"})
+        snames_set.update({"package", "core"})
 
-        if "module" in scopes_set:
+        if "module" in snames_set:
             self._add_modules(cpu_tdict, cpus)
-        if "die" in scopes_set:
+        if "die" in snames_set:
             self._add_compute_dies(cpu_tdict, cpus)
-        if "node" in scopes_set:
+        if "node" in snames_set:
             self._add_nodes(cpu_tdict)
 
         # I/O dies do not have CPUs, so 'cpu_tdict' is not a suitable data structure for them. Use a
         # list of topology lines (tlines) instead.
         tlines = list(cpu_tdict.values())
 
-        if "die" in scopes_set:
+        if "package" in snames_set or "die" in snames_set:
             self._add_io_dies(tlines)
-        elif "die" in self._initialized_scopes:
-            self._add_io_dies_from_cache(tlines)
 
-        self._initialized_scopes.update(scopes_set)
-        for level in self._initialized_scopes:
+        self._initialized_snames.update(snames_set)
+        for level in self._initialized_snames:
             self._sort_topology(tlines, level)
 
         return self._topology[order]
@@ -672,6 +616,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         _LOG.debug("Clearing cashed CPU information")
 
         self._cpus = set()
+        self._all_cpus = set()
         self._hybrid_cpus = {}
-        if self._topology:
-            self._must_update_topology = True
+        self._initialized_snames = set()
+        self._topology = {}
