@@ -114,7 +114,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
             snames = ", ".join(SCOPE_NAMES)
             raise Error(f"Bad {name} name '{sname}', use: {snames}")
 
-    def get_topology(self, levels=None, order="CPU"):
+    def get_topology(self, snames=None, order="CPU"):
         """
         Return the topology table. The arguments are as follows.
           * levels - the levels to include (all levels by default).
@@ -208,14 +208,14 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         {'CPU': 15, 'core': 5, 'module': 4, 'die': 0, 'node': 1, 'package': 1},
         """
 
-        if not levels:
-            levels = SCOPE_NAMES
+        if not snames:
+            snames = SCOPE_NAMES
         else:
-            for lvl in levels:
+            for lvl in snames:
                 self._validate_sname(lvl, name="topology level")
 
         self._validate_sname(order, name="order")
-        topology = self._get_topology(levels, order=order)
+        topology = self._get_topology(snames, order=order)
         return copy.deepcopy(topology)
 
     def _get_level_nums(self, sublvl, lvl, nums, order=None):

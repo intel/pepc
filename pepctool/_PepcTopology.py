@@ -27,7 +27,7 @@ def _get_default_colnames(cpuinfo):
     colnames = list(CPUInfo.SCOPE_NAMES)
 
     module = None
-    for tline in cpuinfo.get_topology(levels=("core", "module", "package"), order="module"):
+    for tline in cpuinfo.get_topology(snames=("core", "module", "package"), order="module"):
         if module != tline["module"]:
             module = tline["module"]
             core = tline["core"]
@@ -38,7 +38,7 @@ def _get_default_colnames(cpuinfo):
         colnames.remove("module")
 
     package = None
-    for tline in cpuinfo.get_topology(levels=("die", "package"), order="package"):
+    for tline in cpuinfo.get_topology(snames=("die", "package"), order="package"):
         if package != tline["package"]:
             die = tline["die"]
             package = tline["package"]
@@ -153,7 +153,7 @@ def topology_info_command(args, pman):
 
         # Note, if there are I/O dies, the topology will include them. They will be filtered out
         # separately in necessary.
-        topology = cpuinfo.get_topology(levels=colnames, order=order)
+        topology = cpuinfo.get_topology(snames=colnames, order=order)
 
         if show_hybrid is None and cpuinfo.info["hybrid"]:
             show_hybrid = True
