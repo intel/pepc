@@ -100,7 +100,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
              "node":    ("node", "CPU"),
              "package": ("package", "CPU")}
 
-        self._hybrid_sysfs_base = Path("/sys/devices/cpu_atom/cpus")
+        self._cpu_sysfs_base = Path("/sys/devices/system/cpu")
 
         if pman:
             self._pman = pman
@@ -262,7 +262,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
                 cpu_tdict[cpu]["module"] = cpu_tdict[cpu]["core"]
                 continue
 
-            base = Path(f"/sys/devices/system/cpu/cpu{cpu}")
+            base = Path(f"{self._cpu_sysfs_base}/cpu{cpu}")
             try:
                 data = self._pman.read_file(base / "cache/index2/id")
             except ErrorNotFound as err:
@@ -323,7 +323,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
                 if "die" in cpu_tdict[cpu]:
                     continue
 
-                base = Path(f"/sys/devices/system/cpu/cpu{cpu}")
+                base = Path(f"{self._cpu_sysfs_base}/cpu{cpu}")
                 data = self._pman.read_file(base / "topology/die_id")
                 die = Trivial.str_to_int(data, what="die number")
                 siblings = self._read_range(base / "topology/die_cpus_list")
@@ -489,7 +489,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         """
 
         if not self._cpus:
-            self._cpus = set(self._read_range("/sys/devices/system/cpu/online"))
+            self._cpus = set(self._read_range(f"{self._cpu_sysfs_base}/online"))
 
         return self._cpus
 
@@ -502,7 +502,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         """
 
         if not self._all_cpus:
-            self._all_cpus = set(self._read_range("/sys/devices/system/cpu/present"))
+            self._all_cpus = set(self._read_range(f"{self._cpu_sysfs_base}/present"))
 
         return self._all_cpus
 
@@ -554,7 +554,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
                     raise Error(f"Unexpected type for '{key}', expected "
                                 f"{key_types[key]}, got {type(val)}")
 
-        if self._pman.exists(self._hybrid_sysfs_base):
+        if self._pman.exists("/sys/devices/cpu_atom/cpus"):
             cpuinfo["hybrid"] = True
         else:
             cpuinfo["hybrid"] = False
