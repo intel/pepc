@@ -412,8 +412,8 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         order.
 
         Args:
-            scopes: Topology scope names to include to the topology table.
-            order: Topology sorting order. Defaults to "CPU".
+            scopes: Scope names to include to the topology table.
+            order: Topology table sorting order. Defaults to "CPU".
 
         Returns:
             The topology table for the specified scopes and order. The topology table is a
