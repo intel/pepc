@@ -16,7 +16,7 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import copy
 import typing
-from typing import Iterable
+from typing import Iterable, Literal
 from pepclibs import _CPUInfoBase
 from pepclibs.helperlibs import Logging, Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
@@ -218,93 +218,101 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         if not snames:
             snames = SCOPE_NAMES
         else:
-            for lvl in snames:
-                self._validate_sname(lvl, name="topology level")
+            for sname in snames:
+                self._validate_sname(sname, name="topology scope name")
 
         self._validate_sname(order, name="order")
         topology = self._get_topology(snames, order=order)
         return copy.deepcopy(topology)
 
-    def _get_level_nums(self, sublvl, lvl, nums, order=None):
+    def _get_scope_nums(self,
+                        sname: ScopeNameType,
+                        parent_sname: ScopeNameType,
+                        nums: Iterable[int] | Literal["all"],
+                        order: ScopeNameType | None = None) -> list[int]:
         """
-        Return a list containing all sub-level 'sublvl' numbers in level 'lvl' elements with
-        numbers 'nums'.
+        Return a list of "scope" numbers (e.g., CPU numbers or core numbers) for specified parent
+        scope numbers (e.g., get a list of CPU numbers for specified cores, or get a list of core
+        numbers for specified packages).
 
-        Examples.
+        Args:
+            sname: Scope name to retrieve the numbers for (e.g., "CPU", "core", "die").
+            parent_sname: Parent scope to retrieve to use for selecting scope numbers (e.g., "core",
+                          "package").
+            nums: Iterable of parent scope numbers for selecting scope numbers, or "all" to or all
+                  parent scope numbers.
+            order: Scope name to sort the result by. Defaults to 'sname'.
 
-        1. Get CPU numbers in cores 1 and 3.
-           _get_level_nums("CPU", "core", (1, 3))
-        2. Get node numbers in package 1.
-           _get_level_nums("node", "package", (1,))
-        3. Get all core numbers.
-           _get_level_nums("core", "package", "all")
-           _get_level_nums("core", "node", "all")
-           _get_level_nums("core", "core", "all")
+        Returns:
+            List of scope numbers corresponding to the specified parent scope numbers.
 
-        The 'order' argument defines the the order of the result (just ascending order by default).
-        If 'order' contains a level name, the returned numbers will be sorted in order of that
-        level.
+        Examples:
+            1. Get CPU numbers in cores 1 and 3.
+               _get_scope_nums("CPU", "core", (1, 3))
+            2. Get node numbers in package 1.
+               _get_scope_nums("node", "package", (1,))
+            3. Get all core numbers.
+               _get_scope_nums("core", "package", "all")
+               _get_scope_nums("core", "node", "all")
+               _get_scope_nums("core", "core", "all")
 
-        Assume a system with 2 packages, 1 die per package, 2 cores per package, and 2 CPUs per
-        core:
-          * Package 0 includes die 0.
-          * Package 1 includes die 1.
-          * Die 0 includes cores 0 and 1.
-          * Die 1 includes cores 2 and 3.
-          * Core 0 includes CPUs 0 and 4
-          * Core 1 includes CPUs 1 and 5
-          * Core 3 includes CPUs 2 and 6
-          * Core 4 includes CPUs 3 and 7
+            Assume a system with 2 packages, 1 die per package, 2 cores per package, and 2 CPUs per
+            core:
+                * Package 0 includes die 0.
+                * Package 1 includes die 1.
+                * Die 0 includes cores 0 and 1.
+                * Die 1 includes cores 2 and 3.
+                * Core 0 includes CPUs 0 and 4
+                * Core 1 includes CPUs 1 and 5
+                * Core 3 includes CPUs 2 and 6
+                * Core 4 includes CPUs 3 and 7
 
-        Examples.
-
-        1. _get_level_nums("CPU", "core", "all") returns:
-            * [0, 1, 2, 3, 4, 5, 6, 7]
-        2. _get_level_nums("CPU", "core", "all", order="core") returns:
-            * [0, 4, 1, 5, 2, 6, 3, 7]
-        3. _get_level_nums("CPU", "core", (1,3), order="core") returns:
-            * [1, 5, 2, 6]
+                1. _get_scope_nums("CPU", "core", "all") returns:
+                   [0, 1, 2, 3, 4, 5, 6, 7]
+                2. _get_scope_nums("CPU", "core", "all", order="core") returns:
+                   [0, 4, 1, 5, 2, 6, 3, 7]
+                3. _get_scope_nums("CPU", "core", (1,3), order="core") returns:
+                   [1, 5, 2, 6]
         """
 
         if order is None:
-            order = sublvl
+            order = sname
 
-        self._validate_sname(sublvl)
-        self._validate_sname(lvl)
+        self._validate_sname(sname)
+        self._validate_sname(parent_sname)
         self._validate_sname(order, name="order")
 
-        if self._sname2idx[lvl] < self._sname2idx[sublvl]:
-            raise Error(f"bad level order, cannot get {sublvl}s from level '{lvl}'")
+        if self._sname2idx[parent_sname] < self._sname2idx[sname]:
+            raise Error(f"Cannot get {sname}s for '{parent_sname}', {sname} is not a child of "
+                        f"{parent_sname}")
 
         if nums != "all":
-            # Valid 'nums' should be an integer or a collection of integers. At this point, just
-            # turn 'nums' into a set. Possible non-integers in the set will be detected later.
-            try:
-                nums = set(nums)
-            except TypeError:
-                nums = set([nums])
+            # Convert 'nums' to a set. Any non-integer values will be validated later.
+            nums_set = set(nums)
+        else:
+            nums_set = set()
 
-        result = {}
-        valid_nums = set()
+        result: dict[int, None] = {}
+        valid_nums: set[int] = set()
 
-        for tline in self._get_topology((lvl, sublvl), order=order):
-            if tline[lvl] == NA:
+        for tline in self._get_topology((parent_sname, sname), order=order):
+            if tline[parent_sname] == NA:
                 continue
-            valid_nums.add(tline[lvl])
-            if tline[sublvl] == NA:
+            valid_nums.add(tline[parent_sname])
+            if tline[sname] == NA:
                 continue
-            if nums == "all" or tline[lvl] in nums:
-                result[tline[sublvl]] = None
+            if nums == "all" or tline[parent_sname] in nums_set:
+                result[tline[sname]] = None
 
-        # Validate the input numbers in 'nums'.
-        if nums == "all":
+        if nums_set == "all":
             return list(result)
 
-        if not nums.issubset(valid_nums):
+        # Validate the input numbers in 'nums'.
+        if not nums_set.issubset(valid_nums):
             valid = Trivial.rangify(valid_nums)
-            invalid = Trivial.rangify(nums - valid_nums)
-            raise Error(f"{lvl} {invalid} do not exist{self._pman.hostmsg}, valid {lvl} numbers "
-                        f"are: {valid}")
+            invalid = Trivial.rangify(nums_set - valid_nums)
+            raise Error(f"{parent_sname} {invalid} do not exist{self._pman.hostmsg}, valid "
+                        f"{parent_sname} numbers are: {valid}")
 
         return list(result)
 
@@ -319,7 +327,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         if order == "CPU":
             return sorted(self._get_online_cpus_set())
 
-        return self._get_level_nums("CPU", "CPU", "all", order=order)
+        return self._get_scope_nums("CPU", "CPU", "all", order=order)
 
     def get_offline_cpus(self):
         """Return list of offline CPU numbers sorted in ascending order."""
@@ -339,7 +347,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         package (e.g., there may be core 0 in package 0 and package 1).
         """
 
-        return self._get_level_nums("core", "package", package, order=order)
+        return self._get_scope_nums("core", "package", package, order=order)
 
     def get_modules(self, order="module"):
         """
@@ -351,7 +359,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         unique (unlike, for example, core numbers).
         """
 
-        return self._get_level_nums("module", "module", "all", order=order)
+        return self._get_scope_nums("module", "module", "all", order=order)
 
     def get_dies(self, package=0, order="die", compute_dies=True, io_dies=True):
         """
@@ -369,7 +377,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         die 0 in package 0 and package 1).
         """
 
-        dies = self._get_level_nums("die", "package", package, order=order)
+        dies = self._get_scope_nums("die", "package", package, order=order)
         if compute_dies and io_dies:
             return dies
 
@@ -396,7 +404,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         unique (unlike, for example, core numbers).
         """
 
-        return self._get_level_nums("node", "node", "all", order=order)
+        return self._get_scope_nums("node", "node", "all", order=order)
 
     def get_packages(self, order="package"):
         """
@@ -408,7 +416,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         unique (unlike, for example, core numbers).
         """
 
-        return self._get_level_nums("package", "package", "all", order=order)
+        return self._get_scope_nums("package", "package", "all", order=order)
 
     def cpus_hotplugged(self):
         """Must be called when a CPU goes online or offline."""
@@ -474,7 +482,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
           * order - the sorting order of the returned CPU numbers list.
         """
 
-        return self._get_level_nums("CPU", "package", (package,), order=order)
+        return self._get_scope_nums("CPU", "package", (package,), order=order)
 
     def package_to_cores(self, package, order="core"):
         """
@@ -483,7 +491,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
           * order - the sorting order of the returned core numbers list.
         """
 
-        return self._get_level_nums("core", "package", (package,), order=order)
+        return self._get_scope_nums("core", "package", (package,), order=order)
 
     def package_to_modules(self, package, order="module"):
         """
@@ -492,7 +500,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
           * order - the sorting order of the returned module numbers list.
         """
 
-        return self._get_level_nums("module", "package", (package,), order=order)
+        return self._get_scope_nums("module", "package", (package,), order=order)
 
     def package_to_dies(self, package, order="die"):
         """
@@ -504,7 +512,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         packages 0 and 1.
         """
 
-        return self._get_level_nums("die", "package", (package,), order=order)
+        return self._get_scope_nums("die", "package", (package,), order=order)
 
     def package_to_nodes(self, package, order="node"):
         """
@@ -513,7 +521,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
           * order - the sorting order of the returned node numbers list.
         """
 
-        return self._get_level_nums("node", "package", (package,), order=order)
+        return self._get_scope_nums("node", "package", (package,), order=order)
 
     def cores_to_cpus(self, cores="all", packages="all", order="CPU"):
         """
@@ -527,8 +535,8 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         in packages 0 and 1.
         """
 
-        by_core = self._get_level_nums("CPU", "core", cores, order=order)
-        by_package = set(self._get_level_nums("CPU", "package", packages))
+        by_core = self._get_scope_nums("CPU", "core", cores, order=order)
+        by_package = set(self._get_scope_nums("CPU", "package", packages))
 
         cpus = []
         for cpu in by_core:
@@ -546,7 +554,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         Note, module numbers are globally unique (unlike, for example, core numbers).
         """
 
-        return self._get_level_nums("CPU", "module", modules, order=order)
+        return self._get_scope_nums("CPU", "module", modules, order=order)
 
     def dies_to_cpus(self, dies="all", packages="all", order="CPU"):
         """
@@ -560,8 +568,8 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         in packages 0 and 1.
         """
 
-        by_die = self._get_level_nums("CPU", "die", dies, order=order)
-        by_package = set(self._get_level_nums("CPU", "package", packages))
+        by_die = self._get_scope_nums("CPU", "die", dies, order=order)
+        by_package = set(self._get_scope_nums("CPU", "package", packages))
 
         cpus = []
         for cpu in by_die:
@@ -579,7 +587,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         Note, NUMA node numbers are globally unique (unlike, for example, core numbers).
         """
 
-        return self._get_level_nums("CPU", "node", nodes, order=order)
+        return self._get_scope_nums("CPU", "node", nodes, order=order)
 
     def packages_to_cpus(self, packages="all", order="CPU"):
         """
@@ -590,7 +598,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         Note, package numbers are globally unique (unlike, for example, core numbers).
         """
 
-        return self._get_level_nums("CPU", "package", packages, order=order)
+        return self._get_scope_nums("CPU", "package", packages, order=order)
 
     def get_cpus_count(self):
         """Return count of online CPUs."""
