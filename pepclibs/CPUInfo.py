@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2023 Intel Corporation
+# Copyright (C) 2020-2025 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Authors: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
@@ -15,11 +15,15 @@ Provide information about CPU topology and other CPU details.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import copy
-import json
+import typing
 from pepclibs import _CPUInfoBase
 from pepclibs.helperlibs import Logging, Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs._CPUInfoBase import SCOPE_NAMES, NA
+
+if typing.TYPE_CHECKING:
+    from pepclibs.helperlibs.ProcessManager import ProcessManagerType
+    from pepclibs._CPUInfoBaseTypes import ScopeNameType
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
@@ -31,7 +35,6 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
     1. Get various CPU information.
         * 'get_topology()' - CPU topology.
-        * 'get_cache_info()' - CPU cache.
     2. Get list of packages/cores/etc.
         * 'get_cpus()'
         * 'get_cores()'
@@ -83,12 +86,33 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         * 'dies_to_str()' - turn a die numbers dictionary into a string.
     """
 
-    def _validate_level(self, lvl, name="level"):
-        """Validate that 'lvl' is a valid level name."""
+    def __init__(self, pman: ProcessManagerType | None = None):
+        """
+        Initialize a class instance.
 
-        if lvl not in self._lvl2idx:
-            levels = ", ".join(SCOPE_NAMES)
-            raise Error(f"bad {name} name '{lvl}', use: {levels}")
+        Args:
+            pman: The process manager object that defines the target host. If not provided, a local
+                  process manager is created.
+        """
+
+        super().__init__(pman=pman)
+
+        # Scope name to its index number.
+        self._sname2idx: dict[ScopeNameType, int]
+        self._sname2idx = {sname: idx for idx, sname in enumerate(SCOPE_NAMES)}
+
+    def _validate_sname(self, sname: ScopeNameType, name: str = "scope name"):
+        """
+        Check that the provided scope name is valid.
+
+        Args:
+            sname: The scope name to validate.
+            name: The label to use in the error message.
+        """
+
+        if sname not in self._sname2idx:
+            snames = ", ".join(SCOPE_NAMES)
+            raise Error(f"Bad {name} name '{sname}', use: {snames}")
 
     def get_topology(self, levels=None, order="CPU"):
         """
@@ -188,9 +212,9 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
             levels = SCOPE_NAMES
         else:
             for lvl in levels:
-                self._validate_level(lvl, name="topology level")
+                self._validate_sname(lvl, name="topology level")
 
-        self._validate_level(order, name="order")
+        self._validate_sname(order, name="order")
         topology = self._get_topology(levels, order=order)
         return copy.deepcopy(topology)
 
@@ -238,11 +262,11 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         if order is None:
             order = sublvl
 
-        self._validate_level(sublvl)
-        self._validate_level(lvl)
-        self._validate_level(order, name="order")
+        self._validate_sname(sublvl)
+        self._validate_sname(lvl)
+        self._validate_sname(order, name="order")
 
-        if self._lvl2idx[lvl] < self._lvl2idx[sublvl]:
+        if self._sname2idx[lvl] < self._sname2idx[sublvl]:
             raise Error(f"bad level order, cannot get {sublvl}s from level '{lvl}'")
 
         if nums != "all":
@@ -1064,43 +1088,6 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         hybrid_cpus = self._get_hybrid_cpus()
         return (list(hybrid_cpus["ecores"]), list(hybrid_cpus["pcores"]))
 
-    def get_cache_info(self):
-        """
-        Return a dictionary including CPU cache information. The dictionary keys and layout is
-        similar to what the following command provides: 'lscpu --json --caches'.
-        """
-
-        if self._cacheinfo:
-            return self._cacheinfo
-
-        cmd = "lscpu --caches --json --bytes"
-        stdout, _ = self._pman.run_verify(cmd)
-
-        try:
-            cacheinfo = json.loads(stdout)
-        except Exception as err:
-            msg = Error(err).indent(2)
-            raise Error(f"failed parse output of '{cmd}' command{self._pman.hostmsg}:\n{msg}\n"
-                        f"The output of the command was:\n{stdout}") from None
-
-        self._cacheinfo = {}
-
-        # Change dictionary structure from a list of dictionaries to a dictionary of dictionaries.
-        for info in cacheinfo["caches"]:
-            name = info["name"]
-            if name in self._cacheinfo:
-                raise Error(f"BUG: multiple caches with name '{name}'")
-
-            self._cacheinfo[name] = {}
-            # Turn size values from strings to integers amount bytes.
-            for key, val in info.items():
-                if Trivial.is_int(val):
-                    self._cacheinfo[name][key] = int(val)
-                else:
-                    self._cacheinfo[name][key] = val
-
-        return self._cacheinfo
-
     @staticmethod
     def dies_to_str(dies):
         """
@@ -1126,17 +1113,3 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
             dies_str = str(dies_strs[0])
 
         return dies_str
-
-    def __init__(self, pman=None):
-        """
-        The class constructor. The arguments are as follows.
-          * pman - the process manager object that defines the target host.
-        """
-
-        super().__init__(pman=pman)
-
-        # Level name to its index number.
-        self._lvl2idx = {lvl: idx for idx, lvl in enumerate(SCOPE_NAMES)}
-
-        # CPU cache information dictionary.
-        self._cacheinfo = None

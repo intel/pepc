@@ -11,7 +11,6 @@
 Provide the base class for the 'CPUInfo.CPUInfo' class.
 """
 
-# TODO: modernize this module
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import re
@@ -442,7 +441,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         if not self._topology:
             cpu_tdict = {cpu: {"CPU": cpu} for cpu in cpus}
         else:
-            cpu_tdict = {tline["CPU"]: tline for tline in self._topology["CPU"] if tline["CPU"] != NA}
+            cpu_tdict = {tl["CPU"]: tl for tl in self._topology["CPU"] if tl["CPU"] != NA}
 
         self._add_cores_and_packages(cpu_tdict, cpus)
         snames_set.update({"package", "core"})
