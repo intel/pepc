@@ -28,6 +28,7 @@ from  __future__ import annotations # Remove when switching to Python 3.10+.
 import contextlib
 from pathlib import Path
 from typing import Generator, cast, IO
+
 from pepclibs.helperlibs import Logging, LocalProcessManager, Trivial, YAML, ClassHelpers
 from pepclibs.helperlibs import _ProcessManagerBase
 from pepclibs.helperlibs._ProcessManagerBase import ProcWaitResultType, LsdirTypedDict
@@ -209,6 +210,18 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
                 finfo["path"] = split[0]
                 finfo["data"] = split[1]
 
+                # Note about lstrip(): it is necessary because the paths in 'finfo["path"]' is an
+                # absolute path starting with '/', and joining it with the base path would result
+                # in a base path ignored. E.g., Path("/tmp") / "/sys" results in "/sys" instead of
+                # "/tmp/sys".
+                dirpath = self._get_basepath() / finfo["path"].lstrip("/")
+                dirpath = dirpath.parent
+                try:
+                    dirpath.mkdir(parents=True, exist_ok=True)
+                except OSError as err:
+                    errmsg = Error(str(err)).indent(2)
+                    raise Error(f"Failed to create directory '{dirpath}':\n{errmsg}") from err
+
                 emul = _EmulFile.get_emul_file(finfo, datapath, self._get_basepath)
                 self._emuls[emul.path] = emul
 
@@ -226,8 +239,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
             for line in lines:
                 path = self._get_basepath() / line.strip().lstrip("/")
-                if not path.exists():
-                    path.mkdir(parents=True)
+                path.mkdir(parents=True, exist_ok=True)
 
     def _init_msrs(self, msrinfo, datapath):
         """
@@ -390,7 +402,11 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         Return 'True' if path 'path' exists.
         """
 
-        emul_path = Path(self._get_basepath() / str(path).lstrip("/"))
+        path = str(path)
+        if path in self._emuls:
+            return True
+
+        emul_path = Path(self._get_basepath() / path.lstrip("/"))
         return super().exists(emul_path) or path in self._ro_files
 
     def is_file(self, path):
@@ -401,7 +417,11 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         Return 'True' 'path' exists and it is a regular file, return 'False' otherwise.
         """
 
-        emul_path = Path(self._get_basepath() / str(path).lstrip("/"))
+        path = str(path)
+        if path in self._emuls:
+            return True
+
+        emul_path = Path(self._get_basepath() / path.lstrip("/"))
         return super().is_file(emul_path) or path in self._ro_files
 
     def is_dir(self, path):
