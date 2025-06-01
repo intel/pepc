@@ -37,6 +37,10 @@ SCOPE_NAMES: tuple[ScopeNameType, ...] = ("CPU", "core", "module", "die", "node"
 # 'NA' is used as the CPU/core/module number for I/O dies, which lack CPUs, cores, or modules.
 NA = 0xFFFFFFFF
 
+# CPU models that have dies but they are not enumerated by Linux kernel. Use 'MSR_PM_LOGICAL_ID' for
+# them instead.
+_PLI_VFMS = CPUModels.CPU_GROUPS["GNR"] + CPUModels.CPU_GROUPS["CRESTMONT"]
+
 class CPUInfoBase(ClassHelpers.SimpleCloseContext):
     """
     Base class for 'CPUInfo.CPUInfo'. Provides low-level functionality, while 'CPUInfo' implements
@@ -312,32 +316,26 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
                 self._io_dies[package] = set()
             self._compute_dies[package].add(die)
 
-        any_cpu = next(iter(cpus))
-        path = f"{self._cpu_sysfs_base}/cpu{any_cpu}/topology/die_id"
-        if self._pman.exists(path):
-            _LOG.debug("Reading compute die information from sysfs")
-            for cpu in cpus:
-                if "die" in cpu_tdict[cpu]:
-                    continue
-
-                base = Path(f"{self._cpu_sysfs_base}/cpu{cpu}")
-                data = self._pman.read_file(base / "topology/die_id")
-                die = Trivial.str_to_int(data, what="die number")
-                siblings = self._read_range(base / "topology/die_cpus_list")
-                for _ in siblings:
-                    # Suppress 'KeyError' in case the 'die_cpus_list' file included an offline CPU.
-                    with contextlib.suppress(KeyError):
-                        _add_compute_die(cpu_tdict, cpu, die)
-        else:
+        if self.info["vfm"] in _PLI_VFMS:
             pli_obj = self._get_pliobj()
             if pli_obj:
                 _LOG.debug("Reading compute die information from 'MSR_PM_LOGICAL_ID'")
                 for cpu, die in pli_obj.read_feature("domain_id", cpus=cpus):
                     _add_compute_die(cpu_tdict, cpu, die)
-            else:
-                _LOG.debug("Die information is not available, using package as die number")
-                for cpu in cpus:
-                    die = cpu_tdict[cpu]["package"]
+                return
+
+        _LOG.debug("Reading compute die information from sysfs")
+        for cpu in cpus:
+            if "die" in cpu_tdict[cpu]:
+                continue
+
+            base = Path(f"{self._cpu_sysfs_base}/cpu{cpu}")
+            data = self._pman.read_file(base / "topology/die_id")
+            die = Trivial.str_to_int(data, what="die number")
+            siblings = self._read_range(base / "topology/die_cpus_list")
+            for _ in siblings:
+                # Suppress 'KeyError' in case the 'die_cpus_list' file included an offline CPU.
+                with contextlib.suppress(KeyError):
                     _add_compute_die(cpu_tdict, cpu, die)
 
     def _add_nodes(self, cpu_tdict: dict[int, dict[ScopeNameType, int]]):
