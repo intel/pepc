@@ -312,12 +312,9 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
                 self._io_dies[package] = set()
             self._compute_dies[package].add(die)
 
-        pli_obj = self._get_pliobj()
-        if pli_obj:
-            _LOG.debug("Reading compute die information from 'MSR_PM_LOGICAL_ID'")
-            for cpu, die in pli_obj.read_feature("domain_id", cpus=cpus):
-                _add_compute_die(cpu_tdict, cpu, die)
-        else:
+        any_cpu = next(iter(cpus))
+        path = f"{self._cpu_sysfs_base}/cpu{any_cpu}/topology/die_id"
+        if self._pman.exists(path):
             _LOG.debug("Reading compute die information from sysfs")
             for cpu in cpus:
                 if "die" in cpu_tdict[cpu]:
@@ -331,6 +328,17 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
                     # Suppress 'KeyError' in case the 'die_cpus_list' file included an offline CPU.
                     with contextlib.suppress(KeyError):
                         _add_compute_die(cpu_tdict, cpu, die)
+        else:
+            pli_obj = self._get_pliobj()
+            if pli_obj:
+                _LOG.debug("Reading compute die information from 'MSR_PM_LOGICAL_ID'")
+                for cpu, die in pli_obj.read_feature("domain_id", cpus=cpus):
+                    _add_compute_die(cpu_tdict, cpu, die)
+            else:
+                _LOG.debug("Die information is not available, using package as die number")
+                for cpu in cpus:
+                    die = cpu_tdict[cpu]["package"]
+                    _add_compute_die(cpu_tdict, cpu, die)
 
     def _add_nodes(self, cpu_tdict: dict[int, dict[ScopeNameType, int]]):
         """
