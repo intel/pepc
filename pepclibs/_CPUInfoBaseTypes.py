@@ -50,12 +50,14 @@ class HybridCPUTypedDict(TypedDict, total=False):
     Attributes:
         pcore: List of P-core CPU numbers.
         ecore: List of E-core CPU numbers.
+        lpecore: List of LPE-core CPU numbers (if applicable).
     """
 
     pcore: list[int]
     ecore: list[int]
+    lpecore: list[int]
 
-HybridCPUKeyType = Literal["pcore", "ecore"]
+HybridCPUKeyType = Literal["pcore", "ecore", "lpecore"]
 
 class HybridCPUKeyInfoType(TypedDict, total=False):
     """

@@ -44,8 +44,9 @@ _PLI_VFMS = CPUModels.CPU_GROUPS["GNR"] + CPUModels.CPU_GROUPS["CRESTMONT"]
 
 # Thy hybrid CPU information dictionary.
 HYBRID_TYPE_INFO: dict[HybridCPUKeyType, HybridCPUKeyInfoType] = {
-        "pcore": {"name": "P-core", "title": "Performance core"},
-        "ecore": {"name": "E-core", "title": "Efficiency core"},
+        "pcore":   {"name": "P-core", "title": "Performance core"},
+        "ecore":   {"name": "E-core", "title": "Efficiency core"},
+        "lpecore": {"name": "LPE-core", "title": "Low Power Efficiency core"},
 }
 
 class CPUInfoBase(ClassHelpers.SimpleCloseContext):
@@ -630,9 +631,11 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
         _LOG.debug("Reading hybrid CPUs information from sysfs")
 
-        iterator: dict[HybridCPUKeyType, str] = {"ecore": "atom", "pcore": "core"}
+        iterator: dict[HybridCPUKeyType, str] = {"ecore": "atom", "pcore": "core",
+                                                 "lpecore": "lowpower"}
         for hybrid_type, arch in iterator.items():
-            self._hybrid_cpus[hybrid_type] = self._read_range(f"/sys/devices/cpu_{arch}/cpus")
+            with contextlib.suppress(ErrorNotFound):
+                self._hybrid_cpus[hybrid_type] = self._read_range(f"/sys/devices/cpu_{arch}/cpus")
 
         return self._hybrid_cpus
 

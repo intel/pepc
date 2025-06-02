@@ -177,8 +177,9 @@ def topology_info_command(args, pman):
                         tline["hybrid"] = CPUInfo.HYBRID_TYPE_INFO[htype]["name"]
                         break
                 else:
-                    raise Error(f"Hybrid CPU '{cpu}' not found in hybrid CPUs information "
-                                f"dictionary")
+                    _LOG.warn_once(f"Hybrid CPU '{cpu}' not found in hybrid CPUs information "
+                                   f"dictionary")
+                    tline["hybrid"] = "Unknown"
 
         cpus = set(optar.get_cpus())
 
