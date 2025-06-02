@@ -359,13 +359,19 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
         _LOG.debug("Reading NUMA node information from sysfs")
 
-        nodes = self._read_range("/sys/devices/system/node/online")
-        for node in nodes:
-            cpus = self._read_range(f"/sys/devices/system/node/node{node}/cpulist")
-            for cpu in cpus:
-                # Suppress 'KeyError' in case the 'cpulist' file included an offline CPU.
-                with contextlib.suppress(KeyError):
-                    cpu_tdict[cpu]["node"] = node
+        try:
+            nodes = self._read_range("/sys/devices/system/node/online")
+        except ErrorNotFound:
+            # No NUMA information in sysfs, assume a single NUMA node.
+            for cpu in cpu_tdict:
+                cpu_tdict[cpu]["node"] = 0
+        else:
+            for node in nodes:
+                cpus = self._read_range(f"/sys/devices/system/node/node{node}/cpulist")
+                for cpu in cpus:
+                    # Suppress 'KeyError' in case the 'cpulist' file included an offline CPU.
+                    with contextlib.suppress(KeyError):
+                        cpu_tdict[cpu]["node"] = node
 
     def _add_io_dies(self, tlines: list[dict[ScopeNameType, int]]):
         """
@@ -628,6 +634,45 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
         return cpudescr
 
+    def _probe_lpe_cores_l3(self):
+        """
+        Look for LPE (Low Power Efficiency) cores on a hybrid system.
+
+        LPE cores are not necessarily enumerated in the sysfs. Find them using the fact that they do
+        not have the L3 cache.
+        """
+
+        cpus = self._get_online_cpus_set()
+
+        has_l3: set[int] = set()
+        no_l3: set[int] = set()
+
+        for cpu in cpus:
+            base = Path(f"{self._cpu_sysfs_base}/cpu{cpu}")
+
+            try:
+                l3_cpus = self._read_range(base / "cache/index3/shared_cpu_list")
+            except ErrorNotFound:
+                no_l3.add(cpu)
+            else:
+                has_l3.update(l3_cpus)
+
+            if cpus == has_l3 | no_l3:
+                # All online CPUs have been checked, no need to continue.
+                break
+
+        if not no_l3 or not has_l3:
+            return
+
+        self._hybrid_cpus["lpecore"] = sorted(list(no_l3))
+
+        if "ecore" not in self._hybrid_cpus:
+            return
+
+        # Make sure LPE cores are not in the E-core list.
+        ecores = [cpu for cpu in self._hybrid_cpus["ecore"] if cpu not in no_l3]
+        self._hybrid_cpus["ecore"] = ecores
+
     def _get_hybrid_cpus(self) -> HybridCPUTypedDict:
         """
         Build and return a dictionary mapping hybrid CPU types to their corresponding CPU numbers.
@@ -647,6 +692,9 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         for hybrid_type, arch in iterator.items():
             with contextlib.suppress(ErrorNotFound):
                 self._hybrid_cpus[hybrid_type] = self._read_range(f"/sys/devices/cpu_{arch}/cpus")
+
+        if "lpecore" not in self._hybrid_cpus:
+            self._probe_lpe_cores_l3()
 
         return self._hybrid_cpus
 
