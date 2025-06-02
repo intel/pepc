@@ -345,9 +345,9 @@ class UncoreFreqSysfs(ClassHelpers.SimpleCloseContext):
     def _get_sysfs_path_cpu(self, key, cpu, limit=False):
         """Return the sysfs file path for a CPU-based uncore frequency read or write operation."""
 
-        levels = self._cpuinfo.get_cpu_levels(cpu, levels=("package", "die"))
-        package = levels["package"]
-        die = levels["die"]
+        tline = self._cpuinfo.get_tline_by_cpu(cpu, snames=("package", "die"))
+        package = tline["package"]
+        die = tline["die"]
 
         if self._use_new_sysfs_api():
             return self._get_new_sysfs_api_path(key, package, die, limit=limit)

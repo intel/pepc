@@ -41,15 +41,15 @@ def _get_possible_ioscopes(cpuinfo, cpu, siblings):
         ioscopes.append("CPU")
 
     topology = cpuinfo.get_topology()
-    tinfo = cpuinfo.get_cpu_levels(cpu)
+    tline = cpuinfo.get_tline_by_cpu(cpu)
     for ioscope in ("core", "module", "die", "package"):
         for tline in topology:
             if tline["CPU"] in siblings:
-                if tline[ioscope] != tinfo[ioscope]:
+                if tline[ioscope] != tline[ioscope]:
                     break
-            elif tline[ioscope] == tinfo[ioscope]:
+            elif tline[ioscope] == tline[ioscope]:
                 # The 'core' and 'die' numbers may be relative to the package on some systems.
-                if ioscope in {"core", "die"} and tline["package"] != tinfo["package"]:
+                if ioscope in {"core", "die"} and tline["package"] != tline["package"]:
                     continue
                 break
         else:

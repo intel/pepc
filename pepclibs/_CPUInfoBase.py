@@ -73,8 +73,10 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
         # Online CPU numbers.
         self._cpus: set[int] = set()
+        # List of online and offline CPUs sorted in ascending order.
+        self._all_cpus: list[int] = []
         # Set of online and offline CPUs.
-        self._all_cpus: set[int] = set()
+        self._all_cpus_set: set[int] = set()
         # Dictionary of P-core/E-core CPUs.
         self._hybrid_cpus: HybridCPUsTypeDict = {}
 
@@ -498,6 +500,19 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
         return self._cpus
 
+    def _get_all_cpus(self) -> list[int]:
+        """
+        Return a list of all CPU numbers, including both online and offline CPUs.
+
+        Returns:
+            A list containing all CPU numbers present in the system, sorted in ascending order.
+        """
+
+        if not self._all_cpus:
+            self._all_cpus = self._read_range(f"{self._cpu_sysfs_base}/present")
+
+        return self._all_cpus
+
     def _get_all_cpus_set(self) -> set[int]:
         """
         Return a set of all CPU numbers, including both online and offline CPUs.
@@ -506,10 +521,10 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
             A set containing all CPU numbers present in the system.
         """
 
-        if not self._all_cpus:
-            self._all_cpus = set(self._read_range(f"{self._cpu_sysfs_base}/present"))
+        if not self._all_cpus_set:
+            self._all_cpus_set = set(self._get_all_cpus())
 
-        return self._all_cpus
+        return self._all_cpus_set
 
     def _get_cpu_info(self) -> CPUInfoTypeDict:
         """
@@ -621,7 +636,6 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         _LOG.debug("Clearing cashed CPU information")
 
         self._cpus = set()
-        self._all_cpus = set()
         self._hybrid_cpus = {}
         self._initialized_snames = set()
         self._topology = {}

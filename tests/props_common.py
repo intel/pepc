@@ -265,9 +265,9 @@ def set_and_verify(params, props_vals, cpu):
     pobj = params["pobj"]
     cpuinfo = params["cpuinfo"]
 
-    levels = cpuinfo.get_cpu_levels(cpu)
-    packages = (levels["package"],)
-    dies = {levels["package"]: (levels["die"],)}
+    tline = cpuinfo.get_tline_by_cpu(cpu)
+    packages = (tline["package"],)
+    dies = {tline["package"]: (tline["die"],)}
 
     for pname, val in props_vals:
         sname = pobj.get_sname(pname)

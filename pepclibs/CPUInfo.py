@@ -44,7 +44,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         * 'get_nodes()'
         * 'get_packages()'
         * 'get_offline_cpus()'
-        * 'get_cpu_levels()'
+        * 'get_tline_by_cpu()'
         * 'get_cpu_siblings()'
     3. Get list of packages/cores/etc for a subset of CPUs/cores/etc.
         * 'package_to_cpus()'
@@ -316,12 +316,19 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
         return list(result)
 
-    def get_cpus(self, order="CPU"):
+    def get_cpus(self, order: ScopeNameType = "CPU") -> list[int]:
         """
-        Return list of online CPU numbers. The arguments are as follows.
-          * order - the sorting order of the returned CPU numbers list.
+        Return a list of online CPU numbers in the specified order.
 
-        CPU numbers are globally unique (unlike, for example, core numbers).
+        Args:
+            order: Sorting order for the returned CPU numbers. Defaults to "CPU".
+
+        Returns:
+            List of online CPU numbers, sorted in the specified order.
+
+        Note:
+            CPU numbers are unique across the system (contrast to die numbers, which are
+            per-package).
         """
 
         if order == "CPU":
@@ -329,120 +336,169 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
         return self._get_scope_nums("CPU", "CPU", "all", order=order)
 
-    def get_offline_cpus(self):
-        """Return list of offline CPU numbers sorted in ascending order."""
+    def get_offline_cpus(self) -> list[int]:
+        """
+        Return a list of offline CPU numbers.
 
-        cpus = self._get_all_cpus_set()
+        Returns:
+            List of offline CPU numbers sorted in ascending order.
+        """
+
+        cpus = self._get_all_cpus()
         online_cpus = self._get_online_cpus_set()
-        return list(cpu for cpu in cpus if cpu not in online_cpus)
+        return [cpu for cpu in cpus if cpu not in online_cpus]
 
-    def get_cores(self, package=0, order="core"):
+    def get_cores(self, package: int = 0, order: ScopeNameType = "core") -> list[int]:
         """
-        Return list of core numbers in package 'package'. The arguments are as follows.
-          * package - the package to get core numbers for.
-          * order - the sorting order of the returned core numbers list.
+        Return a list of core numbers within the specified package.
 
-        Only cores containing at least one online CPU will be included in the result, because Linux
-        does not provide topology information for offline CPUs. Core numbers are relative to the
-        package (e.g., there may be core 0 in package 0 and package 1).
+        Only cores containing at least one online CPU are included, as Linux does not provide
+        topology information for offline CPUs. Depending on kernel version, core numbers may be
+        relative to the package (e.g., core 0 may exist in both package 0 and package 1).
+
+        Args:
+            package: The package to retrieve core numbers from.
+            order: The sorting order of the returned core numbers list. Defaults to "core"
+                   (ascending core number order).
+
+        Returns:
+            A list of core numbers present in the specified package, sorted in the specified order.
         """
 
-        return self._get_scope_nums("core", "package", package, order=order)
+        return self._get_scope_nums("core", "package", (package,), order=order)
 
-    def get_modules(self, order="module"):
+    def get_modules(self, order: ScopeNameType = "module") -> list[int]:
         """
-        Return list of module numbers. The arguments are as follows.
-          * order - the sorting order of the returned module numbers list.
+        Return a list of module numbers, sorted in the specified order.
 
-        Only modules containing at least one online CPU will be included in the result, because
-        Linux does not provide topology information for offline CPUs. Module numbers are globally
-        unique (unlike, for example, core numbers).
+        Only modules containing at least one online CPU are included, because Linux does not provide
+        topology information for offline CPUs. Module numbers are globally unique (unlike core
+        numbers).
+
+        Args:
+            order: Sorting order for the returned module numbers list.
+
+        Returns:
+            A list of module numbers sorted in the specified order.
         """
 
         return self._get_scope_nums("module", "module", "all", order=order)
 
-    def get_dies(self, package=0, order="die", compute_dies=True, io_dies=True):
+    def get_dies(self,
+                 package: int = 0,
+                 order: ScopeNameType = "die",
+                 compute_dies: bool = True,
+                 io_dies: bool = True) -> list[int]:
         """
-        Return list of die numbers in package 'package'. The arguments are as follows.
-          * package - package number to return the list of dies for.
-          * order - the sorting order of the result.
-          * compute_dies - include compute dies to the result if 'True', otherwise exclude them.
-                           Compute dies are the dies that have CPUs.
-          * io_dies - include I/O dies to the result if 'True', otherwise exclude them. I/O dies
-                      are the dies that do not have any CPUs.
+        Return a list of die numbers in the specified package.
 
-        Only dies containing at least one online CPU will be included to the result, because Linux
-        does not provide topology information for offline CPUs. On some systems die numbers may be
-        globally unique, while on other systems they are relative to the package (e.g., there may be
-        die 0 in package 0 and package 1).
+        Only dies containing at least one online CPU are included, as Linux does not provide
+        topology information for offline CPUs. Die numbers may be globally unique or relative to the
+        package, depending on the system.
+
+        Args:
+            package: The package number to return die numbers for.
+            order: The sorting order for the resulting list of die numbers.
+            compute_dies: Include compute dies (dies with CPUs) if True.
+            io_dies: Include I/O dies (dies without CPUs) if True.
+
+        Returns:
+            A list of die numbers in the given package, filtered and sorted according to the
+            provided arguments.
         """
 
-        dies = self._get_scope_nums("die", "package", package, order=order)
+        dies = self._get_scope_nums("die", "package", (package,), order=order)
         if compute_dies and io_dies:
             return dies
 
         if compute_dies:
-            compute_dies = []
+            cdies: list[int] = []
             for die in dies:
                 if die in self._compute_dies[package]:
-                    compute_dies.append(die)
-            return compute_dies
+                    cdies.append(die)
+            return cdies
 
-        io_dies = []
+        iodies: list[int] = []
         for die in dies:
             if die in self._io_dies[package]:
-                io_dies.append(die)
-        return io_dies
+                iodies.append(die)
+        return iodies
 
-    def get_nodes(self, order="node"):
+    def get_nodes(self, order: ScopeNameType = "node") -> list[int]:
         """
-        Return list of NUMA node numbers. The arguments are as follows.
-          * order - the sorting order of the returned node numbers list.
+        Return a list of NUMA node numbers.
 
-        Only NUMA nodes containing at least one online CPU will be included in the result, because
-        Linux does not provide topology information for offline CPUs. Module numbers are globally
-        unique (unlike, for example, core numbers).
+        Only NUMA nodes with at least one online CPU are included, as Linux does not provide
+        topology information for offline CPUs. Node numbers are globally unique.
+
+        Args:
+            order: Sorting order for the returned list of node numbers.
+
+        Returns:
+            List of NUMA node numbers sorted according to the specified order.
         """
 
         return self._get_scope_nums("node", "node", "all", order=order)
 
-    def get_packages(self, order="package"):
+    def get_packages(self, order: ScopeNameType = "package") -> list[int]:
         """
-        Return list of package numbers. The arguments are as follows.
-          * order - the sorting order of the returned package numbers list.
+        Return a list of package numbers.
 
-        Only packages containing at least one online CPU will be included in the result, because
-        Linux does not provide topology information for offline CPUs. Module numbers are globally
-        unique (unlike, for example, core numbers).
+        Only packages containing at least one online CPU are included, as Linux does not provide
+        topology information for offline CPUs. Package numbers are globally unique.
+
+        Args:
+            order: Sorting order for the returned list of package numbers.
+
+        Returns:
+            List of package numbers present in the system, sorted as specified.
         """
 
         return self._get_scope_nums("package", "package", "all", order=order)
 
     def cpus_hotplugged(self):
-        """Must be called when a CPU goes online or offline."""
+        """
+        Handle CPU hotplug events by updating internal state.
+
+        Call this method whenever a CPU is brought online or taken offline. This ensures that the
+        internal CPU information remains accurate after hotplug events.
+        """
+
         self._cpus_hotplugged()
 
-    def get_cpu_levels(self, cpu, levels=None):
+    def get_tline_by_cpu(self,
+                         cpu: int,
+                         snames: Iterable[ScopeNameType] | None = None) -> dict[ScopeNameType, int]:
         """
-        Return a dictionary of levels an online CPU 'cpu' belongs to. The arguments are as follows.
-          * cpu - CPU number to get the levels for.
-          * levels - level names to include to the result (all levels by default).
+        Retrieve the topology line for a specific CPU.
+
+        A topology line is an element of the topology table returned by 'get_topology()'. It is a
+        dictionary with scope names as keys and their corresponding values for the specified CPU.
+
+        Args:
+            cpu: The CPU number to retrieve the topology line for.
+            snames: Scope names to include in the resulting topology line dictionary. If not
+                    provided, all available scope names are included.
+
+        Returns:
+            The topology line for the specified CPU.
         """
 
         cpu = Trivial.str_to_int(cpu, what="CPU number")
-        if not levels:
-            levels = SCOPE_NAMES
+        if not snames:
+            snames = SCOPE_NAMES
 
         tline = None
-        for tline in self._get_topology(levels):
+        # TODO: This for loop is an O(n) operation, which is not optimal. Consider optimizing it.
+        for tline in self._get_topology(snames):
             if cpu == tline["CPU"]:
                 break
         else:
             raise Error(f"CPU {cpu} is not available{self._pman.hostmsg}")
 
         result = {}
-        for lvl in levels:
-            result[lvl] = tline[lvl]
+        for sname in snames:
+            result[sname] = tline[sname]
         return result
 
     def get_cpu_siblings(self, cpu, level):
@@ -461,7 +517,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         if level == "global":
             return self.get_cpus()
 
-        levels = self.get_cpu_levels(cpu, levels=(level, "package"))
+        levels = self.get_tline_by_cpu(cpu, snames=(level, "package"))
         if level == "package":
             return self.package_to_cpus(levels[level])
         if level == "node":
