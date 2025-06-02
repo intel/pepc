@@ -934,34 +934,37 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
         return result
 
-    def cpus_div_cores(self, cpus):
+    def cpus_div_cores(self, cpus: Iterable[int]) -> tuple[dict[int, list[int]], list[int]]:
         """
-        Split CPU numbers in 'cpus' into by-core groups (an operation inverse to 'cores_to_cpus()').
-        The arguments are as follows.
-          * cpus - a collection of integer CPU numbers to split by core numbers.
+        Split a collection of CPU numbers into groups by core, inverse of 'cores_to_cpus()'.
 
-        Return a tuple of ('cores', 'rem_cpus').
-          * cores - a dictionary indexed by the package numbers with values being lists of core
-                    numbers.
-          * rem_cpus - list of remaining CPUs that cannot be converted to a core number.
+        Args:
+            cpus: Collection of CPU numbers to split by core.
 
-        The return value is inconsistent with 'cpus_div_packages()' because core numbers are
-        relative to package numbers.
+        Returns:
+            Tuple:
+                - Dictionary mapping package numbers to lists of core numbers.
+                - List of remaining CPUs that could not be grouped by core.
 
-        Consider an example of a system with 2 packages, 1 core per package, 2 CPUs per core.
-          * package 0 includes core 0 and CPUs 0 and 1
-          * package 1 includes core 0 and CPUs 2 and 3
+        Example.
+            Consider a system with 2 packages, 1 core per package, 2 CPUs per core.
+                - package 0 includes core 0 and CPUs 0 and 1
+                - package 1 includes core 0 and CPUs 2 and 3
 
-        1. cpus_div_cores("0-3") would return ({0:[0], 1:[0]}, []).
-        2. cpus_div_cores("2,3") would return ({1:[0]},        []).
-        3. cpus_div_cores("0,3") would return ({},             [0,3]).
+            1. cpus_div_cores([0, 1, 2, 3]) returns ({0:[0], 1:[0]}, []).
+            2. cpus_div_cores([2, 3])       returns ({1:[0]},        []).
+            3. cpus_div_cores([0, 3])       returns ({},             [0,3]).
+
+        Note:
+            In older kernels, core numbers are relative to package numbers. In newer kernels,
+            core numbers are globally unique.
         """
-
-        cores = {}
-        rem_cpus = []
 
         cpus = self.normalize_cpus(cpus, offline_ok=True)
         cpus_set = set(cpus)
+
+        cores: dict[int, list[int]] = {}
+        rem_cpus: list[int] = []
 
         for pkg in self.get_packages():
             for core in self.package_to_cores(pkg):
