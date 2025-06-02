@@ -20,7 +20,7 @@ from typing import Iterable, Literal
 from pepclibs import _CPUInfoBase
 from pepclibs.helperlibs import Logging, Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
-from pepclibs._CPUInfoBase import SCOPE_NAMES, NA
+from pepclibs._CPUInfoBase import SCOPE_NAMES, NA, INVALID
 
 if typing.TYPE_CHECKING:
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
@@ -818,44 +818,45 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
         return len(self.get_packages())
 
-    def select_core_siblings(self, cpus, indexes):
+    def select_core_siblings(self, cpus: Iterable[int], indexes: Iterable[int]) -> list[int]:
         """
-        Select core siblings described by 'indexes' from 'cpus' and return the result. The arguments
-        are as follows.
-        * cpus - list of CPU numbers to select core siblings from. The returned result is always a
-                 subset of CPU numbers from 'cpus'.
-        * indexes - "indexes" of core siblings to select.
+        Select core siblings from the provided list of CPUs based on sibling indexes.
 
-        Example.
+        Given a list of CPU numbers, return a subset containing only those CPUs that are core
+        siblings at the specified indexes. Core siblings are CPUs that share the same core (e.g.,
+        hyperthreads).
 
-        Suppose the system has 4 cores, and each core has 2 CPUs.
-        * core 0 includes CPUs 0, 4
-        * core 1 includes CPUs 1, 5
-        * core 2 includes CPUs 2, 6
-        * core 4 includes CPUs 3, 7
+        Args:
+            cpus: List of CPU numbers to select core siblings from. The result is always a subset of
+                  this list.
+            indexes: List of sibling indexes to select. Each index corresponds to a sibling position
+                     within a core.
 
-        CPUs 0 and 4, 1 and 5, 2 and 6, 3 and 7 are core siblings.
-        CPUs 0, 1, 2, and 3 are core siblings with index 0.
-        CPUs 4, 5, 6, and 7 are core siblings with index 1.
+        Returns:
+            List of CPU numbers from 'cpus' that match the specified sibling indexes.
 
-        Suppose the 'cpus' input argument is '[1, 2, 4, 5]'. This means that the following cores
-        will participate in the selection: 0, 1, and 2.
+        Example:
+            If the system has 4 cores with 2 CPUs each:
+                - core 0: CPUs 0, 4
+                - core 1: CPUs 1, 5
+                - core 2: CPUs 2, 6
+                - core 3: CPUs 3, 7
 
-        In order to select first core siblings from 'cpus', provide 'indexes=[0]'. The result will
-        be: '[1, 2]'.
+            For cpus = [1, 2, 4, 5]:
+                - indexes = [0] returns [1, 2]
+                - indexes = [1] returns [4, 5]
+                - indexes = [0, 1] returns [1, 2, 4, 5]
 
-        In order to select second core siblings from 'cpus', provide 'indexes=[1]'. The result will
-        be: '[4, 5]'.
-
-        If 'indexes=[0,1]', the result will be the same as 'cpus': '[1, 2, 4, 5]'
-
-        Note: this method ignores offline CPUs.
+        Note:
+            Offline CPUs are ignored.
         """
 
         cpus = self.normalize_cpus(cpus, offline_ok=True)
 
-        cpu2index = {} # CPU number -> core siblings index map.
-        core = pkg = index = None
+        # CPU number -> core siblings index map.
+        cpu2index: dict[int, int] = {}
+
+        core = pkg = index = INVALID
 
         for tline in self._get_topology(("CPU", "core", "package"), order="core"):
             cpu = tline["CPU"]
@@ -874,45 +875,47 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
         return result
 
-    def select_module_siblings(self, cpus, indexes):
+    def select_module_siblings(self, cpus: Iterable[int], indexes: Iterable[int]) -> list[int]:
         """
-        Select module siblings described by 'indexes' from 'cpus' and return the result. The
-        arguments are as follows.
-        * cpus - list of CPU numbers to select module siblings from. The returned result is always a
-                 subset of CPU numbers from 'cpus'.
-        * indexes - "indexes" of module siblings to select.
+        Select CPUs from the input list that are module siblings at the specified indexes.
 
-        Example.
+        Given a list of CPUs, return those that are module siblings at the provided indexes,
+        considering only the modules present in the input list. Offline CPUs are ignored.
 
-        Suppose the system has 4 modules, and each module has 4 CPUs.
-        * module 0 includes CPUs 0, 1, 2, 3
-        * module 1 includes CPUs 4, 5, 6, 7
-        * module 2 includes CPUs 8, 9, 10, 11
-        * module 4 includes CPUs 12, 13, 14, 15
+        Args:
+            cpus: List of CPU numbers to select module siblings from. The result is always a
+                  subset of CPU numbers from 'cpus'.
+            indexes: List of sibling indexes to select.
 
-        CPUs 0, 4, 8, and 12 are module siblings with index 0.
-        CPUs 1, 5, 9, and 13 are module siblings with index 1.
-        CPUs 2, 6, 10, and 14 are module siblings with index 2.
-        CPUs 3, 7, 11, and 15 are module siblings with index 3.
+        Returns:
+            List of CPU numbers from 'cpus' that are module siblings at the specified indexes.
 
-        Suppose the 'cpus' input argument is '[0, 1, 2, 3, 4, 5, 8]'. This means that the following
-        modules will participate in selection: 0, 1, 2.
+        Examples:
+            Suppose the system has 4 modules, and each module has 4 CPUs.
+                - module 0 includes CPUs 0, 1, 2, 3
+                - module 1 includes CPUs 4, 5, 6, 7
+                - module 2 includes CPUs 8, 9, 10, 11
+                - module 4 includes CPUs 12, 13, 14, 15
 
-        In order to select first module siblings from 'cpus', provide 'indexes=[0]'. The result will
-        be: '[0, 4, 8]'.
+            CPUs 0, 4, 8, and 12 are module siblings with index 0.
+            CPUs 1, 5, 9, and 13 are module siblings with index 1.
+            CPUs 2, 6, 10, and 14 are module siblings with index 2.
+            CPUs 3, 7, 11, and 15 are module siblings with index 3.
 
-        In order to select second module siblings from 'cpus', provide 'indexes=[1]'. The result
-        will be: '[1, 5]'.
+            For cpus = [0, 1, 2, 3, 4, 5, 8]:
+                - indexes = [0] returns [0, 4, 8]
+                - indexes = [1] return [1, 5]
+                - indexes = [0, 1] returns [0, 1, 4, 5, 8]
 
-        If 'indexes=[0,1]', the result will be '[0, 1, 4, 5, 8]'
-
-        Note: this method ignores offline CPUs.
+        Note:
+            Offline CPUs are ignored.
         """
 
         cpus = self.normalize_cpus(cpus, offline_ok=True)
 
-        cpu2index = {} # CPU number -> module siblings index map.
-        module = pkg = index = None
+        # CPU number -> module siblings index map.
+        cpu2index = {}
+        module = pkg = index = INVALID
 
         for tline in self._get_topology(("CPU", "module", "package"), order="module"):
             cpu = tline["CPU"]

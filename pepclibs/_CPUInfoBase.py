@@ -35,6 +35,8 @@ SCOPE_NAMES: tuple[ScopeNameType, ...] = ("CPU", "core", "module", "die", "node"
 
 # 'NA' is used as the CPU/core/module number for I/O dies, which lack CPUs, cores, or modules.
 NA = 0xFFFFFFFF
+# A helpful CPU/code/etc (all scopes) number that is guaranteed to never be used.
+INVALID = NA - 1
 
 # CPU models that have dies but they are not enumerated by Linux kernel. Use 'MSR_PM_LOGICAL_ID' for
 # them instead.
