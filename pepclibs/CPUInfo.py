@@ -135,8 +135,8 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
                     kernels. May contain gaps in the numbers.
             - module: Globally unique module number, or 'NA' for I/O dies. Cores in a module share
                       the L2 cache.
-            - die: Die number within the package, or 'NA' for I/O dies. Numbers are per-package, but
-                   not globally unique.
+            - die: Die number within the package, or 'NA' for I/O dies. Numbers may be per-package
+                   or globally unique depending on the system.
             - node: Globally unique NUMA node number, or 'NA' for I/O dies.
             - package: Globally unique package number.
 
@@ -542,64 +542,103 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
         raise Error(f"Unsupported scope name \"{sname}\"")
 
-    def package_to_cpus(self, package, order="CPU"):
+    def package_to_cpus(self, package: int, order: ScopeNameType = "CPU") -> list[int]:
         """
-        Return list of CPU numbers in package 'package'. The arguments are as follows.
-          * package - package number to return CPU numbers for.
-          * order - the sorting order of the returned CPU numbers list.
+        Return a list of CPU numbers belonging to the specified package.
+
+        Args:
+            package: The package number to retrieve CPU numbers for.
+            order: The sorting order of the returned CPU numbers list.
+
+        Returns:
+            List of CPU numbers within the given package, sorted according to the specified order.
         """
 
         return self._get_scope_nums("CPU", "package", (package,), order=order)
 
-    def package_to_cores(self, package, order="core"):
+    def package_to_cores(self, package: int, order: ScopeNameType = "core") -> list[int]:
         """
-        Return list of core numbers in package 'package'. The arguments are as follows.
-          * package - package number to return core numbers for.
-          * order - the sorting order of the returned core numbers list.
+        Return a list of core numbers within the specified package.
+
+        Args:
+            package: The package number for which to retrieve core numbers.
+            order: The sorting order of the returned core numbers list.
+
+        Returns:
+            List of core numbers present in the given package, sorted according to the specified
+            order.
         """
 
         return self._get_scope_nums("core", "package", (package,), order=order)
 
-    def package_to_modules(self, package, order="module"):
+    def package_to_modules(self, package: int, order: ScopeNameType = "module") -> list[int]:
         """
-        Return list of module numbers in package 'package'. The arguments are as follows.
-          * package - package number to return module numbers for.
-          * order - the sorting order of the returned module numbers list.
+        Return a list of module numbers within the specified package.
+
+        Args:
+            package: The package number for which to retrieve module numbers.
+            order: The sorting order for the returned list of module numbers.
+
+        Returns:
+            List of module numbers present in the given package, sorted according to the specified
+            order.
         """
 
         return self._get_scope_nums("module", "package", (package,), order=order)
 
-    def package_to_dies(self, package, order="die"):
+    def package_to_dies(self, package: int, order: ScopeNameType = "die") -> list[int]:
         """
-        Return list of dies numbers in package 'package'. The arguments are as follows.
-          * package - package number to return dies numbers for.
-          * order - the sorting order of the returned dies numbers list.
+        Return a list of die numbers within the specified package.
 
-        Note, die numbers are not globally unique. They are per-package. E.g., there may be die 0 in
-        packages 0 and 1.
+        Args:
+            package: The package number to retrieve die numbers from.
+            order: Sorting order for the returned die numbers list.
+
+        Returns:
+            List of die numbers present in the given package.
+
+        Note:
+            Die numbers may be globally unique or relative to the package, depending on the system.
+            For example, both package 0 and package 1 may have a die 0.
         """
 
         return self._get_scope_nums("die", "package", (package,), order=order)
 
-    def package_to_nodes(self, package, order="node"):
+    def package_to_nodes(self, package: int, order: ScopeNameType = "node") -> list[int]:
         """
-        Return list of NUMA node numbers in package 'package'. The arguments are as follows.
-          * package - package number to return node numbers for.
-          * order - the sorting order of the returned node numbers list.
+        Return a list of NUMA node numbers within the specified package.
+
+        Args:
+            package: Package number to retrieve NUMA node numbers for.
+            order: Sorting order for the returned list of node numbers.
+
+        Returns:
+            List of NUMA node numbers in the given package, sorted according to 'order'.
         """
 
         return self._get_scope_nums("node", "package", (package,), order=order)
 
-    def cores_to_cpus(self, cores="all", packages="all", order="CPU"):
+    def cores_to_cpus(self,
+                      cores: Iterable[int] | Literal["all"] = "all",
+                      packages: Iterable[int] | Literal["all"] = "all",
+                      order: ScopeNameType = "CPU") -> list[int]:
         """
-        Return list of CPU numbers in cores 'cores' of package 'package'. The arguments are as
-        follows.
-          * cores - a collection of core numbers in package 'package' to return CPU numbers for.
-          * packages - a collection of integer package number core numbers in 'cores' belong to.
-          * order - the sorting order of the returned CPU numbers list.
+        Return a list of CPU numbers corresponding to specified cores and packages.
 
-        Note, core numbers are not globally unique. They are per-package. E.g., there may be core 0
-        in packages 0 and 1.
+        Args:
+            cores: Collection of core numbers within the specified packages to include. Use "all" to
+                   select all cores.
+            packages: Collection of package numbers to filter cores by. Use "all" to select all
+                      packages.
+            order: Sorting order for the returned CPU numbers list.
+
+        Returns:
+            List of CPU numbers matching the specified cores and packages, sorted as requested.
+
+        Note:
+            Core numbers may not be globally unique. Depending on the kernel version, they may be
+            relative to the package (e.g., core 0 may exist in both package 0 and package 1).
+
         """
 
         by_core = self._get_scope_nums("CPU", "core", cores, order=order)
@@ -612,27 +651,46 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
         return cpus
 
-    def modules_to_cpus(self, modules="all", order="CPU"):
+    def modules_to_cpus(self,
+                        modules: Iterable[int] | Literal["all"] = "all",
+                        order: ScopeNameType = "CPU") -> list[int]:
         """
-        Return list of CPU numbers in modules 'modules'. The arguments are as follows.
-          * modules - a collection of module numbers to return CPU numbers for.
-          * order - the sorting order of the returned CPU numbers list.
+        Return a list of CPU numbers belonging to the specified modules.
 
-        Note, module numbers are globally unique (unlike, for example, core numbers).
+        Args:
+            modules: Collection of module numbers to retrieve CPU numbers for. Use "all" to include
+                     all modules.
+            order: Sorting order of the returned CPU numbers list.
+
+        Returns:
+            List of CPU numbers in the specified modules, sorted according to the given order.
+
+        Note:
+            Module numbers are globally unique.
         """
 
         return self._get_scope_nums("CPU", "module", modules, order=order)
 
-    def dies_to_cpus(self, dies="all", packages="all", order="CPU"):
+    def dies_to_cpus(self,
+                     dies: Iterable[int] | Literal["all"] = "all",
+                     packages: Iterable[int] | Literal["all"] = "all",
+                     order: ScopeNameType = "CPU") -> list[int]:
         """
-        Return list of CPU numbers in dies 'dies' of package 'package'. The arguments are as
-        follows.
-          * dies - a collection of die numbers in package 'package' to return CPU numbers for.
-          * packages - a collection of integer package number die numbers in 'dies' belong to.
-          * order - the sorting order of the returned CPU numbers list.
+        Return a list of CPU numbers for specified dies and packages.
 
-        Note, die numbers are not globally unique. They are per-package. E.g., there may be die 0
-        in packages 0 and 1.
+        Args:
+            dies: Collection of die numbers within the specified packages to include, or "all" for
+                  all dies.
+            packages: Collection of package numbers to include, or "all" for all packages.
+            order: Sorting order for the returned CPU numbers list.
+
+        Returns:
+            List of CPU numbers belonging to the specified dies and packages, sorted according to
+            the specified order.
+
+        Notes:
+            Depending on the system, die numbers may be globally unique or unique only within a
+            package. For example, both package 0 and package 1 may have a die 0.
         """
 
         by_die = self._get_scope_nums("CPU", "die", dies, order=order)
@@ -645,73 +703,117 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
         return cpus
 
-    def nodes_to_cpus(self, nodes="all", order="CPU"):
+    def nodes_to_cpus(self,
+                      nodes: Iterable[int] | Literal["all"] = "all",
+                      order: ScopeNameType = "CPU") -> list[int]:
         """
-        Return list of CPU numbers in NUMA nodes 'nodes'. The arguments are as follows.
-          * nodes - a collection of node numbers to return CPU numbers for.
-          * order - the sorting order of the returned CPU numbers list.
+        Return a list of CPU numbers for specified NUMA nodes.
 
-        Note, NUMA node numbers are globally unique (unlike, for example, core numbers).
+        Args:
+            nodes: Collection of NUMA node numbers to retrieve CPU numbers for. Use "all" to include
+                   all nodes.
+            order: Sorting order for the returned CPU numbers list.
+
+        Returns:
+            List of CPU numbers present in the specified NUMA nodes, sorted in the given order.
+
+        Note:
+            NUMA node numbers are globally unique.
         """
 
         return self._get_scope_nums("CPU", "node", nodes, order=order)
 
-    def packages_to_cpus(self, packages="all", order="CPU"):
+    def packages_to_cpus(self,
+                         packages: Iterable[int] | Literal["all"] = "all",
+                         order: ScopeNameType = "CPU") -> list[int]:
         """
-        Return list of CPU numbers in packages 'packages'. The arguments are as follows.
-          * packages - a collection of package numbers to return CPU numbers for.
-          * order - the sorting order of the returned CPU numbers list.
+        Return a list of CPU numbers for specified packages.
 
-        Note, package numbers are globally unique (unlike, for example, core numbers).
+        Args:
+            packages: Collection of package numbers to retrieve CPU numbers for. Use "all" to
+                      include all packages.
+            order: Sorting order for the returned CPU numbers list.
+
+        Returns:
+            List of CPU numbers in the specified packages, sorted according to the given order.
+
+        Note:
+            Package numbers are globally unique.
         """
 
         return self._get_scope_nums("CPU", "package", packages, order=order)
 
-    def get_cpus_count(self):
-        """Return count of online CPUs."""
+    def get_cpus_count(self) -> int:
+        """
+        Return the number of online CPUs.
+
+        Returns:
+            Number of CPUs currently online.
+        """
 
         return len(self._get_online_cpus_set())
 
-    def get_offline_cpus_count(self):
-        """Return count of offline CPUs."""
+    def get_offline_cpus_count(self) -> int:
+        """
+        Return the number of offline CPUs.
+
+        Returns:
+            Number of CPUs that are currently offline.
+        """
 
         return len(self.get_offline_cpus())
 
-    def get_cores_count(self, package=0):
+    def get_cores_count(self, package: int = 0) -> int:
         """
-        Return cores count in package 'package'. The arguments are as follows.
-          * package - package number to get cores count for.
+        Return the number of cores in the specified package. Count only cores that have at least one
+        online CPU.
 
-        Only core numbers containing at least one online CPU will be counted.
+        Args:
+            package: Package number to query.
+
+        Returns:
+            Number of cores with at least one online CPU in the given package.
         """
+
         return len(self.get_cores(package=package))
 
-    def get_modules_count(self):
+    def get_modules_count(self) -> int:
         """
-        Return modules count. Only module numbers containing at least one online CPU will be
-        counted.
+        Return the number of modules with at least one online CPU.
+
+        Returns:
+            Number of modules present in the system.
         """
 
         return len(self.get_modules())
 
-    def get_dies_count(self, package=0, compute_dies=True, io_dies=True):
+    def get_dies_count(self,
+                       package: int = 0,
+                       compute_dies: bool = True,
+                       io_dies: bool = True) -> int:
         """
-        Return dies count in package 'package'. The arguments are as follows.
-          * package - package number to get dies count for.
-          * compute_dies - include compute dies to the result if 'True', otherwise exclude them.
-                           Compute dies are the dies that have CPUs.
-          * io_dies - include I/O dies to the result if 'True', otherwise exclude them. I/O dies
-                      are the dies that do not have any CPUs.
+        Return the number of dies in the specified package.
 
-        Only dies numbers containing at least one online CPU will be counted.
+        Args:
+            package: Package number to query.
+            compute_dies: Include compute dies (dies with CPUs) if True.
+            io_dies: Include I/O dies (dies without CPUs) if True.
+
+        Returns:
+            Number of dies in the package that contain at least one online CPU.
+
+        Note:
+            Only dies with at least one online CPU are counted.
         """
 
         return len(self.get_dies(package=package, compute_dies=compute_dies, io_dies=io_dies))
 
-    def get_packages_count(self):
+    def get_packages_count(self) -> int:
         """
-        Return packages count. Only package numbers containing at least one online CPU will be
-        counted.
+        Return the number of CPU packages with at least one online CPU.
+
+        Returns:
+            Number of CPU packages present in the system that contain at least one online CPU.
         """
 
         return len(self.get_packages())
