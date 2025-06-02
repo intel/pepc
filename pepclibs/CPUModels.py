@@ -682,3 +682,6 @@ CPU_GROUPS: dict[str, tuple[int, ...]] = {
     "PHI": (MODELS["XEON_PHI_KNL"]["vfm"],
             MODELS["XEON_PHI_KNM"]["vfm"],),
 }
+
+# CPU models that have dies but they are not enumerated via the CPUID instruction.
+MODELS_WITH_HIDDEN_DIES= CPU_GROUPS["GNR"] + CPU_GROUPS["CRESTMONT"]

@@ -38,10 +38,6 @@ NA = 0xFFFFFFFF
 # A helpful CPU/code/etc (all scopes) number that is guaranteed to never be used.
 INVALID = NA - 1
 
-# CPU models that have dies but they are not enumerated by Linux kernel. Use 'MSR_PM_LOGICAL_ID' for
-# them instead.
-_PLI_VFMS = CPUModels.CPU_GROUPS["GNR"] + CPUModels.CPU_GROUPS["CRESTMONT"]
-
 # Thy hybrid CPU information dictionary.
 HYBRID_TYPE_INFO: dict[HybridCPUKeyType, HybridCPUKeyInfoType] = {
         "pcore":   {"name": "P-core", "title": "Performance core"},
@@ -326,7 +322,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
                 self._io_dies[package] = set()
             self._compute_dies[package].add(die)
 
-        if self.info["vfm"] in _PLI_VFMS:
+        if self.info["vfm"] in CPUModels.MODELS_WITH_HIDDEN_DIES:
             pli_obj = self._get_pliobj()
             if pli_obj:
                 _LOG.debug("Reading compute die information from 'MSR_PM_LOGICAL_ID'")
@@ -636,6 +632,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         for hybrid_type, arch in iterator.items():
             with contextlib.suppress(ErrorNotFound):
                 self._hybrid_cpus[hybrid_type] = self._read_range(f"/sys/devices/cpu_{arch}/cpus")
+
 
         return self._hybrid_cpus
 
