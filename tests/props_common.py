@@ -265,7 +265,7 @@ def set_and_verify(params, props_vals, cpu):
     pobj = params["pobj"]
     cpuinfo = params["cpuinfo"]
 
-    tline = cpuinfo.get_cpu_topology(cpu)
+    tline = cpuinfo.get_tline_by_cpu(cpu)
     packages = (tline["package"],)
     dies = {tline["package"]: (tline["die"],)}
 

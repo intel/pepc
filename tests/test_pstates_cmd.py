@@ -336,7 +336,7 @@ def _set_freq_pairs(params, min_pname, max_pname):
     max_opt = f"--{max_pname.replace('_', '-')}"
 
     sname = pobj.get_sname(min_pname)
-    siblings = params["cpuinfo"].get_cpu_siblings(0, level=sname)
+    siblings = params["cpuinfo"].get_cpu_siblings(0, sname=sname)
     cpus_opt = f"--cpus {Trivial.rangify(siblings)}"
 
     # [Min ------------------ Max ----------------------------------------------------------]
@@ -370,7 +370,7 @@ def test_pstates_frequency_set_order(params):
     # When Turbo is disabled the max frequency may be limited.
     if pobj.prop_is_supported_cpu("turbo", cpu):
         sname = pobj.get_sname("turbo")
-        siblings = cpuinfo.get_cpu_siblings(0, level=sname)
+        siblings = cpuinfo.get_cpu_siblings(0, sname=sname)
         pobj.set_prop_cpus("turbo", "on", siblings)
 
     if pobj.prop_is_supported_cpu("min_freq", cpu):

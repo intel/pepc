@@ -69,7 +69,7 @@ def test_propscache_scope(params):
         pcache.add(pname, test_cpu, val, mname, sname=sname)
 
         if sname not in siblings:
-            siblings[sname] = params["cpuinfo"].get_cpu_siblings(test_cpu, level=sname)
+            siblings[sname] = params["cpuinfo"].get_cpu_siblings(test_cpu, sname=sname)
         cpus = siblings[sname]
 
         for cpu in cpuinfo.get_cpus():

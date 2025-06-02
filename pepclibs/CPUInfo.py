@@ -501,35 +501,46 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
             result[sname] = tline[sname]
         return result
 
-    def get_cpu_siblings(self, cpu, level):
+    def get_cpu_siblings(self, cpu: int, sname: ScopeNameType | Literal["global"]) -> list[int]:
         """
-        Return a list of 'level' siblings. The arguments are as follows:
-         * cpu - CPU number to return the siblings for.
-         * level - the siblings level name to return (e.g. "package", "core").
+        Return a list of sibling CPU number within a specified topology scope.
 
-        For example, if 'level' is "package", this method returns list of CPU numbers sharing
-        the same package as CPU 'cpu'.
+        Given a CPU number and a scope name, retrieve all CPUs that share the same
+        topology scope (e.g., package, core, module) as the specified CPU. Special scope and
+        "global" is also supported.
+
+        For example, if 'sname' is "core", this method returns a list of CPU numbers that
+        share the same core as CPU 'cpu'.
+
+        Args:
+            cpu: CPU number for which to find siblings.
+            sname: Topology scope name to use for finding siblings. Supported values include all
+                  'SCOPE_NAMES' plus "global".
+
+        Returns:
+            List of CPU numbers that are siblings of the specified CPU within the given scope.
+
         """
 
-        if level == "CPU":
+        if sname == "CPU":
             return self.normalize_cpus((cpu,))
 
-        if level == "global":
+        if sname == "global":
             return self.get_cpus()
 
-        levels = self.get_tline_by_cpu(cpu, snames=(level, "package"))
-        if level == "package":
-            return self.package_to_cpus(levels[level])
-        if level == "node":
-            return self.nodes_to_cpus(levels[level])
-        if level == "die":
-            return self.dies_to_cpus(dies=levels[level], packages=levels["package"])
-        if level == "module":
-            return self.modules_to_cpus(levels[level])
-        if level == "core":
-            return self.cores_to_cpus(cores=levels[level], packages=levels["package"])
+        tline = self.get_tline_by_cpu(cpu, snames=(sname, "package"))
+        if sname == "package":
+            return self.package_to_cpus(tline[sname])
+        if sname == "node":
+            return self.nodes_to_cpus((tline[sname],))
+        if sname == "die":
+            return self.dies_to_cpus(dies=(tline[sname],), packages=(tline["package"],))
+        if sname == "module":
+            return self.modules_to_cpus((tline[sname],))
+        if sname == "core":
+            return self.cores_to_cpus(cores=(tline[sname],), packages=(tline["package"],))
 
-        raise Error(f"unsupported scope name \"{level}\"")
+        raise Error(f"Unsupported scope name \"{sname}\"")
 
     def package_to_cpus(self, package, order="CPU"):
         """
