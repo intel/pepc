@@ -143,8 +143,8 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
         if not self._cpuinfo.info["hybrid"]:
             return
 
-        ecore_cpus, pcore_cpus = self._cpuinfo.get_hybrid_cpus()
-        if ecore_cpus or pcore_cpus:
+        hybrid_cpus = self._cpuinfo.get_hybrid_cpus()
+        if hybrid_cpus["ecore"] or hybrid_cpus["pcore"]:
             return
 
         if not self._kver:
@@ -1110,8 +1110,8 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
 
         if self._cpuinfo.info["hybrid"]:
             self._init_scaling_factor()
-            _, pcore_cpus = self._cpuinfo.get_hybrid_cpus()
-            self._pcore_cpus = set(pcore_cpus)
+            hybrid_cpus = self._cpuinfo.get_hybrid_cpus()
+            self._pcore_cpus = set(hybrid_cpus["pcore"])
 
     def close(self):
         """Uninitialize the class instance."""

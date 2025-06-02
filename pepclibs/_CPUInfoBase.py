@@ -624,7 +624,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
         _LOG.debug("Reading hybrid CPUs information from sysfs")
 
-        iterator: dict[HybridCPUsKeyType, str] = {"ecores": "atom", "pcores": "core"}
+        iterator: dict[HybridCPUsKeyType, str] = {"ecore": "atom", "pcore": "core"}
         for hybrid_type, arch in iterator.items():
             self._hybrid_cpus[hybrid_type] = self._read_range(f"/sys/devices/cpu_{arch}/cpus")
 

@@ -18,11 +18,12 @@ import typing
 from typing import Iterable, Literal
 from pepclibs import _CPUInfoBase
 from pepclibs.helperlibs import Logging, Trivial
-from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
+from pepclibs.helperlibs.Exceptions import Error
 from pepclibs._CPUInfoBase import SCOPE_NAMES, NA, INVALID
 
 if typing.TYPE_CHECKING:
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
+    from pepclibs._CPUInfoBaseTypes import HybridCPUsKeyType, HybridCPUsTypeDict
     from pepclibs._CPUInfoBaseTypes import ScopeNameType
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
@@ -1313,25 +1314,23 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
         return self.normalize_packages((package,))[0]
 
-    def get_hybrid_cpus(self) -> tuple[list[int], list[int]]:
+    def get_hybrid_cpus(self) -> HybridCPUsTypeDict:
         """
-        Return lists of online E-core and P-core CPU numbers as a tuple.
+        Return a dictionary with hybrid CPU information.
 
         Returns:
-            tuple:
-                - list of E-core CPU numbers
-                - list of P-core CPU numbers
+            HybridCPUsTypeDict: The dictionary may contain up to 2 keys:
+                - "pcore": List of performance core CPU numbers.
+                - "ecore": List of efficiency core CPU numbers.
 
-        Raises:
-            ErrorNotSupported: If the processor is not hybrid.
+        Note:
+            In case of a non-hybrid system, only the "pcore" key is present.
         """
 
         if self.info["hybrid"] is False:
-            raise ErrorNotSupported(f"Can't get E-core/P-core CPU information{self._pman.hostmsg}: "
-                                    f"{self.cpudescr} is not a hybrid processor")
+            return {"pcore": self.get_cpus()}
 
-        hybrid_cpus = self._get_hybrid_cpus()
-        return (list(hybrid_cpus["ecores"]), list(hybrid_cpus["pcores"]))
+        return self._get_hybrid_cpus()
 
     @staticmethod
     def dies_to_str(dies: dict[int, list[int]]) -> str:
