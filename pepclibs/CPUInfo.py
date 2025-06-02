@@ -333,7 +333,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         """
 
         if order == "CPU":
-            return sorted(self._get_online_cpus_set())
+            return self._get_online_cpus()
 
         return self._get_scope_nums("CPU", "CPU", "all", order=order)
 
@@ -752,7 +752,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
             Number of CPUs currently online.
         """
 
-        return len(self._get_online_cpus_set())
+        return len(self._get_online_cpus())
 
     def get_offline_cpus_count(self) -> int:
         """

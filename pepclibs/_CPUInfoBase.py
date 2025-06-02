@@ -76,8 +76,10 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         # 'True' if the target supports uncore frequency scaling.
         self._uncfreq_supported = True
 
-        # Online CPU numbers.
-        self._cpus: set[int] = set()
+        # Online CPU numbers sorted in ascending order.
+        self._cpus: list[int] = []
+        # Set of online CPU numbers.
+        self._cpus_set: set[int] = set()
         # List of online and offline CPUs sorted in ascending order.
         self._all_cpus: list[int] = []
         # Set of online and offline CPUs.
@@ -443,7 +445,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         # topology lines.
         cpu_tdict: dict[int, dict[ScopeNameType, int]]
 
-        cpus = self._get_online_cpus_set()
+        cpus = self._get_online_cpus()
 
         if not self._topology:
             cpu_tdict = {cpu: {"CPU": cpu} for cpu in cpus}
@@ -492,18 +494,31 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         what = f"contents of file at '{path}'{self._pman.hostmsg}"
         return Trivial.split_csv_line_int(str_of_ranges, what=what)
 
+    def _get_online_cpus(self) -> list[int]:
+        """
+        Return a list of online CPU numbers.
+
+        Returns:
+            A cst ontaining the online CPU numbers sorted in ascending order.
+        """
+
+        if not self._cpus:
+            self._cpus = self._read_range(f"{self._cpu_sysfs_base}/online")
+
+        return self._cpus
+
     def _get_online_cpus_set(self) -> set[int]:
         """
-        Return the set of conline CPU numbers.
+        Return a set of online CPU numbers.
 
         Returns:
             A set containing the online CPU numbers.
         """
 
-        if not self._cpus:
-            self._cpus = set(self._read_range(f"{self._cpu_sysfs_base}/online"))
+        if not self._cpus_set:
+            self._cpus_set = set(self._get_online_cpus())
 
-        return self._cpus
+        return self._cpus_set
 
     def _get_all_cpus(self) -> list[int]:
         """
@@ -573,7 +588,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
                     # Assume that all CPUs share the same flags, this is the case for current CPUs.
                     # But generally, the flags could be different for different CPUs, in which case
                     # they would be read from '/proc/cpuinfo'.
-                    for cpu in self._get_online_cpus_set():
+                    for cpu in self._get_online_cpus():
                         cpuinfo["flags"][cpu] = cpuflags
                 else:
                     raise Error(f"Unexpected type for '{key}', expected "
@@ -633,7 +648,6 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
             with contextlib.suppress(ErrorNotFound):
                 self._hybrid_cpus[hybrid_type] = self._read_range(f"/sys/devices/cpu_{arch}/cpus")
 
-
         return self._hybrid_cpus
 
     def _cpus_hotplugged(self):
@@ -643,7 +657,8 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
         _LOG.debug("Clearing cashed CPU information")
 
-        self._cpus = set()
+        self._cpus = []
+        self._cpus_set = set()
         self._hybrid_cpus = {}
         self._initialized_snames = set()
         self._topology = {}
