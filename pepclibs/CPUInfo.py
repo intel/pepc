@@ -11,7 +11,6 @@
 Provide information about CPU topology and other CPU details.
 """
 
-# TODO: modernize this module
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import copy
@@ -35,56 +34,56 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
     Public methods overview.
 
     1. Get various CPU information.
-        * 'get_topology()' - CPU topology.
+        - 'get_topology()' - CPU topology.
     2. Get list of packages/cores/etc.
-        * 'get_cpus()'
-        * 'get_cores()'
-        * 'get_modules()'
-        * 'get_dies()'
-        * 'get_nodes()'
-        * 'get_packages()'
-        * 'get_offline_cpus()'
-        * 'get_tline_by_cpu()'
-        * 'get_cpu_siblings()'
+        - 'get_cpus()'
+        - 'get_cores()'
+        - 'get_modules()'
+        - 'get_dies()'
+        - 'get_nodes()'
+        - 'get_packages()'
+        - 'get_offline_cpus()'
+        - 'get_tline_by_cpu()'
+        - 'get_cpu_siblings()'
     3. Get list of packages/cores/etc for a subset of CPUs/cores/etc.
-        * 'package_to_cpus()'
-        * 'package_to_cores()'
-        * 'package_to_modules()'
-        * 'package_to_dies()'
-        * 'package_to_nodes()'
-        * 'cores_to_cpus()'
-        * 'modules_to_cpus()'
-        * 'dies_to_cpus()'
-        * 'nodes_to_cpus()'
-        * 'packages_to_cpus()'
+        - 'package_to_cpus()'
+        - 'package_to_cores()'
+        - 'package_to_modules()'
+        - 'package_to_dies()'
+        - 'package_to_nodes()'
+        - 'cores_to_cpus()'
+        - 'modules_to_cpus()'
+        - 'dies_to_cpus()'
+        - 'nodes_to_cpus()'
+        - 'packages_to_cpus()'
     4. Get packages/core/etc counts.
-        * 'get_cpus_count()'
-        * 'get_cores_count()'
-        * 'get_modules_count()'
-        * 'get_dies_count()'
-        * 'get_packages_count()'
-        * 'get_offline_cpus_count()'
+        - 'get_cpus_count()'
+        - 'get_cores_count()'
+        - 'get_modules_count()'
+        - 'get_dies_count()'
+        - 'get_packages_count()'
+        - 'get_offline_cpus_count()'
     5. Normalize a list of packages/cores/etc.
         A. Multiple packages/CPUs/etc numbers:
-            * 'normalize_cpus()'
-            * 'normalize_cores()'
-            * 'normalize_modules()'
-            * 'normalize_dies()'
-            * 'normalize_packages()'
+            - 'normalize_cpus()'
+            - 'normalize_cores()'
+            - 'normalize_modules()'
+            - 'normalize_dies()'
+            - 'normalize_packages()'
         B. Single package/CPU/etc.
-            * 'normalize_cpu()'
-            * 'normalize_core()'
-            * 'normalize_die()'
-            * 'normalize_package()'
+            - 'normalize_cpu()'
+            - 'normalize_core()'
+            - 'normalize_die()'
+            - 'normalize_package()'
     6. Select CPUs by sibling index.
-        * 'select_core_siblings()'
-        * 'select_module_siblings()'
+        - 'select_core_siblings()'
+        - 'select_module_siblings()'
     7. "Divide" list of CPUs.
-        * 'cpus_div_cores()' - by cores.
-        * 'cpus_div_dies()' - by dies.
-        * 'cpus_div_packages()' - by packages.
+        - 'cpus_div_cores()' - by cores.
+        - 'cpus_div_dies()' - by dies.
+        - 'cpus_div_packages()' - by packages.
     8. Miscellaneous.
-        * 'dies_to_str()' - turn a die numbers dictionary into a string.
+        - 'dies_to_str()' - turn a die numbers dictionary into a string.
     """
 
     def __init__(self, pman: ProcessManagerType | None = None):
@@ -146,12 +145,12 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
         Examples:
             Consider the following hypothetical system:
-            * 2 packages, numbers 0, 1.
-            * 2 nodes, numbers 0, 1.
-            * 1 die per package, numbers 0.
-            * 3 modules, numbers 0, 4, 5.
-            * 4 cores per package, numbers 0, 1, 5, 6.
-            * 16 CPUs, numbers 0-16.
+                - 2 packages, numbers 0, 1.
+                - 2 nodes, numbers 0, 1.
+                - 1 die per package, numbers 0.
+                - 3 modules, numbers 0, 4, 5.
+                - 4 cores per package, numbers 0, 1, 5, 6.
+                - 16 CPUs, numbers 0-16.
 
             Here is the topology table in package order. It is sorted by package and CPU.
 
@@ -258,14 +257,14 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
             Assume a system with 2 packages, 1 die per package, 2 cores per package, and 2 CPUs per
             core:
-                * Package 0 includes die 0.
-                * Package 1 includes die 1.
-                * Die 0 includes cores 0 and 1.
-                * Die 1 includes cores 2 and 3.
-                * Core 0 includes CPUs 0 and 4
-                * Core 1 includes CPUs 1 and 5
-                * Core 3 includes CPUs 2 and 6
-                * Core 4 includes CPUs 3 and 7
+                - Package 0 includes die 0.
+                - Package 1 includes die 1.
+                - Die 0 includes cores 0 and 1.
+                - Die 1 includes cores 2 and 3.
+                - Core 0 includes CPUs 0 and 4
+                - Core 1 includes CPUs 1 and 5
+                - Core 3 includes CPUs 2 and 6
+                - Core 4 includes CPUs 3 and 7
 
                 1. _get_scope_nums("CPU", "core", "all") returns:
                    [0, 1, 2, 3, 4, 5, 6, 7]
@@ -523,7 +522,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         """
 
         if sname == "CPU":
-            return self.normalize_cpus((cpu,))
+            return [cpu]
 
         if sname == "global":
             return self.get_cpus()
@@ -942,7 +941,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
             cpus: Collection of CPU numbers to split by core.
 
         Returns:
-            Tuple:
+            tuple:
                 - Dictionary mapping package numbers to lists of core numbers.
                 - List of remaining CPUs that could not be grouped by core.
 
@@ -983,39 +982,42 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
         return (cores, rem_cpus)
 
-    def cpus_div_dies(self, cpus):
+    def cpus_div_dies(self, cpus: Iterable[int]) -> tuple[dict[int, list[int]], list[int]]:
         """
-        Split CPU numbers in 'cpus' into by-die groups (an operation inverse to 'dies_to_cpus()').
-        The arguments are as follows.
-          * cpus - a collection of integer CPU numbers to split by die numbers.
+        Split a collection of CPU numbers into groups by die, inverse of 'dies_to_cpus()'.
 
-        Return a tuple of ('dies', 'rem_cpus').
-          * dies - a dictionary indexed by the package numbers with values being lists of die
-                   numbers.
-          * rem_cpus - list of remaining CPUs that cannot be converted to a die number.
+        Args:
+            cpus: Collection of CPU numbers to group by die.
 
-        The return value is inconsistent with 'cpus_div_packages()' because die numbers may be
-        relative to package numbers on some systems.
+        Returns:
+            tuple:
+                - Dictionary mapping package numbers to lists of die numbers.
+                - List of CPUs from 'cpus' that could not be grouped by die.
 
-        Consider an example of a system with 2 packages, 2 dies per package, 1 core per die, 2 CPUs
-        per core.
-          * package 0 includes dies 0 and 1 and CPUs 0, 1, 2, and 3
-            - die 0 includes CPUs 0 and 1
-            - die 1 includes CPUs 2 and 3
-          * package 1 includes dies 0 and 1 and CPUs 4, 5, 6, and 7
-            - die 0 includes CPUs 4 and 5
-            - die 1 includes CPUs 6 and 7
+        Notes:
+            - Die numbers may be relative to package numbers, depending on the system.
+            - I/O dies (do not have CPUs) are skipped.
+            - The order of rem_cpus matches the input order.
 
-        1. cpus_div_dies("0-3") would return   ({0:[0], 0:[1]}, []).
-        2. cpus_div_dies("4,5,6") would return ({1:[1]},        [6]).
-        3. cpus_div_dies("0,3") would return   ({},             [0,3]).
+        Example:
+            Consider a system with 2 packages, 2 dies per package, 1 core per die, 2 CPUs per core.
+                - package 0 includes dies 0 and 1 and CPUs 0, 1, 2, and 3
+                    - die 0 includes CPUs 0 and 1
+                    - die 1 includes CPUs 2 and 3
+                - package 1 includes dies 0 and 1 and CPUs 4, 5, 6, and 7
+                    - die 0 includes CPUs 4 and 5
+                    - die 1 includes CPUs 6 and 7
+
+            1. cpus_div_dies([0, 1, 2, 3]) returns ({0:[0], 0:[1]}, []).
+            2. cpus_div_dies([4,5,6])      returns ({1:[1]},        [6]).
+            3. cpus_div_dies([0,3])        returns ({},             [0,3]).
         """
-
-        dies = {}
-        rem_cpus = []
 
         cpus = self.normalize_cpus(cpus, offline_ok=True)
         cpus_set = set(cpus)
+
+        dies: dict[int, list[int]] = {}
+        rem_cpus: list[int] = []
 
         for pkg in self.get_packages():
             for die in self.package_to_dies(pkg):
@@ -1038,24 +1040,27 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
         return (dies, rem_cpus)
 
-    def cpus_div_packages(self, cpus, packages="all"):
+    def cpus_div_packages(self, cpus, packages: Iterable[int] | Literal["all"] = "all"):
         """
-        Split CPU numbers in 'cpus' into by-package groups (an operation inverse to
-        'packages_to_cpus()'). The arguments are as follows.
-          * cpus - a collection of integer CPU numbers to split by package numbers.
-          * packages - package numbers to check for CPU numbers in (all packages by default).
+        Split a collection of CPU numbers into groups by package, inverse of 'packages_to_cpus()'.
 
-        Return a tuple of two lists: ('packages', 'rem_cpus').
-          * packages - list of packages with all CPUs present in 'cpus'.
-          * rem_cpus - list of remaining CPUs that cannot be converted to a package number.
+        Args:
+            cpus: Collection of CPU numbers to group by package.
+            packages: Package numbers to consider (default is all packages).
 
-        Consider an example of a system with 2 packages and 2 CPUs per package.
-          * package 0 includes CPUs 0 and 1
-          * package 1 includes CPUs 2 and 3
+        Returns:
+            tuple:
+                - List of package numbers where all CPUs are present in 'cpus'.
+                - List of remaining CPU numbers that do not form a complete package.
 
-        1. cpus_div_packages("0-3") would return ([0,1], []).
-        2. cpus_div_packages("2,3") would return ([1],   []).
-        3. cpus_div_packages("0,3") would return ([],    [0,3]).
+        Examples:
+            Consider a system with 2 packages and 2 CPUs per package.
+                - package 0 includes CPUs 0 and 1
+                - package 1 includes CPUs 2 and 3
+
+            1. cpus_div_packages([0,1,2,3]) returns ([0,1], []).
+            2. cpus_div_packages([2,3])     returns ([1],   []).
+            3. cpus_div_packages([0,3])     returns ([],    [0,3]).
         """
 
         pkgs = []
@@ -1078,14 +1083,23 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
         return (pkgs, rem_cpus)
 
-    def normalize_cpus(self, cpus, offline_ok=False) -> list[int]:
+    def normalize_cpus(self,
+                       cpus: Iterable[int] | Literal["all"],
+                       offline_ok: bool = False) -> list[int]:
         """
-        Validate CPU numbers in 'cpus' and return a normalized list. The arguments are as follows.
-          * cpus - collection of integer CPU numbers to normalize. Special value 'all' means
-                   "all CPUs".
-          * offline_ok - by default, offline CPUs are considered as not available and are not
-                         allowed to be in 'cpus' (will cause an exception). Use 'offline_ok=True'
-                         to allow for offline CPUs.
+        Validate and normalize a collection of CPU numbers.
+
+        Args:
+            cpus: Collection of CPU numbers to normalize, or the special value 'all' to select all
+                  CPUs.
+            offline_ok: If True, allow offline CPUs; otherwise, only online CPUs are considered
+                        valid.
+
+        Returns:
+            List of validated and normalized CPU numbers.
+
+        Note:
+            Normalized CPU numbers are integers without duplicates, sorted in ascending order.
         """
 
         if offline_ok:
@@ -1098,7 +1112,10 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
         cpus = Trivial.list_dedup(cpus)
         for cpu in cpus:
-            if type(cpu) is not int: # pylint: disable=unidiomatic-typecheck
+            # The reason for not using isinstance() here is to avoid bool to be treated as int.
+            # Indeed, isinstance(True, int) is True.
+            # pylint: disable-next=unidiomatic-typecheck
+            if type(cpu) is not int:
                 raise Error(f"'{cpu}' is not an integer, CPU numbers must be integers")
 
             if cpu not in allcpus:
@@ -1108,16 +1125,20 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
         return cpus
 
-    def normalize_cores(self, cores, package=0):
+    def normalize_cores(self, cores: Iterable[int] | Literal["all"], package: int = 0) -> list[int]:
         """
-        Validate core numbers in 'cores' for package 'package' and return the normalized list. The
-        arguments are as follows.
-          * cores - collection of integer core numbers to normalize. Special value 'all' means
-                    "all coress".
-          * package - package number to validate the 'cores' against: all numbers in 'cores' should
-                      be valid core numbers in package number 'package'.
+        Validate and normalize a collection of core numbers for a given package.
 
-        Return a list of integer core numbers.
+        Args:
+            cores: Collection of core numbers to normalize, or the special value 'all' to select all
+                   cores.
+            package: Package number to validate the cores against.
+
+        Returns:
+            List of normalized core numbers for the specified package.
+
+        Note:
+            Normalized core numbers are integers without duplicates, sorted in ascending order.
         """
 
         pkg_cores = self.package_to_cores(package)
@@ -1125,25 +1146,32 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         if cores == "all":
             return pkg_cores
 
-        pkg_cores = set(pkg_cores)
+        pkg_cores_set = set(pkg_cores)
         cores = Trivial.list_dedup(cores)
         for core in cores:
             if type(core) is not int: # pylint: disable=unidiomatic-typecheck
                 raise Error(f"'{core}' is not an integer, core numbers must be integers")
 
-            if core not in pkg_cores:
-                cores_str = Trivial.rangify(pkg_cores)
-                raise Error(f"core '{core}' is not available in package "
+            if core not in pkg_cores_set:
+                cores_str = Trivial.rangify(pkg_cores_set)
+                raise Error(f"Core '{core}' is not available in package "
                             f"'{package}'{self._pman.hostmsg}, available cores are: {cores_str}")
 
         return cores
 
-    def normalize_modules(self, modules):
+    def normalize_modules(self, modules: Iterable[int] | Literal["all"]) -> list[int]:
         """
-        Validate module numbers in 'modules' and return the normalized list. The arguments are
-        as follows.
-          * modules - collection of integer module numbers to normalize. Special value 'all' means
-                      "all modules".
+        Validate and normalize a collection of module numbers.
+
+        Args:
+            modules: Collection of module numbers to normalize, or the special value 'all' to select
+                     all modules.
+
+        Returns:
+            List of validated and normalized module numbers.
+
+        Note:
+            Normalized module numbers are integers without duplicates, sorted in ascending order.
         """
 
         all_modules = self.get_modules()
@@ -1151,29 +1179,33 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         if modules == "all":
             return all_modules
 
-        all_modules = set(all_modules)
+        all_modules_set = set(all_modules)
         modules = Trivial.list_dedup(modules)
         for mdl in modules:
             if type(mdl) is not int: # pylint: disable=unidiomatic-typecheck
                 raise Error(f"'{mdl}' is not an integer, module numbers must be integers")
 
-            if mdl not in all_modules:
-                modules_str = Trivial.rangify(all_modules)
-                raise Error(f"module '{mdl}' is not available{self._pman.hostmsg}, available "
+            if mdl not in all_modules_set:
+                modules_str = Trivial.rangify(all_modules_set)
+                raise Error(f"Module '{mdl}' is not available{self._pman.hostmsg}, available "
                             f"modules are: {modules_str}")
 
         return modules
 
-    def normalize_dies(self, dies, package=0):
+    def normalize_dies(self, dies: Iterable[int] | Literal["all"], package: int = 0) -> list[int]:
         """
-        Validate die numbers in 'dies' for package 'package' and return the normalized list. The
-        arguments are as follows.
-          * dies - collection of integer die numbers to normalize. Special value 'all' means
-                   "all dies".
-          * package - package number to validate the 'dies' against: all numbers in 'dies' should be
-                      valid die numbers in package number 'package'.
+        Validate and normalize die numbers for a given package.
 
-        Return a list of integer die numbers.
+        Args:
+            dies: Collection of die numbers to normalize, or the special value 'all' to select all
+                  dies.
+            package: Package number to validate dies against.
+
+        Returns:
+            List of normalized die numbers for the specified package.
+
+        Note:
+            Normalized die numbers are integers without duplicates, sorted in ascending order.
         """
 
         pkg_dies = self.package_to_dies(package)
@@ -1181,25 +1213,32 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         if dies == "all":
             return pkg_dies
 
-        pkg_dies = set(pkg_dies)
+        pkg_dies_set = set(pkg_dies)
         dies = Trivial.list_dedup(dies)
         for die in dies:
             if type(die) is not int: # pylint: disable=unidiomatic-typecheck
                 raise Error(f"'{die}' is not an integer, die numbers must be integers")
 
-            if die not in pkg_dies:
-                dies_str = Trivial.rangify(pkg_dies)
-                raise Error(f"die '{die}' is not available in package "
+            if die not in pkg_dies_set:
+                dies_str = Trivial.rangify(pkg_dies_set)
+                raise Error(f"Die '{die}' is not available in package "
                             f"'{package}'{self._pman.hostmsg}, available dies are: {dies_str}")
 
         return dies
 
-    def normalize_packages(self, packages):
+    def normalize_packages(self, packages: Iterable[int] | Literal["all"]) -> list[int]:
         """
-        Validate package numbers in 'packages' and return the normalized list. The arguments are
-        as follows.
-          * packages - collection of integer package numbers to normalize. Special value 'all' means
-                       "all packages".
+        Validate and normalize a collection of package numbers.
+
+        Args:
+            packages: Collection of package numbers to normalize, or the special value 'all' to
+                      select all packages.
+
+        Returns:
+            List of normalized package numbers.
+
+        Note:
+            Normalized die package are integers without duplicates, sorted in ascending order.
         """
 
         allpkgs = self.get_packages()
@@ -1207,84 +1246,103 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         if packages == "all":
             return allpkgs
 
-        allpkgs = set(allpkgs)
+        allpkgs_set = set(allpkgs)
         packages = Trivial.list_dedup(packages)
         for pkg in packages:
             if type(pkg) is not int: # pylint: disable=unidiomatic-typecheck
                 raise Error(f"'{pkg}' is not an integer, package numbers must be integers")
 
-            if pkg not in allpkgs:
-                pkgs_str = Trivial.rangify(allpkgs)
-                raise Error(f"package '{pkg}' is not available{self._pman.hostmsg}, available "
+            if pkg not in allpkgs_set:
+                pkgs_str = Trivial.rangify(allpkgs_set)
+                raise Error(f"Package '{pkg}' is not available{self._pman.hostmsg}, available "
                             f"packages are: {pkgs_str}")
 
         return packages
 
-    def normalize_cpu(self, cpu):
+    def normalize_cpu(self, cpu: int) -> int:
         """
-        Validate CPU number 'cpu'. The arguments are as follows.
-          * cpu - an integer CPU number to validate.
+        Validate single CPU number.
 
-        Return 'cpu' if it is valid, raise an 'Error' exception otherwise.
+        Args:
+            cpu: CPU number to validate.
+
+        Returns:
+            The validated CPU number.
         """
 
         return self.normalize_cpus((cpu,))[0]
 
-    def normalize_core(self, core, package=0):
+    def normalize_core(self, core: int, package: int = 0) -> int:
         """
-        Validate core number 'core'. The arguments are as follows.
-          * core - an integer core number to validate.
-          * package - package number the core belongs to.
+        Validate a core number for a given package.
 
-        Return 'core' if it is valid, raise an 'Error' exception otherwise.
+        Args:
+            core: Core number to validate.
+            package: Package number the core belongs to (default is 0).
+
+        Returns:
+            The validated core number.
         """
 
         return self.normalize_cores((core,), package=package)[0]
 
-    def normalize_die(self, die, package=0):
+    def normalize_die(self, die: int, package: int = 0) -> int:
         """
-        Validate die number 'die'. The arguments are as follows.
-          * die - an integer die number to validate.
-          * package - package number the die belongs to.
+        Validate a die number for a given package.
 
-        Return 'die' if it is valid, raise an 'Error' exception otherwise.
+        Args:
+            die: Die number to validate.
+            package: Package number the die belongs to (default is 0).
+
+        Returns:
+            The validated die number.
         """
 
         return self.normalize_dies((die,), package=package)[0]
 
-    def normalize_package(self, package):
+    def normalize_package(self, package: int) -> int:
         """
-        Validate package number 'package'. The arguments are as follows.
-          * package - an integer package number to validate.
+        Validate a single package number.
 
-        Return 'package' if it is valid, raise an 'Error' exception otherwise.
+        Args:
+            package: Package number to validate.
+
+        Returns:
+            The validated package number.
         """
 
         return self.normalize_packages((package,))[0]
 
-    def get_hybrid_cpus(self):
+    def get_hybrid_cpus(self) -> tuple[list[int], list[int]]:
         """
-        Return a tuple with E-core and P-core CPU lists:
-        '(<list of E-core CPU numbers>, <list of P-core CPU numbers>)'.
+        Return lists of online E-core and P-core CPU numbers as a tuple.
 
-        Only online CPUs are included to the returned lists. If the target system is not hybrid,
-        raise 'ErrorNotSupported'.
+        Returns:
+            tuple:
+                - list of E-core CPU numbers
+                - list of P-core CPU numbers
+
+        Raises:
+            ErrorNotSupported: If the processor is not hybrid.
         """
 
         if self.info["hybrid"] is False:
-            raise ErrorNotSupported(f"can't get E-core/P-core CPU information{self._pman.hostmsg}: "
+            raise ErrorNotSupported(f"Can't get E-core/P-core CPU information{self._pman.hostmsg}: "
                                     f"{self.cpudescr} is not a hybrid processor")
 
         hybrid_cpus = self._get_hybrid_cpus()
         return (list(hybrid_cpus["ecores"]), list(hybrid_cpus["pcores"]))
 
     @staticmethod
-    def dies_to_str(dies):
+    def dies_to_str(dies: dict[int, list[int]]) -> str:
         """
-        Turn the die numbers dictionary into a user-readable string and return the result. The
-        arguments are as follows.
-          * dies - a dictionary indexed by the package numbers with values being lists of die
-                   numbers.
+        Convert a dictionary of package-to-die mappings into a human-readable string.
+
+        Args:
+            dies: Dictionary mapping package numbers to lists of die numbers.
+
+        Returns:
+            A string describing the dies for each package in a readable format.
         """
 
         dies_strs = []

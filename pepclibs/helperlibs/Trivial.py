@@ -14,6 +14,7 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import os
 import pwd
+from typing import Iterable
 from itertools import groupby
 from pepclibs.helperlibs.Exceptions import Error, ErrorBadFormat
 
@@ -302,7 +303,7 @@ def is_iterable(value: str | list | tuple | set | dict) -> bool:
         return False
     return not isinstance(value, str)
 
-def list_dedup(elts: list | tuple) -> list:
+def list_dedup(elts: Iterable) -> list:
     """
     Return a list of unique elements in 'elts'.
 
@@ -419,22 +420,28 @@ def parse_int_list(nums: str | int | list[str | int] | tuple[str | int], sep: st
 
     return split_csv_line_int(nums, sep=sep, dedup=dedup, base=base, what=what)
 
-def rangify(numbers):
+def rangify(numbers: Iterable[int | str]) -> str:
     """
-    Turn list of numbers in 'numbers' to a string of comma-separated ranges. Numbers can be integers
-    or strings. E.g. list of numbers [0,1,2,4] is translated to "0-2,4".
+    Convert a list of numbers into a comma-separated string of ranges. Consecutive numbers are
+    represented as ranges (e.g., "0-2"), while non-consecutive numbers are listed individually.
+
+    Args:
+        numbers: List of numbers to convert, as integers or strings.
+
+    Returns:
+        A string representing the input numbers as comma-separated ranges.
     """
 
     try:
-        numbers = [int(number) for number in numbers]
+        numbers_int = [int(number) for number in numbers]
     except (ValueError, TypeError) as err:
         raise Error(f"failed to translate numbers to ranges, expected list of numbers, got "
                     f"'{numbers}'") from err
 
     range_strs = []
-    numbers = sorted(numbers)
-    for _, pairs in groupby(enumerate(numbers), lambda x:x[0]-x[1]):
-        # The 'pairs' is an iterable of tuples (enumerate value, number). E.g. 'numbers'
+    numbers_int = sorted(numbers_int)
+    for _, pairs in groupby(enumerate(numbers_int), lambda x:x[0]-x[1]):
+        # The 'pairs' is an iterable of tuples (enumerate value, number). E.g. 'numbers_int'
         # [5,6,7,8,10,11,13] would result in three iterable groups:
         # ((0, 5), (1, 6), (2, 7), (3, 8)) , ((4, 10), (5, 11)) and  (6, 13)
 
