@@ -283,7 +283,7 @@ def _test_convert_bad(cpuinfo):
             method_name = f"{from_lvl}s_to_{to_lvl}s"
 
             if getattr(cpuinfo, method_name, None):
-                bad_args = (-1, bad_num, (-1, bad_num), "-1", (bad_num,))
+                bad_args = ((-1,), (bad_num,), (-1, bad_num), ("-1",), (bad_num,))
 
                 for args in bad_args:
                     _run_method(method_name, cpuinfo, args=(args,), exp_exc=Error)

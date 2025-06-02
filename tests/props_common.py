@@ -265,7 +265,7 @@ def set_and_verify(params, props_vals, cpu):
     pobj = params["pobj"]
     cpuinfo = params["cpuinfo"]
 
-    tline = cpuinfo.get_tline_by_cpu(cpu)
+    tline = cpuinfo.get_cpu_topology(cpu)
     packages = (tline["package"],)
     dies = {tline["package"]: (tline["die"],)}
 
@@ -275,7 +275,7 @@ def set_and_verify(params, props_vals, cpu):
             continue
 
         if sname not in siblings:
-            siblings[sname] = cpuinfo.get_cpu_siblings(cpu, level=sname)
+            siblings[sname] = cpuinfo.get_cpu_siblings(cpu, sname=sname)
         cpus = siblings[sname]
 
         if sname == "die":
@@ -460,7 +460,7 @@ def verify_set_props_mechanisms_bool(params, cpu):
             continue
 
         if sname not in siblings:
-            siblings[sname] = cpuinfo.get_cpu_siblings(cpu, level=sname)
+            siblings[sname] = cpuinfo.get_cpu_siblings(cpu, sname=sname)
         cpus = siblings[sname]
 
         all_mnames = [(mname,) for mname in pinfo["mnames"]]
