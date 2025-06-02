@@ -1,0 +1,3 @@
+/sys/devices/cpu_atom/cpus:4-11
+/sys/devices/cpu_core/cpus:0-3
+/sys/devices/cpu_lowpower/cpus:12-13

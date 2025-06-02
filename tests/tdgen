@@ -71,7 +71,8 @@ CPUInfoData = {
         # Command for reading hybrid topology info.
         {"command": r"grep -H '.*' "
                     r"/sys/devices/cpu_atom/cpus "
-                    r"/sys/devices/cpu_core/cpus",
+                    r"/sys/devices/cpu_core/cpus "
+                    r"/sys/devices/cpu_lowpower/cpus",
          "separator": ":",
          "readonly": True,
          "dirname": "hybrid-info",
