@@ -129,6 +129,7 @@ def topology_info_command(args, pman):
 
         if show_hybrid and not cpuinfo.info["hybrid"]:
             raise Error(f"no hybrid CPU found{pman.hostmsg}, found {cpuinfo.cpudescr}")
+
         order = args.order
         for lvl in CPUInfo.SCOPE_NAMES:
             if order.lower() == lvl.lower():
@@ -164,12 +165,20 @@ def topology_info_command(args, pman):
             fmt += "    %6s"
 
             hybrid_cpus = cpuinfo.get_hybrid_cpus()
-            pcore_cpus = set(hybrid_cpus["pcore"])
+
+            hybrid_cpu_sets = {}
+            for htype, hcpus in hybrid_cpus.items():
+                hybrid_cpu_sets[htype] = set(hcpus)
+
             for tline in topology:
-                if tline["CPU"] in pcore_cpus:
-                    tline["hybrid"] = "P-core"
+                cpu = tline["CPU"]
+                for htype, hcpus_set in hybrid_cpu_sets.items():
+                    if cpu in hcpus_set:
+                        tline["hybrid"] = CPUInfo.HYBRID_TYPE_INFO[htype]["name"]
+                        break
                 else:
-                    tline["hybrid"] = "E-core"
+                    raise Error(f"Hybrid CPU '{cpu}' not found in hybrid CPUs information "
+                                f"dictionary")
 
         cpus = set(optar.get_cpus())
 

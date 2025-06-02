@@ -14,7 +14,7 @@ This module provides API for printing properties.
 
 import sys
 from pepctool import _PepcCommon
-from pepclibs import CStates
+from pepclibs import CStates, CPUInfo
 from pepclibs.helperlibs import Logging, ClassHelpers, Human, YAML, Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 
@@ -52,6 +52,17 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
             else:
                 msg += f" (packages {pkgs_range})"
 
+        if self._cpuinfo.info["hybrid"]:
+            hybrid_info = self._cpuinfo.get_hybrid_cpus()
+            if len(hybrid_info) > 1:
+                for htype, hcpus in hybrid_info.items():
+                    if set(cpus) == set(hcpus):
+                        hname = CPUInfo.HYBRID_TYPE_INFO[htype]["name"]
+                        if len(cpus) == 1:
+                            msg += f" ({hname})"
+                        else:
+                            msg += f" ({hname}s)"
+                        break
         return msg
 
     def _fmt_packages(self, packages):

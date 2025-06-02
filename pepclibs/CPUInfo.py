@@ -19,11 +19,12 @@ from typing import Iterable, Literal
 from pepclibs import _CPUInfoBase
 from pepclibs.helperlibs import Logging, Trivial
 from pepclibs.helperlibs.Exceptions import Error
-from pepclibs._CPUInfoBase import SCOPE_NAMES, NA, INVALID
+# pylint: disable-next=unused-import
+from pepclibs._CPUInfoBase import SCOPE_NAMES, HYBRID_TYPE_INFO, NA, INVALID
 
 if typing.TYPE_CHECKING:
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
-    from pepclibs._CPUInfoBaseTypes import HybridCPUsKeyType, HybridCPUsTypeDict
+    from pepclibs._CPUInfoBaseTypes import HybridCPUKeyType, HybridCPUTypedDict
     from pepclibs._CPUInfoBaseTypes import ScopeNameType
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
@@ -1314,7 +1315,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
         return self.normalize_packages((package,))[0]
 
-    def get_hybrid_cpus(self) -> HybridCPUsTypeDict:
+    def get_hybrid_cpus(self) -> HybridCPUTypedDict:
         """
         Return a dictionary with hybrid CPU information.
 

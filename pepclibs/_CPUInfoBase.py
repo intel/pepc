@@ -23,11 +23,11 @@ from pepclibs.msr import MSR, PMLogicalId
 from pepclibs.helperlibs import Logging, LocalProcessManager, ClassHelpers, Trivial, KernelVersion
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorNotFound
 
-from pepclibs._CPUInfoBaseTypes import CPUInfoTypeDict
+from pepclibs._CPUInfoBaseTypes import CPUInfoTypedDict
 if typing.TYPE_CHECKING:
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
-    from pepclibs._CPUInfoBaseTypes import CPUInfoKeyType, ScopeNameType
-    from pepclibs._CPUInfoBaseTypes import HybridCPUsTypeDict, HybridCPUsKeyType
+    from pepclibs._CPUInfoBaseTypes import CPUInfoKeyType, ScopeNameType, HybridCPUTypedDict
+    from pepclibs._CPUInfoBaseTypes import HybridCPUKeyType, HybridCPUKeyInfoType
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
@@ -41,6 +41,12 @@ INVALID = NA - 1
 # CPU models that have dies but they are not enumerated by Linux kernel. Use 'MSR_PM_LOGICAL_ID' for
 # them instead.
 _PLI_VFMS = CPUModels.CPU_GROUPS["GNR"] + CPUModels.CPU_GROUPS["CRESTMONT"]
+
+# Thy hybrid CPU information dictionary.
+HYBRID_TYPE_INFO: dict[HybridCPUKeyType, HybridCPUKeyInfoType] = {
+        "pcore": {"name": "P-core", "title": "Performance core"},
+        "ecore": {"name": "E-core", "title": "Efficiency core"},
+}
 
 class CPUInfoBase(ClassHelpers.SimpleCloseContext):
     """
@@ -80,7 +86,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         # Set of online and offline CPUs.
         self._all_cpus_set: set[int] = set()
         # Dictionary of P-core/E-core CPUs.
-        self._hybrid_cpus: HybridCPUsTypeDict = {}
+        self._hybrid_cpus: HybridCPUTypedDict = {}
 
         # Per-package compute die numbers (dies with CPUs) and I/O die numbers (dies without CPUs).
         self._compute_dies: dict[int, set[int]] = {}
@@ -528,7 +534,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
         return self._all_cpus_set
 
-    def _get_cpu_info(self) -> CPUInfoTypeDict:
+    def _get_cpu_info(self) -> CPUInfoTypedDict:
         """
         Collect and return general CPU information such as model, and architecture.
 
@@ -538,7 +544,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
         _LOG.debug("Building CPU information")
 
-        cpuinfo: CPUInfoTypeDict = {}
+        cpuinfo: CPUInfoTypedDict = {}
 
         lscpu, _ = self._pman.run_verify("lscpu", join=False)
 
@@ -551,7 +557,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
                      (r"^Model name:\s*(.*)$", "modelname"),
                      (r"^Flags:\s*(.*)$", "flags"))
 
-        key_types = typing.get_type_hints(CPUInfoTypeDict)
+        key_types = typing.get_type_hints(CPUInfoTypedDict)
         for line in lscpu:
             for pattern, key in patterns:
                 match = re.match(pattern, line.strip())
@@ -610,7 +616,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
         return cpudescr
 
-    def _get_hybrid_cpus(self) -> HybridCPUsTypeDict:
+    def _get_hybrid_cpus(self) -> HybridCPUTypedDict:
         """
         Build and return a dictionary mapping hybrid CPU types to their corresponding CPU numbers.
 
@@ -624,7 +630,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
         _LOG.debug("Reading hybrid CPUs information from sysfs")
 
-        iterator: dict[HybridCPUsKeyType, str] = {"ecore": "atom", "pcore": "core"}
+        iterator: dict[HybridCPUKeyType, str] = {"ecore": "atom", "pcore": "core"}
         for hybrid_type, arch in iterator.items():
             self._hybrid_cpus[hybrid_type] = self._read_range(f"/sys/devices/cpu_{arch}/cpus")
 

@@ -16,7 +16,7 @@ from typing import TypedDict, Literal
 
 ScopeNameType = Literal["CPU", "core", "module", "die", "node", "package"]
 
-class CPUInfoTypeDict(TypedDict, total=False):
+class CPUInfoTypedDict(TypedDict, total=False):
     """
     Type for the CPU information dictionary ('CPUInfo.info').
 
@@ -43,7 +43,7 @@ class CPUInfoTypeDict(TypedDict, total=False):
 
 CPUInfoKeyType = Literal["arch", "vendor", "family", "model", "modelname", "flags", "hybrid", "vfm"]
 
-class HybridCPUsTypeDict(TypedDict, total=False):
+class HybridCPUTypedDict(TypedDict, total=False):
     """
     Type for the hybrid CPUs dictionary.
 
@@ -55,4 +55,16 @@ class HybridCPUsTypeDict(TypedDict, total=False):
     pcore: list[int]
     ecore: list[int]
 
-HybridCPUsKeyType = Literal["pcore", "ecore"]
+HybridCPUKeyType = Literal["pcore", "ecore"]
+
+class HybridCPUKeyInfoType(TypedDict, total=False):
+    """
+    Type for the hybrid CPUs key information dictionary.
+
+    Attributes:
+        name: The name of the hybrid CPU type (e.g., E-core, P-core).
+        title: Longer title for the hybrid CPU type (e.g., "Efficient core", "Performance core").
+    """
+
+    name: str
+    title: str
