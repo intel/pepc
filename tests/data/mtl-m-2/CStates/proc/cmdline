@@ -1,0 +1,1 @@
+BOOT_IMAGE=/boot/vmlinuz-6.15.0-dirty root=UUID=5cbe5910-ae9d-470f-a248-e5986bc6643d ro pmt_watcher.dyndbg pmt_telemetry.dyndbg pmt_class.dyndbg intel_vsec.dyndbg intel_pmc_core.dyndbg console=tty0 console=ttyS0,115200n8 resume=UUID=5cbe5910-ae9d-470f-a248-e5986bc6643d resume_offset=121077760
