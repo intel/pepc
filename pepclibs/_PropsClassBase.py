@@ -37,7 +37,7 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import copy
 import typing
-from typing import Any, Literal, Generator, cast, get_args
+from typing import Any, Sequence, Literal, Generator, cast, get_args
 
 from pepclibs.helperlibs import Logging, Trivial, Human, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
@@ -50,8 +50,7 @@ if typing.TYPE_CHECKING:
     from pepclibs.CPUInfo import CPUInfo
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepclibs._PropsClassBaseTypes import MechanismTypedDict, MechanismNameType
-    from pepclibs._PropsClassBaseTypes import MechanismNamesType, PVInfoTypedDict
-    from pepclibs._PropsClassBaseTypes import NumsType, DieNumsType
+    from pepclibs._PropsClassBaseTypes import PVInfoTypedDict, NumsType, DieNumsType
 
 class IntPropertyTypedDict(PropertyTypedDict):
     """
@@ -267,7 +266,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             raise Error(f"Can't use read-only mechanism '{mname}'")
 
     def _normalize_mnames(self,
-                          mnames: MechanismNamesType | None,
+                          mnames: Sequence[MechanismNameType] | None,
                           pname: str | None = None,
                           allow_readonly: bool = True) -> list[MechanismNameType]:
         """
@@ -473,7 +472,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
     def _validate_prop_vs_ioscope(self,
                                   pname: str,
                                   cpus: NumsType,
-                                  mnames: MechanismNamesType | None = None,
+                                  mnames: Sequence[MechanismNameType] | None = None,
                                   package: int | None = None,
                                   die: int | None = None):
         """
@@ -645,7 +644,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
     def _do_prop_not_supported(self,
                                pname: str,
                                nums_str: str,
-                               mnames: MechanismNamesType,
+                               mnames: Sequence[MechanismNameType],
                                action: str,
                                exceptions: list[Any] | None = None):
         """
@@ -686,7 +685,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
     def _prop_not_supported_cpus(self,
                                  pname: str,
                                  cpus: NumsType,
-                                 mnames: MechanismNamesType,
+                                 mnames: Sequence[MechanismNameType],
                                  action: str,
                                  exceptions: list[Any] | None = None):
         """
@@ -714,7 +713,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
     def _prop_not_supported_dies(self,
                                  pname: str,
                                  dies: DieNumsType,
-                                 mnames: MechanismNamesType,
+                                 mnames: Sequence[MechanismNameType],
                                  action: str,
                                  exceptions: list[Any] | None = None):
         """
@@ -738,7 +737,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
     def _prop_not_supported_packages(self,
                                      pname: str,
                                      packages: NumsType,
-                                     mnames: MechanismNamesType,
+                                     mnames: Sequence[MechanismNameType],
                                      action: str,
                                      exceptions: list[Any] | None = None):
         """
@@ -795,7 +794,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
     def _get_prop_pvinfo_cpus(self,
                               pname: str,
                               cpus: NumsType,
-                              mnames: MechanismNamesType | None = None,
+                              mnames: Sequence[MechanismNameType] | None = None,
                               raise_not_supported: bool = True) -> Generator[PVInfoTypedDict,
                                                                              None, None]:
         """
@@ -861,7 +860,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
     def _get_prop_cpus_mnames(self,
                               pname: str,
                               cpus: NumsType,
-                              mnames: MechanismNamesType | None = None) -> \
+                              mnames: Sequence[MechanismNameType] | None = None) -> \
                                             Generator[tuple[int, PropertyValueType], None, None]:
         """
         Yield (cpu, value) tuples for the specified property and CPUs, using specified mechanisms.
@@ -888,7 +887,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
     def _get_cpu_prop_mnames(self,
                              pname: str,
                              cpu: int,
-                             mnames: MechanismNamesType | None = None) -> PropertyValueType:
+                             mnames: Sequence[MechanismNameType] | None = None) \
+                                                                    -> PropertyValueType:
         """
         Retrieve the value of a CPU property using specified mechanisms.
 
@@ -910,8 +910,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
     def get_prop_cpus(self,
                       pname: str,
                       cpus: NumsType | Literal["all"] = "all",
-                      mnames: MechanismNamesType | None = None) -> Generator[PVInfoTypedDict,
-                                                                             None, None]:
+                      mnames: Sequence[MechanismNameType] | None = None) -> \
+                                                        Generator[PVInfoTypedDict, None, None]:
         """
         Read property 'pname' for CPUs in 'cpus', and for every CPU yield the property value
         dictionary.
@@ -959,7 +959,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
     def get_cpu_prop(self,
                      pname: str,
                      cpu: int,
-                     mnames: MechanismNamesType | None = None) -> PVInfoTypedDict:
+                     mnames: Sequence[MechanismNameType] | None = None) -> PVInfoTypedDict:
         """
         Retrieve the value of a property for a CPU.
 
@@ -1027,7 +1027,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
     def _get_prop_pvinfo_dies(self,
                               pname: str,
                               dies: DieNumsType,
-                              mnames: MechanismNamesType | None = None,
+                              mnames: Sequence[MechanismNameType] | None = None,
                               raise_not_supported: bool = True) -> Generator[PVInfoTypedDict,
                                                                              None, None]:
         """
@@ -1096,7 +1096,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
     def _get_prop_dies_mnames(self,
                               pname: str,
                               dies: DieNumsType,
-                              mnames: MechanismNamesType | None = None) -> \
+                              mnames: Sequence[MechanismNameType] | None = None) -> \
                                           Generator[tuple[int, int, PropertyValueType], None, None]:
         """
         Retrieve and yield property values for the specified dies using the specified mechanisms.
@@ -1123,7 +1123,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                              pname: str,
                              package: int,
                              die: int,
-                             mnames: MechanismNamesType | None = None) -> PropertyValueType:
+                             mnames: Sequence[MechanismNameType] | None = None) -> \
+                                                                            PropertyValueType:
         """
         Retrieve the value of a property for a specific die using specified mechanisms.
 
@@ -1146,8 +1147,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
     def get_prop_dies(self,
                       pname: str,
                       dies: DieNumsType | Literal["all"] = "all",
-                      mnames: MechanismNamesType | None = None) -> Generator[PVInfoTypedDict,
-                                                                             None, None]:
+                      mnames: Sequence[MechanismNameType] | None = None) -> \
+                                                        Generator[PVInfoTypedDict, None, None]:
         """
         Read property 'pname' for dies in 'dies', and for every die yield the property value
         dictionary.
@@ -1181,9 +1182,21 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         mnames = self._normalize_mnames(mnames, pname=pname, allow_readonly=True)
 
         normalized_dies: dict[int, list[int]] = {}
-        for package in self._cpuinfo.normalize_packages(dies):
+        if dies == "all":
+            packages = self._cpuinfo.get_packages()
+        else:
+            packages = self._cpuinfo.normalize_packages(list(dies))
+
+        for package in packages:
             normalized_dies[package] = []
-            for die in self._cpuinfo.normalize_dies(dies[package], package=package):
+
+            pkg_dies: NumsType | Literal["all"]
+            if dies == "all":
+                pkg_dies = "all"
+            else:
+                pkg_dies = dies[package]
+
+            for die in self._cpuinfo.normalize_dies(pkg_dies, package=package):
                 normalized_dies[package].append(die)
 
         # Get rid of empty die lists.
@@ -1199,7 +1212,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         except ErrorNotSupported:
             for package, pkg_dies in normalized_dies.items():
                 for die in pkg_dies:
-                    yield self._construct_die_pvinfo(package, package, die, mnames[-1], None)
+                    yield self._construct_die_pvinfo(pname, package, die, mnames[-1], None)
             return
 
         self._validate_prop_vs_scope(pname, "die")
@@ -1218,7 +1231,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                      pname: str,
                      die: int,
                      package: int,
-                     mnames: MechanismNamesType | None = None) -> PVInfoTypedDict:
+                     mnames: Sequence[MechanismNameType] | None = None) -> PVInfoTypedDict:
         """
         Retrieve a single property value for a specific die and package. Similar to
         `get_prop_dies()`, but operates on a single die and property.
@@ -1236,7 +1249,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             ErrorNotSupported: If the property is not supported by any mechanism.
         """
 
-        dies: dict[int, tuple[int, ...]] = {package: (die,)}
+        dies: DieNumsType = {package: (die,)}
         for pvinfo in self.get_prop_dies(pname, dies=dies, mnames=mnames):
             return pvinfo
 
@@ -1288,7 +1301,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
     def _get_prop_pvinfo_packages(self,
                                   pname: str,
                                   packages: NumsType,
-                                  mnames: MechanismNamesType | None = None,
+                                  mnames: Sequence[MechanismNameType] | None = None,
                                   raise_not_supported: bool = True) -> Generator[PVInfoTypedDict,
                                                                                  None, None]:
         """
@@ -1354,7 +1367,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
     def _get_prop_packages_mnames(self,
                                   pname: str,
                                   packages: NumsType,
-                                  mnames: MechanismNamesType | None = None) -> \
+                                  mnames: Sequence[MechanismNameType] | None = None) -> \
                                             Generator[tuple[int, PropertyValueType], None, None]:
         """
         Yield (package, value) tuples for the specified property and packages, using specified
@@ -1382,7 +1395,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
     def _get_package_prop_mnames(self,
                                  pname: str,
                                  package: int,
-                                 mnames: MechanismNamesType | None = None) -> PropertyValueType:
+                                 mnames: Sequence[MechanismNameType] | None = None) -> \
+                                                                            PropertyValueType:
         """
         Retrieve the value of a property for a specific package using specified mechanisms.
 
@@ -1405,8 +1419,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
     def get_prop_packages(self,
                           pname: str,
                           packages: NumsType | Literal["all"] = "all",
-                          mnames: MechanismNamesType | None = None ) -> Generator[PVInfoTypedDict,
-                                                                                  None, None]:
+                          mnames: Sequence[MechanismNameType] | None = None ) -> \
+                                                            Generator[PVInfoTypedDict, None, None]:
         """
         Read property 'pname' for packages in 'packages', and for every package yield the property
         value dictionary.
@@ -1464,7 +1478,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
     def get_package_prop(self,
                          pname: str,
                          package: int,
-                         mnames: MechanismNamesType | None = None) -> PVInfoTypedDict:
+                         mnames: Sequence[MechanismNameType] | None = None) -> PVInfoTypedDict:
         """
         Retrieve the value of a property for a package.
 
@@ -1558,10 +1572,6 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             name = Human.uncapitalize(prop["name"])
             raise Error(f"Bad value 'None' for {name}")
 
-        if not isinstance(val, PropertyValueType):
-            name = Human.uncapitalize(prop["name"])
-            raise Error(f"Bad type {type(val)} for {name}: expected {prop['type']}")
-
         if prop.get("type") == "bool":
             val = self._normalize_bool_type_value(pname, val)
 
@@ -1617,7 +1627,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                               pname: str,
                               val: PropertyValueType,
                               cpus: NumsType,
-                              mnames: MechanismNamesType | None = None) -> MechanismNameType:
+                              mnames: Sequence[MechanismNameType] | None = None) -> \
+                                                                            MechanismNameType:
         """
         Set a property for specified CPUs using specified mechanisms.
 
@@ -1663,7 +1674,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                       pname: str,
                       val: PropertyValueType,
                       cpus: NumsType,
-                      mnames: MechanismNamesType | None = None) -> str:
+                      mnames: Sequence[MechanismNameType] | None = None) -> str:
         """
         Set a property for specified CPUs using specified mechanisms.
 
@@ -1705,7 +1716,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                      pname: str,
                      val: PropertyValueType,
                      cpu: int,
-                     mnames: MechanismNamesType | None = None) -> str:
+                     mnames: Sequence[MechanismNameType] | None = None) -> str:
         """
         Set a property for a specified CPU using the specified mechanisms.
 
@@ -1802,7 +1813,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                               pname: str,
                               val: PropertyValueType,
                               dies: DieNumsType,
-                              mnames: MechanismNamesType | None = None) -> str:
+                              mnames: Sequence[MechanismNameType] | None = None) -> str:
         """
         Set a property for specified CPUs using specified mechanisms.
 
@@ -1848,7 +1859,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                       pname: str,
                       val: PropertyValueType,
                       dies: DieNumsType,
-                      mnames: MechanismNamesType | None = None) -> str:
+                      mnames: Sequence[MechanismNameType] | None = None) -> str:
         """
         Set a property for specified dies using specified mechanisms.
 
@@ -1877,13 +1888,13 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         val = self._normalize_inprop(pname, val)
 
         normalized_dies: dict[int, list[int]] = {}
-        for package in self._cpuinfo.normalize_packages(dies):
+        for package in self._cpuinfo.normalize_packages(list(dies)):
             normalized_dies[package] = []
             for die in self._cpuinfo.normalize_dies(dies[package], package=package):
                 normalized_dies[package].append(die)
 
         # Make sure there are some die numbers.
-        for package, pkg_dies in dies.copy().items():
+        for package, pkg_dies in dies.items():
             if len(pkg_dies) == 0:
                 raise Error(f"BUG: No package {package} die numbers provided for setting "
                             f"{self._props[pname]['name']}{self._pman.hostmsg}")
@@ -1901,7 +1912,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                      val: PropertyValueType,
                      die: int,
                      package: int,
-                     mnames: MechanismNamesType | None = None) -> str:
+                     mnames: Sequence[MechanismNameType] | None = None) -> str:
         """
         Set a property for a specified die using the specified mechanisms.
 
@@ -1967,7 +1978,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                                   pname: str,
                                   val: PropertyValueType,
                                   packages: NumsType,
-                                  mnames: MechanismNamesType | None = None) -> str:
+                                  mnames: Sequence[MechanismNameType] | None = None) -> str:
         """
         Set a property for specified packages using specified mechanisms.
 
@@ -2013,7 +2024,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                           pname: str,
                           val: PropertyValueType,
                           packages: NumsType,
-                          mnames: MechanismNamesType | None = None) -> str:
+                          mnames: Sequence[MechanismNameType] | None = None) -> str:
         """
         Set a property for specified packages using specified mechanisms.
 
@@ -2055,7 +2066,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                          pname: str,
                          val: PropertyValueType,
                          package: int,
-                         mnames: MechanismNamesType | None = None) -> str:
+                         mnames: Sequence[MechanismNameType] | None = None) -> str:
         """
         Set a property for a specified package using the specified mechanisms.
 

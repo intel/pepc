@@ -15,8 +15,9 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 from typing import Union
 from pepclibs import PStates, CStates
 
-# pylint: disable-next=unused-import
-from pepclibs._PropsClassBaseTypes import NumsType, DieNumsType
-from pepclibs._PropsClassBaseTypes import PropertyTypedDict, PropertyValueType
+# pylint: disable=unused-import
+from pepclibs._CPUInfoBaseTypes import NumsType, DieNumsType
+from pepclibs._PropsClassBaseTypes import PropertyTypedDict, PropertyValueType, MechanismNameType
+from pepclibs._PropsClassBaseTypes import ScopeNameType
 
 PropsType = Union[PStates.PStates, CStates.CStates]

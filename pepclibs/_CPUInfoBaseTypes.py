@@ -12,7 +12,12 @@ Provide types for '_CPUInfoBase' and 'CPUInfo' classes.
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
-from typing import TypedDict, Literal
+from typing import TypedDict, Literal, Sequence, Mapping
+
+# A type for CPU and package numbers.
+NumsType = Sequence[int]
+# A type for die numbers.
+DieNumsType = Mapping[int, NumsType]
 
 ScopeNameType = Literal["CPU", "core", "module", "die", "node", "package"]
 

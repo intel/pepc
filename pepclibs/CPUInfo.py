@@ -24,7 +24,7 @@ from pepclibs._CPUInfoBase import SCOPE_NAMES, HYBRID_TYPE_INFO, NA, INVALID
 
 if typing.TYPE_CHECKING:
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
-    from pepclibs._CPUInfoBaseTypes import HybridCPUKeyType, ScopeNameType
+    from pepclibs._CPUInfoBaseTypes import HybridCPUKeyType, ScopeNameType, NumsType, DieNumsType
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
@@ -228,7 +228,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
     def _get_scope_nums(self,
                         sname: ScopeNameType,
                         parent_sname: ScopeNameType,
-                        nums: Iterable[int] | Literal["all"],
+                        nums: NumsType | Literal["all"],
                         order: ScopeNameType | None = None) -> list[int]:
         """
         Return a list of "scope" numbers (e.g., CPU numbers or core numbers) for specified parent
@@ -619,17 +619,16 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         return self._get_scope_nums("node", "package", (package,), order=order)
 
     def cores_to_cpus(self,
-                      cores: Iterable[int] | Literal["all"] = "all",
-                      packages: Iterable[int] | Literal["all"] = "all",
+                      cores: NumsType | Literal["all"] = "all",
+                      packages: NumsType | Literal["all"] = "all",
                       order: ScopeNameType = "CPU") -> list[int]:
         """
         Return a list of CPU numbers corresponding to specified cores and packages.
 
         Args:
-            cores: Collection of core numbers within the specified packages to include. Use "all" to
-                   select all cores.
-            packages: Collection of package numbers to filter cores by. Use "all" to select all
-                      packages.
+            cores: Core numbers within the specified packages to include. Use "all" to select all
+                   cores.
+            packages: Package numbers to filter cores by. Use "all" to select all packages.
             order: Sorting order for the returned CPU numbers list.
 
         Returns:
@@ -652,14 +651,13 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         return cpus
 
     def modules_to_cpus(self,
-                        modules: Iterable[int] | Literal["all"] = "all",
+                        modules: NumsType | Literal["all"] = "all",
                         order: ScopeNameType = "CPU") -> list[int]:
         """
         Return a list of CPU numbers belonging to the specified modules.
 
         Args:
-            modules: Collection of module numbers to retrieve CPU numbers for. Use "all" to include
-                     all modules.
+            modules: Module numbers to retrieve CPU numbers for. Use "all" to include all modules.
             order: Sorting order of the returned CPU numbers list.
 
         Returns:
@@ -672,16 +670,16 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         return self._get_scope_nums("CPU", "module", modules, order=order)
 
     def dies_to_cpus(self,
-                     dies: Iterable[int] | Literal["all"] = "all",
-                     packages: Iterable[int] | Literal["all"] = "all",
+                     dies: NumsType | Literal["all"] = "all",
+                     packages: NumsType | Literal["all"] = "all",
                      order: ScopeNameType = "CPU") -> list[int]:
         """
         Return a list of CPU numbers for specified dies and packages.
 
         Args:
-            dies: Collection of die numbers within the specified packages to include, or "all" for
-                  all dies.
-            packages: Collection of package numbers to include, or "all" for all packages.
+            dies: Die numbers within the specified packages to include, or "all" for all dies in the
+                  package.
+            packages: Package numbers to include, or "all" for all packages.
             order: Sorting order for the returned CPU numbers list.
 
         Returns:
@@ -704,14 +702,13 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         return cpus
 
     def nodes_to_cpus(self,
-                      nodes: Iterable[int] | Literal["all"] = "all",
+                      nodes: NumsType | Literal["all"] = "all",
                       order: ScopeNameType = "CPU") -> list[int]:
         """
         Return a list of CPU numbers for specified NUMA nodes.
 
         Args:
-            nodes: Collection of NUMA node numbers to retrieve CPU numbers for. Use "all" to include
-                   all nodes.
+            nodes: NUMA node numbers to retrieve CPU numbers for. Use "all" to include all nodes.
             order: Sorting order for the returned CPU numbers list.
 
         Returns:
@@ -724,14 +721,14 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         return self._get_scope_nums("CPU", "node", nodes, order=order)
 
     def packages_to_cpus(self,
-                         packages: Iterable[int] | Literal["all"] = "all",
+                         packages: NumsType | Literal["all"] = "all",
                          order: ScopeNameType = "CPU") -> list[int]:
         """
         Return a list of CPU numbers for specified packages.
 
         Args:
-            packages: Collection of package numbers to retrieve CPU numbers for. Use "all" to
-                      include all packages.
+            packages: Package numbers to retrieve CPU numbers for. Use "all" to include all
+                      packages.
             order: Sorting order for the returned CPU numbers list.
 
         Returns:
@@ -818,7 +815,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
         return len(self.get_packages())
 
-    def select_core_siblings(self, cpus: Iterable[int], indexes: Iterable[int]) -> list[int]:
+    def select_core_siblings(self, cpus: NumsType, indexes: Iterable[int]) -> list[int]:
         """
         Select core siblings from the provided list of CPUs based on sibling indexes.
 
@@ -827,8 +824,8 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         hyperthreads).
 
         Args:
-            cpus: List of CPU numbers to select core siblings from. The result is always a subset of
-                  this list.
+            cpus: CPU numbers to select core siblings from. The result is always a subset of this
+                  collection of CPU numbers.
             indexes: List of sibling indexes to select. Each index corresponds to a sibling position
                      within a core.
 
@@ -875,7 +872,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
         return result
 
-    def select_module_siblings(self, cpus: Iterable[int], indexes: Iterable[int]) -> list[int]:
+    def select_module_siblings(self, cpus: NumsType, indexes: Iterable[int]) -> list[int]:
         """
         Select CPUs from the input list that are module siblings at the specified indexes.
 
@@ -883,8 +880,8 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         considering only the modules present in the input list. Offline CPUs are ignored.
 
         Args:
-            cpus: List of CPU numbers to select module siblings from. The result is always a
-                  subset of CPU numbers from 'cpus'.
+            cpus: CPU numbers to select module siblings from. The result is always a subset of this
+                  collection of CPU numbers.
             indexes: List of sibling indexes to select.
 
         Returns:
@@ -934,12 +931,12 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
         return result
 
-    def cpus_div_cores(self, cpus: Iterable[int]) -> tuple[dict[int, list[int]], list[int]]:
+    def cpus_div_cores(self, cpus: NumsType) -> tuple[dict[int, list[int]], list[int]]:
         """
         Split a collection of CPU numbers into groups by core, inverse of 'cores_to_cpus()'.
 
         Args:
-            cpus: Collection of CPU numbers to split by core.
+            cpus: CPU numbers to split by core.
 
         Returns:
             tuple:
@@ -983,12 +980,12 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
         return (cores, rem_cpus)
 
-    def cpus_div_dies(self, cpus: Iterable[int]) -> tuple[dict[int, list[int]], list[int]]:
+    def cpus_div_dies(self, cpus: NumsType) -> tuple[dict[int, list[int]], list[int]]:
         """
         Split a collection of CPU numbers into groups by die, inverse of 'dies_to_cpus()'.
 
         Args:
-            cpus: Collection of CPU numbers to group by die.
+            cpus: CPU numbers to group by die.
 
         Returns:
             tuple:
@@ -1041,12 +1038,12 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
         return (dies, rem_cpus)
 
-    def cpus_div_packages(self, cpus, packages: Iterable[int] | Literal["all"] = "all"):
+    def cpus_div_packages(self, cpus, packages: NumsType | Literal["all"] = "all"):
         """
         Split a collection of CPU numbers into groups by package, inverse of 'packages_to_cpus()'.
 
         Args:
-            cpus: Collection of CPU numbers to group by package.
+            cpus: CPU numbers to group by package.
             packages: Package numbers to consider (default is all packages).
 
         Returns:
@@ -1085,14 +1082,13 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         return (pkgs, rem_cpus)
 
     def normalize_cpus(self,
-                       cpus: Iterable[int] | Literal["all"],
+                       cpus: NumsType | Literal["all"],
                        offline_ok: bool = False) -> list[int]:
         """
         Validate and normalize a collection of CPU numbers.
 
         Args:
-            cpus: Collection of CPU numbers to normalize, or the special value 'all' to select all
-                  CPUs.
+            cpus: CPU numbers to normalize, or the special value 'all' to select all CPUs.
             offline_ok: If True, allow offline CPUs; otherwise, only online CPUs are considered
                         valid.
 
@@ -1126,13 +1122,12 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
         return cpus
 
-    def normalize_cores(self, cores: Iterable[int] | Literal["all"], package: int = 0) -> list[int]:
+    def normalize_cores(self, cores: NumsType | Literal["all"], package: int = 0) -> list[int]:
         """
         Validate and normalize a collection of core numbers for a given package.
 
         Args:
-            cores: Collection of core numbers to normalize, or the special value 'all' to select all
-                   cores.
+            cores: Core numbers to normalize, or the special value 'all' to select all cores.
             package: Package number to validate the cores against.
 
         Returns:
@@ -1160,13 +1155,12 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
         return cores
 
-    def normalize_modules(self, modules: Iterable[int] | Literal["all"]) -> list[int]:
+    def normalize_modules(self, modules: NumsType | Literal["all"]) -> list[int]:
         """
         Validate and normalize a collection of module numbers.
 
         Args:
-            modules: Collection of module numbers to normalize, or the special value 'all' to select
-                     all modules.
+            modules: Module numbers to normalize, or the special value 'all' to select all modules.
 
         Returns:
             List of validated and normalized module numbers.
@@ -1193,13 +1187,13 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
         return modules
 
-    def normalize_dies(self, dies: Iterable[int] | Literal["all"], package: int = 0) -> list[int]:
+    def normalize_dies(self, dies: NumsType | Literal["all"], package: int = 0) -> list[int]:
         """
         Validate and normalize die numbers for a given package.
 
         Args:
-            dies: Collection of die numbers to normalize, or the special value 'all' to select all
-                  dies.
+            dies: Die numbers within the package to normalize, or the special value 'all' to select
+                  all dies in the package
             package: Package number to validate dies against.
 
         Returns:
@@ -1227,13 +1221,13 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
         return dies
 
-    def normalize_packages(self, packages: Iterable[int] | Literal["all"]) -> list[int]:
+    def normalize_packages(self, packages: NumsType | Literal["all"]) -> list[int]:
         """
         Validate and normalize a collection of package numbers.
 
         Args:
-            packages: Collection of package numbers to normalize, or the special value 'all' to
-                      select all packages.
+            packages: Package numbers to normalize, or the special value 'all' to select all
+                      packages.
 
         Returns:
             List of normalized package numbers.
@@ -1333,7 +1327,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         return self._get_hybrid_cpus()
 
     @staticmethod
-    def dies_to_str(dies: dict[int, list[int]]) -> str:
+    def dies_to_str(dies: DieNumsType) -> str:
         """
         Convert a dictionary of package-to-die mappings into a human-readable string.
 

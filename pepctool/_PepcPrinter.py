@@ -16,19 +16,36 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import sys
 import typing
-from typing import IO, Literal, get_args, cast
+from typing import TypedDict, Iterable, IO, Literal, get_args, cast
 
-from pepclibs._CPUInfoBaseTypes import ScopeNameType
-from pepctool import _PepcCommon
 from pepclibs import CStates, CPUInfo
 from pepclibs.helperlibs import Logging, ClassHelpers, Human, YAML, Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
+from pepctool import _PepcCommon, _OpTarget
+
+# pylint: disable-next=ungrouped-imports
+from pepclibs.Props import MechanismNameType
 
 if typing.TYPE_CHECKING:
-    from pepclibs.Props import PropsType, NumsType, DieNumsType, PropertyTypedDict
+    from pepclibs.Props import PropsType,  ScopeNameType, NumsType, DieNumsType
     from pepclibs.Props import PropertyValueType, PropertyTypedDict
 
 _PrintFormatType = Literal["human", "yaml"]
+
+class _AggrSubPinfoType(TypedDict):
+    """
+    Type for the aggregate properties information sub-dictionary.
+
+    Attributes:
+        sname: Scope name used for reading the property (e.g., "CPU", "die", "package").
+        vals: A dictionary mapping property values to lists of CPUs, dies, or package numbers that
+              have this value.
+    """
+
+    sname: ScopeNameType
+    vals: dict[PropertyValueType, NumsType | DieNumsType]
+
+_AggrPinfoType = dict[MechanismNameType, dict[str, _AggrSubPinfoType]]
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
@@ -174,8 +191,8 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
             return "all dies in all packages"
 
         # Format the detailed string. Examples:
-        #   * all dies of package 0, dies 1,2 of package 1.
-        #   * die 1 of package 0, dies 0-3 of package 1.
+        #   - all dies of package 0, dies 1,2 of package 1.
+        #   - die 1 of package 0, dies 0-3 of package 1.
         result = []
         for pkg, dies in pkgs_dies.items():
             if len(dies) == self._cpuinfo.get_dies_count(package=pkg):
@@ -469,7 +486,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         raise Error("BUG: bad property value dictionary, no 'cpu', 'die', or 'package' key found\n"
                     "The dictionary: {pvinfo}")
 
-    def _build_aggr_pinfo_pname(self, pname, optar, mnames, skip_unsupported, override_sname=None):
+    def _build_aggr_pinfo_pname(self, pname, optar, mnames, skip_unsupported, override_sname=None) -> _AggrPinfoType:
         """Implement '_build_aggr_pinfo()' for one property."""
 
         prop = self._pobj.props[pname]
@@ -524,50 +541,52 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
 
         return apinfo
 
-    def _build_aggr_pinfo(self, pnames, optar, mnames, skip_ro, skip_unsupported):
+    def _build_aggr_pinfo(self,
+                          pnames: Iterable[str],
+                          optar: _OpTarget.OpTarget,
+                          mnames: Iterable[MechanismNameType],
+                          skip_ro: bool, skip_unsupported: bool) -> _AggrPinfoType:
         """
-        Build and return the aggregate properties dictionary for properties in 'pnames'.
+        Build and return an aggregate properties dictionary for the specified property names.
 
-        The aggregate properties dictionary has the following format.
+        Constructs a nested dictionary that maps mechanism names to property names, and then to a
+        dictionary mapping property values to the CPUs, dies, or packages that have those values. In
+        other words, if the multiple CPUs, dies, or packages share the same property value,
+        they will be grouped together under that value.
 
-        {mname1: {pname1: {"sname": sname,
-                           "vals": {val1: [list of CPUs/packages having value 'val1'],
-                                    val2: [list of CPUs/packages having value 'val2'],
-                                    ... and so on for all values ...},
-                  ... and so on for all properties ...},
-         ... and so on for all mechanisms ...},
+        The format of the returned aggregate properties dictionary is as follows:
+            {
+                mechanism_name: {
+                    property_name: {
+                        "sname": scope_name,
+                        "vals": {
+                            value1: [list of CPUs/packages] or {package: [dies]},
+                            value2: ...,
+                            ...
+                        }
+                    },
+                    ...
+                },
+                ...
+            }
 
-        * mname1 - name of the first mechanism that was used for reading the properties.
-        * pname1 - the first property name (e.g., 'pkg_cstate_limit').
-        * sname - scope name that was used for reading the property, may be one of "CPU", "die",
-                  "package". If it is "CPU", the per-CPU 'get_prop_cpus()' method was used, if
-                  "die", the per-die 'get_prop_dies()' was used, if "package", the per-package
-                  'get_prop_packages()' was used.
-        * val, val2, etc - all the different values for the property.
+        - If the scope name ("sname") is "CPU" or "package", property values are mapped to lists of
+          CPU or package numbers.
+        - If the scope name is "die", property values are mapped to dictionaries where keys are package
+          numbers and values are lists of die numbers within each package.
 
-        In other words, the aggregate dictionary essentially maps property values to the list of
-        CPUs, dies, or packages having these values. It represents a "by value view". And there is
-        additional information like mechanism name and scope name. The scope name ("sname") defines
-        whether the values are for individual CPUs, dies, or packages.
+        Args:
+            pnames: Iterable of property names to aggregate.
+            optar: Operation target specifying the hardware scope.
+            mnames: Iterable of mechanism names to use for reading properties.
+            skip_ro: Whether to skip read-only properties.
+            skip_unsupported: Whether to skip unsupported properties.
 
-        There is a complication related to the fact that die numbers are relative to package
-        numbers. If "sname" is "package" or "CPU", the values are mapped to the list of integer
-        package or CPU numbers. But if "sname" is "die", then they are mapped to a dictionary, not a
-        list. The keys of the dictionary are integer package numbers, and the values of the
-        dictionaries are lists of integer die numbers for the package (the key).
-
-        So when 'sname' is die, then the aggregate properties dictionary has the following format:
-
-          {mname1: {pname1: {"sname": sname,
-                             "vals": {val1: {package0: [die numbers in package 0],
-                                             package1: [die numbers in package 1]
-                                             ... and so on for all dies ...},
-                                      ... and so on for all values ...},
-                    ... and so on for all properties ...},
-           ... and so on for all mechanisms ...},
+        Returns:
+            An aggregate properties dictionary structured as described above.
         """
 
-        aggr_pinfo = {}
+        aggr_pinfo: _AggrPinfoType = {}
 
         for pname in pnames:
             prop = self._pobj.props[pname]

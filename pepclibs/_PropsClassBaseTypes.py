@@ -16,6 +16,9 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 
 from typing import TypedDict, Literal, Union
 
+# pylint: disable-next=unused-import
+from pepclibs._CPUInfoBaseTypes import NumsType, DieNumsType
+
 class MechanismTypedDict(TypedDict):
     """
     Type for the mechanism description dictionary.
@@ -31,9 +34,6 @@ class MechanismTypedDict(TypedDict):
     writable: bool
 
 MechanismNameType = Literal["sysfs", "cdev", "msr", "cppc", "doc"]
-
-# A handy alias for a collection of mechanism names.
-MechanismNamesType = Union[list[MechanismNameType], tuple[MechanismNameType, ...]]
 
 ScopeNameType = Literal["CPU", "core", "package", "die", "global"]
 
@@ -85,8 +85,3 @@ class PVInfoTypedDict(TypedDict, total=False):
     pname: str
     val: PropertyValueType
     mname: MechanismNameType
-
-# A type for CPU and package numbers.
-NumsType = Union[list[int], tuple[int, ...]]
-# A type for die numbers.
-DieNumsType = Union[dict[int, list[int]], dict[int, tuple[int, ...]]]
