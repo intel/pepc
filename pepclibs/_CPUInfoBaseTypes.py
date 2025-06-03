@@ -43,20 +43,6 @@ class CPUInfoTypedDict(TypedDict, total=False):
 
 CPUInfoKeyType = Literal["arch", "vendor", "family", "model", "modelname", "flags", "hybrid", "vfm"]
 
-class HybridCPUTypedDict(TypedDict, total=False):
-    """
-    Type for the hybrid CPUs dictionary.
-
-    Attributes:
-        pcore: List of P-core CPU numbers.
-        ecore: List of E-core CPU numbers.
-        lpecore: List of LPE-core CPU numbers (if applicable).
-    """
-
-    pcore: list[int]
-    ecore: list[int]
-    lpecore: list[int]
-
 HybridCPUKeyType = Literal["pcore", "ecore", "lpecore"]
 
 class HybridCPUKeyInfoType(TypedDict, total=False):

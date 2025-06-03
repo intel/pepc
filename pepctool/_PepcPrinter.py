@@ -9,30 +9,86 @@
 #          Niklas Neronin <niklas.neronin@intel.com>
 
 """
-This module provides API for printing properties.
+Provide API for printing properties.
 """
 
+from __future__ import annotations # Remove when switching to Python 3.10+.
+
 import sys
+import typing
+from typing import IO, Literal, get_args
+
 from pepctool import _PepcCommon
 from pepclibs import CStates, CPUInfo
 from pepclibs.helperlibs import Logging, ClassHelpers, Human, YAML, Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 
+if typing.TYPE_CHECKING:
+    from pepclibs.Props import PropsType, NumsType, DieNumsType
+
+_PrintFormatType = Literal["human", "yaml"]
+
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
 class _PropsPrinter(ClassHelpers.SimpleCloseContext):
-    """The base class for printing properties."""
+    """
+    Provide API for printing properties.
+    """
 
-    def _print(self, msg):
-        """Print message 'msg'."""
+    def __init__(self,
+                 pobj: PropsType,
+                 cpuinfo: CPUInfo.CPUInfo,
+                 fobj: IO[str] | None = None,
+                 fmt: _PrintFormatType = "human"):
+        """
+        Initialize the class instance.
+
+        Args:
+            pobj: The properties object to print the properties for (e.g., 'PStates', 'CStates').
+            cpuinfo: The 'CPUInfo' object initialized for the same host as 'pobj'.
+            fobj: File object to print output to. Defaults to standard output.
+            fmt: Output format. Supported values are 'human' (human-readable) and 'yaml' (YAML
+                 format).
+        """
+
+        self._pobj = pobj
+        self._cpuinfo = cpuinfo
+        self._fobj = fobj
+        self._fmt = fmt
+
+        names = get_args(_PrintFormatType)
+        if self._fmt not in names:
+            formats = ", ".join(names)
+            raise Error(f"Unsupported format '{self._fmt}', supported formats are: {formats}")
+
+    def close(self):
+        """Uninitialize the class object."""
+
+        ClassHelpers.close(self, unref_attrs=("_fobj", "_cpuinfo", "_pobj"))
+
+    def _print(self, msg: str):
+        """
+        Print a message to the designated output.
+
+        Args:
+            msg: The message to print.
+        """
 
         if self._fobj:
             self._fobj.write(msg)
         else:
             _LOG.info(msg)
 
-    def _fmt_cpus(self, cpus):
-        """Format and return a string describing CPU numbers in the 'cpus' list."""
+    def _fmt_cpus(self, cpus: NumsType) -> str:
+        """
+        Format CPU numbers into a human-readable string.
+
+        Args:
+            cpus: The CPU numbers to format.
+
+        Returns:
+            A string summarizing the CPUs numbers.
+        """
 
         cpus_range = Trivial.rangify(cpus)
         if len(cpus) == 1:
@@ -65,8 +121,16 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
                         break
         return msg
 
-    def _fmt_packages(self, packages):
-        """Format and return a string describing package numbers in the 'packages' list."""
+    def _fmt_packages(self, packages: NumsType) -> str:
+        """
+        Format package numbers into a human-readable string.
+
+        Args:
+            packages: The package numbers to format.
+
+        Returns:
+            A string summarizing the package numbers.
+        """
 
         allpkgs = self._cpuinfo.get_packages()
         if set(packages) == set(allpkgs):
@@ -79,8 +143,20 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
             return f"package {pkgs_range}"
         return f"packages {pkgs_range}"
 
-    def _fmt_dies(self, pkgs_dies):
-        """Format and return a string describing die numbers in the 'dies' dictionary."""
+    def _fmt_dies(self, pkgs_dies: DieNumsType) -> str:
+        """
+        Format die numbers into a human-readable string.
+
+        Args:
+            pkgs_dies: The die numbers to format.
+
+        Returns:
+            A string summarizing the die numbers.
+
+        Notes:
+            Die numbers are relative to package numbers, so 'pkgs_dies' is a dictionary where keys
+            are package numbers and values are lists of die numbers within the package.
+        """
 
         # Special case: provide a simpler and easier to read message when dealing with all
         # dies in all packages.
@@ -114,23 +190,29 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
 
         return ", ".join(result)
 
-    def _fmt_nums(self, sname, nums):
+    def _fmt_nums(self, sname: str, nums: NumsType | DieNumsType) -> str:
         """
-        Formats and returns a string describing CPU, die, or package numbers in the 'nums' list (CPU
-        or package case) or dictionary (die case)
+        Format and return a human-readable string describing CPU, die, or package numbers.
+
+        Args:
+            sname: Scope name, expected to be "CPU", "package", or "die".
+            nums: The CPU, die, or package numbers to format.
+
+        Returns:
+            Human-readable string summarizing the CPU, die, or package numbers.
         """
 
         if sname == "CPU":
-            return self._fmt_cpus(nums)
+            return self._fmt_cpus(nums) # type: ignore[arg-type]
         if sname == "package":
-            return self._fmt_packages(nums)
+            return self._fmt_packages(nums) # type: ignore[arg-type]
         if sname == "die":
             # Use package formatting if there is only one die per package.
             if self._cpuinfo.get_dies_count(package=0) == 1:
-                return self._fmt_packages(nums)
-            return self._fmt_dies(nums)
+                return self._fmt_packages(nums) # type: ignore[arg-type]
+            return self._fmt_dies(nums) # type: ignore[arg-type]
 
-        raise Error(f"BUG: unexpected scope name {sname} for message formatting")
+        raise Error(f"BUG: Unexpected scope name {sname} for message formatting")
 
     def _format_value_human(self, _, prop, val):
         """Format value 'val' of property described by 'prop' into the "human" format."""
@@ -515,33 +597,6 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         if self._fmt == "human":
             return self._print_aggr_pinfo_human(aggr_pinfo, group=group, action=action)
         return self._print_aggr_pinfo_yaml(aggr_pinfo)
-
-    def __init__(self, pobj, cpuinfo, fobj=None, fmt="human"):
-        """
-        Initialize a class instance. The arguments are as follows.
-          * pobj - a "properties" object ('PStates', 'CStates', etc) to print the properties for.
-          * cpuinfo - a 'CPUInfo' object corresponding to the host the properties are read from.
-          * fobj - a file object to print the output to (standard output by default).
-          * fmt - the printing format.
-
-        The following formats are supported.
-          * human - a human-friendly, human-readable print format.
-          * yaml - print in YAML format.
-        """
-
-        self._pobj = pobj
-        self._cpuinfo = cpuinfo
-        self._fobj = fobj
-        self._fmt = fmt
-
-        formats = {"human", "yaml"}
-        if self._fmt not in formats:
-            formats = ", ".join(formats)
-            raise Error(f"unsupported format '{self._fmt}', supported formats are: {formats}")
-
-    def close(self):
-        """Uninitialize the class object."""
-        ClassHelpers.close(self, unref_attrs=("_fobj", "_cpuinfo", "_pobj"))
 
 class PStatesPrinter(_PropsPrinter):
     """This class provides API for printing P-states information."""

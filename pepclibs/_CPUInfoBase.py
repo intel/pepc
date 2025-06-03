@@ -26,7 +26,7 @@ from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorNotFou
 from pepclibs._CPUInfoBaseTypes import CPUInfoTypedDict
 if typing.TYPE_CHECKING:
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
-    from pepclibs._CPUInfoBaseTypes import CPUInfoKeyType, ScopeNameType, HybridCPUTypedDict
+    from pepclibs._CPUInfoBaseTypes import CPUInfoKeyType, ScopeNameType
     from pepclibs._CPUInfoBaseTypes import HybridCPUKeyType, HybridCPUKeyInfoType
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
@@ -85,7 +85,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         # Set of online and offline CPUs.
         self._all_cpus_set: set[int] = set()
         # Dictionary of P-core/E-core CPUs.
-        self._hybrid_cpus: HybridCPUTypedDict = {}
+        self._hybrid_cpus: dict[HybridCPUKeyType, list[int]] = {}
 
         # Per-package compute die numbers (dies with CPUs) and I/O die numbers (dies without CPUs).
         self._compute_dies: dict[int, set[int]] = {}
@@ -673,7 +673,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         ecores = [cpu for cpu in self._hybrid_cpus["ecore"] if cpu not in no_l3]
         self._hybrid_cpus["ecore"] = ecores
 
-    def _get_hybrid_cpus(self) -> HybridCPUTypedDict:
+    def _get_hybrid_cpus(self) -> dict[HybridCPUKeyType, list[int]]:
         """
         Build and return a dictionary mapping hybrid CPU types to their corresponding CPU numbers.
 
