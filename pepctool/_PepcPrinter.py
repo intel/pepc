@@ -280,44 +280,46 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         if prop["type"] in ("int", "float"):
             return _format_unit(val, unit) # type: ignore[arg-type]
 
-        if prop["type"] == "list[str]":
-            val = ", ".join(cast(list[str], val))
-        elif prop["type"] in ("list[int]", "list[float]"):
-            val = cast(list[float | int], val)
-            step = _detect_progression(val, 4)
-            tar = False
+        result = ""
 
-            if len(val) == 1:
-                val = _format_unit(val[0], unit)
-            elif not step and len(val) > 1:
+        if prop["type"] == "list[str]":
+            result = ", ".join(cast(list[str], val))
+        elif prop["type"] in ("list[int]", "list[float]"):
+            cval = cast(list[float | int], val)
+            step = _detect_progression(cval, 4)
+            has_tar = False
+
+            if len(cval) == 1:
+                result = _format_unit(cval[0], unit)
+            elif not step and len(cval) > 1:
                 # The frequency numbers are expected to be sorted in the ascending order. The last
                 # frequency number is often the Turbo Activation Ration (TAR) - a value just
                 # slightly higher than the base frequency to activate turbo. Detect this situation
                 # and use concise notation for it too.
-                step = _detect_progression(val[:-1], 3)
+                step = _detect_progression(cval[:-1], 3)
                 if not step:
-                    val = ", ".join([_format_unit(v, unit) for v in val])
+                    result = ", ".join([_format_unit(v, unit) for v in cval])
                 else:
-                    tar = True
+                    has_tar = True
 
             if step:
                 # This is an arithmetic progression, use concise notation.
-                first = _format_unit(val[0], unit)
-                if tar:
-                    last = _format_unit(val[-2], unit)
-                    tar = _format_unit(val[-1], unit)
+                first = _format_unit(cval[0], unit)
+                if has_tar:
+                    last = _format_unit(cval[-2], unit)
+                    tar = _format_unit(cval[-1], unit)
                 else:
-                    last = _format_unit(val[-1], unit)
+                    last = _format_unit(cval[-1], unit)
                     tar = None
 
-                step = _format_unit(step, unit)
-                val = f"{first} - {last} with step {step}"
-                if tar:
-                    val += f", {tar}"
+                step_str = _format_unit(step, unit)
+                result = f"{first} - {last} with step {step_str}"
+                if has_tar:
+                    result += f", {tar}"
         else:
-            raise Error(f"BUG: property {prop['name']} as unsupported type '{prop['type']}")
+            raise Error(f"BUG: Property {prop['name']} as unsupported type '{prop['type']}")
 
-        return val
+        return result
 
     def _print_prop_human(self, pname, prop, sname, val, nums, action=None, prefix=None):
         """
