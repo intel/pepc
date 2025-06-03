@@ -36,12 +36,10 @@ MSR_PKG_CST_CONFIG_CONTROL = 0xE2
 #
 # Ice Lake and Granite Rapids Xeons.
 _ICX_PKG_CST_LIMITS = {"codes": {"PC0": 0, "PC2": 1, "PC6": 2, "unlimited": 7},
-                       "aliases": {"PC6N": "PC6"},
                        "bits": (2, 0)}
 # Emerald Rapids, Sapphire Rapids, Cooper Lake, Cascade Lake, Sky Lake Xeons. Knights Mill and
 # Knights Landing Xeon Phis.
-_SKX_PKG_CST_LIMITS = {"codes": {"PC0": 0, "PC2": 1, "PC6N": 2, "PC6R": 3, "unlimited": 7},
-                       "aliases": {"PC6": "PC6R"},
+_SKX_PKG_CST_LIMITS = {"codes": {"PC0": 0, "PC2": 1, "PC6": 2, "PC6R": 3, "unlimited": 7},
                        "bits": (2, 0)}
 # Broadwell-D Xeon.
 _BDWD_PKG_CST_LIMITS = {"codes": {"PC0": 0, "PC2": 1, "PC3": 2, "PC6": 3}, "bits": (3, 0)}
@@ -49,8 +47,7 @@ _BDWD_PKG_CST_LIMITS = {"codes": {"PC0": 0, "PC2": 1, "PC3": 2, "PC6": 3}, "bits
 _HSX_PKG_CST_LIMITS = {"codes": {"PC0": 0, "PC2": 1, "PC3": 2, "PC6": 3, "unlimited": 7},
                        "bits": (2, 0)}
 # Ivy Bridge Xeon (Ivy Town).
-_IVT_PKG_CST_LIMITS = {"codes": {"PC0": 0, "PC2": 1, "PC6N": 2, "PC6R": 3, "unlimited": 7},
-                       "aliases": {"PC6": "PC6R"},
+_IVT_PKG_CST_LIMITS = {"codes": {"PC0": 0, "PC2": 1, "PC6": 2, "PC6R": 3, "unlimited": 7},
                        "bits": (2, 0)}
 
 #
@@ -151,7 +148,6 @@ FEATURES = {
         "vfms": tuple(_PKG_CST_LIMITS.keys()),
         "type": "dict",
         "vals": None,
-        "aliases": {},
         "bits": None,
     },
     "pkg_cstate_limit_lock":  {
@@ -206,10 +202,6 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
         the package C-state information dictionary. Here are the 'info' dictionary keys.
           * limit - the package C-state limit name (small letters, e.g., PC0).
           * limits - list of possible package C-state limits.
-          * aliases - some package C-state may have multiple names, which means the same limit. This
-                      module uses one name as the primary name, and it is provided in the 'limits'
-                      list. The other names are considered to be aliases, and they are provided in
-                      the 'aliases'.
         """
 
         finfo = self._features["pkg_cstate_limit"]
@@ -237,8 +229,7 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
                 limit = finfo["rvals"][code]
 
             res = {"pkg_cstate_limit" : limit,
-                   "pkg_cstate_limits" : list(finfo["vals"].keys()),
-                   "pkg_cstate_limit_aliases" : finfo["aliases"]}
+                   "pkg_cstate_limits" : list(finfo["vals"].keys())}
             yield (cpu, res)
 
     def _set_pkg_cstate_limit(self, limit, cpus="all"):
@@ -278,8 +269,6 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
         finfo = self._features["pkg_cstate_limit"]
         finfo["bits"] = cpumodel_info["bits"]
         finfo["vals"] = cpumodel_info["codes"]
-        if "aliases" in cpumodel_info:
-            finfo["aliases"] = cpumodel_info["aliases"]
 
     def _init_features_dict(self):
         """Initialize the 'features' dictionary with platform-specific information."""

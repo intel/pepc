@@ -120,7 +120,6 @@ def _check_feature_val(val, name, msr):
             if name == "pkg_cstate_limit":
                 assert isinstance(val["pkg_cstate_limit"], str)
                 assert isinstance(val["pkg_cstate_limits"], list)
-                assert isinstance(val["pkg_cstate_limit_aliases"], dict)
         else:
             assert False, f"Unknown '{name}' feature type: {type(val)}"
 

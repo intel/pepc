@@ -36,7 +36,7 @@ PROPS = {
         "sname": None,
         "mnames": ("msr",),
         "writable": True,
-        "subprops": ("pkg_cstate_limit_lock", "pkg_cstate_limits", "pkg_cstate_limit_aliases"),
+        "subprops": ("pkg_cstate_limit_lock", "pkg_cstate_limits"),
     },
     "pkg_cstate_limit_lock": {
         "name": "Package C-state limit lock",
@@ -48,14 +48,6 @@ PROPS = {
     "pkg_cstate_limits": {
         "name": "Available package C-state limits",
         "type": "list[str]",
-        # Conceptually this is per-package, but in practice it is global on all current platforms.
-        "sname": "global",
-        "mnames": ("doc",),
-        "writable": False,
-    },
-    "pkg_cstate_limit_aliases": {
-        "name": "Package C-state limit aliases",
-        "type": "dict[str,str]",
         # Conceptually this is per-package, but in practice it is global on all current platforms.
         "sname": "global",
         "mnames": ("doc",),

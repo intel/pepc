@@ -167,12 +167,6 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
         if not finfo.get("vals"):
             return val
 
-        if "aliases" in finfo:
-            if val in finfo["aliases"]:
-                val = finfo["aliases"][val]
-            elif val.lower() in finfo["aliases_nocase"]:
-                val = finfo["aliases_nocase"][val.lower()]
-
         if finfo["type"] == "bool":
             # Treat boolean 'True' as "on", and 'False' as "off".
             if val is True:
@@ -186,7 +180,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
         if "vals_nocase" in finfo and val.lower() in finfo["vals_nocase"]:
             return finfo["vals_nocase"][val.lower()]
 
-        vals = list(finfo["vals"]) + list(finfo.get("aliases", {}))
+        vals = list(finfo["vals"])
         vals_str = ", ".join(vals)
         raise Error(f"bad value '{val}' for the '{finfo['name']}' feature.\nUse one of: {vals_str}")
 
@@ -429,11 +423,6 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
                         finfo["vals_nocase"][name] = code
                         finfo["rvals_nocase"][code] = name
 
-            if "aliases" in finfo:
-                finfo["aliases_nocase"] = {}
-                for alias, name in finfo["aliases"].items():
-                    finfo["aliases_nocase"][alias.lower()] = name
-
     def _init_public_features_dict(self):
         """Create the public version of the features dictionary ('self.features')."""
 
@@ -447,8 +436,6 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
             if "vals_nocase" in finfo:
                 del finfo["vals_nocase"]
                 del finfo["rvals_nocase"]
-            if "aliases_nocase" in finfo:
-                del finfo["aliases_nocase"]
 
     def _init_features_dict(self):
         """

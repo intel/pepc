@@ -17,5 +17,6 @@ from pepclibs import PStates, CStates
 
 # pylint: disable-next=unused-import
 from pepclibs._PropsClassBaseTypes import NumsType, DieNumsType
+from pepclibs._PropsClassBaseTypes import PropertyTypedDict, PropertyValueType
 
 PropsType = Union[PStates.PStates, CStates.CStates]

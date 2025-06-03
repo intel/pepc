@@ -16,7 +16,7 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import sys
 import typing
-from typing import IO, Literal, get_args
+from typing import IO, Literal, get_args, cast
 
 from pepctool import _PepcCommon
 from pepclibs import CStates, CPUInfo
@@ -24,7 +24,8 @@ from pepclibs.helperlibs import Logging, ClassHelpers, Human, YAML, Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 
 if typing.TYPE_CHECKING:
-    from pepclibs.Props import PropsType, NumsType, DieNumsType
+    from pepclibs.Props import PropsType, NumsType, DieNumsType, PropertyTypedDict
+    from pepclibs.Props import PropertyValueType, PropertyTypedDict
 
 _PrintFormatType = Literal["human", "yaml"]
 
@@ -214,13 +215,30 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
 
         raise Error(f"BUG: Unexpected scope name {sname} for message formatting")
 
-    def _format_value_human(self, _, prop, val):
-        """Format value 'val' of property described by 'prop' into the "human" format."""
+    def _format_value_human(self, _, prop: PropertyTypedDict, val: PropertyValueType) -> str:
+        """
+        Format a property value into a human-readable string based on its type and metadata.
 
-        def _detect_progression(vals, min_len):
+        Args:
+            _ : Unused parameter.
+            prop: The property description dictionary containing metadata about the property (e.g.,
+                  name, type, unit).
+            val: The value of the property to format.
+
+        Returns:
+            Human-readable representation of the value.
+        """
+
+        def _detect_progression(vals: list[float | int], min_len: int) -> float | int | None:
             """
-            Detect if list of numbers 'vals' is an arithmetic progression, return the step if it is,
-            and 'None' otherwise.
+            Determine if a list of numbers forms an arithmetic progression.
+
+            Args:
+                vals: List of numeric values to check.
+                min_len: Minimum length of the list to consider it for progression detection.
+
+            Returns:
+                The common difference if the list is an arithmetic progression, or None otherwise.
             """
 
             if len(vals) < min_len:
@@ -230,10 +248,20 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
             for idx, val in enumerate(vals[:-1]):
                 if vals[idx + 1] - val != step:
                     return None
+
             return step
 
-        def _format_unit(val, unit):
-            """Format values with unit."""
+        def _format_unit(val: int | float, unit: str | None) -> str:
+            """
+            Format a numeric value with its unit, applying SI prefixes when appropriate.
+
+            Args:
+                val: Numeric value to format.
+                unit: Unit of measurement, e.g., "Hz", "W", "s". If None, no unit is applied.
+
+            Returns:
+                Formatted string representing the value with its unit.
+            """
 
             if unit:
                 if unit == "s" and val > 100:
@@ -247,16 +275,15 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         unit = prop.get("unit")
 
         if prop["type"] in ("str", "bool"):
-            return val
+            return str(val)
 
         if prop["type"] in ("int", "float"):
-            return _format_unit(val, unit)
+            return _format_unit(val, unit) # type: ignore[arg-type]
 
-        if prop["type"].startswith("dict["):
-            val = ", ".join(f"{k}={_format_unit(v, unit)}" for k, v in val)
-        elif prop["type"] == "list[str]":
-            val = ", ".join([_format_unit(v, unit) for v in val])
+        if prop["type"] == "list[str]":
+            val = ", ".join(cast(list[str], val))
         elif prop["type"] in ("list[int]", "list[float]"):
+            val = cast(list[float | int], val)
             step = _detect_progression(val, 4)
             tar = False
 
