@@ -43,7 +43,7 @@ def cpu_hotplug_online_command(args, pman):
     if not args.cpus:
         raise Error("please, specify the CPUs to online")
 
-    with CPUOnline.CPUOnline(progress=Logging.INFO, pman=pman) as onl:
+    with CPUOnline.CPUOnline(loglevel=Logging.INFO, pman=pman) as onl:
         onl.online(cpus=_PepcCommon.parse_cpus_string(args.cpus))
 
 def cpu_hotplug_offline_command(args, pman):
@@ -54,7 +54,7 @@ def cpu_hotplug_offline_command(args, pman):
     """
 
     with CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
-         CPUOnline.CPUOnline(progress=Logging.INFO, pman=pman, cpuinfo=cpuinfo) as onl:
+         CPUOnline.CPUOnline(loglevel=Logging.INFO, pman=pman, cpuinfo=cpuinfo) as onl:
 
         # Some CPUs may not support offlining. Suppose it is CPU 0. If CPU 0 is in the 'cpus' list,
         # the 'onl.offline()' method will error out. This is OK in a situation when the user

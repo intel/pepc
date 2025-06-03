@@ -1,41 +1,97 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2021 Intel Corporation
+# Copyright (C) 2020-2025 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
-This module provides an API for onlining and offlining CPUs.
+Provide API for onlining and offlining CPUs.
 """
 
+from __future__ import annotations # Remove when switching to Python 3.10+.
+
+import typing
+from typing import Iterable, Literal
 from pathlib import Path
 from pepclibs.helperlibs import Logging, LocalProcessManager, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
 from pepclibs import CPUInfo
 
+if typing.TYPE_CHECKING:
+    from pepclibs.helperlibs.ProcessManager import ProcessManagerType
+
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
 class CPUOnline(ClassHelpers.SimpleCloseContext):
     """
-    This class provides API for onlining and offlining CPUs.
-
-    Public methods overview.
-      * 'online()'
-      * 'offline()'
-      * 'is_online()'
+    Provides API for onlining and offlining CPUs.
     """
 
-    def _get_cpuinfo(self):
-        """Returns a 'CPUInfo.CPUInfo()' object."""
+    def __init__(self,
+                 loglevel: int | None = None,
+                 pman: ProcessManagerType | None = None,
+                 cpuinfo: CPUInfo.CPUInfo | None = None):
+        """
+        Initialize a class instance.
+
+        Args:
+            progress: Set logging level for progress messages. Defaults to 'DEBUG'.
+            pman: The process manager object for the host to online/offline CPUs. If not provided,
+                  a 'LocalProcessManager.LocalProcessManager()' object is created.
+            cpuinfo: An instance of 'CPUInfo.CPUInfo()' to use. If not provided, a new instance is
+                     created.
+        """
+
+        if loglevel is None:
+            self._loglevel = Logging.DEBUG
+        else:
+            self._loglevel = loglevel
+
+        self._pman: ProcessManagerType
+        if not pman:
+            self._pman = LocalProcessManager.LocalProcessManager()
+        else:
+            self._pman = pman
+
+        self._cpuinfo = cpuinfo
+
+        self._close_pman = pman is None
+        self._close_cpuinfo = cpuinfo is None
+
+        self._sysfs_base = Path("/sys/devices/system/cpu")
+
+    def close(self):
+        """Uninitialize the class object."""
+
+        ClassHelpers.close(self, close_attrs=("_cpuinfo", "_pman",))
+
+    def _get_cpuinfo(self) -> CPUInfo.CPUInfo:
+        """
+        Return a 'CPUInfo' object.
+
+        Returns:
+            CPUInfo: A 'CPUInfo' object describing the target host CPU.
+        """
 
         if not self._cpuinfo:
             self._cpuinfo = CPUInfo.CPUInfo(pman=self._pman)
+
         return self._cpuinfo
 
-    def _verify_path(self, cpu, path):
-        """Verify if path 'path' exists."""
+    def _verify_path(self, cpu: int, path: Path):
+        """
+        Check if the 'online' sysfs path exists for the given CPU.
+
+        Args:
+            cpu: The CPU number to verify the path for.
+            path: Path to the 'online' sysfs file for the CPU.
+
+        Raises:
+            ErrorNotSupported: If the path does not exist, which means that the CPU does not support
+                               onlining/offlining.
+        """
 
         if not self._pman.is_file(path):
             if self._pman.is_dir(path.parent):
@@ -43,35 +99,71 @@ class CPUOnline(ClassHelpers.SimpleCloseContext):
                                         f"{self._pman.hostmsg}")
             raise Error(f"CPU {cpu} does not exist{self._pman.hostmsg}")
 
-    def _validate_hotplugged_cpus(self, cpus, state):
-        """Validate that CPUs 'cpus' state is the same in sysfs."""
+    def _validate_hotplugged_cpus(self, cpus: list[int], state: bool):
+        """
+        Validate that the specified CPUs are in the expected online or offline state.
+
+        Args:
+            cpus: List of CPU numbers to validate.
+            state: The expected state of the CPUs: True for online, False for offline.
+        """
+
+        cpuinfo = self._get_cpuinfo()
 
         if state:
-            valid = set(self._cpuinfo.get_cpus())
+            valid = set(cpuinfo.get_cpus())
         else:
-            valid = set(self._cpuinfo.get_offline_cpus())
+            valid = set(cpuinfo.get_offline_cpus())
 
         for cpu in cpus:
             if cpu not in valid:
                 state_str = "online" if state else "offline"
-                raise Error(f"failed to {state_str} CPU{cpu}")
+                raise Error(f"Failed to {state_str} CPU{cpu}")
 
-    def _get_online(self, path):
-        """Read the 'online' sysfs file at 'path'."""
+    def _get_online(self, path: Path) -> str:
+        """
+        Read the 'online' sysfs file at the given path.
+
+        Args:
+            path: Path to the 'online' sysfs file.
+
+        Returns:
+            The online state as a string ("0" or "1").
+        """
 
         with self._pman.open(path, "r") as fobj:
             state = fobj.read().strip()
+
         if state in ("0", "1"):
             return state
-        raise Error(f"unexpected value '{state}' in '{path}'{self._pman.hostmsg}")
 
-    def _get_path(self, cpu):
-        """Build and return path to the 'online' sysfs file for CPU number 'cpu'."""
+        raise Error(f"Unexpected value '{state}' in '{path}'{self._pman.hostmsg}")
+
+    def _get_path(self, cpu: int) -> Path:
+        """
+        Construct and return the sysfs path to the 'online' file for the specified CPU.
+
+        Args:
+            cpu: CPU number for which to build the sysfs path.
+
+        Returns:
+            Path to the 'online' sysfs file for the given CPU.
+        """
 
         return self._sysfs_base / f"cpu{cpu}" / "online"
 
-    def _toggle(self, cpus, online, skip_unsupported):
-        """Implements onlining and offlining."""
+    def _toggle(self, cpus: Iterable[int] | Literal["all"], online: bool, skip_unsupported: bool):
+        """
+        Toggle the online or offline state of specified CPUs.
+
+        Args:
+            cpus: CPU numbers to toggle. Special value 'all' means "all CPUs".
+            online: If True, bring CPUs online; if False, take CPUs offline.
+            skip_unsupported: If True, skip CPUs that do not support hotplugging.
+
+        Raises:
+            ErrorNotSupported: If a CPU does not support hotplugging and skip_unsupported is False.
+        """
 
         cpuinfo = self._get_cpuinfo()
         cpuinfo.cpus_hotplugged()
@@ -123,31 +215,62 @@ class CPUOnline(ClassHelpers.SimpleCloseContext):
                 with self._pman.open(path, "r+") as fobj:
                     fobj.write(data)
             except Error as err:
-                raise Error(f"failed to {state_str} CPU{cpu}:\n{err.indent(2)}") from err
+                raise Error(f"Failed to {state_str} CPU{cpu}:\n{err.indent(2)}") from err
             toggled.append(cpu)
 
         if toggled:
             cpuinfo.cpus_hotplugged()
             self._validate_hotplugged_cpus(toggled, online)
 
-    def online(self, cpus="all", skip_unsupported=False):
+    def online(self, cpus: Iterable[int] | Literal["all"] = "all", skip_unsupported: bool = False):
         """
-        Bring CPUs in 'cpus' online. The arguments are as follows.
-          * cpus - collection of integer CPU numbers. Special value 'all' means "all CPUs".
-          * skip_unsupported - by default, if a CPU in 'cpus' does not support onlining/offlining,
-                               this method raises 'ErrorNotSupported()'. If 'skip_unsupported' is
-                               'True', the CPU is just skipped without raising an exception.
+        Bring the specified CPUs online.
+
+        Args:
+            cpus: CPU numbers to bring online. Special value 'all' means "all CPUs".
+            skip_unsupported: Skip CPUs that do not support onlining if True; otherwise, raise an
+                              exception.
+
+        Raises:
+            ErrorNotSupported: If a CPU does not support onlining/offlining and 'skip_unsupported'
+                               is False.
         """
 
         self._toggle(cpus, True, skip_unsupported)
 
-    def offline(self, cpus="all", skip_unsupported=False):
-        """The opposite to 'online()'."""
+    def offline(self, cpus: Iterable[int] | Literal["all"] = "all", skip_unsupported: bool = False):
+        """
+        Set specified CPUs offline.
+
+        Args:
+            cpus: CPU numbers to set offline. Special value 'all' means "all CPUs".
+            skip_unsupported: Skip CPUs that do not support onlining if True; otherwise, raise an
+                              exception.
+
+        Raises:
+            Exception: If a CPU does not support onlining/offlining and 'skip_unsupported'
+                       is False.
+        """
 
         self._toggle(cpus, False, skip_unsupported)
 
-    def is_online(self, cpu):
-        """Returns 'True' if CPU number 'cpu' is online and 'False' otherwise."""
+    def is_online(self, cpu: int) -> bool:
+        """
+        Check if the specified CPU is online.
+
+        Args:
+            cpu: CPU number to check.
+
+        Returns:
+            True if the CPU is online, False otherwise.
+
+        Raises:
+            ErrorNotFound: If the CPU path does not exist and is not due to hotplug being disabled.
+
+        Note:
+            If the hotplug subsystem is disabled and the "online" file is missing, assume the CPU is
+            online.
+        """
 
         path = self._get_path(cpu)
         try:
@@ -158,32 +281,3 @@ class CPUOnline(ClassHelpers.SimpleCloseContext):
             # Hotplug sub-system might be disabled, in that case there is no "online" file and the
             # CPU is online.
             return True
-
-    def __init__(self, progress=None, pman=None, cpuinfo=None):
-        """
-        The class constructor. The arguments are as follows.
-          * progress - controls the logging level for the progress messages. The default logging
-                       level is 'DEBUG'.
-          * pman - the process manager object that defines the host to run the measurements on.
-          * cpuinfo - a 'CPUInfo.CPUInfo()' object.
-        """
-
-        self._pman = pman
-        self._cpuinfo = cpuinfo
-
-        self._close_pman = pman is None
-        self._close_cpuinfo = cpuinfo is None
-
-        if progress is None:
-            progress = Logging.DEBUG
-
-        self._loglevel = progress
-        self._sysfs_base = Path("/sys/devices/system/cpu")
-
-        if not self._pman:
-            self._pman = LocalProcessManager.LocalProcessManager()
-
-    def close(self):
-        """Uninitialize the class object."""
-
-        ClassHelpers.close(self, close_attrs=("_cpuinfo", "_pman",))
