@@ -18,6 +18,7 @@ import sys
 import typing
 from typing import IO, Literal, get_args, cast
 
+from pepclibs._CPUInfoBaseTypes import ScopeNameType
 from pepctool import _PepcCommon
 from pepclibs import CStates, CPUInfo
 from pepclibs.helperlibs import Logging, ClassHelpers, Human, YAML, Trivial
@@ -321,34 +322,39 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
 
         return result
 
-    def _print_prop_human(self, pname, prop, sname, val, nums, action=None, prefix=None):
+    def _print_prop_human(self,
+                          pname: str,
+                          prop: PropertyTypedDict,
+                          sname: ScopeNameType,
+                          val: PropertyValueType,
+                          nums: NumsType | DieNumsType,
+                          action: str | None = None,
+                          prefix: str | None = None):
         """
-        Format and print a message about property 'prop' and its value 'val' in the "human" format.
-        The arguments are as follows.
-          * pname - name of the property to print.
-          * prop - the property information dictionary (for the property to print).
-          * sname - scope name corresponding to the API that was used for reading the property. Can
-                    be "die", "package", or "CPU" at the moment. Note, there is also
-                    'prop["sname"]', and this is the functional scope of the property, but it does
-                    not have to have the same value as 'sname'. For example, a property with "core"
-                    scope ('prop["sname"] == "core"') could have been read using the per-CPU API, so
-                    'sname' will be "CPU".
-          * nums - a list defining the CPU or package numbers where the property has value 'val'.
-                   But if 'sname' is "die", 'nums" is a dictionary with keys being package numbers
-                   and values being lists of die numbers within the package (the key).
-          * val - the value of property 'prop["name"]' on CPUs/dies/packages defined by 'num'.
-          * action - same as in 'print_props()'.
-          * prefix - a string to print before the property value message. This method prints a singe
-                     line, and 'prefix' is the string to prefix the line with.
+        Format and print a message about a property in the human-readable format.
+
+        Args:
+            pname: Name of the property to print.
+            prop: The property information dictionary.
+            sname: Scope name used for reading the property (e.g., "die", "package", "CPU").
+            val: Value of the property for the specified CPUs/dies/packages.
+            nums: The CPU, package, or die numbers where the property value applies.
+            action: An "action" word to include into the messages (nothing by default). For
+                    example, if 'action' is "set to", the messages will be like
+                    "property <pname> set to <value>".
+            prefix: An optional string to prepend to the message.
+
+        Notes:
+            - Omit CPU/die/package numbers in case of a global property.
+            - If the property value is None, indicate it is not supported.
+            - For non-numeric types, quote the value when printing with a suffix.
         """
 
-        if nums is None or prop["sname"] == "global":
-            # If there are no CPU/die/package numbers or this is a global property, just do not
-            # print any of the numbers.
+        if prop["sname"] == "global":
             sfx = ""
         else:
-            nums = self._fmt_nums(sname, nums)
-            sfx = f" for {nums}"
+            nums_str = self._fmt_nums(sname, nums)
+            sfx = f" for {nums_str}"
 
         msg = f"{prop['name']}: "
 
@@ -359,8 +365,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
             val = "not supported"
         else:
             val = self._format_value_human(pname, prop, val)
-            if val == "" and (prop["type"].startswith("list") or prop["type"].startswith("dict")):
-                # The list or dictionary is empty. Just do not print the line at all.
+            if val == "" and (prop["type"].startswith("list")):
                 return
 
             if sfx and prop["type"] not in {"int", "float", "list[int]", "list[float]"}:
@@ -380,7 +385,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         printed = 0
         for pname, pinfo in aggr_pinfo.items():
             for val, nums, in pinfo["vals"].items():
-                self._print_prop_human(pname, props[pname], pinfo["sname"], val, nums=nums,
+                self._print_prop_human(pname, props[pname], pinfo["sname"], val, nums,
                                        action=action, prefix=prefix)
                 printed += 1
 
