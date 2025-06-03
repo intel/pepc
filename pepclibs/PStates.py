@@ -94,7 +94,7 @@ PROPS: dict[str, PropertyTypedDict] = {
         "unit": "Hz",
         "type": "int",
         "sname": "CPU",
-        "mnames": ("sysfs",),
+        "mnames": ("sysfs", "cppc"),
         "writable": False,
     },
     "max_freq_limit": {
@@ -102,7 +102,7 @@ PROPS: dict[str, PropertyTypedDict] = {
         "unit": "Hz",
         "type": "int",
         "sname": "CPU",
-        "mnames": ("sysfs",),
+        "mnames": ("sysfs", "cppc"),
         "writable": False,
     },
     "base_freq": {
