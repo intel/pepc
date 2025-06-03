@@ -542,11 +542,20 @@ class PStates(_PropsClassBase.PropsClassBase):
         else:
             perf_iter = cpufreq_obj.get_min_perf_limit(cpus)
 
-        iter_zip = zip(base_freq_iter, nominal_perf_iter, perf_iter)
-        iterator = cast(Generator[tuple[tuple[int, int], tuple[int, int], tuple[int, int]],
-                                  None, None], iter_zip)
-        for (cpu, base_freq), (_, nominal_perf), (_, perf) in iterator:
-            yield cpu, (base_freq * perf) // nominal_perf
+        bclks_iter = self._get_bclks_cpus(cpus)
+
+        iter_zip = zip(base_freq_iter, nominal_perf_iter, perf_iter, bclks_iter)
+        iterator = cast(Generator[tuple[tuple[int, int], tuple[int, int], tuple[int, int],
+                                  tuple[int, int]], None, None], iter_zip)
+        for (cpu, base_freq), (_, nominal_perf), (_, perf), (_, bclk) in iterator:
+            freq = base_freq * perf // nominal_perf
+            # Align the frequency to the bus clock speed.
+            freq_rounded = freq - (freq % bclk)
+            if freq_rounded == 0:
+                raise ErrorNotSupported(f"Got freq = {base_freq}*{perf}//{nominal_perf} = {freq}, "
+                                        f"which results in in 0 Hz after rounding to the bus clock "
+                                        f"speed of {bclk} Hz")
+            yield cpu, freq_rounded
 
     def _get_min_oper_freq(self,
                            cpus: NumsType,
