@@ -16,26 +16,24 @@ Provide API for printing properties.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import sys
-import typing
 from typing import TypedDict, Iterable, IO, Literal, get_args, cast
 
 from pepclibs import CStates, CPUInfo
+from pepclibs._PropsClassBaseTypes import PVInfoTypedDict
 from pepclibs.helperlibs import Logging, ClassHelpers, Human, YAML, Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepctool import _PepcCommon, _OpTarget
 
 # pylint: disable-next=ungrouped-imports
 from pepclibs.Props import MechanismNameType
-
-if typing.TYPE_CHECKING:
-    from pepclibs.Props import PropsType,  ScopeNameType, AbsNumsType, RelNumsType
-    from pepclibs.Props import PropertyValueType, PropertyTypedDict
+from pepclibs.Props import PropsType, ScopeNameType, AbsNumsType, RelNumsType
+from pepclibs.Props import PropertyValueType, PropertyTypedDict
 
 _PrintFormatType = Literal["human", "yaml"]
 
-class _AggrSubPinfoType(TypedDict):
+class _AggrSubPinfoTypdDict(TypedDict):
     """
-    Type for the aggregate properties information sub-dictionary.
+    Type for the aggregate properties information sub-dictionary for human-readable output.
 
     Attributes:
         sname: Scope name used for reading the property (e.g., "CPU", "die", "package").
@@ -46,7 +44,46 @@ class _AggrSubPinfoType(TypedDict):
     sname: ScopeNameType
     vals: dict[PropertyValueType, AbsNumsType | RelNumsType]
 
-_AggrPinfoType = dict[MechanismNameType, dict[str, _AggrSubPinfoType]]
+# The aggregate properties information dictionary for human-readable output.
+_AggrPinfoType = dict[MechanismNameType, dict[str, _AggrSubPinfoTypdDict]]
+
+# Type of a property value in the YAML properties information dictionary.
+_YAMLPinfoValueType = int | float | str | list[int] | list[float] | list[str]
+
+class _YAMLPinfoValueTypedDict(TypedDict, total=False):
+    """
+    Type for property value in the YAML properties information dictionary.
+
+    Attributes:
+        value: The value of the property.
+        CPU: CPUs for which the property value applies.
+        die: Dies for which the property value applies.
+        package: Packages for which the property value applies.
+    """
+
+    value: _YAMLPinfoValueType
+    CPU: str
+    die: dict[int, str]
+    package: str
+
+class _YAMLSubPinfoTypedDict(TypedDict, total=False):
+    """
+    Type for aggregate properties information sub-dictionary for YAML output. Describes a singel
+    property and its value on one or multiple CPUs, dies, or packages.
+
+    Attributes:
+        mechanism: Name of the mechanism used for reading the property.
+        unit: The unit of the property value (e.g., "Hz", "W").
+        values: A list of dictionaries mapping property values to their corresponding CPU, die, or
+                package.
+    """
+
+    mechanism: MechanismNameType
+    unit: str
+    values: list[_YAMLPinfoValueTypedDict]
+
+# The aggregate properties information dictionary for YAML output.
+_YAMLPinfoType = dict[str, _YAMLSubPinfoTypedDict]
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
@@ -395,13 +432,29 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         msg += f"{val}{sfx}"
         self._print(msg)
 
-    def _do_print_aggr_pinfo_human(self, aggr_pinfo, action=None, prefix=None):
-        """A helper for '_print_aggr_pinfo_human()' implementing the printing part."""
+    def _do_print_aggr_pinfo_human(self,
+                                   apinfo: dict[str, _AggrSubPinfoTypdDict],
+                                   action: str | None = None,
+                                   prefix: str | None = None) -> int:
+        """
+        Print a property information sub-dictionary of the aggregated property information
+        dictionary in a human-readable format.
+
+        Args:
+            apinfo: A sub-dictionary of the aggregate properties information dictionary to print.
+            action: An "action" word to include into the messages (nothing by default). For
+                    example, if 'action' is "set to", the messages will be like
+                    "property <pname> set to <value>".
+            prefix: An optional string to prepend to the message.
+
+        Returns:
+            The number of property entries printed.
+        """
 
         props = self._pobj.props
 
         printed = 0
-        for pname, pinfo in aggr_pinfo.items():
+        for pname, pinfo in apinfo.items():
             for val, nums, in pinfo["vals"].items():
                 self._print_prop_human(pname, props[pname], pinfo["sname"], val, nums,
                                        action=action, prefix=prefix)
@@ -409,12 +462,23 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
 
         return printed
 
-    def _print_aggr_pinfo_human(self, aggr_pinfo, group=False, action=None):
+    def _print_aggr_pinfo_human(self,
+                                aggr_pinfo: _AggrPinfoType,
+                                group: bool = False,
+                                action: str | None = None) -> int:
         """
-        Print properties in the "human" format. The arguments are as follows.
-          * aggr_pinfo - the aggregate properties information dictionary.
-          * group - same as in 'print_props()'.
-          * action - same as in 'print_props()'.
+        Print an aggregate property information dictionary in a human-readable format.
+
+        Args:
+            aggr_pinfo: The aggregate properties information dictionary to print.
+            group: If True, properties are grouped and printed by their mechanism name. If False,
+                   properties are printed without grouping.
+            action: An "action" word to include into the messages (nothing by default). For
+                    example, if 'action' is "set to", the messages will be like
+                    "property <pname> set to <value>".
+
+        Returns:
+            The total number of properties printed.
         """
 
         if group:
@@ -427,54 +491,84 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
             if group:
                 self._print(f"Source: {self._pobj.get_mechanism_descr(mname)}")
             printed += self._do_print_aggr_pinfo_human(pinfo, action=action, prefix=prefix)
+
         return printed
 
-    def _yaml_dump(self, info):
-        """Dump dictionary 'info' in YAML format."""
+    def _yaml_dump(self, yaml_pinfo: _YAMLPinfoType):
+        """
+        Dump an aggregate properties information dictionary in YAML format to a file object or
+        stdout.
+
+        Args:
+            yaml_pinfo: The aggregate properties information dictionary to dump.
+        """
 
         fobj = self._fobj
         if not fobj:
             fobj = sys.stdout
 
-        YAML.dump(info, fobj)
+        YAML.dump(yaml_pinfo, fobj)
 
-    def _print_aggr_pinfo_yaml(self, aggr_pinfo):
-        """Print the aggregate properties information in YAML format."""
+    def _print_aggr_pinfo_yaml(self, aggr_pinfo: _AggrPinfoType) -> int:
+        """
+        Print aggregate properties information dictionary in YAML format.
 
-        yaml_pinfo = {}
+        Args:
+            aggr_pinfo: The aggregate properties information dictionary.
 
-        for pinfo in aggr_pinfo.values():
-            for pname, pinfo in pinfo.items():
+        Returns:
+            The number of printed properties.
+        """
+
+        yaml_pinfo: _YAMLPinfoType = {}
+
+        for mname, ainfo in aggr_pinfo.items():
+            for pname, pinfo in ainfo.items():
+                # Only a sub-set of scope names is used.
                 sname = pinfo["sname"]
+
                 for val, nums in pinfo["vals"].items():
                     if val is None:
                         val = "not supported"
 
                     if pname not in yaml_pinfo:
-                        yaml_pinfo[pname] = []
+                        yaml_pinfo[pname] = {}
+
+                    yaml_pinfo[pname]["mechanism"] = mname
 
                     prop = self._pobj.props[pname]
-                    if prop["type"].startswith("list["):
-                        val = list(val)
-                    if prop["type"].startswith("dict["):
-                        val = dict(val)
+                    unit = prop.get("unit")
+                    if unit:
+                        yaml_pinfo[pname]["unit"] = unit
+
+                    if "values" not in yaml_pinfo[pname]:
+                        yaml_pinfo[pname]["values"] = []
 
                     if sname != "die":
-                        nums_range = Trivial.rangify(nums)
+                        ragified_str = Trivial.rangify(cast(list[int], nums))
+                        sname_wa = cast(Literal["CPU"], sname)
+                        yaml_pinfo[pname]["values"].append({"value": val, sname_wa: ragified_str})
                     else:
-                        nums_range = {}
-                        for pkg, dies in nums.items():
-                            nums_range[pkg] = Trivial.rangify(dies)
-
-                    yaml_pinfo[pname].append({"value" : val, sname: nums_range})
+                        rangified_dict: dict[int, str] = {}
+                        nums_dict = cast(dict[int, list[int]], nums)
+                        for pkg, dies in nums_dict.items():
+                            rangified_dict[pkg] = Trivial.rangify(dies)
+                        yaml_pinfo[pname]["values"].append({"value": val, sname: rangified_dict})
 
         self._yaml_dump(yaml_pinfo)
         return len(yaml_pinfo)
 
     @staticmethod
-    def _get_pvinfo_num(pvinfo):
+    def _get_pvinfo_num(pvinfo: PVInfoTypedDict) -> tuple[ScopeNameType, int | tuple[int, int]]:
         """
-        Return CPU, die, or package number and the level name from 'pvinfo' (property value info).
+        Extract and return a tuple containing the scope name and the CPU/die/package number from
+        the property value information dictionary.
+
+        Args:
+            pvinfo: The property value information dictionary.
+
+        Returns:
+            A tuple of scope name and the CPU/die/package number.
         """
 
         if "cpu" in pvinfo:
@@ -484,14 +578,31 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         if "package" in pvinfo:
             return "package", pvinfo["package"]
 
-        raise Error("BUG: bad property value dictionary, no 'cpu', 'die', or 'package' key found\n"
+        raise Error("BUG: Bad property value dictionary, no 'cpu', 'die', or 'package' key found\n"
                     "The dictionary: {pvinfo}")
 
-    def _build_aggr_pinfo_pname(self, pname, optar, mnames, skip_unsupported, override_sname=None) -> _AggrPinfoType:
-        """Implement '_build_aggr_pinfo()' for one property."""
+    def _build_aggr_pinfo_pname(self,
+                                pname: str,
+                                optar: _OpTarget.OpTarget,
+                                mnames: Iterable[MechanismNameType],
+                                skip_unsupported: bool,
+                                override_sname: ScopeNameType | None = None) -> _AggrPinfoType:
+        """
+        Build and return an aggregate properties dictionary for a single property.
+
+        Args:
+            pname: Name of the property to aggregate.
+            optar: Operation target specifying the hardware scope.
+            mnames: Mechanism names to use for reading properties.
+            skip_unsupported: Whether to skip unsupported properties.
+            override_sname: Override the default scope name for the property.
+
+        Returns:
+            The aggregate properties dictionary for the property.
+        """
 
         prop = self._pobj.props[pname]
-        apinfo = {}
+        apinfo: _AggrPinfoType = {}
 
         for pvinfo in _PepcCommon.get_prop_sname(self._pobj, pname, optar, mnames,
                                                  override_sname=override_sname):
@@ -511,10 +622,15 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
                 if val is not None:
                     val = tuple((k, v) for k, v in val.items())
 
+            num_tuple: tuple[int, int]
+            num_int: int
+
             if sname == "die":
-                package, die = num
+                num_tuple = cast(tuple[int, int], num)
+                package, die = num_tuple
             else:
-                package, die = None, None
+                package, die = -1, -1
+                num_int = cast(int, num)
 
             if mname not in apinfo:
                 apinfo[mname] = {}
@@ -527,17 +643,19 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
                 if sname == "die":
                     pinfo["vals"][val] = {package: [die]}
                 else:
-                    pinfo["vals"][val] = [num]
+                    pinfo["vals"][val] = [num_int]
             else:
                 if sname == "die":
-                    if package not in pinfo["vals"][val]:
-                        pinfo["vals"][val][package] = []
-                    pinfo["vals"][val][package].append(die)
+                    dies = cast(dict[int, list[int]], pinfo["vals"][val])
+                    if package not in dies:
+                        dies[package] = []
+                    dies[package].append(die)
                 else:
-                    pinfo["vals"][val].append(num)
+                    nums = cast(list[int], pinfo["vals"][val])
+                    nums.append(num_int)
 
             if sname != pinfo["sname"]:
-                raise Error(f"BUG: varying scope name for property '{pname}': was "
+                raise Error(f"BUG: Varying scope name for property '{pname}': was "
                             f"'{pinfo['sname']}', now '{sname}'")
 
         return apinfo
@@ -573,18 +691,18 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
 
         - If the scope name ("sname") is "CPU" or "package", property values are mapped to lists of
           CPU or package numbers.
-        - If the scope name is "die", property values are mapped to dictionaries where keys are package
-          numbers and values are lists of die numbers within each package.
+        - If the scope name is "die", property values are mapped to dictionaries where keys are
+          package numbers and values are lists of die numbers within each package.
 
         Args:
-            pnames: Iterable of property names to aggregate.
+            pnames: Names of the properties to aggregate.
             optar: Operation target specifying the hardware scope.
-            mnames: Iterable of mechanism names to use for reading properties.
+            mnames: Mechanism names to use for reading properties.
             skip_ro: Whether to skip read-only properties.
             skip_unsupported: Whether to skip unsupported properties.
 
         Returns:
-            An aggregate properties dictionary structured as described above.
+            The aggregate properties dictionary structured as described above.
         """
 
         aggr_pinfo: _AggrPinfoType = {}
