@@ -27,7 +27,7 @@ from pepctool import _PepcCommon, _OpTarget
 from pepclibs.Props import MechanismNameType
 
 if typing.TYPE_CHECKING:
-    from pepclibs.Props import PropsType,  ScopeNameType, NumsType, DieNumsType
+    from pepclibs.Props import PropsType,  ScopeNameType, AbsNumsType, RelNumsType
     from pepclibs.Props import PropertyValueType, PropertyTypedDict
 
 _PrintFormatType = Literal["human", "yaml"]
@@ -43,7 +43,7 @@ class _AggrSubPinfoType(TypedDict):
     """
 
     sname: ScopeNameType
-    vals: dict[PropertyValueType, NumsType | DieNumsType]
+    vals: dict[PropertyValueType, AbsNumsType | RelNumsType]
 
 _AggrPinfoType = dict[MechanismNameType, dict[str, _AggrSubPinfoType]]
 
@@ -98,7 +98,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         else:
             _LOG.info(msg)
 
-    def _fmt_cpus(self, cpus: NumsType) -> str:
+    def _fmt_cpus(self, cpus: AbsNumsType) -> str:
         """
         Format CPU numbers into a human-readable string.
 
@@ -140,7 +140,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
                         break
         return msg
 
-    def _fmt_packages(self, packages: NumsType) -> str:
+    def _fmt_packages(self, packages: AbsNumsType) -> str:
         """
         Format package numbers into a human-readable string.
 
@@ -162,7 +162,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
             return f"package {pkgs_range}"
         return f"packages {pkgs_range}"
 
-    def _fmt_dies(self, pkgs_dies: DieNumsType) -> str:
+    def _fmt_dies(self, pkgs_dies: RelNumsType) -> str:
         """
         Format die numbers into a human-readable string.
 
@@ -209,7 +209,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
 
         return ", ".join(result)
 
-    def _fmt_nums(self, sname: str, nums: NumsType | DieNumsType) -> str:
+    def _fmt_nums(self, sname: str, nums: AbsNumsType | RelNumsType) -> str:
         """
         Format and return a human-readable string describing CPU, die, or package numbers.
 
@@ -344,7 +344,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
                           prop: PropertyTypedDict,
                           sname: ScopeNameType,
                           val: PropertyValueType,
-                          nums: NumsType | DieNumsType,
+                          nums: AbsNumsType | RelNumsType,
                           action: str | None = None,
                           prefix: str | None = None):
         """

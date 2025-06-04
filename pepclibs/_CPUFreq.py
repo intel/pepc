@@ -19,7 +19,7 @@ from typing import Generator
 import contextlib
 from pathlib import Path
 from pepclibs import CPUInfo, CPUModels, _SysfsIO
-from pepclibs._PropsClassBaseTypes import NumsType
+from pepclibs._PropsClassBaseTypes import AbsNumsType
 from pepclibs.helperlibs import Logging, LocalProcessManager, ClassHelpers, Trivial, KernelVersion
 from pepclibs.helperlibs.Exceptions import Error, ErrorBadFormat, ErrorNotSupported
 from pepclibs.helperlibs.Exceptions import ErrorVerifyFailed
@@ -238,7 +238,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
     def _get_freq_sysfs(self,
                         key: str,
-                        cpus: NumsType,
+                        cpus: AbsNumsType,
                         limit: bool = False) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield CPU frequencies from the Linux "cpufreq" sysfs files for specified CPUs.
@@ -262,7 +262,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             # The frequency value is in kHz in sysfs.
             yield cpu, freq * 1000
 
-    def get_min_freq(self, cpus: NumsType) -> Generator[tuple[int, int], None, None]:
+    def get_min_freq(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the minimum CPU frequency for specified CPUs.
 
@@ -279,7 +279,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         yield from self._get_freq_sysfs("min", cpus)
 
-    def get_max_freq(self, cpus: NumsType) -> Generator[tuple[int, int], None, None]:
+    def get_max_freq(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the maximum CPU frequency for specified CPUs.
 
@@ -296,7 +296,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         yield from self._get_freq_sysfs("max", cpus)
 
-    def get_cur_freq(self, cpus: NumsType) -> Generator[tuple[int, int], None, None]:
+    def get_cur_freq(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the current CPU frequency for specified CPUs.
 
@@ -313,7 +313,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         yield from self._get_freq_sysfs("cur", cpus)
 
-    def get_min_freq_limit(self, cpus: NumsType) -> Generator[tuple[int, int], None, None]:
+    def get_min_freq_limit(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the minimum CPU frequency limit for specified CPUs.
 
@@ -330,7 +330,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         yield from self._get_freq_sysfs("min", cpus, limit=True)
 
-    def get_max_freq_limit(self, cpus: NumsType) -> Generator[tuple[int, int], None, None]:
+    def get_max_freq_limit(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the maximum CPU frequency limit for specified CPUs.
 
@@ -347,7 +347,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         yield from self._get_freq_sysfs("max", cpus, limit=True)
 
-    def _set_freq_sysfs(self, freq: int, key: str, cpus: NumsType):
+    def _set_freq_sysfs(self, freq: int, key: str, cpus: AbsNumsType):
         """
         Set the CPU frequency for the specified CPUs using the Linux "cpufreq" sysfs interface.
 
@@ -384,7 +384,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
                 setattr(err, "cpu", cpu)
                 raise err
 
-    def set_min_freq(self, freq: int, cpus: NumsType):
+    def set_min_freq(self, freq: int, cpus: AbsNumsType):
         """
         Set the minimum CPU frequency for the specified CPUs using the Linux "cpufreq" sysfs
         interfaces.
@@ -422,7 +422,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         self._set_freq_sysfs(freq, "max", cpus)
 
-    def get_available_frequencies(self, cpus: NumsType) -> \
+    def get_available_frequencies(self, cpus: AbsNumsType) -> \
                                             Generator[tuple[int, list[int]], None, None]:
         """
         Yield available CPU frequencies specified CPUs. Frequencies are read from the
@@ -455,7 +455,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
             yield cpu, sorted(freqs)
 
-    def _get_base_freq_intel_pstate(self, cpus: NumsType) -> Generator[tuple[int, int], None, None]:
+    def _get_base_freq_intel_pstate(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the base frequency for specified CPUs using the 'intel_pstate' driver.
 
@@ -473,7 +473,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             # The frequency value is in kHz in sysfs.
             yield cpu, freq * 1000
 
-    def _get_base_freq_bios_limit(self, cpus: NumsType) -> Generator[tuple[int, int], None, None]:
+    def _get_base_freq_bios_limit(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the base frequency for specified CPUs using the 'bios_limit' sysfs file.
 
@@ -491,7 +491,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             # The frequency value is in kHz in sysfs.
             yield cpu, freq * 1000
 
-    def get_base_freq(self, cpus: NumsType) -> Generator[tuple[int, int], None, None]:
+    def get_base_freq(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the base frequency for specified CPUs.
 
@@ -521,7 +521,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             except ErrorNotSupported as err2:
                 raise ErrorNotSupported(f"{err1}\n{err2}") from err2
 
-    def get_driver(self, cpus: NumsType) -> Generator[tuple[int, str], None, None]:
+    def get_driver(self, cpus: AbsNumsType) -> Generator[tuple[int, str], None, None]:
         """
         Retrieve and yield the Linux CPU frequency driver name for specified CPUs.
 
@@ -559,7 +559,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             yield cpu, name
 
     def get_intel_pstate_mode(self,
-                              cpus: NumsType) -> Generator[tuple[int, str], None, None]:
+                              cpus: AbsNumsType) -> Generator[tuple[int, str], None, None]:
         """
         Retrieve and yield the 'intel_pstate' driver mode for specified CPUs.
 
@@ -584,7 +584,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             mode = self._sysfs_io.read(path, what=what)
             yield cpu, mode
 
-    def set_intel_pstate_mode(self, mode: str, cpus: NumsType):
+    def set_intel_pstate_mode(self, mode: str, cpus: AbsNumsType):
         """
         Set the operational mode of the 'intel_pstate' driver to one of the supported modes:
         "active", "passive", or "off".
@@ -642,7 +642,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
                                             f"{err.indent(2)}") from err
                 raise
 
-    def get_turbo(self, cpus: NumsType) -> Generator[tuple[int, str], None, None]:
+    def get_turbo(self, cpus: AbsNumsType) -> Generator[tuple[int, str], None, None]:
         """
         Retrieve and yield the turbo on/off status for specified CPUs.
 
@@ -689,7 +689,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
             yield cpu, val
 
-    def set_turbo(self, enable: bool, cpus: NumsType):
+    def set_turbo(self, enable: bool, cpus: AbsNumsType):
         """
         Enable or disable turbo mode for specified CPUs.
 
@@ -733,7 +733,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
                                         f"{self._pman.hostmsg}: Unsupported CPU frequency driver "
                                         f"'{driver}'")
 
-    def get_governor(self, cpus: NumsType) -> Generator[tuple[int, str], None, None]:
+    def get_governor(self, cpus: AbsNumsType) -> Generator[tuple[int, str], None, None]:
         """
         Retrieve and yield the Linux CPU frequency governor name for specified CPUs.
 
@@ -755,7 +755,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             name = self._sysfs_io.read(path, what=what)
             yield cpu, name
 
-    def get_available_governors(self, cpus: NumsType) -> \
+    def get_available_governors(self, cpus: AbsNumsType) -> \
                                             Generator[tuple[int, list[str]], None, None]:
         """
         Retrieve and yield available Linux CPU frequency governor names for specified CPUs.
@@ -778,7 +778,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             names = self._sysfs_io.read(path, what=what)
             yield cpu, Trivial.split_csv_line(names, sep=" ")
 
-    def set_governor(self, governor: str, cpus: NumsType):
+    def set_governor(self, governor: str, cpus: AbsNumsType):
         """
         Set the CPU frequency governor for the specified CPUs.
 
@@ -918,7 +918,7 @@ class CPUFreqCPPC(ClassHelpers.SimpleCloseContext):
 
         return self._sysfs_io.cache_add(path, val)
 
-    def get_min_freq_limit(self, cpus: NumsType) -> Generator[tuple[int, int], None, None]:
+    def get_min_freq_limit(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the minimum frequency limit for specified CPUs.
 
@@ -938,7 +938,7 @@ class CPUFreqCPPC(ClassHelpers.SimpleCloseContext):
             # CPPC sysfs files use MHz.
             yield cpu, val * 1000 * 1000
 
-    def get_max_freq_limit(self, cpus: NumsType) -> Generator[tuple[int, int], None, None]:
+    def get_max_freq_limit(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the maximum frequency limit for specified CPUs.
 
@@ -958,7 +958,7 @@ class CPUFreqCPPC(ClassHelpers.SimpleCloseContext):
             # CPPC sysfs files use MHz.
             yield cpu, val * 1000 * 1000
 
-    def get_min_perf_limit(self, cpus: NumsType) -> Generator[tuple[int, int], None, None]:
+    def get_min_perf_limit(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the the minimum performance level limit for specified CPUs.
 
@@ -978,7 +978,7 @@ class CPUFreqCPPC(ClassHelpers.SimpleCloseContext):
             val = self._read_cppc_sysfs_file(cpu, "lowest_perf", what)
             yield cpu, val
 
-    def get_max_perf_limit(self, cpus: NumsType) -> Generator[tuple[int, int], None, None]:
+    def get_max_perf_limit(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the the maximum performance level limit for specified CPUs.
 
@@ -998,7 +998,7 @@ class CPUFreqCPPC(ClassHelpers.SimpleCloseContext):
             val = self._read_cppc_sysfs_file(cpu, "highest_perf", what)
             yield cpu, val
 
-    def get_base_freq(self, cpus: NumsType) -> Generator[tuple[int, int], None, None]:
+    def get_base_freq(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the base frequency for specified CPUs.
 
@@ -1018,7 +1018,7 @@ class CPUFreqCPPC(ClassHelpers.SimpleCloseContext):
             # CPPC sysfs files use MHz.
             yield cpu, val * 1000 * 1000
 
-    def get_base_perf(self, cpus: NumsType) -> Generator[tuple[int, int], None, None]:
+    def get_base_perf(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the base performance level value for specified CPUs.
 
@@ -1170,7 +1170,7 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
 
         return self._pmenable
 
-    def _get_bclks(self, cpus: NumsType) -> Generator[tuple[int, int], None, None]:
+    def _get_bclks(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the bus clock speed for specified CPUs.
 
@@ -1340,7 +1340,7 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
                 val = perf
             yield cpu1, self._perf_to_freq(cpu1, val, bclk)
 
-    def get_min_freq(self, cpus: NumsType) -> Generator[tuple[int, int], None, None]:
+    def get_min_freq(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the minimum CPU frequency for specified CPUs.
 
@@ -1357,7 +1357,7 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
 
         yield from self._get_freq_msr("min", cpus)
 
-    def get_max_freq(self, cpus: NumsType) -> Generator[tuple[int, int], None, None]:
+    def get_max_freq(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the maximum CPU frequency for specified CPUs.
 
@@ -1374,7 +1374,7 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
 
         yield from self._get_freq_msr("max", cpus)
 
-    def _set_freq_msr(self, freq: int, key: str, cpus: NumsType):
+    def _set_freq_msr(self, freq: int, key: str, cpus: AbsNumsType):
         """
         Set the CPU frequency for specified CPUs using the 'MSR_HWP_REQUEST' model specific
         register.
@@ -1416,7 +1416,7 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         for val, val_cpus in vals.items():
             hwpreq.write_feature(feature_name, val, cpus=val_cpus)
 
-    def set_min_freq(self, freq: int, cpus: NumsType):
+    def set_min_freq(self, freq: int, cpus: AbsNumsType):
         """
         Set minimum frequency for CPUs in 'cpus' via the 'MSR_HWP_REQUEST' model specific register.
 
@@ -1430,7 +1430,7 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
 
         self._set_freq_msr(freq, "min", cpus)
 
-    def set_max_freq(self, freq: int, cpus: NumsType):
+    def set_max_freq(self, freq: int, cpus: AbsNumsType):
         """
         Set maximum frequency for CPUs in 'cpus' via the 'MSR_HWP_REQUEST' model specific register.
 
@@ -1498,7 +1498,7 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
 
     def _get_platinfo_freq(self,
                            fname: str,
-                           cpus: NumsType) -> Generator[tuple[int, int], None, None]:
+                           cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield CPU frequency for the specified CPUs using the 'MSR_PLATFORM_INFO' model
         specific register.
@@ -1525,7 +1525,7 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
 
     def _get_hwpcap_freq(self,
                          fname: str,
-                         cpus: NumsType) -> Generator[tuple[int, int], None, None]:
+                         cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield CPU frequency for the specified CPUs using the 'MSR_HPW_CAPABILITIES'
         model specific register.
@@ -1550,7 +1550,7 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
             assert cpu1 == cpu2
             yield cpu1, self._perf_to_freq(cpu1, perf, bclk)
 
-    def get_base_freq(self, cpus: NumsType) -> Generator[tuple[int, int], None, None]:
+    def get_base_freq(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the base frequency for specified CPUs.
 
@@ -1578,7 +1578,7 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
 
         yield from self._get_platinfo_freq("max_non_turbo_ratio", cpus)
 
-    def get_min_oper_freq(self, cpus: NumsType) -> Generator[tuple[int, int], None, None]:
+    def get_min_oper_freq(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the minimum operating frequency for specified CPUs.
 
@@ -1595,7 +1595,7 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
 
         yield from self._get_platinfo_freq("min_oper_ratio", cpus)
 
-    def get_max_eff_freq(self, cpus: NumsType) -> Generator[tuple[int, int], None, None]:
+    def get_max_eff_freq(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the maximum efficiency frequency for specified CPUs.
 
@@ -1623,7 +1623,7 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
 
         yield from self._get_platinfo_freq("max_eff_ratio", cpus)
 
-    def _get_max_turbo_freq_trl(self, cpus: NumsType) -> Generator[tuple[int, int], None, None]:
+    def _get_max_turbo_freq_trl(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
         Yield (cpu, frequency) tuples by reading the maximum turbo frequency from the
         'MSR_TURBO_RATIO_LIMIT' register for the specified CPUs.
@@ -1674,7 +1674,7 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
                                "maintainers.", self._cpuinfo.cpudescr, self._pman.hostmsg)
                 raise ErrorNotSupported(f"{err1}\n{err2}") from err2
 
-    def get_max_turbo_freq(self, cpus: NumsType) -> Generator[tuple[int, int], None, None]:
+    def get_max_turbo_freq(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the maximum 1-core turbo frequency for specified CPUs.
 
@@ -1702,7 +1702,7 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
 
         yield from self._get_max_turbo_freq_trl(cpus)
 
-    def get_hwp(self, cpus: NumsType) -> Generator[tuple[int, bool], None, None]:
+    def get_hwp(self, cpus: AbsNumsType) -> Generator[tuple[int, bool], None, None]:
         """
         Yield the hardware power management (HWP) status for specified CPUs.
 

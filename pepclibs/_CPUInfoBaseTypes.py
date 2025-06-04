@@ -14,10 +14,10 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 
 from typing import TypedDict, Literal, Sequence, Mapping
 
-# A type for CPU and package numbers.
-NumsType = Sequence[int]
-# A type for die numbers.
-DieNumsType = Mapping[int, NumsType]
+# The type for absolute topology numbers: CPU, module, node, package numbers.
+AbsNumsType = Sequence[int]
+# The type for topology numbers that are relative to the package: core and die numbers.
+RelNumsType = Mapping[int, AbsNumsType]
 
 ScopeNameType = Literal["CPU", "core", "module", "die", "node", "package"]
 

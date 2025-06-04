@@ -26,7 +26,7 @@ from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorNotFou
 from pepclibs._CPUInfoBaseTypes import CPUInfoTypedDict
 if typing.TYPE_CHECKING:
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
-    from pepclibs._CPUInfoBaseTypes import CPUInfoKeyType, ScopeNameType, NumsType
+    from pepclibs._CPUInfoBaseTypes import CPUInfoKeyType, ScopeNameType, AbsNumsType
     from pepclibs._CPUInfoBaseTypes import HybridCPUKeyType, HybridCPUKeyInfoType
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
@@ -193,7 +193,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
     def _add_cores_and_packages(self,
                                 cpu_tdict: dict[int, dict[ScopeNameType, int]],
-                                cpus: NumsType):
+                                cpus: AbsNumsType):
         """
         Add core and package numbers for the specified CPUs to the provided CPU topology dictionary.
 
@@ -251,7 +251,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
             cpu_tdict[cpu]["package"] = _get_number("physical id", lines, 9)
             cpu_tdict[cpu]["core"] = _get_number("core id", lines, 11)
 
-    def _add_modules(self, cpu_tdict: dict[int, dict[ScopeNameType, int]], cpus: NumsType):
+    def _add_modules(self, cpu_tdict: dict[int, dict[ScopeNameType, int]], cpus: AbsNumsType):
         """
         Add module numbers for the specified CPUs to the CPU topology dictionary.
 
@@ -294,7 +294,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
     def _add_compute_dies(self,
                           cpu_tdict: dict[int, dict[ScopeNameType, int]],
-                          cpus: NumsType):
+                          cpus: AbsNumsType):
         """
         Add compute die numbers for the specified CPUs to the CPU topology dictionary.
 

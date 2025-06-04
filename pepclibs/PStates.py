@@ -35,7 +35,7 @@ if typing.TYPE_CHECKING:
     from pepclibs import _SysfsIO, EPP, EPB, _CPUFreq, _UncoreFreq
     from pepclibs.CPUInfo import CPUInfo
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
-    from pepclibs._PropsClassBaseTypes import NumsType, DieNumsType, MechanismNameType
+    from pepclibs._PropsClassBaseTypes import AbsNumsType, RelNumsType, MechanismNameType
     from pepclibs._PropsClassBaseTypes import PropertyTypedDict, PropertyValueType
 
 class ErrorFreqOrder(Error):
@@ -437,7 +437,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         return self._uncfreq_sysfs_obj
 
     def _get_epp(self,
-                 cpus: NumsType,
+                 cpus: AbsNumsType,
                  mname: MechanismNameType) -> Generator[tuple[int, str], None, None]:
         """
         Retrieve and yield EPP values for the specified CPUs using the specified mechanism.
@@ -459,7 +459,7 @@ class PStates(_PropsClassBase.PropsClassBase):
             yield cpu, val
 
     def _get_epb(self,
-                 cpus: NumsType,
+                 cpus: AbsNumsType,
                  mname: MechanismNameType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield EPB values for the specified CPUs using the specified mechanism.
@@ -475,7 +475,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         for cpu, val, _ in self._get_epbobj().get_vals(cpus=cpus, mnames=(mname,)):
             yield cpu, val
 
-    def _get_max_eff_freq(self, cpus: NumsType) -> Generator[tuple[int, int], None, None]:
+    def _get_max_eff_freq(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the maximum efficiency frequency for the specified CPUs.
 
@@ -490,7 +490,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         cpufreq_obj = self._get_cpufreq_msr_obj()
         yield from cpufreq_obj.get_max_eff_freq(cpus=cpus)
 
-    def _get_hwp(self, cpus: NumsType) -> Generator[tuple[int, bool], None, None]:
+    def _get_hwp(self, cpus: AbsNumsType) -> Generator[tuple[int, bool], None, None]:
         """
         Retrieve and yield the hardware power management (HWP) status for the specified CPUs.
 
@@ -504,7 +504,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         cpufreq_obj = self._get_cpufreq_msr_obj()
         yield from cpufreq_obj.get_hwp(cpus=cpus)
 
-    def _get_cppc_freq(self, pname: str, cpus: NumsType) -> Generator[tuple[int, int], None, None]:
+    def _get_cppc_freq(self, pname: str, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield frequency values for the specified CPUs using the CPPC mechanism.
 
@@ -558,7 +558,7 @@ class PStates(_PropsClassBase.PropsClassBase):
             yield cpu, freq_rounded
 
     def _get_min_oper_freq(self,
-                           cpus: NumsType,
+                           cpus: AbsNumsType,
                            mname: MechanismNameType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the minimum operating frequency for the specified CPUs using the given
@@ -585,7 +585,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         raise Error(f"BUG: Unsupported mechanism '{mname}'")
 
     def _get_max_turbo_freq(self,
-                            cpus: NumsType,
+                            cpus: AbsNumsType,
                             mname: MechanismNameType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the maximum turbo frequency for the specified CPUs using the given
@@ -612,7 +612,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         raise Error(f"BUG: Unsupported mechanism '{mname}'")
 
     def _get_base_freq(self,
-                       cpus: NumsType,
+                       cpus: AbsNumsType,
                        mname: MechanismNameType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the base frequency for the specified CPUs using the given mechanism.
@@ -642,7 +642,7 @@ class PStates(_PropsClassBase.PropsClassBase):
 
         raise Error(f"BUG: Unsupported mechanism '{mname}'")
 
-    def _get_freq_sysfs(self, pname: str, cpus: NumsType) -> Generator[tuple[int, int], None, None]:
+    def _get_freq_sysfs(self, pname: str, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield CPU frequency values for the specified CPUs using the sysfs mechanism.
 
@@ -671,7 +671,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         else:
             raise Error(f"BUG: unexpected CPU frequency property {pname}")
 
-    def _get_freq_msr(self, pname: str, cpus: NumsType) -> Generator[tuple[int, int], None, None]:
+    def _get_freq_msr(self, pname: str, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the minimum or maximum CPU frequency for the specified CPUs using the MSR
         mechanism.
@@ -717,7 +717,7 @@ class PStates(_PropsClassBase.PropsClassBase):
 
         raise Error(f"BUG: Unsupported mechanism '{mname}'")
 
-    def _get_freq_limit(self, pname: str, cpus: NumsType) -> Generator[tuple[int, int], None, None]:
+    def _get_freq_limit(self, pname: str, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield CPU frequency limits for the specified CPUs using the sysfs mechanism.
 
@@ -734,7 +734,7 @@ class PStates(_PropsClassBase.PropsClassBase):
 
     def _get_uncore_freq_cpus(self,
                               pname: str,
-                              cpus: NumsType) -> Generator[tuple[int, int], None, None]:
+                              cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield uncore frequency values for the specified CPUs using the sysfs mechanism.
 
@@ -766,7 +766,7 @@ class PStates(_PropsClassBase.PropsClassBase):
 
         raise Error(f"BUG: Unexpected uncore frequency property {pname}")
 
-    def _get_bclks_cpus(self, cpus: NumsType) -> Generator[tuple[int, int], None, None]:
+    def _get_bclks_cpus(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield bus clock speed for the specified CPUs using the MSR mechanism.
 
@@ -791,7 +791,7 @@ class PStates(_PropsClassBase.PropsClassBase):
                 # Convert MHz to Hz.
                 yield cpu, int(bclk * 1000000)
 
-    def _get_bclks_dies(self, dies: DieNumsType) -> Generator[tuple[int, int, int], None, None]:
+    def _get_bclks_dies(self, dies: RelNumsType) -> Generator[tuple[int, int, int], None, None]:
         """
         Retrieve and yield bus clock speed for the specified dies using the MSR mechanism.
 
@@ -832,7 +832,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         return val
 
     def _get_frequencies_intel(self,
-                               cpus: NumsType) -> Generator[tuple[int, list[int]], None, None]:
+                               cpus: AbsNumsType) -> Generator[tuple[int, list[int]], None, None]:
         """
         Retrieve and yield available CPU frequencies for the specified CPUs using the 'intel_pstate'
         driver.
@@ -870,7 +870,7 @@ class PStates(_PropsClassBase.PropsClassBase):
 
             yield cpu, freqs
 
-    def _get_frequencies(self, cpus: NumsType) -> Generator[tuple[int, list[int]], None, None]:
+    def _get_frequencies(self, cpus: AbsNumsType) -> Generator[tuple[int, list[int]], None, None]:
         """
         Retrieve and yield available CPU frequencies for the specified CPUs using the given
         mechanism.
@@ -900,7 +900,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         yield from self._get_frequencies_intel(cpus)
 
     def _get_bus_clock(self,
-                       cpus: NumsType,
+                       cpus: AbsNumsType,
                        mname: MechanismNameType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the bus clock speed for the specified CPUs using the given mechanism.
@@ -956,7 +956,7 @@ class PStates(_PropsClassBase.PropsClassBase):
                         f"{self._pman.hostmsg}")
         return int(val)
 
-    def _get_turbo(self, cpus: NumsType) -> Generator[tuple[int, str], None, None]:
+    def _get_turbo(self, cpus: AbsNumsType) -> Generator[tuple[int, str], None, None]:
         """
         Retrieve and yield the turbo status (on/off) for the specified CPUs.
 
@@ -971,7 +971,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         cpufreq_obj = self._get_cpufreq_sysfs_obj()
         yield from cpufreq_obj.get_turbo(cpus)
 
-    def _get_driver(self, cpus: NumsType) -> Generator[tuple[int, str], None, None]:
+    def _get_driver(self, cpus: AbsNumsType) -> Generator[tuple[int, str], None, None]:
         """
         Retrieve and yield the Linux CPU frequency driver name for the specified CPUs.
 
@@ -986,7 +986,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         cpufreq_obj = self._get_cpufreq_sysfs_obj()
         yield from cpufreq_obj.get_driver(cpus)
 
-    def _get_intel_pstate_mode(self, cpus: NumsType) -> Generator[tuple[int, str], None, None]:
+    def _get_intel_pstate_mode(self, cpus: AbsNumsType) -> Generator[tuple[int, str], None, None]:
         """
         Retrieve and yield the 'intel_pstate' mode name for the specified CPUs.
 
@@ -1001,7 +1001,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         cpufreq_obj = self._get_cpufreq_sysfs_obj()
         yield from cpufreq_obj.get_intel_pstate_mode(cpus)
 
-    def _get_governor(self, cpus: NumsType) -> Generator[tuple[int, str], None, None]:
+    def _get_governor(self, cpus: AbsNumsType) -> Generator[tuple[int, str], None, None]:
         """
         Retrieve and yield the current CPU frequency governor for the specified CPUs.
 
@@ -1016,7 +1016,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         cpufreq_obj = self._get_cpufreq_sysfs_obj()
         yield from cpufreq_obj.get_governor(cpus)
 
-    def _get_governors(self, cpus: NumsType) -> Generator[tuple[int, list[str]], None, None]:
+    def _get_governors(self, cpus: AbsNumsType) -> Generator[tuple[int, list[str]], None, None]:
         """
         Retrieve and yield available CPU frequency governors for the specified CPUs.
 
@@ -1033,7 +1033,7 @@ class PStates(_PropsClassBase.PropsClassBase):
 
     def _get_prop_cpus(self,
                        pname: str,
-                       cpus: NumsType,
+                       cpus: AbsNumsType,
                        mname: MechanismNameType) -> Generator[tuple[int, typing.Any], None, None]:
         """
         Retrieve and yield property values for the specified CPUs using the given mechanism.
@@ -1087,7 +1087,7 @@ class PStates(_PropsClassBase.PropsClassBase):
 
     def _get_uncore_freq_dies(self,
                               pname: str,
-                              dies: DieNumsType) -> Generator[tuple[int, int, int], None, None]:
+                              dies: RelNumsType) -> Generator[tuple[int, int, int], None, None]:
         """
         Retrieve and yield uncore frequency values for the specified dies using the sysfs mechanism.
 
@@ -1119,7 +1119,7 @@ class PStates(_PropsClassBase.PropsClassBase):
 
     def _get_prop_dies(self,
                        pname: str,
-                       dies: DieNumsType,
+                       dies: RelNumsType,
                        mname: MechanismNameType) -> Generator[tuple[int, int, PropertyValueType],
                                                               None, None]:
         """
@@ -1143,7 +1143,7 @@ class PStates(_PropsClassBase.PropsClassBase):
             # per-die access.
             yield from self._get_uncore_freq_dies(pname, dies)
 
-    def _set_turbo(self, enable: bool, cpus: NumsType) -> MechanismNameType:
+    def _set_turbo(self, enable: bool, cpus: AbsNumsType) -> MechanismNameType:
         """
         Enable or disable turbo mode for the specified CPUs.
 
@@ -1159,7 +1159,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         cpufreq_obj.set_turbo(enable, cpus=cpus)
         return "sysfs"
 
-    def _set_intel_pstate_mode(self, mode: str, cpus: NumsType) -> MechanismNameType:
+    def _set_intel_pstate_mode(self, mode: str, cpus: AbsNumsType) -> MechanismNameType:
         """
         Set the 'intel_pstate' driver mode for the specified CPUs.
 
@@ -1175,7 +1175,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         cpufreq_obj.set_intel_pstate_mode(mode, cpus=cpus)
         return "sysfs"
 
-    def _set_governor(self, governor: str, cpus: NumsType) -> MechanismNameType:
+    def _set_governor(self, governor: str, cpus: AbsNumsType) -> MechanismNameType:
         """
         Set the CPU frequency governor for the specified CPUs.
 
@@ -1191,7 +1191,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         cpufreq_obj.set_governor(governor, cpus=cpus)
         return "sysfs"
 
-    def _set_freq_prop_cpus_msr(self, pname: str, freq: int, cpus: NumsType):
+    def _set_freq_prop_cpus_msr(self, pname: str, freq: int, cpus: AbsNumsType):
         """
         Set the 'min_freq' or 'max_freq' CPU frequency property to the specified value for the given
         CPUs.
@@ -1256,7 +1256,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         err.msg = msg
         raise err
 
-    def _set_freq_prop_cpus_sysfs(self, pname: str, freq: int, cpus: NumsType):
+    def _set_freq_prop_cpus_sysfs(self, pname: str, freq: int, cpus: AbsNumsType):
         """
         Set the minimum or maximum CPU frequency property for the specified CPUs.
 
@@ -1341,7 +1341,7 @@ class PStates(_PropsClassBase.PropsClassBase):
 
     def _get_numeric_cpu_freq(self,
                               freq: str | int,
-                              cpus: NumsType) -> Generator[tuple[int, int], None, None]:
+                              cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
         Convert the user-provided frequency value to a numeric frequency in Hz. If the user-provided
         value is a special string (e.g., "max", "min", "base"), resolve it to the corresponding
@@ -1390,7 +1390,7 @@ class PStates(_PropsClassBase.PropsClassBase):
     def _set_cpu_freq(self,
                       pname: str,
                       val: str | int,
-                      cpus: NumsType,
+                      cpus: AbsNumsType,
                       mname: MechanismNameType):
         """
         Set a CPU frequency property for specified CPUs using the given mechanism.
@@ -1491,7 +1491,7 @@ class PStates(_PropsClassBase.PropsClassBase):
     def _set_prop_cpus(self,
                        pname: str,
                        val: typing.Any,
-                       cpus: "NumsType",
+                       cpus: "AbsNumsType",
                        mname: "MechanismNameType") -> MechanismNameType:
         """
         Set the specified property to a given value for for specified CPUs using a specified
@@ -1529,7 +1529,7 @@ class PStates(_PropsClassBase.PropsClassBase):
 
         raise Error("BUG: Unsupported property '{pname}'")
 
-    def _set_uncore_freq_prop_dies(self, pname: str, freq: int, dies: DieNumsType):
+    def _set_uncore_freq_prop_dies(self, pname: str, freq: int, dies: RelNumsType):
         """
         Set the minimum or maximum uncore frequency for specified dies.
 
@@ -1550,7 +1550,7 @@ class PStates(_PropsClassBase.PropsClassBase):
 
     def _get_numeric_uncore_freq(self,
                                  freq: str | int,
-                                 dies: DieNumsType) -> Generator[tuple[int, int, int], None, None]:
+                                 dies: RelNumsType) -> Generator[tuple[int, int, int], None, None]:
         """
         Convert a user-provided uncore frequency value to its numeric representation in Hz for each
         die.
@@ -1590,7 +1590,7 @@ class PStates(_PropsClassBase.PropsClassBase):
     def _set_uncore_freq(self,
                          pname: str,
                          val: str | int,
-                         dies: DieNumsType,
+                         dies: RelNumsType,
                          mname: MechanismNameType) -> MechanismNameType:
         """
         Set the uncore frequency property for specified dies using a given method.
@@ -1653,7 +1653,7 @@ class PStates(_PropsClassBase.PropsClassBase):
     def _set_prop_dies(self,
                        pname: str,
                        val: typing.Any,
-                       dies: DieNumsType,
+                       dies: RelNumsType,
                        mname: MechanismNameType) -> MechanismNameType:
         """
         Set the specified property to a given value for the provided dies using the specified
