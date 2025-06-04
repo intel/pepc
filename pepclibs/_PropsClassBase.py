@@ -1174,57 +1174,41 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         Notes:
             Properties of "bool" type use the following values:
-               * "on" if the feature is enabled.
-               * "off" if the feature is disabled.
+               - "on" if the feature is enabled.
+               - "off" if the feature is disabled.
         """
 
         self._validate_pname(pname)
         mnames = self._normalize_mnames(mnames, pname=pname, allow_readonly=True)
 
-        normalized_dies: dict[int, list[int]] = {}
-        if dies == "all":
-            packages = self._cpuinfo.get_packages()
-        else:
-            packages = self._cpuinfo.normalize_packages(list(dies))
-
-        for package in packages:
-            normalized_dies[package] = []
-
-            pkg_dies: AbsNumsType | Literal["all"]
-            if dies == "all":
-                pkg_dies = "all"
-            else:
-                pkg_dies = dies[package]
-
-            for die in self._cpuinfo.normalize_package_dies(pkg_dies, package=package):
-                normalized_dies[package].append(die)
+        diez = self._cpuinfo.normalize_dies(dies)
 
         # Get rid of empty die lists.
-        for package, pkg_dies in normalized_dies.copy().items():
+        for package, pkg_dies in diez.copy().items():
             if len(pkg_dies) == 0:
-                del normalized_dies[package]
+                del diez[package]
 
-        if len(normalized_dies) == 0:
+        if len(diez) == 0:
             return
 
         try:
             self._set_sname(pname)
         except ErrorNotSupported:
-            for package, pkg_dies in normalized_dies.items():
+            for package, pkg_dies in diez.items():
                 for die in pkg_dies:
                     yield self._construct_die_pvinfo(pname, package, die, mnames[-1], None)
             return
 
         self._validate_prop_vs_scope(pname, "die")
 
-        for package, pkg_dies in normalized_dies.items():
+        for package, pkg_dies in diez.items():
             for die in pkg_dies:
                 if self._props[pname]["sname"] == self._props[pname]["iosname"]:
                     continue
                 cpus = self._cpuinfo.dies_to_cpus(dies=(die,), packages=(package,))
                 self._validate_prop_vs_ioscope(pname, cpus, mnames=mnames, package=package, die=die)
 
-        yield from self._get_prop_pvinfo_dies(pname, normalized_dies, mnames=mnames,
+        yield from self._get_prop_pvinfo_dies(pname, diez, mnames=mnames,
                                               raise_not_supported=False)
 
     def get_die_prop(self,
@@ -1234,7 +1218,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                      mnames: Sequence[MechanismNameType] | None = None) -> PVInfoTypedDict:
         """
         Retrieve a single property value for a specific die and package. Similar to
-        `get_prop_dies()`, but operates on a single die and property.
+        'get_prop_dies()', but operates on a single die and property.
 
         Args:
             pname: Name of the property to retrieve.
