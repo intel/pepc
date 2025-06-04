@@ -14,17 +14,14 @@ Provide information about CPU topology and other CPU details.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import copy
-import typing
 from typing import Iterable, Literal
 from pepclibs import _CPUInfoBase
 from pepclibs.helperlibs import Logging, Trivial
 from pepclibs.helperlibs.Exceptions import Error
+from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 # pylint: disable-next=unused-import
 from pepclibs._CPUInfoBase import SCOPE_NAMES, HYBRID_TYPE_INFO, NA, INVALID
-
-if typing.TYPE_CHECKING:
-    from pepclibs.helperlibs.ProcessManager import ProcessManagerType
-    from pepclibs._CPUInfoBaseTypes import HybridCPUKeyType, ScopeNameType, AbsNumsType, RelNumsType
+from pepclibs._CPUInfoBaseTypes import HybridCPUKeyType, ScopeNameType, AbsNumsType, RelNumsType
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
@@ -39,8 +36,10 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
     2. Get list of packages/cores/etc.
         - 'get_cpus()'
         - 'get_cores()'
+        - 'get_package_cores()'
         - 'get_modules()'
         - 'get_dies()'
+        - 'get_package_dies()'
         - 'get_nodes()'
         - 'get_packages()'
         - 'get_offline_cpus()'
@@ -348,7 +347,31 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         online_cpus = self._get_online_cpus_set()
         return [cpu for cpu in cpus if cpu not in online_cpus]
 
-    def get_cores(self, package: int = 0, order: ScopeNameType = "core") -> list[int]:
+    def get_cores(self, order = "core") -> dict[int, list[int]]:
+        """
+        Return a dictionary mapping package numbers to list of core numbers.
+
+        Only package and core numbers with at least one online CPU are included, as Linux does not
+        provide topology information for offline CPUs. Core numbers may not be globally unique
+        (they may be relative to the package, e.g., core 0 may exist in both package 0 and package
+        1).
+
+        Args:
+            order: The sorting order of the returned core numbers list.
+
+        Returns:
+            A dictionary where keys are package numbers and values are lists of core numbers
+            present in the corresponding package, sorted in ascending order.
+        """
+
+        result: dict[int, list[int]] = {}
+
+        for package in self.get_packages(order="package"):
+            result[package] = self._get_scope_nums("core", "package", (package,), order=order)
+
+        return result
+
+    def get_package_cores(self, package: int = 0, order: ScopeNameType = "core") -> list[int]:
         """
         Return a list of core numbers within the specified package.
 
@@ -384,11 +407,37 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
         return self._get_scope_nums("module", "module", "all", order=order)
 
-    def get_dies(self,
-                 package: int = 0,
-                 order: ScopeNameType = "die",
+    def get_dies(self, order: ScopeNameType = "die",
                  compute_dies: bool = True,
-                 io_dies: bool = True) -> list[int]:
+                 io_dies: bool = True) -> dict[int, list[int]]:
+        """
+        Return a dictionary mapping package numbers to lists of die numbers.
+
+        Only packages and dies containing at least one online CPU are included, as Linux does not
+        provide topology information for offline CPUs. Die numbers may be globally unique or
+        relative to the package, depending on the system.
+
+        Args:
+            order: The sorting order for the resulting lists of die numbers.
+            compute_dies: Include compute dies (dies with CPUs) if True.
+            io_dies: Include I/O dies (dies without CPUs) if True.
+
+        Returns:
+            A dictionary where keys are package numbers and values are lists of die numbers present
+            in the corresponding package, sorted according to the specified order.
+        """
+
+        result: dict[int, list[int]] = {}
+        for package in self.get_packages(order="package"):
+            result[package] = self.get_package_dies(package=package, order=order,
+                                                    compute_dies=compute_dies, io_dies=io_dies)
+        return result
+
+    def get_package_dies(self,
+                         package: int = 0,
+                         order: ScopeNameType = "die",
+                         compute_dies: bool = True,
+                         io_dies: bool = True) -> list[int]:
         """
         Return a list of die numbers in the specified package.
 
@@ -772,7 +821,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
             Number of cores with at least one online CPU in the given package.
         """
 
-        return len(self.get_cores(package=package))
+        return len(self.get_package_cores(package=package))
 
     def get_modules_count(self) -> int:
         """
@@ -803,7 +852,8 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
             Only dies with at least one online CPU are counted.
         """
 
-        return len(self.get_dies(package=package, compute_dies=compute_dies, io_dies=io_dies))
+        return len(self.get_package_dies(package=package, compute_dies=compute_dies,
+                                         io_dies=io_dies))
 
     def get_packages_count(self) -> int:
         """

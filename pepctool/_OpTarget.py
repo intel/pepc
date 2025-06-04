@@ -95,7 +95,7 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
             return False
 
         for package, pkg_dies in dies.items():
-            io_dies = self._cpuinfo.get_dies(package=package, compute_dies=False, io_dies=True)
+            io_dies = self._cpuinfo.get_package_dies(package=package, compute_dies=False, io_dies=True)
             if not set(pkg_dies).issubset(set(io_dies)):
                 return False
 
@@ -162,7 +162,7 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
             for package in self.packages:
                 if package not in dies:
                     dies[package] = []
-                dies[package] += self._cpuinfo.get_dies(package=package)
+                dies[package] += self._cpuinfo.get_package_dies(package=package)
 
         for package in dies:
             dies[package] = Trivial.list_dedup(dies[package])

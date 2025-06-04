@@ -456,7 +456,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
 
         vfm = self._cpuinfo.info["vfm"]
         if vfm == CPUModels.MODELS["SKYLAKE_X"]["vfm"] and \
-           len(self._cpuinfo.get_dies(package=0)) > 1:
+           len(self._cpuinfo.get_package_dies(package=0)) > 1:
             return "die"
         return "package"
 

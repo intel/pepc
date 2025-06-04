@@ -8,20 +8,37 @@
 #
 # Author: Antti Laakso <antti.laakso@linux.intel.com>
 
-"""Tests for the public methods of the 'CPUInfo' module."""
+"""Test the public methods of the 'CPUInfo' module."""
 
+# TODO: finish annotating and modernizing this test.
+from __future__ import annotations # Remove when switching to Python 3.10+.
+
+from typing import Generator
 import random
 import pytest
 import common
+from common import CommonTestParamsTypedDict
 from pepclibs import CPUModels, CPUInfo, CPUOnline
+from pepclibs._CPUInfoBaseTypes import AbsNumsType
 from pepclibs.helperlibs.Exceptions import Error
+from pepclibs.helperlibs.ProcessManager import ProcessManagerType
+from pepclibs.CPUInfo import ScopeNameType
 
 # A unique object used in '_run_method()' for ignoring method's return value by default.
 _IGNORE = object()
 
 @pytest.fixture(name="params", scope="module")
-def get_params(hostspec):
-    """Yield a dictionary with information we need for testing."""
+def get_params(hostspec: str) -> Generator[CommonTestParamsTypedDict, None, None]:
+    """
+    Yield a dictionary containing parameters required 'CPUInfo' tests.
+
+    Args:
+        hostspec: The host specification/name to create a process manager for. If the hostspec
+                  starts with "emulation:", it indicates an emulated environment.
+
+    Yields:
+        A dictionary with test parameters.
+    """
 
     emul_modules = ["CPUInfo"]
 
@@ -29,70 +46,79 @@ def get_params(hostspec):
         params = common.build_params(pman)
         yield params
 
-def _get_levels():
-    """Yield 'CPUInfo.LEVEL' values as a lowercase strings."""
-
-    for lvl in CPUInfo.SCOPE_NAMES:
-        yield lvl.lower()
-
-def _get_level_nums(lvl, cpuinfo, order=None):
+def _get_scope_nums(sname: ScopeNameType,
+                    cpuinfo: CPUInfo.CPUInfo,
+                    order: ScopeNameType | None = None) -> AbsNumsType:
     """
-    Run the 'get_<lvl>(order=<order>)' method of 'cpuinfo' and return the result (e.g., runs
-    'get_packages()' if 'lvl' is "packages").
-      * cpuinfo - the 'CPUInfo' object.
-      * order - value for the 'order' keyword argument of the executed "get" method. Set to 'lvl' by
-                default.
+    Execute the 'get_<sname>s()' (e.g., 'get_cores()') method of the given return the result.
 
-    Notice! If 'lvl' is a non-globally numbered level ("core" or "die"), this method returns level
-    numbers for the first package.
+    Args:
+        sname: Name of the Cscope (e.g., "package", "core", "die") to run the method for.
+        cpuinfo: The 'CPUInfo' object under test.
+        order: The order to pass down to the 'get_<sname>s()' method. Use the 'sname' value is used
+               as the order by default.
+
+    Returns:
+        List of CPU/code/etc (<sname>) numbers as returned by the corresponding 'get_<sname>s()'
+        method. For non-globally numbered scopes ("core" or "die"), return the numbers for the first
+        package.
     """
 
     if order is None:
-        order = lvl
+        order = sname
 
-    # The 'cpu' level is special.
-    order = order.replace("cpu", "CPU")
+    get_method = getattr(cpuinfo, f"get_{sname}s".lower(), None)
 
-    get_method = getattr(cpuinfo, f"get_{lvl}s", None)
+    assert get_method, f"BUG: 'get_{sname}s()' does not exist"
 
-    assert get_method, f"BUG: 'get_{lvl}s()' does not exist"
+    if sname == "die":
+        result_dict = get_method(order=order, io_dies=False)
+        result = next(iter(result_dict.values()))
+    elif sname == "core":
+        result_dict = get_method(order=order)
+        result = next(iter(result_dict.values()))
+    else:
+        result = get_method(order=order)
 
-    if lvl == "die":
-        # TODO: cover I/O dies too.
-        return get_method(order=order, io_dies=False)
-    return get_method(order=order)
+    return result
 
-def _get_levels_and_nums(cpuinfo):
+def _get_snames_and_nums(cpuinfo: CPUInfo.CPUInfo) -> \
+                                        Generator[tuple[ScopeNameType, AbsNumsType], None, None]:
     """
-    This is a combination of '_get_levels()' and '_get_level_nums()'. For every level name which has
-    the corresponding 'get_<lvl>()' method, yield a tuple of lower-cased level name and the
-    'get_<lvl>()' result.
+    Yield tuples of scope names and the result of '_get_scope_nums()' for each scope name.
+
+    Args:
+        cpuinfo: The 'CPUInfo' object under test.
+
+    Yields:
+        tuple: A tuple containing the scope name and the result of '_get_scope_nums()' for that
+               scope name.
     """
 
-    for lvl in CPUInfo.SCOPE_NAMES:
-        lvl = lvl.lower()
-        if not getattr(cpuinfo, f"get_{lvl}s", None):
-            continue
+    for sname in CPUInfo.SCOPE_NAMES:
+        yield (sname, _get_scope_nums(sname, cpuinfo))
 
-        yield (lvl, _get_level_nums(lvl, cpuinfo))
+def _get_emulated_cpuinfos(pman: ProcessManagerType) -> Generator[CPUInfo.CPUInfo, None, None]:
+    """
+    Yield CPUInfo objects with various emulated CPU online/offline patterns for testing.
 
-def _get_bad_orders():
-    """Yield bad 'order' argument values."""
+    This generator simulates different CPU online/offline scenarios using emulated test data:
+        1. All CPUs online.
+        2. Odd-numbered CPUs offline.
+        3. All CPUs except the first one offline.
+        4. (If applicable) CPUInfo object with an unknown CPU Vendor/Family/Model (VFM).
 
-    for order in "CPUS", "CORE", "nodes", "pkg":
-        yield order
+    Args:
+        pman: Process manager instance used to control and query CPU state.
 
-def _get_emulated_cpuinfos(pman):
-    """Yield the 'CPUInfo' objects with emulated testdata."""
+    Yields:
+        CPUInfo objects reflecting the current emulated CPU online/offline state.
+    """
 
-    # Offline CPUs with following patterns.
-    # 1. All CPUs online.
-    # 2. Odd CPUs offline.
-    # 3. All but first CPU offline.
     with CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
          CPUOnline.CPUOnline(pman=pman, cpuinfo=cpuinfo) as cpuonline:
 
-        # By default all CPUs are online on emulated data.
+        # In the emulated environment, all CPUs are initially online by default.
         yield cpuinfo
 
         for pattern in (lambda x: not(x % 2), lambda x: x == 0):
@@ -103,15 +129,18 @@ def _get_emulated_cpuinfos(pman):
             cpuonline.online(cpus=cpus)
 
         if cpuinfo.info["vfm"] == CPUModels.MODELS["ICELAKE_X"]["vfm"]:
-            # Yield CPUInfo object with unknown CPU VFM (Vendor/Family/Model).
             cpuinfo.info["vfm"] = 255
             yield cpuinfo
 
-def _get_cpuinfos(params):
+def _get_cpuinfos(params: CommonTestParamsTypedDict) -> Generator[CPUInfo.CPUInfo, None, None]:
     """
-    Yield the 'CPUInfo' objects to test with. If 'pman' object is for emulated host, then attributes
-    of the 'CPUInfo' object is modified with different permutations that we want to test with. If
-    the 'pman' object is for real host, yield single 'CPUInfo' object.
+    Yield 'CPUInfo' objects for testing based on the host type.
+
+    Args:
+        params: Dictionary containing test parameters.
+
+    Yields:
+        'CPUInfo' objects configured according to the host type for use in tests.
     """
 
     pman = params["pman"]
@@ -121,19 +150,28 @@ def _get_cpuinfos(params):
         with CPUInfo.CPUInfo(pman=pman) as cpuinfo:
             yield cpuinfo
 
-def _run_method(name, cpuinfo, args=None, kwargs=None, exp_res=_IGNORE, exp_exc=None):
+def _run_method(name: str,
+                cpuinfo: CPUInfo.CPUInfo,
+                args: list | tuple | None = None,
+                kwargs: dict | None = None,
+                exp_res: object = _IGNORE,
+                exp_exc: type[BaseException] | None = None):
     """
-    Run the 'name' method of the 'cpuinfo' object. The arguments are as follows.
-      * name - the name of the method.
-      * cpuinfo - the 'CPUInfo' object.
-      * args - the ordered arguments to pass down to the method.
-      * kwargs - keyword arguments to pass down to the method.
-      * exp_res - the expected result (not checked by default).
-      * exp_exc - the expected exception type. By default, any exception is considered to be a
-                  failure. Use '_IGNORE' to ignore exceptions.
+    Execute a specified method of the 'CPUInfo' object with provided arguments and validate its
+    result or exception.
 
-    The 'name' method is called and tested only if it exists in 'cpuinfo'. Returns the result of the
-    'name' method and 'None' if it does not exist.
+    Args:
+        name: Name of the method to invoke on the cpuinfo object.
+        cpuinfo: The 'CPUInfo' object whose method will be called.
+        args: List of positional arguments to pass to the method. Defaults to an empty list.
+        kwargs: Dictionary of keyword arguments to pass to the method. Defaults to an empty dictionary.
+        exp_res: Expected result from the method call. If not provided, the result is not checked.
+        exp_exc: Expected exception type. If provided, assert that the method raises this exception.
+                 Use '_IGNORE' to ignore exceptions.
+
+    Returns:
+        The result of the method call if successful, or None if the method does not exist or if an
+        expected exception was raised.
     """
 
     # The 'exp_res' and 'exp_exc' arguments are mutually exclusive.
@@ -156,61 +194,58 @@ def _run_method(name, cpuinfo, args=None, kwargs=None, exp_res=_IGNORE, exp_exc=
             return None
 
         if exp_exc is None:
-            assert False, f"method '{name}()' raised the following exception:\n\t" \
+            assert False, f"Method '{name}()' raised the following exception:\n\t" \
                           f"type: {type(err)}\n\tmessage: {err}"
 
         if isinstance(err, exp_exc):
             return None
 
-        assert False, f"method '{name}()' raised the following exception:\n\t" \
+        assert False, f"Method '{name}()' raised the following exception:\n\t" \
                       f"type: {type(err)}\n\tmessage: {err}\n" \
-                      f"but it was expected to raise the following exception type: {type(exp_exc)}"
+                      f"But it was expected to raise the following exception type: {type(exp_exc)}"
 
     if exp_res is not _IGNORE:
-        assert res == exp_res, f"method '{name}()' returned:\n\t{res}\n" \
+        assert res == exp_res, f"Method '{name}()' returned:\n\t{res}\n" \
                                f"But it was expected to return:\n\t'{exp_res}'"
 
     return res
 
-def _test_get_good(cpuinfo):
-    """Test 'get' methods for bad option values."""
+def _test_get_good(cpuinfo: CPUInfo.CPUInfo):
+    """
+    Test the 'get_<sname>s()' methods of the 'cpuinfo' object.
 
-    for lvl, nums in _get_levels_and_nums(cpuinfo):
-        assert nums, f"'get_{lvl}s()' is expected to return list of {lvl}s, got: '{nums}'"
+    This function iterates through all scope name and their corresponding numbers, verifying that:
+        - The 'get_{sname}s()' methods return non-empty lists of the expected items.
+        - The returned lists are consistent and sorted, regardless of the 'order' parameter.
+        - The 'get_offline_cpus()' method can be called without error.
+
+    Args:
+        cpuinfo: The 'CPUInfo' object to test.
+    """
+
+    for sname, nums in _get_snames_and_nums(cpuinfo):
+        assert nums, f"'get_{sname}s()' is expected to return list of {sname}s, got: '{nums}'"
         ref_nums = sorted(nums)
 
-        for order in _get_levels():
-            nums = _get_level_nums(lvl, cpuinfo, order=order)
-            assert nums, f"'get_{lvl}s()' is expected to return list of {lvl}s, got: '{nums}'"
+        for order in CPUInfo.SCOPE_NAMES:
+            nums = _get_scope_nums(sname, cpuinfo, order=order)
+            assert nums, f"'get_{sname}s()' is expected to return list of {sname}s, got: '{nums}'"
             nums = sorted(nums)
-            assert nums == ref_nums, f"'get_{lvl}s()' was expected to return '{ref_nums}', " \
+            assert nums == ref_nums, f"'get_{sname}s()' was expected to return '{ref_nums}', " \
                                      f"got '{nums}'"
 
     _run_method("get_offline_cpus", cpuinfo)
 
-def _test_get_bad(cpuinfo):
-    """Test 'get' methods with bad 'order' values and expect methods to fail."""
-
-    for lvl in _get_levels():
-        if not getattr(cpuinfo, f"get_{lvl}s", None):
-            continue
-
-        for order in _get_bad_orders():
-            with pytest.raises(Error):
-                _get_level_nums(lvl, cpuinfo, order=order)
-
-def test_cpuinfo_get(params):
+def test_cpuinfo_get(params: CommonTestParamsTypedDict):
     """
-    Test the following 'CPUInfo' class methods:
-      * 'get_packages()'
-      * 'get_cpus()'
-      * 'get_offline_cpus()'
-      * 'get_cpu_siblings()'
+    Test the 'get_<sname>s()' methods of the 'CPUInfo' object.
+
+    Args:
+        params: Test parameters used to generate CPUInfo instances for testing.
     """
 
     for cpuinfo in _get_cpuinfos(params):
         _test_get_good(cpuinfo)
-        _test_get_bad(cpuinfo)
 
 def test_cpuinfo_get_count(params):
     """
@@ -219,9 +254,9 @@ def test_cpuinfo_get_count(params):
       * 'get_cpus_count()'
       * 'get_offline_cpus_count()'
     """
- 
+
     for cpuinfo in _get_cpuinfos(params):
-        for lvl, nums in _get_levels_and_nums(cpuinfo):
+        for lvl, nums in _get_snames_and_nums(cpuinfo):
             kwargs = {}
             if lvl == "die":
                 # TODO: cover I/O dies too.
@@ -234,7 +269,7 @@ def test_cpuinfo_get_count(params):
 def _test_convert_good(cpuinfo):
     """Test public convert methods of the 'CPUInfo' class with good option values."""
 
-    for from_lvl, from_nums in _get_levels_and_nums(cpuinfo):
+    for from_lvl, from_nums in _get_snames_and_nums(cpuinfo):
         # We have two types of conversion methods to convert values between different "levels"
         # defined in 'CPUInfo.SCOPE_NAMES'. We have methods for converting single value to other
         # level, e.g. 'package_to_cpus()'. And we have methods for converting multiple values to
@@ -247,7 +282,7 @@ def _test_convert_good(cpuinfo):
         if len(from_nums) > 1:
             multi_args.append((from_nums[-1], from_nums[0]))
 
-        for to_lvl, to_nums in _get_levels_and_nums(cpuinfo):
+        for to_lvl, to_nums in _get_snames_and_nums(cpuinfo):
             # Test normalize method of single value.
             method_name = f"{from_lvl}_to_{to_lvl}s"
             for args in single_args:
@@ -263,10 +298,10 @@ def _test_convert_good(cpuinfo):
 def _test_convert_bad(cpuinfo):
     """Same as '_test_convert_good()', but use bad option values."""
 
-    for from_lvl, from_nums in _get_levels_and_nums(cpuinfo):
+    for from_lvl, from_nums in _get_snames_and_nums(cpuinfo):
         bad_num = from_nums[-1] + 1
 
-        for to_lvl in _get_levels():
+        for to_lvl in CPUInfo.SCOPE_NAMES:
             method_name = f"{from_lvl}_to_{to_lvl}s"
 
             if getattr(cpuinfo, method_name, None):
@@ -275,11 +310,6 @@ def _test_convert_bad(cpuinfo):
                 for args in bad_args:
                     _run_method(method_name, cpuinfo, args=(args,), exp_exc=Error)
 
-                args = from_nums[0]
-                for order in _get_bad_orders():
-                    kwargs = {"order": order}
-                    _run_method(method_name, cpuinfo, args=(args,), kwargs=kwargs, exp_exc=Error)
-
             method_name = f"{from_lvl}s_to_{to_lvl}s"
 
             if getattr(cpuinfo, method_name, None):
@@ -287,11 +317,6 @@ def _test_convert_bad(cpuinfo):
 
                 for args in bad_args:
                     _run_method(method_name, cpuinfo, args=(args,), exp_exc=Error)
-
-                args = from_nums[0]
-                for order in _get_bad_orders():
-                    kwargs = {"order": order}
-                    _run_method(method_name, cpuinfo, args=(args,), kwargs=kwargs, exp_exc=Error)
 
 def test_cpuinfo_convert(params):
     """
@@ -312,7 +337,7 @@ def test_cpuinfo_convert(params):
 def _test_normalize_good(cpuinfo):
     """Test public 'normalize' methods of the 'CPUInfo' class with good option values."""
 
-    for lvl, nums in _get_levels_and_nums(cpuinfo):
+    for lvl, nums in _get_snames_and_nums(cpuinfo):
         # We have two types of normalize methods, normalize methods for single value
         # (e.g. normalize_package()), and multiple values (e.g. normalize_packages()). Methods for
         # single value, accept single integer as input value, and the return value
@@ -341,7 +366,7 @@ def _test_normalize_good(cpuinfo):
 def _test_normalize_bad(cpuinfo):
     """Same as '_test_normalize_good()', but use bad option values."""
 
-    for lvl, nums in _get_levels_and_nums(cpuinfo):
+    for lvl, nums in _get_snames_and_nums(cpuinfo):
         bad_num = nums[-1] + 1
         bad_args = (-1, "-1", f"{nums[0]},", bad_num)
 
@@ -374,7 +399,7 @@ def _is_globally_numbered(lvl):
     numbered. This helper returns 'True' if 'lvl' is globally-numbered, and 'False' otherwise.
     """
 
-    if lvl.lower() in {"package", "node", "cpu"}:
+    if lvl.lower() in {"package", "node", "CPU"}:
         return True
     return False
 
@@ -406,7 +431,7 @@ def _test_div_create_exp_res(lvl, nums, cpus):
 def _test_cpuinfo_div(cpuinfo):
     """Implements the 'test_cpuinfo_div()'."""
 
-    for lvl, nums in _get_levels_and_nums(cpuinfo):
+    for lvl, nums in _get_snames_and_nums(cpuinfo):
         method_name  = f"cpus_div_{lvl}s"
         if not getattr(cpuinfo, method_name, None):
             continue

@@ -39,7 +39,7 @@ def get_params(hostspec):
         params["packages"] = cpuinfo.get_packages()
         params["cores"] = {}
         for pkg in params["packages"]:
-            params["cores"][pkg] = cpuinfo.get_cores(package=pkg)
+            params["cores"][pkg] = cpuinfo.get_package_cores(package=pkg)
 
         yield params
 

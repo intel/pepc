@@ -12,6 +12,7 @@
 Provide API for printing properties.
 """
 
+# TODO: finish annotating and modernizing this test.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import sys

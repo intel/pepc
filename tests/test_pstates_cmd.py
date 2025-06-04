@@ -45,9 +45,9 @@ def get_params(hostspec, tmp_path_factory):
         params["dies"] = {}
 
         for pkg in params["packages"]:
-            params["cores"][pkg] = cpuinfo.get_cores(package=pkg)
+            params["cores"][pkg] = cpuinfo.get_package_cores(package=pkg)
             params["modules"][pkg] = cpuinfo.package_to_modules(package=pkg)
-            params["dies"][pkg] = cpuinfo.get_dies(package=pkg, io_dies=False)
+            params["dies"][pkg] = cpuinfo.get_package_dies(package=pkg, io_dies=False)
 
         yield params
 
