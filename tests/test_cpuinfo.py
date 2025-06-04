@@ -10,17 +10,15 @@
 
 """Test the public methods of the 'CPUInfo' module."""
 
-# TODO: finish annotating and modernizing this test.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
-from typing import Generator
+from typing import Generator, cast
 import random
 import pytest
 import common
 from common import CommonTestParamsTypedDict
 from pepclibs import CPUModels, CPUInfo, CPUOnline
-from pepclibs._CPUInfoBaseTypes import AbsNumsType
-from pepclibs.helperlibs.Exceptions import Error
+from pepclibs._CPUInfoBaseTypes import AbsNumsType, RelNumsType
 from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 from pepclibs.CPUInfo import ScopeNameType
 
@@ -48,7 +46,7 @@ def get_params(hostspec: str) -> Generator[CommonTestParamsTypedDict, None, None
 
 def _get_scope_nums(sname: ScopeNameType,
                     cpuinfo: CPUInfo.CPUInfo,
-                    order: ScopeNameType | None = None) -> AbsNumsType:
+                    order: ScopeNameType | None = None) -> AbsNumsType | RelNumsType:
     """
     Execute the 'get_<sname>s()' (e.g., 'get_cores()') method of the given return the result.
 
@@ -60,8 +58,7 @@ def _get_scope_nums(sname: ScopeNameType,
 
     Returns:
         List of CPU/code/etc (<sname>) numbers as returned by the corresponding 'get_<sname>s()'
-        method. For non-globally numbered scopes ("core" or "die"), return the numbers for the first
-        package.
+        method.
     """
 
     if order is None:
@@ -72,18 +69,14 @@ def _get_scope_nums(sname: ScopeNameType,
     assert get_method, f"BUG: 'get_{sname}s()' does not exist"
 
     if sname == "die":
-        result_dict = get_method(order=order, io_dies=False)
-        result = next(iter(result_dict.values()))
-    elif sname == "core":
-        result_dict = get_method(order=order)
-        result = next(iter(result_dict.values()))
+        result = get_method(order=order, io_dies=False)
     else:
         result = get_method(order=order)
 
     return result
 
 def _get_snames_and_nums(cpuinfo: CPUInfo.CPUInfo) -> \
-                                        Generator[tuple[ScopeNameType, AbsNumsType], None, None]:
+                            Generator[tuple[ScopeNameType, AbsNumsType | RelNumsType], None, None]:
     """
     Yield tuples of scope names and the result of '_get_scope_nums()' for each scope name.
 
@@ -91,8 +84,7 @@ def _get_snames_and_nums(cpuinfo: CPUInfo.CPUInfo) -> \
         cpuinfo: The 'CPUInfo' object under test.
 
     Yields:
-        tuple: A tuple containing the scope name and the result of '_get_scope_nums()' for that
-               scope name.
+        A tuple containing the scope name and the result of '_get_scope_nums()' for that scope name.
     """
 
     for sname in CPUInfo.SCOPE_NAMES:
@@ -164,7 +156,8 @@ def _run_method(name: str,
         name: Name of the method to invoke on the cpuinfo object.
         cpuinfo: The 'CPUInfo' object whose method will be called.
         args: List of positional arguments to pass to the method. Defaults to an empty list.
-        kwargs: Dictionary of keyword arguments to pass to the method. Defaults to an empty dictionary.
+        kwargs: Dictionary of keyword arguments to pass to the method. Defaults to an empty
+                dictionary.
         exp_res: Expected result from the method call. If not provided, the result is not checked.
         exp_exc: Expected exception type. If provided, assert that the method raises this exception.
                  Use '_IGNORE' to ignore exceptions.
@@ -223,16 +216,25 @@ def _test_get_good(cpuinfo: CPUInfo.CPUInfo):
         cpuinfo: The 'CPUInfo' object to test.
     """
 
-    for sname, nums in _get_snames_and_nums(cpuinfo):
-        assert nums, f"'get_{sname}s()' is expected to return list of {sname}s, got: '{nums}'"
-        ref_nums = sorted(nums)
+    for sname, ref_nums in _get_snames_and_nums(cpuinfo):
+        assert ref_nums, \
+               f"'get_{sname}s()' is expected to return list of {sname}s, got: '{ref_nums}'"
 
         for order in CPUInfo.SCOPE_NAMES:
             nums = _get_scope_nums(sname, cpuinfo, order=order)
-            assert nums, f"'get_{sname}s()' is expected to return list of {sname}s, got: '{nums}'"
-            nums = sorted(nums)
-            assert nums == ref_nums, f"'get_{sname}s()' was expected to return '{ref_nums}', " \
-                                     f"got '{nums}'"
+            if sname in ("die", "core"):
+                # For dies and cores, the numbers are relative to the package numbers.
+                ref_nums_dict = cast(RelNumsType, ref_nums)
+                nums_dict = cast(RelNumsType, nums)
+
+                sorted_ref_nums = {pkg: sorted(pkg_nums) for pkg, pkg_nums in ref_nums_dict.items()}
+                sorted_nums = {pkg: sorted(pkg_nums) for pkg, pkg_nums in nums_dict.items()}
+
+                assert sorted_nums == sorted_ref_nums, \
+                       f"'get_{sname}s()' was expected to return '{ref_nums}', got '{nums}'"
+            else:
+                assert sorted(nums) == sorted(ref_nums), \
+                       f"'get_{sname}s()' was expected to return '{ref_nums}', got '{nums}'"
 
     _run_method("get_offline_cpus", cpuinfo)
 
@@ -241,251 +243,266 @@ def test_cpuinfo_get(params: CommonTestParamsTypedDict):
     Test the 'get_<sname>s()' methods of the 'CPUInfo' object.
 
     Args:
-        params: Test parameters used to generate CPUInfo instances for testing.
+        params: The test parameters.
     """
 
     for cpuinfo in _get_cpuinfos(params):
         _test_get_good(cpuinfo)
 
-def test_cpuinfo_get_count(params):
+def test_cpuinfo_get_count(params: CommonTestParamsTypedDict):
     """
-    Test the following 'CPUInfo' class methods:
-      * 'get_packages_count()'
-      * 'get_cpus_count()'
-      * 'get_offline_cpus_count()'
+    Test the count retrieval methods for various CPU topology levels.
+
+    Args:
+        params: The test parameters.
     """
 
     for cpuinfo in _get_cpuinfos(params):
-        for lvl, nums in _get_snames_and_nums(cpuinfo):
+        for sname, nums in _get_snames_and_nums(cpuinfo):
             kwargs = {}
-            if lvl == "die":
+            if sname == "die":
                 # TODO: cover I/O dies too.
                 kwargs = {"io_dies" : False}
-            _run_method(f"get_{lvl}s_count", cpuinfo, kwargs=kwargs, exp_res=len(nums))
+            if sname in ("core", "die"):
+                nums_dict = cast(RelNumsType, nums)
+                count = sum(len(pkg_nums) for pkg_nums in nums_dict.values())
+            else:
+                count = len(nums)
+            _run_method(f"get_{sname}s_count", cpuinfo, kwargs=kwargs, exp_res=count)
 
         offline_cpus = cpuinfo.get_offline_cpus()
         _run_method("get_offline_cpus_count", cpuinfo, exp_res=len(offline_cpus))
 
-def _test_convert_good(cpuinfo):
-    """Test public convert methods of the 'CPUInfo' class with good option values."""
+def _test_convert_good(cpuinfo: CPUInfo.CPUInfo):
+    """
+    Test the conversion methods of the 'CPUInfo' class.
 
-    for from_lvl, from_nums in _get_snames_and_nums(cpuinfo):
-        # We have two types of conversion methods to convert values between different "levels"
-        # defined in 'CPUInfo.SCOPE_NAMES'. We have methods for converting single value to other
-        # level, e.g. 'package_to_cpus()'. And we have methods for converting multiple values to
-        # other level, e.g. 'packages_to_cpus()'.
-        # Methods to convert single value accept single integer in different forms, and methods
-        # converting multiple values accept also integers in lists.
+    Args:
+        cpuinfo: An instance of the 'CPUInfo' class to test conversion methods on.
+    """
 
-        single_args = [from_nums[0], from_nums[-1]]
-        multi_args = [{from_nums[0], }, [from_nums[-1]]]
-        if len(from_nums) > 1:
-            multi_args.append((from_nums[-1], from_nums[0]))
+    # There are two types of conversion methods for translating between different scopes defined in
+    # 'CPUInfo.SCOPE_NAMES':
+    #   1. Methods that convert a single value to another scope, e.g., 'package_to_cpus()'.
+    #   2. Methods that convert multiple values to another scope, e.g., 'packages_to_cpus()'.
+    #
+    # Single-value conversion methods accept a single integer, while multi-value conversion methods
+    # also accept lists.
+    for from_sname, from_nums in _get_snames_and_nums(cpuinfo):
+        if from_sname in ("die", "core"):
+            from_nums_dict = cast(RelNumsType, from_nums)
+            pkg_num = next(iter(from_nums_dict))
+            from_nums_list = from_nums_dict[pkg_num]
+        else:
+            from_nums_list = cast(AbsNumsType, from_nums)
 
-        for to_lvl, to_nums in _get_snames_and_nums(cpuinfo):
+        single_args = [from_nums_list[0], from_nums_list[-1]]
+        multi_args = [{from_nums_list[0], }, [from_nums_list[-1]]]
+        if len(from_nums_list) > 1:
+            multi_args.append((from_nums_list[-1], from_nums_list[0]))
+
+        for to_sname, to_nums in _get_snames_and_nums(cpuinfo):
             # Test normalize method of single value.
-            method_name = f"{from_lvl}_to_{to_lvl}s"
-            for args in single_args:
-                _run_method(method_name, cpuinfo, args=(args,))
+            method_name = f"{from_sname}_to_{to_sname}s"
+            for arg in single_args:
+                _run_method(method_name, cpuinfo, args=(arg,))
 
             # Test convert method for multiple values.
-            method_name = f"{from_lvl}s_to_{to_lvl}s"
+            method_name = f"{from_sname}s_to_{to_sname}s"
             _run_method(method_name, cpuinfo, exp_res=to_nums)
 
             for args in multi_args:
                 _run_method(method_name, cpuinfo, args=(args,))
 
-def _test_convert_bad(cpuinfo):
-    """Same as '_test_convert_good()', but use bad option values."""
-
-    for from_lvl, from_nums in _get_snames_and_nums(cpuinfo):
-        bad_num = from_nums[-1] + 1
-
-        for to_lvl in CPUInfo.SCOPE_NAMES:
-            method_name = f"{from_lvl}_to_{to_lvl}s"
-
-            if getattr(cpuinfo, method_name, None):
-                bad_args = (bad_num, f"{bad_num}", f"{from_nums[0]}, ", (bad_num,))
-
-                for args in bad_args:
-                    _run_method(method_name, cpuinfo, args=(args,), exp_exc=Error)
-
-            method_name = f"{from_lvl}s_to_{to_lvl}s"
-
-            if getattr(cpuinfo, method_name, None):
-                bad_args = ((-1,), (bad_num,), (-1, bad_num), ("-1",), (bad_num,))
-
-                for args in bad_args:
-                    _run_method(method_name, cpuinfo, args=(args,), exp_exc=Error)
-
-def test_cpuinfo_convert(params):
+def test_cpuinfo_convert(params: CommonTestParamsTypedDict):
     """
-    Test the following 'CPUInfo' class methods:
-      * 'packages_to_cpus()'
-      * 'package_to_cpus()'
-      * 'package_to_nodes()'
-      * 'package_to_dies()'
-      * 'package_to_cores()'
-      * 'dies_to_cpus()'
-      * 'cores_to_cpus()'
+    Tests various conversion methods of the 'CPUInfo' class, for example:
+        - packages_to_cpus()
+        - package_to_cpus()
+        - package_to_cores()
+        - dies_to_cpus()
+        - cores_to_cpus()
+
+    Args:
+        params: The test parameters.
     """
 
     for cpuinfo in _get_cpuinfos(params):
         _test_convert_good(cpuinfo)
-        _test_convert_bad(cpuinfo)
 
-def _test_normalize_good(cpuinfo):
-    """Test public 'normalize' methods of the 'CPUInfo' class with good option values."""
+def _test_normalize_good(cpuinfo: CPUInfo.CPUInfo):
+    """
+    Test the 'normalize' methods of the 'CPUInfo' class with valid input values.
 
-    for lvl, nums in _get_snames_and_nums(cpuinfo):
-        # We have two types of normalize methods, normalize methods for single value
-        # (e.g. normalize_package()), and multiple values (e.g. normalize_packages()). Methods for
-        # single value, accept single integer as input value, and the return value
-        # is an integer. Normalize methods for multiple values, accept single and multiple integers
-        # in different forms, and return integers as a list.
-        #
-        # Build a list of tuples with input and expected output value pairs.
-        testcase = [nums[0], nums[-1]]
+    Args:
+        cpuinfo: An instance of the 'CPUInfo' class to be tested.
+    """
 
-        method_name  = f"normalize_{lvl}"
-        for args in testcase:
-            _run_method(method_name, cpuinfo, args=(args,), exp_res=args)
+    # There are two types of normalize methods:
+    #   1. Methods for a single value (e.g., normalize_package()), which accept a single integer
+    #      as input and return an integer.
+    #   2. Methods for multiple values (e.g., normalize_packages()), which accept a list of a
+    #      dictionary and return a list of integers.
+    multiple: list[tuple[AbsNumsType | RelNumsType, AbsNumsType | RelNumsType]]
+    for sname, nums in _get_snames_and_nums(cpuinfo):
+        if sname in ("die", "core"):
+            nums_dict = cast(RelNumsType, nums)
+            pkg_num = next(iter(nums_dict))
+            nums_list = nums_dict[pkg_num]
+            multiple = [({pkg_num: [nums_list[0]]}, {pkg_num: [nums_list[0]]}),
+                        ({pkg_num: (nums_list[0],)}, {pkg_num: [nums_list[0]]})]
+            if len(nums_list) > 1:
+                # Test with a list and tuple with multiple integers.
+                multiple += [({pkg_num: [nums_list[-1],  nums_list[0]]},
+                              {pkg_num: [nums_list[-1],  nums_list[0]]}),
+                             ({pkg_num: (nums_list[-1],  nums_list[0])},
+                              {pkg_num: [nums_list[-1],  nums_list[0]]})]
+        else:
+            nums_list = cast(AbsNumsType, nums)
+            multiple = [([nums_list[0]], [nums_list[0]]),
+                        ((nums_list[0], ), [nums_list[0]])]
+            if len(nums_list) > 1:
+                # Test with a list and tuple with multiple integers.
+                multiple += [([nums_list[-1], nums_list[0]], [nums_list[-1],  nums_list[0]]),
+                             ((nums_list[-1], nums_list[0]), [nums_list[-1],  nums_list[0]])]
 
-        # Test with a list and tuple with a single integer.
-        testcase = [([nums[0]], [nums[0]]),
-                    ((nums[0], ), [nums[0]])]
-        if len(nums) > 1:
-            # Test with a list and tuple with multiple integers.
-            testcase += [([nums[-1], nums[0]], [nums[-1],  nums[0]]),
-                         ((nums[-1], nums[0]), [nums[-1],  nums[0]])]
+            single = [nums_list[0], nums_list[-1]]
 
-        method_name  = f"normalize_{lvl}s"
-        for args, exp_res in testcase:
+            method_name  = f"normalize_{sname}"
+            for arg in single:
+                _run_method(method_name, cpuinfo, args=(arg,), exp_res=arg)
+
+        method_name  = f"normalize_{sname}s"
+        for args, exp_res in multiple:
             _run_method(method_name, cpuinfo, args=(args,), exp_res=exp_res)
 
-def _test_normalize_bad(cpuinfo):
-    """Same as '_test_normalize_good()', but use bad option values."""
-
-    for lvl, nums in _get_snames_and_nums(cpuinfo):
-        bad_num = nums[-1] + 1
-        bad_args = (-1, "-1", f"{nums[0]},", bad_num)
-
-        method_name  = f"normalize_{lvl}"
-        for args in bad_args:
-            _run_method(method_name, cpuinfo, args=(args,), exp_exc=Error)
-
-        bad_args = ([[nums[0], bad_num]])
-
-        method_name  = f"normalize_{lvl}s"
-        for args in bad_args:
-            _run_method(method_name, cpuinfo, args=(args,), exp_exc=Error)
-
-def test_cpuinfo_normalize(params):
+def test_cpuinfo_normalize(params: CommonTestParamsTypedDict):
     """
-    Test the following 'CPUInfo' class methods:
-      * 'normalize_packages()'
-      * 'normalize_package()'
-      * 'normalize_cpus()'
-      * 'normalize_cpu()'
+    Test normalization methods of the 'CPUInfo' class, for example:
+        - normalize_packages()
+        - normalize_package()
+        - normalize_cpus()
+        - normalize_cpu()
+
+    Args:
+        params: The test parameters.
     """
 
     for cpuinfo in _get_cpuinfos(params):
         _test_normalize_good(cpuinfo)
-        _test_normalize_bad(cpuinfo)
 
-def _is_globally_numbered(lvl):
+def _is_globally_numbered(sname: ScopeNameType) -> bool:
     """
-    There are 2 types of 'CPUInfo' levels: globally numbered and non-globally (per-package)
-    numbered. This helper returns 'True' if 'lvl' is globally-numbered, and 'False' otherwise.
+    Determine if a given CPU scope name is globally numbered.
+
+    Args:
+        sname: The scope name to check (e.g., "package", "die", "core", etc.).
+
+    Returns:
+        True if the scope is globally numbered, False if it is per-package numbered.
     """
 
-    if lvl.lower() in {"package", "node", "CPU"}:
+    if sname not in ("die", "core"):
         return True
     return False
 
-def _test_div_create_exp_res(lvl, nums, cpus):
+def _test_div_create_exp_res(sname: ScopeNameType,
+                             nums: AbsNumsType,
+                             cpus: AbsNumsType) -> tuple[AbsNumsType | RelNumsType, AbsNumsType]:
     """
-    This is a helper for 'test_div()' and it exists because of inconsistency between some "div"
-    method of "CPUInfo".
-       * 'cpus_div_packages()' returns a tuple with first element being a list of integers. For
-          example: ([0,1], []).
-       * 'cpus_div_cores()' and 'cpu_div_dies()' return a tuple with first element being a
-          dictionary of lists. For example ({0: [0[], 1: [0])}, []).
+    Create and return expected results for CPU division method tests.
 
-    The difference is that 'cpus_div_cores()' and 'cpus_div_dies()' return the dictionary n the
-    {package: [list of cores or dies]} format. , while 'cpus_div_packages()' returns the list of
-    package numbers. And the reason for this is that core and die numbers may relative to the
-    package numbers on some systems.
+    Methods like 'cpus_div_packages()' return a tuple, while methods like 'cpus_div_cores()' and
+    'cpus_div_dies()' return a dictionary. Create the expected results based on scope name.
 
-    For globally-numbered levels, such as "package", this function does nothing and just returns the
-    ('nums', 'cpus') tuple.
+    Args:
+        sname: The name of the CPU subdivision scope (e.g., "package", "core", "die").
+        nums: CPU/core/etc numbers expected to be present in first element of the tuple returned by
+              the division method.
+        cpus: The expected second element of the tuple returned by the division method.
+
+    Returns:
+        The result of the division method.
     """
 
-    if _is_globally_numbered(lvl):
+    if _is_globally_numbered(sname):
         return (nums, cpus)
 
     if nums:
-        return ({0:nums}, cpus)
+        return ({0: nums}, cpus)
+
     return ({}, cpus)
 
 def _test_cpuinfo_div(cpuinfo):
-    """Implements the 'test_cpuinfo_div()'."""
+    """
+    Test the division methods of the 'cpuinfo' object for various CPU topology levels.
 
-    for lvl, nums in _get_snames_and_nums(cpuinfo):
-        method_name  = f"cpus_div_{lvl}s"
+    Args:
+        cpuinfo: An instance of the 'CPUInfo' class to be tested.
+    """
+
+    for sname, nums in _get_snames_and_nums(cpuinfo):
+        method_name  = f"cpus_div_{sname}s"
         if not getattr(cpuinfo, method_name, None):
             continue
 
-        # Note! In the comments below we'll assume that 'lvl' is packages, for simplicity. However,
-        # it may be anything else, like 'cores'.
+        if sname in ("die", "core"):
+            nums_dict = cast(RelNumsType, nums)
+            pkg_num = next(iter(nums_dict))
+            nums_list = nums_dict[pkg_num]
+        else:
+            nums_list = cast(AbsNumsType, nums)
+
+        # Note! In the comments below we'll assume that 'sname' is packages, for simplicity.
+        # However, it may be anything else, like 'cores'.
 
         # Resolving an empty CPUs list.
-        exp_res = _test_div_create_exp_res(lvl, [], [])
+        exp_res = _test_div_create_exp_res(sname, [], [])
         _run_method(method_name, cpuinfo, args=([],), exp_res=exp_res)
 
-        if _is_globally_numbered(lvl):
+        if _is_globally_numbered(sname):
             # Resolving all CPUs in all packages.
             allcpus = cpuinfo.get_cpus()
         else:
             # In case of a non-globally numbered level, we'll operate only with package 0 numbers.
             allcpus = cpuinfo.package_to_cpus(0)
-        exp_res = _test_div_create_exp_res(lvl, nums, [])
+        exp_res = _test_div_create_exp_res(sname, nums_list, [])
         _run_method(method_name, cpuinfo, args=(allcpus,), exp_res=exp_res)
 
         # Get the list of CPUs in the first package.
-        num0_cpus = _run_method(f"{lvl}_to_cpus", cpuinfo, args=(nums[0],))
+        num0_cpus = _run_method(f"{sname}_to_cpus", cpuinfo, args=(nums_list[0],))
         if num0_cpus is None or len(num0_cpus) < 2:
-            # The rest of the test-cases require the '<lvl>_to_cpus()' method and more than one CPU
-            # per package.
+            # The rest of the test-cases require the '<sname>_to_cpus()' method and more than one
+            # CPU per package.
             continue
 
         # Resolving all CPUs except for the very first one.
         rnums, rcpus = _run_method(method_name, cpuinfo, args=(allcpus[1:],))
-        assert len(rnums) == len(nums) - 1 and len(rcpus) > 0, \
-               f"bad result from '{method_name}({allcpus[1:]})':\n\t(rnums, rcpus)\n"
+        assert len(rnums) == len(nums_list) - 1 and len(rcpus) > 0, \
+               f"Bad result from '{method_name}({allcpus[1:]})':\n\t(rnums, rcpus)\n"
 
         # Resolving a single CPU - the first and the last.
-        exp_res = _test_div_create_exp_res(lvl, [], allcpus[0:1])
+        exp_res = _test_div_create_exp_res(sname, [], allcpus[0:1])
         _run_method(method_name, cpuinfo, args=(allcpus[0:1],), exp_res=exp_res)
-        exp_res = _test_div_create_exp_res(lvl, [], allcpus[-1:])
+        exp_res = _test_div_create_exp_res(sname, [], allcpus[-1:])
         _run_method(method_name, cpuinfo, args=(allcpus[-1:],), exp_res=exp_res)
 
-        if len(nums) < 2:
+        if len(nums_list) < 2:
             # The rest of the test-cases require more than one package.
             continue
 
         # Resolving all CPUs in the first package.
-        exp_res = _test_div_create_exp_res(lvl, nums[0:1], [])
+        exp_res = _test_div_create_exp_res(sname, nums_list[0:1], [])
         _run_method(method_name, cpuinfo, args=(num0_cpus,), exp_res=exp_res)
 
         # Same, but without the first CPU in the first package.
-        exp_res = _test_div_create_exp_res(lvl, [], num0_cpus[1:])
+        exp_res = _test_div_create_exp_res(sname, [], num0_cpus[1:])
         _run_method(method_name, cpuinfo, args=(num0_cpus[1:],), exp_res=exp_res)
 
         # Resolving first package CPUs but for the second package.
         args = (num0_cpus,)
-        kwargs = {"packages" : [nums[1]]}
-        exp_res = _test_div_create_exp_res(lvl, [], num0_cpus)
+        kwargs = {"packages" : [nums_list[1]]}
+        exp_res = _test_div_create_exp_res(sname, [], num0_cpus)
         _run_method(method_name, cpuinfo, args=args, kwargs=kwargs, exp_res=exp_res)
 
         exp_cpus = []
@@ -495,23 +512,31 @@ def _test_cpuinfo_div(cpuinfo):
 
         # Resolving all CPUs but for only for the first package.
         args = (allcpus,)
-        kwargs = {"packages" : [nums[0]]}
-        exp_res = _test_div_create_exp_res(lvl, nums[0:1], exp_cpus)
+        kwargs = {"packages" : [nums_list[0]]}
+        exp_res = _test_div_create_exp_res(sname, nums_list[0:1], exp_cpus)
         _run_method(method_name, cpuinfo, args=args, kwargs=kwargs, exp_res=exp_res)
 
-def test_cpuinfo_div(params):
+def test_cpuinfo_div(params: CommonTestParamsTypedDict):
     """
-    Test the following 'CPUInfo' class methods:
-      * 'cpus_div_packages()'
-      * 'cpus_div_dies()'
-      * 'cpus_div_cores()'
+    Test the division method, for example:
+        - 'cpus_div_packages()'
+        - 'cpus_div_dies()'
+        - 'cpus_div_cores()'
+
+    Args:
+        params: The test parameters.
     """
 
     for cpuinfo in _get_cpuinfos(params):
         _test_cpuinfo_div(cpuinfo)
 
-def test_core_siblings(params):
-    """Test 'select_core_siblings()'."""
+def test_core_siblings(params: CommonTestParamsTypedDict):
+    """
+    Test the 'select_core_siblings()' method.
+
+    Args:
+        params: The test parameters.
+    """
 
     for cpuinfo in _get_cpuinfos(params):
         topology = cpuinfo.get_topology(order="core")
@@ -534,12 +559,13 @@ def test_core_siblings(params):
         # remove values from 'l1' that are not in 'l2'.
         l1 = list(dict.fromkeys(l1))
         l1 = [x for x in l1 if x in l2]
-        assert l1 == l2, "list retured by 'select_core_siblings()' is not a subset of input " \
+        assert l1 == l2, "List returned by 'select_core_siblings()' is not a subset of input " \
                          "list and in the same order"
 
         # Here we verify that the index of the returned CPUs is 'index'.
-        l2 = set(l2)
-        core = pkg = i = None
+        l2_set = set(l2)
+        core = pkg = None
+        i = -1
         for tline in topology:
             cpu = tline["CPU"]
             if tline["core"] != core or tline["package"] != pkg:
@@ -549,6 +575,6 @@ def test_core_siblings(params):
             else:
                 i += 1
 
-            if cpu in l2:
+            if cpu in l2_set:
                 assert index == i, f"CPU {cpu} is not sibling index {index}, in core {core} "\
                                    f"package {pkg}"

@@ -59,21 +59,27 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
     4. Get packages/core/etc counts.
         - 'get_cpus_count()'
         - 'get_cores_count()'
+        - 'get_package_cores_count()'
         - 'get_modules_count()'
         - 'get_dies_count()'
+        - 'get_package_dies_count()'
         - 'get_packages_count()'
         - 'get_offline_cpus_count()'
     5. Normalize a list of packages/cores/etc.
         A. Multiple packages/CPUs/etc numbers:
             - 'normalize_cpus()'
             - 'normalize_cores()'
+            - 'normalize_package_cores()'
             - 'normalize_modules()'
             - 'normalize_dies()'
+            - 'normalize_package_dies()'
             - 'normalize_packages()'
         B. Single package/CPU/etc.
             - 'normalize_cpu()'
             - 'normalize_core()'
+            - 'normalize_package_core()'
             - 'normalize_die()'
+            - 'normalize_package_die()'
             - 'normalize_package()'
     6. Select CPUs by sibling index.
         - 'select_core_siblings()'
@@ -809,13 +815,24 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
         return len(self.get_offline_cpus())
 
-    def get_cores_count(self, package: int = 0) -> int:
+    def get_cores_count(self) -> int:
+        """
+        Return the number of cores with at least one online CPU.
+
+        Returns:
+            Number of cores present in the system that contain at least one online CPU.
+        """
+
+        cores = self.get_cores()
+        return sum(len(core_nums) for core_nums in cores.values())
+
+    def get_package_cores_count(self, package: int = 0) -> int:
         """
         Return the number of cores in the specified package. Count only cores that have at least one
         online CPU.
 
         Args:
-            package: Package number to query.
+            package: The package number to query.
 
         Returns:
             Number of cores with at least one online CPU in the given package.
@@ -833,10 +850,25 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
         return len(self.get_modules())
 
-    def get_dies_count(self,
-                       package: int = 0,
-                       compute_dies: bool = True,
-                       io_dies: bool = True) -> int:
+    def get_dies_count(self, compute_dies: bool = True, io_dies: bool = True) -> int:
+        """
+        Return the total number of dies in the system.
+
+        Args:
+            compute_dies: Include compute dies (dies with CPUs) if True.
+            io_dies: Include I/O dies (dies without CPUs) if True.
+
+        Returns:
+            Total number of dies in the system that contain at least one online CPU.
+        """
+
+        dies = self.get_dies(compute_dies=compute_dies, io_dies=io_dies)
+        return sum(len(pkg_dies) for pkg_dies in dies.values())
+
+    def get_package_dies_count(self,
+                               package: int = 0,
+                               compute_dies: bool = True,
+                               io_dies: bool = True) -> int:
         """
         Return the number of dies in the specified package.
 
@@ -1172,7 +1204,35 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
         return cpus
 
-    def normalize_cores(self, cores: AbsNumsType | Literal["all"], package: int = 0) -> list[int]:
+    def normalize_cores(self, cores: RelNumsType | Literal["all"]) -> dict[int, list[int]]:
+        """
+        Validate and normalize core numbers.
+
+        Args:
+            cores: Core numbers to normalize, or the special value 'all' to select all cores.
+
+        Returns:
+            Dictionary mapping package numbers to lists of normalized core numbers, sorted in
+            ascending order.
+        """
+
+        result: dict[int, list[int]] = {}
+
+        if cores == "all":
+            packages = self.get_packages()
+            for pkg in packages :
+                result[pkg] = self.package_to_cores(pkg)
+            return result
+
+        packages = self.normalize_packages(list(cores))
+        for package in packages:
+            result[package] = self.normalize_package_cores(cores[package], package=package)
+
+        return result
+
+    def normalize_package_cores(self,
+                                cores: AbsNumsType | Literal["all"],
+                                package: int = 0) -> list[int]:
         """
         Validate and normalize a collection of core numbers for a given package.
 
@@ -1237,7 +1297,35 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
         return modules
 
-    def normalize_dies(self, dies: AbsNumsType | Literal["all"], package: int = 0) -> list[int]:
+    def normalize_dies(self, dies: RelNumsType | Literal["all"]) -> dict[int, list[int]]:
+        """
+        Validate and normalize die numbers.
+
+        Args:
+            dies: Die numbers to normalize, or the special value 'all' to select all dies.
+
+        Returns:
+            Dictionary mapping package numbers to lists of normalized die numbers, sorted in
+            ascending order.
+        """
+
+        result: dict[int, list[int]] = {}
+
+        if dies == "all":
+            packages = self.get_packages()
+            for pkg in packages :
+                result[pkg] = self.package_to_dies(pkg)
+            return result
+
+        packages = self.normalize_packages(list(dies))
+        for package in packages:
+            result[package] = self.normalize_package_dies(dies[package], package=package)
+
+        return result
+
+    def normalize_package_dies(self,
+                               dies: AbsNumsType | Literal["all"],
+                               package: int = 0) -> list[int]:
         """
         Validate and normalize die numbers for a given package.
 
@@ -1329,9 +1417,9 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
             The validated core number.
         """
 
-        return self.normalize_cores((core,), package=package)[0]
+        return self.normalize_package_cores((core,), package=package)[0]
 
-    def normalize_die(self, die: int, package: int = 0) -> int:
+    def normalize_package_die(self, die: int, package: int = 0) -> int:
         """
         Validate a die number for a given package.
 
@@ -1343,7 +1431,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
             The validated die number.
         """
 
-        return self.normalize_dies((die,), package=package)[0]
+        return self.normalize_package_dies((die,), package=package)[0]
 
     def normalize_package(self, package: int) -> int:
         """

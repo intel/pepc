@@ -434,7 +434,7 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
                     self.cores = self._build_package_indexed_dict(nums, "core")
                 else:
                     for pkg in pkgs:
-                        self.cores[pkg] = self._cpuinfo.normalize_cores(nums, package=pkg)
+                        self.cores[pkg] = self._cpuinfo.normalize_package_cores(nums, package=pkg)
             else:
                 for pkg, pkg_cores in cores.items():
                     pkg = self._cpuinfo.normalize_package(pkg)
@@ -454,12 +454,12 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
                     self.dies = self._build_package_indexed_dict(nums, "die")
                 else:
                     for pkg in pkgs:
-                        self.dies[pkg] = self._cpuinfo.normalize_dies(nums, package=pkg)
+                        self.dies[pkg] = self._cpuinfo.normalize_package_dies(nums, package=pkg)
             else:
                 for pkg, pkg_dies in dies.items():
                     pkg = self._cpuinfo.normalize_package(pkg)
                     for die in pkg_dies:
-                        die = self._cpuinfo.normalize_die(die, package=pkg)
+                        die = self._cpuinfo.normalize_package_die(die, package=pkg)
                         if pkg not in self.dies:
                             self.dies[pkg] = []
                         if die not in self.dies[pkg]:

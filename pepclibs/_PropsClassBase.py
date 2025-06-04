@@ -1196,7 +1196,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             else:
                 pkg_dies = dies[package]
 
-            for die in self._cpuinfo.normalize_dies(pkg_dies, package=package):
+            for die in self._cpuinfo.normalize_package_dies(pkg_dies, package=package):
                 normalized_dies[package].append(die)
 
         # Get rid of empty die lists.
@@ -1890,7 +1890,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         normalized_dies: dict[int, list[int]] = {}
         for package in self._cpuinfo.normalize_packages(list(dies)):
             normalized_dies[package] = []
-            for die in self._cpuinfo.normalize_dies(dies[package], package=package):
+            for die in self._cpuinfo.normalize_package_dies(dies[package], package=package):
                 normalized_dies[package].append(die)
 
         # Make sure there are some die numbers.
