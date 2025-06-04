@@ -5,9 +5,13 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
+ - Fix hybrid core type detiction in 'pepc topology info'.
 ### Added
+ - Add LPE cores support.
+ - Improve output on hybryd systems: specify core types.
 ### Removed
  - Remove 'pepc power' command.
+ - Remove package C-state aliases output.
 ### Changed
 
 ## [1.5.38] - 2025-05-28
