@@ -12,14 +12,12 @@
 Provide API for printing properties.
 """
 
-# TODO: finish annotating and modernizing this test.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import sys
-from typing import TypedDict, Iterable, IO, Literal, get_args, cast
+from typing import TypedDict, Iterable, Sequence, IO, Literal, Iterator, get_args, cast
 
 from pepclibs import CStates, CPUInfo
-from pepclibs._PropsClassBaseTypes import PVInfoTypedDict
 from pepclibs.helperlibs import Logging, ClassHelpers, Human, YAML, Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepctool import _PepcCommon, _OpTarget
@@ -28,12 +26,14 @@ from pepctool import _PepcCommon, _OpTarget
 from pepclibs.Props import MechanismNameType
 from pepclibs.Props import PropsType, ScopeNameType, AbsNumsType, RelNumsType
 from pepclibs.Props import PropertyValueType, PropertyTypedDict
+from pepclibs.CPUIdle import ReqCStateInfoTypedDict, ReqCStateInfoValuesType, ReqCStateInfoKeysType
+from pepclibs._PropsClassBaseTypes import PVInfoTypedDict
 
 _PrintFormatType = Literal["human", "yaml"]
 
-class _AggrSubPinfoTypdDict(TypedDict):
+class _AggrSubPinfoTypdDict(TypedDict,):
     """
-    Type for the aggregate properties information sub-dictionary for human-readable output.
+    Type for the aggregate properties sub-dictionary for human-readable output.
 
     Attributes:
         sname: Scope name used for reading the property (e.g., "CPU", "die", "package").
@@ -44,15 +44,15 @@ class _AggrSubPinfoTypdDict(TypedDict):
     sname: ScopeNameType
     vals: dict[PropertyValueType, AbsNumsType | RelNumsType]
 
-# The aggregate properties information dictionary for human-readable output.
+# The aggregate properties dictionary for human-readable output.
 _AggrPinfoType = dict[MechanismNameType, dict[str, _AggrSubPinfoTypdDict]]
 
-# Type of a property value in the YAML properties information dictionary.
+# Type for a property value in the aggregate properties dictionary for YAML output.
 _YAMLPinfoValueType = int | float | str | list[int] | list[float] | list[str]
 
-class _YAMLPinfoValueTypedDict(TypedDict, total=False):
+class _YAMLAggrPinfoValueTypedDict(TypedDict, total=False):
     """
-    Type for property value in the YAML properties information dictionary.
+    Type for property value in the aggregate properties sub-dictionary.
 
     Attributes:
         value: The value of the property.
@@ -66,10 +66,10 @@ class _YAMLPinfoValueTypedDict(TypedDict, total=False):
     die: dict[int, str]
     package: str
 
-class _YAMLSubPinfoTypedDict(TypedDict, total=False):
+class _YAMLAggrSubPinfoTypedDict(TypedDict, total=False):
     """
-    Type for aggregate properties information sub-dictionary for YAML output. Describes a singel
-    property and its value on one or multiple CPUs, dies, or packages.
+    Type for the aggregate properties sub-dictionary for YAML output. Describes a single property
+    and its value on one or multiple CPUs, dies, or packages.
 
     Attributes:
         mechanism: Name of the mechanism used for reading the property.
@@ -80,10 +80,34 @@ class _YAMLSubPinfoTypedDict(TypedDict, total=False):
 
     mechanism: MechanismNameType
     unit: str
-    values: list[_YAMLPinfoValueTypedDict]
+    values: list[_YAMLAggrPinfoValueTypedDict]
 
-# The aggregate properties information dictionary for YAML output.
-_YAMLPinfoType = dict[str, _YAMLSubPinfoTypedDict]
+# Type for the aggregate properties dictionary for YAML output.
+_YAMLAggrPinfoType = dict[str, _YAMLAggrSubPinfoTypedDict]
+
+# Type for the requestable C-state aggregate properties dictionary for human output.
+_RCAggrPinfoType = dict[str, dict[ReqCStateInfoKeysType,
+                                       dict[ReqCStateInfoValuesType, list[int]]]]
+
+# Type for a requestable C-state property for YAML output.
+_YAMLRCAggrPinfoPropertyTypedDict = dict[ReqCStateInfoKeysType | Literal["CPU"],
+                                         ReqCStateInfoValuesType | str]
+
+class _YAMLRCAggrSubPinfoTypedDict(TypedDict, total=False):
+    """
+    Type for the requestable C-state aggregate properties sub-dictionary for YAML output.
+
+    Attributes:
+        mechanism: Name of the mechanism used for reading the property.
+        values: A list of dictionaries mapping, each dictionary contains a property value and its
+                CPU numbers (as a rangified string).
+    """
+
+    mechanism: MechanismNameType
+    properties: list[_YAMLRCAggrPinfoPropertyTypedDict]
+
+# Type for the requestable C-state aggregate properties dictionary for YAML output.
+_YAMLRCAggrPinfoType = dict[str, _YAMLRCAggrSubPinfoTypedDict]
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
@@ -437,11 +461,11 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
                                    action: str | None = None,
                                    prefix: str | None = None) -> int:
         """
-        Print a property information sub-dictionary of the aggregated property information
-        dictionary in a human-readable format.
+        Print a property sub-dictionary of the aggregated property dictionary in a human-readable
+        format.
 
         Args:
-            apinfo: A sub-dictionary of the aggregate properties information dictionary to print.
+            apinfo: A sub-dictionary of the aggregate properties dictionary to print.
             action: An "action" word to include into the messages (nothing by default). For
                     example, if 'action' is "set to", the messages will be like
                     "property <pname> set to <value>".
@@ -467,10 +491,10 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
                                 group: bool = False,
                                 action: str | None = None) -> int:
         """
-        Print an aggregate property information dictionary in a human-readable format.
+        Print an aggregate property dictionary in a human-readable format.
 
         Args:
-            aggr_pinfo: The aggregate properties information dictionary to print.
+            aggr_pinfo: The aggregate properties dictionary to print.
             group: If True, properties are grouped and printed by their mechanism name. If False,
                    properties are printed without grouping.
             action: An "action" word to include into the messages (nothing by default). For
@@ -494,13 +518,13 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
 
         return printed
 
-    def _yaml_dump(self, yaml_pinfo: _YAMLPinfoType):
+    def _yaml_dump(self, yaml_pinfo: dict):
         """
-        Dump an aggregate properties information dictionary in YAML format to a file object or
+        Dump an aggregate properties dictionary in YAML format to a file object or
         stdout.
 
         Args:
-            yaml_pinfo: The aggregate properties information dictionary to dump.
+            yaml_pinfo: The aggregate properties dictionary to dump.
         """
 
         fobj = self._fobj
@@ -511,16 +535,16 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
 
     def _print_aggr_pinfo_yaml(self, aggr_pinfo: _AggrPinfoType) -> int:
         """
-        Print aggregate properties information dictionary in YAML format.
+        Print aggregate properties dictionary in YAML format.
 
         Args:
-            aggr_pinfo: The aggregate properties information dictionary.
+            aggr_pinfo: The aggregate properties dictionary.
 
         Returns:
             The number of printed properties.
         """
 
-        yaml_pinfo: _YAMLPinfoType = {}
+        yaml_pinfo: _YAMLAggrPinfoType = {}
 
         for mname, ainfo in aggr_pinfo.items():
             for pname, pinfo in ainfo.items():
@@ -584,16 +608,17 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
     def _build_aggr_pinfo_pname(self,
                                 pname: str,
                                 optar: _OpTarget.OpTarget,
-                                mnames: Iterable[MechanismNameType],
+                                mnames: Sequence[MechanismNameType] | None,
                                 skip_unsupported: bool,
                                 override_sname: ScopeNameType | None = None) -> _AggrPinfoType:
         """
-        Build and return an aggregate properties dictionary for a single property.
+        Build and return an aggregate properties dictionary for human-readable output for a single
+        property.
 
         Args:
             pname: Name of the property to aggregate.
             optar: Operation target specifying the hardware scope.
-            mnames: Mechanism names to use for reading properties.
+            mnames: Mechanism names to use for reading properties. If None, all mechanisms are used.
             skip_unsupported: Whether to skip unsupported properties.
             override_sname: Override the default scope name for the property.
 
@@ -663,10 +688,11 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
     def _build_aggr_pinfo(self,
                           pnames: Iterable[str],
                           optar: _OpTarget.OpTarget,
-                          mnames: Iterable[MechanismNameType],
+                          mnames: Sequence[MechanismNameType] | None,
                           skip_ro: bool, skip_unsupported: bool) -> _AggrPinfoType:
         """
-        Build and return an aggregate properties dictionary for the specified property names.
+        Build and return an aggregate properties infomation dictionary for human-readable output for
+        the specified property names.
 
         Constructs a nested dictionary that maps mechanism names to property names, and then to a
         dictionary mapping property values to the CPUs, dies, or packages that have those values. In
@@ -697,7 +723,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         Args:
             pnames: Names of the properties to aggregate.
             optar: Operation target specifying the hardware scope.
-            mnames: Mechanism names to use for reading properties.
+            mnames: Mechanism names to use for reading properties. If None, all mechanisms are used.
             skip_ro: Whether to skip read-only properties.
             skip_unsupported: Whether to skip unsupported properties.
 
@@ -728,39 +754,62 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
 
         return aggr_pinfo
 
-    def _normalize_pnames(self, pnames, skip_ro=False):
-        """Validate property names in 'pnames' and return a normalized list."""
+    def _normalize_pnames(self,
+                          pnames: list[str] | Literal["all"],
+                          skip_ro: bool = False) -> list[str]:
+        """
+        Validate and normalize a list of property names.
+
+        Args:
+            pnames: List of property names to validate and normalize, or the string "all" to include
+                    all properties.
+            skip_ro: If True, excludes read-only properties from the returned list.
+
+        Returns:
+            A list of validated and normalized property names.
+        """
 
         if pnames == "all":
             pnames = list(self._pobj.props)
         else:
             for pname in pnames:
                 if pname not in self._pobj.props:
-                    raise Error(f"unknown property name '{pname}'")
+                    raise Error(f"Unknown property name '{pname}'")
 
         if not skip_ro:
             return pnames
+
         return [pname for pname in pnames if self._pobj.props[pname]["writable"]]
 
-    def print_props(self, pnames, optar, mnames=None, skip_ro=False, skip_unsupported=True,
-                    group=False, action=None):
+    def print_props(self,
+                    pnames: list[str] | Literal["all"],
+                    optar: _OpTarget.OpTarget,
+                    mnames: Sequence[MechanismNameType] | None = None,
+                    skip_ro: bool = False,
+                    skip_unsupported: bool = True,
+                    group: bool = False,
+                    action: str | None = None) -> int:
         """
-        Read and print properties. The arguments are as follows.
-          * pnames - names of the property to read and print.
-          * optar - an '_OpTarget.OpTarget()' object representing the CPUs, cores, modules, etc to
-                    print the properties for.
-          * mnames - list of mechanism names allowed to be used for getting properties (default -
-                     all mechanisms are allowed).
-          * skip_unsupported - if 'True', unsupported properties are skipped. Otherwise
-                               "not supported" is printed.
-          * skip_ro - if 'False', read-only properties information will be printed, otherwise they
-                      will be skipped.
-          * group - whether to group properties by the mechanism (e.g., "sysfs", "msr", etc) when
-                    printing.
-          * action - an optional action word to include into the messages (nothing by default). For
-                     example, if 'action' is "set to", the messages will be like "property <pname>
-                     set to <value>". Applicable only to the "human" format.
-        Returns the printed properties count.
+        Read and print properties for specified CPUs, cores, modules, etc.
+
+        Args:
+            pnames: List of property names to read and print. Read all properties if set to "all".
+            optar: An '_OpTarget.OpTarget()' object representing the CPUs, cores, modules, etc., for
+                   which to print the properties.
+            mnames: List of mechanism names allowed for retrieving properties. If None, all
+                    mechanisms are allowed.
+            skip_ro: If True, skip read-only properties. If False, include read-only properties in
+                     the output.
+            skip_unsupported: If True, skip unsupported properties. If False, print "not supported"
+                              for unsupported properties.
+            group: If True, properties are grouped and printed by their mechanism name. If False,
+                   properties are printed without grouping.
+            action: An "action" word to include into the messages (nothing by default). For
+                    example, if 'action' is "set to", the messages will be like
+                    "property <pname> set to <value>". Not applicable for YAML output.
+
+        Returns:
+            The number of printed properties.
         """
 
         pnames = self._normalize_pnames(pnames, skip_ro=skip_ro)
@@ -771,13 +820,24 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         return self._print_aggr_pinfo_yaml(aggr_pinfo)
 
 class PStatesPrinter(_PropsPrinter):
-    """This class provides API for printing P-states information."""
+    """Provide API for printing P-states information."""
 
 class PMQoSPrinter(_PropsPrinter):
-    """This class provides API for printing PM QoS information."""
+    """Provide API for printing PM QoS information."""
 
-    def _format_value_human(self, pname, prop, val):
-        """Format value 'val' of property described by 'prop' into the "human" format."""
+    def _format_value_human(self, pname, prop: PropertyTypedDict, val: PropertyValueType) -> str:
+        """
+        Format a property value into a human-readable string based on its type and metadata.
+
+        Args:
+            pname: Name of the property to format the value for.
+            prop: The property description dictionary containing metadata about the property (e.g.,
+                  name, type, unit).
+            val: The value of the property to format.
+
+        Returns:
+            Human-readable representation of the value.
+        """
 
         if pname == "latency_limit" and val == 0:
             # Per-CPU latency limit 0 means "no latency".
@@ -789,17 +849,32 @@ class PMQoSPrinter(_PropsPrinter):
         return super()._format_value_human(pname, prop, val)
 
 class CStatesPrinter(_PropsPrinter):
-    """This class provides API for printing C-states information."""
+    """Provide API for printing C-states information."""
 
-    def _adjust_aggr_pinfo_pcs_limit(self, aggr_pinfo, optar, mnames):
+    def _adjust_aggr_pinfo_pcs_limit(self,
+                                     aggr_pinfo: _AggrPinfoType,
+                                     cpus: AbsNumsType,
+                                     mnames: Sequence[MechanismNameType] | None) -> \
+                                                                            _AggrPinfoType:
         """
-        The aggregate properties information dictionary 'aggr_pinfo' includes the 'pkg_cstate_limit'
-        property. This property is read/write in case the corresponding MSR is unlocked, and it is
-        R/O if the MSR is locked. The goal of this method is to remove all the "locked" CPUs from
-        the 'pkg_cstate_limit' key of 'aggr_pinfo'.
+        Adjust the 'pkg_cstate_limit' property in the aggregate properties information dictionary by
+        removing it for locked CPUs. This is necessary when user requested to exclude R/O
+        properties, and the 'pkg_cstate_limit' property is effectively read-only when it is locked.
+
+        In practice, it is locked either for all CPUs or none. But this method is designed to handle
+        the general case where some CPUs may be locked and others may not.
+
+        Args:
+            aggr_pinfo: Dictionary containing aggregate properties information for CPUs, including
+                        'pkg_cstate_limit'.
+            cpus: CPU numbers for which to adjust the 'pkg_cstate_limit' property.
+            mnames: Mechanism names to use for reading properties. If None, all mechanisms are used.
+
+        Returns:
+            The updated 'aggr_pinfo' dictionary with locked CPUs removed from the 'pkg_cstate_limit'
+            property, or with the property removed entirely if all CPUs are locked.
         """
 
-        cpus = optar.get_cpus()
         for pinfo in aggr_pinfo.values():
             pcsl_info = pinfo.get("pkg_cstate_limit")
             if not pcsl_info:
@@ -825,27 +900,90 @@ class CStatesPrinter(_PropsPrinter):
                 del pinfo["pkg_cstate_limit"]
                 continue
 
-            new_pcsl_info = {}
-            for key, _cpus in pcsl_info.items():
+            new_pcsl_info: _AggrSubPinfoTypdDict = {"sname": pcsl_info["sname"], "vals": {}}
+            for val, _cpus in pcsl_info["vals"].items():
                 new_cpus = []
-                for cpu in _cpus:
+                for cpu in cast(AbsNumsType, _cpus):
                     if cpu not in locked_cpus:
                         new_cpus.append(cpu)
                 if new_cpus:
-                    new_pcsl_info[key] = new_cpus
+                    new_pcsl_info["vals"][val] = new_cpus
 
             pinfo["pkg_cstate_limit"] = new_pcsl_info
 
         return aggr_pinfo
 
-    def _print_val_msg(self, val, name=None, cpus=None, prefix=None, suffix=None, action=None):
-        """Format and print a message about 'name' and its value 'val'."""
+    def print_props(self,
+                    pnames: list[str] | Literal["all"],
+                    optar: _OpTarget.OpTarget,
+                    mnames: Sequence[MechanismNameType] | None = None,
+                    skip_ro: bool = False,
+                    skip_unsupported: bool = True,
+                    group: bool = False,
+                    action: str | None = None) -> int:
+        """
+        Read and print properties for specified CPUs, cores, modules, etc.
+
+        Args:
+            pnames: List of property names to read and print. Read all properties if set to "all".
+            optar: An '_OpTarget.OpTarget()' object representing the CPUs, cores, modules, etc., for
+                   which to print the properties.
+            mnames: List of mechanism names allowed for retrieving properties. If None, all
+                    mechanisms are allowed.
+            skip_ro: If True, skip read-only properties. If False, include read-only properties in
+                     the output.
+            skip_unsupported: If True, skip unsupported properties. If False, print "not supported"
+                              for unsupported properties.
+            group: If True, properties are grouped and printed by their mechanism name. If False,
+                   properties are printed without grouping.
+            action: An "action" word to include into the messages (nothing by default). For
+                    example, if 'action' is "set to", the messages will be like
+                    "property <pname> set to <value>". Not applicable for YAML output.
+
+        Returns:
+            The number of printed properties.
+        """
+
+        pnames = self._normalize_pnames(pnames, skip_ro=skip_ro)
+        aggr_pinfo = self._build_aggr_pinfo(pnames, optar, mnames, skip_ro, skip_unsupported)
+
+        if skip_ro and "pkg_cstate_limit" in pnames:
+            # Special case: the package C-state limit option is read-write in general, but if it is
+            # locked, it is effectively read-only. Since 'skip_ro' is 'True', we need to adjust
+            # 'aggr_pinfo'.
+            aggr_pinfo = self._adjust_aggr_pinfo_pcs_limit(aggr_pinfo, optar.get_cpus(), mnames)
+
+        if self._fmt == "human":
+            return self._print_aggr_pinfo_human(aggr_pinfo, group=group, action=action)
+
+        return self._print_aggr_pinfo_yaml(aggr_pinfo)
+
+    def _print_val_msg(self,
+                       val: ReqCStateInfoValuesType,
+                       name: str | None = None,
+                       cpus: AbsNumsType | None = None,
+                       prefix: str | None = None,
+                       suffix: str | None = None,
+                       action: str | None = None):
+        """
+        Format and print a message describing a value of a requestable C-state property.
+
+        Args:
+            val: The value to print. If None, "not supported" will be displayed.
+            name: Property name. If None, no name will be included in the message.
+            cpus: CPU numbers that have this value. If None, no CPU information will be included.
+            prefix: An optional string to prepend to the message.
+            suffix: An optional string to append to the message.
+            action: An "action" word to include into the messages (nothing by default). For example,
+                    if 'action' is "set to", the messages will be like "property <pname> set to
+                    <value>". Not applicable for YAML output.
+        """
 
         if cpus is None:
             sfx = ""
         else:
-            cpus = self._fmt_cpus(cpus)
-            sfx = f" for {cpus}"
+            cpus_str = self._fmt_cpus(cpus)
+            sfx = f" for {cpus_str}"
 
         if suffix is not None:
             sfx = sfx + suffix
@@ -870,12 +1008,23 @@ class CStatesPrinter(_PropsPrinter):
         msg += f"{val}{sfx}"
         self._print(msg)
 
-    def _print_aggr_rcsinfo_human(self, aggr_rcsinfo, group=False, action=None):
+    def _print_aggr_rcsinfo_human(self,
+                                  aggr_rcsinfo: _RCAggrPinfoType,
+                                  group: bool = False,
+                                  action: str | None = None) -> int:
         """
-        Print the aggregate C-states information in "human" format. The arguments are as follows.
-          * aggr_rcsinfo - the aggregate C-states information dictionary.
-          * group - same as in 'print_props()'.
-          * action - same as in 'print_props()'.
+        Print a requestable C-states aggregate dictionary in a human-readable format.
+
+        Args:
+            aggr_rcsinfo: The requestable C-states aggregate dictionary to print.
+            group: If True, properties are grouped and printed by their mechanism name. If False,
+                   properties are printed without grouping.
+            action: An "action" word to include into the messages (nothing by default). For example,
+                    if 'action' is "set to", the messages will be like "property <pname> set to
+                    <value>". Not applicable for YAML output.
+
+        Returns:
+            The number of C-states printed.
         """
 
         if not aggr_rcsinfo:
@@ -919,57 +1068,48 @@ class CStatesPrinter(_PropsPrinter):
 
         return printed
 
-    def _print_aggr_rcsinfo_yaml(self, aggr_rcsinfo):
-        """Print the aggregate C-states information in YAML format."""
+    def _print_aggr_rcsinfo_yaml(self, aggr_rcsinfo: _RCAggrPinfoType) -> int:
+        """
+        Print the requestable C-states aggregate dictionary in YAML format.
 
-        yaml_rcsinfo = {}
+        Args:
+            aggr_rcsinfo: The requestable C-states aggregate dictionary to print.
+
+        Returns:
+            The number of C-state entries processed and printed.
+        """
+
+        yaml_rcsinfo: _YAMLRCAggrPinfoType = {}
 
         for csname, csinfo in aggr_rcsinfo.items():
             for key, kinfo in csinfo.items():
                 for val, cpus in kinfo.items():
-                    if key == "disable":
-                        key = "value"
-                        val = "off" if val else "on"
-
                     if csname not in yaml_rcsinfo:
-                        yaml_rcsinfo[csname] = []
+                        yaml_rcsinfo[csname] = {"mechanism": "sysfs", "properties": []}
 
-                    yaml_rcsinfo[csname].append({key: val, "CPU": Trivial.rangify(cpus)})
+                    properties = yaml_rcsinfo[csname]["properties"]
+                    properties.append({key: val, "CPU": Trivial.rangify(cpus)})
 
-        self._yaml_dump(yaml_rcsinfo)
+        self._yaml_dump({"cstates": yaml_rcsinfo})
         return len(yaml_rcsinfo)
 
-    def print_props(self, pnames, optar, mnames=None, skip_ro=False,
-                    skip_unsupported=True, group=False, action=None):
+    def _build_aggr_rcsinfo(self,
+                            csinfo_iter: Iterator[tuple[int, dict[str, ReqCStateInfoTypedDict]]],
+                            keys: set[ReqCStateInfoKeysType]) -> _RCAggrPinfoType:
         """
-        Read and print properties. The arguments are the same as in '_PropsPrinter.print_props()'.
-        """
+        Build and return requestable C-states aggregate dictionary for human-readable output.
 
-        pnames = self._normalize_pnames(pnames, skip_ro=skip_ro)
-        aggr_pinfo = self._build_aggr_pinfo(pnames, optar, mnames, skip_ro, skip_unsupported)
+        Args:
+            csinfo_iter: Iterator yielding (cpu, csinfo) tuples, where 'cpu' is a CPU number and
+                         'csinfo' is a dictionary with C-state information for that CPU.
+            keys: Set of C-state property names to include in the aggregate dictionary, such as
+                  "disable", "latency", or "residency".
 
-        if skip_ro and "pkg_cstate_limit" in pnames:
-            # Special case: the package C-state limit option is read-write in general, but if it is
-            # locked, it is effectively read-only. Since 'skip_ro' is 'True', we need to adjust
-            # 'aggr_pinfo'.
-            aggr_pinfo = self._adjust_aggr_pinfo_pcs_limit(aggr_pinfo, optar, mnames)
-
-        if self._fmt == "human":
-            return self._print_aggr_pinfo_human(aggr_pinfo, group=group, action=action)
-        return self._print_aggr_pinfo_yaml(aggr_pinfo)
-
-    def _build_aggr_rcsinfo(self, csinfo_iter, keys):
-        """
-        Build the aggregate C-states information dictionary. The arguments are as follows.
-          * csinfo_iter - an iterator yielding '(cpu, csinfo)' tuples.
-          * keys - C-state keys which should be included in the aggregate C-states dictionary.
-                   For example, "disable", "latency", "residency.
-
-        This method is similar to '_build_aggr_pinfo()' and returns a dictionary of a similar
-        structure.
+        Returns:
+            The aggregate C-states information dictionary for requestable C-states output.
         """
 
-        aggr_rcsinfo = {}
+        aggr_rcsinfo: _RCAggrPinfoType = {}
 
         # C-states info 'csinfo' has the following format:
         #
@@ -977,43 +1117,53 @@ class CStatesPrinter(_PropsPrinter):
         #  "C1E": {"disable": False, "latency": 2, "residency": 1, ...},
         #  ...}
         for cpu, csinfo in csinfo_iter:
-            for pname, values in csinfo.items():
-                if pname not in aggr_rcsinfo:
-                    aggr_rcsinfo[pname] = {}
+            for csname, values in csinfo.items():
+                if csname not in aggr_rcsinfo:
+                    aggr_rcsinfo[csname] = {}
 
-                for name, val in values.items():
-                    if name not in keys or val is None:
+                for key, val in values.items():
+                    if key not in keys or val is None:
                         continue
 
-                    if name not in aggr_rcsinfo[pname]:
-                        aggr_rcsinfo[pname][name] = {val: [cpu]}
-                    elif val not in aggr_rcsinfo[pname][name]:
-                        aggr_rcsinfo[pname][name][val] = [cpu]
+                    val = cast(ReqCStateInfoValuesType, val)
+                    key = cast(ReqCStateInfoKeysType, key)
+
+                    if key not in aggr_rcsinfo[csname]:
+                        aggr_rcsinfo[csname][key] = {val: [cpu]}
+                    elif val not in aggr_rcsinfo[csname][key]:
+                        aggr_rcsinfo[csname][key][val] = [cpu]
                     else:
-                        aggr_rcsinfo[pname][name][val].append(cpu)
+                        aggr_rcsinfo[csname][key][val].append(cpu)
 
         return aggr_rcsinfo
 
     def print_cstates(self, csnames="all", cpus="all", skip_ro=False, group=False, action=None):
         """
-        Read and print information about requestable C-states. The arguments are as follows.
-          * csnames - C-state names to print information about (all C-states by default).
-          * cpus - CPU numbers to read and print C-state information for (all CPUs by default).
-          * skip_ro - skip printing read-only information, print only modifiable information.
-          * group - whether to group properties by the mechanism (e.g., "sysfs", "msr", etc) when
-                    printing.
-          * action - an optional action word to include into the messages (nothing by default). For
-                     example, if 'action' is "set to", the messages will be like "property <pname>
-                     set to <value>". Applicable only to the "human" format.
-        Returns the printed requestable C-states count.
+        Print information about requestable C-states for specified CPUs.
+
+        Args:
+            csnames: Names of C-states to include in the output. Use "all" to include all C-states.
+            cpus: CPU numbers to include in the output. Use "all" to include all CPUs.
+            skip_ro: If True, print only modifiable properties and skip read-only information.
+            group: If True, properties are grouped and printed by their mechanism name. If False,
+                   properties are printed without grouping.
+            action: An "action" word to include into the messages (nothing by default). For
+                    example, if 'action' is "set to", the messages will be like
+                    "property <pname> set to <value>". Not applicable for YAML output.
+
+        Returns:
+            The number of requestable C-states printed.
         """
+
+        keys: set[ReqCStateInfoKeysType]
 
         if skip_ro:
             keys = {"disable"}
         else:
             keys = {"disable", "latency", "residency", "desc"}
 
-        csinfo_iter = self._pobj.get_cstates_info(csnames=csnames, cpus=cpus)
+        pobj = cast(CStates.CStates, self._pobj)
+        csinfo_iter = pobj.get_cstates_info(csnames=csnames, cpus=cpus)
 
         try:
             aggr_rcsinfo = self._build_aggr_rcsinfo(csinfo_iter, keys)

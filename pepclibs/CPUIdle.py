@@ -12,14 +12,50 @@
 This class provides API for Linux "cpuidle" subsystem sysfs knobs.
 """
 
+# TODO: finish annotating and modernizing this module.
+from __future__ import annotations # Remove when switching to Python 3.10+.
+
 import re
 import contextlib
 from pathlib import Path
+from typing import Literal, TypedDict
 from pepclibs.helperlibs import Logging, LocalProcessManager, Trivial, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorNotFound
 from pepclibs import CPUInfo, _PerCPUCache
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
+
+class ReqCStateInfoTypedDict(TypedDict, total=False):
+    """
+    Type for the Requestable C-state information dictionary returned by 'get_cstates_info()' and
+    similar methods.
+
+    Attributes:
+        index: C-state index.
+        name: C-state name.
+        desc: C-state description.
+        disable: True if the C-state is disabled.
+        latency: C-state latency in microseconds.
+        residency: C-state target residency in microseconds.
+        time: Time spent in the C-state in microseconds.
+        usage: Number of times the C-state was requested.
+    """
+
+    index: int
+    name: str
+    desc: str
+    disable: bool
+    latency: int
+    residency: int
+    time: int
+    usage: int
+
+# The type of the values in the Requestable C-state information dictionary.
+ReqCStateInfoValuesType = int | str | bool
+
+# The type of the keys in the Requestable C-state information dictionary.
+ReqCStateInfoKeysType = Literal["index", "name", "desc", "disable",
+                                "latency", "residency", "time", "usage"]
 
 # The C-state sysfs file names which are read by 'get_cstates_info()'. The C-state
 # information dictionary returned by 'get_cstates_info()' uses these file names as keys as well.
@@ -180,6 +216,9 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
 
             if Trivial.is_int(val):
                 val = int(val)
+
+            if key == "disable":
+                val = bool(val)
 
             if prev_index is not None and index != prev_index:
                 # A C-state has been processed. Add it to 'csinfo'.

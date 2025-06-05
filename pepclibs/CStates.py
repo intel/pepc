@@ -12,13 +12,19 @@
 This module provides C-state management API.
 """
 
+# TODO: finish annotating and modernizing this module.
+from __future__ import annotations # Remove when switching to Python 3.10+.
+
+from typing import Generator, Literal, Iterable
 from pepclibs.helperlibs import ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs import _PropsClassBase, CPUIdle
 from pepclibs.msr import PowerCtl, PCStateConfigCtl
 
-# Make the exception class be available for users.
-from pepclibs._PropsClassBase import ErrorUsePerCPU # pylint: disable=unused-import
+# pylint: disable=unused-import
+from pepclibs.CPUIdle import ReqCStateInfoTypedDict, ReqCStateInfoValuesType, ReqCStateInfoKeysType
+from pepclibs._PropsClassBase import ErrorUsePerCPU
+from pepclibs._CPUInfoBaseTypes import AbsNumsType
 
 # This dictionary describes the C-state properties this module supports. Many of the properties are
 # just features controlled by an MSR, such as "c1e_autopromote" from 'PowerCtl.FEATURES'.
@@ -144,7 +150,10 @@ class CStates(_PropsClassBase.PropsClassBase):
                                                                  cpuinfo=self._cpuinfo, msr=msr)
         return self._pcstatectl
 
-    def get_cstates_info(self, cpus="all", csnames="all"):
+    def get_cstates_info(self,
+                         cpus: AbsNumsType | Literal["all"] = "all",
+                         csnames: Iterable[str] | Literal["all"] = "all") -> \
+                            Generator[tuple[int, dict[str, ReqCStateInfoTypedDict]], None, None]:
         """Same as 'CPUIdle.get_cstates_info()'."""
 
         yield from self._get_cpuidle().get_cstates_info(cpus=cpus, csnames=csnames)
