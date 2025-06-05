@@ -20,6 +20,8 @@ from typing import TypedDict, Iterable, Sequence, IO, Literal, Iterator, get_arg
 from pepclibs import CStates, CPUInfo
 from pepclibs.helperlibs import Logging, ClassHelpers, Human, YAML, Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
+from pepclibs.CStates import ErrorUsePerCPU
+from pepclibs.PStates import ErrorTryAnotherMechanism
 from pepctool import _PepcCommon, _OpTarget
 
 # pylint: disable-next=ungrouped-imports
@@ -622,6 +624,11 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
             skip_unsupported: Whether to skip unsupported properties.
             override_sname: Override the default scope name for the property.
 
+        Raises:
+            ErrorUsePerCPU: If the property value is inconsistent across package or die siblings,
+                            indicating that per-CPU access should be used instead.
+            ErrorTryAnotherMechanism: If the property is not supported by the requested mechanism,
+                                      and another mechanism should be used instead.
         Returns:
             The aggregate properties dictionary for the property.
         """
@@ -689,7 +696,9 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
                           pnames: Iterable[str],
                           optar: _OpTarget.OpTarget,
                           mnames: Sequence[MechanismNameType] | None,
-                          skip_ro: bool, skip_unsupported: bool) -> _AggrPinfoType:
+                          skip_ro: bool,
+                          skip_unsupported: bool,
+                          skip_unsupported_mechanism: bool) -> _AggrPinfoType:
         """
         Build and return an aggregate properties infomation dictionary for human-readable output for
         the specified property names.
@@ -726,6 +735,9 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
             mnames: Mechanism names to use for reading properties. If None, all mechanisms are used.
             skip_ro: Whether to skip read-only properties.
             skip_unsupported: Whether to skip unsupported properties.
+            skip_unsupported_mechanism: If True, skip the properties that cannot be retrieved using
+                                        the mechanisms in 'mnames', byt can be retrieved using other
+                                        mechanisms. Otherwise, raise an exception.
 
         Returns:
             The aggregate properties dictionary structured as described above.
@@ -740,7 +752,12 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
 
             try:
                 apinfo = self._build_aggr_pinfo_pname(pname, optar, mnames, skip_unsupported)
-            except CStates.ErrorUsePerCPU as err:
+            except ErrorTryAnotherMechanism as err:
+                _LOG.debug(err)
+                if skip_unsupported_mechanism:
+                    continue
+                raise
+            except ErrorUsePerCPU as err:
                 # Inconsistent property value across package or die siblings. Use per-CPU access.
                 _LOG.warning(err)
                 apinfo = self._build_aggr_pinfo_pname(pname, optar, mnames, skip_unsupported,
@@ -812,8 +829,13 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
             The number of printed properties.
         """
 
+        # Make sure limiting the mechanisms when printing all available properties is not failing.
+        skip_unsupported_mechanism = pnames == "all"
+
         pnames = self._normalize_pnames(pnames, skip_ro=skip_ro)
-        aggr_pinfo = self._build_aggr_pinfo(pnames, optar, mnames, skip_ro, skip_unsupported)
+
+        aggr_pinfo = self._build_aggr_pinfo(pnames, optar, mnames, skip_ro, skip_unsupported,
+                                            skip_unsupported_mechanism)
 
         if self._fmt == "human":
             return self._print_aggr_pinfo_human(aggr_pinfo, group=group, action=action)
@@ -944,8 +966,12 @@ class CStatesPrinter(_PropsPrinter):
             The number of printed properties.
         """
 
+        # Make sure limiting the mechanisms when printing all available properties is not failing.
+        skip_unsupported_mechanism = pnames == "all"
+
         pnames = self._normalize_pnames(pnames, skip_ro=skip_ro)
-        aggr_pinfo = self._build_aggr_pinfo(pnames, optar, mnames, skip_ro, skip_unsupported)
+        aggr_pinfo = self._build_aggr_pinfo(pnames, optar, mnames, skip_ro, skip_unsupported,
+                                            skip_unsupported_mechanism)
 
         if skip_ro and "pkg_cstate_limit" in pnames:
             # Special case: the package C-state limit option is read-write in general, but if it is
@@ -1137,13 +1163,21 @@ class CStatesPrinter(_PropsPrinter):
 
         return aggr_rcsinfo
 
-    def print_cstates(self, csnames="all", cpus="all", skip_ro=False, group=False, action=None):
+    def print_cstates(self,
+                      csnames: list[str] | Literal["all"] = "all",
+                      cpus: AbsNumsType | Literal["all"] = "all",
+                      mnames: Sequence[MechanismNameType] | None = None,
+                      skip_ro: bool = False,
+                      group: bool = False,
+                      action: str | None = None) -> int:
         """
         Print information about requestable C-states for specified CPUs.
 
         Args:
             csnames: Names of C-states to include in the output. Use "all" to include all C-states.
             cpus: CPU numbers to include in the output. Use "all" to include all CPUs.
+            mnames: Mechanism names to use for reading properties. If None, all mechanisms are used,
+                    although only the "sysfs" mechanism is currently supported.
             skip_ro: If True, print only modifiable properties and skip read-only information.
             group: If True, properties are grouped and printed by their mechanism name. If False,
                    properties are printed without grouping.
@@ -1154,6 +1188,14 @@ class CStatesPrinter(_PropsPrinter):
         Returns:
             The number of requestable C-states printed.
         """
+
+        if mnames is None:
+            mnames = ["sysfs"]
+
+        if "sysfs" not in mnames:
+            if csnames == "all":
+                return 0
+            raise Error("The 'sysfs' mechanism is required for printing C-states information")
 
         keys: set[ReqCStateInfoKeysType]
 

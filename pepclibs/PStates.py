@@ -504,7 +504,8 @@ class PStates(_PropsClassBase.PropsClassBase):
         cpufreq_obj = self._get_cpufreq_msr_obj()
         yield from cpufreq_obj.get_hwp(cpus=cpus)
 
-    def _get_cppc_freq(self, pname: str, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
+    def _get_cppc_freq(self, pname: str, cpus: AbsNumsType) -> \
+                                                        Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield frequency values for the specified CPUs using the CPPC mechanism.
 
@@ -642,7 +643,8 @@ class PStates(_PropsClassBase.PropsClassBase):
 
         raise Error(f"BUG: Unsupported mechanism '{mname}'")
 
-    def _get_freq_sysfs(self, pname: str, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
+    def _get_freq_sysfs(self, pname: str, cpus: AbsNumsType) -> \
+                                                    Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield CPU frequency values for the specified CPUs using the sysfs mechanism.
 
@@ -671,7 +673,8 @@ class PStates(_PropsClassBase.PropsClassBase):
         else:
             raise Error(f"BUG: unexpected CPU frequency property {pname}")
 
-    def _get_freq_msr(self, pname: str, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
+    def _get_freq_msr(self, pname: str, cpus: AbsNumsType) -> \
+                                                Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the minimum or maximum CPU frequency for the specified CPUs using the MSR
         mechanism.
@@ -717,7 +720,8 @@ class PStates(_PropsClassBase.PropsClassBase):
 
         raise Error(f"BUG: Unsupported mechanism '{mname}'")
 
-    def _get_freq_limit(self, pname: str, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
+    def _get_freq_limit(self, pname: str, cpus: AbsNumsType) -> \
+                                                        Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield CPU frequency limits for the specified CPUs using the sysfs mechanism.
 

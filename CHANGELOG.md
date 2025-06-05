@@ -6,6 +6,7 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
  - Fix hybrid core type detiction in 'pepc topology info'.
+ - Fix 'pepc print pstates --mechanisms msr,cppc' and similar use-cases.
 ### Added
  - Add LPE cores support.
  - Improve output on hybryd systems: specify core types.

@@ -56,7 +56,8 @@ def cstates_info_command(args, pman):
         if not hasattr(args, "oargs") and args.csnames == "default":
             # No options were specified. Print all the information. Skip the unsupported ones as
             # they add clutter.
-            printed += csprint.print_cstates(csnames="all", cpus=optar.get_cpus(), group=True)
+            printed += csprint.print_cstates(csnames="all", cpus=optar.get_cpus(), mnames=mnames,
+                                             group=True)
             printed += csprint.print_props("all", optar, mnames=mnames, skip_unsupported=True,
                                            group=True)
         else:
@@ -66,7 +67,8 @@ def cstates_info_command(args, pman):
                 csnames = args.csnames
                 if args.csnames is None:
                     csnames = "all"
-                printed += csprint.print_cstates(csnames=csnames, cpus=optar.get_cpus())
+                printed += csprint.print_cstates(csnames=csnames, cpus=optar.get_cpus(),
+                                                 mnames=mnames)
 
             pnames = list(getattr(args, "oargs", []))
             pnames = _PepcCommon.expand_subprops(pnames, pobj.props)
@@ -134,7 +136,7 @@ def cstates_config_command(args, pman):
                 # Handle the special case of '--enable' and '--disable' option without arguments. In
                 # this case we just print the C-states enable/disable status.
                 if not all_cstates_printed:
-                    csprint.print_cstates(csnames="all", cpus=optar.get_cpus())
+                    csprint.print_cstates(csnames="all", cpus=optar.get_cpus(), mnames=mnames)
                     all_cstates_printed = True
                 del enable_opts[optname]
 

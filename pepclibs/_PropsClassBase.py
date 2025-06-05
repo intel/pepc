@@ -241,6 +241,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         Raises:
             ErrorNotSupported: If the mechanism is not supported for the property or overall.
+            ErrorTryAnotherMechanism: If the mechanism is not supported for the property, but
+                                      alternative mechanisms are available.
         """
 
         all_mnames: dict[MechanismNameType, MechanismTypedDict] | tuple[MechanismNameType, ...]
@@ -253,9 +255,10 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             mnames = ", ".join(all_mnames)
             if pname:
                 name = self._props[pname]["name"]
-                raise ErrorNotSupported(f"{name} is not available via the '{mname}' mechanism"
-                                        f"{self._pman.hostmsg}.\nUse one the following "
-                                        f"mechanism(s) instead: {mnames}.", mname=mname)
+                raise ErrorTryAnotherMechanism(f"{name} is not available via the '{mname}' "
+                                               f"mechanism{self._pman.hostmsg}.\n"
+                                               f"Use one the following mechanism(s) instead: "
+                                               f"{mnames}.", mname=mname)
             raise ErrorNotSupported(f"Unsupported mechanism '{mname}', supported mechanisms are: "
                                     f"{mnames}.", mname=mname)
 
@@ -289,10 +292,21 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                 return list(self._props[pname]["mnames"])
             return list(self.mechanisms)
 
-        for mname in mnames:
-            self._validate_mname(mname, pname=pname, allow_readonly=allow_readonly)
+        supported_mnames: list[MechanismNameType] = []
+        errors: list[ErrorNotSupported] = []
 
-        return Trivial.list_dedup(mnames)
+        for mname in mnames:
+            try:
+                self._validate_mname(mname, pname=pname, allow_readonly=allow_readonly)
+            except ErrorNotSupported as err:
+                errors.append(err)
+            else:
+                supported_mnames.append(mname)
+
+        if not supported_mnames:
+            raise errors[0]
+
+        return Trivial.list_dedup(supported_mnames)
 
     def _set_sname(self, pname: str):
         """
