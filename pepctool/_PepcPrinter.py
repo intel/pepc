@@ -15,7 +15,7 @@ Provide API for printing properties.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import sys
-from typing import TypedDict, Iterable, Sequence, IO, Literal, Iterator, get_args, cast
+from typing import TypedDict, Iterable, Sequence, IO, Literal, Iterator, Union, get_args, cast
 
 from pepclibs import CStates, CPUInfo
 from pepclibs.helperlibs import Logging, ClassHelpers, Human, YAML, Trivial
@@ -50,7 +50,7 @@ class _AggrSubPinfoTypdDict(TypedDict,):
 _AggrPinfoType = dict[MechanismNameType, dict[str, _AggrSubPinfoTypdDict]]
 
 # Type for a property value in the aggregate properties dictionary for YAML output.
-_YAMLPinfoValueType = int | float | str | list[int] | list[float] | list[str]
+_YAMLPinfoValueType = Union[int, float, str, list[int], list[float], list[str]]
 
 class _YAMLAggrPinfoValueTypedDict(TypedDict, total=False):
     """
@@ -92,8 +92,8 @@ _RCAggrPinfoType = dict[str, dict[ReqCStateInfoKeysType,
                                        dict[ReqCStateInfoValuesType, list[int]]]]
 
 # Type for a requestable C-state property for YAML output.
-_YAMLRCAggrPinfoPropertyTypedDict = dict[ReqCStateInfoKeysType | Literal["CPU"],
-                                         ReqCStateInfoValuesType | str]
+_YAMLRCAggrPinfoPropertyTypedDict = dict[Union[ReqCStateInfoKeysType, Literal["CPU"]],
+                                         Union[ReqCStateInfoValuesType, str]]
 
 class _YAMLRCAggrSubPinfoTypedDict(TypedDict, total=False):
     """
@@ -367,7 +367,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         if prop["type"] == "list[str]":
             result = ", ".join(cast(list[str], val))
         elif prop["type"] in ("list[int]", "list[float]"):
-            cval = cast(list[float | int], val)
+            cval = cast(list[Union[float, int]], val)
             step = _detect_progression(cval, 4)
             has_tar = False
 

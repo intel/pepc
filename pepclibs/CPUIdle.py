@@ -18,7 +18,7 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 import re
 import contextlib
 from pathlib import Path
-from typing import Literal, TypedDict
+from typing import Literal, TypedDict, Union
 from pepclibs.helperlibs import Logging, LocalProcessManager, Trivial, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorNotFound
 from pepclibs import CPUInfo, _PerCPUCache
@@ -51,7 +51,7 @@ class ReqCStateInfoTypedDict(TypedDict, total=False):
     usage: int
 
 # The type of the values in the Requestable C-state information dictionary.
-ReqCStateInfoValuesType = int | str | bool
+ReqCStateInfoValuesType = Union[int, str, bool]
 
 # The type of the keys in the Requestable C-state information dictionary.
 ReqCStateInfoKeysType = Literal["index", "name", "desc", "disable",
