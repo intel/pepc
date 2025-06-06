@@ -5,6 +5,12 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
+### Added
+### Removed
+### Changed
+
+## [1.5.39] - 2025-06-06
+### Fixed
  - Fix hybrid core type detiction in 'pepc topology info'.
  - Fix 'pepc print pstates --mechanisms msr,cppc' and similar use-cases.
 ### Added
@@ -13,7 +19,6 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Removed
  - Remove 'pepc power' command.
  - Remove package C-state aliases output.
-### Changed
 
 ## [1.5.38] - 2025-05-28
 ### Fixed
