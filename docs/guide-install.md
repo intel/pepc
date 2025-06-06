@@ -105,11 +105,17 @@ Source: Linux sysfs file-system
 
 ## Using pip
 
-Install pip on your system. Most modern Linux distributions include a package for pip installation.
-Also install git. For example, in Fedora, run
+Install pip and python virtualenv on your system. Most modern Linux distributions include a package
+for this. Also install git. For example, in Fedora, run
 
 ```
 dnf install python-pip git
+```
+
+In Ubuntu, run
+
+```
+apt install python3-venv git
 ```
 
 Install pepc into a python virtual environment using the following commands.

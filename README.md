@@ -77,7 +77,7 @@ Some features are hardware-agnostic, while others depend on specific hardware ca
 
 * Pepc requires Python 3.9 or newer.
 * Run pepc as a superuser (e.g., using "sudo").
-* Many options need access to MSRs (Model Specific Registers), requiring the "msr" kernel driver
+* Many options need access to MSRs (Model Specific Registers), requiring the "msr" kernel driver.
   Ensure the "msr" kernel driver is available, as some Linux distributions may disable it by
   default.
 
