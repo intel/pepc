@@ -194,7 +194,7 @@ class _MyFilter(logging.Filter):
         """
 
         if DEBUG_MODULE_NAMES and record.levelno == DEBUG:
-            # Example of a reocrd name: "main.pepc.pepclibs._PropsClassBase".
+            # Example of a record name: "main.pepc.pepclibs._PropsClassBase".
             modname = record.name.rsplit(".", maxsplit=1)[-1]
             if modname in DEBUG_MODULE_NAMES:
                 return True
