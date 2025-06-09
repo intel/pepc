@@ -10,17 +10,18 @@
 
 """Test module for 'pepc' project 'pstates' command."""
 
-import copy
 import pytest
 import common
 import props_common
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
-from pepclibs.helperlibs import Trivial, YAML
+from pepclibs.helperlibs import Trivial
 from pepclibs import CPUInfo, PStates
+from pepclibs.PStates import ErrorTryAnotherMechanism
 
 # If the '--mechanism' option is present, the command may fail because the mechanism may not be
 # supported. Ignore these failures.
-_IGNORE = { ErrorNotSupported : "--mechanism" }
+_IGNORE = {ErrorNotSupported: "--mechanism",
+           ErrorTryAnotherMechanism: "--mechanism"}
 
 @pytest.fixture(name="params", scope="module")
 def get_params(hostspec, tmp_path_factory):

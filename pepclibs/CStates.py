@@ -23,7 +23,7 @@ from pepclibs.msr import PowerCtl, PCStateConfigCtl
 
 # pylint: disable=unused-import
 from pepclibs.CPUIdle import ReqCStateInfoTypedDict, ReqCStateInfoValuesType, ReqCStateInfoKeysType
-from pepclibs._PropsClassBase import ErrorUsePerCPU
+from pepclibs._PropsClassBase import ErrorUsePerCPU, ErrorTryAnotherMechanism
 from pepclibs._CPUInfoBaseTypes import AbsNumsType
 
 # This dictionary describes the C-state properties this module supports. Many of the properties are
