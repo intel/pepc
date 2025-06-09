@@ -648,6 +648,8 @@ class UncoreFreqSysfs(ClassHelpers.SimpleCloseContext):
                                     f"Intel CPU uncore frequency control is currently supported")
 
         if not self._pman.exists(self._sysfs_base):
+            _LOG.debug("The uncore frequency sysfs directory '%s' does not exist%s.",
+                       self._sysfs_base, self._pman.hostmsg)
             self._probe_driver()
 
     def close(self):
