@@ -453,13 +453,22 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
         cpus = self._get_online_cpus()
 
+        tlines_no_cpu: list[dict[ScopeNameType, int]] = []
         if not self._topology:
             cpu_tdict = {cpu: {"CPU": cpu} for cpu in cpus}
         else:
-            cpu_tdict = {tl["CPU"]: tl for tl in self._topology["CPU"] if tl["CPU"] != NA}
+            cpu_tdict = {}
+            for tline in self._topology["CPU"]:
+                if tline["CPU"] != NA:
+                    # If the topology table already has some CPU lines, use them as a base.
+                    cpu_tdict[tline["CPU"]] = tline
+                else:
+                    tlines_no_cpu.append(tline)
 
-        self._add_cores_and_packages(cpu_tdict, cpus)
-        snames_set.update({"package", "core"})
+        if "CPU" not in self._initialized_snames or "core" not in self._initialized_snames or \
+           "package" not in self._initialized_snames:
+            self._add_cores_and_packages(cpu_tdict, cpus)
+            snames_set.update({"CPU", "core", "package"})
 
         if "module" in snames_set:
             self._add_modules(cpu_tdict, cpus)
@@ -470,9 +479,9 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
         # I/O dies do not have CPUs, so 'cpu_tdict' is not a suitable data structure for them. Use a
         # list of topology lines (tlines) instead.
-        tlines = list(cpu_tdict.values())
+        tlines = list(cpu_tdict.values()) + tlines_no_cpu
 
-        if "package" in snames_set or "die" in snames_set:
+        if "die" in snames_set:
             self._add_io_dies(tlines)
 
         self._initialized_snames.update(snames_set)
