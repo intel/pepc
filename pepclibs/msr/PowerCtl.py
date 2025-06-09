@@ -36,8 +36,7 @@ LTR_VFMS = (CPUModels.MODELS["GRANITERAPIDS_X"]["vfm"],
             CPUModels.MODELS["SAPPHIRERAPIDS_X"]["vfm"],
             CPUModels.MODELS["ICELAKE_X"]["vfm"],)
 
-# Description of CPU features controlled by the Power Control MSR. Please, refer to the notes
-# for '_FeaturedMSR.FEATURES' for more comments.
+# Description of CPU features controlled by the Power Control MSR.
 #
 # Note: while the "C-state prewake" feature available on many CPUs, in practice it works only on
 #       some platforms, like Ice Lake Xeon. Therefore we mark it as "supported" only for those

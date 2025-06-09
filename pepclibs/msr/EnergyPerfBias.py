@@ -21,8 +21,7 @@ MSR_ENERGY_PERF_BIAS = 0x1B0
 _CORE_SCOPE_VFMS = CPUModels.CPU_GROUPS["SILVERMONT"]
 _PACKAGE_SCOPE_VFMS = CPUModels.CPU_GROUPS["WESTMERE"] + CPUModels.CPU_GROUPS["SANDYBRIDGE"]
 
-# Description of CPU features controlled by the the Power Control MSR. Please, refer to the notes
-# for '_FeaturedMSR.FEATURES' for more comments.
+# Description of CPU features controlled by the the Power Control MSR.
 FEATURES = {
     "epb": {
         "name": "Energy Performance Bias",

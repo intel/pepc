@@ -1,31 +1,21 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2021 Intel Corporation
+# Copyright (C) 2020-2025 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Authors: Antti Laakso <antti.laakso@linux.intel.com>
 #          Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
-This module provides the base class for "featured" MSRs, such as MSR_PKG_CST_CONFIG_CONTROL.
+Base class for accessing MSR features.
 
-Terminology.
-  * MSR feature scope - the functional scope of MSR feature, i.e., whether it is per-CPU, per-core,
-                        per-package, etc.
-  * MSR feature I/O scope - same as the scope in most cases. But in rare cases feature scope and its
-                            I/O scope may be different. The I/O scop is defined by the observability
-                            of MSR feature changes, not by its functional impact. For example, if
-                            modifying an MSR feature from CPU X makes the modification visible on
-                            all core siblings, the MSR feature has core scope. If the modification
-                            is visible on all package siblings, the MSR feature has package scope.
-                            Some MSRs may have, for example, core I/O scope, but impact the entire
-                            package from the functional point of view (e.g., the package C-state
-                            limit feature in MSR_PKG_CST_CONFIG_CONTROL).
-  * MSR I/O scope - same as MSR feature I/O scope. Usually all features in an MSR have the same
-                    scope, in which case the I/O scope references the entire MSR.
-  * sname - (functional) scope.
-  * iosname - I/O scope.
+Terminology:
+    - MSR feature scope (sname): The functional scope of an MSR feature - whether it applies
+        per-CPU, per-core, per-package, etc.
+    - MSR feature I/O scope (iosname): The I/O scope of the feature. Typically the same as the
+        functional scope, but may be different for some MSRs. More information:
+        https://github.com/intel/pepc/blob/main/docs/misc-msr-scope.md
 """
 
 import copy
@@ -35,15 +25,6 @@ from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs.msr import MSR
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
-
-# Map of features available on various CPU. Must be defined by sub-classes and describe every
-# supported feature.
-#
-# * This is only the initial, general definition. Many things are platform-dependent, so full
-#   dictionary is available the 'features' attribute of the featured MSR classes (e.g.,
-#   'PCStateConfigCtl.features').
-# * Sub-classes do not necessary implement all features available in the MSR register.
-FEATURES = {}
 
 class FeaturedMSR(ClassHelpers.SimpleCloseContext):
     """

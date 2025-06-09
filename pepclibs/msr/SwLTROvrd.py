@@ -20,8 +20,7 @@ MSR_SW_LTR_OVRD = 0xA02
 # CPU models supporting the LTR feature.
 _LTR_CPUS = PowerCtl.LTR_VFMS
 
-# Description of CPU features controlled by the MSR. Please, refer to the notes
-# for '_FeaturedMSR.FEATURES' for more comments.
+# Description of CPU features controlled by the MSR.
 #
 # Note: only snoop latency bits and fields are supported. There are non-snoop latency bits and
 # fields, but the do not seem to be useful.

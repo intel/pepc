@@ -16,8 +16,7 @@ from pepclibs.msr import _FeaturedMSR
 # The Power Management Enable Model Specific Register.
 MSR_PM_ENABLE = 0x770
 
-# Description of CPU features controlled by the the Power Control MSR. Please, refer to the notes
-# for '_FeaturedMSR.FEATURES' for more comments.
+# Description of CPU features controlled by the the Power Control MSR.
 FEATURES = {
     "hwp": {
         "name": "Hardware Power Management enabled",

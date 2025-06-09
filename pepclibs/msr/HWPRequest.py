@@ -19,8 +19,7 @@ from pepclibs.helperlibs.Exceptions import ErrorNotSupported
 # The Hardware Power Management Request Model Specific Register.
 MSR_HWP_REQUEST = 0x774
 
-# Description of CPU features controlled by the the Power Control MSR. Please, refer to the notes
-# for '_FeaturedMSR.FEATURES' for more comments.
+# Description of CPU features controlled by the the Power Control MSR.
 FEATURES = {
     "min_perf": {
         "name": "Min. CPU performance",

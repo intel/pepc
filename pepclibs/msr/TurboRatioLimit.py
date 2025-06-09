@@ -58,8 +58,7 @@ _GT_VFMS = CPUModels.CPU_GROUPS["GNR"] + \
             CPUModels.MODELS["ATOM_GOLDMONT"]["vfm"],
             CPUModels.MODELS["ATOM_GOLDMONT_PLUS"]["vfm"],)
 
-# Description of CPU features controlled by the the Turbo Ratio Limit MSR. Please, refer to the
-# notes for '_FeaturedMSR.FEATURES' for more comments.
+# Description of CPU features controlled by the the Turbo Ratio Limit MSR.
 FEATURES = {
     "max_1c_turbo_ratio": {
         "name": "Max. 1 Core Turbo Ratio",

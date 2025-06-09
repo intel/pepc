@@ -16,8 +16,7 @@ from pepclibs.msr import _FeaturedMSR, PMEnable
 # The Hardware Power Management Capabilities Model Specific Register.
 MSR_HWP_CAPABILITIES = 0x771
 
-# Description of CPU features controlled by the the Power Control MSR. Please, refer to the notes
-# for '_FeaturedMSR.FEATURES' for more comments.
+# Description of CPU features controlled by the the Power Control MSR.
 FEATURES = {
     "max_perf": {
         "name": "Max. CPU performance",

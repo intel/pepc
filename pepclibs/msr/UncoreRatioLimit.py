@@ -32,8 +32,7 @@ _VMFS = CPUModels.CPU_GROUPS["EMR"] + \
          CPUModels.MODELS["BROADWELL_D"]["vfm"],
          CPUModels.MODELS["BROADWELL_X"]["vfm"])
 
-# Description of CPU features controlled by the the Turbo Ratio Limit MSR. Please, refer to the
-# notes for '_FeaturedMSR.FEATURES' for more comments.
+# Description of CPU features controlled by the the Turbo Ratio Limit MSR.
 FEATURES = {
     "max_ratio": {
         "name": "Maximum uncore ratio",

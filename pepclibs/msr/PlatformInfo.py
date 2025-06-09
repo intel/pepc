@@ -68,8 +68,7 @@ _MIN_OPER_RATIO_VFMS = CPUModels.CPU_GROUPS["GNR"] +              \
 _BASEFREQ_VFMS = _EFREQ_VFMS + CPUModels.CPU_GROUPS["SILVERMONT"] + \
                  CPUModels.CPU_GROUPS["AIRMONT"]
 
-# Description of CPU features controlled by the the Platform Information MSR. Please, refer to the
-# notes for '_FeaturedMSR.FEATURES' for more comments.
+# Description of CPU features controlled by the the Platform Information MSR.
 FEATURES = {
     "max_non_turbo_ratio": {
         "name": "Max. Non-Turbo Ratio",

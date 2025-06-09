@@ -61,8 +61,7 @@ _FSB_CODES = {
 # MSR_FSB_FREQ features have core scope, except for the following CPUs.
 _MODULE_SCOPE_VFMS = CPUModels.CPU_GROUPS["SILVERMONT"] + CPUModels.CPU_GROUPS["AIRMONT"]
 
-# Description of CPU features controlled by the the Power Control MSR. Please, refer to the notes
-# for '_FeaturedMSR.FEATURES' for more comments.
+# Description of CPU features controlled by the the Power Control MSR.
 FEATURES = {
     "fsb" : {
         "name": "Bus clock speed (megahertz)",

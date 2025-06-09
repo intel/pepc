@@ -133,8 +133,7 @@ _CORE_C1D_SCOPE_VFMS = CPUModels.CPU_GROUPS["EMR"] + \
                        CPUModels.CPU_GROUPS["SPR"] + \
                        CPUModels.CPU_GROUPS["ICX"]
 
-# Map of features available on various CPUs. Please, refer to the notes for '_FeaturedMSR.FEATURES'
-# for more comments.
+# Map of features available on various CPUs.
 FEATURES = {
     "pkg_cstate_limit": {
         "name": "Package C-state limit",

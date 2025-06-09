@@ -12,25 +12,25 @@
 Provide the base class for implementing property classes, such as 'PStates' and 'CStates'.
 
 Terminology:
- * Sub-property: A property that is related to a main property and only exists or is meaningful when
-                 the main property is supported by the platform. Sub-properties must be read-only.
+    - Sub-property: A property that is related to a main property and only exists or is meaningful
+      when he main property is supported by the platform. Sub-properties must be read-only.
 
 Naming conventions:
- * props: A dictionary describing the properties. For example, see 'PROPS' in 'PStates' and
-         'CStates'.
- * pvinfo: The property value dictionary returned by 'get_prop_cpus()' and 'get_cpu_prop()'. It has
-           the 'PVInfoTypedDict' type.
- * pname: The name of a property.
- * sname: The functional scope name of the property, indicating whether the property is per-CPU,
-          per-core, per-package, etc.
- * iosname: The I/O scope name of the property. Typically the same as 'sname', but may differ in
-            for some MSR-backed properties. More information:
-            https://github.com/intel/pepc/blob/main/docs/misc-msr-scope.md
- * core siblings: All CPUs sharing the same core. For example, "CPU6 core siblings" are all CPUs
-                  sharing the same core as CPU 6.
- * module siblings: All CPUs sharing the same module.
- * die siblings: All CPUs sharing the same die.
- * package siblings: All CPUs sharing the same package.
+    - props: A dictionary describing the properties. For example, see 'PROPS' in 'PStates' and
+             'CStates'.
+    - pvinfo: The property value dictionary returned by 'get_prop_cpus()' and 'get_cpu_prop()'. It
+              has the 'PVInfoTypedDict' type.
+    - pname: The name of a property.
+    - sname: The functional scope name of the property, indicating whether the property is per-CPU,
+             per-core, per-package, etc.
+    - iosname: The I/O scope name of the property. Typically the same as 'sname', but may may be
+               different to the functional scope in case of some MSR-backed properties. More
+               information: https://github.com/intel/pepc/blob/main/docs/misc-msr-scope.md
+    - core siblings: All CPUs sharing the same core. For example, "CPU6 core siblings" are all CPUs
+                     sharing the same core as CPU 6.
+    - module siblings: All CPUs sharing the same module.
+    - die siblings: All CPUs sharing the same die.
+    - package siblings: All CPUs sharing the same package.
 """
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
@@ -52,9 +52,16 @@ if typing.TYPE_CHECKING:
     from pepclibs._PropsClassBaseTypes import MechanismTypedDict, MechanismNameType
     from pepclibs._PropsClassBaseTypes import PVInfoTypedDict, AbsNumsType, RelNumsType
 
-class IntPropertyTypedDict(PropertyTypedDict):
+class _PropertyTypedDict(PropertyTypedDict):
     """
-    Type for the internal property description dictionary.
+    Represents the internal property description dictionary used for property metadata.
+
+    This class extends 'PropertyTypedDict' and is intended for internal use to describe properties
+    with additional metadata, such as the I/O scope name.
+
+    Attributes:
+        iosname: The name of the I/O scope associated with the property, or None if not applicable.
+                 Type for the internal property description dictionary.
     """
 
     iosname: ScopeNameType | None
@@ -178,7 +185,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         self.props: dict[str, PropertyTypedDict]
         # Internal version of 'self.props'. Contains some data which we don't want to expose to the
         # user. Has to be initialized by the sub-class.
-        self._props: dict[str, IntPropertyTypedDict]
+        self._props: dict[str, _PropertyTypedDict]
 
         # Dictionary describing all supported mechanisms. Same as 'MECHANISMS', but includes only
         # the mechanisms that at least one property supports. Has to be initialized by the
@@ -2089,7 +2096,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
     def _init_props_dict(self, props: dict[str, PropertyTypedDict]):
         """Initialize the 'props' and 'mechanisms' dictionaries."""
 
-        self._props = copy.deepcopy(cast(dict[str, IntPropertyTypedDict], props))
+        self._props = copy.deepcopy(cast(dict[str, _PropertyTypedDict], props))
         self.props = props
 
         # Initialize the 'ioscope' to the same value as 'scope'. I/O scope may be different to the
