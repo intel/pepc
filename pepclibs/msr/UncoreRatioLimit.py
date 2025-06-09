@@ -13,6 +13,8 @@ uncore frequency on Intel platforms.
 
 from pepclibs import CPUModels
 from pepclibs.msr import _FeaturedMSR
+from pepclibs.msr ._FeaturedMSR import PartialFeatureTypedDict
+
 
 # The Uncore Ratio Limit Model Specific Register.
 MSR_UNCORE_RATIO_LIMIT = 0x620
@@ -33,7 +35,7 @@ _VMFS = CPUModels.CPU_GROUPS["EMR"] + \
          CPUModels.MODELS["BROADWELL_X"]["vfm"])
 
 # Description of CPU features controlled by the the Turbo Ratio Limit MSR.
-FEATURES = {
+FEATURES: dict[str, PartialFeatureTypedDict] = {
     "max_ratio": {
         "name": "Maximum uncore ratio",
         "sname": None,

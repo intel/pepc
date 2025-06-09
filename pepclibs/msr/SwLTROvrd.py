@@ -13,6 +13,8 @@ Tolerance Report) requirements to the power management unit of the CPU.
 """
 
 from pepclibs.msr import _FeaturedMSR, PowerCtl
+from pepclibs.msr ._FeaturedMSR import PartialFeatureTypedDict
+
 
 # The Software LTR Override Model Specific Register.
 MSR_SW_LTR_OVRD = 0xA02
@@ -24,7 +26,7 @@ _LTR_CPUS = PowerCtl.LTR_VFMS
 #
 # Note: only snoop latency bits and fields are supported. There are non-snoop latency bits and
 # fields, but the do not seem to be useful.
-FEATURES = {
+FEATURES: dict[str, PartialFeatureTypedDict] = {
     "sxl": {
         "name": "Snoop latency software LTR",
         "sname": "package",

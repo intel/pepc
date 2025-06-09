@@ -13,6 +13,8 @@ is called either 'MSR_TURBO_GROUP_CORECNT' (Atoms) or 'MSR_TURBO_RATIO_LIMIT_COR
 """
 
 from pepclibs.msr import _FeaturedMSR, TurboRatioLimit
+from pepclibs.msr ._FeaturedMSR import PartialFeatureTypedDict
+
 
 # The Turbo Ratio Limit 1 Model Specific Register.
 MSR_TURBO_RATIO_LIMIT1 = 0x1AE
@@ -20,7 +22,7 @@ MSR_TURBO_GROUP_CORECNT = 0x1AE
 MSR_TURBO_RATIO_LIMIT_CORES = 0x1AE
 
 # Description of CPU features controlled by the the Turbo Ratio Limit MSR.
-FEATURES = {
+FEATURES: dict[str, PartialFeatureTypedDict] = {
     "g0_cpu_cnt": {
         "name": "Group 0 cores count",
         "sname": None,

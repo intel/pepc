@@ -14,6 +14,8 @@ on some Intel platforms.
 
 from pepclibs import CPUModels
 from pepclibs.msr import _FeaturedMSR
+from pepclibs.msr ._FeaturedMSR import PartialFeatureTypedDict
+
 
 # The Scalable Bus Speed Model Specific Register.
 MSR_FSB_FREQ = 0xCD
@@ -62,7 +64,7 @@ _FSB_CODES = {
 _MODULE_SCOPE_VFMS = CPUModels.CPU_GROUPS["SILVERMONT"] + CPUModels.CPU_GROUPS["AIRMONT"]
 
 # Description of CPU features controlled by the the Power Control MSR.
-FEATURES = {
+FEATURES: dict[str, PartialFeatureTypedDict] = {
     "fsb" : {
         "name": "Bus clock speed (megahertz)",
         "sname": None,

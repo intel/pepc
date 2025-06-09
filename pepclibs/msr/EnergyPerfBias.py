@@ -13,6 +13,7 @@ many Intel platforms.
 
 from pepclibs import CPUModels
 from pepclibs.msr import _FeaturedMSR
+from pepclibs.msr ._FeaturedMSR import PartialFeatureTypedDict
 
 # The Energy Performance Bias Model Specific Register.
 MSR_ENERGY_PERF_BIAS = 0x1B0
@@ -22,7 +23,7 @@ _CORE_SCOPE_VFMS = CPUModels.CPU_GROUPS["SILVERMONT"]
 _PACKAGE_SCOPE_VFMS = CPUModels.CPU_GROUPS["WESTMERE"] + CPUModels.CPU_GROUPS["SANDYBRIDGE"]
 
 # Description of CPU features controlled by the the Power Control MSR.
-FEATURES = {
+FEATURES: dict[str, PartialFeatureTypedDict] = {
     "epb": {
         "name": "Energy Performance Bias",
         "sname": None,

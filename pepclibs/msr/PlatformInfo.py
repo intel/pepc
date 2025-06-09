@@ -13,6 +13,8 @@ information on Intel platforms.
 
 from pepclibs import CPUModels
 from pepclibs.msr import _FeaturedMSR
+from pepclibs.msr ._FeaturedMSR import PartialFeatureTypedDict
+
 
 # The Power Control Model Specific Register.
 MSR_PLATFORM_INFO = 0xCE
@@ -69,7 +71,7 @@ _BASEFREQ_VFMS = _EFREQ_VFMS + CPUModels.CPU_GROUPS["SILVERMONT"] + \
                  CPUModels.CPU_GROUPS["AIRMONT"]
 
 # Description of CPU features controlled by the the Platform Information MSR.
-FEATURES = {
+FEATURES: dict[str, PartialFeatureTypedDict] = {
     "max_non_turbo_ratio": {
         "name": "Max. Non-Turbo Ratio",
         "sname": None,

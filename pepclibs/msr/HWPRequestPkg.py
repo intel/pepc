@@ -13,12 +13,14 @@ many Intel platforms.
 """
 
 from pepclibs.msr import _FeaturedMSR, PMEnable
+from pepclibs.msr ._FeaturedMSR import PartialFeatureTypedDict
+
 
 # The Hardware Power Management Request Package Model Specific Register.
 MSR_HWP_REQUEST_PKG = 0x772
 
 # Description of CPU features controlled by the the Power Control MSR.
-FEATURES = {
+FEATURES: dict[str, PartialFeatureTypedDict] = {
     "min_perf": {
         "name": "Min. CPU performance",
         "sname": None,

@@ -14,6 +14,8 @@ many Intel platforms.
 
 from pepclibs import CPUModels
 from pepclibs.msr import _FeaturedMSR
+from pepclibs.msr ._FeaturedMSR import PartialFeatureTypedDict
+
 
 # The Power Control Model Specific Register.
 MSR_POWER_CTL = 0x1FC
@@ -41,7 +43,7 @@ LTR_VFMS = (CPUModels.MODELS["GRANITERAPIDS_X"]["vfm"],
 # Note: while the "C-state prewake" feature available on many CPUs, in practice it works only on
 #       some platforms, like Ice Lake Xeon. Therefore we mark it as "supported" only for those
 #       platforms where we know it works.
-FEATURES = {
+FEATURES: dict[str, PartialFeatureTypedDict] = {
     "c1e_autopromote": {
         "name": "C1E autopromote",
         "sname": None,

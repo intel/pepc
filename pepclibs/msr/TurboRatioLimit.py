@@ -13,6 +13,8 @@ information on Intel platforms.
 
 from pepclibs import CPUModels
 from pepclibs.msr import _FeaturedMSR
+from pepclibs.msr ._FeaturedMSR import PartialFeatureTypedDict
+
 
 # The Turbo Ratio Limit Model Specific Register.
 MSR_TURBO_RATIO_LIMIT = 0x1AD
@@ -59,7 +61,7 @@ _GT_VFMS = CPUModels.CPU_GROUPS["GNR"] + \
             CPUModels.MODELS["ATOM_GOLDMONT_PLUS"]["vfm"],)
 
 # Description of CPU features controlled by the the Turbo Ratio Limit MSR.
-FEATURES = {
+FEATURES: dict[str, PartialFeatureTypedDict] = {
     "max_1c_turbo_ratio": {
         "name": "Max. 1 Core Turbo Ratio",
         "sname": None,

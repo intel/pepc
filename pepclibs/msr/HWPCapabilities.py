@@ -12,12 +12,14 @@ many Intel platforms.
 """
 
 from pepclibs.msr import _FeaturedMSR, PMEnable
+from pepclibs.msr ._FeaturedMSR import PartialFeatureTypedDict
+
 
 # The Hardware Power Management Capabilities Model Specific Register.
 MSR_HWP_CAPABILITIES = 0x771
 
 # Description of CPU features controlled by the the Power Control MSR.
-FEATURES = {
+FEATURES: dict[str, PartialFeatureTypedDict] = {
     "max_perf": {
         "name": "Max. CPU performance",
         "sname": "CPU",

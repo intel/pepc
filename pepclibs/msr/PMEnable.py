@@ -12,12 +12,14 @@ many Intel platforms.
 """
 
 from pepclibs.msr import _FeaturedMSR
+from pepclibs.msr ._FeaturedMSR import PartialFeatureTypedDict
+
 
 # The Power Management Enable Model Specific Register.
 MSR_PM_ENABLE = 0x770
 
 # Description of CPU features controlled by the the Power Control MSR.
-FEATURES = {
+FEATURES: dict[str, PartialFeatureTypedDict] = {
     "hwp": {
         "name": "Hardware Power Management enabled",
         "sname": None,

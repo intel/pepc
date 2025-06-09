@@ -16,6 +16,8 @@ from pepclibs import CPUModels
 from pepclibs.helperlibs import Logging
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs.msr import _FeaturedMSR
+from pepclibs.msr ._FeaturedMSR import PartialFeatureTypedDict
+
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
@@ -134,7 +136,7 @@ _CORE_C1D_SCOPE_VFMS = CPUModels.CPU_GROUPS["EMR"] + \
                        CPUModels.CPU_GROUPS["ICX"]
 
 # Map of features available on various CPUs.
-FEATURES = {
+FEATURES: dict[str, PartialFeatureTypedDict] = {
     "pkg_cstate_limit": {
         "name": "Package C-state limit",
         "sname": None,

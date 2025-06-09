@@ -12,6 +12,8 @@ This module provides API to MSR 0x0x54 (MSR_PM_LOGICAL_ID).
 
 from pepclibs import CPUModels
 from pepclibs.msr import _FeaturedMSR
+from pepclibs.msr ._FeaturedMSR import PartialFeatureTypedDict
+
 
 # The PM Logical ID Model Specific Register.
 MSR_PM_LOGICAL_ID = 0x54
@@ -20,7 +22,7 @@ MSR_PM_LOGICAL_ID = 0x54
 _PLI_VFMS = CPUModels.CPU_GROUPS["GNR"] + CPUModels.CPU_GROUPS["CRESTMONT"]
 
 # Description of CPU features controlled by the PM Logical ID.
-FEATURES = {
+FEATURES: dict[str, PartialFeatureTypedDict] = {
     "domain_id": {
         "name": "Domain ID",
         "sname": "CPU",
