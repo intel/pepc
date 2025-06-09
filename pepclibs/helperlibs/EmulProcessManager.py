@@ -328,6 +328,9 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             # ('/sys/devices/system/cpu/intel_uncore_frequency/*'), which are initialized by the
             # 'PStates' module.
             self._init_module("PStates", datapath)
+            # CPUInfo used TPMI information to enumerate dies on some platforms.
+            self._init_module("TPMI", datapath)
+
 
         confpath = datapath / f"{module}.yaml"
         if not confpath.exists():

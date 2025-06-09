@@ -18,7 +18,7 @@ import typing
 from typing import Iterable
 import contextlib
 from pathlib import Path
-from pepclibs import _UncoreFreq, CPUModels
+from pepclibs import CPUModels, Tpmi
 from pepclibs.msr import MSR, PMLogicalId
 from pepclibs.helperlibs import Logging, LocalProcessManager, ClassHelpers, Trivial, KernelVersion
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorNotFound
@@ -69,12 +69,13 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
         self._msr: MSR.MSR | None = None
         self._pliobj: PMLogicalId.PMLogicalId | None = None
-        self._uncfreq_obj: _UncoreFreq.UncoreFreqSysfs | None = None
+        self._tpmi: Tpmi.Tpmi | None = None
 
-        # 'True' if the target supports 'MSR_PM_LOGICAL_ID', which provides die ID enumeration.
+        # 'True' if the target system supports 'MSR_PM_LOGICAL_ID', which provides die ID
+        # enumeration.
         self._pli_msr_supported = True
-        # 'True' if the target supports uncore frequency scaling.
-        self._uncfreq_supported = True
+        # 'True' if the target system supports TPMI.
+        self._tpmi_supported = True
 
         # Online CPU numbers sorted in ascending order.
         self._cpus: list[int] = []
@@ -127,7 +128,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
         _LOG.debug("Closing the '%s' class object", self.__class__.__name__)
 
-        ClassHelpers.close(self, close_attrs=("_uncfreq_obj", "_pliobj", "_msr", "_pman"))
+        ClassHelpers.close(self, close_attrs=("_tpmi", "_pliobj", "_msr", "_pman"))
 
     def _get_msr(self) -> MSR.MSR:
         """
@@ -170,26 +171,27 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
         return self._pliobj
 
-    def _get_uncfreq_obj(self) -> _UncoreFreq.UncoreFreqSysfs | None:
+    def _get_tpmi(self) -> Tpmi.Tpmi | None:
         """
-        Return an instance of '_UncoreFreq.UncoreFreqSysfs' if uncore frequency is supported.
+        Return an instance of 'Tpmi.Tpmi' object if TPMI is supported.
 
         Returns:
-            The '_UncoreFreq.UncoreFreqSysfs' object or None.
+            The 'Tpmi.Tpmi' object or None.
         """
 
-        if not self._uncfreq_supported:
+        if not self._tpmi_supported:
             return None
 
-        if not self._uncfreq_obj:
-            _LOG.debug("Creating an instance of '_UncoreFreq.UncoreFreqSysfs'")
+        if not self._tpmi:
+            _LOG.debug("Creating an instance of 'Tpmi.Tpmi'")
 
             try:
-                self._uncfreq_obj = _UncoreFreq.UncoreFreqSysfs(self, pman=self._pman)
-            except ErrorNotSupported:
-                self._uncfreq_supported = False
+                self._tpmi = Tpmi.Tpmi(pman=self._pman)
+            except ErrorNotSupported as err:
+                _LOG.debug("TPMI not supported%s:\n%s", self._pman.hostmsg, err.indent(2))
+                self._tpmi_supported = False
 
-        return self._uncfreq_obj
+        return self._tpmi
 
     def _add_cores_and_packages(self,
                                 cpu_tdict: dict[int, dict[ScopeNameType, int]],
@@ -320,8 +322,8 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
             package = cpu_tdict[cpu]["package"]
             if package not in self._compute_dies:
                 self._compute_dies[package] = set()
-                # Initialize the I/O dies cache at the same time.
-                self._io_dies[package] = set()
+                if package not in self._io_dies:
+                    self._io_dies[package] = set()
             self._compute_dies[package].add(die)
 
         if self.info["vfm"] in CPUModels.MODELS_WITH_HIDDEN_DIES:
@@ -384,36 +386,44 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
             tlines: The topology table (list of dictionaries) to which I/O dies should be added.
         """
 
-        uncfreq_obj = self._get_uncfreq_obj()
-        if not uncfreq_obj:
+        if self.info["vfm"] not in CPUModels.MODELS_WITH_HIDDEN_DIES:
+            return
+
+        tpmi = self._get_tpmi()
+        if not tpmi:
             return
 
         _LOG.debug("Reading I/O dies information from uncore frequency driver")
 
-        # The 'UncoreFreqSysfs' class is I/O dies-aware.
-        dies_info = uncfreq_obj.get_dies_info()
-
-        for package, pkg_dies in dies_info.items():
-            # This must be a package that has all CPUs offline.
+        for addr, package, die in tpmi.iter_feature("uncore"):
             if package not in self._compute_dies:
                 continue
-            for die in pkg_dies:
-                if die in self._compute_dies[package]:
-                    continue
 
-                tline = {}
-                for key in SCOPE_NAMES:
-                    # At this point the topology table lines may not even include some levels (e.g.,
-                    # "numa" may not be there). But they may be added later. Add them for the I/O
-                    # die topology table lines now, so that later the lines would not need # to be
-                    # updated.
-                    tline[key] = NA
-                tline["package"] = package
-                tline["die"] = die
-                tlines.append(tline)
+            if die in self._compute_dies[package]:
+                continue
 
-                # Cache the I/O die number.
-                self._io_dies[package].add(die)
+            # Check if the die has any cores via TPMI.
+            regname = "UFS_STATUS"
+            bfname = "AGENT_TYPE_CORE"
+
+            val = tpmi.read_register("uncore", addr, die, regname, bfname=bfname)
+            if val != 0:
+                continue
+
+            _LOG.debug("Adding I/O die %d for package %d", die, package)
+
+            tline = {}
+            for key in SCOPE_NAMES:
+                tline[key] = NA
+
+            tline["package"] = package
+            tline["die"] = die
+            tlines.append(tline)
+
+            # Cache the I/O die number.
+            if package not in self._io_dies:
+                self._io_dies[package] = set()
+            self._io_dies[package].add(die)
 
     def _sort_topology(self, tlines, order):
         """Sorts and save the topology list by 'order' in sorting map"""
