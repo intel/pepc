@@ -1040,6 +1040,9 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         """
 
         cpus = self.normalize_cpus(cpus, offline_ok=True)
+        if not cpus:
+            return ({}, [])
+
         cpus_set = set(cpus)
 
         cores: dict[int, list[int]] = {}
@@ -1094,6 +1097,9 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         """
 
         cpus = self.normalize_cpus(cpus, offline_ok=True)
+        if not cpus:
+            return ({}, [])
+
         cpus_set = set(cpus)
 
         dies: dict[int, list[int]] = {}
@@ -1147,6 +1153,9 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         rem_cpus = []
 
         cpus = self.normalize_cpus(cpus, offline_ok=True)
+        if not cpus:
+            return ([], [])
+
         cpus_set = set(cpus)
 
         for pkg in self.normalize_packages(packages):

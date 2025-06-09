@@ -316,11 +316,18 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
     def _init_module(self, module, datapath):
         """Implement 'init_module()'. Arguments are the same as in 'init_module()'."""
 
+        # TODO: the idea of initializing only some parts is not well-implemented, error-prone, and
+        # hard to maintain. I think it should be removed and everything should be initialized
+        # together.
         if module == "CPUInfo":
             # CPUInfo uses '/sys/devices/system/cpu/online' file, on emulated system the file is
             # constructed using per-CPU '/sys/devices/system/cpu/cpu*/online' files that belong to
             # CPUOnline.
             self._init_module("CPUOnline", datapath)
+            # CPUInfo uses the uncore frequency sysfs files
+            # ('/sys/devices/system/cpu/intel_uncore_frequency/*'), which are initialized by the
+            # 'PStates' module.
+            self._init_module("PStates", datapath)
 
         confpath = datapath / f"{module}.yaml"
         if not confpath.exists():
