@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2023 Intel Corporation
+# Copyright (C) 2020-2025 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Authors: Antti Laakso <antti.laakso@linux.intel.com>
@@ -9,8 +9,8 @@
 #          Niklas Neronin <niklas.neronin@intel.com>
 
 """
-This module provides API to MSR 0x774 (MSR_HWP_REQUEST). This is an architectural MSR found on many
-Intel platforms.
+Provide an API for MSR 0x774 (MSR_HWP_REQUEST), an architectural MSR available on many Intel
+platforms.
 """
 
 from pepclibs import CPUInfo
@@ -102,51 +102,13 @@ FEATURES: dict[str, PartialFeatureTypedDict] = {
 
 class HWPRequest(_FeaturedMSR.FeaturedMSR):
     """
-    This class provides API to MSR 0x774 (MSR_HWP_REQUEST). This is an architectural MSR found on
-    many Intel platforms.
+    Provide an API for MSR 0x774 (MSR_HWP_REQUEST), an architectural MSR available on many Intel
+    platforms.
     """
 
     regaddr = MSR_HWP_REQUEST
     regname = "MSR_HWP_REQUEST"
     vendor = "GenuineIntel"
-
-    def is_cpu_feature_pkg_controlled(self, fname, cpu):
-        """
-        Returns 'True' if an HWP feature is controlled by 'MSR_HWP_REQUEST_PKG' or 'False' if it is
-        controlled by 'MSR_HWP_REQUEST'. The arguments are as follows.
-         * fname - name of the 'MSR_HWP_REQUEST' feature to check.
-         * cpu - CPU number to check the feature for.
-        """
-
-        try:
-            pkg_control = self.is_cpu_feature_enabled("pkg_control", cpu)
-        except ErrorNotSupported:
-            # If package control is not supported, 'fname' is controlled on a per-CPU basis.
-            return False
-
-        if pkg_control:
-            # Even if package control is enabled, it can be overridden by the 'fname' "valid" bit.
-            valid = self.is_cpu_feature_enabled(f"{fname}_valid", cpu)
-            if not valid:
-                return True
-
-        return False
-
-    def disable_cpu_feature_pkg_control(self, fname, cpu):
-        """
-        Disable 'MSR_HWP_REQUEST_PKG' control over an HWP feature. The arguments are as follows.
-         * fname - name of the 'MSR_HWP_REQUEST' feature.
-         * cpu - CPU number for which to disable package control.
-        """
-
-        try:
-            pkg_control = self.is_cpu_feature_enabled("pkg_control", cpu)
-        except ErrorNotSupported:
-            # If package control is not supported, 'fname' is controlled on a per-CPU basis.
-            return
-
-        if pkg_control:
-            self.write_cpu_feature(f"{fname}_valid", "on", cpu)
 
     def __init__(self,
                  cpuinfo: CPUInfo.CPUInfo,
@@ -189,3 +151,52 @@ class HWPRequest(_FeaturedMSR.FeaturedMSR):
             if "cpuflags" in finfo and "hwp" in finfo["cpuflags"]:
                 for cpu in unsupported_cpus:
                     finfo["supported"][cpu] = False
+
+    def is_cpu_feature_pkg_controlled(self, fname: str, cpu: int) -> bool:
+        """
+        Check whether the specified HWP feature is managed by the package-level MSR
+        ('MSR_HWP_REQUEST_PKG') or by the per-CPU MSR ('MSR_HWP_REQUEST'). If package control is not
+        supported, the feature is considered to be controlled per-CPU. If package control is
+        enabled, further check if the feature's "valid" bit allows per-CPU override.
+
+        Args:
+            fname: Name of the feature to check.
+            cpu: CPU number to check the feature for.
+
+        Returns:
+           True if the feature is controlled by the package-level MSR, False if controlled per-CPU.
+        """
+
+        try:
+            pkg_control = self.is_cpu_feature_enabled("pkg_control", cpu)
+        except ErrorNotSupported:
+            # If package control is not supported, 'fname' is controlled on a per-CPU basis.
+            return False
+
+        if pkg_control:
+            # Even if package control is enabled, it can be overridden by the 'fname' "valid" bit.
+            valid = self.is_cpu_feature_enabled(f"{fname}_valid", cpu)
+            if not valid:
+                return True
+
+        return False
+
+    def disable_cpu_feature_pkg_control(self, fname: str, cpu: int):
+        """
+        Disable the 'MSR_HWP_REQUEST_PKG' control for the specified HWP feature, allowing the
+        feature to be managed on a per-CPU basis instead of at the package level. If package-level
+        control is not supported on the target CPU, the return without making changes.
+
+        Args:
+            fname: Name of the HWP feature associated with 'MSR_HWP_REQUEST'.
+            cpu: CPU number for which to disable package-level control.
+        """
+
+        try:
+            pkg_control = self.is_cpu_feature_enabled("pkg_control", cpu)
+        except ErrorNotSupported:
+            # If package control is not supported, 'fname' is controlled on a per-CPU basis.
+            return
+
+        if pkg_control:
+            self.write_cpu_feature(f"{fname}_valid", "on", cpu)

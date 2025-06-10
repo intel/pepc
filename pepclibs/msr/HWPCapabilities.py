@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2024 Intel Corporation
+# Copyright (C) 2024-2025 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
-This module provides API to MSR 0x771 (MSR_HWP_CAPABILITIES). This is an architectural MSR found on
+Provide an API for accessing MSR 0x771 (MSR_HWP_CAPABILITIES), an architectural MSR available on
 many Intel platforms.
 """
 
@@ -61,8 +61,8 @@ FEATURES: dict[str, PartialFeatureTypedDict] = {
 
 class HWPCapabilities(_FeaturedMSR.FeaturedMSR):
     """
-    This class provides API to MSR 0x771 (MSR_HWP_CAPABILITIES). This is an architectural MSR found
-    on many Intel platforms.
+    Provide an API for accessing MSR 0x771 (MSR_HWP_CAPABILITIES), an architectural MSR available on
+    many Intel platforms.
     """
 
     regaddr = MSR_HWP_CAPABILITIES
