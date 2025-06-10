@@ -30,6 +30,12 @@ from pepclibs.msr import MSR
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
+# The type of the feature value.
+FeatureValueType = Union[int, float, bool, str]
+
+_FeatureValsType = Union[dict[int, int], dict[float, int], dict[bool, int] | dict[str, int]]
+_FeatureReversValsType = Union[dict[int, int], dict[int, float], dict[int, bool] | dict[int, str]]
+
 class FeatureTypedDict(TypedDict, total=False):
     """
     Typed dictionary for MSR feature information.
@@ -56,10 +62,7 @@ class FeatureTypedDict(TypedDict, total=False):
     cpuflags: set[str]
     vfms: set[int]
     bits: tuple[int, int]
-    vals: dict[str, int]
-
-# The type of the feature value.
-FeatureValueType = Union[int, float, bool, str]
+    vals: _FeatureValsType
 
 class _ReadFeatureMethodType(Protocol):
     """
@@ -102,7 +105,7 @@ class PartialFeatureTypedDict(TypedDict, total=False):
     cpuflags: set[str]
     vfms: set[int]
     bits: tuple[int, int]
-    vals: dict[str, int]
+    vals: _FeatureValsType
 
 class _FeatureTypedDict(FeatureTypedDict, total=False):
     """
@@ -116,7 +119,7 @@ class _FeatureTypedDict(FeatureTypedDict, total=False):
     """
 
     supported: dict[int, bool]
-    rvals: dict[int, str]
+    rvals: dict[int, FeatureValueType]
     vals_nocase: dict[str, int]
     rvals_nocase: dict[int, str]
 
@@ -282,9 +285,10 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
                     finfo["vals_nocase"] = {}
                     finfo["rvals_nocase"] = {}
                     for name, code in finfo["vals"].items():
-                        name = name.lower()
-                        finfo["vals_nocase"][name] = code
-                        finfo["rvals_nocase"][code] = name
+                        name_str = cast(str, name)
+                        name_str = name_str.lower()
+                        finfo["vals_nocase"][name_str] = code
+                        finfo["rvals_nocase"][code] = name_str
 
     def _init_public_features_dict(self):
         """
@@ -465,13 +469,13 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
             val_str = str(val)
 
         if val_str in finfo["vals"]:
-            return finfo["vals"][val_str]
+            vals_dict = cast(dict[str, int], finfo["vals"])
+            return vals_dict[val_str]
 
         if "vals_nocase" in finfo and val_str.lower() in finfo["vals_nocase"]:
             return finfo["vals_nocase"][val_str.lower()]
 
-        vals = list(finfo["vals"])
-        vals_str = ", ".join(vals)
+        vals_str = ", ".join([str(v) for v in finfo["vals"]])
         raise Error(f"Bad value '{val}' for the '{finfo['name']}' feature, use one of:\n  "
                     f"{vals_str}")
 

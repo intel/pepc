@@ -8,47 +8,79 @@
 #          Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
-Provide an API for accessing MSR 0xCD (MSR_FSB_FREQ), which reports the bus clock speed
+Provide API for accessing MSR 0xCD (MSR_FSB_FREQ), which reports the bus clock speed
 on certain Intel platforms.
 """
 
+from typing import TypedDict
 from pepclibs import CPUModels, CPUInfo
 from pepclibs.msr import _FeaturedMSR, MSR
 from pepclibs.msr ._FeaturedMSR import PartialFeatureTypedDict
 from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
+class _FSBCodesTypedDict(TypedDict, total=False):
+    """
+    A dictionary that describes the FSB codes for a specific CPU model.
+
+    Attributes:
+        codes: A dictionary mapping bus clock speeds (in megahertz) to their corresponding
+               FSB codes.
+        bits: A tuple containing the bit positions for the FSB code in the MSR register.
+    """
+
+    codes: dict[float, int]
+    bits: tuple[int, int]
 
 # The Scalable Bus Speed Model Specific Register.
 MSR_FSB_FREQ = 0xCD
 
 # Core 2 clients.
-_CORE2_FSB_CODES = {"codes": {100.0:  0b101, 133.33: 0b001,
-                              166.67: 0b011, 200.0:  0b010,
-                              266.67: 0b000, 333.33: 0b100,
-                              400.0:  0b110},
-                    "bits": (2, 0)}
+_CORE2_FSB_CODES: _FSBCodesTypedDict = {
+    "codes": {100.00: 0b101,
+              133.33: 0b001,
+              166.67: 0b011,
+              200.00: 0b010,
+              266.67: 0b000,
+              333.33: 0b100,
+              400.00: 0b110},
+    "bits": (2, 0)
+}
 
 # Pre-Silvermont Atoms.
-_OLD_ATOM_FSB_CODES = {"codes": {83.0:   0b111, 100.0:  0b101,
-                                 133.33: 0b001, 166.67: 0b011},
-                       "bits": (2, 0)}
+_OLD_ATOM_FSB_CODES: _FSBCodesTypedDict = {
+    "codes": {083.00: 0b111,
+              100.00: 0b101,
+              133.33: 0b001,
+              166.67: 0b011},
+    "bits": (2, 0)
+}
 
 # Silvermont Atoms.
-_SILVERMONT_FSB_CODES = {"codes": {80.0:  0b100, 83.3:  0b000,
-                                   100.0: 0b001, 133.3: 0b010,
-                                   116.7: 0b011},
-                         "bits": (2, 0)}
+_SILVERMONT_FSB_CODES: _FSBCodesTypedDict = {
+    "codes": {080.0: 0b100,
+              083.3: 0b000,
+              100.0: 0b001,
+              133.3: 0b010,
+              116.7: 0b011},
+    "bits": (2, 0)
+}
 
 # Airmont Atoms.
-_AIRMONT_FSB_CODES = {"codes": {83.3:  0b0000, 100.0: 0b0001,
-                                133.3: 0b0010, 116.7: 0b0011,
-                                80.0:  0b0100, 93.3:  0b0101,
-                                90.0:  0b0110, 88.9:  0b0111,
-                                87.5:  0b1000},
-                      "bits": (3, 0)}
+_AIRMONT_FSB_CODES: _FSBCodesTypedDict = {
+    "codes": {083.3: 0b0000,
+              100.0: 0b0001,
+              133.3: 0b0010,
+              116.7: 0b0011,
+              080.0: 0b0100,
+              093.3: 0b0101,
+              090.0: 0b0110,
+              088.9:  0b0111,
+              087.5:  0b1000},
+    "bits": (3, 0)
+}
 
 # CPU ID -> FSB codes map.
-_FSB_CODES = {
+_FSB_CODES: dict[int, _FSBCodesTypedDict] = {
     CPUModels.MODELS["CORE2_MEROM"]["vfm"]:          _CORE2_FSB_CODES,
     CPUModels.MODELS["ATOM_BONNELL_MID"]["vfm"]:     _OLD_ATOM_FSB_CODES,
     CPUModels.MODELS["ATOM_BONNELL"]["vfm"]:         _OLD_ATOM_FSB_CODES,
@@ -79,8 +111,8 @@ FEATURES: dict[str, PartialFeatureTypedDict] = {
 
 class FSBFreq(_FeaturedMSR.FeaturedMSR):
     """
-    Provide an API for accessing MSR 0xCD (MSR_FSB_FREQ), which reports the bus clock speed on
-    certain Intel platforms.
+    Provide API for accessing MSR 0xCD (MSR_FSB_FREQ), which reports the bus clock speed on certain
+    Intel platforms.
     """
 
     regaddr = MSR_FSB_FREQ
@@ -121,10 +153,10 @@ class FSBFreq(_FeaturedMSR.FeaturedMSR):
     def _init_features_dict_fsb(self):
         """Initialize the 'fsb' feature information in the 'self._features' dictionary."""
 
-        if not self.is_feature_supported("fsb", cpus="all"):
+        vfm = self._cpuinfo.info["vfm"]
+        if vfm not in _FSB_CODES:
             return
 
-        vfm = self._cpuinfo.info["vfm"]
         fsb_codes = _FSB_CODES[vfm]
 
         finfo = self._features["fsb"]
@@ -132,8 +164,11 @@ class FSBFreq(_FeaturedMSR.FeaturedMSR):
         finfo["vals"] = fsb_codes["codes"]
 
     def _init_features_dict(self):
-        """Initialize the 'features' dictionary with platform-specific information."""
+        """
+        Initialize the 'features' dictionary with platform-specific information. The sub-classes
+        can re-define this method and call individual '_init_features_dict_*()' methods.
+        """
 
-        self._init_supported_flag()
         self._init_features_dict_fsb()
-        self._init_features_dict_defaults()
+
+        super()._init_features_dict()
