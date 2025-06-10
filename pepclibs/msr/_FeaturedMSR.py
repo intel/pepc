@@ -49,8 +49,8 @@ class FeatureTypedDict(TypedDict, total=False):
         - writable: Whether the feature can be modified (default is 'True').
         - cpuflags: A set of CPU flags that must be present for the feature to be supported.
         - vfms: A list of valid VFM values for the feature.
-        - bits: The MSR bits range for the feature.
         - vals: A dictionary mapping user-friendly names to MSR values.
+        - bits: The MSR bits range for the feature.
     """
 
     name: str
@@ -61,8 +61,8 @@ class FeatureTypedDict(TypedDict, total=False):
     writable: bool
     cpuflags: set[str]
     vfms: set[int]
-    bits: tuple[int, int]
     vals: _FeatureValsType
+    bits: tuple[int, int]
 
 class _ReadFeatureMethodType(Protocol):
     """
@@ -92,8 +92,8 @@ class PartialFeatureTypedDict(TypedDict, total=False):
         - writable: Whether the feature can be modified (default is 'True').
         - cpuflags: A set of CPU flags that must be present for the feature to be supported.
         - vfms: A list of valid VFM values for the feature.
-        - bits: The MSR bits range for the feature.
         - vals: A dictionary mapping user-friendly names to MSR values.
+        - bits: The MSR bits range for the feature.
     """
 
     name: str
@@ -104,8 +104,8 @@ class PartialFeatureTypedDict(TypedDict, total=False):
     writable: bool
     cpuflags: set[str]
     vfms: set[int]
-    bits: tuple[int, int]
-    vals: _FeatureValsType
+    vals: _FeatureValsType | None
+    bits: tuple[int, int] | None
 
 class _FeatureTypedDict(FeatureTypedDict, total=False):
     """

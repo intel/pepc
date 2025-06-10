@@ -1,17 +1,18 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2021 Intel Corporation
+# Copyright (C) 2020-2025 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Authors: Antti Laakso <antti.laakso@linux.intel.com>
 #          Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
-This module provides API to MSR 0xE2 (MSR_PKG_CST_CONFIG_CONTROL). This is a model-specific register
-found on many Intel platforms.
+Provide an API for MSR 0xE2 (MSR_PKG_CST_CONFIG_CONTROL), a model-specific register
+present on many Intel platforms.
 """
 
+from typing import TypedDict, Sequence, Literal, Generator, cast
 from pepclibs import CPUModels, CPUInfo
 from pepclibs.helperlibs import Logging
 from pepclibs.helperlibs.Exceptions import Error
@@ -21,6 +22,19 @@ from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
+class _LimitsTypedDict(TypedDict, total=False):
+    """
+    The type of the package C-state limits dictionary.
+
+    Attributes:
+        codes: A dictionary mapping package C-state names to their codes.
+        bits: A tuple of two integers, the first is the start bit and the second is the end bit
+              of the package C-state limit bits in MSR_PKG_CST_CONFIG_CONTROL.
+    """
+
+    codes: dict[str, int]
+    bits: tuple[int, int]
+
 # Package C-state configuration control Model Specific Register.
 MSR_PKG_CST_CONFIG_CONTROL = 0xE2
 
@@ -29,48 +43,72 @@ MSR_PKG_CST_CONFIG_CONTROL = 0xE2
 # C-states for a CPU model. In practice, however, specific platforms often do not support many of
 # those package C-states. For example, Xeons typically do not support anything deeper than PC6.
 #
-# In this file we are trying to define package C-states limits for platforms that we actually
-# verified.
-#
 
 #
 # Xeons.
 #
-# Ice Lake and Granite Rapids Xeons.
-_ICX_PKG_CST_LIMITS = {"codes": {"PC0": 0, "PC2": 1, "PC6": 2, "unlimited": 7},
-                       "bits": (2, 0)}
+# Ice Lake, Granite Rapids, Sierra Forest, Clear Water Forest Xeons.
+_ICX_PKG_CST_LIMITS: _LimitsTypedDict = {
+    "codes": {"PC0": 0, "PC2": 1, "PC6": 2, "unlimited": 7},
+    "bits": (2, 0)
+}
+
 # Emerald Rapids, Sapphire Rapids, Cooper Lake, Cascade Lake, Sky Lake Xeons. Knights Mill and
 # Knights Landing Xeon Phis.
-_SKX_PKG_CST_LIMITS = {"codes": {"PC0": 0, "PC2": 1, "PC6": 2, "PC6R": 3, "unlimited": 7},
-                       "bits": (2, 0)}
+_SKX_PKG_CST_LIMITS: _LimitsTypedDict = {
+    "codes": {"PC0": 0, "PC2": 1, "PC6": 2, "PC6R": 3, "unlimited": 7},
+    "bits": (2, 0)
+}
+
 # Broadwell-D Xeon.
-_BDWD_PKG_CST_LIMITS = {"codes": {"PC0": 0, "PC2": 1, "PC3": 2, "PC6": 3}, "bits": (3, 0)}
+_BDWD_PKG_CST_LIMITS: _LimitsTypedDict = {
+    "codes": {"PC0": 0, "PC2": 1, "PC3": 2, "PC6": 3},
+    "bits": (3, 0)
+}
+
 # Broadwell and Haswell Xeons.
-_HSX_PKG_CST_LIMITS = {"codes": {"PC0": 0, "PC2": 1, "PC3": 2, "PC6": 3, "unlimited": 7},
-                       "bits": (2, 0)}
+_HSX_PKG_CST_LIMITS: _LimitsTypedDict = {
+    "codes": {"PC0": 0, "PC2": 1, "PC3": 2, "PC6": 3, "unlimited": 7},
+    "bits": (2, 0)
+}
+
 # Ivy Bridge Xeon (Ivy Town).
-_IVT_PKG_CST_LIMITS = {"codes": {"PC0": 0, "PC2": 1, "PC6": 2, "PC6R": 3, "unlimited": 7},
-                       "bits": (2, 0)}
+_IVT_PKG_CST_LIMITS: _LimitsTypedDict = {
+    "codes": {"PC0": 0, "PC2": 1, "PC6": 2, "PC6R": 3, "unlimited": 7},
+    "bits": (2, 0)
+}
 
 #
 # Atom-based micro servers.
 #
 # Denverton SoC (Goldmont). Note, successor of Denverton is Snow Ridge, and its successor is Grand
 # Ridge. They do not support package C-states.
-_DNV_PKG_CST_LIMITS = {"codes": {"PC2": 2, "PC6": 3, "unlimited": 0}, "bits": (3, 0)}
+_DNV_PKG_CST_LIMITS: _LimitsTypedDict = {
+    "codes": {"PC2": 2, "PC6": 3, "unlimited": 0},
+    "bits": (3, 0)
+}
 
 #
 # Clients.
 #
-_CLIENT_LNL_CST_LIMITS = {"codes": {"PC0": 0, "PC2": 1, "PC6": 3, "PC10": 8}, "bits": (3, 0)}
-_CLIENT_PC10_CST_LIMITS = {"codes": {"PC0": 0, "PC2": 1, "PC3": 2, "PC6": 3, "PC7": 4, "PC7S": 5,
-                                     "PC8": 6, "PC9": 7, "PC10": 8},
-                           "bits": (3, 0)}
-_CLIENT_PC7S_CST_LIMITS = {"codes": {"PC0": 0, "PC2": 1, "PC3": 2, "PC6": 3, "PC7": 4, "PC7S": 5},
-                           "bits": (3, 0)}
+_CLIENT_LNL_CST_LIMITS: _LimitsTypedDict = {
+    "codes": {"PC0": 0, "PC2": 1, "PC6": 3, "PC10": 8},
+    "bits": (3, 0)
+}
 
-# CPU ID -> Package C-state limit map.
-_PKG_CST_LIMITS = {
+_CLIENT_PC8_CST_LIMITS: _LimitsTypedDict = {
+    "codes": {"PC0": 0, "PC2": 1, "PC3": 2, "PC6": 3, "PC7": 4, "PC7S": 5, "PC8": 6, "PC9": 7,
+              "PC10": 8},
+    "bits": (3, 0)
+}
+
+_CLIENT_PC7S_CST_LIMITS: _LimitsTypedDict = {
+    "codes": {"PC0": 0, "PC2": 1, "PC3": 2, "PC6": 3, "PC7": 4, "PC7S": 5},
+    "bits": (3, 0)
+}
+
+# CPU model -> Package C-state limit map.
+_PKG_CST_LIMITS: dict[int, _LimitsTypedDict] = {
     # Xeons.
     CPUModels.MODELS["ATOM_DARKMONT_X"]["vfm"]:  _ICX_PKG_CST_LIMITS,
     CPUModels.MODELS["ATOM_CRESTMONT_X"]["vfm"]: _ICX_PKG_CST_LIMITS,
@@ -92,36 +130,34 @@ _PKG_CST_LIMITS = {
     # Atom microservers.
     CPUModels.MODELS["ATOM_GOLDMONT_D"]["vfm"]:  _DNV_PKG_CST_LIMITS,
     # Clients.
-    # Deepest: PC10.
-    CPUModels.MODELS["ARROWLAKE"]["vfm"]:        _CLIENT_PC10_CST_LIMITS,
-    CPUModels.MODELS["ARROWLAKE_H"]["vfm"]:      _CLIENT_PC10_CST_LIMITS,
-    CPUModels.MODELS["ARROWLAKE_U"]["vfm"]:      _CLIENT_PC10_CST_LIMITS,
-    CPUModels.MODELS["METEORLAKE"]["vfm"]:       _CLIENT_PC10_CST_LIMITS,
-    CPUModels.MODELS["METEORLAKE_L"]["vfm"]:     _CLIENT_PC10_CST_LIMITS,
-    CPUModels.MODELS["RAPTORLAKE"]["vfm"]:       _CLIENT_PC10_CST_LIMITS,
-    CPUModels.MODELS["RAPTORLAKE_S"]["vfm"]:     _CLIENT_PC10_CST_LIMITS,
-    CPUModels.MODELS["RAPTORLAKE_P"]["vfm"]:     _CLIENT_PC10_CST_LIMITS,
-    CPUModels.MODELS["ALDERLAKE"]["vfm"]:        _CLIENT_PC10_CST_LIMITS,
-    CPUModels.MODELS["ALDERLAKE_L"]["vfm"]:      _CLIENT_PC10_CST_LIMITS,
-    CPUModels.MODELS["ALDERLAKE_N"]["vfm"]:      _CLIENT_PC10_CST_LIMITS,
-    CPUModels.MODELS["ROCKETLAKE"]["vfm"]:       _CLIENT_PC10_CST_LIMITS,
-    CPUModels.MODELS["TIGERLAKE"]["vfm"]:        _CLIENT_PC10_CST_LIMITS,
-    CPUModels.MODELS["TIGERLAKE_L"]["vfm"]:      _CLIENT_PC10_CST_LIMITS,
-    CPUModels.MODELS["LAKEFIELD"]["vfm"]:        _CLIENT_PC10_CST_LIMITS,
-    CPUModels.MODELS["COMETLAKE"]["vfm"]:        _CLIENT_PC10_CST_LIMITS,
-    CPUModels.MODELS["COMETLAKE_L"]["vfm"]:      _CLIENT_PC10_CST_LIMITS,
-    CPUModels.MODELS["KABYLAKE_L"]["vfm"]:       _CLIENT_PC10_CST_LIMITS,
-    CPUModels.MODELS["KABYLAKE"]["vfm"]:         _CLIENT_PC10_CST_LIMITS,
-    CPUModels.MODELS["ICELAKE_L"]["vfm"]:        _CLIENT_PC10_CST_LIMITS,
-    CPUModels.MODELS["ICELAKE_NNPI"]["vfm"]:     _CLIENT_PC10_CST_LIMITS,
-    CPUModels.MODELS["CANNONLAKE_L"]["vfm"]:     _CLIENT_PC10_CST_LIMITS,
-    CPUModels.MODELS["SKYLAKE"]["vfm"]:          _CLIENT_PC10_CST_LIMITS,
-    CPUModels.MODELS["SKYLAKE_L"]["vfm"]:        _CLIENT_PC10_CST_LIMITS,
-    CPUModels.MODELS["BROADWELL"]["vfm"]:        _CLIENT_PC10_CST_LIMITS,
-    CPUModels.MODELS["HASWELL_L"]["vfm"]:        _CLIENT_PC10_CST_LIMITS,
-    CPUModels.MODELS["METEORLAKE_L"]["vfm"]:     _CLIENT_PC10_CST_LIMITS,
     CPUModels.MODELS["LUNARLAKE_M"]["vfm"]:      _CLIENT_LNL_CST_LIMITS,
-    # Deepest: PC7S.
+    CPUModels.MODELS["ARROWLAKE"]["vfm"]:        _CLIENT_PC8_CST_LIMITS,
+    CPUModels.MODELS["ARROWLAKE_H"]["vfm"]:      _CLIENT_PC8_CST_LIMITS,
+    CPUModels.MODELS["ARROWLAKE_U"]["vfm"]:      _CLIENT_PC8_CST_LIMITS,
+    CPUModels.MODELS["METEORLAKE_L"]["vfm"]:     _CLIENT_PC8_CST_LIMITS,
+    CPUModels.MODELS["METEORLAKE"]["vfm"]:       _CLIENT_PC8_CST_LIMITS,
+    CPUModels.MODELS["METEORLAKE_L"]["vfm"]:     _CLIENT_PC8_CST_LIMITS,
+    CPUModels.MODELS["RAPTORLAKE"]["vfm"]:       _CLIENT_PC8_CST_LIMITS,
+    CPUModels.MODELS["RAPTORLAKE_S"]["vfm"]:     _CLIENT_PC8_CST_LIMITS,
+    CPUModels.MODELS["RAPTORLAKE_P"]["vfm"]:     _CLIENT_PC8_CST_LIMITS,
+    CPUModels.MODELS["ALDERLAKE"]["vfm"]:        _CLIENT_PC8_CST_LIMITS,
+    CPUModels.MODELS["ALDERLAKE_L"]["vfm"]:      _CLIENT_PC8_CST_LIMITS,
+    CPUModels.MODELS["ALDERLAKE_N"]["vfm"]:      _CLIENT_PC8_CST_LIMITS,
+    CPUModels.MODELS["ROCKETLAKE"]["vfm"]:       _CLIENT_PC8_CST_LIMITS,
+    CPUModels.MODELS["TIGERLAKE"]["vfm"]:        _CLIENT_PC8_CST_LIMITS,
+    CPUModels.MODELS["TIGERLAKE_L"]["vfm"]:      _CLIENT_PC8_CST_LIMITS,
+    CPUModels.MODELS["LAKEFIELD"]["vfm"]:        _CLIENT_PC8_CST_LIMITS,
+    CPUModels.MODELS["COMETLAKE"]["vfm"]:        _CLIENT_PC8_CST_LIMITS,
+    CPUModels.MODELS["COMETLAKE_L"]["vfm"]:      _CLIENT_PC8_CST_LIMITS,
+    CPUModels.MODELS["KABYLAKE_L"]["vfm"]:       _CLIENT_PC8_CST_LIMITS,
+    CPUModels.MODELS["KABYLAKE"]["vfm"]:         _CLIENT_PC8_CST_LIMITS,
+    CPUModels.MODELS["ICELAKE_L"]["vfm"]:        _CLIENT_PC8_CST_LIMITS,
+    CPUModels.MODELS["ICELAKE_NNPI"]["vfm"]:     _CLIENT_PC8_CST_LIMITS,
+    CPUModels.MODELS["CANNONLAKE_L"]["vfm"]:     _CLIENT_PC8_CST_LIMITS,
+    CPUModels.MODELS["SKYLAKE"]["vfm"]:          _CLIENT_PC8_CST_LIMITS,
+    CPUModels.MODELS["SKYLAKE_L"]["vfm"]:        _CLIENT_PC8_CST_LIMITS,
+    CPUModels.MODELS["BROADWELL"]["vfm"]:        _CLIENT_PC8_CST_LIMITS,
+    CPUModels.MODELS["HASWELL_L"]["vfm"]:        _CLIENT_PC8_CST_LIMITS,
     CPUModels.MODELS["HASWELL"]["vfm"]:          _CLIENT_PC7S_CST_LIMITS,
     CPUModels.MODELS["HASWELL_G"]["vfm"]:        _CLIENT_PC7S_CST_LIMITS,
 }
@@ -146,7 +182,7 @@ FEATURES: dict[str, PartialFeatureTypedDict] = {
                    (MSR_PKG_CST_CONFIG_CONTROL). This model-specific register can be locked by the
                    BIOS, in which case the package C-state limit can only be read, but cannot be
                    modified.""",
-        "vfms": tuple(_PKG_CST_LIMITS.keys()),
+        "vfms": set(_PKG_CST_LIMITS),
         "type": "str",
         "vals": None,
         "bits": None,
@@ -159,7 +195,7 @@ FEATURES: dict[str, PartialFeatureTypedDict] = {
                    (MSR_PKG_CST_CONFIG_CONTROL), which include the Package C-state limit. This bit
                    is typically set by BIOS, and sometimes there is a BIOS menu to lock/unlock the
                    MSR.""",
-        "vfms": tuple(_PKG_CST_LIMITS.keys()),
+        "vfms": set(_PKG_CST_LIMITS),
         "type": "bool",
         "vals": {"on": 1, "off": 0},
         "bits": (15, 15),
@@ -188,92 +224,13 @@ FEATURES: dict[str, PartialFeatureTypedDict] = {
 
 class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
     """
-    This class provides API to MSR 0xE2 (MSR_PKG_CST_CONFIG_CONTROL). This is a model-specific
-    register found on many Intel platforms.
+    Provide an API for MSR 0xE2 (MSR_PKG_CST_CONFIG_CONTROL), a model-specific register present on
+    many Intel platforms.
     """
 
     regaddr = MSR_PKG_CST_CONFIG_CONTROL
     regname = "MSR_PKG_CST_CONFIG_CONTROL"
     vendor = "GenuineIntel"
-
-    def _read_pkg_cstate_limit(self, cpus="all"):
-        """
-        Get package C-state limit for CPUs in 'cpus'. For every CPU in 'cpus', yields a tuple of
-        '(cpu, info)', where 'cpu' is the CPU number the limits were read from, and 'info' is
-        the package C-state limit name in lower case, e.g., pc0.
-        """
-
-        finfo = self._features["pkg_cstate_limit"]
-
-        for cpu, code in self._msr.read_bits(self.regaddr, finfo["bits"], cpus=cpus,
-                                             iosname=finfo["iosname"]):
-            if code not in finfo["rvals"]:
-                # No exact match. The limit is the closest lower known number. For example, if the
-                # known numbers are 0(PC0), 2(PC6), and 7(unlimited), and 'code' is 3, then the
-                # limit is PC6.
-                #
-                # On some platforms code 0 is "unlimited" (e.g., Denverton). Do not resolve unknown
-                # numbers to "unlimited".
-                for cde in sorted(finfo["rvals"], reverse=True):
-                    if cde <= code and finfo["rvals"][cde] != "unlimited":
-                        limit = finfo["rvals"][cde]
-                        break
-                else:
-                    known_codes = [f"{cde} ({lmt})" for cde, lmt in finfo["rvals"].items()]
-                    _LOG.warn_once("unexpected package C-state limit code '%d' read from '%s' MSR "
-                                   "(%#x) on CPU %d%s. Known codes are: %s", code, self.regname,
-                                   self.regaddr, cpu, self._pman.hostmsg, ", ".join(known_codes))
-                    limit = str(code)
-            else:
-                limit = finfo["rvals"][code]
-
-            yield (cpu, limit)
-
-    def _write_pkg_cstate_limit(self, limit, cpus="all"):
-        """Set package C-state limit for CPUs in 'cpus'."""
-
-        finfo = self._features["pkg_cstate_limit"]
-        regvals = {}
-
-        for cpu, regval in self._msr.read(self.regaddr, cpus=cpus, iosname=finfo["iosname"]):
-            if self._msr.get_bits(regval, self._features["pkg_cstate_limit_lock"]["bits"]):
-                raise Error(f"cannot set package C-state limit{self._pman.hostmsg} for CPU "
-                            f"'{cpu}', MSR {MSR_PKG_CST_CONFIG_CONTROL:#x} is locked. Sometimes, "
-                            f"depending on the vendor, there is a BIOS knob to unlock it")
-
-            new_regval = self._msr.set_bits(regval, finfo["bits"], limit)
-            if regval == new_regval:
-                continue
-
-            if new_regval not in regvals:
-                regvals[new_regval] = []
-            regvals[new_regval].append(cpu)
-
-        for regval, regval_cpus in regvals.items():
-            self._msr.write(self.regaddr, regval, regval_cpus, iosname=finfo["iosname"])
-
-    def _init_features_dict_pkg_cstate_limit(self):
-        """Initialize the 'pkg_cstate_limit' information in the 'self._features' dictionary."""
-
-        if not self.is_feature_supported("pkg_cstate_limit", cpus="all"):
-            _LOG.debug("no package C-state limit table available for %s%s",
-                       self._cpuinfo.cpudescr, self._pman.hostmsg)
-            return
-
-        cpumodel = self._cpuinfo.info["vfm"]
-        cpumodel_info = _PKG_CST_LIMITS[cpumodel]
-
-        finfo = self._features["pkg_cstate_limit"]
-        finfo["bits"] = cpumodel_info["bits"]
-        finfo["vals"] = cpumodel_info["codes"]
-
-    def _init_features_dict(self):
-        """Initialize the 'features' dictionary with platform-specific information."""
-
-        self._init_supported_flag()
-        self._init_features_dict_pkg_cstate_limit()
-        self._init_features_dict_defaults()
-        self._init_public_features_dict()
 
     def __init__(self,
                  cpuinfo: CPUInfo.CPUInfo,
@@ -317,3 +274,101 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
             finfo["iosname"] = iosname
 
         super().__init__(cpuinfo, pman=pman, msr=msr)
+
+    def _read_pkg_cstate_limit(self, cpus: Sequence[int] | Literal["all"] = "all") -> \
+                                                            Generator[tuple[int, str], None, None]:
+        """
+        Retrieve the package C-state limit for the specified CPUs.
+
+        Args:
+            cpus: CPU numbers to read the package C-state limit from. If 'cpus' is "all", read the
+                  limits from all CPUs in the system.
+
+        Yields:
+            Tuple of (cpu, limit), where 'cpu' is the CPU number and 'limit' is the package C-state
+            limit name in lowercase.
+        """
+
+        finfo = self._features["pkg_cstate_limit"]
+
+        for cpu, code in self._msr.read_bits(self.regaddr, finfo["bits"], cpus=cpus,
+                                             iosname=finfo["iosname"]):
+            if code not in finfo["rvals"]:
+                # No exact match. The limit is the closest lower known number. For example, if the
+                # known numbers are 0(PC0), 2(PC6), and 7(unlimited), and 'code' is 3, then the
+                # limit is PC6.
+                #
+                # On some platforms code 0 is "unlimited" (e.g., Denverton). Do not resolve unknown
+                # numbers to "unlimited".
+                for cde in sorted(finfo["rvals"], reverse=True):
+                    if cde <= code and finfo["rvals"][cde] != "unlimited":
+                        limit = finfo["rvals"][cde]
+                        break
+                else:
+                    known_codes = [f"{cde} ({lmt})" for cde, lmt in finfo["rvals"].items()]
+                    _LOG.warn_once("Unexpected package C-state limit code '%d' read from '%s' MSR "
+                                   "(%#x) on CPU %d%s. Known codes are: %s", code, self.regname,
+                                   self.regaddr, cpu, self._pman.hostmsg, ", ".join(known_codes))
+                    limit = str(code)
+            else:
+                limit = finfo["rvals"][code]
+
+            yield (cpu, cast(str, limit))
+
+    def _write_pkg_cstate_limit(self, limit: str, cpus: Sequence[int] | Literal["all"] = "all"):
+        """
+        Set the package C-state limit for the specified CPUs.
+
+        Args:
+            limit: The package C-state limit to set.
+            cpus: CPU numbers to set the package C-state limit for. If 'cpus' is "all", set the
+                  limit for all CPUs in the system.
+        """
+
+        finfo = self._features["pkg_cstate_limit"]
+        regvals: dict[int, list[int]] = {}
+
+        for cpu, regval in self._msr.read(self.regaddr, cpus=cpus, iosname=finfo["iosname"]):
+            if self._msr.get_bits(regval, self._features["pkg_cstate_limit_lock"]["bits"]):
+                raise Error(f"Cannot set package C-state limit{self._pman.hostmsg} for CPU "
+                            f"'{cpu}', MSR {MSR_PKG_CST_CONFIG_CONTROL:#x} is locked. Sometimes, "
+                            f"depending on the vendor, there is a BIOS knob to unlock it")
+
+            new_regval = self._msr.set_bits(regval, finfo["bits"], limit)
+            if regval == new_regval:
+                continue
+
+            if new_regval not in regvals:
+                regvals[new_regval] = []
+            regvals[new_regval].append(cpu)
+
+        for regval, regval_cpus in regvals.items():
+            self._msr.write(self.regaddr, regval, regval_cpus, iosname=finfo["iosname"])
+
+    def _init_features_dict_pkg_cstate_limit(self):
+        """
+        Populate the 'pkg_cstate_limit' entry in the 'self._features' dictionary with
+        platform-specific information.
+        """
+
+        vfm = self._cpuinfo.info["vfm"]
+        if vfm in _PKG_CST_LIMITS:
+            limits = _PKG_CST_LIMITS[vfm]
+        else:
+            # Populate with something, do not leave them as None to comply with the type
+            # definition. Just randomly picked '_ICX_PKG_CST_LIMITS'.
+            limits = _ICX_PKG_CST_LIMITS
+
+        finfo = self._features["pkg_cstate_limit"]
+        finfo["bits"] = limits["bits"]
+        finfo["vals"] = limits["codes"]
+
+    def _init_features_dict(self):
+        """
+        Initialize the 'features' dictionary with platform-specific information. The sub-classes
+        can re-define this method and call individual '_init_features_dict_*()' methods.
+        """
+
+        self._init_features_dict_pkg_cstate_limit()
+
+        super()._init_features_dict()
