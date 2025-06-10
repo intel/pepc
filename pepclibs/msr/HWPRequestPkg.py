@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2021 Intel Corporation
+# Copyright (C) 2020-2025 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Authors: Antti Laakso <antti.laakso@linux.intel.com>
 #          Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
-This module provides API to MSR 0x772 (MSR_HWP_REQUEST_PKG). This is an architectural MSR found on
-many Intel platforms.
+Provide an API for MSR 0x772 (MSR_HWP_REQUEST_PKG), an architectural MSR available on many Intel
+platforms.
 """
 
 from pepclibs import CPUInfo
@@ -55,8 +55,8 @@ FEATURES: dict[str, PartialFeatureTypedDict] = {
 
 class HWPRequestPkg(_FeaturedMSR.FeaturedMSR):
     """
-    This class provides API to MSR 0x772 (MSR_HWP_REQUEST_PKG). This is an architectural MSR found
-    on many Intel platforms.
+    Provide an API for MSR 0x772 (MSR_HWP_REQUEST_PKG), an architectural MSR available on many Intel
+    platforms.
     """
 
     regaddr = MSR_HWP_REQUEST_PKG
@@ -85,8 +85,8 @@ class HWPRequestPkg(_FeaturedMSR.FeaturedMSR):
 
         sname = _FeaturedMSR.get_clx_ap_adjusted_msr_scope(cpuinfo)
 
-        for finfo in self._partial_features.values():
-            finfo["sname"] = finfo["iosname"] = sname
+        for pfinfo in self._partial_features.values():
+            pfinfo["sname"] = pfinfo["iosname"] = sname
 
         super().__init__(cpuinfo, pman=pman, msr=msr)
 
