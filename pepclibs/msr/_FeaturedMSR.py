@@ -21,9 +21,8 @@ Terminology:
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import copy
-from typing import TypedDict, Literal, Union, cast
+from typing import TypedDict, Sequence, Literal, Union, Generator, Protocol, cast
 from pepclibs import CPUModels, CPUInfo
-from pepclibs.CPUInfo import AbsNumsType
 from pepclibs.helperlibs import Logging, LocalProcessManager, ClassHelpers, Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs.helperlibs.ProcessManager import ProcessManagerType
@@ -59,7 +58,23 @@ class FeatureTypedDict(TypedDict, total=False):
     bits: tuple[int, int]
     vals: dict[str, int]
 
-FeatureValueType = Union[int, float, bool]
+# The type of the feature value.
+FeatureValueType = Union[int, float, bool, str]
+
+class _ReadFeatureMethodType(Protocol):
+    """
+    The type for a feature get method.
+    """
+
+    def __call__(self, cpus: Sequence[int] | Literal["all"] = "all") -> \
+                                   Generator[tuple[int, FeatureValueType], None, None]: ...
+
+class _WriteFeatureMethodType(Protocol):
+    """
+    The type for a feature set method.
+    """
+
+    def __call__(self, val: FeatureValueType, cpus: Sequence[int] | Literal["all"] = "all"): ...
 
 class PartialFeatureTypedDict(TypedDict, total=False):
     """
@@ -214,8 +229,8 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
 
     def _init_features_dict_defaults(self):
         """
-        Ensure that each feature in the 'self._features' dictionary contains all required keys, setting
-        missing keys to their default values.
+        Ensure that each feature in the 'self._features' dictionary contains all required keys,
+        setting missing keys to their default values.
         """
 
         for finfo in self._features.values():
@@ -292,21 +307,22 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
         If the current platform is a Cascade Lake AP (CLX-AP), return "die", otherwise return
         "package".
 
-        On CLX-AP platforms, which consist of two Cascade Lake-SP (CLX-SP) dies within a single package,
-        most MSRs that have "package" scope on SKX or CLX platforms, have "die" scope on CLX-AP.
-        This method helps to adjust the MSR scope accordingly.
+        On CLX-AP platforms, which consist of two Cascade Lake-SP (CLX-SP) dies within a single
+        package, most MSRs that have "package" scope on SKX or CLX platforms, have "die" scope on
+        CLX-AP. This method helps to adjust the MSR scope accordingly.
 
         Returns:
-            str: "die" if the platform is CLX-AP (i.e., two dies in one package), otherwise "package".
+            "die" if the platform is CLX-AP (i.e., two dies in one package), otherwise "package".
         """
 
         vfm = self._cpuinfo.info["vfm"]
         if vfm == CPUModels.MODELS["SKYLAKE_X"]["vfm"] and \
            len(self._cpuinfo.get_package_dies(package=0)) > 1:
             return "die"
+
         return "package"
 
-    def validate_feature_supported(self, fname: str, cpus: AbsNumsType | Literal["all"] = "all"):
+    def validate_feature_supported(self, fname: str, cpus: Sequence[int] | Literal["all"] = "all"):
         """
         Validate that a feature is supported by all specified CPUs.
 
@@ -345,7 +361,9 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
                                     f"{self._features[fname]['name']} only on the following CPUs: "
                                     f"{supported_str}")
 
-    def is_feature_supported(self, fname: str, cpus: AbsNumsType | Literal["all"] = "all") -> bool:
+    def is_feature_supported(self,
+                             fname: str,
+                             cpus: Sequence[int] | Literal["all"] = "all") -> bool:
         """
         Check if a feature is supported by all specified CPUs.
 
@@ -354,7 +372,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
             cpus: CPU numbers to check, or "all" to check all CPUs.
 
         Returns:
-            bool: True if the feature is supported on all specified CPUs, False otherwise.
+            bool: True if the feature is supported for all specified CPUs, False otherwise.
         """
 
         try:
@@ -421,8 +439,14 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
 
     def _normalize_feature_value(self, fname: str, val: FeatureValueType) -> FeatureValueType:
         """
-        Check that 'val' is a valid value for feature 'fname' and converts it to a value suitable
-        for writing the MSR register.
+        Validate and normalize a feature value.
+
+        Args:
+            fname: The name of the feature whose value is being normalized.
+            val: The value to normalize.
+
+        Returns:
+            The normalized value suitable for writing to the MSR register.
         """
 
         finfo = self._features[fname]
@@ -452,50 +476,49 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
         raise Error(f"Bad value '{val}' for the '{finfo['name']}' feature, use one of:\n  "
                     f"{vals_str}")
 
-    def read_feature(self, fname, cpus="all"):
+    def read_feature(self,
+                     fname: str,
+                     cpus: Sequence[int] | Literal["all"] = "all") -> \
+                                                Generator[tuple[int, FeatureValueType], None, None]:
         """
-        Read the MSR on CPUs in 'cpus', extract the values of the 'fname' feature, and yield the
-        result. The arguments are as follows.
-          * fname - name of the feature to read.
-          * cpus - collection of integer CPU numbers. Special value 'all' means "all CPUs".
+        Read the value of a feature from the MSR for given CPUs and yield the results.
 
-        The yielded tuples are '(cpu, val)'.
-          * cpu - the CPU number the MSR was read from.
-          * val - the feature value.
+        Args:
+            fname: Name of the feature to read.
+            cpus: CPU numbers to read from, or the special value "all" to select all CPUs.
+
+        Yields:
+            tuple: A tuple (cpu, val), where 'cpu' is the CPU number and 'val' is the value of the
+                   feature read from that CPU.
         """
 
         self.validate_feature_supported(fname, cpus=cpus)
 
-        get_method_name = f"_get_{fname}"
-        get_method = getattr(self, get_method_name, None)
-        if get_method:
-            for cpu, val in get_method(cpus=cpus):
-                _LOG.debug("%s: read '%s' value '%s' from MSR %#x (%s) for CPU %s%s",
-                           get_method_name, fname, val, self.regaddr, self.regname, cpu,
-                           self._pman.hostmsg)
-                yield cpu, val
-        elif hasattr(self, "_get_feature"):
-            for cpu, val in self._get_feature(fname, cpus=cpus):
-                _LOG.debug("_get_feature: read '%s' value '%s' from MSR %#x (%s) for CPU %s%s",
-                           fname, val, self.regaddr, self.regname, cpu, self._pman.hostmsg)
+        read_method_name = f"_get_{fname}"
+        read_method: _ReadFeatureMethodType | None = getattr(self, read_method_name, None)
+
+        if read_method:
+            # pylint: disable=not-callable
+            for cpu, val in read_method(cpus=cpus):
                 yield cpu, val
         else:
             bits = self._features[fname]["bits"]
             for cpu, val in self._msr.read_bits(self.regaddr, bits, cpus=cpus,
-                                                iosname=self._features[fname]["iosname"]):
+                                                    iosname=self._features[fname]["iosname"]):
                 if "rvals" in self._features[fname]:
-                    val = self._features[fname]["rvals"][val]
-                _LOG.debug("read_bits: read '%s' value '%s' from MSR %#x (%s) for CPU %s%s",
-                           fname, val, self.regaddr, self.regname, cpu, self._pman.hostmsg)
+                    val = self._features[fname]["rvals"][cast(int, val)]
                 yield cpu, val
 
-    def read_cpu_feature(self, fname, cpu):
+    def read_cpu_feature(self, fname: str, cpu: int) -> FeatureValueType:
         """
-        Read the MSR for CPU 'cpu', extract the value of the 'fname' feature, and return the result.
-        The arguments are as follows.
-          * fname - name of the feature to read.
-          * cpu - CPU number to read the feature from. Can be an integer or a string with an integer
-                  number.
+        Read the value of a feature from for a given CPU and return the result.
+
+        Args:
+            fname: Name of the feature to read.
+            cpu: CPU number to read the feature from.
+
+        Returns:
+            The value of the requested feature for the specified CPU.
         """
 
         val = None
@@ -504,48 +527,59 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
 
         return val
 
-    def is_feature_enabled(self, fname, cpus="all"):
+    def is_feature_enabled(self, fname: str, cpus: Sequence[int] | Literal["all"] = "all") -> \
+                                                            Generator[tuple[int, bool], None, None]:
         """
-        Check if feature 'fname' is enabled on CPUs in 'cpus'. The arguments are as follows.
-          * fname - name of the feature to read and check.
-          * cpus - the CPUs to read the feature from (same as in 'read_feature()').
+        Check whether a boolean feature is enabled for specified CPUs.
 
-        The yielded tuples are '(cpu, enabled)'.
-          * cpu - the CPU number the MSR was read from.
-          * enabled - 'True' if the feature is enabled, 'False' otherwise.
+        Args:
+            fname: Name of the feature to check.
+            cpus: CPUs to check the feature on. Special value "all" selects all CPUs.
+
+        Yields:
+            tuple: A tuple (cpu, enabled), where:
+                cpu: CPU number the feature was read from.
+                enabled: True if the feature is enabled, False otherwise.
         """
 
         self.validate_feature_supported(fname, cpus=cpus)
 
         if self._features[fname]["type"] != "bool":
-            raise Error(f"feature '{fname}' is not boolean, use 'read_feature()' instead")
+            raise Error(f"Feature '{fname}' is not boolean, use 'read_feature()' instead")
 
         for cpu, val in self.read_feature(fname, cpus=cpus):
             enabled = val in {"on", "enabled"}
-            yield (cpu, enabled)
+            yield cpu, enabled
 
     def is_cpu_feature_enabled(self, fname, cpu):
         """
-        Check if CPU 'cpu' has feature 'fname' enabled. The arguments are as follows.
-          * fname - name of the feature to read and check.
-          * cpu - CPU number to read the feature from. Can be an integer or a string with an integer
-                  number.
+        Check if a CPU feature is enabled for a CPU.
 
-        Return 'True' if the feature is enabled, and 'False' otherwise.
+        Args:
+            fname: Name of the feature to check.
+            cpu: CPU number to check the feature on.
+
+        Returns:
+            True if the feature is enabled for the specified CPU, False otherwise.
         """
 
         enabled = None
         for _, enabled in self.is_feature_enabled(fname, cpus=(cpu,)):
             pass
+
         return enabled
 
-    def write_feature(self, fname, val, cpus="all"):
+    def write_feature(self,
+                      fname: str,
+                      val: FeatureValueType,
+                      cpus: Sequence[int] | Literal["all"] = "all"):
         """
-        For every CPU in 'cpus', modify the MSR by reading it, changing the 'fname' feature bits to
-        the value corresponding to 'val', and writing it back. The arguments are as follows.
-          * fname - name of the feature to set.
-          * val - value to set the feature to.
-          * cpus - the CPUs to write the feature to (same as in 'read_feature()').
+        Write a feature value for the specified CPUs.
+
+        Args:
+            fname: Name of the feature to write.
+            val: The value to write.
+            cpus: CPU numbers to write the feature on. Special value "all" selects all CPUs.
         """
 
         self.validate_feature_supported(fname, cpus=cpus)
@@ -554,48 +588,43 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
         finfo = self._features[fname]
         if not finfo["writable"]:
             fullname = finfo["name"]
-            raise Error(f"feature '{fullname}' can not be modified{self._pman.hostmsg}, it is "
+            raise Error(f"Feature '{fullname}' can not be modified{self._pman.hostmsg}, it is "
                         f"read-only")
 
-        dbg_msg = ""
-        if _LOG.getEffectiveLevel() == Logging.DEBUG:
-            cpus_str = Trivial.rangify(self._cpuinfo.normalize_cpus(cpus))
-            dbg_msg = f"writing '{val}' to {fname}' in MSR {self.regaddr:#x} ({self.regname}) " \
-                      f"for CPUs {cpus_str}{self._pman.hostmsg}"
-
         set_method_name = f"_set_{fname}"
-        set_method = getattr(self, set_method_name, None)
+        set_method: _WriteFeatureMethodType | None = getattr(self, set_method_name, None)
         if set_method:
-            _LOG.debug("%s: %s", set_method_name, dbg_msg)
+            # pylint: disable=not-callable
             set_method(val, cpus=cpus)
-        elif hasattr(self, "_set_feature"):
-            _LOG.debug("_set_feature: %s", dbg_msg)
-            self._set_feature(fname, val, cpus=cpus)
         else:
-            _LOG.debug("write_bits: %s", dbg_msg)
             self._msr.write_bits(self.regaddr, finfo["bits"], val, cpus=cpus,
                                  iosname=finfo["iosname"])
 
-    def write_cpu_feature(self, fname, val, cpu):
+    def write_cpu_feature(self, fname: str, val: FeatureValueType, cpu: int):
         """
-        Modify the MSR on CPU 'cpu' by reading it, changing the 'fname' feature bits to the value
-        corresponding to 'val', and writing it back. The arguments are as follows.
-          * fname - name of the feature to set.
-          * val - value to set the feature to.
-          * cpu - CPU number to write the feature to. Can be an integer or a string with an integer
-                  number.
+        Write a feature value for a specified CPU.
+
+        Args:
+            fname: Name of the feature to write.
+            val: The value to write.
+            cpu: CPU number to write the feature for.
         """
 
         self.write_feature(fname, val, cpus=(cpu,))
 
-    def enable_feature(self, fname, enable, cpus="all"):
+    def enable_feature(self,
+                       fname: str,
+                       enable: bool | str,
+                       cpus: Sequence[int] | Literal["all"] = "all"):
         """
-        Modify the MSR by enabling or disabling feature 'fname' on CPUs in 'cpus'. The arguments
-        are as follows.
-          * fname - name of the feature to enable or disable.
-          * enable - enable the feature if 'True', disable otherwise.
-          * cpus - the CPUs to enable or disable the feature on (same as in
-                   'read_feature()').
+        Enable or disable a boolean feature for specified CPUs.
+
+        Args:
+            fname: Name of the feature to enable or disable.
+            enable: Enable the feature if  True, "on", or "enable"; disable the feature if False,
+                    "off", or "disable".
+            cpus: CPU numbers to enable or disable the feature for. Special value "all" selects
+                  all CPUs.
         """
 
         self.validate_feature_supported(fname, cpus=cpus)
@@ -617,12 +646,13 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
 
     def enable_cpu_feature(self, fname, enable, cpu):
         """
-        Modify the MSR by enabling or disabling feature 'fname' on CPU 'cpu'. The arguments are as
-        follows.
-          * fname - name of the feature to enable or disable.
-          * enable - enable the feature if 'True', disable otherwise.
-          * cpu - CPU number to enable or disable the feature on. Can be an integer or a string with
-                  an integer number.
+        Enable or disable a boolean feature for a specified CPU.
+
+        Args:
+            fname: Name of the feature to enable or disable.
+            enable: Enable the feature if  True, "on", or "enable"; disable the feature if False,
+                    "off", or "disable".
+            cpu: CPU number to enable or disable the feature for.
         """
 
         self.enable_feature(fname, enable, cpus=(cpu,))

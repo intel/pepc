@@ -196,7 +196,7 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
     regname = "MSR_PKG_CST_CONFIG_CONTROL"
     vendor = "GenuineIntel"
 
-    def _get_pkg_cstate_limit(self, cpus="all"):
+    def _read_pkg_cstate_limit(self, cpus="all"):
         """
         Get package C-state limit for CPUs in 'cpus'. For every CPU in 'cpus', yields a tuple of
         '(cpu, info)', where 'cpu' is the CPU number the limits were read from, and 'info' is
@@ -229,7 +229,7 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
 
             yield (cpu, limit)
 
-    def _set_pkg_cstate_limit(self, limit, cpus="all"):
+    def _write_pkg_cstate_limit(self, limit, cpus="all"):
         """Set package C-state limit for CPUs in 'cpus'."""
 
         finfo = self._features["pkg_cstate_limit"]

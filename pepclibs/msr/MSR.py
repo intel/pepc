@@ -11,7 +11,11 @@
 Provide a capability to read and write CPU Model Specific Registers.
 """
 
+# TODO: finish annotating.
+from __future__ import annotations # Remove when switching to Python 3.10+.
+
 import pprint
+from typing import Generator
 from pathlib import Path
 from pepclibs.helperlibs import Logging, LocalProcessManager, FSHelpers, KernelModule, Trivial
 from pepclibs.helperlibs import ClassHelpers
@@ -412,7 +416,8 @@ for cpu in cpus:
 
         return regval
 
-    def read_bits(self, regaddr, bits, cpus="all", iosname="CPU"):
+    def read_bits(self, regaddr, bits, cpus="all", iosname="CPU") -> \
+                                                            Generator[tuple[int, int], None, None]:
         """
         Read bits 'bits' from an MSR at 'regaddr' from CPUs in 'cpus' and yield the results. The
         arguments are as follows.
