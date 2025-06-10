@@ -542,6 +542,9 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         cpu = Trivial.str_to_int(cpu, what="CPU number")
         if not snames:
             snames = SCOPE_NAMES
+        else:
+            for sname in snames:
+                self._validate_sname(sname, name="topology scope name")
 
         tline = None
         # TODO: This for loop is an O(n) operation, which is not optimal. Consider optimizing it.

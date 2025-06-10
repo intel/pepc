@@ -1,20 +1,21 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2021 Intel Corporation
+# Copyright (C) 2020-2025 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Authors: Antti Laakso <antti.laakso@linux.intel.com>
 #          Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
-This module provides API to MSR 0xCD (MSR_FSB_FREQ). This MSR provides bus clock speed information
-on some Intel platforms.
+Provide an API for accessing MSR 0xCD (MSR_FSB_FREQ), which reports the bus clock speed
+on certain Intel platforms.
 """
 
-from pepclibs import CPUModels
-from pepclibs.msr import _FeaturedMSR
+from pepclibs import CPUModels, CPUInfo
+from pepclibs.msr import _FeaturedMSR, MSR
 from pepclibs.msr ._FeaturedMSR import PartialFeatureTypedDict
+from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
 
 # The Scalable Bus Speed Model Specific Register.
@@ -70,7 +71,7 @@ FEATURES: dict[str, PartialFeatureTypedDict] = {
         "sname": None,
         "iosname": None,
         "help": "Platform bus clock speed (FSB) in megahertz",
-        "vfms": tuple(_FSB_CODES.keys()),
+        "vfms": set(_FSB_CODES),
         "type": "float",
         "writable": False,
     },
@@ -78,13 +79,44 @@ FEATURES: dict[str, PartialFeatureTypedDict] = {
 
 class FSBFreq(_FeaturedMSR.FeaturedMSR):
     """
-    This class provides API to MSR 0xCD (MSR_FSB_FREQ). This MSR provides bus clock speed
-    information on some Intel platforms.
+    Provide an API for accessing MSR 0xCD (MSR_FSB_FREQ), which reports the bus clock speed on
+    certain Intel platforms.
     """
 
     regaddr = MSR_FSB_FREQ
     regname = "MSR_FSB_FREQ"
     vendor = "GenuineIntel"
+
+    def __init__(self,
+                 cpuinfo: CPUInfo.CPUInfo,
+                 pman: ProcessManagerType | None = None,
+                 msr: MSR.MSR | None = None):
+        """
+        Initialize a class instance.
+
+        Args:
+            cpuinfo: The CPU information object.
+            pman: The Process manager object that defines the host to run the measurements on. If
+                  not provided, a local process manager will be used.
+            msr: An optional 'MSR.MSR()' object to use for writing to the MSR register. If not
+                 provided, a new MSR object will be created.
+
+        Raises:
+            ErrorNotSupported: If CPU vendor is not supported or if the CPU does not the MSR.
+        """
+
+        self._partial_features = FEATURES
+        vfm = cpuinfo.info["vfm"]
+
+        if vfm in _MODULE_SCOPE_VFMS:
+            sname = "module"
+        else:
+            sname = "core"
+
+        for finfo in self._partial_features.values():
+            finfo["sname"] = finfo["iosname"] = sname
+
+        super().__init__(cpuinfo, pman=pman, msr=msr)
 
     def _init_features_dict_fsb(self):
         """Initialize the 'fsb' feature information in the 'self._features' dictionary."""
@@ -105,17 +137,3 @@ class FSBFreq(_FeaturedMSR.FeaturedMSR):
         self._init_supported_flag()
         self._init_features_dict_fsb()
         self._init_features_dict_defaults()
-
-    def _set_baseclass_attributes(self):
-        """Set the attributes the superclass requires."""
-
-        self.features = FEATURES
-        vfm = self._cpuinfo.info["vfm"]
-
-        if vfm in _MODULE_SCOPE_VFMS:
-            sname = "module"
-        else:
-            sname = "core"
-
-        for finfo in self.features.values():
-            finfo["sname"] = finfo["iosname"] = sname

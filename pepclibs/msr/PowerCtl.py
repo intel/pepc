@@ -12,10 +12,10 @@ This module provides API to MSR 0x1FC (MSR_POWER_CTL). This is a model-specific 
 many Intel platforms.
 """
 
-from pepclibs import CPUModels
-from pepclibs.msr import _FeaturedMSR
+from pepclibs import CPUModels, CPUInfo
+from pepclibs.msr import _FeaturedMSR, MSR
 from pepclibs.msr ._FeaturedMSR import PartialFeatureTypedDict
-
+from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
 # The Power Control Model Specific Register.
 MSR_POWER_CTL = 0x1FC
@@ -87,11 +87,28 @@ class PowerCtl(_FeaturedMSR.FeaturedMSR):
     regname = "MSR_POWER_CTL"
     vendor = "GenuineIntel"
 
-    def _set_baseclass_attributes(self):
-        """Set the attributes the superclass requires."""
+    def __init__(self,
+                 cpuinfo: CPUInfo.CPUInfo,
+                 pman: ProcessManagerType | None = None,
+                 msr: MSR.MSR | None = None):
+        """
+        Initialize a class instance.
 
-        self.features = FEATURES
+        Args:
+            cpuinfo: The CPU information object.
+            pman: The Process manager object that defines the host to run the measurements on. If
+                  not provided, a local process manager will be used.
+            msr: An optional 'MSR.MSR()' object to use for writing to the MSR register. If not
+                 provided, a new MSR object will be created.
 
-        sname = self._get_clx_ap_adjusted_msr_scope()
-        for finfo in self.features.values():
+        Raises:
+            ErrorNotSupported: If CPU vendor is not supported or if the CPU does not the MSR.
+        """
+
+        self._partial_features = FEATURES
+
+        sname = _FeaturedMSR.get_clx_ap_adjusted_msr_scope(cpuinfo)
+        for finfo in self._partial_features.values():
             finfo["sname"] = finfo["iosname"] = sname
+
+        super().__init__(cpuinfo, pman=pman, msr=msr)

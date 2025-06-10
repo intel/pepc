@@ -54,7 +54,7 @@ class FeatureTypedDict(TypedDict, total=False):
     type: str
     writable: bool
     cpuflags: set[str]
-    vfms: list[str]
+    vfms: set[int]
     bits: tuple[int, int]
     vals: dict[str, int]
 
@@ -100,7 +100,7 @@ class PartialFeatureTypedDict(TypedDict, total=False):
     type: str
     writable: bool
     cpuflags: set[str]
-    vfms: list[str]
+    vfms: set[int]
     bits: tuple[int, int]
     vals: dict[str, int]
 
@@ -119,6 +119,28 @@ class _FeatureTypedDict(FeatureTypedDict, total=False):
     rvals: dict[int, str]
     vals_nocase: dict[str, int]
     rvals_nocase: dict[int, str]
+
+def get_clx_ap_adjusted_msr_scope(cpuinfo: CPUInfo.CPUInfo) -> Literal["die", "package"]:
+    """
+    If the current platform is a Cascade Lake AP (CLX-AP), return "die", otherwise return
+    "package".
+
+    On CLX-AP platforms, which consist of two Cascade Lake-SP (CLX-SP) dies within a single
+    package, most MSRs that have "package" scope on SKX or CLX platforms, have "die" scope on
+    CLX-AP. This method helps to adjust the MSR scope accordingly.
+
+    Args:
+        cpuinfo: The CPU information object.
+
+    Returns:
+        "die" if the platform is CLX-AP (i.e., two dies in one package), otherwise "package".
+    """
+
+    vfm = cpuinfo.info["vfm"]
+    if vfm == CPUModels.MODELS["SKYLAKE_X"]["vfm"] and len(cpuinfo.get_package_dies(package=0)) > 1:
+        return "die"
+
+    return "package"
 
 class FeaturedMSR(ClassHelpers.SimpleCloseContext):
     """
@@ -146,7 +168,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
 
     def __init__(self,
                  cpuinfo: CPUInfo.CPUInfo,
-                 pman: ProcessManagerType | None=None,
+                 pman: ProcessManagerType | None = None,
                  msr: MSR.MSR | None = None):
         """
         Initialize a class instance.
@@ -159,8 +181,10 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
                  provided, a new MSR object will be created.
 
         Raises:
-            ErrorNotSupported: If CPU vendor is not supported.
+            ErrorNotSupported: If CPU vendor is not supported or if the CPU does not the MSR.
         """
+
+        _LOG.debug("Initializing MSR %s (0x%x)", self.regname, self.regaddr)
 
         self._cpuinfo = cpuinfo
 
@@ -169,6 +193,8 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
 
         # The user-visible features dictionary.
         self.features: dict[str, FeatureTypedDict] = {}
+        # The partially initialized features dictionary, must be set by the sub-class.
+        self._partial_features: dict[str, PartialFeatureTypedDict]
         # The private version of the 'self.features' dictionary.
         self._features: dict[str, _FeatureTypedDict] = {}
 
@@ -186,12 +212,13 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
         else:
             self._msr = MSR.MSR(self._cpuinfo, pman=self._pman)
 
-        self._set_baseclass_attributes()
-        self._features = cast(dict[str, _FeatureTypedDict], copy.deepcopy(self.features))
+        self._features = cast(dict[str, _FeatureTypedDict], copy.deepcopy(self._partial_features))
         self._init_features_dict()
 
     def close(self):
         """Uninitialize the class object."""
+
+        _LOG.debug("Closing MSR %s (0x%x)", self.regname, self.regaddr)
 
         close_attrs = ("_msr", "_pman",)
         unref_attrs = ("_cpuinfo",)
@@ -287,41 +314,6 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
         self._init_features_dict_defaults()
         self._init_public_features_dict()
 
-    def _set_baseclass_attributes(self):
-        """
-        This method must be implemented by the sub-class. It should initialize the following
-        attributes:
-            - self._features: Set the private features dictionary describing the MSR features.
-            - self.regaddr: Set the address of the featured MSR.
-            - self.regname: Set the name of the featured MSR.
-
-        Raises:
-            NotImplementedError: If the sub-class does not implement this method.
-        """
-
-        raise NotImplementedError("BUG: sub-class did not define the '_set_baseclass_attributes()' "
-                                  "method")
-
-    def _get_clx_ap_adjusted_msr_scope(self) -> Literal["die", "package"]:
-        """
-        If the current platform is a Cascade Lake AP (CLX-AP), return "die", otherwise return
-        "package".
-
-        On CLX-AP platforms, which consist of two Cascade Lake-SP (CLX-SP) dies within a single
-        package, most MSRs that have "package" scope on SKX or CLX platforms, have "die" scope on
-        CLX-AP. This method helps to adjust the MSR scope accordingly.
-
-        Returns:
-            "die" if the platform is CLX-AP (i.e., two dies in one package), otherwise "package".
-        """
-
-        vfm = self._cpuinfo.info["vfm"]
-        if vfm == CPUModels.MODELS["SKYLAKE_X"]["vfm"] and \
-           len(self._cpuinfo.get_package_dies(package=0)) > 1:
-            return "die"
-
-        return "package"
-
     def validate_feature_supported(self, fname: str, cpus: Sequence[int] | Literal["all"] = "all"):
         """
         Validate that a feature is supported by all specified CPUs.
@@ -375,11 +367,16 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
             bool: True if the feature is supported for all specified CPUs, False otherwise.
         """
 
+        result: bool = True
         try:
             self.validate_feature_supported(fname, cpus=cpus)
-            return True
         except ErrorNotSupported:
-            return False
+            result = False
+
+        _LOG.debug("Feature '%s' (%s) is %s on CPUs %s", fname, self.msr_bits_str(fname),
+                   "supported" if result else "not supported", cpus)
+
+        return result
 
     def is_cpu_feature_supported(self, fname: str, cpu: int) -> bool:
         """
@@ -419,23 +416,25 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
             fname: Name of the feature for which to return the description.
 
         Returns:
-            A string in the format "MSR 0x<address> bits (<start>:<end>)" or "MSR 0x<address> bit
-            <n>".
+            A string in the format "<name> (<address>) bits (<start>:<end>)" or
+            "<name> <address> bit <n>".
 
         Example:
-            "MSR 0xABC bits 3:9"
-            "MSR 0xABC bit 5"
+            "MSR_PLATFORM_INFO (0xce) bits 55:48"
         """
 
         self._check_fname(fname)
 
-        bits = self._features["fname"]["bits"]
-        if bits[0] == bits[1]:
-            bits_str = f"bit {bits[0]}"
+        bits = self._features[fname].get("bits")
+        if bits:
+            if bits[0] == bits[1]:
+                bits_str = f" bit {bits[0]}"
+            else:
+                bits_str = f" bits {bits[0]}:{bits[1]}"
         else:
-            bits_str = f"bit {bits[0]:bits[1]}"
+            bits_str = ""
 
-        return f"MSR {self.regaddr:x} bits {bits_str}"
+        return f"{self.regname} {self.regaddr:#x}{bits_str}"
 
     def _normalize_feature_value(self, fname: str, val: FeatureValueType) -> FeatureValueType:
         """
@@ -497,6 +496,8 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
         read_method_name = f"_get_{fname}"
         read_method: _ReadFeatureMethodType | None = getattr(self, read_method_name, None)
 
+        _LOG.debug("Reading feature '%s' (%s) on CPUs %s", fname, self.msr_bits_str(fname), cpus)
+
         if read_method:
             # pylint: disable=not-callable
             for cpu, val in read_method(cpus=cpus):
@@ -547,6 +548,9 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
         if self._features[fname]["type"] != "bool":
             raise Error(f"Feature '{fname}' is not boolean, use 'read_feature()' instead")
 
+        _LOG.debug("Checking if feature '%s' (%s) is enabled on CPUs %s",
+                   fname, self.msr_bits_str(fname), cpus)
+
         for cpu, val in self.read_feature(fname, cpus=cpus):
             enabled = val in {"on", "enabled"}
             yield cpu, enabled
@@ -584,6 +588,9 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
 
         self.validate_feature_supported(fname, cpus=cpus)
         val = self._normalize_feature_value(fname, val)
+
+        _LOG.debug("Writing feature '%s' (%s) on CPUs %s, value: %s",
+                   fname, self.msr_bits_str(fname), cpus, val)
 
         finfo = self._features[fname]
         if not finfo["writable"]:

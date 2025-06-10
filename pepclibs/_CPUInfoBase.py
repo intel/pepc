@@ -449,8 +449,7 @@ for cpu in cpus:
             # The topology for the necessary scopes has already been built, just return it.
             return self._topology[order]
 
-        _LOG.debug("Building CPU topology for scopes %s, order '%s'",
-                   ", ".join(snames), order)
+        _LOG.debug("Building CPU topology for scopes %s, order '%s'", ", ".join(snames), order)
 
         # A prelimitary CPU topology dictionary. They keys are CPU numbers, and the values are the
         # topology lines.

@@ -12,12 +12,12 @@ This module provides API to MSR 0xE2 (MSR_PKG_CST_CONFIG_CONTROL). This is a mod
 found on many Intel platforms.
 """
 
-from pepclibs import CPUModels
+from pepclibs import CPUModels, CPUInfo
 from pepclibs.helperlibs import Logging
 from pepclibs.helperlibs.Exceptions import Error
-from pepclibs.msr import _FeaturedMSR
+from pepclibs.msr import _FeaturedMSR, MSR
 from pepclibs.msr ._FeaturedMSR import PartialFeatureTypedDict
-
+from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
@@ -275,11 +275,27 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
         self._init_features_dict_defaults()
         self._init_public_features_dict()
 
-    def _set_baseclass_attributes(self):
-        """Set the attributes the superclass requires."""
+    def __init__(self,
+                 cpuinfo: CPUInfo.CPUInfo,
+                 pman: ProcessManagerType | None = None,
+                 msr: MSR.MSR | None = None):
+        """
+        Initialize a class instance.
 
-        self.features = FEATURES
-        model = self._cpuinfo.info["vfm"]
+        Args:
+            cpuinfo: The CPU information object.
+            pman: The Process manager object that defines the host to run the measurements on. If
+                  not provided, a local process manager will be used.
+            msr: An optional 'MSR.MSR()' object to use for writing to the MSR register. If not
+                 provided, a new MSR object will be created.
+
+        Raises:
+            ErrorNotSupported: If CPU vendor is not supported or if the CPU does not the MSR.
+        """
+
+        self._partial_features = FEATURES
+
+        model = cpuinfo.info["vfm"]
 
         if model in _MODULE_IO_SCOPE_VFMS:
             iosname = "module"
@@ -291,11 +307,13 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
         # For the package C-state limit/lock features the scope is always "package", except for
         # CLX-AP, which is one very special platform. And it is different to the I/O scope on most
         # platforms.
-        sname = self._get_clx_ap_adjusted_msr_scope()
+        sname = _FeaturedMSR.get_clx_ap_adjusted_msr_scope(cpuinfo)
 
-        for fname, finfo in self.features.items():
+        for fname, finfo in self._partial_features.items():
             if fname.startswith("pkg_") or model in _CORE_C1D_SCOPE_VFMS:
                 finfo["sname"] = sname
             else:
                 finfo["sname"] = iosname
             finfo["iosname"] = iosname
+
+        super().__init__(cpuinfo, pman=pman, msr=msr)

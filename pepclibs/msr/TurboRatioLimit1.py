@@ -12,9 +12,10 @@ provides either turbo ratio information, or the turbo ratio groups encoding. In 
 is called either 'MSR_TURBO_GROUP_CORECNT' (Atoms) or 'MSR_TURBO_RATIO_LIMIT_CORES' (big cores).
 """
 
-from pepclibs.msr import _FeaturedMSR, TurboRatioLimit
+from pepclibs import CPUInfo
+from pepclibs.msr import _FeaturedMSR, TurboRatioLimit, MSR
 from pepclibs.msr ._FeaturedMSR import PartialFeatureTypedDict
-
+from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
 # The Turbo Ratio Limit 1 Model Specific Register.
 MSR_TURBO_RATIO_LIMIT1 = 0x1AE
@@ -49,11 +50,28 @@ class TurboRatioLimit1(_FeaturedMSR.FeaturedMSR):
     regname = "MSR_TURBO_RATIO_LIMIT1"
     vendor = "GenuineIntel"
 
-    def _set_baseclass_attributes(self):
-        """Set the attributes the superclass requires."""
+    def __init__(self,
+                 cpuinfo: CPUInfo.CPUInfo,
+                 pman: ProcessManagerType | None = None,
+                 msr: MSR.MSR | None = None):
+        """
+        Initialize a class instance.
 
-        self.features = FEATURES
+        Args:
+            cpuinfo: The CPU information object.
+            pman: The Process manager object that defines the host to run the measurements on. If
+                  not provided, a local process manager will be used.
+            msr: An optional 'MSR.MSR()' object to use for writing to the MSR register. If not
+                 provided, a new MSR object will be created.
 
-        sname = self._get_clx_ap_adjusted_msr_scope()
-        for finfo in self.features.values():
+        Raises:
+            ErrorNotSupported: If CPU vendor is not supported or if the CPU does not the MSR.
+        """
+
+        self._partial_features = FEATURES
+
+        sname = _FeaturedMSR.get_clx_ap_adjusted_msr_scope(cpuinfo)
+        for finfo in self._partial_features.values():
             finfo["sname"] = finfo["iosname"] = sname
+
+        super().__init__(cpuinfo, pman=pman, msr=msr)

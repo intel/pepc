@@ -12,9 +12,10 @@ model-specific register allows the OS communicate software (as opposed to PCIe) 
 Tolerance Report) requirements to the power management unit of the CPU.
 """
 
-from pepclibs.msr import _FeaturedMSR, PowerCtl
+from pepclibs import CPUInfo
+from pepclibs.msr import _FeaturedMSR, PowerCtl, MSR
 from pepclibs.msr ._FeaturedMSR import PartialFeatureTypedDict
-
+from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
 # The Software LTR Override Model Specific Register.
 MSR_SW_LTR_OVRD = 0xA02
@@ -80,6 +81,24 @@ class SwLTROvrd(_FeaturedMSR.FeaturedMSR):
     regname = "MSR_SW_LTR_OVRD"
     vendor = "GenuineIntel"
 
-    def _set_baseclass_attributes(self):
-        """Set the attributes the superclass requires."""
-        self.features = FEATURES
+    def __init__(self,
+                 cpuinfo: CPUInfo.CPUInfo,
+                 pman: ProcessManagerType | None = None,
+                 msr: MSR.MSR | None = None):
+        """
+        Initialize a class instance.
+
+        Args:
+            cpuinfo: The CPU information object.
+            pman: The Process manager object that defines the host to run the measurements on. If
+                  not provided, a local process manager will be used.
+            msr: An optional 'MSR.MSR()' object to use for writing to the MSR register. If not
+                 provided, a new MSR object will be created.
+
+        Raises:
+            ErrorNotSupported: If CPU vendor is not supported or if the CPU does not the MSR.
+        """
+
+        self._partial_features = FEATURES
+
+        super().__init__(cpuinfo, pman=pman, msr=msr)

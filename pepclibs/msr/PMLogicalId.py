@@ -10,10 +10,10 @@
 This module provides API to MSR 0x0x54 (MSR_PM_LOGICAL_ID).
 """
 
-from pepclibs import CPUModels
-from pepclibs.msr import _FeaturedMSR
+from pepclibs import CPUModels, CPUInfo
+from pepclibs.msr import _FeaturedMSR, MSR
 from pepclibs.msr ._FeaturedMSR import PartialFeatureTypedDict
-
+from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
 # The PM Logical ID Model Specific Register.
 MSR_PM_LOGICAL_ID = 0x54
@@ -64,7 +64,24 @@ class PMLogicalId(_FeaturedMSR.FeaturedMSR):
     regname = "MSR_PM_LOGICAL_ID"
     vendor = "GenuineIntel"
 
-    def _set_baseclass_attributes(self):
-        """Set the attributes the superclass requires."""
+    def __init__(self,
+                 cpuinfo: CPUInfo.CPUInfo,
+                 pman: ProcessManagerType | None = None,
+                 msr: MSR.MSR | None = None):
+        """
+        Initialize a class instance.
 
-        self.features = FEATURES
+        Args:
+            cpuinfo: The CPU information object.
+            pman: The Process manager object that defines the host to run the measurements on. If
+                  not provided, a local process manager will be used.
+            msr: An optional 'MSR.MSR()' object to use for writing to the MSR register. If not
+                 provided, a new MSR object will be created.
+
+        Raises:
+            ErrorNotSupported: If CPU vendor is not supported or if the CPU does not the MSR.
+        """
+
+        self._partial_features = FEATURES
+
+        super().__init__(cpuinfo, pman=pman, msr=msr)
