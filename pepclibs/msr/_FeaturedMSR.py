@@ -395,7 +395,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
                 for name, code in finfo["vals"].items():
                     finfo["rvals"][code] = name
 
-                if finfo["type"] in ("bool", "dict"):
+                if finfo["type"] in ("bool", "str"):
                     # Build a lowercase version of 'vals' and 'rvals' for case-insensitive matching.
                     finfo["vals_nocase"] = {}
                     finfo["rvals_nocase"] = {}

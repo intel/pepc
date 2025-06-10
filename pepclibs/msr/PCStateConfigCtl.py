@@ -145,7 +145,7 @@ FEATURES = {
                    BIOS, in which case the package C-state limit can only be read, but cannot be
                    modified.""",
         "vfms": tuple(_PKG_CST_LIMITS.keys()),
-        "type": "dict",
+        "type": "str",
         "vals": None,
         "bits": None,
     },
@@ -198,9 +198,7 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
         """
         Get package C-state limit for CPUs in 'cpus'. For every CPU in 'cpus', yields a tuple of
         '(cpu, info)', where 'cpu' is the CPU number the limits were read from, and 'info' is
-        the package C-state information dictionary. Here are the 'info' dictionary keys.
-          * limit - the package C-state limit name (small letters, e.g., PC0).
-          * limits - list of possible package C-state limits.
+        the package C-state limit name in lower case, e.g., pc0.
         """
 
         finfo = self._features["pkg_cstate_limit"]
@@ -227,9 +225,7 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
             else:
                 limit = finfo["rvals"][code]
 
-            res = {"pkg_cstate_limit" : limit,
-                   "pkg_cstate_limits" : list(finfo["vals"].keys())}
-            yield (cpu, res)
+            yield (cpu, limit)
 
     def _set_pkg_cstate_limit(self, limit, cpus="all"):
         """Set package C-state limit for CPUs in 'cpus'."""

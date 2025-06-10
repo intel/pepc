@@ -219,9 +219,16 @@ class CStates(_PropsClassBase.PropsClassBase):
 
         if pname == "pkg_cstate_limit_lock":
             yield from pcstatectl.read_feature(pname, cpus=cpus)
-        else:
+        elif pname == "pkg_cstate_limit":
             for cpu, features in pcstatectl.read_feature("pkg_cstate_limit", cpus=cpus):
-                yield cpu, features[pname]
+                yield cpu, features
+        elif pname == "pkg_cstate_limits":
+            pcstatectl.validate_feature_supported("pkg_cstate_limit", cpus=cpus)
+            # The "vals" attribute contains a dictionary with keys being the limit names and
+            # values being the limit values.
+            limits = list(pcstatectl.features["pkg_cstate_limit"]["vals"])
+            for cpu in cpus:
+                yield cpu, limits
 
     def _get_cpuidle_prop(self, pname, cpus):
         """
