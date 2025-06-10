@@ -15,11 +15,10 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import re
 import typing
-from typing import Iterable
+from typing import Iterable, cast
 import contextlib
 from pathlib import Path
 from pepclibs import CPUModels, Tpmi
-from pepclibs.msr import MSR, PMLogicalId
 from pepclibs.helperlibs import Logging, LocalProcessManager, ClassHelpers, Trivial, KernelVersion
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorNotFound
 
@@ -67,13 +66,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
         self._close_pman = pman is None
 
-        self._msr: MSR.MSR | None = None
-        self._pliobj: PMLogicalId.PMLogicalId | None = None
         self._tpmi: Tpmi.Tpmi | None = None
-
-        # 'True' if the target system supports 'MSR_PM_LOGICAL_ID', which provides die ID
-        # enumeration.
-        self._pli_msr_supported = True
         # 'True' if the target system supports TPMI.
         self._tpmi_supported = True
 
@@ -128,48 +121,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
         _LOG.debug("Closing the '%s' class object", self.__class__.__name__)
 
-        ClassHelpers.close(self, close_attrs=("_tpmi", "_pliobj", "_msr", "_pman"))
-
-    def _get_msr(self) -> MSR.MSR:
-        """
-        Return an instance of the 'MSR.MSR' object for interacting with Model-Specific Registers
-        (MSRs).
-
-        Returns:
-            An instance of the 'MSR.MSR' object.
-        """
-
-        if not self._msr:
-            # Disable caching to exclude usage of the 'cpuinfo' object by the 'MSR' module, which
-            # happens when 'MSR' module uses 'PerCPUCache'.
-            _LOG.debug("Creating an instance of 'MSR.MSR' with cache disabled")
-            self._msr = MSR.MSR(self, pman=self._pman, enable_cache=False)
-
-        return self._msr
-
-    def _get_pliobj(self) -> PMLogicalId.PMLogicalId | None:
-        """
-        Return a 'PMLogicalId.PMLogicalId' object if MSR_PM_LOGICAL_ID is supported by the target
-        platform, otherwise return None.
-
-        Returns:
-            The 'PMLogicalId.PMLogicalId' object or None.
-        """
-
-        if not self._pliobj:
-            if not self._pli_msr_supported:
-                return None
-
-            msr = self._get_msr()
-
-            _LOG.debug("Creating an instance of 'PMLogicalId.PMLogicalId'")
-
-            try:
-                self._pliobj = PMLogicalId.PMLogicalId(pman=self._pman, cpuinfo=self, msr=msr)
-            except ErrorNotSupported:
-                self._pli_msr_supported = False
-
-        return self._pliobj
+        ClassHelpers.close(self, close_attrs=("_tpmi", "_pman"))
 
     def _get_tpmi(self) -> Tpmi.Tpmi | None:
         """
@@ -326,27 +278,70 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
                     self._io_dies[package] = set()
             self._compute_dies[package].add(die)
 
-        if self.info["vfm"] in CPUModels.MODELS_WITH_HIDDEN_DIES:
-            pli_obj = self._get_pliobj()
-            if pli_obj:
-                _LOG.debug("Reading compute die information from 'MSR_PM_LOGICAL_ID'")
-                for cpu, die in pli_obj.read_feature("domain_id", cpus=cpus):
-                    _add_compute_die(cpu_tdict, cpu, die)
-                return
+        if self.info["vfm"] not in CPUModels.MODELS_WITH_HIDDEN_DIES:
+            _LOG.debug("Reading compute die information from sysfs")
+            for cpu in cpus:
+                if "die" in cpu_tdict[cpu]:
+                    continue
 
-        _LOG.debug("Reading compute die information from sysfs")
-        for cpu in cpus:
-            if "die" in cpu_tdict[cpu]:
-                continue
+                base = Path(f"{self._cpu_sysfs_base}/cpu{cpu}")
+                data = self._pman.read_file(base / "topology/die_id")
+                die = Trivial.str_to_int(data, what="die number")
+                siblings = self._read_range(base / "topology/die_cpus_list")
+                for _ in siblings:
+                    # Suppress 'KeyError' in case the 'die_cpus_list' file included an offline CPU.
+                    with contextlib.suppress(KeyError):
+                        _add_compute_die(cpu_tdict, cpu, die)
 
-            base = Path(f"{self._cpu_sysfs_base}/cpu{cpu}")
-            data = self._pman.read_file(base / "topology/die_id")
-            die = Trivial.str_to_int(data, what="die number")
-            siblings = self._read_range(base / "topology/die_cpus_list")
-            for _ in siblings:
-                # Suppress 'KeyError' in case the 'die_cpus_list' file included an offline CPU.
-                with contextlib.suppress(KeyError):
-                    _add_compute_die(cpu_tdict, cpu, die)
+            return
+
+        _LOG.debug("Reading compute die information from 'MSR_PM_LOGICAL_ID'")
+
+        # This module cannot use the MSR and PMLogicalId modules, because they depend on 'CPUInfo',
+        # which would create a circular dependency. So, read it directly.
+        regaddr = 0x54
+        regbytes = 8
+
+        regvals: list[tuple[int, int]] = []
+
+        if not self._pman.is_remote:
+            for cpu in cpus:
+                path = f"/dev/cpu/{cpu}/msr"
+                with self._pman.open(path, "rb") as fobj:
+                    fobj.seek(regaddr)
+                    regval_bytes = fobj.read(regbytes)
+                    regval = int.from_bytes(regval_bytes, byteorder="little")
+                    regvals.append((cpu, regval))
+        else:
+            # Optimize the remote case by running a Python script on the remote host to read
+            # the MSR register.
+            python_path = self._pman.get_python_path()
+            cpus_str = ",".join([str(cpu) for cpu in cpus])
+            cmd = f"""{python_path} -c '
+cpus = [{cpus_str}]
+for cpu in cpus:
+    path = "/dev/cpu/%d/msr" % cpu
+    with open(path, "rb") as fobj:
+        fobj.seek({regaddr})
+        regval = fobj.read({regbytes})
+        regval = int.from_bytes(regval, byteorder="little")
+        print("%d,%d" % (cpu, regval))'"""
+
+            stdout, _ = self._pman.run_verify(cmd, join=False)
+
+            for line in cast(list[str], stdout):
+                split = Trivial.split_csv_line(line.strip())
+                if len(split) != 2:
+                    raise Error("BUG: Bad MSR read script line:\n  '{line}'\nScript:\n{cmd}")
+
+                cpu = Trivial.str_to_int(split[0], what="CPU number")
+                regval = Trivial.str_to_int(split[1], what=f"MSR {regaddr:#x} value on CPU {cpu}")
+                regvals.append((cpu, regval))
+
+        for cpu, regval in regvals:
+            # Bits 15:11 are the die number.
+            die = (regval >> 11) & 0x3F
+            _add_compute_die(cpu_tdict, cpu, die)
 
     def _add_nodes(self, cpu_tdict: dict[int, dict[ScopeNameType, int]]):
         """
