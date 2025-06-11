@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2021 Intel Corporation
+# Copyright (C) 2020-2025 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
-This module provides API to MSR 0xCE (MSR_PLATFORM_INFO). This MSR provides power and thermal
-information on Intel platforms.
+Provide an API for MSR 0xCE (MSR_PLATFORM_INFO), a model-specific register present on many Intel
+platforms.
 """
 
 from pepclibs import CPUModels, CPUInfo
@@ -78,7 +78,7 @@ FEATURES: dict[str, PartialFeatureTypedDict] = {
         "iosname": None,
         "help": """The ratio of the maximum non-turbo frequency. This ratio multiplied by bus
                    clock speed gives the base frequency.""",
-        "vfms": _BASEFREQ_VFMS,
+        "vfms": set(_BASEFREQ_VFMS),
         "type": "int",
         "writable": False,
         "bits": (15, 8),
@@ -89,7 +89,7 @@ FEATURES: dict[str, PartialFeatureTypedDict] = {
         "iosname": None,
         "help": """The maximum efficiency CPU ratio. This ratio multiplied by bus clock speed gives
                    the efficiency CPU frequency (Pn).""",
-        "vfms": _EFREQ_VFMS,
+        "vfms": set(_EFREQ_VFMS),
         "type": "int",
         "writable": False,
         "bits": (47, 40),
@@ -100,7 +100,7 @@ FEATURES: dict[str, PartialFeatureTypedDict] = {
         "iosname": None,
         "help": """The minimum operating CPU ratio. This ratio multiplied by bus clock speed gives
                    the minimum operating CPU frequency (Pm).""",
-        "vfms": _MIN_OPER_RATIO_VFMS,
+        "vfms": set(_MIN_OPER_RATIO_VFMS),
         "type": "int",
         "writable": False,
         "bits": (55, 48),
@@ -109,8 +109,8 @@ FEATURES: dict[str, PartialFeatureTypedDict] = {
 
 class PlatformInfo(_FeaturedMSR.FeaturedMSR):
     """
-    This class provides API to MSR 0xCE (MSR_PLATFORM_INFO). This MSR provides power and thermal
-    information on Intel platforms.
+    Provide an API for MSR 0xCE (MSR_PLATFORM_INFO), a model-specific register present on many Intel
+    platforms.
     """
 
     regaddr = MSR_PLATFORM_INFO
