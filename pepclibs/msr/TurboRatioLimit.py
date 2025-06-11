@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2021 Intel Corporation
+# Copyright (C) 2020-2025 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
-This module provides API to MSR 0x1AD (MSR_TURBO_RATIO_LIMIT). This MSR provides turbo ratio
-information on Intel platforms.
+Provide an API for MSR 0x1AD (MSR_TURBO_RATIO_LIMIT) to retrieve turbo ratio information on Intel
+platforms.
 """
 
 from pepclibs import CPUModels, CPUInfo
@@ -68,7 +68,7 @@ FEATURES: dict[str, PartialFeatureTypedDict] = {
         "iosname": None,
         "help": """The ratio of maximum turbo frequency in case of 1 active core. This ratio
                    multiplied by bus clock speed gives the maximum 1 core turbo frequency.""",
-        "vfms": _CT_VFMS,
+        "vfms": set(_CT_VFMS),
         "type": "int",
         "writable": False,
         "bits": (7, 0),
@@ -80,7 +80,7 @@ FEATURES: dict[str, PartialFeatureTypedDict] = {
         "help": """The ratio of maximum turbo frequency in case "group 0" count of cores are
                    active. This ratio multiplied by bus clock speed gives the frequency. Count of
                    cores in group 0 is provided by MSR 0x1AE.""",
-        "vfms": _GT_VFMS,
+        "vfms": set(_GT_VFMS),
         "type": "int",
         "writable": False,
         "bits": (7, 0),
@@ -89,8 +89,8 @@ FEATURES: dict[str, PartialFeatureTypedDict] = {
 
 class TurboRatioLimit(_FeaturedMSR.FeaturedMSR):
     """
-    This class provides API to MSR 0x1AD (MSR_TURBO_RATIO_LIMIT). This MSR provides turbo ratio
-    information on Intel platforms.
+    Provide an API for MSR 0x1AD (MSR_TURBO_RATIO_LIMIT) to retrieve turbo ratio information on
+    Intel platforms.
     """
 
     regaddr = MSR_TURBO_RATIO_LIMIT
