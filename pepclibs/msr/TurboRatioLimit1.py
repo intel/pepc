@@ -7,9 +7,9 @@
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
-This module provides API to MSR 0x1AE (MSR_TURBO_RATIO_LIMIT1). Depending on the platform, this MSR
-provides either turbo ratio information, or the turbo ratio groups encoding. In the latter case it
-is called either 'MSR_TURBO_GROUP_CORECNT' (Atoms) or 'MSR_TURBO_RATIO_LIMIT_CORES' (big cores).
+Provide an API for MSR 0x1AE (MSR_TURBO_RATIO_LIMIT1). Depending on the platform, use this MSR to
+retrieve either turbo ratio information or turbo ratio group encoding. In the latter case, refer to
+it as 'MSR_TURBO_GROUP_CORECNT' (for Atom CPUs) or 'MSR_TURBO_RATIO_LIMIT_CORES' (for big cores).
 """
 
 from pepclibs import CPUInfo
@@ -40,10 +40,10 @@ FEATURES: dict[str, PartialFeatureTypedDict] = {
 
 class TurboRatioLimit1(_FeaturedMSR.FeaturedMSR):
     """
-    This class provides API to MSR 0x1AE (MSR_TURBO_RATIO_LIMIT1). Depending on the platform, this
-    MSR provides either turbo ratio information, or the turbo ratio groups encoding. In the latter
-    case it is called either 'MSR_TURBO_GROUP_CORECNT' (Atoms) or 'MSR_TURBO_RATIO_LIMIT_CORES' (big
-    cores).
+    Provide an API for MSR 0x1AE (MSR_TURBO_RATIO_LIMIT1). Depending on the platform, use this MSR
+    to retrieve either turbo ratio information or turbo ratio group encoding. In the latter case,
+    refer to it as 'MSR_TURBO_GROUP_CORECNT' (for Atom CPUs) or 'MSR_TURBO_RATIO_LIMIT_CORES' (for
+    big cores).
     """
 
     regaddr = MSR_TURBO_RATIO_LIMIT1
