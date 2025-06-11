@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2021 Intel Corporation
+# Copyright (C) 2020-2025 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
-This module provides API to MSR 0x770 (MSR_PM_ENABLE). This is an architectural MSR found on
-many Intel platforms.
+Provide an API for accessing MSR 0x770 (MSR_PM_ENABLE), an architectural MSR present on many Intel
+platforms.
 """
 
 from pepclibs import CPUInfo
@@ -36,8 +36,8 @@ FEATURES: dict[str, PartialFeatureTypedDict] = {
 
 class PMEnable(_FeaturedMSR.FeaturedMSR):
     """
-    This class provides API to MSR 0x770 (MSR_PM_ENABLE). This is an architectural MSR found on
-    many Intel platforms.
+    Provide an API for accessing MSR 0x770 (MSR_PM_ENABLE), an architectural MSR present on many
+    Intel platforms.
     """
 
     regaddr = MSR_PM_ENABLE
