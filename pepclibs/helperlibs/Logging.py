@@ -206,14 +206,14 @@ class _MyFilter(logging.Filter):
 class Logger(logging.Logger):
     """
     A custom logger class that provides the following functionality on top of the standard logger:
-      * Message coloring.
-      * Different prefixes for different log levels.
-      * Debug messages with timestamps and file line numbers.
-      * Error messages with stack traces.
-      * The NOTICE and ERRINFO log levels.
-      * The 'warn_once()' method.
-      * The 'error_out()' method.
-      * The 'debug_print_stacktrace()' method.
+        - Message coloring.
+        - Different prefixes for different log levels.
+        - Debug messages with timestamps and file line numbers.
+        - Error messages with stack traces.
+        - The NOTICE and ERRINFO log levels.
+        - The 'warn_once()' method.
+        - The 'error_out()' method.
+        - The 'debug_print_stacktrace()' method.
     """
 
     def __init__(self, name: str | None = None):
@@ -240,6 +240,7 @@ class Logger(logging.Logger):
 
     def _init_colors(self):
         """
+        Initialize the colorama colors for different log levels.
         """
 
         self._colors[DEBUG] = colorama.Fore.GREEN

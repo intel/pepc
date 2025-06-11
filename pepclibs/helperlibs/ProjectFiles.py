@@ -18,7 +18,7 @@ from typing import Generator, Sequence
 from pathlib import Path
 
 # TODO: remove the 'importlib_resources' import and use 'importlib.resources' instead when
-#       witchint to Python 3.10+. This hack is needed only to support Python 3.9.
+#       switching to Python 3.10+. This hack is needed only to support Python 3.9.
 #import importlib.resources
 import importlib_resources
 from pepclibs.helperlibs import ProcessManager, Logging

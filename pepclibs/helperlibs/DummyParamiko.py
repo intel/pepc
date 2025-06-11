@@ -7,8 +7,11 @@
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
-A dummy paramiko module for systems where paramiko is not available. Provide dummy versions of
-classes and methods used by the project. The dummy versions do nothing but raise an exception.
+A dummy 'paramiko' module for systems where 'paramiko' is not available. This allows the tools to
+function correctly on the local host, where 'paramiko' is not required.
+
+Provide dummy implementations of the classes and methods used by the project. All dummy versions
+simply raise an exception if called.
 """
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
