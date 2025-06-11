@@ -15,7 +15,7 @@ Provide a capability to read and write CPU Model Specific Registers.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import pprint
-from typing import Generator, TypedDict
+from typing import Generator, TypedDict, Literal
 from pathlib import Path
 from pepclibs.helperlibs import Logging, LocalProcessManager, FSHelpers, KernelModule, Trivial
 from pepclibs.helperlibs import ClassHelpers
@@ -38,7 +38,19 @@ class _TransactionBufferItemTypedDict(TypedDict, total=False):
     verify: bool
     iosname: ScopeNameType
 
-_CPU_BYTEORDER = "little"
+class _TransactionVerifyItemTypedDict(TypedDict, total=False):
+    """
+    The typed dictionary for a transaction verification item.
+
+    Attributes:
+        cpus: CPU numbers to verify the MSR on.
+        iosname: The I/O scope name of the MSR (e.g. "package", "core").
+    """
+
+    cpus: list[int]
+    iosname: ScopeNameType
+
+_CPU_BYTEORDER: Literal["little", "big"] = "little"
 
 # A special value which can be used to specify that all bits have to be set to "1" in methods like
 # 'write_bits()'.
@@ -231,20 +243,35 @@ class MSR(ClassHelpers.SimpleCloseContext):
 
         self._in_transaction = True
 
-    def _verify(self, regaddr, regval, cpus, iosname):
-        """Read MSR 'regaddr' for CPUs in 'cpus' and verify that it's value is 'regval'."""
+    def _verify(self, regaddr: int, regval: int, cpus: list[int], iosname: ScopeNameType):
+        """
+        Read an MSR and verify that the read value matches the expected value.
+
+        Args:
+            regaddr: The MSR address to read and verify.
+            regval: The expected value to verify against.
+            cpus: CPU numbers to verify the MSR on.
+            iosname: The I/O scope name of the MSR.
+
+        Raises:
+            ErrorVerifyFailed: If the value read from the MSR does not match the expected value for
+                               any CPU. The 'cpu' attribute of the exception will contain
+                               the CPU number where the verification failed, and 'expected' and
+                               'actual' attributes will contain the expected and actual values,
+                               respectively.
+        """
 
         for cpu in cpus:
             self._cache.remove(regaddr, cpu, sname=iosname)
 
         for cpu, new_val in self._read(regaddr, cpus, iosname):
             if new_val != regval:
-                raise ErrorVerifyFailed(f"verification failed for MSR '{regaddr:#x}' on CPU {cpu}"
-                                        f"{self._pman.hostmsg}:\n  wrote '{regval:#x}', read back "
+                raise ErrorVerifyFailed(f"Verification failed for MSR '{regaddr:#x}' on CPU {cpu}"
+                                        f"{self._pman.hostmsg}:\n  Wrote '{regval:#x}', read back "
                                         f"'{new_val:#x}'", cpu=cpu, expected=regval, actual=new_val)
 
     def _transaction_write(self):
-        """Write the contents of the transaction buffer to the MSRs."""
+        """Write the contents of the transaction buffer to MSRs."""
 
         for cpu, cpus_info in self._transaction_buffer.items():
             # Write all the dirty data.
@@ -260,20 +287,18 @@ class MSR(ClassHelpers.SimpleCloseContext):
                         _LOG.debug("CPU%d: commit MSR 0x%x: wrote 0x%x%s",
                                    cpu, regaddr, regval, self._pman.hostmsg)
                     except Error as err:
-                        raise Error(f"failed to write '{regval:#x}' to MSR '{regaddr:#x}' of CPU "
+                        raise Error(f"Failed to write '{regval:#x}' to MSR '{regaddr:#x}' of CPU "
                                     f"{cpu}{self._pman.hostmsg} (file '{path}'):\n"
                                     f"{err.indent(2)}") from err
 
     def _transaction_write_remote_optimized(self):
         """
-        An optmimized implementation of transaction '_transaction_write()' for a remote host.
+        Write MSR transactions on a remote host using an optimized approach.
 
-        Observation: opening and writing to multiple remote '/dev/msr/{cpu}' files from the local
-        system is significantly slower than running a script on the remote system and having the
-        script open/write to the files.
-
-        Optimized solution: generate a small python script that writes to the MSRs and run it on the
-        remote host.
+        Provide an optimized implementation of the '_transaction_write()' function for remote hosts.
+        Instead of opening and writing to multiple remote '/dev/msr/{cpu}' files from the local
+        system, which is slow, generate a small Python script that performs the MSR writes and
+        execute it on the remote host.
         """
 
         python_path = self._pman.get_python_path()
@@ -281,8 +306,8 @@ class MSR(ClassHelpers.SimpleCloseContext):
         printer = pprint.PrettyPrinter(compact=True, sort_dicts=False)
         transaction_buffer_str = printer.pformat(self._transaction_buffer)
 
-        # Single quotes are used for the as the code delimiters in "python -c '<code>'". Replace
-        # them with double quotes.
+        # The code passed to "python -c '<code>'" uses single quotes as delimiters.
+        # Replace single quotes in the transaction buffer string with double quotes.
         transaction_buffer_str = transaction_buffer_str.replace("'", "\"")
 
         cmd = f"""{python_path} -c '
@@ -300,12 +325,17 @@ for cpu, cpus_info in transaction_buffer.items():
 
         self._pman.run_verify(cmd)
 
-    def flush_transaction(self):
+    def flush_transaction(self) -> bool:
         """
-        Flush the transaction buffer. Write all the buffered data to the MSRs. If there are multiple
-        writes to the same MSR, they will be merged into a single write operation. The transaction
-        does not stop after flushing. Return 'True' if there was something to flush, return 'False'
-        if there was not taransaction data to flush.
+        Flush the transaction buffer and write all buffered data to the MSRs.
+
+        If multiple writes to the same MSR exist, merge them into a single write operation. The transaction
+        does not stop after flushing. If verification is requested for any write, verify the written values
+        after flushing. Clear the transaction buffer after writing.
+
+        Returns:
+            True if there was data to flush and the operation was performed, False if there was no
+            transaction data to flush or if caching or transaction mode is disabled.
         """
 
         if not self._enable_cache:
@@ -315,7 +345,7 @@ for cpu, cpus_info in transaction_buffer.items():
         if not self._transaction_buffer:
             return False
 
-        _LOG.debug("flushing MSR transaction buffer")
+        _LOG.debug("Flushing the MSR transaction buffer")
 
         if self._pman.is_remote and len(self._transaction_buffer) > 1:
             self._transaction_write_remote_optimized()
@@ -324,7 +354,8 @@ for cpu, cpus_info in transaction_buffer.items():
 
         # Form a temporary dictionary for verifying the contents of the MSRs written to by the
         # transaction.
-        verify_info = {}
+        verify_info: dict[int, dict[int, _TransactionVerifyItemTypedDict]] = {}
+
         for cpu, cpus_info in self._transaction_buffer.items():
             for regaddr, regval_info in cpus_info.items():
                 verify = regval_info["verify"]
@@ -334,27 +365,29 @@ for cpu, cpus_info in transaction_buffer.items():
                 if regval not in verify_info:
                     verify_info[regval] = {}
                 if regaddr not in verify_info[regval]:
-                    verify_info[regval][regaddr] = {"iosname": None, "cpus": []}
+                    verify_info[regval][regaddr] = {"cpus": []}
                 verify_info[regval][regaddr]["iosname"] = regval_info["iosname"]
                 verify_info[regval][regaddr]["cpus"].append(cpu)
 
         self._transaction_buffer.clear()
 
         for regval, regaddr_info in verify_info.items():
-            for regaddr, cpus_info in regaddr_info.items():
-                self._verify(regaddr, regval, cpus_info["cpus"], cpus_info["iosname"])
+            for regaddr, vinfo in regaddr_info.items():
+                self._verify(regaddr, regval, vinfo["cpus"], vinfo["iosname"])
 
         return True
 
     def commit_transaction(self):
         """
-        Commit the transaction. Write all the buffered data to MSRs and close the transaction. Note,
-        there is no atomicity guarantee, this is not like a database transaction, this is just an
-        optimization to reduce the amount of MSR I/O.
+        Commit the current MSR transaction by flushing all buffered data to the MSRs and closing the
+        transaction.
+
+        This method does not provide atomicity guarantees; it is intended as an optimization to
+        reduce the number of MSR I/O operations.
         """
 
         if not self._in_transaction:
-            raise Error("cannot commit a transaction, it did not start")
+            raise Error("Cannot commit transaction: no transaction is currently in progress")
 
         flushed = self.flush_transaction()
         self._in_transaction = False
@@ -363,37 +396,49 @@ for cpu, cpus_info in transaction_buffer.items():
         else:
             _LOG.debug("MSR transaction has been committed, but it was empty")
 
-    def _normalize_bits(self, bits):
-        """Validate and normalize bits range 'bits'."""
+    def _normalize_bits(self, bits: tuple[int, int] | list[int]) -> tuple[int, int]:
+        """
+        Validate and normalize a bits range.
+
+        Args:
+            bits: A tuple or list of two integers (msb, lsb) specifying the bit range to extract;
+                  msb is the most significant bit and lsb is the least significant bit.
+
+        Returns:
+            A tuple of two integers representing the normalized bit range.
+        """
 
         orig_bits = bits
         try:
             if not Trivial.is_int(orig_bits[0]) or not Trivial.is_int(orig_bits[1]):
-                raise Error(f"bad bits range '{bits}', must be a list or tuple of 2 integers")
+                raise Error(f"Bad bits range '{bits}', must be a list or tuple of 2 integers")
 
             bits = (int(orig_bits[0]), int(orig_bits[1]))
 
             if bits[0] < bits[1]:
-                raise Error(f"bad bits range ({bits[0]}, {bits[1]}), the first number must be "
+                raise Error(f"Bad bits range ({bits[0]}, {bits[1]}), the first number must be "
                             f"greater or equal to the second number")
 
             bits_cnt = (bits[0] - bits[1]) + 1
             if bits_cnt > self.regbits:
-                raise Error(f"too many bits in ({bits[0]}, {bits[1]}), MSRs only have "
+                raise Error(f"Too many bits in ({bits[0]}, {bits[1]}), MSRs only have "
                             f"{self.regbits} bits")
         except TypeError:
-            raise Error(f"bad bits range '{bits}', must be a list or tuple of 2 integers") from None
+            raise Error(f"Bad bits range '{bits}', must be a list or tuple of 2 integers") from None
 
         return bits
 
-    def get_bits(self, regval, bits):
+    def get_bits(self, regval: int, bits: tuple[int, int] | list[int]) -> int:
         """
-        Fetch bits 'bits' from an MSR value 'regval'. The arguments are as follows.
-          * regval - an MSR value to fetch the bits from.
-          * bits - the MSR bits range. A tuple or a list of 2 integers: (msb, lsb), where 'msb' is
-                   the more significant bit, and 'lsb' is a less significant bit. For example, (3,1)
-                   would mean bits 3-1 of the MSR. In a 64-bit number, the least significant bit
-                   number would be 0, and the most significant bit number would be 63.
+        Extract a range of bits from an MSR value.
+
+        Args:
+            regval: The MSR value to extract bits from.
+            bits: A tuple or list of two integers (msb, lsb) specifying the bit range to extract;
+                  msb is the most significant bit and lsb is the least significant bit.
+
+        Returns:
+            The integer value represented by the specified bit range, right-aligned to bit 0.
         """
 
         bits = self._normalize_bits(bits)
@@ -401,8 +446,17 @@ for cpu, cpus_info in transaction_buffer.items():
         mask = (1 << bits_cnt) - 1
         return (regval >> bits[1]) & mask
 
-    def _read_cpu_nocache(self, regaddr, cpu):
-        """Read an MSR at address 'regaddr' on CPU 'cpu'."""
+    def _read_cpu_nocache(self, regaddr: int, cpu: int) -> int:
+        """
+        Read an MSR at the specified address for a given CPU without using the cache.
+
+        Args:
+            regaddr: The address of the MSR to read.
+            cpu: CPU number to read the MSR from.
+
+        Returns:
+            The value of the MSR as an integer.
+        """
 
         path = Path(f"/dev/cpu/{cpu}/msr")
         try:
@@ -410,7 +464,7 @@ for cpu, cpus_info in transaction_buffer.items():
                 fobj.seek(regaddr)
                 regval = fobj.read(self.regbytes)
         except Error as err:
-            raise Error(f"failed to read MSR '{regaddr:#x}' from file '{path}'"
+            raise Error(f"Failed to read MSR '{regaddr:#x}' from file '{path}'"
                         f"{self._pman.hostmsg}:\n{err.indent(2)}") from err
 
         regval = int.from_bytes(regval, byteorder=_CPU_BYTEORDER)
@@ -418,16 +472,25 @@ for cpu, cpus_info in transaction_buffer.items():
 
         return regval
 
-    def _read_remote_optimized(self, regaddr, cpus, iosname):
+    def _read_remote_optimized(self,
+                               regaddr: int,
+                               cpus: list[int],
+                               iosname: ScopeNameType) -> Generator[tuple[int, int], None, None]:
         """
-        An optimized implementation of 'read()' method for a remote host.
+        Optimized method for reading MSR values from a remote host.
 
-        Observation: opening and reading multiple remote '/dev/msr/{cpu}' files from the local
-        system is significantly slower than running a script on the remote system and having the
-        script open/read the files.
+        Improve performance by generating and executing a small Python script on the remote host to
+        read the specified MSR register for a set of CPUs. This approach is faster than opening and
+        reading multiple remote '/dev/msr/{cpu}' files from the local system.
 
-        Optimized solution: generate a small python script that reads the 'regaddr' MSR on 'cpus'
-        and prints the values, run the script on the remote host, parse script output.
+        Args:
+            regaddr: The address of the MSR register to read.
+            cpus: CPU numbers to read the MSR from.
+            iosname: The name of the I/O scope, used to determine sibling CPUs.
+
+        Yields:
+            Tuples of (cpu, regval), where 'cpu' is the CPU number and 'regval' is the value read from
+            the MSR register.
         """
 
         # CPU numbers to read the MSR for (subset of 'cpus').
@@ -479,10 +542,10 @@ for cpu in cpus:
         print("%d,%d" % (cpu, regval))
 '"""
 
-        stdout, _ = self._pman.run_verify(cmd)
-        regvals = {}
+        stdout, _ = self._pman.run_verify(cmd, join=False)
+        regvals: dict[int, int] = {}
 
-        for line in stdout.splitlines():
+        for line in stdout:
             split = Trivial.split_csv_line(line.strip())
             if len(split) != 2:
                 raise Error("BUG: bad MSR read script line '{line}'")
@@ -494,9 +557,11 @@ for cpu in cpus:
             self._cache.add(regaddr, cpu, regval, sname=iosname)
 
         for cpu in cpus:
-            regval = regvals.get(cpu)
-            if regval is None:
+            if cpu not in regvals:
                 regval = self._cache.get(regaddr, cpu)
+            else:
+                regval = regvals[cpu]
+
             yield cpu, regval
 
     def _read(self, regaddr, cpus, iosname):
