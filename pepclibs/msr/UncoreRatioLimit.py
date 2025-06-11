@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2023 Intel Corporation
+# Copyright (C) 2023-2025 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
-This module provides API to MSR 0x620 (MSR_UNCORE_RATIO_LIMIT). This MSR provides a way to limit
-uncore frequency on Intel platforms.
+Provide an API for MSR 0x620 (MSR_UNCORE_RATIO_LIMIT), which allows you to control and limit
+uncore frequency on some older Intel platforms. Note, newer Intel platforms use TPMI for this
+instead.
 """
 
 from pepclibs import CPUModels, CPUInfo
@@ -42,7 +43,7 @@ FEATURES: dict[str, PartialFeatureTypedDict] = {
         "iosname": None,
         "help": """The maximum allowed uncore ratio. This ratio multiplied by bus clock speed gives
                    the maximum allowed uncore frequency.""",
-        "vfms": _VMFS,
+        "vfms": set(_VMFS),
         "type": "int",
         "writable": True,
         "bits": (6, 0),
@@ -53,7 +54,7 @@ FEATURES: dict[str, PartialFeatureTypedDict] = {
         "iosname": None,
         "help": """The minimum allowed uncore ratio. This ratio multiplied by bus clock speed gives
                    the minimum allowed uncore frequency.""",
-        "vfms": _VMFS,
+        "vfms": set(_VMFS),
         "type": "int",
         "writable": True,
         "bits": (14, 8),
@@ -62,8 +63,9 @@ FEATURES: dict[str, PartialFeatureTypedDict] = {
 
 class UncoreRatioLimit(_FeaturedMSR.FeaturedMSR):
     """
-    This class provides API to MSR 0x620 (MSR_UNCORE_RATIO_LIMIT). This MSR provides a way to limit
-    uncore frequency on Intel platforms.
+    Provide an API for MSR 0x620 (MSR_UNCORE_RATIO_LIMIT), which allows you to control and limit
+    uncore frequency on some older Intel platforms. Note, newer Intel platforms use TPMI for this
+    instead.
     """
 
     regaddr = MSR_UNCORE_RATIO_LIMIT
