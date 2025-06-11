@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2021 Intel Corporation
+# Copyright (C) 2020-2025 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Authors: Antti Laakso <antti.laakso@linux.intel.com>
 #          Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
-This module provides API to MSR 0x1FC (MSR_POWER_CTL). This is a model-specific register found on
-many Intel platforms.
+Provide an API for MSR 0x1FC (MSR_POWER_CTL), a model-specific register available on many Intel
+platforms.
 """
 
 from pepclibs import CPUModels, CPUInfo
@@ -59,7 +59,7 @@ FEATURES: dict[str, PartialFeatureTypedDict] = {
         "iosname": None,
         "help": """When enabled, the CPU will start exiting the C6 idle state in advance, prior to
                    the next local APIC timer event.""",
-        "vfms": _CSTATE_PREWAKE_VFMS,
+        "vfms": set(_CSTATE_PREWAKE_VFMS),
         "type": "bool",
         "vals": {"on": 0, "off": 1},
         "bits": (30, 30),
@@ -70,7 +70,7 @@ FEATURES: dict[str, PartialFeatureTypedDict] = {
         "iosname": None,
         "help": """When enabled, the CPU will take LTR constraints into account when making power
                    management decisions, such as selecting package C-state.""",
-        "vfms": LTR_VFMS,
+        "vfms": set(LTR_VFMS),
         "type": "bool",
         "vals": {"on": 0, "off": 1},
         "bits": (35, 35),
@@ -79,8 +79,8 @@ FEATURES: dict[str, PartialFeatureTypedDict] = {
 
 class PowerCtl(_FeaturedMSR.FeaturedMSR):
     """
-    This class provides API to MSR 0x1FC (MSR_POWER_CTL). This is a model-specific register found on
-    many Intel platforms.
+    Provide an API for MSR 0x1FC (MSR_POWER_CTL), a model-specific register available on many Intel
+    platforms.
     """
 
     regaddr = MSR_POWER_CTL
