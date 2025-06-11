@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2023 Intel Corporation
+# Copyright (C) 2023-2025 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
-# Author: Tero Kristo <tero.kristo@linux.intel.com>
+# Authors: Tero Kristo <tero.kristo@linux.intel.com>
+#          Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
-This module provides API to MSR 0x0x54 (MSR_PM_LOGICAL_ID).
+Provide an API for MSR 0x0x54 (MSR_PM_LOGICAL_ID), a model-specific register present on many Intel
+platforms.
 """
 
 from pepclibs import CPUModels, CPUInfo
@@ -28,7 +30,7 @@ FEATURES: dict[str, PartialFeatureTypedDict] = {
         "sname": "CPU",
         "iosname": "CPU",
         "help": """Domain ID.""",
-        "vfms": _PLI_VFMS,
+        "vfms": set(_PLI_VFMS),
         "type": "int",
         "bits": (15, 11),
         "writable": False,
@@ -38,7 +40,7 @@ FEATURES: dict[str, PartialFeatureTypedDict] = {
         "sname": "CPU",
         "iosname": "CPU",
         "help": """Module ID.""",
-        "vfms": _PLI_VFMS,
+        "vfms": set(_PLI_VFMS),
         "type": "int",
         "bits": (10, 3),
         "writable": False,
@@ -48,7 +50,7 @@ FEATURES: dict[str, PartialFeatureTypedDict] = {
         "sname": "CPU",
         "iosname": "CPU",
         "help": """CPU ID.""",
-        "vfms": _PLI_VFMS,
+        "vfms": set(_PLI_VFMS),
         "type": "int",
         "bits": (2, 0),
         "writable": False,
@@ -57,7 +59,8 @@ FEATURES: dict[str, PartialFeatureTypedDict] = {
 
 class PMLogicalId(_FeaturedMSR.FeaturedMSR):
     """
-    This class provides API to MSR 0x54 (MSR_PM_LOGICAL_ID).
+    Provide an API for MSR 0x0x54 (MSR_PM_LOGICAL_ID), a model-specific register present on many
+    Intel platforms.
     """
 
     regaddr = MSR_PM_LOGICAL_ID
