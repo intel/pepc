@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2021 Intel Corporation
+# Copyright (C) 2020-2025 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Authors: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
-This module provides API to Software LTR Override MSR 0xA02 (MSR_SW_LTR_OVRD). This is a
-model-specific register allows the OS communicate software (as opposed to PCIe) LTR (Latency
-Tolerance Report) requirements to the power management unit of the CPU.
+Provide an API for the Software LTR Override MSR 0xA02 (MSR_SW_LTR_OVRD). Use this model-specific
+register to communicate software-defined Latency Tolerance Report (LTR) requirements, as opposed to
+PCIe LTR, from the operating system to the CPU's power management unit.
 """
 
 from pepclibs import CPUInfo
@@ -35,7 +35,7 @@ FEATURES: dict[str, PartialFeatureTypedDict] = {
         "help": """Software (as opposed to PCIe) Latency Tolerance Report (LTR) value for
                    snoop latency in nanoseconds. Value 0 corresponds to best possible service
                    request.""",
-        "cpumodels": _LTR_CPUS,
+        "vfms": set(_LTR_CPUS),
         "type": "int",
         "bits": (25, 16),
     },
@@ -44,7 +44,7 @@ FEATURES: dict[str, PartialFeatureTypedDict] = {
         "sname": "package",
         "iosname": "package",
         "help": "Multiplier for the snoop latency software LTR.",
-        "cpumodels": _LTR_CPUS,
+        "vfms": set(_LTR_CPUS),
         "type": "int",
         "bits": (28, 26),
     },
@@ -54,7 +54,7 @@ FEATURES: dict[str, PartialFeatureTypedDict] = {
         "iosname": "package",
         "help": """When set, use snoop latency software LTR value from this MSR regardless of LTR
                    from PCIe controllers.""",
-        "cpumodels": _LTR_CPUS,
+        "vfms": set(_LTR_CPUS),
         "type": "bool",
         "vals": {"on": 1, "off": 0},
         "bits": (30, 30),
@@ -65,7 +65,7 @@ FEATURES: dict[str, PartialFeatureTypedDict] = {
         "iosname": "package",
         "help": """When enabled, power management unit takes into account snoop latency software
                    LTR value from this MSR, otherwise ignores it.""",
-        "cpumodels": _LTR_CPUS,
+        "vfms": set(_LTR_CPUS),
         "type": "bool",
         "vals": {"on": 1, "off": 0},
         "bits": (31, 31),
@@ -74,7 +74,10 @@ FEATURES: dict[str, PartialFeatureTypedDict] = {
 
 class SwLTROvrd(_FeaturedMSR.FeaturedMSR):
     """
-    This class provides API to Software LTR Override MSR 0xA02 (MSR_SW_LTR_OVRD).
+    Provide an API for the Software LTR Override MSR 0xA02 (MSR_SW_LTR_OVRD). Use this
+    model-specific register to communicate software-defined Latency Tolerance Report (LTR)
+    requirements, as opposed to PCIe LTR, from the operating system to the CPU's power management
+    unit.
     """
 
     regaddr = MSR_SW_LTR_OVRD
