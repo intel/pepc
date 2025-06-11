@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2021 Intel Corporation
+# Copyright (C) 2020-2025 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
-# Authors: Antti Laakso <antti.laakso@linux.intel.com>
-#          Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
+# Authors: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
+#          Antti Laakso <antti.laakso@linux.intel.com>
 
 """
 Provide a capability to read and write CPU Model Specific Registers.
@@ -15,12 +15,28 @@ Provide a capability to read and write CPU Model Specific Registers.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import pprint
-from typing import Generator
+from typing import Generator, TypedDict
 from pathlib import Path
 from pepclibs.helperlibs import Logging, LocalProcessManager, FSHelpers, KernelModule, Trivial
 from pepclibs.helperlibs import ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorVerifyFailed, ErrorNotFound
-from pepclibs import _PerCPUCache
+from pepclibs.helperlibs.ProcessManager import ProcessManagerType
+from pepclibs._CPUInfoBaseTypes import ScopeNameType
+from pepclibs import _PerCPUCache, CPUInfo
+
+class _TransactionBufferItemTypedDict(TypedDict, total=False):
+    """
+    The typed dictionary for a transaction buffer item.
+
+    Attributes:
+        regval: The MSR value to write.
+        verify: Whether to verify the written value.
+        iosname: The I/O scope name of the MSR (e.g. "package", "core").
+    """
+
+    regval: int
+    verify: bool
+    iosname: ScopeNameType
 
 _CPU_BYTEORDER = "little"
 
@@ -37,45 +53,159 @@ class MSR(ClassHelpers.SimpleCloseContext):
     Public methods overview.
 
     1. Multi-CPU I/O.
-        * 'read()' - read an MSR.
-        * 'read_bits()'  - read an MSR bits range.
-        * 'write()' - write to the an MSR.
-        * 'write_bits()'  - write MSR bits range.
+        - 'read()' - read an MSR.
+        - 'read_bits()'  - read an MSR bits range.
+        - 'write()' - write to the an MSR.
+        - 'write_bits()'  - write MSR bits range.
     2. Single-CPU I/O.
-        * 'read_cpu()' - read an MSR.
-        * 'read_cpu_bits()'  - read an MSR bits range.
-        * 'write_cpu()' - write to the an MSR.
-        * 'write_cpu_bits()'  - write MSR bits range.
+        - 'read_cpu()' - read an MSR.
+        - 'read_cpu_bits()'  - read an MSR bits range.
+        - 'write_cpu()' - write to the an MSR.
+        - 'write_cpu_bits()'  - write MSR bits range.
     3. Transactions support.
-        * 'start_transaction()' - start a transaction.
-        * 'flush_transaction()' - flush the transaction buffer.
-        * 'commit_transaction()' - commit the transaction.
+        - 'start_transaction()' - start a transaction.
+        - 'flush_transaction()' - flush the transaction buffer.
+        - 'commit_transaction()' - commit the transaction.
     4. Miscellaneous.
-        * 'get_bits()' - get bits range from a user-provided MSR value.
-        * 'set_bits()' - set bits range from a user-provided MSR value.
+        - 'get_bits()' - get bits range from a user-provided MSR value.
+        - 'set_bits()' - set bits range from a user-provided MSR value.
+
+    Note:
+        Current implementation is not thread-safe. Can only be used by single-threaded applications
+        (add locking to improve this).
     """
 
-    def _add_for_transation(self, regaddr, regval, cpu, verify, iosname):
-        """Add CPU 'cpu' MSR at 'regaddr' with its value 'regval' to the transaction buffer."""
+    def __init__(self,
+                 cpuinfo: CPUInfo.CPUInfo,
+                 pman: ProcessManagerType | None = None,
+                 enable_cache: bool = True):
+        """
+        Initialize a class instance.
+
+        Args:
+            cpuinfo: The CPU information object.
+            pman: The process manager object that defines the target host. If not provided, a local
+                  process manager will be used.
+            enable_cache: If True, enable caching of MSR values. The first read fetches from hardware,
+                         subsequent reads return the cached value. Writes update the cache and and
+                         propagate to hardware immediately (write-through policy). If False, caching
+                         is disabled, and every read/write operation accesses the hardware directly.
+        """
+
+        self._cpuinfo = cpuinfo
+        self._enable_cache = enable_cache
+
+        self._close_pman = pman is None
+
+        if pman:
+            self._pman = pman
+        else:
+            self._pman = LocalProcessManager.LocalProcessManager()
+
+        # MSR size in bits and bytes.
+        self.regbits = 64
+        self.regbytes = self.regbits // 8
+
+        self._msr_drv: KernelModule.KernelModule | None = None
+
+        # The write-through per-CPU MSR values cache.
+        self._cache = _PerCPUCache.PerCPUCache(self._cpuinfo, enable_cache=self._enable_cache)
+        # The transaction buffer. This is a dictionary of dictionaries, where the first key is the CPU
+        # number, and the second key is the MSR address. The value is a dictionary with transaction
+        # value and additional information.
+        self._transaction_buffer: dict[int, dict[int, _TransactionBufferItemTypedDict]] = {}
+        # Whether there is an ongoing transaction.
+        self._in_transaction = False
+
+        self._ensure_dev_msr()
+
+    def close(self):
+        """Uninitialize the class object."""
+
+        if self._msr_drv:
+            try:
+                self._msr_drv.unload()
+            except Error as err:
+                _LOG.warning("Failed to unload the previously loaded MSR driver: %s", err.indent(2))
+
+        close_attrs = ("_pman", "_msr_drv", "_cache")
+        unref_attrs = ("_cpuinfo",)
+        ClassHelpers.close(self, close_attrs=close_attrs, unref_attrs=unref_attrs)
+
+    def _ensure_dev_msr(self):
+        """
+        Ensure that device nodes for accessing Model-Specific Registers (MSRs) are available.
+        Attempt to load the 'msr' kernel driver if the required device node does not exist.
+        """
+
+        cpus = self._cpuinfo.get_cpus()
+        dev_path = Path(f"/dev/cpu/{cpus[0]}/msr")
+        if self._pman.exists(dev_path):
+            return
+
+        drvname = "msr"
+        msg = f"File '{dev_path}' is not available{self._pman.hostmsg}\nMake sure your kernel" \
+              f"has the '{drvname}' driver enabled (CONFIG_X86_MSR)."
+        try:
+            self._msr_drv = KernelModule.KernelModule(drvname, pman=self._pman)
+        except Error as err:
+            raise Error(f"{msg}\n{err.indent(2)}") from err
+
+        try:
+            loaded = self._msr_drv.is_loaded()
+        except Error as err:
+            self._msr_drv.close()
+            self._msr_drv = None
+            raise Error(f"{msg}\n{err.indent(2)}") from err
+
+        if loaded:
+            self._msr_drv.close()
+            self._msr_drv = None
+            raise Error(msg)
+
+        try:
+            self._msr_drv.load()
+            FSHelpers.wait_for_a_file(dev_path, timeout=1, pman=self._pman)
+        except Error as err:
+            self._msr_drv.close()
+            self._msr_drv = None
+            raise Error(f"{msg}\n{err.indent(2)}") from err
+
+    def _add_for_transation(self,
+                            regaddr: int,
+                            regval: int,
+                            cpu: int,
+                            verify: bool,
+                            iosname: ScopeNameType):
+        """
+        Add the specified MSR register address and value to the transaction buffer for the given
+        CPU.
+
+        Args:
+            regaddr: The address of the MSR register to add.
+            regval: The value to write to the MSR register.
+            cpu: CPU number for which the transaction is being added.
+            verify: Whether to verify the register value after writing.
+            iosname: The I/O scope name associated with the MSR register.
+        """
 
         if not self._enable_cache:
-            raise Error("transactions support requires caching to be enabled, see 'enable_cache' "
-                        "argument of the 'MSR.MSR()' constructor")
+            raise Error("Transactions support requires caching to be enabled")
 
         if cpu not in self._transaction_buffer:
             self._transaction_buffer[cpu] = {}
 
-        if regaddr not in self._transaction_buffer[cpu]:
-            self._transaction_buffer[cpu][regaddr] = {}
+        if regaddr in self._transaction_buffer[cpu]:
+            tinfo = self._transaction_buffer[cpu][regaddr]
 
-        tinfo = self._transaction_buffer[cpu][regaddr] = {}
-
-        if "iosname" in tinfo and tinfo["iosname"] != iosname:
-            raise Error(f"BUG: inconsistent I/O scope name for MSR {regaddr:#x}:\n"
-                        f"  old: {tinfo['iosname']}, new: {iosname}.")
-        if "verify" in tinfo and tinfo["verify"] != verify:
-            raise Error(f"BUG: inconsistent verification flag value for MSR {regaddr:#x}:\n"
-                        f"  old: {tinfo['iosname']}, new: {iosname}.")
+            if "iosname" in tinfo and tinfo["iosname"] != iosname:
+                raise Error(f"BUG: Inconsistent I/O scope name for MSR {regaddr:#x}:\n"
+                            f"  old: {tinfo['iosname']}, new: {iosname}")
+            if "verify" in tinfo and tinfo["verify"] != verify:
+                raise Error(f"BUG: Inconsistent verification flag value for MSR {regaddr:#x}:\n"
+                            f"  old: {tinfo['iosname']}, new: {iosname}")
+        else:
+            tinfo = self._transaction_buffer[cpu][regaddr] = {}
 
         tinfo["regval"] = regval
         tinfo["verify"] = verify
@@ -83,21 +213,21 @@ class MSR(ClassHelpers.SimpleCloseContext):
 
     def start_transaction(self):
         """
-        Start transaction. All writes to MSRs will be cached, and will only be written to the actual
-        hardware on 'commit_transaction()' or 'flush_transaction(). Writes to the same MSRs will be
-        merged.
+        Begin a transaction to cache MSR writes and merge multiple writes to the same register.
 
-        The purpose of a transaction is to reduce the amount of I/O. There is no atomicity and
-        roll-back functionality, it is only about buffering the I/O and merging multiple writes to
-        the same register into a single write operation.
+        When a transaction is active, all writes to MSRs are buffered and only written to hardware
+        upon calling 'commit_transaction()' or 'flush_transaction()'. Writes to the same MSR are
+        merged into a single operation to minimize I/O overhead. Transactions do not provide
+        atomicity or rollback; they are intended solely for optimizing I/O by batching and merging
+        writes.
         """
 
         if not self._enable_cache:
-            _LOG.debug("transactions support requires caching to be enabled")
+            _LOG.debug("Transactions support requires caching to be enabled")
             return
 
         if self._in_transaction:
-            raise Error("cannot start a transaction, it has already started")
+            raise Error("Cannot start a new transaction: A transaction is already in progress")
 
         self._in_transaction = True
 
@@ -584,83 +714,3 @@ for cpu in cpus:
         """
 
         self.write_bits(regaddr, bits, val, cpus=(cpu,), iosname=iosname, verify=verify)
-
-    def _ensure_dev_msr(self):
-        """
-        Make sure that device nodes for accessing MSRs are available. Try to load the MSR driver if
-        necessary.
-        """
-
-        cpus = self._cpuinfo.get_cpus()
-        dev_path = Path(f"/dev/cpu/{cpus[0]}/msr")
-        if self._pman.exists(dev_path):
-            return
-
-        drvname = "msr"
-        msg = f"file '{dev_path}' is not available{self._pman.hostmsg}\nMake sure your kernel" \
-              f"has the '{drvname}' driver enabled (CONFIG_X86_MSR)."
-        try:
-            self._msr_drv = KernelModule.KernelModule(drvname, pman=self._pman)
-            loaded = self._msr_drv.is_loaded()
-        except Error as err:
-            raise Error(f"{msg}\n{err.indent(2)}") from err
-
-        if loaded:
-            raise Error(msg)
-
-        try:
-            self._msr_drv.load()
-            self._unload_msr_drv = True
-            FSHelpers.wait_for_a_file(dev_path, timeout=1, pman=self._pman)
-        except Error as err:
-            raise Error(f"{msg}\n{err.indent(2)}") from err
-
-    def __init__(self, cpuinfo, pman=None, enable_cache=True):
-        """
-        The class constructor. The arguments are as follows.
-          * cpuinfo - CPU information object generated by 'CPUInfo.CPUInfo()'.
-          * pman - the process manager object that defines the host to run the measurements on.
-          * enable_cache - by default, this class caches values read from MSRs. This means that
-                           the first time an MSR is read, it will be read from the hardware, but the
-                           subsequent reads will return the cached value. The writes are not cached
-                           (write-through cache policy). This option can be used to disable
-                           caching.
-
-        Important: current implementation is not thread-safe. Can only be used by single-threaded
-        applications (add locking to improve this).
-        """
-
-        self._pman = pman
-        self._cpuinfo = cpuinfo
-        self._enable_cache = enable_cache
-
-        self._close_pman = pman is None
-
-        if not self._pman:
-            self._pman = LocalProcessManager.LocalProcessManager()
-
-        # MSR size in bits and bytes.
-        self.regbits = 64
-        self.regbytes = self.regbits // 8
-
-        self._msr_drv = None
-        self._unload_msr_drv = False
-
-        # The write-through per-CPU MSR values cache.
-        self._cache = _PerCPUCache.PerCPUCache(self._cpuinfo, enable_cache=self._enable_cache)
-        # Stores new MSR values to be written when 'commit_transaction()' is called.
-        self._transaction_buffer = {}
-        # Whether there is an ongoing transaction.
-        self._in_transaction = False
-
-        self._ensure_dev_msr()
-
-    def close(self):
-        """Uninitialize the class object."""
-
-        if self._unload_msr_drv:
-            self._msr_drv.unload()
-
-        close_attrs = ("_pman", "_msr_drv", "_cache")
-        unref_attrs = ("_cpuinfo",)
-        ClassHelpers.close(self, close_attrs=close_attrs, unref_attrs=unref_attrs)
