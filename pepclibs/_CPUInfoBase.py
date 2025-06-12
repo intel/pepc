@@ -15,7 +15,7 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import re
 import typing
-from typing import Iterable, cast
+from typing import Iterable
 import contextlib
 from pathlib import Path
 from pepclibs import CPUModels, Tpmi
@@ -297,49 +297,20 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
         _LOG.debug("Reading compute die information from 'MSR_PM_LOGICAL_ID'")
 
-        # This module cannot use the MSR and PMLogicalId modules, because they depend on 'CPUInfo',
-        # which would create a circular dependency. So, read it directly.
+        # pylint: disable=import-outside-toplevel
+        from pepclibs.msr import _SimpleMSR
+
+        try:
+            msr = _SimpleMSR.SimpleMSR(pman=self._pman)
+        except Error as err:
+            _LOG.warning("Failed to read 'MSR_PM_LOGICAL_ID' MSR%s:\n%s",
+                         self._pman.hostmsg, err.indent(2))
+            _LOG.warning("Information about die numbers will not be available")
+            return
+
         regaddr = 0x54
-        regbytes = 8
 
-        regvals: list[tuple[int, int]] = []
-
-        if not self._pman.is_remote:
-            for cpu in cpus:
-                path = f"/dev/cpu/{cpu}/msr"
-                with self._pman.open(path, "rb") as fobj:
-                    fobj.seek(regaddr)
-                    regval_bytes = fobj.read(regbytes)
-                    regval = int.from_bytes(regval_bytes, byteorder="little")
-                    regvals.append((cpu, regval))
-        else:
-            # Optimize the remote case by running a Python script on the remote host to read
-            # the MSR register.
-            python_path = self._pman.get_python_path()
-            cpus_str = ",".join([str(cpu) for cpu in cpus])
-            cmd = f"""{python_path} -c '
-cpus = [{cpus_str}]
-for cpu in cpus:
-    path = "/dev/cpu/%d/msr" % cpu
-    with open(path, "rb") as fobj:
-        fobj.seek({regaddr})
-        regval = fobj.read({regbytes})
-        regval = int.from_bytes(regval, byteorder="little")
-        print("%d,%d" % (cpu, regval))'"""
-
-            stdout, _ = self._pman.run_verify(cmd, join=False)
-
-            for line in cast(list[str], stdout):
-                split = Trivial.split_csv_line(line.strip())
-                if len(split) != 2:
-                    raise Error("BUG: Bad MSR read script line:\n  '{line}'\nScript:\n{cmd}")
-
-                cpu = Trivial.str_to_int(split[0], what="CPU number")
-                regval = Trivial.str_to_int(split[1], what=f"MSR {regaddr:#x} value on CPU {cpu}")
-                regvals.append((cpu, regval))
-
-        for cpu, regval in regvals:
-            # Bits 15:11 are the die number.
+        for cpu, regval in msr.cpus_read(regaddr, cpus):
             die = (regval >> 11) & 0x3F
             _add_compute_die(cpu_tdict, cpu, die)
 
