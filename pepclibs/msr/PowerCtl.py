@@ -30,7 +30,12 @@ _CSTATE_PREWAKE_VFMS = (CPUModels.MODELS["GRANITERAPIDS_X"]["vfm"],
                         CPUModels.MODELS["SKYLAKE_X"]["vfm"],
                         CPUModels.MODELS["BROADWELL_X"]["vfm"],
                         CPUModels.MODELS["HASWELL_X"]["vfm"],
-                        CPUModels.MODELS["IVYBRIDGE_X"]["vfm"],)
+                        CPUModels.MODELS["IVYBRIDGE_X"]["vfm"]) + \
+                        CPUModels.CPU_GROUPS["ALDERLAKE"] + \
+                        CPUModels.CPU_GROUPS["RAPTORLAKE"] + \
+                        CPUModels.CPU_GROUPS["METEORLAKE"] + \
+                        CPUModels.CPU_GROUPS["ARROWLAKE"] + \
+                        CPUModels.CPU_GROUPS["LUNARLAKE"]
 
 # CPU supporting the LTR feature.
 LTR_VFMS = (CPUModels.MODELS["GRANITERAPIDS_X"]["vfm"],
