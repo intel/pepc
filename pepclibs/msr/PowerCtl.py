@@ -4,12 +4,28 @@
 # Copyright (C) 2020-2025 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
-# Authors: Antti Laakso <antti.laakso@linux.intel.com>
-#          Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
+# Authors: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
+#          Antti Laakso <antti.laakso@linux.intel.com>
 
 """
 Provide an API for MSR 0x1FC (MSR_POWER_CTL), a model-specific register available on many Intel
 platforms.
+
+Notes:
+    - The C-state pre-wake feature is available on "big core" server CPUs. Artem Bityutskiy verified
+      that it works using the 'wult' tool using timer-based interrupts, which clearly shows very low
+      CC6 exit latency when C-state prewake was enabled, and much higher latency when it was
+      disabled.
+    - Artem Bityutskiy verified many Atom-based server platforms and Client platforms - the C-state
+      pre-wake bit is a "no-op" on those platforms. The 'wult' tool showed no difference in CC6
+      exit latency when the C-state pre-wake bit was toggled. The verified platforms include: Knights
+      Landing, Snow Ridge, Denverton.
+    - Artem Bityutskiy verified that the C-state pre-wake feature is a "no-op" on many client
+      platforms, including Alder Lake, Raptor Lake, Meteor Lake, Arrow Lake, and Lunar Lake.
+    - On some platforms BIOS may have a "C-state pre-wake" option, but the platform does not really
+      implement the feature, the feature is a "no-op".
+    - This module reports a feature as "supported" only if it is known to work and is not a "no-op".
+      Otherwise, the feature is reported as "not supported".
 """
 
 from pepclibs import CPUModels, CPUInfo
