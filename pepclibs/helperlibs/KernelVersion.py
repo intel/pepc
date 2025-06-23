@@ -142,7 +142,7 @@ def get_kver_bin(path, split=False, pman=None):
 
         msg = f"ran this command: {cmd}, got output:\n{stdout}"
 
-        matchobj = re.match(r".* Linux kernel.* executable .*", stdout)
+        matchobj = re.match(r".* Linux kernel.* executable[ ,].*", stdout)
         if not matchobj:
             raise Error(f"file at '{path}'{wpman.hostmsg} is not a Linux kernel binary file\n{msg}")
 
