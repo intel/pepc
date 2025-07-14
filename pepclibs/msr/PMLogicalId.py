@@ -21,7 +21,9 @@ from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 MSR_PM_LOGICAL_ID = 0x54
 
 # CPUs supporting the "PM Logical ID" MSR.
-_PLI_VFMS = CPUModels.CPU_GROUPS["GNR"] + CPUModels.CPU_GROUPS["CRESTMONT"]
+_PLI_VFMS = CPUModels.CPU_GROUPS["GNR"] + \
+            CPUModels.CPU_GROUPS["DARKMONT"] + \
+            CPUModels.CPU_GROUPS["CRESTMONT"]
 
 # Description of CPU features controlled by the PM Logical ID.
 FEATURES: dict[str, PartialFeatureTypedDict] = {

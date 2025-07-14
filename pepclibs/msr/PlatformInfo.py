@@ -40,6 +40,7 @@ _EFREQ_VFMS = CPUModels.CPU_GROUPS["GNR"] +         \
               CPUModels.CPU_GROUPS["SANDYBRIDGE"] + \
               CPUModels.CPU_GROUPS["WESTMERE"] +    \
               CPUModels.CPU_GROUPS["NEHALEM"] +     \
+              CPUModels.CPU_GROUPS["DARKMONT"] +   \
               CPUModels.CPU_GROUPS["CRESTMONT"] +   \
               CPUModels.CPU_GROUPS["TREMONT"] +     \
               CPUModels.CPU_GROUPS["GOLDMONT"] +    \
@@ -61,6 +62,7 @@ _MIN_OPER_RATIO_VFMS = CPUModels.CPU_GROUPS["GNR"] +              \
                        CPUModels.CPU_GROUPS["BROADWELL"] +        \
                        CPUModels.CPU_GROUPS["HASWELL"] +          \
                        (CPUModels.MODELS["IVYBRIDGE"]["vfm"],) +  \
+                       CPUModels.CPU_GROUPS["DARKMONT"] +        \
                        CPUModels.CPU_GROUPS["CRESTMONT"] +        \
                        CPUModels.CPU_GROUPS["TREMONT"] +          \
                        CPUModels.CPU_GROUPS["GOLDMONT"] +         \
