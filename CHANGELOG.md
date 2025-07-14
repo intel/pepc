@@ -6,9 +6,12 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
 ### Added
- - Add Clearwater Forest support.
 ### Removed
 ### Changed
+
+## [1.5.40] - 2025-07-14
+### Added
+ - Add Clearwater Forest support.
 
 ## [1.5.39] - 2025-06-06
 ### Fixed

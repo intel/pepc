@@ -1,3 +1,9 @@
+pepc (1.5.40) unstable; urgency=low
+
+  * Add Clearwater Forest support.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Mon, 14 Jul 2025 00:00:00 +0200
+
 pepc (1.5.39) unstable; urgency=low
 
   * Fix hybrid core type detiction in 'pepc topology info'.
