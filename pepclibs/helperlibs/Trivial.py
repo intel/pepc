@@ -13,6 +13,7 @@ Common trivial helpers.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import os
+import grp
 import pwd
 from typing import Iterable
 from itertools import groupby
@@ -29,8 +30,8 @@ def is_root() -> bool:
     try:
         return os.getuid() == 0 or os.geteuid() == 0
     except OSError as err:
-        msg = Error(str(err)).indent(2)
-        raise Error(f"Failed to get process UID:\n{msg}") from None
+        errmsg = Error(str(err)).indent(2)
+        raise Error(f"Failed to get process UID:\n{errmsg}") from None
 
 def get_pid() -> int:
     """
@@ -43,8 +44,8 @@ def get_pid() -> int:
     try:
         return os.getpid()
     except OSError as err:
-        msg = Error(str(err)).indent(2)
-        raise Error(f"Failed to get own PID:\n{msg}") from None
+        errmsg = Error(str(err)).indent(2)
+        raise Error(f"Failed to get own PID:\n{errmsg}") from None
 
 def get_pgid(pid: int) -> int:
     """
@@ -60,8 +61,8 @@ def get_pgid(pid: int) -> int:
     try:
         return os.getpgid(pid)
     except OSError as err:
-        msg = Error(str(err)).indent(2)
-        raise Error(f"Failed to get process group ID for PID {pid}:\n{msg}") from None
+        errmsg = Error(str(err)).indent(2)
+        raise Error(f"Failed to get process group ID for PID {pid}:\n{errmsg}") from None
 
 def get_username(uid: int | None = None) -> str:
     """
@@ -78,14 +79,81 @@ def get_username(uid: int | None = None) -> str:
         if uid is None:
             uid = os.getuid()
     except OSError as err:
-        msg = Error(str(err)).indent(2)
-        raise Error(f"Failed to detect username of current process:\n{msg}") from None
+        errmsg = Error(str(err)).indent(2)
+        raise Error(f"Failed to detect username of current process:\n{errmsg}") from None
 
     try:
         return pwd.getpwuid(uid).pw_name
     except KeyError as err:
-        msg = Error(str(err)).indent(2)
-        raise Error(f"Failed to get username for UID {uid}:\n{msg}") from None
+        errmsg = Error(str(err)).indent(2)
+        raise Error(f"Failed to get username for UID {uid}:\n{errmsg}") from None
+
+def get_groupname(gid: int | None = None) -> str:
+    """
+    Return the group name for a given group ID (GID) or for the current process.
+
+    Args:
+        gid: The group ID to get the group name for. If None, the GID of the current process is
+             used.
+
+    Returns:
+        str: The name of the group associated with the specified GID or the current process's GID.
+    """
+
+    try:
+        if gid is None:
+            gid = os.getgid()
+    except OSError as err:
+        errmsg = Error(str(err)).indent(2)
+        raise Error(f"Failed to get group name of the current process:\n{errmsg}") from None
+
+    try:
+        return grp.getgrgid(gid).gr_name
+    except KeyError as err:
+        errmsg = Error(str(err)).indent(2)
+        raise Error(f"Failed to get group name for GID {gid}:\n{errmsg}") from None
+
+def get_uid(username: str = "") -> int:
+    """
+    Return the user ID for the specified username or the current process.
+
+    Args:
+        username: The username to get the user ID for. If empty, the current process's user ID is
+                  returned.
+
+    Returns:
+        int: The UID associated with the specified username or the current process.
+    """
+
+    if not username:
+        username = get_username()
+
+    try:
+        return pwd.getpwnam(username).pw_uid
+    except KeyError as err:
+        errmsg = Error(str(err)).indent(2)
+        raise Error(f"Failed to get UID for user '{username}:\n{errmsg}") from None
+
+def get_gid(groupname: str = ""):
+    """
+    Return the group ID or a specified group name or for the current process's group.
+
+    Args:
+        groupname: The name of the group to return the GID for. If empty, the current process's
+                   group is used.
+
+    Returns:
+        int: The GID corresponding to the specified or current group.
+    """
+
+    if not groupname:
+        groupname = get_groupname()
+
+    try:
+        return grp.getgrnam(groupname).gr_gid
+    except KeyError as err:
+        errmsg = Error(str(err)).indent(2)
+        raise Error(f"Failed to get GID for group '{groupname}':\n{errmsg}") from None
 
 def str_to_int(snum: str | int, base: int = 0, what: str | None = None) -> int:
     """
@@ -111,19 +179,19 @@ def str_to_int(snum: str | int, base: int = 0, what: str | None = None) -> int:
         try:
             str_to_int(base)
         except (ValueError, TypeError) as err:
-            msg = Error(str(err)).indent(2)
+            errmsg = Error(str(err)).indent(2)
             raise Error(f"BUG: Bad base value {base} when converting bad {what} '{snum}':\n"
-                        f"{msg}") from err
+                        f"{errmsg}") from err
 
         if base != 0 and base < 2:
             raise Error(f"BUG: Bad base value {base} when converting bad {what} '{snum}': must be "
                         f"greater than 2 or 0") from None
 
         if base:
-            msg = f"a base {base} integer"
+            errmsg = f"a base {base} integer"
         else:
-            msg = "an integer"
-        raise ErrorBadFormat(f"Bad {what} '{snum}': should be {msg}") from None
+            errmsg = "an integer"
+        raise ErrorBadFormat(f"Bad {what} '{snum}': should be {errmsg}") from None
 
     return num
 
