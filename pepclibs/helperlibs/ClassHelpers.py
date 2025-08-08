@@ -18,7 +18,7 @@ from pepclibs.helperlibs.Exceptions import Error, ErrorPermissionDenied, ErrorNo
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
-class SimpleCloseContext():
+class SimpleCloseContext:
     """
     Provide a simple context manager implementation for classes.
 
