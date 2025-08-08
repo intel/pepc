@@ -349,6 +349,24 @@ def test_parse_human_range():
                f"target_unit='{target_unit}', integer={integer}, sep='{sep}):\n" \
                f"expected '{expected}', got '{result}'"
 
+_CAPITALIZE_TEST_DATA = [
+    {"sentence": "hello, world!", "result": "Hello, world!"},
+    {"sentence": "DMA latency", "result": "DMA latency"},
+    {"sentence": "c-state latency", "result": "C-state latency"},
+]
+
+def test_capitalize():
+    """Test the 'capitalize()' function."""
+
+    for entry in _CAPITALIZE_TEST_DATA:
+        sentence = entry["sentence"]
+        expected = entry["result"]
+
+        result = Human.capitalize(sentence)
+
+        assert result == expected, \
+               f"Bad result of capitalize('{sentence}'):\n" \
+               f"expected '{expected}', got '{result}'"
 
 _UNCAPITALIZE_TEST_DATA = [
     {"sentence": "Hello, world!", "result": "hello, world!"},

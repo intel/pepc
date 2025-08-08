@@ -566,6 +566,24 @@ def parse_human_range(rng: str,
         return round(vals[0]), round(vals[1])
     return vals[0], vals[1]
 
+def capitalize(sentence: str) -> str:
+    """
+    Convert the first letter of the first word in the sentence from lowercase to uppercase.
+
+    Args:
+        sentence: The input sentence to be modified.
+
+    Returns:
+        The modified sentence with the first letter of the first word in uppercase.
+    """
+
+    if not sentence:
+        return ""
+
+    if sentence[0].isupper():
+        return sentence
+    return sentence[0].upper() + sentence[1:]
+
 def uncapitalize(sentence: str) -> str:
     """
     Convert the first letter of the first word in the sentence from uppercase to lowercase, with
