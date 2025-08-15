@@ -11,26 +11,26 @@ Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 * Author: Artem Bityutskiy <dedekind1@gmail.com>
 * Date: May, 2025
 
-# Table of contents
+# Table of Contents
 
-- [Table of contents](#table-of-contents)
+- [Table of Contents](#table-of-contents)
 - [Introduction](#introduction)
 - [Functional Scope](#functional-scope)
-- [Scope: platform-dependent](#scope-platform-dependent)
-- [Scope: per-bit field](#scope-per-bit-field)
+- [Scope: Platform-dependent](#scope-platform-dependent)
+- [Scope: Per-Bit-field](#scope-per-bit-field)
 - [I/O Scope](#io-scope)
   - [Example Platform](#example-platform)
   - [Introduction](#introduction-1)
-  - [Mental model](#mental-model)
+  - [Mental Model](#mental-model)
 - [MSR_PKG_CST_CONFIG_CONTROL](#msr_pkg_cst_config_control)
   - [Example](#example)
-  - [Initial configuration](#initial-configuration)
+  - [Initial Configuration](#initial-configuration)
   - [Topology](#topology)
-  - [Confusing configuration](#confusing-configuration)
+  - [Confusing Configuration](#confusing-configuration)
   - [Enable PC6](#enable-pc6)
   - [Verify PC6](#verify-pc6)
-  - [More confusing configuration](#more-confusing-configuration)
-  - [Clarify the situation](#clarify-the-situation)
+  - [More Confusing Configuration](#more-confusing-configuration)
+  - [Clarify the Situation](#clarify-the-situation)
 
 # Introduction
 
@@ -68,7 +68,7 @@ additional complexities:
 2. The scope may not apply to the entire MSR but rather to specific bits within the MSR.
 3. The concept of I/O scope, which differs from functional scope.
 
-# Scope: platform-dependent
+# Scope: Platform-dependent
 
 The scope of certain power management MSRs varies by platform. For example:
 
@@ -80,7 +80,7 @@ The scope of certain power management MSRs varies by platform. For example:
   - Typically package scope.
   - Die scope on CLX-AP (Cascade Lake Xeon Advanced Performance).
 
-# Scope: per-bit field
+# Scope: Per-Bit-field
 
 An MSR may control multiple features using different bits, each potentially having a distinct scope.
 
@@ -168,7 +168,7 @@ would become:
 In this scenario, feature X would be enabled for package 0, but CPU 2 would still read MSR_BLAH as
 "0" due to core I/O scope.
 
-## Mental model
+## Mental Model
 
 Let's assume MSR_BLAH has package functional scope and core I/O scope. The following mental model
 helps understanding how MSR_BLAH operates.
@@ -248,7 +248,7 @@ providing a user-friendly interface, reducing errors, and helping to identify pl
 nuances. It is particularly useful for understanding complex scenarios, such as those involving I/O
 scope differences.
 
-## Initial configuration
+## Initial Configuration
 
 Set the package C-state limit to PC0 (0) and disable C1 demotion for all CPUs as follows:
 
@@ -288,7 +288,7 @@ Topology details can be checked with 'pepc topology info'. Here are relevant num
 * CPUs 36 and 108 belong to core 0 of package 1.
 * CPUs 37 and 109 belong to core 1 of package 1.
 
-## Confusing configuration
+## Confusing Configuration
 
 Enable C1 demotion and set the package C-state limit to PC6 by writing to the MSR from CPU 0:
 
@@ -358,7 +358,7 @@ Pkg%pc6
 
 This indicates the platform was in PC6 for 78.43% of the 1-second measurement interval.
 
-## More confusing configuration
+## More Confusing Configuration
 
 Now let's involve CPU1, and set set the package C-state limit to PC0 by writing
 pkg_cstate_limit=0 to MSR_PKG_CST_CONFIG_CONTROL on CPU 1.
@@ -386,7 +386,7 @@ Pkg%pc6
 
 This configuration is confusing due to core I/O scope.
 
-## Clarify the situation
+## Clarify the Situation
 
 Here's how pepc helps clarify the situation:
 

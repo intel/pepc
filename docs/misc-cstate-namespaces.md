@@ -18,9 +18,9 @@ Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 - [Hardware C-states](#hardware-c-states)
   - [Hardware C-states scope](#hardware-c-states-scope)
 - [ACPI C-states](#acpi-c-states)
-- [Linux names](#linux-names)
-  - [Example: ACPI mode](#example-acpi-mode)
-  - [Example: native mode](#example-native-mode)
+- [Linux Names](#linux-names)
+  - [Example: ACPI Mode](#example-acpi-mode)
+  - [Example: Native Mode](#example-native-mode)
 
 # Introduction
 
@@ -136,7 +136,7 @@ Here is an example of a Intel Sierra Forest configuration.
 | C1          | C1E                 |  CC1, PC1E                |
 | C2          | C6SP                |  CC1, CC6, MC6, PC6       |
 
-# Linux names
+# Linux Names
 
 In case of Intel platforms, Linux exposes either requestable or ACPI C-state names to users,
 depending on the idle driver:
@@ -157,7 +157,7 @@ Here is an example for Intel Sierra Forest platform.
   - C1 maps to either C1 or C1E, depending on BIOS settings.
   - C2/C3 map to C6S or C6SP, depending on BIOS settings.
 
-## Example: ACPI mode
+## Example: ACPI Mode
 
 Here is pepc output on an Intel Granite Rapids platform using the intel_idle driver in ACPI mode
 (in practice, and older kernel that does not include
@@ -196,7 +196,7 @@ There are 2 idle states used by Linux (excluding POLL).
   is set to PC0, PC6 is disabled. As a result, the deepest hardware C-state for C6P will be CC6
   (core C6).
 
-## Example: native mode
+## Example: Native Mode
 
 Here is the pepc output on an Intel Granite Rapids platform using the intel_idle driver in native
 mode. The C1E autopromotion feature is enabled in the BIOS, and the package C-state limit is set to
