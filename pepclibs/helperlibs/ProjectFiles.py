@@ -21,10 +21,10 @@ from pathlib import Path
 #       switching to Python 3.10+. This hack is needed only to support Python 3.9.
 try:
     import importlib.resources
-    importlib_resources_files = importlib.resources.files
-except:
+    _importlib_resources_files = importlib.resources.files
+except ImportError:
     import importlib_resources
-    importlib_resources_files = importlib_resources.files
+    _importlib_resources_files = importlib_resources.files
 
 from pepclibs.helperlibs import ProcessManager, Logging
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound
@@ -83,7 +83,7 @@ def get_python_data_package_path(prjname: str) -> Path | None:
             # 'improtlib.resources.files()' into a 'Path' object. Just using 'str()' does not work.
             # However, with 'joinpath()' it is possible to get a string, and then we can convert it
             # to a 'Path' object.
-            multiplexed_path = importlib_resources_files(pkgname)
+            multiplexed_path = _importlib_resources_files(pkgname)
             pkgpath = Path(str(multiplexed_path.joinpath(f"../{pkgname}")))
         if pkgpath:
             return pkgpath.resolve()
