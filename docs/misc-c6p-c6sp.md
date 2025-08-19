@@ -25,7 +25,7 @@ Intel Xeon platforms have long offered C6 as the deepest requestable C-state. In
 Granite Rapids Xeon platform introduced C6P, and the Sierra Forest Xeon platform introduced C6SP.
 
 To understand this description of C6P and C6SP, the reader should first be familiar with the concept
-of requestable C-state and hardware C-state, which are descrivbed here in
+of requestable C-state and hardware C-state, which are described here in
 [C-state Namespaces](https://github.com/intel/pepc/blob/main/docs/misc-cstate-namespaces.md).
 
 Note that this article comprehends Intel server platforms through 2025, but may need to be further
