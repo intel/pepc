@@ -166,7 +166,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             msr: The MSR access object ('MSR.MSR()'). If not provided, one is created.
             sysfs_io: The sysfs access object ('_SysfsIO.SysfsIO()'). If not provided, one is
                       created.
-            enable_cache: Enable property caching if True, do not use caching if False.
+            enable_cache: Enable property caching if True.
         """
 
         self._msr = msr

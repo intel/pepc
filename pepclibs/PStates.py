@@ -261,7 +261,7 @@ class PStates(_PropsClassBase.PropsClassBase):
             msr: The MSR access object ('MSR.MSR()'). If not provided, one is created.
             sysfs_io: The sysfs access object ('_SysfsIO.SysfsIO()'). If not provided, one is
                       created.
-            enable_cache: Enable property caching if True, do not use caching if False.
+            enable_cache: Enable property caching if True.
         """
 
         super().__init__(pman=pman, cpuinfo=cpuinfo, msr=msr, sysfs_io=sysfs_io,

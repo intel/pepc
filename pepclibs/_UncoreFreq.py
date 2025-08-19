@@ -1,37 +1,42 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2023 Intel Corporation
+# Copyright (C) 2023-2025 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
-# Authors: Tero Kristo <tero.kristo@linux.intel.com>
-#          Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
+# Authors: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
+#          Tero Kristo <tero.kristo@linux.intel.com>
 #          Antti Laakso <antti.laakso@linux.intel.com>
 #          Niklas Neronin <niklas.neronin@intel.com>
 
 """
-This module provides a capability of reading and changing uncore frequency on Intel CPUs.
+Provide functionality for reading and modifying uncore frequency on Intel CPUs.
 
-On older platforms, such as Skylake Xeon and Sapphire Rapids Xeon, the uncore frequency is
-controlled via an MSR. Linux kernel has the 'intel_uncore_frequency' driver that exposes the sysfs
-interface, which programs the MSR under the hood. The sysfs interface is per-die. For example,
-package 0, die 1 uncore frequency is controlled via sysfs files under the "package_01_die_00" sysfs
-sub-directory.
+On older Intel server platforms, such as Skylake Xeon and Sapphire Rapids Xeon, uncore frequency is
+managed via an MSR. The Linux kernel 'intel_uncore_frequency' driver exposes a sysfs interface that
+programs the MSR behind the scenes. This sysfs interface operates on a per-die basis. For example,
+the uncore frequency for package 0, die 1 is controlled through sysfs files located in the
+"package_01_die_00" sub-directory. This sysfs interface is referred to as the legacy interface in
+this python module.
 
-This sysfs interface is referred to as the legacy interface.
+On newer Intel server platforms, such as Granite Rapids Xeon, uncore frequency is managed via TPMI,
+and the Linux kernel provides the 'intel_uncore_frequency_tpmi' driver. The TPMI driver exposes both
+the legacy and a new sysfs interfaces. The legacy interface is limited, so this module uses the new
+interface when available.
 
-On newer platforms, such as Granite Rapids Xeon, the uncore frequency is controlled via TPMI, and
-Linux kernel has the 'intel_uncore_frequency_tpmi' driver that exposes the sysfs interface. The TPMI
-driver has two sysfs interfaces, though: the legacy interface and the new interface. The legacy
-interface is limited, so this module uses the new interface instead.
-
-The new interface works in terms of "uncore frequency domains". However, uncore domain IDs are the
-same as die IDs, and in this project uncore domains are referred to as "dies".
+The new sysfs interface operates in terms of "uncore frequency domains". On current Intel server
+platforms the uncore domain IDs correspond to die IDs, and this project refers to uncore domains as
+"dies".
 """
 
+from __future__ import annotations # Remove when switching to Python 3.10+.
+
 import re
+from typing import Literal, Generator
 from pathlib import Path
-from pepclibs import _SysfsIO
+from pepclibs import _SysfsIO, CPUInfo
+from pepclibs.helperlibs.ProcessManager import ProcessManagerType
+from pepclibs.CPUInfo import RelNumsType, AbsNumsType
 from pepclibs.msr import UncoreRatioLimit
 from pepclibs.helperlibs import Logging, LocalProcessManager, ClassHelpers, KernelModule, FSHelpers
 from pepclibs.helperlibs import Trivial
@@ -39,226 +44,460 @@ from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
+
+# An uncore frequency sysfs file type. Possible values:
+#   - "min": a minimum uncore frequency file
+#   - "max": a maximum uncore frequency file
+#   - "current": a current uncore frequency file
+_SysfsFileType = Literal["min", "max", "current"]
+
+# Type for the uncore frequency driver sysfs paths cache. The indexing goes as follows.
+#
+#   ftype[_SysfsFileType]: Whether the sysfs path is for a minimum, maximum or current uncore
+#                          frequency file.
+#   package[int] - The package number the sysfs path belongs to.
+#   die[int] - The die number the sysfs path belongs to.
+#   limit[bool] - If 'True', path is about an uncore frequency limit, otherwise the path is about
+#                  the current uncore frequency.
+#
+# Example:
+# {'max': {0: {0: {False:
+#                   '/sys/devices/system/cpu/intel_uncore_frequency/uncore00/max_freq_khz',
+#                  True:
+#                   '/sys/devices/system/cpu/intel_uncore_frequency/uncore00/initial_max_freq_khz'},
+#              1: {False:
+#                   '/sys/devices/system/cpu/intel_uncore_frequency/uncore01/max_freq_khz',
+#                  True:
+#                   '/sys/devices/system/cpu/intel_uncore_frequency/uncore01/initial_max_freq_khz'},
+#
+#               ... and so on for all dies of package 0 ...
+#
+#          1: {0: {False:
+#                   '/sys/devices/system/cpu/intel_uncore_frequency/uncore04/max_freq_khz',
+#                  True:
+#                  '/sys/devices/system/cpu/intel_uncore_frequency/uncore04/initial_max_freq_khz'},
+#
+#               ... and so on for all dies of package 1 ...
+#
+#  'min': {0: {0: {False:
+#                   '/sys/devices/system/cpu/intel_uncore_frequency/uncore00/min_freq_khz',
+#                  True:
+#                   '/sys/devices/system/cpu/intel_uncore_frequency/uncore00/initial_min_freq_khz'},
+#
+#               ... and so on for all packages and dies ...
+_SysfsPathCacheType = dict[_SysfsFileType, dict[int, dict[int, dict[bool, Path]]]]
+
 class UncoreFreqSysfs(ClassHelpers.SimpleCloseContext):
     """
-    This class provides a capability of reading and changing uncore frequency on Intel CPUs. This
-    class is considered to be an internal "companion" class for other classes, so it does not
-    validate the input arguments, assuming the user does the validation.
+    Provide functionality for reading and modifying uncore frequency on Intel CPUs.
 
-    Public methods overview.
+    Overview of public methods:
 
-    1. Get/set uncore frequency via Linux sysfs interfaces:
-       * On per-die (uncore frequency domain) basis:
+    1. Get or set uncore frequency via Linux sysfs interfaces:
+       * Per-die (uncore frequency domain):
            - 'get_min_freq_dies()'
            - 'get_max_freq_dies()'
            - 'set_min_freq_dies()'
            - 'set_max_freq_dies()'
            - 'get_cur_freq_dies()'
-       * On per-CPU basis:
+       * Per-CPU:
            - 'get_min_freq_cpus()'
            - 'get_max_freq_cpus()'
            - 'set_min_freq_cpus()'
            - 'set_max_freq_cpus()'
            - 'get_cur_freq_cpus()'
-    2. Get uncore frequency limits via Linux sysfs interfaces:
-       * On per-die (uncore frequency domain) basis:
+    2. Retrieve uncore frequency limits via Linux sysfs interfaces:
+       * Per-die:
            - 'get_min_freq_limit_dies()'
            - 'get_max_freq_limit_dies()'
-       * On per-CPU basis:
+       * Per-CPU:
            - 'get_min_freq_limit_cpus()'
            - 'get_max_freq_limit_cpus()'
-    3. Get dies information dictionary:
-       * 'get_dies_info()'
 
-    Note, class methods do not validate the 'cpus' and 'dies' arguments. The caller is assumed to
-    have done the validation. The input package, die, and CPU numbers should exist, the CPUs should
-    be online.
+    Note: Methods of this class do not validate the 'cpus' and 'dies' arguments. The caller is
+    responsible for ensuring that the provided package, die, and CPU numbers exist and that CPUs are
+    online.
     """
 
-    def _get_sysfs_base_lsdir(self):
+    def __init__(self,
+                 cpuinfo: CPUInfo.CPUInfo,
+                 pman: ProcessManagerType | None = None,
+                 sysfs_io: _SysfsIO.SysfsIO | None = None,
+                 enable_cache: bool = True):
         """
-        Return the list of files and directories in the uncore frequency driver's base sysfs
-        directory.
+        Initialize a class instance.
+
+        Args:
+            cpuinfo: The CPU information object ('CPUInfo.CPUInfo()').
+            pman: The process manager object for the target system. If not provided, a local process
+                  manager is created.
+            sysfs_io: The sysfs access object ('_SysfsIO.SysfsIO()'). If not provided, one is
+                      created.
+            enable_cache: Enable caching if True.
         """
 
-        if self._sysfs_base_lsdir is not None:
-            return self._sysfs_base_lsdir
+        self._cpuinfo = cpuinfo
 
-        self._sysfs_base_lsdir = []
+        self._close_pman = pman is None
+        self._close_sysfs_io = sysfs_io is None
+
+        self._drv: KernelModule.KernelModule | None = None
+        self._unload_drv = False
+
+        self._sysfs_base = Path("/sys/devices/system/cpu/intel_uncore_frequency")
+        self._path_cache: _SysfsPathCacheType = {}
+
+        # The package -> die numbers map.
+        self._pkg2dies: dict[int, list[int]]= {}
+
+        # The dictionary that maps package and die numbers to their corresponding sysfs
+        # sub-directory names. Example:
+        # {0: {0: 'uncore00', 1: 'uncore01', 3: 'uncore02', 4: 'uncore03'},
+        #  1: {0: 'uncore04', 1: 'uncore05', 3: 'uncore06', 4: 'uncore07'}}
+        self._dirmap: dict[int, dict[int, str]] = {}
+
+        # List of directory names in 'self._sysfs_base'.
+        self._lsdir_sysfs_base_cache: list[str] = []
+
+        # The new sysfs API is available if 'True', 'False' if it is not, and 'None' if it is
+        # unknown.
+        self._has_sysfs_new_api: bool | None = None
+        # 'True' if the uncore frequency was "unlocked" via the legacy sysfs API before starting to
+        # use the new sysfs API.
+        self._new_sysfs_api_unlocked = False
+
+        self._pman: ProcessManagerType
+        if not pman:
+            self._pman = LocalProcessManager.LocalProcessManager()
+        else:
+            self._pman = pman
+
+        self._sysfs_io: _SysfsIO.SysfsIO
+        if not sysfs_io:
+            self._sysfs_io = _SysfsIO.SysfsIO(pman=pman, enable_cache=enable_cache)
+        else:
+            self._sysfs_io = sysfs_io
+
+        vendor = self._cpuinfo.info["vendor"]
+        if vendor != "GenuineIntel":
+            raise ErrorNotSupported(f"Unsupported CPU vendor '{vendor}'{self._pman.hostmsg}\nOnly"
+                                    f"Intel CPU uncore frequency control is currently supported")
+
+        if not self._pman.exists(self._sysfs_base):
+            _LOG.debug("The uncore frequency sysfs directory '%s' does not exist%s.",
+                       self._sysfs_base, self._pman.hostmsg)
+            self._probe_driver()
+
+    def close(self):
+        """Uninitialize the class object."""
+
+        if self._unload_drv:
+            assert self._drv is not None
+            self._drv.unload()
+
+        close_attrs = ("_sysfs_io", "_drv", "_pman")
+        unref_attrs = ("_cpuinfo",)
+        ClassHelpers.close(self, close_attrs=close_attrs, unref_attrs=unref_attrs)
+
+        self._path_cache = {}
+        self._dirmap = {}
+        self._pkg2dies = {}
+        self._lsdir_sysfs_base_cache = []
+
+    def _lsdir_sysfs_base(self) -> list[str]:
+        """
+        List files and directories in the uncore frequency driver's base sysfs directory.
+
+        Returns:
+            Names of files and directories in the uncore frequency driver's base sysfs directory.
+        """
+
+        if self._lsdir_sysfs_base_cache:
+            return self._lsdir_sysfs_base_cache
+
         for entry in self._pman.lsdir(self._sysfs_base):
-            self._sysfs_base_lsdir.append(entry["name"])
+            self._lsdir_sysfs_base_cache.append(entry["name"])
 
-        return self._sysfs_base_lsdir
+        return self._lsdir_sysfs_base_cache
 
-    def _use_new_sysfs_api(self):
-        """Return 'True' if the new uncore frequency driver interface is available."""
+    def _use_new_sysfs_api(self) -> bool:
+        """
+        Determine if the new uncore frequency driver sysfs interface is available.
+
+        Returns:
+            True if the new uncore frequency driver sysfs interface is available, False otherwise.
+        """
 
         if self._has_sysfs_new_api is not None:
             return self._has_sysfs_new_api
 
         self._has_sysfs_new_api = False
-        for dirname in self._get_sysfs_base_lsdir():
+        for dirname in self._lsdir_sysfs_base():
             if dirname.startswith("uncore"):
                 self._has_sysfs_new_api = True
                 break
 
-        _LOG.debug("using the %s uncore frequency sysfs interface",
+        _LOG.debug("Using the %s uncore frequency sysfs interface",
                    "new" if self._has_sysfs_new_api else "old")
         return self._has_sysfs_new_api
 
-    def _get_dies_info(self):
-        """Return the dies information dictionary."""
+    def _get_dies_info(self) -> RelNumsType:
+        """
+        Retrieve the dies information dictionary.
 
-        if self._dies_info is None:
+        Returns:
+            The dies information dictionary, mapping package numbers to their corresponding die
+            numbers.
+        """
+
+        if not self._pkg2dies:
             self._build_dies_info()
-        return self._dies_info
+        return self._pkg2dies
 
-    def _get_dirmap(self):
-        """Return the sysfs directory map."""
+    def _get_dirmap(self) -> dict[int, dict[int, str]]:
+        """
+        Retrieve the sysfs directory map for uncore frequency control.
 
-        if self._dirmap is None:
+        Returns:
+            A mapping of package and die numbers to their corresponding uncore frequency driver
+            sysfs sub-directory names.
+        """
+
+        if not self._dirmap:
             self._build_dies_info()
         return self._dirmap
 
-    def _get_new_sysfs_api_path(self, key, package, die, limit=False):
-        """Return the new sysfs API file path for an uncore frequency read or write operation."""
+    def _construct_new_sysfs_path(self,
+                                  ftype: _SysfsFileType,
+                                  package: int,
+                                  die: int,
+                                  limit: bool = False) -> Path:
+        """
+        Construct and return the new sysfs API file path for uncore frequency read or write
+        operations.
+
+        Args:
+            ftype: The uncore frequency sysfs file type.
+            package: The package number to construct the path for.
+            die: The die number within the package to construct the path for.
+            limit: If True, construct the path for an uncore frequency limit sysfs file.
+
+        Returns:
+            Path to the requested uncore frequency sysfs file.
+        """
 
         prefix = "initial_" if limit else ""
-        fname = prefix + key + "_freq_khz"
+        fname = prefix + ftype + "_freq_khz"
         return self._sysfs_base / self._get_dirmap()[package][die] / fname
 
-    def _get_legacy_sysfs_api_path(self, key, package, die, limit=False):
-        """Return the legacy sysfs API file path for a uncore frequency read or write operation."""
+    def _construct_legacy_sysfs_path(self,
+                                     ftype: _SysfsFileType,
+                                     package: int,
+                                     die: int,
+                                     limit: bool = False) -> Path:
+        """
+        Construct and return the legacy sysfs API file path for uncore frequency read or write
+        operations.
+
+        Args:
+            ftype: The uncore frequency sysfs file type.
+            package: The package number to construct the path for.
+            die: The die number within the package to construct the path for.
+            limit: If True, construct the path for an uncore frequency limit sysfs file.
+
+        Returns:
+            Path to the requested uncore frequency sysfs file.
+        """
 
         prefix = "initial_" if limit else ""
-        fname = prefix + key + "_freq_khz"
+        fname = prefix + ftype + "_freq_khz"
         return self._sysfs_base / f"package_{package:02d}_die_{die:02d}" / fname
 
-    def _get_sysfs_path_dies(self, key, package, die, limit=False):
-        """Get the sysfs file path for an uncore frequency read or write operation."""
+    def _construct_sysfs_path_dies(self,
+                                   ftype: _SysfsFileType,
+                                   package: int,
+                                   die: int,
+                                   limit: bool = False) -> Path:
+        """
+        Retrieve the sysfs file path for an uncore frequency read or write operation.
 
-        if key not in self._path_cache:
-            self._path_cache[key] = {}
-        if package not in self._path_cache[key]:
-            self._path_cache[key][package] = {}
-        if die not in self._path_cache[key][package]:
-            self._path_cache[key][package][die] = {}
+        Args:
+            ftype: The uncore frequency sysfs file type.
+            package: The package number.
+            die: The die number within the package.
+            limit: if True, retrieve the path for a frequency limit file. If False,
+                   retrieve the path for a current frequency value file.
 
-        path = self._path_cache[key][package][die].get(limit)
-        if path:
-            return path
+        Returns:
+            The sysfs file path as a string for the specified sysfs file type, package, die, and
+            limit.
+        """
+
+        if ftype not in self._path_cache:
+            self._path_cache[ftype] = {}
+        if package not in self._path_cache[ftype]:
+            self._path_cache[ftype][package] = {}
+        if die not in self._path_cache[ftype][package]:
+            self._path_cache[ftype][package][die] = {}
+
+        cached_path = self._path_cache[ftype][package][die].get(limit)
+        if cached_path:
+            return cached_path
 
         if self._use_new_sysfs_api():
-            path = self._get_new_sysfs_api_path(key, package, die, limit=limit)
+            path = self._construct_new_sysfs_path(ftype, package, die, limit=limit)
         else:
-            path = self._get_legacy_sysfs_api_path(key, package, die, limit=limit)
+            path = self._construct_legacy_sysfs_path(ftype, package, die, limit=limit)
 
-        self._path_cache[key][package][die][limit] = path
+        self._path_cache[ftype][package][die][limit] = path
         return path
 
-    def _get_freq_dies(self, key, dies, limit=False):
+    def _get_freq_dies(self,
+                       ftype: _SysfsFileType,
+                       dies: RelNumsType,
+                       limit: bool = False) -> Generator[tuple[int, int, int], None, None]:
         """
-        For every die in the 'dies' dictionary, yield a '(package, die, val)' tuple, where 'val' is
-        the uncore frequency for die 'die' in package 'package'. Possible values of the 'key'
-        argument are "min", "max", and "current".
+        Retrieve and yield an uncore frequency for each die in the provided packages->dies mapping.
+
+        Args:
+            ftype: The uncore frequency sysfs file type.
+            dies: Dictionary mapping package numbers to sequences of die numbers for which to yield
+                  the uncore frequency.
+            limit: If True, retrieve the frequency limit value instead of the current frequency
+                   value.
+
+        Yields:
+            Tuple (package, die, value), where 'value' is the uncore frequency in Hz.
+
+        Raises:
+            ErrorNotSupported: If the uncore frequency sysfs file does not exist.
         """
 
-        what = f"{key}. uncore frequency"
+        what = f"{ftype}. uncore frequency"
         if limit:
             what += " limit"
 
         for package, pkg_dies in dies.items():
             for die in pkg_dies:
-                path = self._get_sysfs_path_dies(key, package, die, limit=limit)
+                path = self._construct_sysfs_path_dies(ftype, package, die, limit=limit)
                 freq = self._sysfs_io.read_int(path, what=what)
                 # The frequency value is in kHz in sysfs.
                 yield package, die, freq * 1000
 
-    def get_min_freq_dies(self, dies):
+    def get_min_freq_dies(self, dies: RelNumsType) -> Generator[tuple[int, int, int], None, None]:
         """
-        For every die in the 'dies' dictionary, yield a '(package, die, val)' tuple, where 'val' is
-        the minimum uncore frequency for the die 'die' in package 'package'. The arguments are as
-        follows.
-          * dies - a dictionary indexed by the package numbers with values being lists of die
-                   numbers to get the frequency for.
+        Retrieve and yield the minimum uncore frequency for each die in the provided packages->dies
+        mapping.
 
-        Use the Linux uncore frequency driver sysfs interface to get and return the minimum uncore
-        frequency in Hz. Raise 'ErrorNotSupported' if the uncore frequency sysfs file does not
-        exist.
+        Args:
+            dies: Dictionary mapping package numbers to sequences of die numbers for which to yield
+                  the minimum uncore frequency.
+
+        Yields:
+            Tuples of (package, die, value), where 'value' is the minimum uncore frequency for the
+            specified die in the specified package, in Hz.
+
+        Raises:
+            ErrorNotSupported: If the uncore frequency sysfs file does not exist.
         """
 
         yield from self._get_freq_dies("min", dies)
 
-    def get_max_freq_dies(self, dies):
+    def get_max_freq_dies(self, dies: RelNumsType) -> Generator[tuple[int, int, int], None, None]:
         """
-        For every die in the 'dies' dictionary, yield a '(package, die, val)' tuple, where 'val' is
-        the maximum uncore frequency for the die 'die' in package 'package'. The arguments are as
-        follows.
-          * dies - a dictionary indexed by the package numbers with values being lists of die
-                   numbers to get the frequency for.
+        Retrieve and yield the maximum uncore frequency for each die in the provided packages->dies
+        mapping.
 
-        Use the Linux uncore frequency driver sysfs interface to get and return the maximum uncore
-        frequency in Hz. Raise 'ErrorNotSupported' if the uncore frequency sysfs file does not
-        exist.
+        Args:
+            dies: Dictionary mapping package numbers to sequences of die numbers for which to yield
+                  the maximum uncore frequency.
+
+        Yields:
+            Tuples of (package, die, value), where 'value' is the maximum uncore frequency for the
+            specified die in the specified package, in Hz.
+
+        Raises:
+            ErrorNotSupported: If the uncore frequency sysfs file does not exist.
         """
 
         yield from self._get_freq_dies("max", dies)
 
-    def get_min_freq_limit_dies(self, dies):
+    def get_min_freq_limit_dies(self,
+                                dies: RelNumsType) -> Generator[tuple[int, int, int], None, None]:
         """
-        For every die in the 'dies' dictionary, yield a '(package, die, val)' tuple, where 'val' is
-        the minimum uncore frequency limit for the die 'die' in package 'package'. The arguments are
-        as follows.
-          * dies - a dictionary indexed by the package numbers with values being lists of die
-                   numbers to get the frequency limit for.
+        Retrieve and yield the minimum uncore frequency limit for each die in the provided
+        package->die mapping.
 
-        Use the Linux uncore frequency driver sysfs interface to get and return the minimum uncore
-        frequency limit in Hz. Raise 'ErrorNotSupported' if the uncore frequency limit sysfs file
-        does not exist.
+        Args:
+            dies: Dictionary mapping package numbers to sequences of die numbers for which to yield
+                  the minimum uncore frequency limit.
+
+        Yields:
+            Tuples of (package, die, value), where 'value' is the minimum uncore frequency limit for
+            the specified die in the specified package, in Hz.
+
+        Raises:
+            ErrorNotSupported: If the uncore frequency limit sysfs file does not exist.
         """
 
         yield from self._get_freq_dies("min", dies, limit=True)
 
-    def get_max_freq_limit_dies(self, dies):
+    def get_max_freq_limit_dies(self,
+                                dies: RelNumsType) -> Generator[tuple[int, int, int], None, None]:
         """
-        For every die in the 'dies' dictionary, yield a '(package, die, val)' tuple, where 'val' is
-        the maximum uncore frequency limit for the die 'die' in package 'package'. The arguments are
-        as follows.
-          * dies - a dictionary indexed by the package numbers with values being lists of die
-                   numbers to get the frequency limit for.
+        Retrieve and yield the maximum uncore frequency limit for each die in the provided
+        package->die mapping.
 
-        Use the Linux uncore frequency driver sysfs interface to get and return the maximum uncore
-        frequency limit in Hz. Raise 'ErrorNotSupported' if the uncore frequency limit sysfs file
-        does not exist.
+        Args:
+            dies: Dictionary mapping package numbers to sequences of die numbers for which to yield
+                  the maximum uncore frequency limit.
+
+        Yields:
+            Tuples of (package, die, value), where 'value' is the maximum uncore frequency limit for
+            the specified die in the specified package, in Hz.
+
+        Raises:
+            ErrorNotSupported: If the uncore frequency limit sysfs file does not exist.
         """
 
         yield from self._get_freq_dies("max", dies, limit=True)
 
-    def get_cur_freq_dies(self, dies):
+    def get_cur_freq_dies(self, dies: RelNumsType) -> Generator[tuple[int, int, int], None, None]:
         """
-        For every die in 'dies', get the current uncore frequency for the die (uncore frequency
-        domain). The arguments are as follows.
-          * dies - a dictionary indexed by the package numbers with values being lists of die
-                   numbers to get the frequency limit for.
+        Retrieve and yield the current uncore frequency for each die in the provided packages->dies
+        mapping.
 
-        Use the Linux uncore frequency driver sysfs interface to get the current uncore frequency.
-        Raise 'ErrorNotSupported' if the uncore frequency sysfs file does not exist.
+        Args:
+            dies: Dictionary mapping package numbers to sequences of die numbers for which to yield
+                  the current uncore frequency.
+
+        Yields:
+            Tuples of (package, die, value), where 'value' is the current uncore frequency for the
+            specified die in the specified package, in Hz.
+
+        Raises:
+            ErrorNotSupported: If the uncore frequency sysfs file does not exist.
         """
 
         yield from self._get_freq_dies("current", dies, limit=False)
 
     def _unlock_new_sysfs_api(self):
         """
-        The "intel_uncore_frequency_tpmi" kernel driver has an unintuitive behavior: the min./max.
-        frequency configured via the legacy sysfs API limits the range of available uncore
-        frequencies configurable via the new sysfs API.
+        Unlock the new sysfs API for uncore frequency control by removing limits set via the legacy
+        sysfs API.
 
-        For example, if max. uncore frequency limit is 2GHz, but max. uncore frequency was set to
-        1GHz via the legacy API, it is impossible to set it to anything greater than 1GHz via the
-        new API.
+        The "intel_uncore_frequency_tpmi" kernel driver has unintuitive behavior: minimum and
+        maximum uncore frequencies configured through the legacy sysfs API restrict the range of
+        frequencies that can be set using the new sysfs API. For example, if the maximum uncore
+        frequency limit is 2 GHz, but the maximum frequency was set to 1 GHz via the legacy API,
+        you cannot set it above 1 GHz using the new API.
 
-        The method is essentially a quirk to work around the driver behavior: "unlock" the new sysfs
-        API by removing the floor/ceiling potentially configured via the legacy sysfs API.
+        This method works around this strange driver behavior by restoring the legacy min/max
+        frequency values to their limit values, effectively "unlocking" the new sysfs API and
+        allowing the full frequency range to be configured.
+
+        Raises:
+            ErrorNotSupported: If the uncore frequency sysfs files do not exist.
         """
 
         if self._new_sysfs_api_unlocked:
@@ -268,15 +507,15 @@ class UncoreFreqSysfs(ClassHelpers.SimpleCloseContext):
         # 0, which actually controls all dies in the package. Therefore, iterate only the packages,
         # but not dies.
         for package, dies in self._get_dies_info().items():
-            for key in "min", "max":
+            for ftype in "min", "max":
                 # Get the frequency limit value via the legacy API.
-                path_legacy_limit = self._get_legacy_sysfs_api_path(key, package, 0, limit=True)
-                what_limit = f"{key}. uncore frequency limit"
+                path_legacy_limit = self._construct_legacy_sysfs_path(ftype, package, 0, limit=True)
+                what_limit = f"{ftype}. uncore frequency limit"
                 freq_limit_legacy = self._sysfs_io.read_int(path_legacy_limit, what=what_limit)
 
                 # Get min. or max. frequency value via the legacy API.
-                path_legacy = self._get_legacy_sysfs_api_path(key, package, 0, limit=False)
-                what = f"{key}. uncore frequency"
+                path_legacy = self._construct_legacy_sysfs_path(ftype, package, 0, limit=False)
+                what = f"{ftype}. uncore frequency"
                 freq_legacy = self._sysfs_io.read_int(path_legacy, what=what)
                 if freq_legacy == freq_limit_legacy:
                     # Nothing to do, the legacy API won't be a limiting factor, because the min.
@@ -288,7 +527,8 @@ class UncoreFreqSysfs(ClassHelpers.SimpleCloseContext):
                 paths_new = {}
                 freqs_new = {}
                 for die in dies:
-                    paths_new[die] = self._get_new_sysfs_api_path(key, package, die, limit=False)
+                    paths_new[die] = self._construct_new_sysfs_path(ftype, package, die,
+                                                                    limit=False)
                     freqs_new[die] = self._sysfs_io.read_int(paths_new[die], what=what)
 
                 # Set min. or max. frequency limit via the legacy interface. This should "unlock"
@@ -301,202 +541,262 @@ class UncoreFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         self._new_sysfs_api_unlocked = True
 
-    def _set_freq_dies(self, freq, key, dies):
-        """For every die in 'dies', set the min. or max. uncore frequency for the die."""
+    def _set_freq_dies(self, freq: int, ftype: _SysfsFileType, dies: RelNumsType):
+        """
+        Set the minimum or maximum uncore frequency for each die in the specified packages->dies
+        mapping.
+
+        Args:
+            freq: The frequency value to set, in Hz.
+            ftype: Type of sysfs file to write to (e.g., "min" or "max").
+            dies: The package->dies mapping defining die numbers to set the uncore frequency for.
+        """
 
         if self._use_new_sysfs_api():
             self._unlock_new_sysfs_api()
 
-        what = f"{key}. uncore frequency"
+        what = f"{ftype}. uncore frequency"
 
         for package, pkg_dies in dies.items():
             for die in pkg_dies:
-                path = self._get_sysfs_path_dies(key, package, die)
+                path = self._construct_sysfs_path_dies(ftype, package, die)
                 self._sysfs_io.write_int(path, freq // 1000, what=what)
 
-    def set_min_freq_dies(self, freq, dies):
+    def set_min_freq_dies(self, freq: int, dies: RelNumsType):
         """
-        For every die in 'dies', set the minimum uncore frequency for the die (uncore frequency
-        domain). The arguments are as follows.
-          * freq - the frequency to set, in Hz.
-          * dies - a dictionary indexed by the package numbers with values being lists of die
-                   numbers to get the frequency limit for.
+        Set the minimum uncore frequency for each die in the provided packages->dies mapping.
 
-        Use the Linux uncore frequency driver sysfs interface set the minimum uncore frequency.
-        Raise 'ErrorNotSupported' if the uncore frequency sysfs file does not exist.
+        Args:
+            freq: The frequency value to set, in Hz.
+            dies: Dictionary mapping package numbers to die numbers.
+
+        Raises:
+            ErrorNotSupported: If the uncore frequency sysfs file does not exist.
         """
 
         self._set_freq_dies(freq, "min", dies)
 
-    def set_max_freq_dies(self, freq, dies):
+    def set_max_freq_dies(self, freq: int, dies: RelNumsType):
         """
-        For every die in 'dies', set the maximum uncore frequency for the die (uncore frequency
-        domain). The arguments are as follows.
-          * freq - the frequency to set, in Hz.
-          * dies - a dictionary indexed by the package numbers with values being lists of die
-                   numbers to get the frequency limit for.
+        Set the maximum uncore frequency for each die in the provided packages->dies mapping.
 
-        Use the Linux uncore frequency driver sysfs interface set the maximum uncore frequency.
-        Raise 'ErrorNotSupported' if the uncore frequency sysfs file does not exist.
+        Args:
+            freq: The frequency value to set, in Hz.
+            dies: Dictionary mapping package numbers to die numbers.
+
+        Raises:
+            ErrorNotSupported: If the uncore frequency sysfs file does not exist.
         """
 
         self._set_freq_dies(freq, "max", dies)
 
-    def _get_sysfs_path_cpu(self, key, cpu, limit=False):
-        """Return the sysfs file path for a CPU-based uncore frequency read or write operation."""
+    def _construct_sysfs_path_cpu(self,
+                                  ftype: _SysfsFileType,
+                                  cpu: int,
+                                  limit: bool = False) -> Path:
+        """
+        Retrieve the sysfs file path for an CPU-based uncore frequency read or write operation.
+
+        Args:
+            ftype: The uncore frequency sysfs file type.
+            cpu: The CPU number.
+            limit: if True, retrieve the path for a frequency limit file. If False,
+                   retrieve the path for a current frequency value file.
+
+        Returns:
+            The sysfs file path as a string for the specified sysfs file type, package, die, and
+            limit.
+        """
 
         tline = self._cpuinfo.get_tline_by_cpu(cpu, snames=("package", "die"))
         package = tline["package"]
         die = tline["die"]
 
         if self._use_new_sysfs_api():
-            return self._get_new_sysfs_api_path(key, package, die, limit=limit)
-        return self._get_legacy_sysfs_api_path(key, package, die, limit=limit)
+            return self._construct_new_sysfs_path(ftype, package, die, limit=limit)
+        return self._construct_legacy_sysfs_path(ftype, package, die, limit=limit)
 
-    def _get_freq_cpus(self, key, cpus, limit=False):
+    def _get_freq_cpus(self,
+                       ftype: _SysfsFileType,
+                       cpus: AbsNumsType,
+                       limit: bool = False) -> Generator[tuple[int, int], None, None]:
         """
-        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' uncore frequency for the
-        die (uncore frequency domain) corresponding to CPU 'cpu'. Possible values of the 'key'
-        argument are "min", "max", and "current".
+        Yield an uncore frequency value for each CPU in the provided collection of CPU numbers.
 
+        Args:
+            ftype: The type of uncore frequency to read. Possible values are "min", "max", and
+                   "current".
+            cpus: A collection of integer CPU numbers to read the uncore frequency for.
+            limit: If True, read the frequency limit value instead of the frequency.
+
+        Yields:
+            tuple: A tuple (cpu, frequency) for each CPU, where frequency is in Hz.
         """
 
-        what = f"{key}. uncore frequency"
+        what = f"{ftype}. uncore frequency"
         if limit:
             what += " limit"
 
         for cpu in cpus:
-            path = self._get_sysfs_path_cpu(key, cpu, limit=limit)
+            path = self._construct_sysfs_path_cpu(ftype, cpu, limit=limit)
             freq = self._sysfs_io.read_int(path, what=what)
             # The frequency value is in kHz in sysfs.
             yield cpu, freq * 1000
 
-    def get_min_freq_cpus(self, cpus):
+    def get_min_freq_cpus(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
-        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the minimum uncore
-        frequency for the die (uncore frequency domain) corresponding to CPU 'cpu'. The arguments
-        are as follows.
-          * cpus - a collection of integer CPU numbers to get the uncore frequencies for.
+        Yield the minimum uncore frequency for each CPU in 'cpus'.
 
-        Use the Linux uncore frequency driver sysfs interface to get and return the minimum uncore
-        frequency in Hz. Raise 'ErrorNotSupported' if the uncore frequency sysfs file does not
-        exist.
+        Args:
+            cpus: A collection of integer CPU numbers to retrieve the minimum uncore frequency for.
+
+        Yields:
+            Tuple (cpu, value), where 'value' is the minimum uncore frequency for the die
+            corresponding to 'cpu', in Hz.
+
+        Raises:
+            ErrorNotSupported: If the uncore frequency sysfs file does not exist.
         """
 
         yield from self._get_freq_cpus("min", cpus)
 
-    def get_max_freq_cpus(self, cpus):
+    def get_max_freq_cpus(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
-        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the maximum uncore
-        frequency for the die (uncore frequency domain) corresponding to CPU 'cpu'. The arguments
-        are as follows.
-          * cpus - a collection of integer CPU numbers to get the uncore frequencies for.
+        Yield the maximum uncore frequency for each CPU in 'cpus'.
 
-        Use the Linux uncore frequency driver sysfs interface to get and return the maximum uncore
-        frequency in Hz. Raise 'ErrorNotSupported' if the uncore frequency sysfs file does not
-        exist.
+        Args:
+            cpus: A collection of integer CPU numbers to retrieve the maximum uncore frequency for.
+
+        Yields:
+            Tuple (cpu, value), where 'value' is the maximum uncore frequency for the die
+            corresponding to 'cpu', in Hz.
+
+        Raises:
+            ErrorNotSupported: If the uncore frequency sysfs file does not exist.
         """
 
         yield from self._get_freq_cpus("max", cpus)
 
-    def get_min_freq_limit_cpus(self, cpus):
+    def get_min_freq_limit_cpus(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
-        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the minimum uncore
-        frequency limit for the die (uncore frequency domain) corresponding to CPU 'cpu'. The
-        arguments are as follows.
-          * cpus - a collection of integer CPU numbers to get the uncore frequency limit for.
+        Yield the minimum uncore frequency limit for each CPU in 'cpus'.
 
-        Use the Linux uncore frequency driver sysfs interface to get and return the minimum uncore
-        frequency limit in Hz. Raise 'ErrorNotSupported' if the uncore frequency sysfs file does not
-        exist.
+        Args:
+            cpus: A collection of integer CPU numbers to retrieve the minimum uncore frequency limit
+                  for.
+
+        Yields:
+            Tuple (cpu, value), where 'value' is the minimum uncore frequency limit for the die
+            corresponding to 'cpu', in Hz.
+
+        Raises:
+            ErrorNotSupported: If the uncore frequency limit sysfs file does not exist.
         """
 
         yield from self._get_freq_cpus("min", cpus, limit=True)
 
-    def get_max_freq_limit_cpus(self, cpus):
+    def get_max_freq_limit_cpus(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
-        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the maximum uncore
-        frequency limit for the die (uncore frequency domain) corresponding to CPU 'cpu'. The
-        arguments are as follows.
-          * cpus - a collection of integer CPU numbers to get the uncore frequency limit for.
+        Yield the maximum uncore frequency limit for each CPU in 'cpus'.
 
-        Use the Linux uncore frequency driver sysfs interface to get and return the maximum uncore
-        frequency limit in Hz. Raise 'ErrorNotSupported' if the uncore frequency sysfs file does not
-        exist.
+        Args:
+            cpus: A collection of integer CPU numbers to retrieve the maximum uncore frequency limit
+                  for.
+
+        Yields:
+            Tuple (cpu, value), where 'value' is the maximum uncore frequency limit for the die
+            corresponding to 'cpu', in Hz.
+
+        Raises:
+            ErrorNotSupported: If the uncore frequency limit sysfs file does not exist.
         """
 
         yield from self._get_freq_cpus("max", cpus, limit=True)
 
-    def get_cur_freq_cpus(self, cpus):
+    def get_cur_freq_cpus(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
-        For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the current uncore
-        frequency for the die (uncore frequency domain) corresponding to CPU 'cpu'. The
-        arguments are as follows.
-          * cpus - a collection of integer CPU numbers to get the uncore frequency limit for.
+        Yield the current uncore frequency for each CPU in 'cpus'.
 
-        Use the Linux uncore frequency driver sysfs interface to get and return the current uncore
-        frequency limit in Hz. Raise 'ErrorNotSupported' if the uncore frequency sysfs file does not
-        exist.
+        Args:
+            cpus: A collection of integer CPU numbers to retrieve the current uncore frequency for.
+
+        Yields:
+            Tuple (cpu, value), where 'value' is the current uncore frequency for the die
+            corresponding to 'cpu', in Hz.
+
+        Raises:
+            ErrorNotSupported: If the uncore frequency sysfs file does not exist.
         """
 
         yield from self._get_freq_cpus("current", cpus, limit=False)
 
-    def _set_freq_cpus(self, freq, key, cpus):
+    def _set_freq_cpus(self, freq: int, ftype: _SysfsFileType, cpus: AbsNumsType):
         """
-        For every CPU in 'cpus', set the min. or max. uncore frequency for the die (uncore frequency
-        domain) corresponding to the CPU. The arguments are as follows.
+        Set the minimum or maximum uncore frequency for each die corresponding to the specified
+        CPUs.
+
+        Args:
+            freq: Frequency value to set, in Hz.
+            ftype: Uncore frequency sysfs file type. Possible values are "min", "max", and
+                   "current".
+            cpus: A collection of integer CPU numbers to set the uncore frequency for.
         """
 
-        what = f"{key}. uncore frequency"
+        what = f"{ftype}. uncore frequency"
 
         for cpu in cpus:
-            path = self._get_sysfs_path_cpu(key, cpu)
+            path = self._construct_sysfs_path_cpu(ftype, cpu)
             self._sysfs_io.write_int(path, freq // 1000, what=what)
 
-    def set_min_freq_cpus(self, freq, cpus):
+    def set_min_freq_cpus(self, freq: int, cpus: AbsNumsType):
         """
-        For every CPU in 'cpus', set the minimum uncore frequency for the die (uncore frequency
-        domain) corresponding the CPU. The arguments are as follows.
-          * freq - the frequency to set, in Hz.
-          * cpus - a collection of integer CPU numbers to set the uncore frequency limit for.
+        Set the minimum uncore frequency for the dies corresponding to the specified CPUs.
 
-        Use the Linux uncore frequency driver sysfs interface set the minimum uncore frequency.
+        Args:
+            freq: The frequency value to set, in Hz.
+            cpus: A collection of integer CPU numbers to set the uncore frequency for.
         """
 
         self._set_freq_cpus(freq, "min", cpus)
 
-    def set_max_freq_cpus(self, freq, cpus):
+    def set_max_freq_cpus(self, freq: int, cpus: AbsNumsType):
         """
-        For every CPU in 'cpus', set the maximum uncore frequency for the die (uncore frequency
-        domain) corresponding the CPU. The arguments are as follows.
-          * freq - the frequency to set, in Hz.
-          * cpus - a collection of integer CPU numbers to set the uncore frequency limit for.
+        Set the maximum uncore frequency for the dies corresponding to the specified CPUs.
 
-        Use the Linux uncore frequency driver sysfs interface set the maximum uncore frequency.
+        Args:
+            freq: The frequency value to set, in Hz.
+            cpus: A collection of integer CPU numbers to set the uncore frequency for.
         """
 
         self._set_freq_cpus(freq, "max", cpus)
 
-    def _add_die(self, package, die, dirname):
+    def _add_die(self, package: int, die: int, dirname: str):
         """
-        Add package and die numbers to the dies information dictionary. Add the sysfs directory name
-        to the sysfs directories map.
+        Add package, die and sysfs sub-directory name information to the 'self._pkg2dies' and
+        'self._dirmap' caches.
+
+        Args:
+            package: Package number to add.
+            die: Die number to add.
+            dirname: Sysfs subdirectory name to add.
         """
 
-        if package not in self._dies_info:
-            self._dies_info[package] = []
-        self._dies_info[package].append(die)
+        if package not in self._pkg2dies:
+            self._pkg2dies[package] = []
+        self._pkg2dies[package].append(die)
 
         if package not in self._dirmap:
             self._dirmap[package] = {}
         self._dirmap[package][die] = dirname
 
     def _build_dies_info(self):
-        """Build the dies information dictionary and the sysfs directories map."""
+        """
+        Build the dies information dictionary that maps package and die numbers to corresponding
+        uncore frequency driver sysfs sub-directory names.
+        """
 
-        self._dies_info = {}
         self._dirmap = {}
-        sysfs_base_lsdir = self._get_sysfs_base_lsdir()
+        sysfs_base_lsdir = self._lsdir_sysfs_base()
 
         if self._use_new_sysfs_api():
             for dirname in sysfs_base_lsdir:
@@ -520,31 +820,13 @@ class UncoreFreqSysfs(ClassHelpers.SimpleCloseContext):
                     die = int(match.group(2))
                     self._add_die(package, die, dirname)
 
-    def get_dies_info(self):
-        """
-        Return the dies information dictionary, which maps package numbers to die numbers. Die
-        numbers match the uncore frequency domain ID numbers. The returned dictionary has the
-        following format.
-
-            {package0: [ die0, die1, ... ], package1: [ die0, die1, ... ]}
-
-        In other words, it is a dictionary with keys being package numbers and values being lists of
-        die numbers.  For example, with a system with 2 packages and 3 dies per package, the dies
-        information dictionary would be as follows.
-
-            {0: [0, 1, 2], 1: [0, 1, 2]}
-        """
-
-        return self._get_dies_info().copy()
-
     def _probe_driver(self):
         """
-        Attempt to determine the required kernel module for uncore frequency support, and probe it.
-        Raise 'ErrorNotSupported' if the uncore frequency driver fails to load.
+        Attempt to determine and load the required kernel module for uncore frequency support.
         """
 
         vfm = self._cpuinfo.info["vfm"]
-        errmsg = None
+        errmsg = ""
 
         # If the CPU supports MSR_UNCORE_RATIO_LIMIT, the uncore frequency driver is
         # "intel_uncore_frequency".
@@ -583,11 +865,12 @@ class UncoreFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         if loaded:
             # The sysfs directories do not exist, but the driver is loaded.
-            _LOG.debug("the uncore frequency driver '%s' is loaded, but the sysfs directory '%s' "
+            _LOG.debug("The uncore frequency driver '%s' is loaded, but the sysfs directory '%s' "
                        "does not exist\n%s.", drvname, self._sysfs_base, msg)
             errmsg = msg
         else:
             try:
+                assert self._drv is not None
                 self._drv.load()
                 self._unload_drv = True
                 FSHelpers.wait_for_a_file(self._sysfs_base, timeout=1, pman=self._pman)
@@ -597,67 +880,3 @@ class UncoreFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         if errmsg:
             raise ErrorNotSupported(errmsg)
-
-    def __init__(self, cpuinfo, pman=None, sysfs_io=None, enable_cache=True):
-        """
-        The class constructor. The argument are as follows.
-          * cpuinfo - CPU information object generated by 'CPUInfo.CPUInfo()'.
-          * pman - the process manager object that defines the host to control uncore frequency on
-                   (local host by default).
-          * sysfs_io - an '_SysfsIO.SysfsIO()' object which should be used for accessing sysfs
-                       files.
-          * enable_cache - this argument can be used to disable caching.
-        """
-
-        self._pman = pman
-        self._cpuinfo = cpuinfo
-        self._sysfs_io = sysfs_io
-
-        self._close_pman = pman is None
-        self._close_sysfs_io = sysfs_io is None
-
-        self._drv = None
-        self._unload_drv = False
-
-        self._path_cache = {}
-
-        self._sysfs_base = Path("/sys/devices/system/cpu/intel_uncore_frequency")
-
-        # List of directory names in 'self._sysfs_base'.
-        self._sysfs_base_lsdir = None
-        # The new sysfs API is available if 'True'.
-        self._has_sysfs_new_api = None
-
-        # The package -> die numbers map.
-        self._dies_info = None
-        # The sysfs directories map, translating package/die number to the corresponding sysfs
-        # directory name. Helps to quickly determine sysfs path in case of the new sysfs API.
-        self._dirmap = None
-        # 'True' if the uncore frequency was "unlocked" via the legacy sysfs API before starting to
-        # use the new sysfs API.
-        self._new_sysfs_api_unlocked = False
-
-        if not self._pman:
-            self._pman = LocalProcessManager.LocalProcessManager()
-        if not self._sysfs_io:
-            self._sysfs_io = _SysfsIO.SysfsIO(pman=pman, enable_cache=enable_cache)
-
-        vendor = self._cpuinfo.info["vendor"]
-        if vendor != "GenuineIntel":
-            raise ErrorNotSupported(f"unsupported CPU vendor '{vendor}'{pman.hostmsg}\nOnly"
-                                    f"Intel CPU uncore frequency control is currently supported")
-
-        if not self._pman.exists(self._sysfs_base):
-            _LOG.debug("The uncore frequency sysfs directory '%s' does not exist%s.",
-                       self._sysfs_base, self._pman.hostmsg)
-            self._probe_driver()
-
-    def close(self):
-        """Uninitialize the class object."""
-
-        if self._unload_drv:
-            self._drv.unload()
-
-        close_attrs = ("_sysfs_io", "_drv", "_pman")
-        unref_attrs = ("_cpuinfo",)
-        ClassHelpers.close(self, close_attrs=close_attrs, unref_attrs=unref_attrs)
