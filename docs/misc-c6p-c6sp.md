@@ -63,7 +63,7 @@ is omitted from the discussion below.
 
 **DMA latency implications**: CC6 impacts interrupt latency, but does not shut down the path between
 IO and memory, so it does not impact DMA latency. PC6 is a super-set of CC6, to save more energy than
-CC6 it does turn off the path between IO and memory, so it does impact DMA latency. For example, if
+CC6. It does turn off the path between IO and memory, so it does impact DMA latency. For example, if
 a PCIe Network Card receives a packet and attempts to transfer it from its internal memory to main
 memory, it will encounter a delay while waiting for the memory controller to exit the low power
 state. But when the Network Card generates an interrupt for the received packet, both CC6 and PC6
