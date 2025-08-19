@@ -8,6 +8,8 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Added
 ### Removed
 ### Changed
+ - Just minor helper module improvements to support derived projects.
+ - Add an article about C6P C-state.
 
 ## [1.5.40] - 2025-07-14
 ### Added
