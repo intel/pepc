@@ -86,9 +86,9 @@ the discussion will focus on C6.
 
 The issue with C6 is that it encompasses hardware C-states with significantly different
 characteristics:
-* **CC6**: Lower exit latency compared to PC6 (e.g., ~190µs at 99.99th precentile on Sapphire
+* **CC6**: Lower exit latency compared to PC6 (e.g., ~200µs at 99.99th precentile on Sapphire
   Rapids Xeon) and no impact on DMA latency.
-* **PC6**: Higher exit latency (e.g., ~290µs at 99.99th percentile on Sapphire Rapids Xeon) and
+* **PC6**: Higher exit latency (e.g., ~300µs at 99.99th percentile on Sapphire Rapids Xeon) and
   significantly increased DMA latency. Lower power comparing to CC6.
 
 The OS cannot distinguish between these two hardware C-states when it requests C6, and it has no way
