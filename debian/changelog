@@ -1,3 +1,10 @@
+pepc (1.5.41) unstable; urgency=low
+
+  * Just minor helper module improvements to support derived projects.
+  * Add an article about C6P C-state.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Tue, 19 Aug 2025 00:00:00 +0200
+
 pepc (1.5.40) unstable; urgency=low
 
   * Add Clearwater Forest support.
