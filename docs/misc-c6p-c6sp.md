@@ -76,7 +76,7 @@ The C6S requestable C-state is essentially an alternative name for C6, used on I
 featuring a shared L2 cache architecture. For instance, on Sierra Forest Xeon processors, the L2
 cache is shared between four cores, while on Granite Rapids Xeon each core has a dedicated L2.
 
-The "S" stands for "Shrink," indicating that the L2 cache is flushed ("shrunk") as part of entering
+The "S" stands for "Shrink", indicating that the L2 cache is flushed ("shrunk") as part of entering
 the Module C6 state.
 
 For the purposes of this article, there is no significant difference between C6 and C6S. Therefore,
