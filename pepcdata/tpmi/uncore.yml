@@ -82,8 +82,14 @@ registers:
                 desc: >-
                     Utilization point above which freq will be optimized to optimize latency.
             RESERVED_2:
-                bits: "63:47"
+                bits: "56:47"
                 desc: "Reserved"
+            EFFICIENCY_LATENCY_CTRL_MID_RATIO:
+                bits: "63:57"
+                desc: >-
+                    Fabric domain frequency ratio floor when utilization is higher than
+                    EFFICIENCY_LATENCY_CTRL_LOW_THRESHOLD and lower than
+                    EFFICIENCY_LATENCY_CTRL_HIGH_THRESHOLD.
         offset: 24
         width: 64
     UFS_FABRIC_CLUSTER_OFFSET:
