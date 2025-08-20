@@ -74,6 +74,11 @@ MECHANISMS: dict[MechanismNameType, MechanismTypedDict] = {
         "long":  "Linux sysfs file-system",
         "writable": True,
     },
+    "tpmi" : {
+        "short": "tpmi",
+        "long":  "Topology Aware Register and PM Capsule Interface (TPMI)",
+        "writable": True,
+    },
     "cdev" : {
         "short": "cdev",
         "long":  "Linux character device node",

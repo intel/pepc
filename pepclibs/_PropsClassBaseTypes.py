@@ -33,7 +33,7 @@ class MechanismTypedDict(TypedDict):
     long: str
     writable: bool
 
-MechanismNameType = Literal["sysfs", "cdev", "msr", "cppc", "doc"]
+MechanismNameType = Literal["sysfs", "tpmi", "cdev", "msr", "cppc", "doc"]
 
 PropertyTypeType = Literal["int", "float", "bool", "str", "list[str]", "list[int]", "dict[str,str]"]
 
