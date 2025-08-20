@@ -17,7 +17,7 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 from typing import TypedDict, Literal, Union
 
 # pylint: disable-next=unused-import
-from pepclibs._CPUInfoBaseTypes import AbsNumsType, RelNumsType
+from pepclibs._CPUInfoBaseTypes import AbsNumsType, RelNumsType, ScopeNameType
 
 class MechanismTypedDict(TypedDict):
     """
@@ -34,8 +34,6 @@ class MechanismTypedDict(TypedDict):
     writable: bool
 
 MechanismNameType = Literal["sysfs", "cdev", "msr", "cppc", "doc"]
-
-ScopeNameType = Literal["CPU", "core", "package", "die", "global"]
 
 PropertyTypeType = Literal["int", "float", "bool", "str", "list[str]", "list[int]", "dict[str,str]"]
 

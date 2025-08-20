@@ -19,7 +19,7 @@ AbsNumsType = Sequence[int]
 # The type for topology numbers that are relative to the package: core and die numbers.
 RelNumsType = Mapping[int, AbsNumsType]
 
-ScopeNameType = Literal["CPU", "core", "module", "die", "node", "package"]
+ScopeNameType = Literal["CPU", "core", "module", "die", "node", "package", "global"]
 
 class CPUInfoTypedDict(TypedDict, total=False):
     """
