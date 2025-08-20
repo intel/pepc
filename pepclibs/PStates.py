@@ -32,7 +32,7 @@ from pepclibs._PropsClassBase import ErrorUsePerCPU
 
 if typing.TYPE_CHECKING:
     from pepclibs.msr import MSR, FSBFreq
-    from pepclibs import _SysfsIO, EPP, EPB, _CPUFreq, _UncoreFreq
+    from pepclibs import _SysfsIO, EPP, EPB, _CPUFreq, _UncoreFreqSysfs
     from pepclibs.CPUInfo import CPUInfo
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepclibs._PropsClassBaseTypes import AbsNumsType, RelNumsType, MechanismNameType
@@ -275,7 +275,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         self._cpufreq_cppc_obj: _CPUFreq.CPUFreqCPPC | None = None
         self._cpufreq_msr_obj: _CPUFreq.CPUFreqMSR | None= None
 
-        self._uncfreq_sysfs_obj: _UncoreFreq.UncoreFreqSysfs | None = None
+        self._uncfreq_sysfs_obj: _UncoreFreqSysfs.UncoreFreqSysfs | None = None
         self._uncfreq_sysfs_err: str | None = None
 
         super()._init_props_dict(PROPS)
@@ -410,12 +410,12 @@ class PStates(_PropsClassBase.PropsClassBase):
                                                         msr=msr, enable_cache=self._enable_cache)
         return self._cpufreq_msr_obj
 
-    def _get_uncfreq_sysfs_obj(self) -> _UncoreFreq.UncoreFreqSysfs:
+    def _get_uncfreq_sysfs_obj(self) -> _UncoreFreqSysfs.UncoreFreqSysfs:
         """
         Get an 'UncoreFreqSysfs' object.
 
         Returns:
-            An instance of '_UncoreFreq.UncoreFreqSysfs'.
+            An instance of '_UncoreFreqSysfs.UncoreFreqSysfs'.
         """
 
         if self._uncfreq_sysfs_err:
@@ -423,12 +423,13 @@ class PStates(_PropsClassBase.PropsClassBase):
 
         if not self._uncfreq_sysfs_obj:
             # pylint: disable-next=import-outside-toplevel
-            from pepclibs import _UncoreFreq
+            from pepclibs import _UncoreFreqSysfs
 
             sysfs_io = self._get_sysfs_io()
             try:
-                obj = _UncoreFreq.UncoreFreqSysfs(self._cpuinfo, pman=self._pman, sysfs_io=sysfs_io,
-                                                  enable_cache=self._enable_cache)
+                obj = _UncoreFreqSysfs.UncoreFreqSysfs(self._cpuinfo, pman=self._pman,
+                                                       sysfs_io=sysfs_io,
+                                                       enable_cache=self._enable_cache)
                 self._uncfreq_sysfs_obj = obj
             except ErrorNotSupported as err:
                 self._uncfreq_sysfs_err = str(err)

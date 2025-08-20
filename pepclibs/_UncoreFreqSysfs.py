@@ -10,7 +10,7 @@
 #          Niklas Neronin <niklas.neronin@intel.com>
 
 """
-Provide functionality for reading and modifying uncore frequency on Intel CPUs.
+Provide functionality for reading and modifying uncore frequency on Intel CPUs via sysfs.
 
 On older Intel server platforms, such as Skylake Xeon and Sapphire Rapids Xeon, uncore frequency is
 managed via an MSR. The Linux kernel 'intel_uncore_frequency' driver exposes a sysfs interface that
@@ -43,7 +43,6 @@ from pepclibs.helperlibs import Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
-
 
 # An uncore frequency sysfs file type. Possible values:
 #   - "min": a minimum uncore frequency file
@@ -89,7 +88,7 @@ _SysfsPathCacheType = dict[_SysfsFileType, dict[int, dict[int, dict[bool, Path]]
 
 class UncoreFreqSysfs(ClassHelpers.SimpleCloseContext):
     """
-    Provide functionality for reading and modifying uncore frequency on Intel CPUs.
+    Provide functionality for reading and modifying uncore frequency on Intel CPUs via sysfs.
 
     Overview of public methods:
 
@@ -479,7 +478,7 @@ class UncoreFreqSysfs(ClassHelpers.SimpleCloseContext):
             ErrorNotSupported: If the uncore frequency sysfs file does not exist.
         """
 
-        yield from self._get_freq_dies("current", dies, limit=False)
+        yield from self._get_freq_dies("current", dies)
 
     def _unlock_new_sysfs_api(self):
         """
@@ -728,7 +727,7 @@ class UncoreFreqSysfs(ClassHelpers.SimpleCloseContext):
             ErrorNotSupported: If the uncore frequency sysfs file does not exist.
         """
 
-        yield from self._get_freq_cpus("current", cpus, limit=False)
+        yield from self._get_freq_cpus("current", cpus)
 
     def _set_freq_cpus(self, freq: int, ftype: _SysfsFileType, cpus: AbsNumsType):
         """

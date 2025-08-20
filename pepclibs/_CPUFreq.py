@@ -12,6 +12,7 @@
 Provide a capability for reading and modifying CPU frequency settings.
 """
 
+# TODO: Split this file on 3 files, one per class. This file is too large.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
