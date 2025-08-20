@@ -170,11 +170,16 @@ target CPU specification options to define a subset of CPUs, cores, dies, or pac
 
 **--base-freq**
    Retrieve the base CPU frequency, also known as the "guaranteed frequency," HFM (High Frequency
-   Mode), or P1. Preferred mechanism is 'sysfs', which reads
-   '/sys/devices/system/cpu/cpu<NUMBER>/cpufreq/base_frequency'. If unavailable, it falls back to
-   '/sys/devices/system/cpu/cpu<NUMBER>/cpufreq/bios_limit'. The 'msr' mechanism reads it from
-   MSR_HWP_CAPABILITIES (0x771), bits 15:8 if CPU hardware power management is enabled, otherwise
-   from MSR_PLATFORM_INFO (0xCE), bits 15:8.
+   Mode), or P1. The supported mechanisms are: 'sysfs', 'cppc', 'msr'.
+
+   The preferred mechanism is 'sysfs', which reads
+   '/sys/devices/system/cpu/cpu<NUMBER>/cpufreq/base_frequency'. If the file is unavailable, it
+   falls back to '/sys/devices/system/cpu/cpu<NUMBER>/cpufreq/bios_limit'.
+
+   The 'cppc' mechanism read the '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/nominal_freq'.
+
+   The 'msr' mechanism reads the base CPU frequency from the MSR_HWP_CAPABILITIES (0x771), bits 15:8
+   if CPU hardware power management is enabled, otherwise from MSR_PLATFORM_INFO (0xCE), bits 15:8.
 
 **--bus-clock**
    Retrieve the bus clock frequency, one of the CPU's reference clocks. The 'msr' mechanism reads
@@ -184,8 +189,17 @@ target CPU specification options to define a subset of CPUs, cores, dies, or pac
 **--min-oper-freq**
    Retrieve the minimum CPU operating frequency, the lowest frequency the CPU can operate at. This
    frequency, also known as Pm, may not always be directly available to the OS but can be used by
-   the platform in certain scenarios (e.g., some C-states). Mechanism: 'msr', reads MSR_PLATFORM_INFO
-   (0xCE), bits 55:48.
+   the platform in certain scenarios (e.g., some C-states). The supported mechanisms are: 'msr',
+   'cppc'.
+
+   The 'msr' mechanism: 'msr', reads MSR_PLATFORM_INFO (0xCE), bits 55:48.
+
+   The 'cppc' mechanism reads '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/lowest_freq'.
+   If unavailable, the frequency is calculated as "base_freq * lowest_perf / nominal_perf" using
+   values from:
+   base_freq: '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/nominal_freq',
+   lowest_perf: '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/lowest_perf',
+   nominal_perf: '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/nominal_perf'.
 
 **--max-eff-freq**
    Retrieve the maximum CPU efficiency frequency, also known as LFM (Low Frequency Mode) or Pn.
@@ -199,9 +213,18 @@ target CPU specification options to define a subset of CPUs, cores, dies, or pac
    '/sys/devices/system/cpu/cpufreq/boost'. The setting has global scope.
 
 **--max-turbo-freq**
-   Retrieve the maximum turbo frequency, the highest frequency a single CPU can achieve. Also known
-   as max 1-core turbo or P01. Mechanism: 'msr', reads MSR_HWP_CAPABILITIES (0x771), bits 7:0 if
-   hardware power management is enabled, otherwise reads MSR_TURBO_RATIO_LIMIT (0x1AD), bits 7:0.
+   Retrieve the maximum turbo frequency - the highest frequency a single CPU can run on. Also known
+   as max 1-core turbo or P01. The supported mechanisms are: 'msr', 'cppc'.
+
+   The 'msr' mechanism reads MSR_HWP_CAPABILITIES (0x771), bits 7:0 if hardware power management is
+   enabled, otherwise reads MSR_TURBO_RATIO_LIMIT (0x1AD), bits 7:0.
+
+   The 'cppc' mechanism reads '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/highest_freq'.
+   If unavailable, the frequency is calculated as "base_freq * highest_perf / nominal_perf" using
+   values from:
+   base_freq: '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/nominal_freq',
+   highest_perf: '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/highest_perf',
+   nominal_perf: '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/nominal_perf'.
 
 **--min-uncore-freq**
    Retrieve the minimum uncore frequency. In case of the 'intel_uncore_frequency_tpmi' driver, read

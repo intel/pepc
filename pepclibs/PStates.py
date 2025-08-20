@@ -94,7 +94,7 @@ PROPS: dict[str, PropertyTypedDict] = {
         "unit": "Hz",
         "type": "int",
         "sname": "CPU",
-        "mnames": ("sysfs", "cppc"),
+        "mnames": ("sysfs",),
         "writable": False,
     },
     "max_freq_limit": {
@@ -102,7 +102,7 @@ PROPS: dict[str, PropertyTypedDict] = {
         "unit": "Hz",
         "type": "int",
         "sname": "CPU",
-        "mnames": ("sysfs", "cppc"),
+        "mnames": ("sysfs",),
         "writable": False,
     },
     "base_freq": {
@@ -110,7 +110,7 @@ PROPS: dict[str, PropertyTypedDict] = {
         "unit": "Hz",
         "type": "int",
         "sname": "CPU",
-        "mnames": ("sysfs", "msr", "cppc"),
+        "mnames": ("sysfs", "cppc", "msr"),
         "writable": False,
     },
     "bus_clock": {
@@ -126,7 +126,7 @@ PROPS: dict[str, PropertyTypedDict] = {
         "unit": "Hz",
         "type": "int",
         "sname": "CPU",
-        "mnames": ("msr", "cppc"),
+        "mnames": ("msr",),
         "writable": False,
     },
     "max_eff_freq": {
@@ -142,7 +142,7 @@ PROPS: dict[str, PropertyTypedDict] = {
         "unit": "Hz",
         "type": "int",
         "sname": "CPU",
-        "mnames": ("msr", "cppc"),
+        "mnames": ("msr","cppc"),
         "writable": False,
     },
     "frequencies": {
@@ -504,8 +504,9 @@ class PStates(_PropsClassBase.PropsClassBase):
         cpufreq_obj = self._get_cpufreq_msr_obj()
         yield from cpufreq_obj.get_hwp(cpus=cpus)
 
-    def _get_cppc_freq(self, pname: str, cpus: AbsNumsType) -> \
-                                                        Generator[tuple[int, int], None, None]:
+    def _get_cppc_freq(self,
+                       pname: str,
+                       cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield frequency values for the specified CPUs using the CPPC mechanism.
 
@@ -643,8 +644,9 @@ class PStates(_PropsClassBase.PropsClassBase):
 
         raise Error(f"BUG: Unsupported mechanism '{mname}'")
 
-    def _get_freq_sysfs(self, pname: str, cpus: AbsNumsType) -> \
-                                                    Generator[tuple[int, int], None, None]:
+    def _get_freq_sysfs(self,
+                        pname: str,
+                        cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield CPU frequency values for the specified CPUs using the sysfs mechanism.
 
@@ -673,8 +675,9 @@ class PStates(_PropsClassBase.PropsClassBase):
         else:
             raise Error(f"BUG: unexpected CPU frequency property {pname}")
 
-    def _get_freq_msr(self, pname: str, cpus: AbsNumsType) -> \
-                                                Generator[tuple[int, int], None, None]:
+    def _get_freq_msr(self,
+                      pname: str,
+                      cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the minimum or maximum CPU frequency for the specified CPUs using the MSR
         mechanism.
@@ -696,7 +699,10 @@ class PStates(_PropsClassBase.PropsClassBase):
         else:
             raise Error(f"BUG: Unexpected CPU frequency property {pname}")
 
-    def _get_freq(self, pname, cpus, mname):
+    def _get_freq(self,
+                  pname: str,
+                  cpus: AbsNumsType,
+                  mname: MechanismNameType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the minimum or maximum CPU frequency for the specified CPUs using the
         specified mechanism.
@@ -720,8 +726,9 @@ class PStates(_PropsClassBase.PropsClassBase):
 
         raise Error(f"BUG: Unsupported mechanism '{mname}'")
 
-    def _get_freq_limit(self, pname: str, cpus: AbsNumsType) -> \
-                                                        Generator[tuple[int, int], None, None]:
+    def _get_freq_limit(self,
+                        pname: str,
+                        cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield CPU frequency limits for the specified CPUs using the sysfs mechanism.
 
