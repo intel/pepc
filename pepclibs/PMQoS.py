@@ -13,6 +13,7 @@ This module provides PM QoS management API.
 from pepclibs import _PropsClassBase
 from pepclibs.helperlibs import ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error
+from pepclibs._PropsClassBase import PropertyTypedDict
 
 # This dictionary describes the CPU properties this module supports.
 #
@@ -22,7 +23,7 @@ from pepclibs.helperlibs.Exceptions import Error
 #
 # Some properties have scope name set to 'None' because the scope may be different for different
 # systems. In such cases, the scope can be obtained via 'PMQoS.get_sname()'.
-PROPS = {
+PROPS: dict[str, PropertyTypedDict] = {
     "latency_limit": {
         "name": "Linux per-CPU PM QoS latency limit",
         "unit": "s",

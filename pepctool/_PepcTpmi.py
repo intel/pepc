@@ -10,6 +10,7 @@
 Implement the 'pepc tpmi' command.
 """
 
+# TODO: annotate and modernize this module. Define a type for 'args'.
 import sys
 from pepclibs import Tpmi
 from pepclibs.helperlibs import Logging, Trivial, YAML

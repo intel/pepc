@@ -11,7 +11,6 @@
 pepc - Power, Energy, and Performance Configuration tool for Linux.
 """
 
-# TODO: annotate and modernize this file
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import os
@@ -21,17 +20,18 @@ from pathlib import Path
 
 try:
     import argcomplete
+    _ARGCOMPLETE_AVAILABLE = True
 except ImportError:
     # We can live without argcomplete, we only lose tab completions.
-    argcomplete = None
+    _ARGCOMPLETE_AVAILABLE = False
 
-from typing import Sequence, Any
-from pepclibs.helperlibs import ArgParse, Human, Logging, ProcessManager, ProjectFiles
+from typing import Sequence, Any, Generator, cast
+from pepclibs.helperlibs import ArgParse, Human, Logging, ProcessManager, ProjectFiles, Trivial
+from pepclibs.helperlibs import EmulProcessManager
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs import CStates, PStates, PMQoS, CPUInfo
-from pepclibs._PropsClassBase import MECHANISMS
-
-from pepclibs.helperlibs.ArgParse import ArgTypedDict
+from pepclibs._PropsClassBase import MECHANISMS, PropertyTypedDict
+from pepclibs.helperlibs.ArgParse import ArgTypedDict, ArgKwargsTypedDict
 
 _VERSION = "1.5.41"
 TOOLNAME = "pepc"
@@ -79,20 +79,22 @@ _MECHANISMS_OPTIONS: list[ArgTypedDict] = [
         "argcomplete": None,
         "kwargs": {
             "dest": "mechanisms",
-            "help": """Comma-separated list of allowed mechanisms names (e.g., 'sysfs' or 'msr'). Use
-                    '--list-mechanisms' to get all names. By default, use the best available
+            "help": """Comma-separated list of allowed mechanisms names (e.g., 'sysfs' or 'msr').
+                    Use '--list-mechanisms' to get all names. By default, use the best available
                     mechanism is used.""",
         },
     },
 ]
 
-def _add_target_cpus_arguments(subpars, fmt, exclude=None):
+def _add_target_cpus_arguments(subpars: ArgParse.ArgsParser, fmt: str, exclude: set | None = None):
     """
-    Add target CPUs arguments, such as '--cpus' and '--packages. The input arguments are as follows.
-      * subpars - the 'argparse' sub-parser to add the target CPU arguments too.
-      * fmt - format string for the first sentence. Should include one '%s' that will be replaced
-              with level name (CPU, module, package, etc.).
-      * exclude - name of options to exclude ("nothing" by default).
+    Add options related to the target CPU / topology to an argument parser object.
+
+    Args:
+        subpars: The sub-command parser object to add the options to.
+        fmt: Format string for the help text's first sentence. Should contain one '%s' placeholder
+             for the level name (e.g., CPU, module, package).
+        exclude: Optional set of argument names to exclude from being added (e.g., {"--cpus"}).
     """
 
     if not exclude:
@@ -141,8 +143,13 @@ def _add_target_cpus_arguments(subpars, fmt, exclude=None):
                     index '0' refers to CPU 4, index '1' to CPU 5, and index '4' to CPU 7."""
         subpars.add_argument("--module-siblings", help=text)
 
-def _get_info_subcommand_prop_help_text(prop):
-    """Format and return the "info" sub-command help text for a property described by 'prop'."""
+def _get_info_subcommand_prop_help_text(prop: PropertyTypedDict) -> str:
+    """
+    Format and return help text for a "info" sub-command command-line option.
+
+    Args:
+        prop: The description dictionary of the property to format the help text for.
+    """
 
     if prop["type"] == "bool":
         # This is a binary "on/off" type of features.
@@ -152,8 +159,14 @@ def _get_info_subcommand_prop_help_text(prop):
 
     return text
 
-def _add_info_subcommand_options(props, subpars):
-    """Add options for all properties in 'props' to for the "info" subcommand."""
+def _add_info_subcommand_options(props: dict[str, PropertyTypedDict], subpars: ArgParse.ArgsParser):
+    """
+    Add "info" sub-command command-line options for each property in 'props'.
+
+    Args:
+        props: The properties description dictionary.
+        subpars: The sub-command parser object to add the options to.
+    """
 
     spnames = set()
     for prop in props.values():
@@ -166,7 +179,7 @@ def _add_info_subcommand_options(props, subpars):
             # along with the property information.
             continue
 
-        kwargs = {}
+        kwargs: ArgKwargsTypedDict = {}
         kwargs["default"] = argparse.SUPPRESS
         kwargs["nargs"] = 0
         kwargs["help"] = _get_info_subcommand_prop_help_text(prop)
@@ -175,8 +188,13 @@ def _add_info_subcommand_options(props, subpars):
         option = f"--{pname.replace('_', '-')}"
         subpars.add_argument(option, **kwargs)
 
-def _get_config_subcommand_prop_help_text(prop):
-    """Format and return the "info" sub-command help text for a property described by 'prop'."""
+def _get_config_subcommand_prop_help_text(prop: PropertyTypedDict) -> str:
+    """
+    Format and return help text for a "config" sub-command command-line option.
+
+    Args:
+        prop: The description dictionary of the property to format the help text for.
+    """
 
     if prop["type"] == "bool":
         # This is a binary "on/off" type of features.
@@ -186,14 +204,21 @@ def _get_config_subcommand_prop_help_text(prop):
 
     return text
 
-def _add_config_subcommand_options(props, subpars):
-    """Add options for all properties in 'props' to for the "config" sub-command."""
+def _add_config_subcommand_options(props: dict[str, PropertyTypedDict],
+                                   subpars: ArgParse.ArgsParser):
+    """
+    Add "config" sub-command command-line options for each property in 'props'.
+
+    Args:
+        props: The properties description dictionary.
+        subpars: The sub-command parser object to add the options to.
+    """
 
     for name, prop in props.items():
         if not prop["writable"]:
             continue
 
-        kwargs = {}
+        kwargs: ArgKwargsTypedDict = {}
         kwargs["default"] = argparse.SUPPRESS
         kwargs["nargs"] = "?"
         kwargs["help"] = _get_config_subcommand_prop_help_text(prop)
@@ -207,7 +232,7 @@ def _add_config_subcommand_options(props, subpars):
 
 class _PrintManPathAction(argparse.Action):
     """
-    Custom argparse action to print the path to the manual pages directory and exit.
+    Custom argparse action class to print the path to the manual pages directory and exit.
     """
 
     def __call__(self,
@@ -221,8 +246,13 @@ class _PrintManPathAction(argparse.Action):
         _LOG.info("%s", manpath)
         parser.exit()
 
-def build_arguments_parser():
-    """Build and return the the command-line arguments parser object."""
+def _build_arguments_parser() -> ArgParse.ArgsParser:
+    """
+    Build and return the command-line arguments parser.
+
+    Returns:
+        An initialized command-line arguments parser object.
+    """
 
     text = "pepc - Power, Energy, and Performance Configuration tool for Linux."
     parser = ArgParse.ArgsParser(description=text, prog=TOOLNAME, ver=_VERSION)
@@ -252,7 +282,8 @@ def build_arguments_parser():
     man_msg = """Refer to 'pepc-cpu-hotplug' manual page for more information."""
     descr = "CPU online/offline commands. " + man_msg
     subpars = subparsers.add_parser("cpu-hotplug", help=text, description=descr)
-    subparsers2 = subpars.add_subparsers(title="further sub-commands")
+    subpars = cast(ArgParse.ArgsParser, subpars)
+    subparsers2 = subpars.add_subparsers(title="Further sub-commands")
     subparsers2.required = True
 
     #
@@ -261,6 +292,7 @@ def build_arguments_parser():
     text = "Display the list of online and offline CPUs."
     descr = "Display the list of online and offline CPUs. " + man_msg
     subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
+    subpars2 = cast(ArgParse.ArgsParser, subpars2)
     subpars2.set_defaults(func=_cpu_hotplug_info_command)
 
     ArgParse.add_options(subpars2, ssh_options)
@@ -271,6 +303,7 @@ def build_arguments_parser():
     text = """Bring CPUs online."""
     descr = "Bring specified CPUs online. " + man_msg
     subpars2 = subparsers2.add_parser("online", help=text, description=descr, epilog=man_msg)
+    subpars2 = cast(ArgParse.ArgsParser, subpars2)
     subpars2.set_defaults(func=_cpu_hotplug_online_command)
 
     ArgParse.add_options(subpars2, ssh_options)
@@ -285,6 +318,7 @@ def build_arguments_parser():
     text = """Bring CPUs offline."""
     descr = "Bring specified CPUs offline. " + man_msg
     subpars2 = subparsers2.add_parser("offline", help=text, description=descr, epilog=man_msg)
+    subpars2 = cast(ArgParse.ArgsParser, subpars2)
     subpars2.set_defaults(func=_cpu_hotplug_offline_command)
 
     ArgParse.add_options(subpars2, ssh_options)
@@ -298,7 +332,8 @@ def build_arguments_parser():
     man_msg = "Refer to 'pepc-cstates' manual page for more information."
     descr = "Various commands related to CPU C-states. " + man_msg
     subpars = subparsers.add_parser("cstates", help=text, description=descr)
-    subparsers2 = subpars.add_subparsers(title="further sub-commands")
+    subpars = cast(ArgParse.ArgsParser, subpars)
+    subparsers2 = subpars.add_subparsers(title="Further sub-commands")
     subparsers2.required = True
 
     cst_list_text = """C-states should be specified by name (e.g., 'C1'). Use 'all' to specify all
@@ -310,6 +345,7 @@ def build_arguments_parser():
     text = "Get CPU C-states information."
     descr = "Get information about C-states on specified CPUs. " + man_msg
     subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
+    subpars2 = cast(ArgParse.ArgsParser, subpars2)
     subpars2.set_defaults(func=_cstates_info_command)
 
     ArgParse.add_options(subpars2, all_options)
@@ -333,6 +369,7 @@ def build_arguments_parser():
     descr = """Configure C-states on specified CPUs. All options can be used without a parameter,
                in which case the currently configured value(s) will be printed. """ + man_msg
     subpars2 = subparsers2.add_parser("config", help=text, description=descr, epilog=man_msg)
+    subpars2 = cast(ArgParse.ArgsParser, subpars2)
     subpars2.set_defaults(func=_cstates_config_command)
 
     ArgParse.add_options(subpars2, all_options)
@@ -356,7 +393,8 @@ def build_arguments_parser():
     man_msg = "Refer to 'pepc-pstates' manual page for more information."
     descr = "Various commands related to P-states (CPU performance states). " + man_msg
     subpars = subparsers.add_parser("pstates", help=text, description=descr)
-    subparsers2 = subpars.add_subparsers(title="further sub-commands")
+    subpars = cast(ArgParse.ArgsParser, subpars)
+    subparsers2 = subpars.add_subparsers(title="Further sub-commands")
     subparsers2.required = True
 
     #
@@ -366,6 +404,7 @@ def build_arguments_parser():
     descr = """Get P-states information for specified CPUs. By default, print all information for
                all CPUs. """ + man_msg
     subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
+    subpars2 = cast(ArgParse.ArgsParser, subpars2)
     subpars2.set_defaults(func=_pstates_info_command)
 
     ArgParse.add_options(subpars2, all_options)
@@ -384,6 +423,7 @@ def build_arguments_parser():
     descr = """Configure P-states on specified CPUs. All options can be used without a parameter,
                in which case the currently configured value(s) will be printed. """ + man_msg
     subpars2 = subparsers2.add_parser("config", help=text, description=descr, epilog=man_msg)
+    subpars2 = cast(ArgParse.ArgsParser, subpars2)
     subpars2.set_defaults(func=_pstates_config_command)
 
     ArgParse.add_options(subpars2, all_options)
@@ -399,7 +439,8 @@ def build_arguments_parser():
     man_msg = "Refer to 'pepc-pmqos' manual page for more information."
     descr = "Various commands related to PM QoS (Power Management Quality of Service). " + man_msg
     subpars = subparsers.add_parser("pmqos", help=text, description=descr)
-    subparsers2 = subpars.add_subparsers(title="further sub-commands")
+    subpars = cast(ArgParse.ArgsParser, subpars)
+    subparsers2 = subpars.add_subparsers(title="Further sub-commands")
     subparsers2.required = True
 
     #
@@ -409,6 +450,7 @@ def build_arguments_parser():
     descr = """Get PM QoS information for specified CPUs. By default, print all information for
                all CPUs. """ + man_msg
     subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
+    subpars2 = cast(ArgParse.ArgsParser, subpars2)
     subpars2.set_defaults(func=_pmqos_info_command)
 
     ArgParse.add_options(subpars2, ssh_mechanisms_options)
@@ -427,6 +469,7 @@ def build_arguments_parser():
     descr = """Configure PM QoS on specified CPUs. All options can be used without a parameter,
                in which case the currently configured value(s) will be printed. """ + man_msg
     subpars2 = subparsers2.add_parser("config", help=text, description=descr, epilog=man_msg)
+    subpars2 = cast(ArgParse.ArgsParser, subpars2)
     subpars2.set_defaults(func=_pmqos_config_command)
 
     ArgParse.add_options(subpars2, ssh_mechanisms_options)
@@ -442,7 +485,8 @@ def build_arguments_parser():
     man_msg = "Refer to 'pepc-aspm' manual page for more information."
     descr = "Manage Active State Power Management configuration. " + man_msg
     subpars = subparsers.add_parser("aspm", help=text, description=descr)
-    subparsers2 = subpars.add_subparsers(title="further sub-commands")
+    subpars = cast(ArgParse.ArgsParser, subpars)
+    subparsers2 = subpars.add_subparsers(title="Further sub-commands")
     subparsers2.required = True
 
     #
@@ -451,6 +495,7 @@ def build_arguments_parser():
     text = "Get PCI ASPM information."
     descr = "Get information about current PCI ASPM configuration. " + man_msg
     subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
+    subpars2 = cast(ArgParse.ArgsParser, subpars2)
     subpars2.set_defaults(func=_aspm_info_command)
 
     ArgParse.add_options(subpars2, ssh_options)
@@ -474,6 +519,7 @@ def build_arguments_parser():
     text = "Change PCI ASPM configuration."
     descr = "Change PCI ASPM configuration. " + man_msg
     subpars2 = subparsers2.add_parser("config", help=text, description=descr, epilog=man_msg)
+    subpars2 = cast(ArgParse.ArgsParser, subpars2)
     subpars2.set_defaults(func=_aspm_config_command)
 
     ArgParse.add_options(subpars2, ssh_options)
@@ -497,7 +543,8 @@ def build_arguments_parser():
     man_msg = "Refer to 'pepc-topology' manual page for more information."
     descr = "Various commands related to CPU topology. " + man_msg
     subpars = subparsers.add_parser("topology", help=text, description=descr)
-    subparsers2 = subpars.add_subparsers(title="further sub-commands")
+    subpars = cast(ArgParse.ArgsParser, subpars)
+    subparsers2 = subpars.add_subparsers(title="Further sub-commands")
     subparsers2.required = True
 
     #
@@ -508,6 +555,7 @@ def build_arguments_parser():
                may be unavailable, in these cases the number will be substituted with "?". Refer to
                'pepc-topology' manual page for more information."""
     subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
+    subpars2 = cast(ArgParse.ArgsParser, subpars2)
     subpars2.set_defaults(func=_topology_info_command)
 
     ArgParse.add_options(subpars2, ssh_options)
@@ -536,8 +584,9 @@ def build_arguments_parser():
     descr = """Read, write, and discover TPMI (Topology Aware Register and PM Capsule Interface)
                registers. """ + man_msg
     subpars = subparsers.add_parser("tpmi", help=text, description=descr)
+    subpars = cast(ArgParse.ArgsParser, subpars)
 
-    subparsers2 = subpars.add_subparsers(title="further sub-commands")
+    subparsers2 = subpars.add_subparsers(title="Further sub-commands")
     subparsers2.required = True
 
     #
@@ -546,6 +595,7 @@ def build_arguments_parser():
     text = "List available TPMI features."
     descr = """List TPMI features supported by the target system. """ + man_msg
     subpars2 = subparsers2.add_parser("ls", help=text, description=descr, epilog=man_msg)
+    subpars2 = cast(ArgParse.ArgsParser, subpars2)
     subpars2.set_defaults(func=_tpmi_ls_command)
 
     ArgParse.add_options(subpars2, ssh_options)
@@ -562,6 +612,7 @@ def build_arguments_parser():
     text = "Read TPMI registers."
     descr = """Read TPMI registers. """ + man_msg
     subpars2 = subparsers2.add_parser("read", help=text, description=descr, epilog=man_msg)
+    subpars2 = cast(ArgParse.ArgsParser, subpars2)
     subpars2.set_defaults(func=_tpmi_read_command)
 
     ArgParse.add_options(subpars2, ssh_options)
@@ -598,6 +649,7 @@ def build_arguments_parser():
     text = "Write TPMI registers."
     descr = """Write to a TPMI register. """ + man_msg
     subpars2 = subparsers2.add_parser("write", help=text, description=descr, epilog=man_msg)
+    subpars2 = cast(ArgParse.ArgsParser, subpars2)
     subpars2.set_defaults(func=_tpmi_write_command)
 
     ArgParse.add_options(subpars2, ssh_options)
@@ -627,15 +679,20 @@ def build_arguments_parser():
     text = "The value to write to the TPMI register or its bit field."
     subpars2.add_argument("-V", "--value", help=text, required=True)
 
-    if argcomplete:
+    if _ARGCOMPLETE_AVAILABLE:
         argcomplete.autocomplete(parser)
 
     return parser
 
-def parse_arguments():
-    """Parse command-line arguments."""
+def parse_arguments() -> argparse.Namespace:
+    """
+    Parse the command-line arguments.
 
-    parser = build_arguments_parser()
+    Returns:
+        argparse.Namespace: The parsed arguments.
+    """
+
+    parser = _build_arguments_parser()
     args = parser.parse_args()
 
     # It is handy to have CPU target attributes.
@@ -652,18 +709,30 @@ def parse_arguments():
 
     return args
 
-# pylint: disable=import-outside-toplevel
-
 def _topology_info_command(args, pman):
-    """Implement the 'topology info' command."""
+    """
+    Implement the 'topology info' command.
 
+    Args:
+        args: Parsed command-line arguments.
+        pman: Process manager object for the host to run the command for.
+    """
+
+    # pylint: disable-next=import-outside-toplevel
     from pepctool import _PepcTopology
 
     _PepcTopology.topology_info_command(args, pman)
 
 def _tpmi_ls_command(args, pman):
-    """Implement the 'tpmi ls' command."""
+    """
+    Implement the 'tpmi ls' command.
 
+    Args:
+        args: Parsed command-line arguments.
+        pman: Process manager object for the host to run the command for.
+    """
+
+    # pylint: disable-next=import-outside-toplevel
     from pepctool import _PepcTpmi
 
     _PepcTpmi.tpmi_ls_command(args, pman)
@@ -671,6 +740,7 @@ def _tpmi_ls_command(args, pman):
 def _tpmi_read_command(args, pman):
     """Implements the 'tpmi read' command."""
 
+    # pylint: disable-next=import-outside-toplevel
     from pepctool import _PepcTpmi
 
     _PepcTpmi.tpmi_read_command(args, pman)
@@ -678,124 +748,221 @@ def _tpmi_read_command(args, pman):
 def _tpmi_write_command(args, pman):
     """Implements the 'tpmi write' command."""
 
+    # pylint: disable-next=import-outside-toplevel
     from pepctool import _PepcTpmi
 
     _PepcTpmi.tpmi_write_command(args, pman)
 
 def _cpu_hotplug_info_command(args, pman):
-    """Implement the 'cpu-hotplug info' command."""
+    """
+    Implement the 'cpu-hotplug info' command.
 
+    Args:
+        args: Parsed command-line arguments.
+        pman: Process manager object for the host to run the command for.
+    """
+
+    # pylint: disable-next=import-outside-toplevel
     from pepctool import _PepcCPUHotplug
 
     _PepcCPUHotplug.cpu_hotplug_info_command(args, pman)
 
 def _cpu_hotplug_online_command(args, pman):
-    """Implement the 'cpu-hotplug online' command."""
+    """
+    Implement the 'cpu-hotplug online' command.
 
+    Args:
+        args: Parsed command-line arguments.
+        pman: Process manager object for the host to run the command for.
+    """
+
+    # pylint: disable-next=import-outside-toplevel
     from pepctool import _PepcCPUHotplug
 
     _PepcCPUHotplug.cpu_hotplug_online_command(args, pman)
 
 def _cpu_hotplug_offline_command(args, pman):
-    """Implement the 'cpu-hotplug offline' command."""
+    """
+    Implement the 'cpu-hotplug offline' command.
 
+    Args:
+        args: Parsed command-line arguments.
+        pman: Process manager object for the host to run the command for.
+    """
+
+    # pylint: disable-next=import-outside-toplevel
     from pepctool import _PepcCPUHotplug
 
     _PepcCPUHotplug.cpu_hotplug_offline_command(args, pman)
 
 def _cstates_info_command(args, pman):
-    """Implement the 'cstates info' command."""
+    """
+    Implement the 'cstates info' command.
 
+    Args:
+        args: Parsed command-line arguments.
+        pman: Process manager object for the host to run the command for.
+    """
+
+    # pylint: disable-next=import-outside-toplevel
     from pepctool import _PepcCStates
 
     _PepcCStates.cstates_info_command(args, pman)
 
 def _cstates_config_command(args, pman):
-    """Implement the 'cstates config' command."""
+    """
+    Implement the 'cstates config' command.
 
+    Args:
+        args: Parsed command-line arguments.
+        pman: Process manager object for the host to run the command for.
+    """
+
+    # pylint: disable-next=import-outside-toplevel
     from pepctool import _PepcCStates
 
     _PepcCStates.cstates_config_command(args, pman)
 
 def _pstates_info_command(args, pman):
-    """Implement the 'pstates info' command."""
+    """
+    Implement the 'pstates info' command.
 
+    Args:
+        args: Parsed command-line arguments.
+        pman: Process manager object for the host to run the command for.
+    """
+
+    # pylint: disable-next=import-outside-toplevel
     from pepctool import _PepcPStates
 
     _PepcPStates.pstates_info_command(args, pman)
 
 def _pstates_config_command(args, pman):
-    """Implement the 'pstates config' command."""
+    """
+    Implement the 'pstates config' command.
 
+    Args:
+        args: Parsed command-line arguments.
+        pman: Process manager object for the host to run the command for.
+    """
+
+    # pylint: disable-next=import-outside-toplevel
     from pepctool import _PepcPStates
 
     _PepcPStates.pstates_config_command(args, pman)
 
 def _pmqos_info_command(args, pman):
-    """Implement the 'pmqos info' command."""
+    """
+    Implement the 'pmqos info' command.
 
+    Args:
+        args: Parsed command-line arguments.
+        pman: Process manager object for the host to run the command for.
+    """
+
+    # pylint: disable-next=import-outside-toplevel
     from pepctool import _PepcPMQoS
 
     _PepcPMQoS.pmqos_info_command(args, pman)
 
 def _pmqos_config_command(args, pman):
-    """Implement the 'pmqos config' command."""
+    """
+    Implement the 'pmqos config' command.
 
+    Args:
+        args: Parsed command-line arguments.
+        pman: Process manager object for the host to run the command for.
+    """
+
+    # pylint: disable-next=import-outside-toplevel
     from pepctool import _PepcPMQoS
 
     _PepcPMQoS.pmqos_config_command(args, pman)
 
 def _aspm_info_command(args, pman):
-    """Implement the 'aspm info'. command"""
+    """
+    Implement the 'aspm info' command.
 
+    Args:
+        args: Parsed command-line arguments.
+        pman: Process manager object for the host to run the command for.
+    """
+
+    # pylint: disable-next=import-outside-toplevel
     from pepctool import _PepcASPM
 
     _PepcASPM.aspm_info_command(args, pman)
 
-def _aspm_config_command(args, pman):
-    """Implement the 'aspm config' command."""
+def _aspm_config_command(args: argparse.Namespace, pman: ProcessManager.ProcessManagerType):
+    """
+    Implement the 'aspm config' command.
 
+    Args:
+        args: Parsed command-line arguments.
+        pman: Process manager object for the host to run the command on..
+    """
+
+    # pylint: disable-next=import-outside-toplevel
     from pepctool import _PepcASPM
 
     _PepcASPM.aspm_config_command(args, pman)
 
-def _get_next_dataset(dataset):
+def _get_next_dataset(dataset: str) -> Generator[Path, None, None]:
     """
-    Parse the '-D' option and yield dataset path for every specified dataset. The arguments are as
-    follows.
-      * dataset - the '-D' option value.
+    Parse the '-D' option and yield dataset paths for each specified dataset.
 
-    Yield paths of all found datasets if the 'dataset' argument has value "all".
+    Args:
+        dataset: The value of the '-D' option. Can be a directory path, the string "all", or a
+                 specific dataset name.
+
+    Yields:
+        Path objects representing the locations of datasets found according to the input.
+
+    Notes:
+        - If 'dataset' is a directory, yield its path.
+        - If 'dataset' is "all", search for all available datasets except those named "common" and
+          yield their paths.
+        - If 'dataset' is a specific name, find and yield the corresponding dataset path.
     """
 
     if Path(dataset).is_dir():
         yield Path(dataset)
-    elif dataset == "all":
-        datasets = {}
+        return
 
-        for base in ProjectFiles.search_project_data(TOOLNAME, "tests/data",
-                                                     what=f"{TOOLNAME} dataset"):
-            for name in os.listdir(base):
-                if name == "common":
-                    continue
-                if name in datasets:
-                    raise Error(f"multiple datasets named '{name}' found. Conflicting locations:\n"
-                                f"  * {datasets[name]}\n  * {base}/{name}")
-                datasets[name] = base / name
-                _LOG.info("\n======= emulation:%s =======", name)
-                yield base / name
-    else:
+    if dataset != "all":
         path = ProjectFiles.find_project_data(TOOLNAME, f"tests/data/{dataset}",
                                               what=f"{TOOLNAME} dataset '{dataset}'")
         yield path
+        return
 
-def _get_emul_pman(args, commonpath, path):
-    """
-    Configure and return an 'EmulProcessManager' object for the dataset specified with the '-D'
-    option.
-    """
+    datasets: dict[str, Path] = {}
 
-    from pepclibs.helperlibs import EmulProcessManager
+    for base in ProjectFiles.search_project_data(TOOLNAME, "tests/data",
+                                                 what=f"{TOOLNAME} dataset"):
+        for name in os.listdir(base):
+            if name == "common":
+                continue
+            if name in datasets:
+                raise Error(f"Multiple '{name}' datasets found, conflicting locations are:\n"
+                            f"  * {datasets[name]}\n  * {base}/{name}")
+            datasets[name] = base / name
+            _LOG.info("\n======= emulation:%s =======", name)
+            yield base / name
+
+def _get_emul_pman(args: argparse.Namespace,
+                   commonpath: Path,
+                   path: Path) -> EmulProcessManager.EmulProcessManager:
+    """
+    Configure and return an emulation process manager object for a dataset.
+
+    Args:
+        args: Parsed command-line arguments.
+        commonpath: Path to the common dataset directory.
+        path: Path to the specific dataset directory.
+
+    Returns:
+        An initialized 'EmulProcessManager' object.
+    """
 
     required_cmd_modules = {
         "aspm": ["ASPM", "Systemctl"],
@@ -825,16 +992,22 @@ def _get_emul_pman(args, commonpath, path):
 
     return pman
 
-def _list_mechanisms(args):
-    """Implement the '--list-mechanisms' option."""
+def _list_mechanisms(args: argparse.Namespace):
+    """
+    Implement the '--list-mechanisms' option by listing mechanisms associated with the subcommand.
 
-    fname = args.func.__name__
+    Args:
+        args: Parsed command-line arguments.
+    """
+
+    props: dict[str, PropertyTypedDict]
+    fname: str = args.func.__name__
     if fname.startswith("_pstates_"):
         props = PStates.PROPS
     elif fname.startswith("_cstates_"):
         props = CStates.PROPS
     else:
-        raise Error(f"BUG: unknown function '{fname}' for '--list-mechanisms'")
+        raise Error(f"BUG: Unknown function '{fname}' for '--list-mechanisms'")
 
     # Form a set of mechanisms used by properties in 'props'.
     mnames = set()
@@ -850,33 +1023,43 @@ def _list_mechanisms(args):
 
     _LOG.info("* %s", "\n* ".join(info))
 
-def main():
-    """Script entry point."""
+def main() -> int:
+    """
+    The entry point of the tool.
+
+    Returns:
+        int: The program exit code.
+    """
 
     try:
         args = parse_arguments()
 
         if not getattr(args, "func", None):
-            _LOG.error("please, run '%s -h' for help", TOOLNAME)
+            _LOG.error("Please, run '%s -h' for help", TOOLNAME)
             return -1
-
-        # pylint: disable=no-member
-        if args.hostname == "localhost":
-            args.username = args.privkey = args.timeout = None
 
         if getattr(args, "list_mechanisms", None):
             _list_mechanisms(args)
             return 0
 
-        if args.dataset:
+        hostname: str = getattr(args, "hostname", "localhost")
+        username: str | None = getattr(args, "username", None)
+        privkey: str | None = getattr(args, "privkey", None)
+        timeout = Trivial.str_to_num(getattr(args, "timeout"), what="--timeout option value")
+        dataset: str | None = getattr(args, "dataset", None)
+
+        if hostname == "localhost":
+            username = privkey = None
+
+        if dataset:
             commonpath = ProjectFiles.find_project_data(TOOLNAME, "tests/data/common",
                                                         what=f"common part of {TOOLNAME} datasets")
-            for path in _get_next_dataset(args.dataset):
+            for path in _get_next_dataset(dataset):
                 with _get_emul_pman(args, commonpath, path) as pman:
                     args.func(args, pman)
         else:
-            with ProcessManager.get_pman(args.hostname, username=args.username,
-                                         privkeypath=args.privkey, timeout=args.timeout) as pman:
+            with ProcessManager.get_pman(hostname, username=username, privkeypath=privkey,
+                                         timeout=timeout) as pman:
                 args.func(args, pman)
     except KeyboardInterrupt:
         _LOG.info("\nInterrupted, exiting")

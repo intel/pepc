@@ -10,6 +10,7 @@
 Implement the 'pepc cpu-hotplug' command.
 """
 
+# TODO: annotate and modernize this module. Define a type for 'args'.
 from pepclibs.helperlibs import Logging, Trivial
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs import CPUInfo, CPUOnline

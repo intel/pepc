@@ -10,6 +10,7 @@
 Implement the 'pepc pmqos' command.
 """
 
+# TODO: annotate and modernize this module. Define a type for 'args'.
 import contextlib
 from pepclibs.helperlibs import Logging
 from pepclibs.helperlibs.Exceptions import Error

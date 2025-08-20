@@ -351,9 +351,11 @@ def main():
     try:
         args = _parse_arguments()
 
+        args.timeout = Trivial.str_to_num(args.timeout, what="--timeout option value")
+
         # pylint: disable=no-member
         if args.hostname == "localhost":
-            args.username = args.privkey = args.timeout = None
+            args.username = args.privkey = None
 
         with ProcessManager.get_pman(args.hostname, username=args.username,
                                      privkeypath=args.privkey, timeout=args.timeout) as pman, \

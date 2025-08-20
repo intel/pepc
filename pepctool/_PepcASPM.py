@@ -10,6 +10,8 @@
 Implement the 'pepc aspm' command.
 """
 
+# TODO: annotate and modernize this module. Define a type for 'args'.
+
 from pepclibs.helperlibs import Logging
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs import ASPM

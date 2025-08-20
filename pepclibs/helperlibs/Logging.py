@@ -20,9 +20,9 @@ from pathlib import Path
 try:
     # It is OK if 'colorama' is not available, we only lose message coloring.
     import colorama
-    colorama_imported = True
+    _COLORAMA_AVAILABLE = True
 except ImportError:
-    colorama_imported = False
+    _COLORAMA_AVAILABLE = False
 from pepclibs.helperlibs.Exceptions import Error
 
 # Names of the modules to accept debug log messages from. Can be set by the user. All modules are
@@ -288,7 +288,7 @@ class Logger(logging.Logger):
 
         self.setLevel(level)
 
-        if not colorama_imported:
+        if not _COLORAMA_AVAILABLE:
             colored = False
 
         if colored is None:
@@ -398,7 +398,7 @@ class Logger(logging.Logger):
         tback = lines[0:last_idx]
 
         if tback:
-            if colorama_imported:
+            if _COLORAMA_AVAILABLE:
                 dim = colorama.Style.RESET_ALL + colorama.Style.DIM
                 undim = colorama.Style.RESET_ALL
             else:

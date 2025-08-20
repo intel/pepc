@@ -10,6 +10,7 @@
 Implement the 'pepc pstates' command.
 """
 
+# TODO: annotate and modernize this module. Define a type for 'args'.
 import contextlib
 from pepclibs.msr import MSR
 from pepclibs.helperlibs import Logging

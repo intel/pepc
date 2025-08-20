@@ -95,7 +95,7 @@ def get_python_data_package_path(prjname: str) -> Path | None:
 
 def search_project_data(subpath: str,
                         tpath: str,
-                        pman: ProcessManagerType | None,
+                        pman: ProcessManagerType | None = None,
                         what: str | None = None,
                         envars: Sequence[str] | None = None) -> Generator[Path, None, None]:
     """
@@ -278,7 +278,7 @@ def find_project_data(prjname: str,
         ErrorNotFound: If project data cannot be found in any of the searched locations.
     """
 
-    return next(search_project_data(prjname, tpath, pman, what,
+    return next(search_project_data(prjname, tpath, pman=pman, what=what,
                                     envars=(get_project_data_envar(prjname),)))
 
 def get_project_data_search_descr(prjname: str, tpath: str) -> str:

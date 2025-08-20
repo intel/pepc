@@ -19,10 +19,10 @@ import argparse
 
 try:
     import argcomplete
-    argcomplete_imported = True
+    _ARGCOMPLETE_AVAILABLE = True
 except ImportError:
     # We can live without argcomplete, we only lose tab completions.
-    argcomplete_imported = False
+    _ARGCOMPLETE_AVAILABLE = False
 
 from pepclibs.helperlibs import DamerauLevenshtein, Trivial, Logging
 from pepclibs.helperlibs.Exceptions import Error
@@ -39,6 +39,7 @@ class ArgKwargsTypedDict(TypedDict, total=False):
     Attributes:
         dest: The 'argparse' attribute name where the command line argument will be stored.
         default: The default value for the argument.
+        nargs: The number of command line arguments that should be consumed.
         metavar: The name of the argument in the help text.
         action: The 'argparse' action to use for the argument. For example, 'store_true' or
                 'store_const'.
@@ -47,8 +48,9 @@ class ArgKwargsTypedDict(TypedDict, total=False):
 
     dest: str
     default: str | int
+    nargs: str | int
     metavar: str
-    action: str
+    action: str | type[argparse.Action]
     help: str
 
 class ArgTypedDict(TypedDict, total=False):
@@ -106,7 +108,7 @@ SSH_OPTIONS: list[ArgTypedDict] = [
         "argcomplete" : None,
         "kwargs" : {
             "dest" : "timeout",
-            "default" : 8,
+            "default" : "8",
             "help" : "Timeout for establishing an SSH connection in seconds. Defaults to 8."
         },
     },
@@ -146,7 +148,7 @@ def add_options(parser: argparse.ArgumentParser | ArgsParser, options: Iterable[
             args = (opt["short"], opt["long"])
 
         arg = parser.add_argument(*args, **opt["kwargs"])
-        if opt["argcomplete"] and argcomplete_imported:
+        if opt["argcomplete"] and _ARGCOMPLETE_AVAILABLE:
             setattr(arg, "completer", getattr(argcomplete.completers, opt["argcomplete"]))
 
 def add_ssh_options(parser: argparse.ArgumentParser | ArgsParser):
