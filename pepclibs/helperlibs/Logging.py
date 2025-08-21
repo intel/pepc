@@ -15,7 +15,7 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 import sys
 import logging
 import traceback
-from typing import NoReturn, Any, IO, cast
+from typing import NoReturn, Any, IO, cast, Sequence
 from pathlib import Path
 try:
     # It is OK if 'colorama' is not available, we only lose message coloring.
@@ -170,7 +170,7 @@ class _MyFormatter(logging.Formatter):
 class _MyFilter(logging.Filter):
     """A custom filter which allows only certain log levels to go through."""
 
-    def __init__(self, let_go):
+    def __init__(self, let_go: Sequence[int]):
         """
         Initialize the logging filter.
 
@@ -179,7 +179,8 @@ class _MyFilter(logging.Filter):
         """
 
         logging.Filter.__init__(self)
-        self._let_go = let_go
+
+        self._let_go: set[int] = set(let_go)
 
     def filter(self, record):
         """
@@ -193,13 +194,13 @@ class _MyFilter(logging.Filter):
                   blocked.
         """
 
-        if DEBUG_MODULE_NAMES and record.levelno == DEBUG:
-            # Example of a record name: "main.pepc.pepclibs._PropsClassBase".
-            modname = record.name.rsplit(".", maxsplit=1)[-1]
-            if modname in DEBUG_MODULE_NAMES:
-                return True
-            return False
         if record.levelno in self._let_go:
+            if DEBUG_MODULE_NAMES and record.levelno == DEBUG:
+                # Example of a record name: "main.pepc.pepclibs._PropsClassBase".
+                modname = record.name.rsplit(".", maxsplit=1)[-1]
+                if modname in DEBUG_MODULE_NAMES:
+                    return True
+                return False
             return True
         return False
 
