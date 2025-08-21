@@ -15,10 +15,11 @@ Provide a capability of retrieving and setting P-state related properties.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
+import itertools
 import contextlib
 import statistics
 from pathlib import Path
-from typing import Generator, NoReturn, cast
+from typing import Generator, NoReturn, cast, Iterator
 from pepclibs import _PropsClassBase
 from pepclibs.helperlibs import Trivial, Human, ClassHelpers, Logging
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorVerifyFailed
@@ -1461,6 +1462,58 @@ class PStates(_PropsClassBase.PropsClassBase):
             for cpu in cpus:
                 yield cpu, cast(int, freq)
 
+    def _get_cpu_freq_limit_iterators(self,
+                    cpus: AbsNumsType,
+                    mname: MechanismNameType) -> tuple[Iterator[tuple[int, PropertyValueType]],
+                                                       Iterator[tuple[int, PropertyValueType]]]:
+        """
+        Get iterators for minimum and maximum CPU frequency limits for the specified CPUs and
+        mechanism.
+
+        Args:
+            cpus: List or set of CPU numbers to query frequency limits for.
+            mname: Name of the mechanism to use ("sysfs" or "msr").
+
+        Returns:
+            A tuple containing two iterators:
+                - The first iterator yields (CPU, min. frequency limit) pairs.
+                - The second iterator yields (CPU, max. frequency limit) pairs.
+        """
+
+        min_limit_iter: Iterator[tuple[int, PropertyValueType]]
+        max_limit_iter: Iterator[tuple[int, PropertyValueType]]
+
+        if mname == "sysfs":
+            min_limit_iter = self._get_prop_cpus_mnames("min_freq_limit", cpus, mnames=(mname,))
+            max_limit_iter = self._get_prop_cpus_mnames("max_freq_limit", cpus, mnames=(mname,))
+            return min_limit_iter, max_limit_iter
+
+        if mname != "msr":
+            raise Error(f"BUG: Unexpected mechanism '{mname}'")
+
+        # For the minimum frequency limit, try the min. operational and efficiency frequencies
+        # first. If they are not supported by the platform, create a dummy iterator yielding a very
+        # small frequency value.
+        try:
+            next(self._get_prop_cpus_mnames("min_oper_freq", cpus, mnames=(mname,)))
+            min_limit_iter = self._get_prop_cpus_mnames("min_oper_freq", cpus, mnames=(mname,))
+        except ErrorNotSupported:
+            try:
+                next(self._get_prop_cpus_mnames("min_eff_freq", cpus, mnames=(mname,)))
+                min_limit_iter = self._get_prop_cpus_mnames("min_eff_freq", cpus, mnames=(mname,))
+            except ErrorNotSupported:
+                min_limit_iter = itertools.repeat((0, 100_000_000), times=len(cpus)) # 100MHz.
+
+        # For the maximum frequency limit, try the max. turbo frequency. If it is not supported,
+        # fall-back to a dummy iterator that yields a very large frequency value.
+        try:
+            next(self._get_prop_cpus_mnames("max_turbo_freq", cpus, mnames=(mname,)))
+            max_limit_iter = self._get_prop_cpus_mnames("max_turbo_freq", cpus, mnames=(mname,))
+        except ErrorNotSupported:
+            max_limit_iter = itertools.repeat((0, 8_000_000_000), times=len(cpus)) # 8GHz.
+
+        return min_limit_iter, max_limit_iter
+
     def _set_cpu_freq(self,
                       pname: str,
                       val: str | int,
@@ -1485,11 +1538,8 @@ class PStates(_PropsClassBase.PropsClassBase):
         else:
             raise Error(f"BUG: Unexpected mechanism '{mname}'")
 
+        min_limit_iter, max_limit_iter = self._get_cpu_freq_limit_iterators(cpus, mname)
         new_freq_iter = self._get_numeric_cpu_freq(val, cpus)
-        if mname in self._props["min_freq_limit"]["mnames"]:
-            min_limit_iter = self._get_prop_cpus_mnames("min_freq_limit", cpus, mnames=(mname,))
-            max_limit_iter = self._get_prop_cpus_mnames("max_freq_limit", cpus, mnames=(mname,))
-
         cur_freq_limit_pname = "max_freq" if is_min else "min_freq"
         cur_freq_limit_iter = self._get_prop_cpus_mnames(cur_freq_limit_pname, cpus,
                                                          mnames=(mname,))
