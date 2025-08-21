@@ -153,6 +153,11 @@ class ErrorConnect(Error):
 
         super().__init__(msg, *args, **kwargs)
 
+class ErrorOutOfRange(Error):
+    """
+    Something is out of range.
+    """
+
 ExceptionType = Union[type[Error], type[ErrorTimeOut], type[ErrorExists], type[ErrorNotFound],
                       type[ErrorNotSupported], type[ErrorPermissionDenied], type[ErrorBadFormat],
-                      type[ErrorVerifyFailed], type[ErrorConnect]]
+                      type[ErrorVerifyFailed], type[ErrorConnect], type[ErrorOutOfRange]]

@@ -25,6 +25,7 @@ from pepclibs import _PropsClassBase
 from pepclibs.helperlibs import Trivial, Human, ClassHelpers
 
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorVerifyFailed
+from pepclibs.helperlibs.Exceptions import ErrorOutOfRange
 from pepclibs._PropsClassBase import ErrorTryAnotherMechanism
 # Make the exception class be available for users.
 # pylint: disable-next=unused-import
@@ -41,14 +42,6 @@ if typing.TYPE_CHECKING:
 class ErrorFreqOrder(Error):
     """
     Raise when modification of minimum or maximum frequency fails due to ordering constraints.
-    """
-
-class ErrorFreqRange(ErrorTryAnotherMechanism):
-    """
-    Raise when minimum or maximum frequency values are outside the permitted range.
-
-    This exception suggests that the current mechanism cannot handle the requested frequency,
-    but another mechanism may succeed.
     """
 
 # Special values for writable CPU frequency properties.
@@ -947,7 +940,7 @@ class PStates(_PropsClassBase.PropsClassBase):
                     # Modern Intel platforms use 100MHz bus clock.
                     yield cpu, 100000000
                 return
-            raise ErrorTryAnotherMechanism(f"use 'msr' method for {self._cpuinfo.cpudescr}")
+            raise ErrorTryAnotherMechanism(f"Use the 'msr' method for {self._cpuinfo.cpudescr}")
 
         raise Error(f"BUG: Unsupported mechanism '{mname}'")
 
@@ -1297,7 +1290,7 @@ class PStates(_PropsClassBase.PropsClassBase):
                                  max_limit: int,
                                  what: str) -> NoReturn:
         """
-        Raise an 'ErrorFreqRange' exception if the provided frequency value is out of the allowed
+        Raise an 'ErrorOutOfRange' exception if the provided frequency value is out of the allowed
         range.
 
         Args:
@@ -1308,14 +1301,14 @@ class PStates(_PropsClassBase.PropsClassBase):
             what: A description of what the frequency value refers to (e.g., CPU or uncore).
 
         Raises:
-            ErrorFreqRange: If the frequency value is outside the specified range.
+            ErrorOutOfRange: If the frequency value is outside the specified range.
         """
 
         name = Human.uncapitalize(self._props[pname]["name"])
         val_str = Human.num2si(val, unit="Hz", decp=4)
         min_limit_str = Human.num2si(min_limit, unit="Hz", decp=4)
         max_limit_str = Human.num2si(max_limit, unit="Hz", decp=4)
-        raise ErrorFreqRange(f"{name} value of '{val_str}' for {what} is out of range"
+        raise ErrorOutOfRange(f"{name} value of '{val_str}' for {what} is out of range"
                              f"{self._pman.hostmsg}, must be within [{min_limit_str}, "
                              f"{max_limit_str}]")
 
