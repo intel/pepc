@@ -423,8 +423,9 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         self._set_freq_sysfs(freq, "max", cpus)
 
-    def get_available_frequencies(self, cpus: AbsNumsType) -> \
-                                            Generator[tuple[int, list[int]], None, None]:
+    def get_available_frequencies(self,
+                                  cpus: AbsNumsType) -> Generator[tuple[int, list[int]],
+                                                                  None, None]:
         """
         Yield available CPU frequencies specified CPUs. Frequencies are read from the
         'scaling_available_frequencies' sysfs file, which is typically provided by the

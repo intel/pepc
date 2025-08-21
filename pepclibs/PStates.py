@@ -471,31 +471,43 @@ class PStates(_PropsClassBase.PropsClassBase):
         for cpu, val, _ in self._get_epbobj().get_vals(cpus=cpus, mnames=(mname,)):
             yield cpu, val
 
-    def _get_max_eff_freq(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
+    def _get_max_eff_freq(self,
+                          cpus: AbsNumsType,
+                          mname: MechanismNameType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the maximum efficiency frequency for the specified CPUs.
 
         Args:
             cpus: CPU numbers to retrieve maximum efficiency frequency for.
+            mname: Mechanism name to use for retrieving maximum efficiency frequency.
 
         Yields:
             Tuple of (cpu, val), where 'cpu' is the CPU number and 'val' is its maximum efficiency
             frequency.
         """
 
+        if mname != "msr":
+            raise Error(f"BUG: Unexpected mechanism '{mname}'")
+
         cpufreq_obj = self._get_cpufreq_msr_obj()
         yield from cpufreq_obj.get_max_eff_freq(cpus=cpus)
 
-    def _get_hwp(self, cpus: AbsNumsType) -> Generator[tuple[int, bool], None, None]:
+    def _get_hwp(self,
+                 cpus: AbsNumsType,
+                 mname: MechanismNameType) -> Generator[tuple[int, bool], None, None]:
         """
         Retrieve and yield the hardware power management (HWP) status for the specified CPUs.
 
         Args:
             cpus: CPU numbers to retrieve HWP status for.
+            mname: Mechanism name to use for retrieving the HWP status.
 
         Yields:
             Tuple of (cpu, status), where 'cpu' is the CPU number and 'status' is its HWP status.
         """
+
+        if mname != "msr":
+            raise Error(f"BUG: Unexpected mechanism '{mname}'")
 
         cpufreq_obj = self._get_cpufreq_msr_obj()
         yield from cpufreq_obj.get_hwp(cpus=cpus)
@@ -580,7 +592,7 @@ class PStates(_PropsClassBase.PropsClassBase):
             yield from self._get_cppc_freq("min_oper_freq", cpus)
             return
 
-        raise Error(f"BUG: Unsupported mechanism '{mname}'")
+        raise Error(f"BUG: Unexpected mechanism '{mname}'")
 
     def _get_max_turbo_freq(self,
                             cpus: AbsNumsType,
@@ -607,7 +619,7 @@ class PStates(_PropsClassBase.PropsClassBase):
             yield from self._get_cppc_freq("max_turbo_freq", cpus)
             return
 
-        raise Error(f"BUG: Unsupported mechanism '{mname}'")
+        raise Error(f"BUG: Unexpected mechanism '{mname}'")
 
     def _get_base_freq(self,
                        cpus: AbsNumsType,
@@ -638,7 +650,7 @@ class PStates(_PropsClassBase.PropsClassBase):
             yield from self._get_cppc_freq("base_freq", cpus)
             return
 
-        raise Error(f"BUG: Unsupported mechanism '{mname}'")
+        raise Error(f"BUG: Unexpected mechanism '{mname}'")
 
     def _get_freq_sysfs(self,
                         pname: str,
@@ -720,28 +732,34 @@ class PStates(_PropsClassBase.PropsClassBase):
             yield from self._get_freq_msr(pname, cpus)
             return
 
-        raise Error(f"BUG: Unsupported mechanism '{mname}'")
+        raise Error(f"BUG: Unexpected mechanism '{mname}'")
 
     def _get_freq_limit(self,
                         pname: str,
-                        cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
+                        cpus: AbsNumsType,
+                        mname: MechanismNameType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield CPU frequency limits for the specified CPUs using the sysfs mechanism.
 
         Args:
             pname: Property name to retrieve ("min_freq_limit" or "max_freq_limit").
             cpus: CPU numbers to retrieve frequency values for.
+            mname: Name of the mechanism to use for retrieving the frequency limits.
 
         Yields:
             Tuple of (cpu, val), where 'cpu' is the CPU number and 'val' is its frequency limit in
             Hz.
         """
 
+        if mname != "sysfs":
+            raise Error(f"BUG: Unexpected mechanism '{mname}'")
+
         yield from self._get_freq_sysfs(pname, cpus)
 
     def _get_uncore_freq_cpus(self,
                               pname: str,
-                              cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
+                              cpus: AbsNumsType,
+                              mname: MechanismNameType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield uncore frequency values for the specified CPUs using the sysfs mechanism.
 
@@ -750,11 +768,15 @@ class PStates(_PropsClassBase.PropsClassBase):
                    "min_uncore_freq", "max_uncore_freq", "min_uncore_freq_limit", and
                    "max_uncore_freq_limit".
             cpus: CPU numbers to retrieve uncore frequency values for.
+            mname: Name of the mechanism to use for retrieving the uncore frequency values.
 
         Yields:
             Tuples of (cpu, val), where 'cpu' is the CPU number and 'val' is its uncore frequency in
             Hz.
         """
+
+        if mname != "sysfs":
+            raise Error(f"BUG: Unexpected mechanism '{mname}'")
 
         uncfreq_obj = self._get_uncfreq_sysfs_obj()
 
@@ -877,34 +899,33 @@ class PStates(_PropsClassBase.PropsClassBase):
 
             yield cpu, freqs
 
-    def _get_frequencies(self, cpus: AbsNumsType) -> Generator[tuple[int, list[int]], None, None]:
+    def _get_frequencies(self,
+                         cpus: AbsNumsType,
+                         mname: MechanismNameType) -> Generator[tuple[int, list[int]], None, None]:
         """
         Retrieve and yield available CPU frequencies for the specified CPUs using the given
         mechanism.
 
         Args:
             cpus: CPU numbers to retrieve frequencies for.
+            mname: Name of the mechanism to use for retrieving frequencies.
 
         Yields:
             Tuples of (cpu, freqs), where 'cpu' is the CPU number and 'freqs' is a list of available
             frequencies in Hz for that CPU.
         """
 
-        cpufreq_obj = self._get_cpufreq_sysfs_obj()
-
-        yielded = False
-
-        try:
+        if mname == "sysfs":
+            cpufreq_obj = self._get_cpufreq_sysfs_obj()
             for cpu, freq in cpufreq_obj.get_available_frequencies(cpus):
-                yielded = True
                 yield cpu, freq
-        except ErrorNotSupported:
-            if yielded:
-                raise
-        else:
             return
 
-        yield from self._get_frequencies_intel(cpus)
+        if mname == "doc":
+            yield from self._get_frequencies_intel(cpus)
+            return
+
+        raise Error(f"BUG: Unexpected mechanism '{mname}'")
 
     def _get_bus_clock(self,
                        cpus: AbsNumsType,
@@ -944,7 +965,7 @@ class PStates(_PropsClassBase.PropsClassBase):
                 return
             raise ErrorTryAnotherMechanism(f"Use the 'msr' method for {self._cpuinfo.cpudescr}")
 
-        raise Error(f"BUG: Unsupported mechanism '{mname}'")
+        raise Error(f"BUG: Unexpected mechanism '{mname}'")
 
     def _read_int(self, path: Path) -> int:
         """
@@ -963,77 +984,107 @@ class PStates(_PropsClassBase.PropsClassBase):
                         f"{self._pman.hostmsg}")
         return int(val)
 
-    def _get_turbo(self, cpus: AbsNumsType) -> Generator[tuple[int, str], None, None]:
+    def _get_turbo(self,
+                   cpus: AbsNumsType,
+                   mname: MechanismNameType) -> Generator[tuple[int, str], None, None]:
         """
         Retrieve and yield the turbo status (on/off) for the specified CPUs.
 
         Args:
             cpus: CPU numbers to retrieve turbo status for.
+            mname: Name of the mechanism to use for retrieving turbo status.
 
         Yields:
             Tuples of (cpu, status), where 'cpu' is the CPU number and 'status' is its turbo status
             ("on" or "off").
         """
 
+        if mname != "sysfs":
+            raise Error(f"BUG: Unexpected mechanism '{mname}'")
+
         cpufreq_obj = self._get_cpufreq_sysfs_obj()
         yield from cpufreq_obj.get_turbo(cpus)
 
-    def _get_driver(self, cpus: AbsNumsType) -> Generator[tuple[int, str], None, None]:
+    def _get_driver(self,
+                    cpus: AbsNumsType,
+                    mname: MechanismNameType) -> Generator[tuple[int, str], None, None]:
         """
         Retrieve and yield the Linux CPU frequency driver name for the specified CPUs.
 
         Args:
             cpus: CPU numbers to retrieve driver names for.
+            mname: Name of the mechanism to use for retrieving driver names.
 
         Yields:
             Tuples of (cpu, driver), where 'cpu' is the CPU number and 'driver' is its driver name.
             The driver name is obtained from the sysfs interface.
         """
 
+        if mname != "sysfs":
+            raise Error(f"BUG: Unexpected mechanism '{mname}'")
+
         cpufreq_obj = self._get_cpufreq_sysfs_obj()
         yield from cpufreq_obj.get_driver(cpus)
 
-    def _get_intel_pstate_mode(self, cpus: AbsNumsType) -> Generator[tuple[int, str], None, None]:
+    def _get_intel_pstate_mode(self,
+                               cpus: AbsNumsType,
+                               mname: MechanismNameType) -> Generator[tuple[int, str], None, None]:
         """
         Retrieve and yield the 'intel_pstate' mode name for the specified CPUs.
 
         Args:
             cpus: CPU numbers to retrieve 'intel_pstate' mode names for.
+            mname: Name of the mechanism to use for retrieving 'intel_pstate' mode names.
 
         Yields:
             Tuples of (cpu, mode), where 'cpu' is the CPU number and 'mode' is its 'intel_pstate'
             mode name. The mode name is obtained from the sysfs interface.
         """
 
+        if mname != "sysfs":
+            raise Error(f"BUG: Unexpected mechanism '{mname}'")
+
         cpufreq_obj = self._get_cpufreq_sysfs_obj()
         yield from cpufreq_obj.get_intel_pstate_mode(cpus)
 
-    def _get_governor(self, cpus: AbsNumsType) -> Generator[tuple[int, str], None, None]:
+    def _get_governor(self,
+                      cpus: AbsNumsType,
+                      mname: MechanismNameType) -> Generator[tuple[int, str], None, None]:
         """
         Retrieve and yield the current CPU frequency governor for the specified CPUs.
 
         Args:
             cpus: CPU numbers to retrieve governor names for.
+            mname: Name of the mechanism to use for retrieving governor names.
 
         Yields:
             Tuples of (cpu, governor), where 'cpu' is the CPU number and 'governor' is its current
             CPU frequency governor. The governor name is obtained from the sysfs interface.
         """
 
+        if mname != "sysfs":
+            raise Error(f"BUG: Unexpected mechanism '{mname}'")
+
         cpufreq_obj = self._get_cpufreq_sysfs_obj()
         yield from cpufreq_obj.get_governor(cpus)
 
-    def _get_governors(self, cpus: AbsNumsType) -> Generator[tuple[int, list[str]], None, None]:
+    def _get_governors(self,
+                       cpus: AbsNumsType,
+                       mname: MechanismNameType) -> Generator[tuple[int, list[str]], None, None]:
         """
         Retrieve and yield available CPU frequency governors for the specified CPUs.
 
         Args:
             cpus: CPU numbers to retrieve available governors for.
+            mname: Name of the mechanism to use for retrieving governor names.
 
         Yields:
             Tuples of (cpu, governors), where 'cpu' is the CPU number and 'governors' is a list of
             available governor names (strings).
         """
+
+        if mname != "sysfs":
+            raise Error(f"BUG: Unexpected mechanism '{mname}'")
 
         cpufreq_obj = self._get_cpufreq_sysfs_obj()
         yield from cpufreq_obj.get_available_governors(cpus)
@@ -1063,9 +1114,9 @@ class PStates(_PropsClassBase.PropsClassBase):
         elif pname == "epb":
             yield from self._get_epb(cpus, mname)
         elif pname == "max_eff_freq":
-            yield from self._get_max_eff_freq(cpus)
+            yield from self._get_max_eff_freq(cpus, mname)
         elif pname == "hwp":
-            yield from self._get_hwp(cpus)
+            yield from self._get_hwp(cpus, mname)
         elif pname == "min_oper_freq":
             yield from self._get_min_oper_freq(cpus, mname)
         elif pname == "max_turbo_freq":
@@ -1075,40 +1126,46 @@ class PStates(_PropsClassBase.PropsClassBase):
         elif pname in {"min_freq", "max_freq"}:
             yield from self._get_freq(pname, cpus, mname)
         elif pname in {"min_freq_limit", "max_freq_limit"}:
-            yield from self._get_freq_limit(pname, cpus)
+            yield from self._get_freq_limit(pname, cpus, mname)
         elif self._is_uncore_prop(pname):
-            yield from self._get_uncore_freq_cpus(pname, cpus)
+            yield from self._get_uncore_freq_cpus(pname, cpus, mname)
         elif pname == "frequencies":
-            yield from self._get_frequencies(cpus)
+            yield from self._get_frequencies(cpus, mname)
         elif pname == "bus_clock":
             yield from self._get_bus_clock(cpus, mname)
         elif pname == "turbo":
-            yield from self._get_turbo(cpus)
+            yield from self._get_turbo(cpus, mname)
         elif pname == "driver":
-            yield from self._get_driver(cpus)
+            yield from self._get_driver(cpus, mname)
         elif pname == "intel_pstate_mode":
-            yield from self._get_intel_pstate_mode(cpus)
+            yield from self._get_intel_pstate_mode(cpus, mname)
         elif pname == "governor":
-            yield from self._get_governor(cpus)
+            yield from self._get_governor(cpus, mname)
         elif pname == "governors":
-            yield from self._get_governors(cpus)
+            yield from self._get_governors(cpus, mname)
         else:
             raise Error(f"BUG: Unknown property '{pname}'")
 
     def _get_uncore_freq_dies(self,
                               pname: str,
-                              dies: RelNumsType) -> Generator[tuple[int, int, int], None, None]:
+                              dies: RelNumsType,
+                              mname: MechanismNameType) -> Generator[tuple[int, int, int],
+                                                                     None, None]:
         """
         Retrieve and yield uncore frequency values for the specified dies using the sysfs mechanism.
 
         Args:
             pname: Name of the uncore frequency property to retrieve (e.g., "min_uncore_freq").
             dies: Dictionary mapping package numbers to collections of die numbers.
+            mname: Name of the mechanism to use for property retrieval.
 
         Yields:
             Tuples of (package, die, val), where 'package' is the package number, 'die' is the die
             number, and 'val' is the uncore frequency or limit.
         """
+
+        if mname != "sysfs":
+            raise Error(f"BUG: Unexpected mechanism '{mname}'")
 
         uncfreq_obj = self._get_uncfreq_sysfs_obj()
 
@@ -1154,51 +1211,72 @@ class PStates(_PropsClassBase.PropsClassBase):
         else:
             # In case of uncore frequency, there may be I/O dies, which have no CPUs, so implement
             # per-die access.
-            yield from self._get_uncore_freq_dies(pname, dies)
+            yield from self._get_uncore_freq_dies(pname, dies, mname)
 
-    def _set_turbo(self, enable: bool, cpus: AbsNumsType) -> MechanismNameType:
+    def _set_turbo(self,
+                   enable: bool,
+                   cpus: AbsNumsType,
+                   mname: MechanismNameType) -> MechanismNameType:
         """
         Enable or disable turbo mode for the specified CPUs.
 
         Args:
             enable: Whether to enable (True) or disable (False) turbo mode.
             cpus: CPU numbers to set turbo mode for.
+            mname: Name of the mechanism to use for setting turbo mode.
 
         Returns:
             Name of the mechanism used to set turbo mode (e.g., "sysfs").
         """
 
+        if mname != "sysfs":
+            raise Error(f"BUG: Unexpected mechanism '{mname}'")
+
         cpufreq_obj = self._get_cpufreq_sysfs_obj()
         cpufreq_obj.set_turbo(enable, cpus=cpus)
         return "sysfs"
 
-    def _set_intel_pstate_mode(self, mode: str, cpus: AbsNumsType) -> MechanismNameType:
+    def _set_intel_pstate_mode(self,
+                               mode: str,
+                               cpus: AbsNumsType,
+                               mname: MechanismNameType) -> MechanismNameType:
         """
         Set the 'intel_pstate' driver mode for the specified CPUs.
 
         Args:
             mode: Name of the mode to set (e.g., "powersave", "performance").
             cpus: CPU numbers to set the mode for.
+            mname: Name of the mechanism to use for setting the mode.
 
         Returns:
             The name of the mechanism used to set the mode (e.g., 'sysfs').
         """
 
+        if mname != "sysfs":
+            raise Error(f"BUG: Unexpected mechanism '{mname}'")
+
         cpufreq_obj = self._get_cpufreq_sysfs_obj()
         cpufreq_obj.set_intel_pstate_mode(mode, cpus=cpus)
         return "sysfs"
 
-    def _set_governor(self, governor: str, cpus: AbsNumsType) -> MechanismNameType:
+    def _set_governor(self,
+                      governor: str,
+                      cpus: AbsNumsType,
+                      mname: MechanismNameType) -> MechanismNameType:
         """
         Set the CPU frequency governor for the specified CPUs.
 
         Args:
             governor: Name of the governor to set (e.g., "performance", "powersave").
             cpus: CPUs to apply the governor setting to.
+            mname: Name of the mechanism to use for setting the governor.
 
         Returns:
             The name of the mechanism used to set the governor (e.g., "sysfs").
         """
+
+        if mname != "sysfs":
+            raise Error(f"BUG: Unexpected mechanism '{mname}'")
 
         cpufreq_obj = self._get_cpufreq_sysfs_obj()
         cpufreq_obj.set_governor(governor, cpus=cpus)
@@ -1422,7 +1500,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         elif mname == "msr":
             set_freq_method = self._set_freq_prop_cpus_msr
         else:
-            raise Error(f"BUG: Unsupported mechanism '{mname}'")
+            raise Error(f"BUG: Unexpected mechanism '{mname}'")
 
         new_freq_iter = self._get_numeric_cpu_freq(val, cpus)
         min_limit_iter = self._get_prop_cpus_mnames("min_freq_limit", cpus, mnames=(mname,))
@@ -1504,8 +1582,8 @@ class PStates(_PropsClassBase.PropsClassBase):
     def _set_prop_cpus(self,
                        pname: str,
                        val: typing.Any,
-                       cpus: "AbsNumsType",
-                       mname: "MechanismNameType") -> MechanismNameType:
+                       cpus: AbsNumsType,
+                       mname: MechanismNameType) -> MechanismNameType:
         """
         Set the specified property to a given value for for specified CPUs using a specified
         mechanism.
@@ -1535,11 +1613,11 @@ class PStates(_PropsClassBase.PropsClassBase):
         if pname == "epb":
             return self._get_epbobj().set_vals(val, cpus=cpus, mnames=(mname,))
         if pname == "turbo":
-            return self._set_turbo(val, cpus)
+            return self._set_turbo(val, cpus, mname)
         if pname == "intel_pstate_mode":
-            return self._set_intel_pstate_mode(val, cpus)
+            return self._set_intel_pstate_mode(val, cpus, mname)
         if pname == "governor":
-            return self._set_governor(val, cpus)
+            return self._set_governor(val, cpus, mname)
         if pname in ("min_freq", "max_freq"):
             return self._set_cpu_freq(pname, val, cpus, mname)
 
