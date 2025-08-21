@@ -16,7 +16,7 @@ Provide a capability for reading and modifying CPU frequency settings.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
-from typing import Generator
+from typing import Generator, cast
 import contextlib
 from pathlib import Path
 from pepclibs import CPUInfo, CPUModels, _SysfsIO
@@ -1312,11 +1312,17 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         bclks_iter = self._get_bclks(cpus)
         for (cpu1, bclk), (cpu2, perf) in zip(bclks_iter, hwpreq_iter):
             assert cpu1 == cpu2
+
+            perf = cast(int, perf)
             if hwpreq.is_cpu_feature_pkg_controlled(feature_name, cpu1):
                 run_again = True
                 break
             yielded_cpus.add(cpu1)
-            yield cpu1, self._perf_to_freq(cpu1, perf, bclk)
+
+            freq = self._perf_to_freq(cpu1, perf, bclk)
+            _LOG.debug("Read CPU %d frequency from %s (%#x): %d Hz. Perf = %d, bclk = %d",
+                       cpu1, hwpreq.regname, hwpreq.regaddr, freq, perf, bclk )
+            yield cpu1, freq
 
         if not run_again:
             # Nothing uses package control, nothing more to do.
@@ -1335,11 +1341,18 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         iterator = zip(bclks_iter, hwpreq_iter, hwpreq_pkg_iter)
         for (_, bclk), (cpu1, perf), (cpu2, perf_pkg) in iterator:
             assert cpu1 == cpu2
+            perf = cast(int, perf)
+            perf_pkg = cast(int, perf_pkg)
+
             if hwpreq.is_cpu_feature_pkg_controlled(feature_name, cpu1):
                 val = perf_pkg
             else:
                 val = perf
-            yield cpu1, self._perf_to_freq(cpu1, val, bclk)
+
+            freq = self._perf_to_freq(cpu1, val, bclk)
+            _LOG.debug("Read CPU %d frequency from %s (%#x): %d Hz. Perf = %d, bclk = %d",
+                       cpu1, hwpreq_pkg.regname, hwpreq_pkg.regaddr, freq, perf, bclk )
+            yield cpu1, freq
 
     def get_min_freq(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
