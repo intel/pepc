@@ -22,7 +22,7 @@ import contextlib
 import statistics
 
 from pepclibs import _PropsClassBase
-from pepclibs.helperlibs import Trivial, Human, ClassHelpers
+from pepclibs.helperlibs import Trivial, Human, ClassHelpers, Logging
 
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorVerifyFailed
 from pepclibs.helperlibs.Exceptions import ErrorOutOfRange
@@ -43,6 +43,8 @@ class ErrorFreqOrder(Error):
     """
     Raise when modification of minimum or maximum frequency fails due to ordering constraints.
     """
+
+_LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
 # Special values for writable CPU frequency properties.
 _SPECIAL_FREQ_VALS = {"min", "max", "base", "hfm", "P1", "eff", "lfm", "Pn", "Pm"}
@@ -1053,6 +1055,9 @@ class PStates(_PropsClassBase.PropsClassBase):
             value for that CPU.
         """
 
+        _LOG.debug("Getting property '%s' using mechanism '%s', cpus: %s",
+                   pname, mname, self._cpuinfo.cpus_to_str(cpus))
+
         if pname == "epp":
             yield from self._get_epp(cpus, mname)
         elif pname == "epb":
@@ -1139,6 +1144,9 @@ class PStates(_PropsClassBase.PropsClassBase):
             Tuples of (package, die, value), where 'package' is the package number, 'die' is the
             die number, and 'value' is the property value for that die.
         """
+
+        _LOG.debug("Getting property '%s' using mechanism '%s', packages/dies: %s",
+                   pname, mname, dies)
 
         if not self._is_uncore_prop(pname):
             # Use the default implementation for anything but uncore frequency.
@@ -1512,6 +1520,9 @@ class PStates(_PropsClassBase.PropsClassBase):
             The name of the mechanism used to set the property (e.g., 'sysfs', 'msr', etc.).
         """
 
+        _LOG.debug("Setting property '%s' to value '%s' using mechanism '%s', cpus: %s",
+                   pname, val, mname, self._cpuinfo.cpus_to_str(cpus))
+
         if pname == "epp":
             try:
                 return self._get_eppobj().set_vals(val, cpus=cpus, mnames=(mname,))
@@ -1673,6 +1684,9 @@ class PStates(_PropsClassBase.PropsClassBase):
         Returns:
             Name of the mechanism used to set the property (e.g., 'sysfs', 'msr').
         """
+
+        _LOG.debug("Setting property '%s' to value '%s' using mechanism '%s', packages/dies: %s",
+                   pname, val, mname, dies)
 
         if pname not in ("min_uncore_freq", "max_uncore_freq"):
             return super()._set_prop_dies(pname, val, dies, mname)

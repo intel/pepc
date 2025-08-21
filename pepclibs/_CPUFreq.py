@@ -456,7 +456,8 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
             yield cpu, sorted(freqs)
 
-    def _get_base_freq_intel_pstate(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
+    def _get_base_freq_intel_pstate(self,
+                                    cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the base frequency for specified CPUs using the 'intel_pstate' driver.
 
@@ -474,7 +475,8 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             # The frequency value is in kHz in sysfs.
             yield cpu, freq * 1000
 
-    def _get_base_freq_bios_limit(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
+    def _get_base_freq_bios_limit(self,
+                                  cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the base frequency for specified CPUs using the 'bios_limit' sysfs file.
 
@@ -1535,6 +1537,7 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
 
         for (cpu1, bclk), (cpu2, ratio) in zip(bclks_iter, platinfo_iter):
             assert cpu1 == cpu2
+            ratio = cast(int, ratio)
             yield cpu1, ratio * bclk
 
     def _get_hwpcap_freq(self,
@@ -1562,6 +1565,7 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
 
         for (cpu1, bclk), (cpu2, perf) in zip(bclks_iter, hwpcap_iter):
             assert cpu1 == cpu2
+            perf = cast(int, perf)
             yield cpu1, self._perf_to_freq(cpu1, perf, bclk)
 
     def get_base_freq(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
@@ -1668,6 +1672,7 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         try:
             for (cpu1, bclk), (cpu2, ratio) in zip(bclks_iter, trl_iter):
                 assert cpu1 == cpu2
+                ratio = cast(int, ratio)
                 yielded = True
                 yield cpu1, ratio * bclk
         except ErrorNotSupported as err1:
@@ -1681,6 +1686,7 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
                 # not need to look at 'MSR_TURBO_RATIO_LIMIT1'.
                 for (cpu1, bclk), (cpu2, ratio) in zip(bclks_iter, trl_iter):
                     assert cpu1 == cpu2
+                    ratio = cast(int, ratio)
                     yield cpu1, ratio * bclk
             except ErrorNotSupported as err2:
                 _LOG.warn_once("Module 'TurboRatioLimit' doesn't support "

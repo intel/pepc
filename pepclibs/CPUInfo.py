@@ -89,6 +89,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         - 'cpus_div_dies()' - by dies.
         - 'cpus_div_packages()' - by packages.
     8. Miscellaneous.
+        - 'cpus_to_str()' - turn a collection of CPU numbers into a string.
         - 'dies_to_str()' - turn a die numbers dictionary into a string.
     """
 
@@ -1477,16 +1478,36 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         return self._get_hybrid_cpus()
 
     @staticmethod
-    def dies_to_str(dies: RelNumsType) -> str:
+    def cpus_to_str(cpus: AbsNumsType | Literal["all"]) -> str:
+        """
+        Convert a collection of CPU numbers or to a human-readable string representation.
+
+        Args:
+            cpus: The collection of CPU numbers or the string "all".
+
+        Returns:
+            String representation of the collection of CPU numbers.
+        """
+
+        if cpus == "all":
+            return cpus
+
+        return Trivial.rangify(cpus)
+
+    @staticmethod
+    def dies_to_str(dies: RelNumsType | Literal["all"]) -> str:
         """
         Convert a dictionary of package-to-die mappings into a human-readable string.
 
         Args:
-            dies: Dictionary mapping package numbers to lists of die numbers.
+            dies: Dictionary mapping package numbers to lists of die numbers or the string "all".
 
         Returns:
             A string describing the dies for each package in a readable format.
         """
+
+        if dies == "all":
+            return dies
 
         dies_strs = []
         for package, pkg_dies in dies.items():
