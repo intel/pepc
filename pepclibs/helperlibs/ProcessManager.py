@@ -18,8 +18,7 @@ as if it was a local host.
 from  __future__ import annotations # Remove when switching to Python 3.10+.
 
 import contextlib
-from typing import Union, Any, cast
-from pepclibs.helperlibs.Exceptions import Error
+from typing import Union, cast
 from pepclibs.helperlibs import LocalProcessManager, SSHProcessManager, EmulProcessManager
 # pylint: disable-next=unused-import
 from pepclibs.helperlibs._ProcessManagerBase import ProcWaitResultType, LsdirTypedDict
@@ -29,23 +28,6 @@ ProcessManagerType = Union[LocalProcessManager.LocalProcessManager,
                            EmulProcessManager.EmulProcessManager]
 
 ProcessType = Union[LocalProcessManager.LocalProcess, SSHProcessManager.SSHProcess]
-
-def _check_for_none(hostname: str, kwargs: dict[str, Any]):
-    """
-    Ensure all keyword arguments in 'kwargs' are set to 'None'.
-
-    Args:
-        hostname: The hostname associated with the check, used for error messages.
-        kwargs: Arbitrary keyword arguments to validate.
-
-    Raises:
-        Error: If any value in 'kwargs' is not 'None'.
-    """
-
-    for name, val in kwargs.items():
-        if val is not None:
-            raise Error(f"BUG: get_pman(): hostname is '{hostname}', but argument '{name}' is not "
-                        f"'None'. Instead, it is '{val}'")
 
 def get_pman(hostname: str,
              username: str | None = None,
@@ -74,8 +56,7 @@ def get_pman(hostname: str,
                    'SSHProcessManager'.
          privkeypath: Path to the SSH private key for authentication. Only used for
                      'SSHProcessManager'.
-         timeout: The SSH connection timeout in seconds. Only used for
-                  'SSHProcessManager'.
+         timeout: The SSH connection timeout in seconds. Only used for 'SSHProcessManager'.
 
     Returns:
          An instance of the appropriate process manager class.
@@ -94,8 +75,6 @@ def get_pman(hostname: str,
     pman: ProcessManagerType | None = None
 
     if hostname == "localhost" and username is None:
-        kwargs = {"username": username, "privkeypath": privkeypath, "timeout": timeout}
-        _check_for_none(hostname, kwargs)
         pman = LocalProcessManager.LocalProcessManager()
     elif hostname.startswith("emulation"):
         pman = EmulProcessManager.EmulProcessManager(hostname=hostname)
