@@ -501,7 +501,8 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
         read_method_name = f"_get_{fname}"
         read_method: _ReadFeatureMethodType | None = getattr(self, read_method_name, None)
 
-        _LOG.debug("Reading feature '%s' (%s) on CPUs %s", fname, self.msr_bits_str(fname), cpus)
+        _LOG.debug("Reading feature '%s' (%s) on CPUs %s",
+                   fname, self.msr_bits_str(fname), Trivial.rangify(cpus))
 
         if read_method:
             # pylint: disable=not-callable
@@ -554,7 +555,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
             raise Error(f"Feature '{fname}' is not boolean, use 'read_feature()' instead")
 
         _LOG.debug("Checking if feature '%s' (%s) is enabled on CPUs %s",
-                   fname, self.msr_bits_str(fname), cpus)
+                   fname, self.msr_bits_str(fname), Trivial.rangify(cpus))
 
         for cpu, val in self.read_feature(fname, cpus=cpus):
             enabled = val in {"on", "enabled"}
@@ -595,7 +596,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
         val = self._normalize_feature_value(fname, val)
 
         _LOG.debug("Writing feature '%s' (%s) on CPUs %s, value: %s",
-                   fname, self.msr_bits_str(fname), cpus, val)
+                   fname, self.msr_bits_str(fname), Trivial.rangify(cpus), val)
 
         finfo = self._features[fname]
         if not finfo["writable"]:
