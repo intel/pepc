@@ -1785,7 +1785,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                        pname: str,
                        val: PropertyValueType,
                        dies: RelNumsType,
-                       mname: MechanismNameType) -> MechanismNameType:
+                       mname: MechanismNameType):
         """
         Set a property to a specified value for specified dies using a specified mechanism.
 
@@ -1796,9 +1796,6 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             val: Value to set the property to.
             die: Die numbers to set the property for.
             mname: Name of the mechanism to use for setting the property.
-
-        Returns:
-            Name of the mechanism used to set the property.
 
         Raises:
             ErrorNotSupported: If the property is not supported for the specified dies and
@@ -1817,7 +1814,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             raise Error(f"BUG: I/O scope was not set for property '{pname}'")
 
         cpus = self._reduce_cpus_ioscope(cpus, iosname)
-        return self._set_prop_cpus_mnames(pname, val, cpus, mnames=(mname,))
+        self._set_prop_cpus_mnames(pname, val, cpus, mnames=(mname,))
 
     def _set_prop_dies_mnames(self,
                               pname: str,

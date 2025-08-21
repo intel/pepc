@@ -15,15 +15,12 @@ Provide a capability of retrieving and setting P-state related properties.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
-from pathlib import Path
-from typing import Generator, NoReturn, cast
-
 import contextlib
 import statistics
-
+from pathlib import Path
+from typing import Generator, NoReturn, cast
 from pepclibs import _PropsClassBase
 from pepclibs.helperlibs import Trivial, Human, ClassHelpers, Logging
-
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorVerifyFailed
 from pepclibs.helperlibs.Exceptions import ErrorOutOfRange
 from pepclibs._PropsClassBase import ErrorTryAnotherMechanism
@@ -1213,10 +1210,7 @@ class PStates(_PropsClassBase.PropsClassBase):
             # per-die access.
             yield from self._get_uncore_freq_dies(pname, dies, mname)
 
-    def _set_turbo(self,
-                   enable: bool,
-                   cpus: AbsNumsType,
-                   mname: MechanismNameType) -> MechanismNameType:
+    def _set_turbo(self, enable: bool, cpus: AbsNumsType, mname: MechanismNameType):
         """
         Enable or disable turbo mode for the specified CPUs.
 
@@ -1224,9 +1218,6 @@ class PStates(_PropsClassBase.PropsClassBase):
             enable: Whether to enable (True) or disable (False) turbo mode.
             cpus: CPU numbers to set turbo mode for.
             mname: Name of the mechanism to use for setting turbo mode.
-
-        Returns:
-            Name of the mechanism used to set turbo mode (e.g., "sysfs").
         """
 
         if mname != "sysfs":
@@ -1234,12 +1225,8 @@ class PStates(_PropsClassBase.PropsClassBase):
 
         cpufreq_obj = self._get_cpufreq_sysfs_obj()
         cpufreq_obj.set_turbo(enable, cpus=cpus)
-        return "sysfs"
 
-    def _set_intel_pstate_mode(self,
-                               mode: str,
-                               cpus: AbsNumsType,
-                               mname: MechanismNameType) -> MechanismNameType:
+    def _set_intel_pstate_mode(self, mode: str, cpus: AbsNumsType, mname: MechanismNameType):
         """
         Set the 'intel_pstate' driver mode for the specified CPUs.
 
@@ -1247,9 +1234,6 @@ class PStates(_PropsClassBase.PropsClassBase):
             mode: Name of the mode to set (e.g., "powersave", "performance").
             cpus: CPU numbers to set the mode for.
             mname: Name of the mechanism to use for setting the mode.
-
-        Returns:
-            The name of the mechanism used to set the mode (e.g., 'sysfs').
         """
 
         if mname != "sysfs":
@@ -1257,7 +1241,6 @@ class PStates(_PropsClassBase.PropsClassBase):
 
         cpufreq_obj = self._get_cpufreq_sysfs_obj()
         cpufreq_obj.set_intel_pstate_mode(mode, cpus=cpus)
-        return "sysfs"
 
     def _set_governor(self,
                       governor: str,
@@ -1503,8 +1486,10 @@ class PStates(_PropsClassBase.PropsClassBase):
             raise Error(f"BUG: Unexpected mechanism '{mname}'")
 
         new_freq_iter = self._get_numeric_cpu_freq(val, cpus)
-        min_limit_iter = self._get_prop_cpus_mnames("min_freq_limit", cpus, mnames=(mname,))
-        max_limit_iter = self._get_prop_cpus_mnames("max_freq_limit", cpus, mnames=(mname,))
+        if mname in self._props["min_freq_limit"]["mnames"]:
+            min_limit_iter = self._get_prop_cpus_mnames("min_freq_limit", cpus, mnames=(mname,))
+            max_limit_iter = self._get_prop_cpus_mnames("max_freq_limit", cpus, mnames=(mname,))
+
         cur_freq_limit_pname = "max_freq" if is_min else "min_freq"
         cur_freq_limit_iter = self._get_prop_cpus_mnames(cur_freq_limit_pname, cpus,
                                                          mnames=(mname,))
@@ -1583,7 +1568,7 @@ class PStates(_PropsClassBase.PropsClassBase):
                        pname: str,
                        val: typing.Any,
                        cpus: AbsNumsType,
-                       mname: MechanismNameType) -> MechanismNameType:
+                       mname: MechanismNameType):
         """
         Set the specified property to a given value for for specified CPUs using a specified
         mechanism.
@@ -1593,9 +1578,6 @@ class PStates(_PropsClassBase.PropsClassBase):
             val: The value to assign to the property.
             cpus: CPU numbers to apply the property setting to.
             mname: Name of the mechanism to use for setting the property.
-
-        Returns:
-            The name of the mechanism used to set the property (e.g., 'sysfs', 'msr', etc.).
         """
 
         _LOG.debug("Setting property '%s' to value '%s' using mechanism '%s', cpus: %s",
@@ -1603,25 +1585,24 @@ class PStates(_PropsClassBase.PropsClassBase):
 
         if pname == "epp":
             try:
-                return self._get_eppobj().set_vals(val, cpus=cpus, mnames=(mname,))
+                self._get_eppobj().set_vals(val, cpus=cpus, mnames=(mname,))
             except Error as err:
                 msg = self._handle_epp_set_exception(val, mname, err)
                 if msg is None:
                     raise
                 raise type(err)(msg) from err
-
-        if pname == "epb":
-            return self._get_epbobj().set_vals(val, cpus=cpus, mnames=(mname,))
-        if pname == "turbo":
-            return self._set_turbo(val, cpus, mname)
-        if pname == "intel_pstate_mode":
-            return self._set_intel_pstate_mode(val, cpus, mname)
-        if pname == "governor":
-            return self._set_governor(val, cpus, mname)
-        if pname in ("min_freq", "max_freq"):
-            return self._set_cpu_freq(pname, val, cpus, mname)
-
-        raise Error("BUG: Unsupported property '{pname}'")
+        elif pname == "epb":
+            self._get_epbobj().set_vals(val, cpus=cpus, mnames=(mname,))
+        elif pname == "turbo":
+            self._set_turbo(val, cpus, mname)
+        elif pname == "intel_pstate_mode":
+            self._set_intel_pstate_mode(val, cpus, mname)
+        elif pname == "governor":
+            self._set_governor(val, cpus, mname)
+        elif pname in ("min_freq", "max_freq"):
+            self._set_cpu_freq(pname, val, cpus, mname)
+        else:
+            raise Error(f"BUG: Unsupported property '{pname}'")
 
     def _set_uncore_freq_prop_dies(self, pname: str, freq: int, dies: RelNumsType):
         """
@@ -1748,7 +1729,7 @@ class PStates(_PropsClassBase.PropsClassBase):
                        pname: str,
                        val: typing.Any,
                        dies: RelNumsType,
-                       mname: MechanismNameType) -> MechanismNameType:
+                       mname: MechanismNameType):
         """
         Set the specified property to a given value for the provided dies using the specified
         mechanism.
@@ -1758,18 +1739,15 @@ class PStates(_PropsClassBase.PropsClassBase):
             val: Value to assign to the property.
             dies: Mapping of package numbers to collections of die numbers.
             mname: Name of the mechanism to use for setting the property.
-
-        Returns:
-            Name of the mechanism used to set the property (e.g., 'sysfs', 'msr').
         """
 
         _LOG.debug("Setting property '%s' to value '%s' using mechanism '%s', packages/dies: %s",
                    pname, val, mname, dies)
 
         if pname not in ("min_uncore_freq", "max_uncore_freq"):
-            return super()._set_prop_dies(pname, val, dies, mname)
+            super()._set_prop_dies(pname, val, dies, mname)
 
-        return self._set_uncore_freq(pname, val, dies, mname)
+        self._set_uncore_freq(pname, val, dies, mname)
 
     def _set_sname(self, pname: str):
         """

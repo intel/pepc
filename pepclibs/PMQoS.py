@@ -84,7 +84,7 @@ class PMQoS(_PropsClassBase.PropsClassBase):
         linux_pmqos_obj = self._get_linux_pmqos_obj()
 
         if pname == "latency_limit":
-            return linux_pmqos_obj.set_latency_limit(val, cpus)
+            linux_pmqos_obj.set_latency_limit(val, cpus)
 
         raise Error("BUG: unsupported property '{pname}'")
 
