@@ -144,14 +144,14 @@ target CPU specification options to define a subset of CPUs, cores, dies, or pac
    Display available mechanisms for retrieving P-states information.
 
 **--min-freq**
-   Retrieve the minimum CPU frequency using 'sysfs' (preferred) or 'msr'. The 'sysfs' mechanism reads
-   '/sys/devices/system/cpu/cpu<NUMBER>/cpufreq/scaling_min_freq', while 'msr' reads the MSR_HWP_REQUEST
-   (0x774) register, bits 7:0.
+   Retrieve the minimum CPU frequency using the 'sysfs' or 'msr' mechanisms. The 'sysfs' mechanism
+   reads '/sys/devices/system/cpu/cpu<NUMBER>/cpufreq/scaling_min_freq', while 'msr' reads the
+   MSR_HWP_REQUEST (0x774) register, bits 7:0.
 
 **--max-freq**
-   Retrieve the maximum CPU frequency using 'sysfs' (preferred) or 'msr'. The 'sysfs' mechanism reads
-   '/sys/devices/system/cpu/cpu<NUMBER>/cpufreq/scaling_max_freq', while 'msr' reads the MSR_HWP_REQUEST
-   (0x774) register, bits 15:8.
+   Retrieve the maximum CPU frequency using the 'sysfs' or 'msr' mechanisms. The 'sysfs' mechanism
+   reads '/sys/devices/system/cpu/cpu<NUMBER>/cpufreq/scaling_max_freq', while 'msr' reads the
+   MSR_HWP_REQUEST (0x774) register, bits 15:8.
 
 **--min-freq-limit**
    Retrieve the minimum CPU frequency supported by the Linux kernel from
@@ -311,28 +311,36 @@ packages.
 
 **--min-freq** *MIN_FREQ*
    Set the minimum CPU frequency. The default unit is 'Hz', but 'kHz', 'MHz', and 'GHz' can also be
-   used (for example "900MHz"). Preferred mechanism is 'sysfs', which uses
-   '/sys/devices/system/cpu/cpu<NUMBER>/cpufreq/scaling_min_freq'. The 'msr' mechanism uses the
+   used (for example "900MHz"). The supported mechanisms are: 'sysfs', 'msr'. The 'sysfs' mechanism
+   uses '/sys/devices/system/cpu/cpu<NUMBER>/cpufreq/scaling_min_freq'. The 'msr' mechanism uses the
    MSR_HWP_REQUEST (0x774) register, bits 7:0.
 
    The following special values can also be used:
    **min**
       Minimum frequency supported by the Linux CPU frequency driver (see '--min-freq-limit').
+      Regardless of the '--mechanisms' option, the 'sysfs' mechanism is always used to resolve 'min'
+      to the actual minimum frequency.
    **max**
       Maximum frequency supported by the Linux CPU frequency driver (see '--max-freq-limit').
+      Regardless of the '--mechanisms' option, the 'sysfs' mechanism is always used to resolve 'max'
+      to the actual maximum frequency.
    **base**, **hfm**, **P1**
-      Base CPU frequency (see '--base-freq').
+      Base CPU frequency (see '--base-freq'). Regardless of the '--mechanisms' option, all available
+      mechanisms are tried to resolve these special values to the actual base frequency.
    **eff**, **lfm**, **Pn**
-      Maximum CPU efficiency frequency (see '--max-eff-freq').
+      Maximum CPU efficiency frequency (see '--max-eff-freq'). Regardless of the '--mechanisms'
+      option, the 'msr' mechanism is always used to resolve these special values to the actual
+      maximum CPU efficiency frequency.
    **Pm**
-      Minimum CPU operating frequency (see '--min-oper-freq').
+      Minimum CPU operating frequency (see '--min-oper-freq'). Regardless of the '--mechanisms'
+      option, the 'msr' mechanism is always used to resolve these special values to the actual
+      minimum CPU operating frequency.
 
    Note, on some systems 'Pm' is lower than 'Pn'. For example, 'Pm' may be 500MHz, while 'Pn' may
    be 800MHz. On such systems, Linux may use 'Pn' as the minimum supported frequency limit. From
-   Linux's perspective, the minimum frequency could be 800MHz, not 500MHz. In this case, using
+   Linux's perspective, the minimum supported frequency is 800MHz, not 500MHz. In this case, using
    '--min-freq 500MHz --mechanisms sysfs' will fail, while '--min-freq 500MHz --mechanisms msr'
-   will succeed. By default, '--min-freq 500MHz' will also succeed as pepc tries all available
-   mechanisms.
+   will succeed.
 
 **--max-freq** *MAX_FREQ*
    Set the maximum CPU frequency. Similar to '--min-freq', but applies to the maximum frequency.
