@@ -31,7 +31,8 @@ from pepclibs._PropsClassBase import ErrorUsePerCPU
 
 if typing.TYPE_CHECKING:
     from pepclibs.msr import MSR, FSBFreq
-    from pepclibs import _SysfsIO, EPP, EPB, _CPUFreq, _UncoreFreqSysfs
+    from pepclibs import _CPUFreqSysfs, _CPUFreqCPPC, _CPUFreqMSR
+    from pepclibs import _SysfsIO, EPP, EPB, _UncoreFreqSysfs
     from pepclibs.CPUInfo import CPUInfo
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepclibs._PropsClassBaseTypes import AbsNumsType, RelNumsType, MechanismNameType
@@ -264,9 +265,9 @@ class PStates(_PropsClassBase.PropsClassBase):
         self._epbobj: EPB.EPB | None = None
         self._fsbfreq: FSBFreq.FSBFreq | None = None
 
-        self._cpufreq_sysfs_obj: _CPUFreq.CPUFreqSysfs | None = None
-        self._cpufreq_cppc_obj: _CPUFreq.CPUFreqCPPC | None = None
-        self._cpufreq_msr_obj: _CPUFreq.CPUFreqMSR | None= None
+        self._cpufreq_sysfs_obj: _CPUFreqSysfs.CPUFreqSysfs | None = None
+        self._cpufreq_cppc_obj: _CPUFreqCPPC.CPUFreqCPPC | None = None
+        self._cpufreq_msr_obj: _CPUFreqMSR.CPUFreqMSR | None= None
 
         self._uncfreq_sysfs_obj: _UncoreFreqSysfs.UncoreFreqSysfs | None = None
         self._uncfreq_sysfs_err: str | None = None
@@ -349,58 +350,59 @@ class PStates(_PropsClassBase.PropsClassBase):
 
         return self._epbobj
 
-    def _get_cpufreq_sysfs_obj(self) -> _CPUFreq.CPUFreqSysfs:
+    def _get_cpufreq_sysfs_obj(self) -> _CPUFreqSysfs.CPUFreqSysfs:
         """
         Get an 'CPUFreqSysfs' object.
 
         Returns:
-            An instance of '_CPUFreq.CPUFreqSysfs'.
+            An instance of '_CPUFreqSysfs.CPUFreqSysfs'.
         """
 
         if not self._cpufreq_sysfs_obj:
             # pylint: disable-next=import-outside-toplevel
-            from pepclibs import _CPUFreq
+            from pepclibs import _CPUFreqSysfs
 
             msr = self._get_msr()
             sysfs_io = self._get_sysfs_io()
-            self._cpufreq_sysfs_obj = _CPUFreq.CPUFreqSysfs(cpuinfo=self._cpuinfo, pman=self._pman,
-                                                            msr=msr, sysfs_io=sysfs_io,
-                                                            enable_cache=self._enable_cache)
+            self._cpufreq_sysfs_obj = _CPUFreqSysfs.CPUFreqSysfs(cpuinfo=self._cpuinfo,
+                                                                 pman=self._pman,
+                                                                 msr=msr, sysfs_io=sysfs_io,
+                                                                 enable_cache=self._enable_cache)
         return self._cpufreq_sysfs_obj
 
-    def _get_cpufreq_cppc_obj(self) -> _CPUFreq.CPUFreqCPPC:
+    def _get_cpufreq_cppc_obj(self) -> _CPUFreqCPPC.CPUFreqCPPC:
         """
         Get an 'CPUFreqCPPC' object.
 
         Returns:
-            An instance of '_CPUFreq.CPUFreqCPPC'.
+            An instance of '_CPUFreqCPPC.CPUFreqCPPC'.
         """
 
         if not self._cpufreq_cppc_obj:
             # pylint: disable-next=import-outside-toplevel
-            from pepclibs import _CPUFreq
+            from pepclibs import _CPUFreqCPPC
 
             sysfs_io = self._get_sysfs_io()
-            self._cpufreq_cppc_obj = _CPUFreq.CPUFreqCPPC(cpuinfo=self._cpuinfo, pman=self._pman,
-                                                          sysfs_io=sysfs_io,
-                                                          enable_cache=self._enable_cache)
+            self._cpufreq_cppc_obj = _CPUFreqCPPC.CPUFreqCPPC(cpuinfo=self._cpuinfo,
+                                                              pman=self._pman, sysfs_io=sysfs_io,
+                                                              enable_cache=self._enable_cache)
         return self._cpufreq_cppc_obj
 
-    def _get_cpufreq_msr_obj(self) -> _CPUFreq.CPUFreqMSR:
+    def _get_cpufreq_msr_obj(self) -> _CPUFreqMSR.CPUFreqMSR:
         """
         Get an 'CPUFreqMSR' object.
 
         Returns:
-            An instance of '_CPUFreq.CPUFreqMSR'.
+            An instance of '_CPUFreqMSR.CPUFreqMSR'.
         """
 
         if not self._cpufreq_msr_obj:
             # pylint: disable-next=import-outside-toplevel
-            from pepclibs import _CPUFreq
+            from pepclibs import _CPUFreqMSR
 
             msr = self._get_msr()
-            self._cpufreq_msr_obj = _CPUFreq.CPUFreqMSR(cpuinfo=self._cpuinfo, pman=self._pman,
-                                                        msr=msr, enable_cache=self._enable_cache)
+            self._cpufreq_msr_obj = _CPUFreqMSR.CPUFreqMSR(cpuinfo=self._cpuinfo, pman=self._pman,
+                                                           msr=msr, enable_cache=self._enable_cache)
         return self._cpufreq_msr_obj
 
     def _get_uncfreq_sysfs_obj(self) -> _UncoreFreqSysfs.UncoreFreqSysfs:
