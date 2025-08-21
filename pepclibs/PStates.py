@@ -119,7 +119,7 @@ PROPS: dict[str, PropertyTypedDict] = {
         "unit": "Hz",
         "type": "int",
         "sname": "CPU",
-        "mnames": ("msr",),
+        "mnames": ("msr", "cppc"),
         "writable": False,
     },
     "max_eff_freq": {
@@ -1433,31 +1433,19 @@ class PStates(_PropsClassBase.PropsClassBase):
 
         if freq == "min":
             yield from cast(Generator[tuple[int, int], None, None],
-                            self._get_prop_cpus_mnames("min_freq_limit", cpus))
+                            self._get_prop_cpus_mnames("min_freq_limit", cpus, mnames=("sysfs",)))
         elif freq == "max":
             yield from cast(Generator[tuple[int, int], None, None],
-                            self._get_prop_cpus_mnames("max_freq_limit", cpus))
+                            self._get_prop_cpus_mnames("max_freq_limit", cpus, mnames=("sysfs",)))
         elif freq in {"base", "hfm", "P1"}:
             yield from cast(Generator[tuple[int, int], None, None],
                             self._get_prop_cpus_mnames("base_freq", cpus))
         elif freq in {"eff", "lfm", "Pn"}:
-            idx = 0
-            try:
-                iterator = enumerate(cast(Generator[tuple[int, int], None, None],
-                                          self._get_prop_cpus_mnames("max_eff_freq", cpus)))
-                for idx, (cpu, max_eff_freq) in iterator:
-                    yield cpu, max_eff_freq
-            except ErrorNotSupported:
-                if idx != 0:
-                    # Already yielded something, consider this to be an error.
-                    raise
-                # Max. efficiency frequency may not be supported by the platform. Fall back to the
-                # minimum frequency in this case.
-                yield from cast(Generator[tuple[int, int], None, None],
-                                self._get_prop_cpus_mnames("min_freq_limit", cpus))
+            yield from cast(Generator[tuple[int, int], None, None],
+                            self._get_prop_cpus_mnames("max_eff_freq", cpus, mnames=("msr",)))
         elif freq == "Pm":
             yield from cast(Generator[tuple[int, int], None, None],
-                            self._get_prop_cpus_mnames("min_oper_freq", cpus))
+                            self._get_prop_cpus_mnames("min_oper_freq", cpus, mnames=("msr",)))
         else:
             for cpu in cpus:
                 yield cpu, cast(int, freq)
@@ -1491,26 +1479,23 @@ class PStates(_PropsClassBase.PropsClassBase):
         if mname != "msr":
             raise Error(f"BUG: Unexpected mechanism '{mname}'")
 
-        # For the minimum frequency limit, try the min. operational and efficiency frequencies
-        # first. If they are not supported by the platform, create a dummy iterator yielding a very
-        # small frequency value.
+        # For the minimum frequency limit, try the min. operational frequency. If it is not
+        # supported, fall-back to a dummy iterator that yields a very small value.
         try:
             next(self._get_prop_cpus_mnames("min_oper_freq", cpus, mnames=(mname,)))
-            min_limit_iter = self._get_prop_cpus_mnames("min_oper_freq", cpus, mnames=(mname,))
         except ErrorNotSupported:
-            try:
-                next(self._get_prop_cpus_mnames("min_eff_freq", cpus, mnames=(mname,)))
-                min_limit_iter = self._get_prop_cpus_mnames("min_eff_freq", cpus, mnames=(mname,))
-            except ErrorNotSupported:
-                min_limit_iter = itertools.repeat((0, 100_000_000), times=len(cpus)) # 100MHz.
+            min_limit_iter = itertools.repeat((0, 100_000_000), times=len(cpus)) # 100MHz.
+        else:
+            min_limit_iter = self._get_prop_cpus_mnames("min_oper_freq", cpus, mnames=(mname,))
 
         # For the maximum frequency limit, try the max. turbo frequency. If it is not supported,
         # fall-back to a dummy iterator that yields a very large frequency value.
         try:
             next(self._get_prop_cpus_mnames("max_turbo_freq", cpus, mnames=(mname,)))
-            max_limit_iter = self._get_prop_cpus_mnames("max_turbo_freq", cpus, mnames=(mname,))
         except ErrorNotSupported:
             max_limit_iter = itertools.repeat((0, 8_000_000_000), times=len(cpus)) # 8GHz.
+        else:
+            max_limit_iter = self._get_prop_cpus_mnames("max_turbo_freq", cpus, mnames=(mname,))
 
         return min_limit_iter, max_limit_iter
 
@@ -1692,14 +1677,18 @@ class PStates(_PropsClassBase.PropsClassBase):
 
         if freq == "min":
             yield from cast(Generator[tuple[int, int, int], None, None],
-                            self._get_prop_dies_mnames("min_uncore_freq_limit", dies))
+                            self._get_prop_dies_mnames("min_uncore_freq_limit", dies,
+                                                       mnames=("sysfs",)))
         elif freq == "max":
             yield from cast(Generator[tuple[int, int, int], None, None],
-                            self._get_prop_dies_mnames("max_uncore_freq_limit", dies))
+                            self._get_prop_dies_mnames("max_uncore_freq_limit", dies,
+                                                       mnames=("sysfs",)))
         elif freq == "mdl":
             bclks_iter = self._get_bclks_dies(dies)
-            min_limit_iter = self._get_prop_dies_mnames("min_uncore_freq_limit", dies)
-            max_limit_iter = self._get_prop_dies_mnames("max_uncore_freq_limit", dies)
+            min_limit_iter = self._get_prop_dies_mnames("min_uncore_freq_limit", dies,
+                                                        mnames=("sysfs",))
+            max_limit_iter = self._get_prop_dies_mnames("max_uncore_freq_limit", dies,
+                                                        mnames=("sysfs",))
             iter_zip = zip(bclks_iter, min_limit_iter, max_limit_iter)
             iterator = cast(Generator[tuple[tuple[int, int, int], tuple[int, int, int],
                                             tuple[int, int, int]], None, None], iter_zip)
