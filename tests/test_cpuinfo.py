@@ -479,7 +479,7 @@ def _test_cpuinfo_div(cpuinfo):
         # Resolving all CPUs except for the very first one.
         rnums, rcpus = _run_method(method_name, cpuinfo, args=(allcpus[1:],))
         assert len(rnums) == len(nums_list) - 1 and len(rcpus) > 0, \
-               f"Bad result from '{method_name}({allcpus[1:]})':\n\t(rnums, rcpus)\n"
+               f"Bad result from '{method_name}({allcpus[1:]})':\n\t({rnums}, {rcpus})\n"
 
         # Resolving a single CPU - the first and the last.
         exp_res = _test_div_create_exp_res(sname, [], allcpus[0:1])
