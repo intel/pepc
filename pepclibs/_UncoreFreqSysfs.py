@@ -589,30 +589,6 @@ class UncoreFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         self._set_freq_dies(freq, "max", dies)
 
-    def _construct_sysfs_path_cpu(self,
-                                  ftype: _SysfsFileType,
-                                  cpu: int,
-                                  limit: bool = False) -> Path:
-        """
-        Retrieve the sysfs file path for an CPU-based uncore frequency read or write operation.
-
-        Args:
-            ftype: The uncore frequency sysfs file type.
-            cpu: The CPU number.
-            limit: if True, retrieve the path for a frequency limit file. If False,
-                   retrieve the path for a current frequency value file.
-
-        Returns:
-            The sysfs file path as a string for the specified sysfs file type, package, die, and
-            limit.
-        """
-
-        tline = self._cpuinfo.get_tline_by_cpu(cpu, snames=("package", "die"))
-        package = tline["package"]
-        die = tline["die"]
-
-        return self._construct_sysfs_path_die(ftype, package, die, limit=limit)
-
     def _get_freq_cpus(self,
                        ftype: _SysfsFileType,
                        cpus: AbsNumsType,
@@ -635,7 +611,11 @@ class UncoreFreqSysfs(ClassHelpers.SimpleCloseContext):
             what += " limit"
 
         for cpu in cpus:
-            path = self._construct_sysfs_path_cpu(ftype, cpu, limit=limit)
+            tline = self._cpuinfo.get_tline_by_cpu(cpu, snames=("package", "die"))
+            package = tline["package"]
+            die = tline["die"]
+
+            path = self._construct_sysfs_path_die(ftype, package, die, limit=limit)
             freq = self._sysfs_io.read_int(path, what=what)
             # The frequency value is in kHz in sysfs.
             yield cpu, freq * 1000
@@ -742,7 +722,11 @@ class UncoreFreqSysfs(ClassHelpers.SimpleCloseContext):
         what = f"{ftype}. uncore frequency"
 
         for cpu in cpus:
-            path = self._construct_sysfs_path_cpu(ftype, cpu)
+            tline = self._cpuinfo.get_tline_by_cpu(cpu, snames=("package", "die"))
+            package = tline["package"]
+            die = tline["die"]
+
+            path = self._construct_sysfs_path_die(ftype, package, die)
             self._sysfs_io.write_int(path, freq // 1000, what=what)
 
     def set_min_freq_cpus(self, freq: int, cpus: AbsNumsType):
