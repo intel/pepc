@@ -13,15 +13,23 @@ via TPMI.
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
-from typing import Generator
+from typing import Generator, Final
 from pepclibs import CPUInfo, Tpmi, _UncoreFreqBase
 from pepclibs._PropsClassBaseTypes import MechanismNameType
 from pepclibs._UncoreFreqBase import FreqValueType as _FreqValueType
 from pepclibs.helperlibs.ProcessManager import ProcessManagerType
-from pepclibs.CPUInfo import RelNumsType, AbsNumsType
+from pepclibs.CPUInfo import RelNumsType
 from pepclibs.helperlibs import Logging, ClassHelpers
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
+
+# Unfortunately TPMI does not provide the limit values. The way the Linux kernel driver
+# works-around this is it assumes that the initial min/max values at the driver
+# initialization time (boot time) are the actual limits. But in theory, these my not be the
+# actual limits, these may be the limits the BIOS configured or even mis-configured. So just
+# pick some reasonable numbers for the limits.
+MIN_FREQ_LIMIT: Final[int] = 100_000_000 # 100MHz
+MAX_FREQ_LIMIT: Final[int] = 5_000_000_000 # 5GHz
 
 class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
     """
@@ -30,18 +38,20 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
 
     Overview of public methods:
 
-    * Per-die (uncore frequency domain) methods:
-        - 'get_min_freq_dies()'
-        - 'get_max_freq_dies()'
-        - 'set_min_freq_dies()'
-        - 'set_max_freq_dies()'
-        - 'get_cur_freq_dies()'
-    * Per-CPU methods:
-        - 'get_min_freq_cpus()'
-        - 'get_max_freq_cpus()'
-        - 'set_min_freq_cpus()'
-        - 'set_max_freq_cpus()'
-        - 'get_cur_freq_cpus()'
+    1. Get or set uncore frequency via the Linux TPMI debugfs interface:
+       * Per-die (uncore frequency domain):
+           - 'get_min_freq_dies()'
+           - 'get_max_freq_dies()'
+           - 'set_min_freq_dies()'
+           - 'set_max_freq_dies()'
+           - 'get_cur_freq_dies()'
+       * Per-CPU:
+           - 'get_min_freq_cpus()'
+           - 'get_max_freq_cpus()'
+           - 'set_min_freq_cpus()'
+           - 'set_max_freq_cpus()'
+           - 'get_cur_freq_cpus()'
+    2. Retrieve uncore frequency limits via the Linux TPMI debugfs interface:
 
     Note: Methods of this class do not validate the 'cpus' and 'dies' arguments. The caller is
     responsible for ensuring that the provided package, die, and CPU numbers exist and that CPUs are
@@ -223,14 +233,6 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
                            versa.
         """
 
-        # Unfortunately TPMI does not provide the limit values. The way the Linux kernel driver
-        # works-around this is it assumes that the initial min/max values at the driver
-        # initialization time (boot time) are the actual limits. But in theory, these my not be the
-        # actual limits, these may be the limits the BIOS configured or even mis-configured. So just
-        # pick some reasonable numbers for the limits.
-        min_freq_limit = 100_000_000 # 100MHz
-        max_freq_limit = 5_000_000_000 # 5GHz
-
         min_freq: int | None = None
         max_freq: int | None = None
 
@@ -245,7 +247,7 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
             ratio = self._tpmi.read_register("uncore", addr, die, regname, bfname=bfname)
             min_freq = ratio * self._ratio_multiplier
 
-        self._validate_frequency(freq, ftype, package, die, min_freq_limit, max_freq_limit,
+        self._validate_frequency(freq, ftype, package, die, MIN_FREQ_LIMIT, MAX_FREQ_LIMIT,
                                  min_freq=min_freq, max_freq=max_freq)
 
     def _set_freq_dies(self, freq: int, ftype: _FreqValueType, dies: RelNumsType):
@@ -295,32 +297,3 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
         """
 
         self._set_freq_dies(freq, "max", dies)
-
-    def _get_freq_cpus(self,
-                       ftype: _FreqValueType,
-                       cpus: AbsNumsType,
-                       limit: bool = False) -> Generator[tuple[int, int], None, None]:
-        """
-        Yield an uncore frequency value for each CPU in the provided collection of CPU numbers.
-
-        Args:
-            ftype: The uncore frequency value type (e.g., "min" for the minimum frequency).
-            cpus: A collection of integer CPU numbers to read the uncore frequency for.
-            limit: If True, read the frequency limit value instead of the frequency.
-
-        Yields:
-            tuple: A tuple (cpu, frequency) for each CPU, where frequency is in Hz.
-        """
-
-        yield 0, 0
-
-    def _set_freq_cpus(self, freq: int, ftype: _FreqValueType, cpus: AbsNumsType):
-        """
-        Set the minimum or maximum uncore frequency for each die corresponding to the specified
-        CPUs.
-
-        Args:
-            freq: Frequency value to set, in Hz.
-            ftype: The uncore frequency value type (e.g., "min" for the minimum frequency).
-            cpus: A collection of integer CPU numbers to set the uncore frequency for.
-        """

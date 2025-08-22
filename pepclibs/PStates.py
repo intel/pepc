@@ -1328,8 +1328,9 @@ class PStates(_PropsClassBase.PropsClassBase):
         msg = str(err)
 
         with contextlib.suppress(Error):
-            frequencies = cast(list[int], self._get_cpu_prop_mnames("frequencies", cpu,
-                                                                    self._props["frequencies"]["mnames"]))
+            frequencies = cast(list[int],
+                               self._get_cpu_prop_mnames("frequencies", cpu,
+                                                         self._props["frequencies"]["mnames"]))
             frequencies_set = set(frequencies)
             if freq not in frequencies_set and read_freq in frequencies_set:
                 fvals = ", ".join([Human.num2si(v, unit="Hz", decp=4) for v in frequencies])

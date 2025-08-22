@@ -122,7 +122,7 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
             else:
                 freq_cache[package] = {}
 
-            _, _, freq = next(self._get_freq_dies(ftype, {package: [die]}, limit=limit))
+            _, _, freq = next(self._get_freq_dies(ftype, {package: [die]}))
             freq_cache[package][die] = freq
             yield cpu, freq
 
