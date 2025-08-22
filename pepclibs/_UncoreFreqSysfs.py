@@ -610,15 +610,26 @@ class UncoreFreqSysfs(ClassHelpers.SimpleCloseContext):
         if limit:
             what += " limit"
 
+        freq_cache: dict[int, dict[int, int]] = {}
+
         for cpu in cpus:
             tline = self._cpuinfo.get_tline_by_cpu(cpu, snames=("package", "die"))
             package = tline["package"]
             die = tline["die"]
 
+            if package in freq_cache:
+                if die in freq_cache[package]:
+                    yield cpu, freq_cache[package][die]
+                    continue
+            else:
+                freq_cache[package] = {}
+
             path = self._construct_sysfs_path_die(ftype, package, die, limit=limit)
             freq = self._sysfs_io.read_int(path, what=what)
             # The frequency value is in kHz in sysfs.
-            yield cpu, freq * 1000
+            freq *= 1000
+            freq_cache[package][die] = freq
+            yield cpu, freq
 
     def get_min_freq_cpus(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
@@ -720,11 +731,20 @@ class UncoreFreqSysfs(ClassHelpers.SimpleCloseContext):
         """
 
         what = f"{ftype}. uncore frequency"
+        set_dies_cache: dict[int, set[int]] = {}
 
         for cpu in cpus:
             tline = self._cpuinfo.get_tline_by_cpu(cpu, snames=("package", "die"))
             package = tline["package"]
             die = tline["die"]
+
+            if package in set_dies_cache:
+                if die in set_dies_cache[package]:
+                    continue
+            else:
+                set_dies_cache[package] = set()
+
+            set_dies_cache[package].add(die)
 
             path = self._construct_sysfs_path_die(ftype, package, die)
             self._sysfs_io.write_int(path, freq // 1000, what=what)
