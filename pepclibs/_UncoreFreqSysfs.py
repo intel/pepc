@@ -35,6 +35,7 @@ import re
 from typing import Generator
 from pathlib import Path
 from pepclibs import _SysfsIO, CPUInfo, _UncoreFreqBase
+from pepclibs._PropsClassBaseTypes import MechanismNameType
 from pepclibs._UncoreFreqBase import FreqValueType as _FreqValueType
 from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 from pepclibs.CPUInfo import RelNumsType, AbsNumsType
@@ -113,6 +114,8 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
     online.
     """
 
+    mname: MechanismNameType = "sysfs"
+
     def __init__(self,
                  cpuinfo: CPUInfo.CPUInfo,
                  pman: ProcessManagerType | None = None,
@@ -127,10 +130,10 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
                   manager is created.
             sysfs_io: The sysfs access object ('_SysfsIO.SysfsIO()'). If not provided, one is
                       created.
-            enable_cache: Enable caching if True.
+            enable_cache: Enable caching if True. Used only if 'sysfs_io' is not provided.
         """
 
-        super().__init__(cpuinfo, pman)
+        super().__init__(cpuinfo, pman, enable_cache=enable_cache)
 
         self._close_sysfs_io = sysfs_io is None
 

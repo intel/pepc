@@ -30,7 +30,8 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
     Provide the base class for uncore frequency management classes.
     """
 
-    def __init__(self, cpuinfo: CPUInfo.CPUInfo, pman: ProcessManagerType | None = None):
+    def __init__(self, cpuinfo: CPUInfo.CPUInfo, pman: ProcessManagerType | None = None,
+                 enable_cache: bool = True):
         """
         Initialize a class instance.
 
@@ -38,9 +39,11 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
             cpuinfo: The CPU information object ('CPUInfo.CPUInfo()').
             pman: The process manager object for the target system. If not provided, a local process
                   manager is created.
+            enable_cache: Enable caching if True. Used only if 'sysfs_io' is not provided.
         """
 
         self._cpuinfo = cpuinfo
+        self.cache_enabled = enable_cache
 
         self._close_pman = pman is None
         self._pman: ProcessManagerType

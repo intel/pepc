@@ -15,6 +15,7 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 
 from typing import Generator
 from pepclibs import CPUInfo, Tpmi, _UncoreFreqBase
+from pepclibs._PropsClassBaseTypes import MechanismNameType
 from pepclibs._UncoreFreqBase import FreqValueType as _FreqValueType
 from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 from pepclibs.CPUInfo import RelNumsType, AbsNumsType
@@ -47,6 +48,8 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
     online.
     """
 
+    mname: MechanismNameType = "tpmi"
+
     def __init__(self, cpuinfo: CPUInfo.CPUInfo, pman: ProcessManagerType | None = None):
         """
         Initialize a class instance.
@@ -57,7 +60,7 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
                   manager is created.
         """
 
-        super().__init__(cpuinfo, pman=pman)
+        super().__init__(cpuinfo, pman, enable_cache=False)
 
         self._tpmi = Tpmi.Tpmi(self._pman)
 
