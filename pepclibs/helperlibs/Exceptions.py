@@ -158,6 +158,12 @@ class ErrorOutOfRange(Error):
     Something is out of range.
     """
 
+class ErrorBadOrder(Error):
+    """
+    Something is in the wrong order.
+    """
+
 ExceptionType = Union[type[Error], type[ErrorTimeOut], type[ErrorExists], type[ErrorNotFound],
                       type[ErrorNotSupported], type[ErrorPermissionDenied], type[ErrorBadFormat],
-                      type[ErrorVerifyFailed], type[ErrorConnect], type[ErrorOutOfRange]]
+                      type[ErrorVerifyFailed], type[ErrorConnect], type[ErrorOutOfRange],
+                      type[ErrorBadOrder]]

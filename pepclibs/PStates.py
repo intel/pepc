@@ -23,7 +23,7 @@ from typing import Generator, NoReturn, cast, Iterator
 from pepclibs import _PropsClassBase
 from pepclibs.helperlibs import Trivial, Human, ClassHelpers, Logging
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorVerifyFailed
-from pepclibs.helperlibs.Exceptions import ErrorOutOfRange
+from pepclibs.helperlibs.Exceptions import ErrorOutOfRange, ErrorBadOrder
 from pepclibs._PropsClassBase import ErrorTryAnotherMechanism
 # Make the exception class be available for users.
 # pylint: disable-next=unused-import
@@ -37,11 +37,6 @@ if typing.TYPE_CHECKING:
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepclibs._PropsClassBaseTypes import AbsNumsType, RelNumsType, MechanismNameType
     from pepclibs._PropsClassBaseTypes import PropertyTypedDict, PropertyValueType
-
-class ErrorFreqOrder(Error):
-    """
-    Raise when modification of minimum or maximum frequency fails due to ordering constraints.
-    """
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
@@ -1391,7 +1386,7 @@ class PStates(_PropsClassBase.PropsClassBase):
                                 is_min: bool,
                                 what: str) -> NoReturn:
         """
-        Raise an 'ErrorFreqOrder' exception when attempting to set a CPU or uncore frequency that
+        Raise an 'ErrorBadOrder' exception when attempting to set a CPU or uncore frequency that
         violates ordering constraints.
 
         Args:
@@ -1403,8 +1398,8 @@ class PStates(_PropsClassBase.PropsClassBase):
                   set.
 
         Raises:
-            ErrorFreqOrder: always raised, indicating that the new frequency violates ordering
-                            constraints.
+            ErrorBadOrder: always raised, indicating that the new frequency violates ordering
+                           constraints.
         """
 
         name = Human.uncapitalize(self._props[pname]["name"])
@@ -1414,7 +1409,7 @@ class PStates(_PropsClassBase.PropsClassBase):
             msg = f"larger than currently configured max. frequency of {cur_freq_str}"
         else:
             msg = f"lower than currently configured min. frequency of {cur_freq_str}"
-        raise ErrorFreqOrder(f"Can't set {name} of {what} to {new_freq_str} - it is {msg}")
+        raise ErrorBadOrder(f"Can't set {name} of {what} to {new_freq_str} - it is {msg}")
 
     def _get_numeric_cpu_freq(self,
                               freq: str | int,

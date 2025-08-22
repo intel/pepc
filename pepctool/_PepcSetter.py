@@ -11,12 +11,9 @@
 Provides API for changing properties.
 """
 
-import sys
-import contextlib
-from pepctool import _PepcCommon, _OpTarget
-from pepclibs.helperlibs import ClassHelpers, YAML, Trivial
-from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
-from pepclibs.PStates import ErrorFreqOrder
+from pepctool import _PepcCommon
+from pepclibs.helperlibs import ClassHelpers, Trivial
+from pepclibs.helperlibs.Exceptions import Error, ErrorBadOrder
 
 class _PropsSetter(ClassHelpers.SimpleCloseContext):
     """Provide API for changing properties."""
@@ -163,7 +160,7 @@ class PStatesSetter(_PropsSetter):
         try:
             super()._set_prop_sname(spinfo, pname, optar, mnames, mnames_info)
             return
-        except ErrorFreqOrder as err:
+        except ErrorBadOrder as err:
             if pname not in {"min_freq", "max_freq", "min_uncore_freq", "max_uncore_freq"}:
                 raise
 
@@ -173,7 +170,7 @@ class PStatesSetter(_PropsSetter):
             #  ---- Cur. Min --- Cur. Max -------- New Min --- New Max ---------->
             #
             # Where the dotted line represents the horizontal frequency axis. Setting min. frequency
-            # before max. frequency leads to a failure (more precisely, the 'ErrorFreqOrder'
+            # before max. frequency leads to a failure (more precisely, the 'ErrorBadOrder'
             # exception). Indeed, at step #2 below, current minimum frequency would be set to a
             # value higher that current maximum frequency.
             #  1. ---- Cur. Min --- Cur. Max -------- New Min --- New Max ---------->
