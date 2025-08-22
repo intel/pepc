@@ -18,7 +18,7 @@ import typing
 import contextlib
 import statistics
 from pathlib import Path
-from typing import Generator, NoReturn, cast
+from typing import Generator, NoReturn, cast, Union
 from pepclibs import _PropsClassBase
 from pepclibs.helperlibs import Trivial, Human, ClassHelpers, Logging
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorVerifyFailed
@@ -30,7 +30,7 @@ from pepclibs._PropsClassBase import ErrorUsePerCPU
 if typing.TYPE_CHECKING:
     from pepclibs.msr import MSR, FSBFreq
     from pepclibs import _CPUFreqSysfs, _CPUFreqCPPC, _CPUFreqMSR
-    from pepclibs import _SysfsIO, EPP, EPB, _UncoreFreqSysfs
+    from pepclibs import _SysfsIO, EPP, EPB, _UncoreFreqSysfs, _UncoreFreqTpmi
     from pepclibs.CPUInfo import CPUInfo
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepclibs._PropsClassBaseTypes import AbsNumsType, RelNumsType, MechanismNameType
@@ -145,7 +145,7 @@ PROPS: dict[str, PropertyTypedDict] = {
         "unit": "Hz",
         "type": "int",
         "sname": "die",
-        "mnames": ("sysfs",),
+        "mnames": ("sysfs", "tpmi"),
         "writable": True,
         "special_vals": _SPECIAL_UNCORE_FREQ_VALS,
     },
@@ -154,7 +154,7 @@ PROPS: dict[str, PropertyTypedDict] = {
         "unit": "Hz",
         "type": "int",
         "sname": "die",
-        "mnames": ("sysfs",),
+        "mnames": ("sysfs", "tpmi"),
         "writable": True,
         "special_vals": _SPECIAL_UNCORE_FREQ_VALS,
     },
@@ -264,6 +264,9 @@ class PStates(_PropsClassBase.PropsClassBase):
 
         self._uncfreq_sysfs_obj: _UncoreFreqSysfs.UncoreFreqSysfs | None = None
         self._uncfreq_sysfs_err: str | None = None
+
+        self._uncfreq_tpmi_obj: _UncoreFreqTpmi.UncoreFreqTpmi | None = None
+        self._uncfreq_tpmi_err: str | None = None
 
         super()._init_props_dict(PROPS)
 
@@ -424,6 +427,30 @@ class PStates(_PropsClassBase.PropsClassBase):
                 raise
 
         return self._uncfreq_sysfs_obj
+
+    def _get_uncfreq_tpmi_obj(self) -> _UncoreFreqTpmi.UncoreFreqTpmi:
+        """
+        Get an 'UncoreFreqTpmi' object.
+
+        Returns:
+            An instance of '_UncoreFreqTpmi.UncoreFreqTpmi'.
+        """
+
+        if self._uncfreq_tpmi_err:
+            raise ErrorNotSupported(self._uncfreq_tpmi_err)
+
+        if not self._uncfreq_tpmi_obj:
+            # pylint: disable-next=import-outside-toplevel
+            from pepclibs import _UncoreFreqTpmi
+
+            try:
+                obj = _UncoreFreqTpmi.UncoreFreqTpmi(self._cpuinfo, pman=self._pman)
+                self._uncfreq_tpmi_obj = obj
+            except ErrorNotSupported as err:
+                self._uncfreq_tpmi_err = str(err)
+                raise
+
+        return self._uncfreq_tpmi_obj
 
     def _get_epp(self,
                  cpus: AbsNumsType,
@@ -768,10 +795,13 @@ class PStates(_PropsClassBase.PropsClassBase):
             Hz.
         """
 
-        if mname != "sysfs":
+        uncfreq_obj: Union[_UncoreFreqSysfs.UncoreFreqSysfs, _UncoreFreqTpmi.UncoreFreqTpmi]
+        if mname == "sysfs":
+            uncfreq_obj = self._get_uncfreq_sysfs_obj()
+        elif mname == "tpmi":
+            uncfreq_obj = self._get_uncfreq_tpmi_obj()
+        else:
             raise Error(f"BUG: Unexpected mechanism '{mname}'")
-
-        uncfreq_obj = self._get_uncfreq_sysfs_obj()
 
         if pname == "min_uncore_freq":
             yield from uncfreq_obj.get_min_freq_cpus(cpus)
@@ -779,12 +809,15 @@ class PStates(_PropsClassBase.PropsClassBase):
         if pname == "max_uncore_freq":
             yield from uncfreq_obj.get_max_freq_cpus(cpus)
             return
-        if pname == "min_uncore_freq_limit":
-            yield from uncfreq_obj.get_min_freq_limit_cpus(cpus)
-            return
-        if pname == "max_uncore_freq_limit":
-            yield from uncfreq_obj.get_max_freq_limit_cpus(cpus)
-            return
+
+        if mname == "sysfs":
+            uncfreq_sysfs_obj = self._get_uncfreq_sysfs_obj()
+            if pname == "min_uncore_freq_limit":
+                yield from uncfreq_sysfs_obj.get_min_freq_limit_cpus(cpus)
+                return
+            if pname == "max_uncore_freq_limit":
+                yield from uncfreq_sysfs_obj.get_max_freq_limit_cpus(cpus)
+                return
 
         raise Error(f"BUG: Unexpected uncore frequency property {pname}")
 
@@ -1157,10 +1190,13 @@ class PStates(_PropsClassBase.PropsClassBase):
             number, and 'val' is the uncore frequency or limit.
         """
 
-        if mname != "sysfs":
+        uncfreq_obj: Union[_UncoreFreqSysfs.UncoreFreqSysfs, _UncoreFreqTpmi.UncoreFreqTpmi]
+        if mname == "sysfs":
+            uncfreq_obj = self._get_uncfreq_sysfs_obj()
+        elif mname == "tpmi":
+            uncfreq_obj = self._get_uncfreq_tpmi_obj()
+        else:
             raise Error(f"BUG: Unexpected mechanism '{mname}'")
-
-        uncfreq_obj = self._get_uncfreq_sysfs_obj()
 
         if pname == "min_uncore_freq":
             yield from uncfreq_obj.get_min_freq_dies(dies)
@@ -1168,12 +1204,16 @@ class PStates(_PropsClassBase.PropsClassBase):
         if pname == "max_uncore_freq":
             yield from uncfreq_obj.get_max_freq_dies(dies)
             return
-        if pname == "min_uncore_freq_limit":
-            yield from uncfreq_obj.get_min_freq_limit_dies(dies)
-            return
-        if pname == "max_uncore_freq_limit":
-            yield from uncfreq_obj.get_max_freq_limit_dies(dies)
-            return
+
+        if mname == "sysfs":
+            uncfreq_sysfs_obj = self._get_uncfreq_sysfs_obj()
+
+            if pname == "min_uncore_freq_limit":
+                yield from uncfreq_sysfs_obj.get_min_freq_limit_dies(dies)
+                return
+            if pname == "max_uncore_freq_limit":
+                yield from uncfreq_sysfs_obj.get_max_freq_limit_dies(dies)
+                return
 
         raise Error(f"BUG: unexpected uncore frequency property {pname}")
 
@@ -1498,7 +1538,11 @@ class PStates(_PropsClassBase.PropsClassBase):
         else:
             raise Error(f"BUG: Unsupported property '{pname}'")
 
-    def _set_uncore_freq_prop_dies(self, pname: str, freq: int, dies: RelNumsType):
+    def _set_uncore_freq_dies(self,
+                              pname: str,
+                              freq: int,
+                              dies: RelNumsType,
+                              mname: MechanismNameType):
         """
         Set the minimum or maximum uncore frequency for specified dies.
 
@@ -1506,9 +1550,16 @@ class PStates(_PropsClassBase.PropsClassBase):
             pname: The property name, either "min_uncore_freq" or "max_uncore_freq".
             freq: The frequency value to set.
             dies: Dictionary mapping package numbers to collections of die numbers.
+            mname: Name of the mechanism to use for setting the property.
         """
 
-        uncfreq_obj = self._get_uncfreq_sysfs_obj()
+        uncfreq_obj: Union[_UncoreFreqSysfs.UncoreFreqSysfs, _UncoreFreqTpmi.UncoreFreqTpmi]
+        if mname == "sysfs":
+            uncfreq_obj = self._get_uncfreq_sysfs_obj()
+        elif mname == "tpmi":
+            uncfreq_obj = self._get_uncfreq_tpmi_obj()
+        else:
+            raise Error(f"BUG: Unexpected mechanism '{mname}'")
 
         if pname == "min_uncore_freq":
             uncfreq_obj.set_min_freq_dies(freq, dies)
@@ -1577,9 +1628,6 @@ class PStates(_PropsClassBase.PropsClassBase):
             mname: Name of the mechanism to use for setting the property.
         """
 
-        if mname != "sysfs":
-            raise Error(f"BUG: Unexpected mechanism '{mname}'")
-
         freq2dies: dict[int, dict[int, list[int]]] = {}
         for (package, die, new_freq) in self._get_numeric_uncore_freq(val, dies):
             if new_freq not in freq2dies:
@@ -1589,7 +1637,7 @@ class PStates(_PropsClassBase.PropsClassBase):
             freq2dies[new_freq][package].append(die)
 
         for new_freq, freq_dies in freq2dies.items():
-            self._set_uncore_freq_prop_dies(pname, new_freq, freq_dies)
+            self._set_uncore_freq_dies(pname, new_freq, freq_dies, mname)
 
     def _set_prop_dies(self,
                        pname: str,
