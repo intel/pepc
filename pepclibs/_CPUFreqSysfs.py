@@ -125,7 +125,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             self._cpuinfo = cpuinfo
 
         if not sysfs_io:
-            self._sysfs_io = _SysfsIO.SysfsIO(pman=pman, enable_cache=enable_cache)
+            self._sysfs_io = _SysfsIO.SysfsIO(pman=self._pman, enable_cache=enable_cache)
         else:
             self._sysfs_io = sysfs_io
 
