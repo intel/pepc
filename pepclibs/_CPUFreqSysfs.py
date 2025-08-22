@@ -380,7 +380,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
         min_freq_limit *= 1000
 
         path = self._get_cpu_freq_sysfs_path("max", cpu, limit=True)
-        max_freq_limit = self._sysfs_io.read_int(path, what=f"max. frequency limit for CPU {cpu}")
+        max_freq_limit = self._sysfs_io.read_int(path, what=f"max frequency limit for CPU {cpu}")
         max_freq_limit *= 1000
 
         if freq < min_freq_limit or freq > max_freq_limit:
@@ -388,9 +388,8 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             freq_str = Human.num2si(freq, unit="Hz", decp=4)
             min_limit_str = Human.num2si(min_freq_limit, unit="Hz", decp=4)
             max_limit_str = Human.num2si(max_freq_limit, unit="Hz", decp=4)
-            raise ErrorOutOfRange(f"{name} value of '{freq_str}' for is out of range"
-                                  f"{self._pman.hostmsg}, must be within [{min_limit_str}, "
-                                  f"{max_limit_str}]")
+            raise ErrorOutOfRange(f"{name} value of '{freq_str}' is out of range, must be within "
+                                  f"[{min_limit_str},{max_limit_str}]")
 
         if ftype == "min":
             path = self._get_cpu_freq_sysfs_path("max", cpu)

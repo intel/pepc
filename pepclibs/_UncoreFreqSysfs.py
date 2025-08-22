@@ -39,8 +39,8 @@ from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 from pepclibs.CPUInfo import RelNumsType, AbsNumsType
 from pepclibs.msr import UncoreRatioLimit
 from pepclibs.helperlibs import Logging, LocalProcessManager, ClassHelpers, KernelModule, FSHelpers
-from pepclibs.helperlibs import Trivial
-from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
+from pepclibs.helperlibs import Trivial, Human
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorOutOfRange, ErrorBadOrder
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
@@ -540,6 +540,61 @@ class UncoreFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         self._new_sysfs_api_unlocked = True
 
+    def _validate_freq(self, freq: int, ftype: _SysfsFileType, package: int, die: int):
+        """
+        Validate that aan frequency value is within the acceptable range.
+
+        Args:
+            freq: The uncore frequency value to validate, in Hz.
+            ftype: The uncore frequency sysfs file type.
+            package: Package number to validate the frequency for.
+            die: Die number to validate the frequency for.
+
+        Raises:
+            ErrorOutOfRange: If the uncore frequency value is outside the allowed range.
+            ErrorBadOrder: If min. uncore frequency is greater than max. uncore frequency and vice
+                           versa.
+        """
+
+        path = self._construct_sysfs_path_die("min", package, die, limit=True)
+        what = f"min uncore frequency limit for package {package} die {die}"
+        min_freq_limit = self._sysfs_io.read_int(path, what=what) * 1000
+
+        path = self._construct_sysfs_path_die("max", package, die, limit=True)
+        what = f"max uncore frequency limit for package {package} die {die}"
+        max_freq_limit = self._sysfs_io.read_int(path, what=what) * 1000
+
+        if freq < min_freq_limit or freq > max_freq_limit:
+            name = f"{ftype} package {package} die {die} uncore frequency"
+            freq_str = Human.num2si(freq, unit="Hz", decp=4)
+            min_limit_str = Human.num2si(min_freq_limit, unit="Hz", decp=4)
+            max_limit_str = Human.num2si(max_freq_limit, unit="Hz", decp=4)
+            raise ErrorOutOfRange(f"{name} value of '{freq_str}' is out of range, must be within "
+                                  f"[{min_limit_str},{max_limit_str}]")
+
+        if ftype == "min":
+            path = self._construct_sysfs_path_die("max", package, die)
+            what = f"max package {package} die {die} uncore frequency"
+            max_freq = self._sysfs_io.read_int(path, what=what) * 1000
+
+            if freq > max_freq:
+                name = f"{ftype} package {package} die {die} uncore frequency"
+                freq_str = Human.num2si(freq, unit="Hz", decp=4)
+                max_freq_str = Human.num2si(max_freq, unit="Hz", decp=4)
+                raise ErrorBadOrder(f"{name} value of '{freq_str}' is greater than the currently "
+                                    f"configured max frequency of {max_freq_str}")
+        else:
+            path = self._construct_sysfs_path_die("min", package, die)
+            what = f"min package {package} die {die} uncore frequency"
+            min_freq = self._sysfs_io.read_int(path, what=what) * 1000
+
+            if freq < min_freq:
+                name = f"{ftype} package {package} die {die} uncore frequency"
+                freq_str = Human.num2si(freq, unit="Hz", decp=4)
+                min_freq_str = Human.num2si(min_freq, unit="Hz", decp=4)
+                raise ErrorBadOrder(f"{name} value of '{freq_str}' is less than the currently "
+                                    f"configured min frequency of {min_freq_str}")
+
     def _set_freq_dies(self, freq: int, ftype: _SysfsFileType, dies: RelNumsType):
         """
         Set the minimum or maximum uncore frequency for each die in the specified packages->dies
@@ -558,6 +613,7 @@ class UncoreFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         for package, pkg_dies in dies.items():
             for die in pkg_dies:
+                self._validate_freq(freq, ftype, package, die)
                 path = self._construct_sysfs_path_die(ftype, package, die)
                 self._sysfs_io.write_int(path, freq // 1000, what=what)
 
@@ -571,6 +627,9 @@ class UncoreFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         Raises:
             ErrorNotSupported: If the uncore frequency sysfs file does not exist.
+            ErrorOutOfRange: If the uncore frequency value is outside the allowed range.
+            ErrorBadOrder: If min. uncore frequency is greater than max. uncore frequency and vice
+                           versa.
         """
 
         self._set_freq_dies(freq, "min", dies)
@@ -585,6 +644,9 @@ class UncoreFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         Raises:
             ErrorNotSupported: If the uncore frequency sysfs file does not exist.
+            ErrorOutOfRange: If the uncore frequency value is outside the allowed range.
+            ErrorBadOrder: If min. uncore frequency is greater than max. uncore frequency and vice
+                           versa.
         """
 
         self._set_freq_dies(freq, "max", dies)
@@ -756,6 +818,12 @@ class UncoreFreqSysfs(ClassHelpers.SimpleCloseContext):
         Args:
             freq: The frequency value to set, in Hz.
             cpus: A collection of integer CPU numbers to set the uncore frequency for.
+
+        Raises:
+            ErrorNotSupported: If the uncore frequency sysfs file does not exist.
+            ErrorOutOfRange: If the uncore frequency value is outside the allowed range.
+            ErrorBadOrder: If min. uncore frequency is greater than max. uncore frequency and vice
+                           versa.
         """
 
         self._set_freq_cpus(freq, "min", cpus)
@@ -767,6 +835,12 @@ class UncoreFreqSysfs(ClassHelpers.SimpleCloseContext):
         Args:
             freq: The frequency value to set, in Hz.
             cpus: A collection of integer CPU numbers to set the uncore frequency for.
+
+        Raises:
+            ErrorNotSupported: If the uncore frequency sysfs file does not exist.
+            ErrorOutOfRange: If the uncore frequency value is outside the allowed range.
+            ErrorBadOrder: If min. uncore frequency is greater than max. uncore frequency and vice
+                           versa.
         """
 
         self._set_freq_cpus(freq, "max", cpus)
