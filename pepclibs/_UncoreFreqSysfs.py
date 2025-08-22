@@ -372,7 +372,7 @@ class UncoreFreqSysfs(ClassHelpers.SimpleCloseContext):
             ErrorNotSupported: If the uncore frequency sysfs file does not exist.
         """
 
-        what = f"{ftype}. uncore frequency"
+        what = f"{ftype} uncore frequency"
         if limit:
             what += " limit"
 
@@ -509,12 +509,12 @@ class UncoreFreqSysfs(ClassHelpers.SimpleCloseContext):
             for ftype in "min", "max":
                 # Get the frequency limit value via the legacy API.
                 path_legacy_limit = self._construct_legacy_sysfs_path(ftype, package, 0, limit=True)
-                what_limit = f"{ftype}. uncore frequency limit"
+                what_limit = f"{ftype} uncore frequency limit"
                 freq_limit_legacy = self._sysfs_io.read_int(path_legacy_limit, what=what_limit)
 
                 # Get min. or max. frequency value via the legacy API.
                 path_legacy = self._construct_legacy_sysfs_path(ftype, package, 0, limit=False)
-                what = f"{ftype}. uncore frequency"
+                what = f"{ftype} uncore frequency"
                 freq_legacy = self._sysfs_io.read_int(path_legacy, what=what)
                 if freq_legacy == freq_limit_legacy:
                     # Nothing to do, the legacy API won't be a limiting factor, because the min.
@@ -554,7 +554,7 @@ class UncoreFreqSysfs(ClassHelpers.SimpleCloseContext):
         if self._use_new_sysfs_api():
             self._unlock_new_sysfs_api()
 
-        what = f"{ftype}. uncore frequency"
+        what = f"{ftype} uncore frequency"
 
         for package, pkg_dies in dies.items():
             for die in pkg_dies:
@@ -606,7 +606,7 @@ class UncoreFreqSysfs(ClassHelpers.SimpleCloseContext):
             tuple: A tuple (cpu, frequency) for each CPU, where frequency is in Hz.
         """
 
-        what = f"{ftype}. uncore frequency"
+        what = f"{ftype} uncore frequency"
         if limit:
             what += " limit"
 
@@ -730,7 +730,7 @@ class UncoreFreqSysfs(ClassHelpers.SimpleCloseContext):
             cpus: A collection of integer CPU numbers to set the uncore frequency for.
         """
 
-        what = f"{ftype}. uncore frequency"
+        what = f"{ftype} uncore frequency"
         set_dies_cache: dict[int, set[int]] = {}
 
         for cpu in cpus:
