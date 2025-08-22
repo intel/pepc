@@ -14,7 +14,7 @@ model-specific register (MSR).
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
-from typing import Generator, cast
+from typing import Generator, cast, Literal
 import contextlib
 from pepclibs import CPUInfo, CPUModels
 from pepclibs._PropsClassBaseTypes import AbsNumsType
@@ -25,6 +25,12 @@ if typing.TYPE_CHECKING:
     from pepclibs.msr import MSR, FSBFreq, PMEnable, HWPRequest, HWPRequestPkg, PlatformInfo
     from pepclibs.msr import TurboRatioLimit, HWPCapabilities
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
+
+# A CPU frequency sysfs file type. Possible values:
+#   - "min": a minimum CPU frequency file
+#   - "max": a maximum CPU frequency file
+#   - "current": a current CPU frequency file
+_SysfsFileType = Literal["min", "max", "current"]
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
@@ -275,12 +281,14 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
 
         return perf * bclk
 
-    def _get_freq_msr(self, key, cpus):
+    def _get_freq_msr(self,
+                      ftype: _SysfsFileType,
+                      cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the minimum or maximum CPU frequency for specified CPUs.
 
         Args:
-            key: The frequency key (e.g., "min", "max").
+            ftype: The CPU frequency sysfs file type.
             cpus: CPU numbers to get the frequency for.
 
         Yields:
@@ -292,7 +300,7 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         """
 
         # The corresponding 'MSR_HWP_REQUEST' feature name.
-        feature_name = f"{key}_perf"
+        feature_name = f"{ftype}_perf"
 
         run_again = False
         yielded_cpus = set()
@@ -378,14 +386,14 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
 
         yield from self._get_freq_msr("max", cpus)
 
-    def _set_freq_msr(self, freq: int, key: str, cpus: AbsNumsType):
+    def _set_freq_msr(self, freq: int, ftype: _SysfsFileType, cpus: AbsNumsType):
         """
         Set the CPU frequency for specified CPUs using the 'MSR_HWP_REQUEST' model specific
         register.
 
         Args:
             freq: The frequency value to set, in Hz.
-            key: The frequency key (e.g., "min", "max").
+            ftype: The CPU frequency sysfs file type.
             cpus: CPU numbers to set the frequency for.
 
         Raises:
@@ -393,7 +401,7 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         """
 
         # The corresponding 'MSR_HWP_REQUEST' feature name.
-        feature_name = f"{key}_perf"
+        feature_name = f"{ftype}_perf"
 
         hwpreq = self._get_hwpreq()
 

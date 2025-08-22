@@ -16,7 +16,7 @@ frequency subsystem sysfs interface.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
-from typing import Generator
+from typing import Generator, Literal
 from pathlib import Path
 from pepclibs import CPUInfo, _SysfsIO
 from pepclibs._PropsClassBaseTypes import AbsNumsType
@@ -27,6 +27,12 @@ if typing.TYPE_CHECKING:
     from pepclibs import _CPUFreqMSR
     from pepclibs.msr import MSR
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
+
+# A CPU frequency sysfs file type. Possible values:
+#   - "min": a minimum CPU frequency file
+#   - "max": a maximum CPU frequency file
+#   - "current": a current CPU frequency file
+_SysfsFileType = Literal["min", "max", "current"]
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
@@ -209,13 +215,16 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         return self._sysfs_base / "cpufreq" / f"policy{cpu}" / fname
 
-    def _get_cpu_freq_sysfs_path(self, key: str, cpu: int, limit: bool = False) -> Path:
+    def _get_cpu_freq_sysfs_path(self,
+                                 ftype: _SysfsFileType,
+                                 cpu: int,
+                                 limit: bool = False) -> Path:
         """
         Return the sysfs file path for a CPU frequency read or write operation. Use paths cache to
         avoid recomputing the paths.
 
         Args:
-            key: The frequency key (e.g., "min", "max").
+            ftype: The CPU frequency sysfs file type.
             cpu: CPU number for which to get the path.
             limit: Whether to use the "limit" file or the "scaling" file.
 
@@ -223,31 +232,31 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             The sysfs file path for the specified CPU and other parameters.
         """
 
-        if key not in self._path_cache:
-            self._path_cache[key] = {}
-        if cpu not in self._path_cache[key]:
-            self._path_cache[key][cpu] = {}
+        if ftype not in self._path_cache:
+            self._path_cache[ftype] = {}
+        if cpu not in self._path_cache[ftype]:
+            self._path_cache[ftype][cpu] = {}
 
-        if limit in self._path_cache[key][cpu]:
-            return self._path_cache[key][cpu][limit]
+        if limit in self._path_cache[ftype][cpu]:
+            return self._path_cache[ftype][cpu][limit]
 
-        fname = "scaling_" + key + "_freq"
+        fname = "scaling_" + ftype + "_freq"
         prefix = "cpuinfo_" if limit else "scaling_"
-        fname = prefix + key + "_freq"
+        fname = prefix + ftype + "_freq"
 
         path = self._get_policy_sysfs_path(cpu, fname)
-        self._path_cache[key][cpu][limit] = path
+        self._path_cache[ftype][cpu][limit] = path
         return path
 
     def _get_freq_sysfs(self,
-                        key: str,
+                        ftype: _SysfsFileType,
                         cpus: AbsNumsType,
                         limit: bool = False) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield CPU frequencies from the Linux "cpufreq" sysfs files for specified CPUs.
 
         Args:
-            key: The frequency key (e.g., "min", "max").
+            ftype: The CPU frequency sysfs file type.
             cpus: CPU numbers to get the frequency for.
             limit: Whether to use the "limit" file or the "scaling" sysfs file for reading the
                    frequency.
@@ -260,8 +269,8 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
         self._warn_no_ecores_bug()
 
         for cpu in cpus:
-            path = self._get_cpu_freq_sysfs_path(key, cpu, limit=limit)
-            freq = self._sysfs_io.read_int(path, what=f"{key}. frequency for CPU {cpu}")
+            path = self._get_cpu_freq_sysfs_path(ftype, cpu, limit=limit)
+            freq = self._sysfs_io.read_int(path, what=f"{ftype}. frequency for CPU {cpu}")
             # The frequency value is in kHz in sysfs.
             yield cpu, freq * 1000
 
@@ -314,7 +323,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             ErrorNotSupported: If the CPU frequency sysfs file does not exist.
         """
 
-        yield from self._get_freq_sysfs("cur", cpus)
+        yield from self._get_freq_sysfs("current", cpus)
 
     def get_min_freq_limit(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
@@ -350,19 +359,19 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         yield from self._get_freq_sysfs("max", cpus, limit=True)
 
-    def _set_freq_sysfs(self, freq: int, key: str, cpus: AbsNumsType):
+    def _set_freq_sysfs(self, freq: int, ftype: _SysfsFileType, cpus: AbsNumsType):
         """
         Set the CPU frequency for the specified CPUs using the Linux "cpufreq" sysfs interface.
 
         Args:
             freq: Target CPU frequency in Hz.
-            key: The frequency key (e.g., "min", "max").
+            ftype: The CPU frequency sysfs file type.
             cpus: CPU numbers to set the frequency for.
         """
 
         self._warn_no_ecores_bug()
 
-        what = f"{key}. CPU frequency"
+        what = f"{ftype}. CPU frequency"
         retries = 0
         sleep = 0.0
 
@@ -375,7 +384,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
                     retries = 2
                     sleep = 0.1
 
-            path = self._get_cpu_freq_sysfs_path(key, cpu)
+            path = self._get_cpu_freq_sysfs_path(ftype, cpu)
 
             try:
                 if not self._verify:
