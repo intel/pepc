@@ -21,7 +21,9 @@ from pathlib import Path
 from pepclibs import CPUInfo, _SysfsIO
 from pepclibs._PropsClassBaseTypes import AbsNumsType
 from pepclibs.helperlibs import Logging, LocalProcessManager, ClassHelpers, Trivial, KernelVersion
+from pepclibs.helperlibs import Human
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorVerifyFailed
+from pepclibs.helperlibs.Exceptions import ErrorOutOfRange, ErrorBadOrder
 
 if typing.TYPE_CHECKING:
     from pepclibs import _CPUFreqMSR
@@ -270,7 +272,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         for cpu in cpus:
             path = self._get_cpu_freq_sysfs_path(ftype, cpu, limit=limit)
-            freq = self._sysfs_io.read_int(path, what=f"{ftype}. frequency for CPU {cpu}")
+            freq = self._sysfs_io.read_int(path, what=f"{ftype} frequency for CPU {cpu}")
             # The frequency value is in kHz in sysfs.
             yield cpu, freq * 1000
 
@@ -359,6 +361,58 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         yield from self._get_freq_sysfs("max", cpus, limit=True)
 
+    def _validate_freq(self, freq: int, ftype: _SysfsFileType, cpu: int):
+        """
+        Validate that a CPU frequency value is within the acceptable range.
+
+        Args:
+            freq: The CPU frequency value to validate, in Hz.
+            ftype: The CPU frequency sysfs file type.
+            cpu: CPU number to validate the frequency for.
+
+        Raises:
+            ErrorOutOfRange: If the CPU frequency value is outside the allowed range.
+            ErrorBadOrder: If min. CPU frequency is greater than max. CPU frequency and vice versa.
+        """
+
+        path = self._get_cpu_freq_sysfs_path("min", cpu, limit=True)
+        min_freq_limit = self._sysfs_io.read_int(path, what=f"min frequency limit for CPU {cpu}")
+        min_freq_limit *= 1000
+
+        path = self._get_cpu_freq_sysfs_path("max", cpu, limit=True)
+        max_freq_limit = self._sysfs_io.read_int(path, what=f"max. frequency limit for CPU {cpu}")
+        max_freq_limit *= 1000
+
+        if freq < min_freq_limit or freq > max_freq_limit:
+            name = f"{ftype} CPU {cpu} frequency"
+            freq_str = Human.num2si(freq, unit="Hz", decp=4)
+            min_limit_str = Human.num2si(min_freq_limit, unit="Hz", decp=4)
+            max_limit_str = Human.num2si(max_freq_limit, unit="Hz", decp=4)
+            raise ErrorOutOfRange(f"{name} value of '{freq_str}' for is out of range"
+                                  f"{self._pman.hostmsg}, must be within [{min_limit_str}, "
+                                  f"{max_limit_str}]")
+
+        if ftype == "min":
+            path = self._get_cpu_freq_sysfs_path("max", cpu)
+            max_freq = self._sysfs_io.read_int(path, what=f"max frequency for CPU {cpu}") * 1000
+
+            if freq > max_freq:
+                name = f"{ftype} CPU {cpu} frequency"
+                freq_str = Human.num2si(freq, unit="Hz", decp=4)
+                max_freq_str = Human.num2si(max_freq, unit="Hz", decp=4)
+                raise ErrorBadOrder(f"{name} value of '{freq_str}' is greater than the currently "
+                                    f"configured max frequency of {max_freq_str}")
+        else:
+            path = self._get_cpu_freq_sysfs_path("min", cpu)
+            min_freq = self._sysfs_io.read_int(path, what=f"min frequency for CPU {cpu}") * 1000
+
+            if freq < min_freq:
+                name = f"{ftype} CPU {cpu} frequency"
+                freq_str = Human.num2si(freq, unit="Hz", decp=4)
+                min_freq_str = Human.num2si(min_freq, unit="Hz", decp=4)
+                raise ErrorBadOrder(f"{name} value of '{freq_str}' is less than the currently "
+                                    f"configured min frequency of {min_freq_str}")
+
     def _set_freq_sysfs(self, freq: int, ftype: _SysfsFileType, cpus: AbsNumsType):
         """
         Set the CPU frequency for the specified CPUs using the Linux "cpufreq" sysfs interface.
@@ -367,15 +421,27 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             freq: Target CPU frequency in Hz.
             ftype: The CPU frequency sysfs file type.
             cpus: CPU numbers to set the frequency for.
+
+        Raises:
+            ErrorNotSupported: If the CPU frequency sysfs file does not exist.
+            ErrorVerifyFailed: If the frequency could not be set or verified after retries. The
+                               exception object will have an additional 'cpu' attribute indicating
+                               the CPU number that failed, the 'expected' attribute will contain the
+                               expected value, and the 'actual' attribute will contain the actual
+                               value read from sysfs.
+            ErrorOutOfRange: If the CPU frequency value is outside the allowed range.
+            ErrorBadOrder: If min. CPU frequency is greater than max. CPU frequency and vice versa.
         """
 
         self._warn_no_ecores_bug()
 
-        what = f"{ftype}. CPU frequency"
+        what = f"{ftype} CPU frequency"
         retries = 0
         sleep = 0.0
 
         for cpu in cpus:
+            self._validate_freq(freq, ftype, cpu)
+
             if self._verify:
                 cpu_info = self._cpuinfo.info
                 if cpu_info["vendor"] == "GenuineIntel" and "hwp" in cpu_info["flags"][cpu]:
@@ -406,11 +472,14 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             cpus: CPU numbers to set the frequency for.
 
         Raises:
+            ErrorNotSupported: If the CPU frequency sysfs file does not exist.
             ErrorVerifyFailed: If the frequency could not be set or verified after retries. The
                                exception object will have an additional 'cpu' attribute indicating
                                the CPU number that failed, the 'expected' attribute will contain the
                                expected value, and the 'actual' attribute will contain the actual
                                value read from sysfs.
+            ErrorOutOfRange: If the CPU frequency value is outside the allowed range.
+            ErrorBadOrder: If min. CPU frequency is greater than max. CPU frequency and vice versa.
         """
 
         self._set_freq_sysfs(freq, "min", cpus)
@@ -425,11 +494,14 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             cpus: CPU numbers to set the frequency for.
 
         Raises:
+            ErrorNotSupported: If the CPU frequency sysfs file does not exist.
             ErrorVerifyFailed: If the frequency could not be set or verified after retries. The
                                exception object will have an additional 'cpu' attribute indicating
                                the CPU number that failed, the 'expected' attribute will contain the
                                expected value, and the 'actual' attribute will contain the actual
                                value read from sysfs.
+            ErrorOutOfRange: If the CPU frequency value is outside the allowed range.
+            ErrorBadOrder: If min. CPU frequency is greater than max. CPU frequency and vice versa.
         """
 
         self._set_freq_sysfs(freq, "max", cpus)

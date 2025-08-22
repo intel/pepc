@@ -15,11 +15,10 @@ Provide a capability of retrieving and setting P-state related properties.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
-import itertools
 import contextlib
 import statistics
 from pathlib import Path
-from typing import Generator, NoReturn, cast, Iterator
+from typing import Generator, NoReturn, cast
 from pepclibs import _PropsClassBase
 from pepclibs.helperlibs import Trivial, Human, ClassHelpers, Logging
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorVerifyFailed
@@ -1447,55 +1446,6 @@ class PStates(_PropsClassBase.PropsClassBase):
             for cpu in cpus:
                 yield cpu, cast(int, freq)
 
-    def _get_cpu_freq_limit_iterators(self,
-                    cpus: AbsNumsType,
-                    mname: MechanismNameType) -> tuple[Iterator[tuple[int, PropertyValueType]],
-                                                       Iterator[tuple[int, PropertyValueType]]]:
-        """
-        Get iterators for minimum and maximum CPU frequency limits for the specified CPUs and
-        mechanism.
-
-        Args:
-            cpus: List or set of CPU numbers to query frequency limits for.
-            mname: Name of the mechanism to use ("sysfs" or "msr").
-
-        Returns:
-            A tuple containing two iterators:
-                - The first iterator yields (CPU, min. frequency limit) pairs.
-                - The second iterator yields (CPU, max. frequency limit) pairs.
-        """
-
-        min_limit_iter: Iterator[tuple[int, PropertyValueType]]
-        max_limit_iter: Iterator[tuple[int, PropertyValueType]]
-
-        if mname == "sysfs":
-            min_limit_iter = self._get_prop_cpus_mnames("min_freq_limit", cpus, mnames=(mname,))
-            max_limit_iter = self._get_prop_cpus_mnames("max_freq_limit", cpus, mnames=(mname,))
-            return min_limit_iter, max_limit_iter
-
-        if mname != "msr":
-            raise Error(f"BUG: Unexpected mechanism '{mname}'")
-
-        # For the minimum frequency limit, try the min. operational frequency. If it is not
-        # supported, fall-back to a dummy iterator that yields a very small value.
-        try:
-            next(self._get_prop_cpus_mnames("min_oper_freq", cpus, mnames=(mname,)))
-        except ErrorNotSupported:
-            min_limit_iter = itertools.repeat((0, 100_000_000), times=len(cpus)) # 100MHz.
-        else:
-            min_limit_iter = self._get_prop_cpus_mnames("min_oper_freq", cpus, mnames=(mname,))
-
-        # For the maximum frequency limit, try the max. turbo frequency. If it is not supported,
-        # fall-back to a dummy iterator that yields a very large frequency value.
-        try:
-            next(self._get_prop_cpus_mnames("max_turbo_freq", cpus, mnames=(mname,)))
-        except ErrorNotSupported:
-            max_limit_iter = itertools.repeat((0, 8_000_000_000), times=len(cpus)) # 8GHz.
-        else:
-            max_limit_iter = self._get_prop_cpus_mnames("max_turbo_freq", cpus, mnames=(mname,))
-
-        return min_limit_iter, max_limit_iter
-
     def _set_cpu_freq(self,
                       pname: str,
                       val: str | int,
@@ -1512,7 +1462,6 @@ class PStates(_PropsClassBase.PropsClassBase):
             mname: Mechanism to use for setting the frequency (e.g., "sysfs" or "msr").
         """
 
-        is_min = "min" in pname
         if mname == "sysfs":
             set_freq_method = self._set_freq_prop_cpus_sysfs
         elif mname == "msr":
@@ -1520,34 +1469,9 @@ class PStates(_PropsClassBase.PropsClassBase):
         else:
             raise Error(f"BUG: Unexpected mechanism '{mname}'")
 
-        min_limit_iter, max_limit_iter = self._get_cpu_freq_limit_iterators(cpus, mname)
-        new_freq_iter = self._get_numeric_cpu_freq(val, cpus)
-        cur_freq_limit_pname = "max_freq" if is_min else "min_freq"
-        cur_freq_limit_iter = self._get_prop_cpus_mnames(cur_freq_limit_pname, cpus,
-                                                         mnames=(mname,))
-
-        iter_zip = zip(new_freq_iter, min_limit_iter, max_limit_iter, cur_freq_limit_iter)
-        iterator = cast(Generator[tuple[tuple[int, int], tuple[int, int], tuple[int, int],
-                                        tuple[int, int]], None, None], iter_zip)
-
         freq2cpus: dict[int, list[int]] = {}
 
-        for (cpu, new_freq), (_, min_limit), (_, max_limit), (_, cur_freq_limit) in iterator:
-            if new_freq < min_limit or new_freq > max_limit:
-                what = f"CPU {cpu}"
-                self._raise_freq_out_of_range(pname, new_freq, min_limit, max_limit, what=what)
-
-            if is_min:
-                if new_freq > cur_freq_limit:
-                    # New min. frequency cannot be set to a value larger than current max.
-                    # frequency.
-                    what = f"CPU {cpu}"
-                    self._raise_wrong_freq_order(pname, new_freq, cur_freq_limit, is_min, what=what)
-            elif new_freq < cur_freq_limit:
-                # New max. frequency cannot be set to a value smaller than current min. frequency.
-                what = f"CPU {cpu}"
-                self._raise_wrong_freq_order(pname, new_freq, cur_freq_limit, is_min, what=what)
-
+        for (cpu, new_freq) in self._get_numeric_cpu_freq(val, cpus):
             if new_freq not in freq2cpus:
                 freq2cpus[new_freq] = []
             freq2cpus[new_freq].append(cpu)

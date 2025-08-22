@@ -18,8 +18,8 @@ from typing import Generator, cast, Literal
 import contextlib
 from pepclibs import CPUInfo, CPUModels
 from pepclibs._PropsClassBaseTypes import AbsNumsType
-from pepclibs.helperlibs import Logging, LocalProcessManager, ClassHelpers
-from pepclibs.helperlibs.Exceptions import ErrorNotSupported
+from pepclibs.helperlibs import Logging, LocalProcessManager, ClassHelpers, Human
+from pepclibs.helperlibs.Exceptions import ErrorNotSupported, ErrorOutOfRange, ErrorBadOrder
 
 if typing.TYPE_CHECKING:
     from pepclibs.msr import MSR, FSBFreq, PMEnable, HWPRequest, HWPRequestPkg, PlatformInfo
@@ -386,6 +386,50 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
 
         yield from self._get_freq_msr("max", cpus)
 
+    def _validate_freq(self, freq: int, ftype: _SysfsFileType, cpus: AbsNumsType):
+        """
+        Validate that a CPU frequency value is within the acceptable range.
+
+        Args:
+            freq: The CPU frequency value to validate, in Hz.
+            ftype: The CPU frequency sysfs file type.
+            cpus: CPU numbers to validate the frequency for.
+
+        Raises:
+            ErrorOutOfRange: If the CPU frequency value is outside the allowed range.
+            ErrorBadOrder: If min. CPU frequency is greater than max. CPU frequency and vice versa.
+        """
+
+        min_limit_iter = self.get_min_oper_freq(cpus)
+        max_limit_iter = self.get_max_turbo_freq(cpus)
+
+        for (cpu, min_freq_limit), (_, max_freq_limit) in zip(min_limit_iter, max_limit_iter):
+            if freq < min_freq_limit or freq > max_freq_limit:
+                name = f"{ftype} CPU {cpu} frequency"
+                freq_str = Human.num2si(freq, unit="Hz", decp=4)
+                min_limit_str = Human.num2si(min_freq_limit, unit="Hz", decp=4)
+                max_limit_str = Human.num2si(max_freq_limit, unit="Hz", decp=4)
+                raise ErrorOutOfRange(f"{name} value of '{freq_str}' for is out of range"
+                                      f"{self._pman.hostmsg}, must be within [{min_limit_str}, "
+                                      f"{max_limit_str}]")
+
+        if ftype == "min":
+            for cpu, max_freq in self._get_freq_msr("max", cpus):
+                if freq > max_freq:
+                    name = f"{ftype} CPU {cpu} frequency"
+                    freq_str = Human.num2si(freq, unit="Hz", decp=4)
+                    max_freq_str = Human.num2si(max_freq, unit="Hz", decp=4)
+                    raise ErrorBadOrder(f"{name} value of '{freq_str}' is greater than the "
+                                        f"currently configured max frequency of {max_freq_str}")
+        else:
+            for cpu, min_freq in self._get_freq_msr("min", cpus):
+                if freq < min_freq:
+                    name = f"{ftype} CPU {cpu} frequency"
+                    freq_str = Human.num2si(freq, unit="Hz", decp=4)
+                    min_freq_str = Human.num2si(min_freq, unit="Hz", decp=4)
+                    raise ErrorBadOrder(f"{name} value of '{freq_str}' is less than the currently "
+                                        f"configured min frequency of {min_freq_str}")
+
     def _set_freq_msr(self, freq: int, ftype: _SysfsFileType, cpus: AbsNumsType):
         """
         Set the CPU frequency for specified CPUs using the 'MSR_HWP_REQUEST' model specific
@@ -398,6 +442,8 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
 
         Raises:
             ErrorNotSupported: If disabling package control via 'MSR_HWP_REQUEST' is not supported.
+            ErrorOutOfRange: If the CPU frequency value is outside the allowed range.
+            ErrorBadOrder: If min. CPU frequency is greater than max. CPU frequency and vice versa.
         """
 
         # The corresponding 'MSR_HWP_REQUEST' feature name.
@@ -412,6 +458,8 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
                 if enabled:
                     pkg_control_cpus.append(cpu)
             hwpreq.write_feature(f"{feature_name}_valid", "on", cpus=pkg_control_cpus)
+
+        self._validate_freq(freq, ftype, cpus)
 
         # Prepare the values dictionary, which maps each value to the list of CPUs to write this
         # value to.
@@ -438,6 +486,8 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
 
         Raises:
             ErrorNotSupported: If setting the frequency via 'MSR_HWP_REQUEST' is not supported.
+            ErrorOutOfRange: If the CPU frequency value is outside the allowed range.
+            ErrorBadOrder: If min. CPU frequency is greater than max. CPU frequency and vice versa.
         """
 
         self._set_freq_msr(freq, "min", cpus)
@@ -452,6 +502,8 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
 
         Raises:
             ErrorNotSupported: If setting the frequency via 'MSR_HWP_REQUEST' is not supported.
+            ErrorOutOfRange: If the CPU frequency value is outside the allowed range.
+            ErrorBadOrder: If min. CPU frequency is greater than max. CPU frequency and vice versa.
         """
 
         self._set_freq_msr(freq, "max", cpus)
