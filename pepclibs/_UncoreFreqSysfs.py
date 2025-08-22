@@ -312,11 +312,11 @@ class UncoreFreqSysfs(ClassHelpers.SimpleCloseContext):
         fname = prefix + ftype + "_freq_khz"
         return self._sysfs_base / f"package_{package:02d}_die_{die:02d}" / fname
 
-    def _construct_sysfs_path_dies(self,
-                                   ftype: _SysfsFileType,
-                                   package: int,
-                                   die: int,
-                                   limit: bool = False) -> Path:
+    def _construct_sysfs_path_die(self,
+                                  ftype: _SysfsFileType,
+                                  package: int,
+                                  die: int,
+                                  limit: bool = False) -> Path:
         """
         Retrieve the sysfs file path for an uncore frequency read or write operation.
 
@@ -378,7 +378,7 @@ class UncoreFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         for package, pkg_dies in dies.items():
             for die in pkg_dies:
-                path = self._construct_sysfs_path_dies(ftype, package, die, limit=limit)
+                path = self._construct_sysfs_path_die(ftype, package, die, limit=limit)
                 freq = self._sysfs_io.read_int(path, what=what)
                 # The frequency value is in kHz in sysfs.
                 yield package, die, freq * 1000
@@ -558,7 +558,7 @@ class UncoreFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         for package, pkg_dies in dies.items():
             for die in pkg_dies:
-                path = self._construct_sysfs_path_dies(ftype, package, die)
+                path = self._construct_sysfs_path_die(ftype, package, die)
                 self._sysfs_io.write_int(path, freq // 1000, what=what)
 
     def set_min_freq_dies(self, freq: int, dies: RelNumsType):
@@ -611,9 +611,7 @@ class UncoreFreqSysfs(ClassHelpers.SimpleCloseContext):
         package = tline["package"]
         die = tline["die"]
 
-        if self._use_new_sysfs_api():
-            return self._construct_new_sysfs_path(ftype, package, die, limit=limit)
-        return self._construct_legacy_sysfs_path(ftype, package, die, limit=limit)
+        return self._construct_sysfs_path_die(ftype, package, die, limit=limit)
 
     def _get_freq_cpus(self,
                        ftype: _SysfsFileType,
