@@ -72,8 +72,6 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         self.hostmsg = f" on '{self.hostname}'"
         self.is_remote = False
 
-        # Data for emulated read-only files.
-        self._ro_files = {}
         self._cmds = {}
         self._basepath = None
         # Set of all modules that were initialized.
@@ -462,7 +460,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             return True
 
         emul_path = Path(self._get_basepath() / path.lstrip("/"))
-        return super().exists(emul_path) or path in self._ro_files
+        return super().exists(emul_path)
 
     def is_file(self, path):
         """
@@ -477,7 +475,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             return True
 
         emul_path = Path(self._get_basepath() / path.lstrip("/"))
-        return super().is_file(emul_path) or path in self._ro_files
+        return super().is_file(emul_path)
 
     def is_dir(self, path):
         """
