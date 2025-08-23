@@ -118,10 +118,9 @@ class EmulFileBase:
 
         fobj = self._open(mode)
 
-        setattr(fobj, "__fullpath", self.fullpath)
-
         if self.readonly:
             # Monkey-patch the 'write()' method to ensure writes fail.
+            setattr(fobj, "__fullpath", self.fullpath)
             setattr(fobj, "write", types.MethodType(_readonly_fobj_write, fobj))
 
         return fobj

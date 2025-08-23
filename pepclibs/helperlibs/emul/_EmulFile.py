@@ -13,8 +13,7 @@ from typing import Any, Union
 from pathlib import Path
 from pepclibs.helperlibs.emul import _EmulFileBase, _ROFile, _RWFile, _EmulDevMSR
 
-EmulFileType = Union[_EmulFileBase.EmulFileBase, _ROFile.ROSysfsFile, _RWFile.RWFile,
-                     _EmulDevMSR.EmulDevMSR]
+EmulFileType = Union[_EmulFileBase.EmulFileBase, _ROFile.ROSysfsFile, _EmulDevMSR.EmulDevMSR]
 
 def get_emul_file(path: str,
                   basepath: Path,
@@ -49,7 +48,8 @@ def get_emul_file(path: str,
         return _EmulFileBase.EmulFileBase(Path(path), basepath, readonly=readonly, data=data)
 
     if path.startswith("/sys/"):
-        return _RWFile.RWSysinfoFile(Path(path), basepath, data)
+        return _RWFile.RWSysinfoFile(Path(path), basepath, readonly=readonly, data=data)
     if path.endswith("/msr"):
         return _EmulDevMSR.EmulDevMSR(Path(path), basepath, data)
-    return _RWFile.RWFile(Path(path), basepath, data)
+
+    return _EmulFileBase.EmulFileBase(Path(path), basepath, readonly=readonly, data=data)

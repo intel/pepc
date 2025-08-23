@@ -10,43 +10,39 @@
 """Emulate read-write sysfs, procfs, and debugfs files."""
 
 import types
+from pathlib import Path
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs.helperlibs.emul import _EmulFileBase
 
-def populate_rw_file(path, data):
-    """Create text file 'path' and write 'data' into it."""
-
-    if not path.parent.exists():
-        path.parent.mkdir(parents=True)
-
-    with open(path, "w", encoding="utf-8") as fobj:
-        try:
-            fobj.write(data)
-        except OSError as err:
-            msg = Error(err).indent(2)
-            raise Error(f"failed to write into file '{path}':\n{msg}") from err
-
-class RWFile(_EmulFileBase.EmulFileBase):
-    """Emulate read-write procfs and debugfs files."""
-
-    def __init__(self, path, basepath, data):
-        """
-        Class constructor. Arguments are as follows:
-         * basepath - The basepath is a
-                          path to the directory where emulated files should be created.
-        """
-
-        self.ro = False
-
-        super().__init__(path, basepath)
-
-        # Create file in temporary directory. Here is an example.
-        #   * Emulated path: "/sys/devices/system/cpu/cpu0".
-        #   * Real path: "/tmp/emulprocs_861089_0s3hy8ye/sys/devices/system/cpu/cpu0".
-        populate_rw_file(self.fullpath, data)
-
-class RWSysinfoFile(RWFile):
+class RWSysinfoFile(_EmulFileBase.EmulFileBase):
     """Emulate read-write sysfs files."""
+
+    def __init__(self,
+                 path: Path,
+                 basepath: Path,
+                 readonly: bool = False,
+                 data: str | bytes | None = None):
+        """
+        Initialize a class instance.
+
+        Args:
+            path: Path to the file to emulate.
+            basepath: Path to the base directory (where the emulated files are stored).
+            readonly: Whether the emulated file is read-only.
+            data: The initial data to populate the emulated file with. Do not populate the file if
+                  None.
+        """
+
+        super().__init__(path, basepath, readonly=readonly, data=data)
+
+        if data:
+            return
+
+        # Create an empty file.
+        # TODO: this would be better to do in the superclass.
+        if not self.fullpath.parent.exists():
+            self.fullpath.parent.mkdir(parents=True)
+        self._open("w").close()
 
     def _set_write_method(self, fobj, path, mode):
         """
