@@ -12,6 +12,7 @@
 Provide base class for emulated file classes.
 """
 
+import types
 from typing import IO
 from pathlib import Path
 from pepclibs.helperlibs.Exceptions import Error, ErrorPermissionDenied, ErrorNotFound
@@ -29,6 +30,19 @@ class EmulFileBase:
             mode: The mode in which to open the file, similar to 'mode' argument the built-in Python
                   'open()' function.
         """
+
+        def _readonly_fobj_write(self, data):
+            """
+            The 'write()' method for read-only file objects. Just raise an exception.
+
+            Args:
+                data: The data to write (ignored).
+
+            Raises:
+                ErrorPermissionDenied: If a write operation is attempted on a read-only file.
+            """
+
+            raise ErrorPermissionDenied(f"Cannot write to a read-only file '{self.fullpath}'")
 
         encoding: str | None
 
@@ -54,15 +68,20 @@ class EmulFileBase:
             errmsg = Error(str(err)).indent(2)
             raise Error(f"{errmsg_prefix}\n{errmsg}") from None
 
+        if self.readonly:
+            # Monkey-patch the 'write()' method to ensure writes fail.
+            setattr(fobj, "write", types.MethodType(_readonly_fobj_write, fobj))
+
         return fobj
 
-    def __init__(self, path: Path, basepath: Path):
+    def __init__(self, path: Path, basepath: Path, readonly: bool = False):
         """
         Initialize a class instance.
 
         Args:
             path: Path to the file to emulate.
             basepath: Path to the base directory (where the emulated files are stored).
+            readonly: Whether the emulated file is read-only.
         """
 
         # TODO: remove.
@@ -71,6 +90,7 @@ class EmulFileBase:
 
         self.path = path
         self.basepath = basepath
+        self.readonly = readonly
 
         # Note about lstrip(): 'self.path' is usually an absolute path starting with '/', and
         # joining it directly with 'self.basepath' would ignore the base path. For example,

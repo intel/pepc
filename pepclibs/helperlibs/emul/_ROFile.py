@@ -9,33 +9,12 @@
 
 """Emulate read-only sysfs, procfs, and debugfs files."""
 
-import io
 import types
 from pepclibs.helperlibs import Trivial
-from pepclibs.helperlibs.Exceptions import Error
 from pepclibs.helperlibs.emul import _EmulFileBase
-
-def open_ro(data, mode): # pylint: disable=unused-argument
-    """
-    Return an emulated read-only file object using a 'StringIO' object, containing 'data' and
-    opened with 'mode'.
-    """
-
-    def _ro_write(data):
-        """Write 'data' to emulated RO file."""
-        raise Error("not writable")
-
-    fobj = io.StringIO(data)
-    setattr(fobj, "write", types.MethodType(_ro_write, fobj))
-    return fobj
 
 class ROFile(_EmulFileBase.EmulFileBase):
     """Emulate read-only procfs and debugfs files."""
-
-    def open(self, mode):
-        """Create a file in the temporary directory and return the file object with 'mode'."""
-
-        return open_ro(self.ro_data, mode)
 
     def __init__(self, path, basepath, data):
         """
@@ -44,10 +23,13 @@ class ROFile(_EmulFileBase.EmulFileBase):
                           path to the directory where emulated files should be created.
         """
 
-        super().__init__(path, basepath)
+        super().__init__(path, basepath, readonly=True)
 
-        self.ro = True
-        self.ro_data = data
+        if not self.fullpath.parent.exists():
+            self.fullpath.parent.mkdir(parents=True)
+
+        with open(self.fullpath, "w", encoding="utf-8") as fobj:
+            fobj.write(data)
 
 class ROSysfsFile(ROFile):
     """Emulate read-only sysfs files."""
