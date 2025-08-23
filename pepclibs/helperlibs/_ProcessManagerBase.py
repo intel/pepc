@@ -1032,8 +1032,8 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         Args:
             path: The path to the file to open.
-            mode: The mode in which to open the file, similar to the built-in Python 'open()'
-                  function.
+            mode: The mode in which to open the file, similar to 'mode' argument the built-in Python
+                  'open()' function.
 
         Returns:
             A file-like object corresponding to the opened file.

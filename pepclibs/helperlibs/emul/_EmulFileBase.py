@@ -1,24 +1,70 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2022-2024 Intel Corporation
+# Copyright (C) 2022-2025 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
-# Authors: Antti Laakso <antti.laakso@linux.intel.com>
+# Authors: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
+#          Antti Laakso <antti.laakso@linux.intel.com>
 #          Niklas Neronin <niklas.neronin@intel.com>
 
-"""Provide the base class for sub-classes emulating sysfs, procfs, and debugfs files."""
+"""
+Provide base class for emulated file classes.
+"""
+
+from typing import IO
+from pathlib import Path
+from pepclibs.helperlibs.Exceptions import Error, ErrorPermissionDenied, ErrorNotFound
 
 class EmulFileBase:
-    """Base class for sub-classes emulating sysfs, procfs, and debugfs files."""
+    """
+    Base class for emulated file classes.
+    """
 
-    def open(self, mode):
-        """Create a file in the temporary directory and return the file object with 'mode'."""
-        raise NotImplementedError()
+    def open(self, mode: str) -> IO:
+        """
+        Open the emulated file. The file resides in the temporary directory the base directory.
 
-    def __init__(self, path):
+        Args:
+            mode: The mode in which to open the file, similar to 'mode' argument the built-in Python
+                  'open()' function.
         """
-        Class constructor. Arguments are as follows:
-         * path - emulated path of the file.
+
+        path = self.basepath / str(self.path).strip("/")
+        encoding: str | None
+
+        # Allow for disabling buffering only in binary mode.
+        if "b" in mode:
+            buffering = 0
+            encoding = None
+        else:
+            buffering = -1
+            encoding = "utf-8"
+
+        errmsg_prefix = f"Cannot open file '{path}' with mode '{mode}': "
+        try:
+            # pylint: disable-next=consider-using-with
+            fobj = open(path, mode, buffering=buffering, encoding=encoding)
+        except PermissionError as err:
+            errmsg = Error(str(err)).indent(2)
+            raise ErrorPermissionDenied(f"{errmsg_prefix}\n{errmsg}") from None
+        except FileNotFoundError as err:
+            errmsg = Error(str(err)).indent(2)
+            raise ErrorNotFound(f"{errmsg_prefix}\n{errmsg}") from None
+        except OSError as err:
+            errmsg = Error(str(err)).indent(2)
+            raise Error(f"{errmsg_prefix}\n{errmsg}") from None
+
+        return fobj
+
+    def __init__(self, path: Path, basepath: Path):
         """
+        Initialize a class instance.
+
+        Args:
+            path: Path to the file to emulate.
+            basepath: Path to the base directory (where the emulated files are stored).
+        """
+
         self.path = path
+        self.basepath = basepath

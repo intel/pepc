@@ -37,17 +37,15 @@ class ROFile(_EmulFileBase.EmulFileBase):
 
         return open_ro(self.ro_data, mode)
 
-    def __init__(self, finfo, datapath, get_basepath, module=None):
+    def __init__(self, finfo, datapath, basepath, module=None):
         """
         Class constructor. Arguments are as follows:
          * finfo - file info dictionary.
          * datapath - path to the directory containing data which is used for emulation.
-         * get_basepath - a function which can be called to access the basepath. The basepath is a
+         * basepath - The basepath is a
                           path to the directory where emulated files should be created.
          * module - the name of the module which the file is a part of.
         """
-
-        self._get_basepath = get_basepath
 
         if "data" in finfo:
             data = finfo["data"]
@@ -59,7 +57,7 @@ class ROFile(_EmulFileBase.EmulFileBase):
         self.ro = True
         self.ro_data = data
 
-        super().__init__(str(finfo["path"]))
+        super().__init__(str(finfo["path"]), basepath)
 
 class ROSysfsFile(ROFile):
     """Emulate read-only sysfs files."""
@@ -109,7 +107,7 @@ class ROSysfsFile(ROFile):
             return Trivial.rangify(online)
 
         # pylint: disable=pepc-unused-variable,protected-access
-        fobj._base_path = self._get_basepath() / "sys" / "devices" / "system" / "cpu"
+        fobj._base_path = self.basepath / "sys" / "devices" / "system" / "cpu"
         fobj._orig_read = fobj.read
         # pylint: enable=pepc-unused-variable,protected-access
         setattr(fobj, "read", types.MethodType(_online_read, fobj))

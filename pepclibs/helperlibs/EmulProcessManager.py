@@ -32,7 +32,7 @@ from pepclibs.helperlibs import Logging, LocalProcessManager, Trivial, YAML, Cla
 from pepclibs.helperlibs import _ProcessManagerBase
 from pepclibs.helperlibs._ProcessManagerBase import ProcWaitResultType, LsdirTypedDict
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
-from pepclibs.helperlibs.emul import _EmulDevMSR, _RWFile, _EmulFile
+from pepclibs.helperlibs.emul import _EmulDevMSR, _RWFile, _EmulFile, _EmulFileBase
 
 class _EmulCmdResultType(NamedTuple):
     """
@@ -231,14 +231,13 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         Open a file at path 'path' relative to the emulation base directory. Create it if necessary.
         """
 
+        _LOG.debug("Opening file '%s' with mode '%s'", path, mode)
+
         path = str(path)
         if path in self._emuls:
-            _LOG.debug("Opening emulated file in mode '%s': %s", mode, path)
             return self._emuls[path].open(mode)
 
-        fobj = _RWFile.open_rw(path, mode, self._get_basepath())
-        wfobj = ClassHelpers.WrapExceptions(fobj, get_err_prefix=_ProcessManagerBase.get_err_prefix)
-        return cast(IO, wfobj)
+        return _EmulFileBase.EmulFileBase(path, self._get_basepath()).open(mode)
 
     def _init_commands(self, cmdinfos, datapath):
         """

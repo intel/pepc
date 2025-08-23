@@ -10,9 +10,7 @@
 """Emulate read-write sysfs, procfs, and debugfs files."""
 
 import types
-from pepclibs.helperlibs import ClassHelpers, _ProcessManagerBase
-from pepclibs.helperlibs.Exceptions import Error, ErrorPermissionDenied
-from pepclibs.helperlibs.Exceptions import ErrorNotFound
+from pepclibs.helperlibs.Exceptions import Error
 from pepclibs.helperlibs.emul import _EmulFileBase
 
 def populate_rw_file(path, data):
@@ -28,62 +26,19 @@ def populate_rw_file(path, data):
             msg = Error(err).indent(2)
             raise Error(f"failed to write into file '{path}':\n{msg}") from err
 
-def open_rw(path, mode, basepath):
-    """
-    Create a file in the temporary directory and return the file object. Arguments are as
-    follows:
-     * path - non-emulated path.
-     * mode - mode with which to open the file.
-     * basepath - base path of the temporary directory containing emulated files.
-    """
-
-    tmppath = basepath / str(path).strip("/")
-
-    # Disabling buffering is only allowed in binary mode.
-    if "b" in mode:
-        buffering = 0
-        encoding = None
-    else:
-        buffering = -1
-        encoding = "utf-8"
-
-    errmsg = f"cannot open file '{path}' with mode '{mode}': "
-    try:
-        # pylint: disable=consider-using-with
-        fobj = open(tmppath, mode, buffering=buffering, encoding=encoding)
-    except PermissionError as err:
-        msg = Error(err).indent(2)
-        raise ErrorPermissionDenied(f"{errmsg}\n{msg}") from None
-    except FileNotFoundError as err:
-        msg = Error(err).indent(2)
-        raise ErrorNotFound(f"{errmsg}\n{msg}") from None
-    except OSError as err:
-        msg = Error(err).indent(2)
-        raise Error(f"{errmsg}\n{msg}") from None
-
-    return fobj
-
 class RWFile(_EmulFileBase.EmulFileBase):
     """Emulate read-write procfs and debugfs files."""
 
-    def open(self, mode):
-        """Create a file in the temporary directory and return the file object with 'mode'."""
-
-        fobj = open_rw(self.path, mode, self._get_basepath())
-        # Make sure methods of 'fobj' always raise the 'Error' exceptions.
-        return ClassHelpers.WrapExceptions(fobj, get_err_prefix=_ProcessManagerBase.get_err_prefix)
-
-    def __init__(self, finfo, datapath, get_basepath, module=None):
+    def __init__(self, finfo, datapath, basepath, module=None):
         """
         Class constructor. Arguments are as follows:
          * finfo - file info dictionary.
          * datapath - path to the directory containing data which is used for emulation.
-         * get_basepath - a function which can be called to access the basepath. The basepath is a
+         * basepath - The basepath is a
                           path to the directory where emulated files should be created.
          * module - the name of the module which the file is a part of.
         """
 
-        self._get_basepath = get_basepath
         self.ro = False
 
         if "data" in finfo:
@@ -96,10 +51,10 @@ class RWFile(_EmulFileBase.EmulFileBase):
         # Create file in temporary directory. Here is an example.
         #   * Emulated path: "/sys/devices/system/cpu/cpu0".
         #   * Real path: "/tmp/emulprocs_861089_0s3hy8ye/sys/devices/system/cpu/cpu0".
-        path = self._get_basepath() / finfo["path"].lstrip("/")
+        path = basepath / finfo["path"].lstrip("/")
         populate_rw_file(path, data)
 
-        super().__init__(str(finfo["path"]))
+        super().__init__(finfo["path"], basepath)
 
 class RWSysinfoFile(RWFile):
     """Emulate read-write sysfs files."""
@@ -173,6 +128,6 @@ class RWSysinfoFile(RWFile):
     def open(self, mode):
         """Create a file in the temporary directory and return the file object with 'mode'."""
 
-        fobj = open_rw(self.path, mode, self._get_basepath())
+        fobj = super().open(mode)
         self._set_write_method(fobj, self.path, mode)
-        return ClassHelpers.WrapExceptions(fobj, get_err_prefix=_ProcessManagerBase.get_err_prefix)
+        return fobj

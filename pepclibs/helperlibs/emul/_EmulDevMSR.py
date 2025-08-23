@@ -11,7 +11,7 @@
 
 import types
 from pepclibs.helperlibs import ClassHelpers, _ProcessManagerBase
-from pepclibs.helperlibs.emul import _RWFile
+from pepclibs.helperlibs.emul import _RWFile, _EmulFileBase
 from pepclibs.helperlibs.Exceptions import Error
 
 def _populate_sparse_file(path, data):
@@ -29,7 +29,7 @@ def _populate_sparse_file(path, data):
         msg = Error(err).indent(2)
         raise Error(f"failed to prepare sparse file '{path}':\n{msg}") from err
 
-class EmulDevMSR:
+class EmulDevMSR(_EmulFileBase.EmulFileBase):
     """Emulate the '/dev/msr/*' device node files."""
 
     def _set_seek_method(self, fobj, path):
@@ -54,9 +54,9 @@ class EmulDevMSR:
         Create a file in the temporary directory and return the file object, opened with 'mode'.
         """
 
-        fobj = _RWFile.open_rw(self.path, mode, self._basepath)
+        fobj = super().open(mode)
         self._set_seek_method(fobj, self.path)
-        return ClassHelpers.WrapExceptions(fobj, get_err_prefix=_ProcessManagerBase.get_err_prefix)
+        return fobj
 
     def __init__(self, msrinfo, basepath):
         """
@@ -65,9 +65,9 @@ class EmulDevMSR:
          * basepath - path to the temporary directory containing emulated files.
         """
 
-        self._basepath = basepath
+        super().__init__(msrinfo["path"], basepath)
+
         self.ro = msrinfo.get("readonly", False)
 
-        self.path = str(msrinfo["path"])
         real_path = basepath / msrinfo["path"].lstrip("/")
         _populate_sparse_file(real_path, msrinfo["data"])

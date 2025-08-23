@@ -22,17 +22,19 @@ def get_emul_file(finfo, datapath, get_basepath, module=None):
      * module - the name of the module which the file is a part of.
     """
 
+    basepath = get_basepath()
+
     emul = None
     if finfo.get("readonly", False):
         if finfo["path"].endswith("cpu/online"):
-            emul = _ROFile.ROSysfsFile(finfo, datapath, get_basepath, module)
+            emul = _ROFile.ROSysfsFile(finfo, datapath, basepath, module)
         else:
-            emul = _ROFile.ROFile(finfo, datapath, get_basepath, module)
+            emul = _ROFile.ROFile(finfo, datapath, basepath, module)
     else:
         if finfo["path"].startswith("/sys/"):
-            emul = _RWFile.RWSysinfoFile(finfo, datapath, get_basepath, module)
+            emul = _RWFile.RWSysinfoFile(finfo, datapath, basepath, module)
         else:
-            emul = _RWFile.RWFile(finfo, datapath, get_basepath, module)
+            emul = _RWFile.RWFile(finfo, datapath, basepath, module)
 
     if emul is None:
         raise Error(f"BUG: emulation of file '{finfo['path']}' is not supported")
