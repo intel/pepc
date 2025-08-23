@@ -13,7 +13,7 @@ from typing import Any, Union
 from pathlib import Path
 from pepclibs.helperlibs.emul import _EmulFileBase, _ROFile, _RWFile, _EmulDevMSR
 
-EmulFileType = Union[_EmulFileBase.EmulFileBase, _ROFile.ROFile, _RWFile.RWFile,
+EmulFileType = Union[_EmulFileBase.EmulFileBase, _ROFile.ROSysfsFile, _RWFile.RWFile,
                      _EmulDevMSR.EmulDevMSR]
 
 def get_emul_file(path: str,
@@ -45,8 +45,8 @@ def get_emul_file(path: str,
 
     if readonly:
         if path.endswith("cpu/online"):
-            return _ROFile.ROSysfsFile(Path(path), basepath, data)
-        return _ROFile.ROFile(Path(path), basepath, data)
+            return _ROFile.ROSysfsFile(Path(path), basepath, readonly=readonly, data=data)
+        return _EmulFileBase.EmulFileBase(Path(path), basepath, readonly=readonly, data=data)
 
     if path.startswith("/sys/"):
         return _RWFile.RWSysinfoFile(Path(path), basepath, data)

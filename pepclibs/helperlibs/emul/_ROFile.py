@@ -10,29 +10,30 @@
 """Emulate read-only sysfs, procfs, and debugfs files."""
 
 import types
+from pathlib import Path
 from pepclibs.helperlibs import Trivial
 from pepclibs.helperlibs.emul import _EmulFileBase
 
-class ROFile(_EmulFileBase.EmulFileBase):
-    """Emulate read-only procfs and debugfs files."""
-
-    def __init__(self, path, basepath, data):
-        """
-        Class constructor. Arguments are as follows:
-         * basepath - The basepath is a
-                          path to the directory where emulated files should be created.
-        """
-
-        super().__init__(path, basepath, readonly=True)
-
-        if not self.fullpath.parent.exists():
-            self.fullpath.parent.mkdir(parents=True)
-
-        with open(self.fullpath, "w", encoding="utf-8") as fobj:
-            fobj.write(data)
-
-class ROSysfsFile(ROFile):
+class ROSysfsFile(_EmulFileBase.EmulFileBase):
     """Emulate read-only sysfs files."""
+
+    def __init__(self,
+                 path: Path,
+                 basepath: Path,
+                 readonly: bool = False,
+                 data: str | bytes | None = None):
+        """
+        Initialize a class instance.
+
+        Args:
+            path: Path to the file to emulate.
+            basepath: Path to the base directory (where the emulated files are stored).
+            readonly: Whether the emulated file is read-only.
+            data: The initial data to populate the emulated file with. If None, and the emulated
+                  path does not exist, an empty file will be created.
+        """
+
+        super().__init__(path, basepath, readonly=readonly, data=data)
 
     def _set_read_method(self, fobj):
         """
@@ -78,10 +79,8 @@ class ROSysfsFile(ROFile):
 
             return Trivial.rangify(online)
 
-        # pylint: disable=pepc-unused-variable,protected-access
         fobj._base_path = self.basepath / "sys" / "devices" / "system" / "cpu"
         fobj._orig_read = fobj.read
-        # pylint: enable=pepc-unused-variable,protected-access
         setattr(fobj, "read", types.MethodType(_online_read, fobj))
 
     def open(self, mode):
