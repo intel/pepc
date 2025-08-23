@@ -4,37 +4,44 @@
 # Copyright (C) 2024 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
-# Author: Adam Hawley <adam.james.hawley@intel.com>
+# Authors: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
+#          Adam Hawley <adam.james.hawley@intel.com>
 
 """Provide the factory function to create emulated file objects."""
 
-from typing import Any
+from typing import Any, Union
 from pathlib import Path
 from pepclibs.helperlibs.emul import _EmulFileBase, _ROFile, _RWFile, _EmulDevMSR
+
+EmulFileType = Union[_EmulFileBase.EmulFileBase, _ROFile.ROFile, _RWFile.RWFile,
+                     _EmulDevMSR.EmulDevMSR]
 
 def get_emul_file(path: str,
                   basepath: Path,
                   data: Any = None,
-                  datapath: Path | None = None,
-                  readonly: bool = False,
-                  module: str = ""):
+                  readonly: bool = False) -> EmulFileType:
     """
-    Create and return an emulated file object representing the file described by the file
-    information dictionary 'finfo'. Arguments are as follows:
-     * finfo - file information dictionary which describes the file to be emulated.
-     * basepath - The basepath is a
-                      path to the directory where emulated files should be created.
-     * datapath - path to the directory containing data which is used for emulation.
-     * module - the name of the module which the file is a part of.
+    Create and return an emulated file object for the specified path.
+
+    Args:
+        path: Path to the file to emulate.
+        basepath: Directory where emulated files should be created.
+        data: Optional data used for emulation.
+        readonly: Whether the emulated file should be read-only.
+
+    Returns:
+        An emulated file object representing the specified file.
+
+    Raises:
+        ValueError: If the file type is not supported for emulation.
     """
 
-    if datapath is None and data is None:
+    # TODO: remove.
+    assert isinstance(path, str)
+    assert isinstance(basepath, Path)
+
+    if data is None:
         return _EmulFileBase.EmulFileBase(Path(path), basepath)
-
-    if datapath is not None:
-        data_path = datapath / module / path.lstrip("/")
-        with open(data_path, "r", encoding="utf-8") as fobj:
-            data = fobj.read()
 
     if readonly:
         if path.endswith("cpu/online"):

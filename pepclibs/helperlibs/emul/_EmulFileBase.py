@@ -65,6 +65,10 @@ class EmulFileBase:
             basepath: Path to the base directory (where the emulated files are stored).
         """
 
+        # TODO: remove.
+        assert isinstance(path, Path)
+        assert isinstance(basepath, Path)
+
         self.path = path
         self.basepath = basepath
 

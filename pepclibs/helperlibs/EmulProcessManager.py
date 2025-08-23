@@ -349,8 +349,12 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         """Initialize plain files, which are just copies of the original files."""
 
         for finfo in finfos:
-            emul = _EmulFile.get_emul_file(finfo["path"], self._basepath, datapath=datapath,
-                                           module=module)
+            path = datapath / module / finfo["path"].lstrip("/")
+            with open(path, "r", encoding="utf-8") as fobj:
+                data = fobj.read()
+
+            emul = _EmulFile.get_emul_file(finfo["path"], self._basepath, data=data,
+                                           readonly=finfo["readonly"])
             self._emuls[finfo["path"]] = emul
 
     def _init_empty_dirs(self, finfos):
