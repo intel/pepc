@@ -93,7 +93,8 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         self.hostmsg = f" on '{self.hostname}'"
         self.is_remote = False
 
-        self._basepath: Path | None = None
+        pid = Trivial.get_pid()
+        self._basepath = super().mkdtemp(prefix=f"emulprocs_{pid}_")
 
         # The emulation data dictionary.
         self._emd: _EmulDataTypedDict = {"cmds": {}}
@@ -129,28 +130,17 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
         return stdout, stderr
 
-    def _get_basepath(self):
-        """Return path to the temporary directory where all the files should be created."""
-
-        if not self._basepath:
-            pid = Trivial.get_pid()
-            self._basepath = super().mkdtemp(prefix=f"emulprocs_{pid}_")
-
-        return self._basepath
-
     def _extract_path(self, cmd):
         """
         Parse command 'cmd' and find if it includes path which is also emulated. Returns the path if
         found, otherwise returns 'None'.
         """
 
-        basepath = self._get_basepath()
-
         for split in cmd.split():
-            if Path(basepath / split).exists():
+            if Path(self._basepath / split).exists():
                 return split
             for strip_chr in ("'/", "\"/"):
-                if Path(basepath / split.strip(strip_chr)).exists():
+                if Path(self._basepath / split.strip(strip_chr)).exists():
                     return split.strip(strip_chr)
 
         return None
@@ -161,13 +151,12 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         doesn't include any paths, or paths are not emulated.
         """
 
-        basepath = self._get_basepath()
-        if str(basepath) in cmd:
+        if str(self._basepath) in cmd:
             return cmd
 
         path = self._extract_path(cmd)
         if path:
-            rebased_cmd = cmd.replace(path, f"{basepath}/{str(path).lstrip('/')}")
+            rebased_cmd = cmd.replace(path, f"{self._basepath}/{str(path).lstrip('/')}")
             return rebased_cmd
 
         return None
@@ -237,7 +226,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         if path in self._emuls:
             return self._emuls[path].open(mode)
 
-        return _EmulFileBase.EmulFileBase(path, self._get_basepath()).open(mode)
+        return _EmulFileBase.EmulFileBase(path, self._basepath).open(mode)
 
     def _init_commands(self, cmdinfos, datapath):
         """
@@ -283,7 +272,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
                 # absolute path starting with '/', and joining it with the base path would result
                 # in a base path ignored. E.g., Path("/tmp") / "/sys" results in "/sys" instead of
                 # "/tmp/sys".
-                dirpath = self._get_basepath() / finfo["path"].lstrip("/")
+                dirpath = self._basepath / finfo["path"].lstrip("/")
                 dirpath = dirpath.parent
                 try:
                     dirpath.mkdir(parents=True, exist_ok=True)
@@ -291,7 +280,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
                     errmsg = Error(str(err)).indent(2)
                     raise Error(f"Failed to create directory '{dirpath}':\n{errmsg}") from err
 
-                emul = _EmulFile.get_emul_file(finfo, datapath, self._get_basepath)
+                emul = _EmulFile.get_emul_file(finfo, datapath, self._basepath)
                 self._emuls[emul.path] = emul
 
     def _init_inline_dirs(self, finfos, datapath):
@@ -307,7 +296,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
                 lines = fobj.readlines()
 
             for line in lines:
-                path = self._get_basepath() / line.strip().lstrip("/")
+                path = self._basepath / line.strip().lstrip("/")
                 path.mkdir(parents=True, exist_ok=True)
 
     def _init_msrs(self, msrinfo, datapath):
@@ -355,21 +344,21 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
             msrinfo["path"] = path
             msrinfo["data"] = data
-            emul = _EmulDevMSR.EmulDevMSR(msrinfo, self._get_basepath())
+            emul = _EmulDevMSR.EmulDevMSR(msrinfo, self._basepath)
             self._emuls[emul.path] = emul
 
     def _init_files(self, finfos, datapath, module):
         """Initialize plain files, which are just copies of the original files."""
 
         for finfo in finfos:
-            emul = _EmulFile.get_emul_file(finfo, datapath, self._get_basepath, module)
+            emul = _EmulFile.get_emul_file(finfo, datapath, self._basepath, module)
             self._emuls[emul.path] = emul
 
     def _init_empty_dirs(self, finfos):
         """Initialize empty directories at paths in 'finfos'."""
 
         for finfo in finfos:
-            path = self._get_basepath() / finfo["path"].lstrip("/")
+            path = self._basepath / finfo["path"].lstrip("/")
             path.mkdir(parents=True, exist_ok=True)
 
     def _init_copied_dirs(self, finfos, datapath, module):
@@ -459,17 +448,16 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
     def mkdir(self, dirpath: str | Path, parents: bool = False, exist_ok: bool = False):
         """Refer to 'ProcessManagerBase.mkdir()'."""
 
-        dirpath = self._get_basepath() / str(dirpath).lstrip("/")
+        dirpath = self._basepath / str(dirpath).lstrip("/")
         super().mkdir(dirpath, parents=parents, exist_ok=exist_ok)
 
     def lsdir(self, path: str | Path) -> Generator[LsdirTypedDict, None, None]:
         """Refer to 'ProcessManagerBase.lsdir()'."""
 
-        basepath = self._get_basepath()
-        emul_path = Path(basepath / str(path).lstrip("/"))
+        emul_path = Path(self._basepath / str(path).lstrip("/"))
 
         for entry in super().lsdir(emul_path):
-            entry["path"] = entry["path"].relative_to(basepath)
+            entry["path"] = entry["path"].relative_to(self._basepath)
             yield entry
 
     def exists(self, path):
@@ -484,7 +472,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         if path in self._emuls:
             return True
 
-        emul_path = Path(self._get_basepath() / path.lstrip("/"))
+        emul_path = Path(self._basepath / path.lstrip("/"))
         return super().exists(emul_path)
 
     def is_file(self, path):
@@ -499,7 +487,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         if path in self._emuls:
             return True
 
-        emul_path = Path(self._get_basepath() / path.lstrip("/"))
+        emul_path = Path(self._basepath / path.lstrip("/"))
         return super().is_file(emul_path)
 
     def is_dir(self, path):
@@ -510,7 +498,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         Return 'True' 'path' exists and it is a directory, return 'False' otherwise.
         """
 
-        path = Path(self._get_basepath() / str(path).lstrip("/"))
+        path = Path(self._basepath / str(path).lstrip("/"))
         return super().is_dir(path)
 
     def is_exe(self, path):
@@ -522,7 +510,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         Return 'True' 'path' exists and it is an executable file, return 'False' otherwise.
         """
 
-        path = Path(self._get_basepath() / str(path).lstrip("/"))
+        path = Path(self._basepath / str(path).lstrip("/"))
         return super().is_exe(path)
 
     def is_socket(self, path):
@@ -533,7 +521,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         Return 'True' 'path' exists and it is a socket file, return 'False' otherwise.
         """
 
-        path = Path(self._get_basepath() / str(path).lstrip("/"))
+        path = Path(self._basepath / str(path).lstrip("/"))
         return super().is_socket(path)
 
     def mkdtemp(self, prefix: str | None  = None, basedir: str | Path | None = None) -> Path:
@@ -543,9 +531,9 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
           * basedir - path to the base directory where the temporary directory should be created.
         """
 
-        path = self._get_basepath()
+        path = self._basepath
         if basedir:
             path = path / basedir
 
         temppath = super().mkdtemp(prefix=prefix, basedir=path)
-        return temppath.relative_to(self._get_basepath())
+        return temppath.relative_to(self._basepath)
