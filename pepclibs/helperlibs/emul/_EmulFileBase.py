@@ -19,7 +19,8 @@ from pepclibs.helperlibs.Exceptions import Error, ErrorPermissionDenied, ErrorNo
 
 class EmulFileBase:
     """
-    Base class for emulated file classes.
+    Base class for emulated file classes. Represents a regular read-only or read-write file in the
+    base direectory.
     """
 
     def __init__(self,
@@ -34,8 +35,8 @@ class EmulFileBase:
             path: Path to the file to emulate.
             basepath: Path to the base directory (where the emulated files are stored).
             readonly: Whether the emulated file is read-only.
-            data: The initial data to populate the emulated file with. Do not populate the file if
-                  None.
+            data: The initial data to populate the emulated file with. Create an empty file if "",
+                  do not create an empty file if None.
         """
 
         # TODO: remove.
@@ -52,7 +53,7 @@ class EmulFileBase:
         # ensures the file is placed under the base path.
         self.fullpath = self.basepath / str(self.path).lstrip("/")
 
-        if data:
+        if data is not None:
             if not self.fullpath.parent.exists():
                 self.fullpath.parent.mkdir(parents=True)
             with self._open("w") as fobj:
@@ -124,4 +125,3 @@ class EmulFileBase:
             setattr(fobj, "write", types.MethodType(_readonly_fobj_write, fobj))
 
         return fobj
-

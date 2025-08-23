@@ -20,8 +20,7 @@ class RWSysinfoFile(_EmulFileBase.EmulFileBase):
     def __init__(self,
                  path: Path,
                  basepath: Path,
-                 readonly: bool = False,
-                 data: str | bytes | None = None):
+                 data: str):
         """
         Initialize a class instance.
 
@@ -29,20 +28,10 @@ class RWSysinfoFile(_EmulFileBase.EmulFileBase):
             path: Path to the file to emulate.
             basepath: Path to the base directory (where the emulated files are stored).
             readonly: Whether the emulated file is read-only.
-            data: The initial data to populate the emulated file with. Do not populate the file if
-                  None.
+            data: The initial data to populate the emulated file with.
         """
 
-        super().__init__(path, basepath, readonly=readonly, data=data)
-
-        if data:
-            return
-
-        # Create an empty file.
-        # TODO: this would be better to do in the superclass.
-        if not self.fullpath.parent.exists():
-            self.fullpath.parent.mkdir(parents=True)
-        self._open("w").close()
+        super().__init__(path, basepath, data=data)
 
     def _set_write_method(self, fobj, path, mode):
         """

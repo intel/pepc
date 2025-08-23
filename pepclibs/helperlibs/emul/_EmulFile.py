@@ -11,9 +11,10 @@
 
 from typing import Any, Union
 from pathlib import Path
-from pepclibs.helperlibs.emul import _EmulFileBase, _ROFile, _RWFile, _EmulDevMSR
+from pepclibs.helperlibs.emul import _EmulFileBase, _CPUOnlineEmulFIle, _RWFile, _EmulDevMSR
 
-EmulFileType = Union[_EmulFileBase.EmulFileBase, _ROFile.ROSysfsFile, _EmulDevMSR.EmulDevMSR]
+EmulFileType = Union[_EmulFileBase.EmulFileBase, _CPUOnlineEmulFIle.CPUOnlineEmulFile,
+                     _EmulDevMSR.EmulDevMSR]
 
 def get_emul_file(path: str,
                   basepath: Path,
@@ -25,7 +26,8 @@ def get_emul_file(path: str,
     Args:
         path: Path to the file to emulate.
         basepath: Directory where emulated files should be created.
-        data: Optional data used for emulation.
+        data: Optional data to populate the emulated file with. Create an empty file if "", do not
+              create the file in None.
         readonly: Whether the emulated file should be read-only.
 
     Returns:
@@ -40,15 +42,16 @@ def get_emul_file(path: str,
     assert isinstance(basepath, Path)
 
     if data is None:
-        return _EmulFileBase.EmulFileBase(Path(path), basepath)
-
-    if readonly:
-        if path.endswith("cpu/online"):
-            return _ROFile.ROSysfsFile(Path(path), basepath, readonly=readonly, data=data)
+        # A pre-created file in the base directory.
         return _EmulFileBase.EmulFileBase(Path(path), basepath, readonly=readonly, data=data)
 
+    if path.endswith("/sys/devices/system/cpu/online"):
+        # The global CPU online sysfs file.
+        return _CPUOnlineEmulFIle.CPUOnlineEmulFile(Path(path), basepath, data)
+
     if path.startswith("/sys/"):
-        return _RWFile.RWSysinfoFile(Path(path), basepath, readonly=readonly, data=data)
+        return _RWFile.RWSysinfoFile(Path(path), basepath, data)
+
     if path.endswith("/msr"):
         return _EmulDevMSR.EmulDevMSR(Path(path), basepath, data)
 
