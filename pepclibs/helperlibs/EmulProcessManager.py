@@ -1,26 +1,26 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2022-2024 Intel Corporation
+# Copyright (C) 2022-2025 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Authors: Antti Laakso <antti.laakso@linux.intel.com>
 #          Niklas Neronin <niklas.neronin@intel.com>
+#          Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
-A version or the 'LocalProcessManager' module that only pretends it runs commands, but in reality it
-just returns pre-defined results that are based on the test data. The test data are collected from
-real systems using the 'tdgen' tool.
+A process manager that emulates a SUT for testing purposes.
+
+Provide the 'EmulProcessManager' class, a subclass of 'LocalProcessManager' that pretends to execute
+commands on a SUT, but performs local operations, returning pre-defined results based on test data
+previously collected from a real SUT using the 'tdgen' tool.
 
 Terminology:
-  * test data - the data collected by the 'tdgen' tool, and it is used for emulating the results of
-                running commands.
-  * emulation data - the processed version of the test data, stored at the emulation data base
-                     directory.
+    - Test Data: Data collected from real SUTs, stored in the "test" sub-directory, used to emulate
+      results of commands and file I/O operations.
+    - Emulation Data: Processed version of test data, either stored in memory or in a temporary
+      directory on the local file-system.
 """
-
-# pylint: disable=arguments-differ
-# pylint: disable=arguments-renamed
 
 # TODO: finish adding type hints to this module.
 from  __future__ import annotations # Remove when switching to Python 3.10+.
@@ -39,14 +39,60 @@ _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
 class EmulProcessManager(LocalProcessManager.LocalProcessManager):
     """
-    A version or the 'LocalProcessManager' module that only pretends it runs commands, but in
-    reality it just returns pre-defined results that are based on the test data. This class is used
-    for testing purposes.
+    A process manager that emulates a System Under Test (SUT) for testing purposes.
 
-    Filesystem-related methods like 'mkdir()', 'lsdir()', 'is_file()' only pretend they work
-    relative to the normal file-system root. In reality the all the file operations relative to the
-    emulation base directory.
+    A mock implementation of a process manager designed for unit testing. Instead of executing real
+    commands or interacting with the actual filesystem, return pre-defined results. Instead of
+    writing the real SUT filesystem, manipulate files and directories in memory or within a
+    temporary directory (the base directory).
+
+    Key Features:
+        - Emulate command execution by returning pre-defined stdout/stderr for supported commands.
+        - Filesystem-related methods (e.g., mkdir, lsdir, is_file) operate relative to the base
+          directory (which is just a temporary directory), not the real local filesystem.
+          So all file and directory operations are sandboxed within the base directory.
+        - The emulation data is intialized and populated from the test data.
     """
+
+    def __init__(self, hostname: str | None = None):
+        """
+        Initialize a class instance.
+
+        Args:
+            hostname: Name of the emulated host to use in messages.
+        """
+
+        super().__init__()
+
+        if hostname:
+            self.hostname = hostname
+        else:
+            self.hostname = "emulated local host"
+
+        self.hostmsg = f" on '{self.hostname}'"
+        self.is_remote = False
+
+        self.datapath = None
+        # Data for emulated read-only files.
+        self._ro_files = {}
+        self._cmds = {}
+        self._basepath = None
+        # Set of all modules that were initialized.
+        self._modules = set()
+        # A dictionary mapping paths to emulated file objects.
+        self._emuls = {}
+        # 'True' if common test data has already been initialized.
+        self._initialised_common_data = False
+
+    def close(self):
+        """Stop emulation."""
+
+        if self._basepath:
+            with contextlib.suppress(Error):
+                super().rmtree(self._basepath)
+
+        with contextlib.suppress(Exception):
+            super().close()
 
     def _get_predefined_result(self, cmd, join=True):
         """Return pre-defined value for the command 'cmd'."""
@@ -165,6 +211,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
         path = str(path)
         if path in self._emuls:
+            _LOG.debug("Opening emulated file in mode '%s': %s", mode, path)
             return self._emuls[path].open(mode)
 
         fobj = _RWFile.open_rw(path, mode, self._get_basepath())
@@ -331,7 +378,6 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             # CPUInfo used TPMI information to enumerate dies on some platforms.
             self._init_module("TPMI", datapath)
 
-
         confpath = datapath / f"{module}.yaml"
         if not confpath.exists():
             raise ErrorNotSupported(f"test data configuration for module '{module}' not found "
@@ -481,40 +527,3 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
         temppath = super().mkdtemp(prefix=prefix, basedir=path)
         return temppath.relative_to(self._get_basepath())
-
-    def __init__(self, hostname=None):
-        """
-        Initialize a class instance. The arguments are as follows.
-          * hostname - name of the emulated host to use in messages.
-        """
-
-        super().__init__()
-
-        if hostname:
-            self.hostname = hostname
-        else:
-            self.hostname = "emulated local host"
-        self.hostmsg = f" on '{self.hostname}'"
-        self.is_remote = False
-
-        self.datapath = None
-        # Data for emulated read-only files.
-        self._ro_files = {}
-        self._cmds = {}
-        self._basepath = None
-        # Set of all modules that were initialized.
-        self._modules = set()
-        # A dictionary mapping paths to emulated file objects.
-        self._emuls = {}
-        # 'True' if common test data has already been initialized.
-        self._initialised_common_data = False
-
-    def close(self):
-        """Stop emulation."""
-
-        if self._basepath:
-            with contextlib.suppress(Error):
-                super().rmtree(self._basepath)
-
-        with contextlib.suppress(Exception):
-            super().close()
