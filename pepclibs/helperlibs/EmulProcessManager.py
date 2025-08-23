@@ -72,7 +72,6 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         self.hostmsg = f" on '{self.hostname}'"
         self.is_remote = False
 
-        self.datapath = None
         # Data for emulated read-only files.
         self._ro_files = {}
         self._cmds = {}
