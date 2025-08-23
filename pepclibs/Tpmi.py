@@ -441,7 +441,7 @@ class Tpmi():
             self._fid2fname[sdict["feature-id"]] = fname
 
     def _build_fmaps(self):
-        """Build an fmaps for all TPMI features and save them in the 'self._fmaps' dictionary."""
+        """Build fmaps for all TPMI features and save them in the 'self._fmaps' dictionary."""
 
         # A dictionary mapping feature names to the list of TPMI device addresses that provide this
         # feature.
@@ -616,6 +616,8 @@ class Tpmi():
             val = fobj.read(8)
 
         what = f"value of register '{regname}' (offset '{offset:#x}') of TPMI feature '{fname}'"
+        _LOG.debug("read TPMI register '%s' (offset '%#x'), value is %s, file: %s, file offset %d",
+                   regname, offset, val, path, mdmap[instance][offset])
         return Trivial.str_to_int(val, base=16, what=what)
 
     def _get_bfdict(self, fname, regname, bfname):
@@ -683,7 +685,7 @@ class Tpmi():
         width = regdict["width"]
 
         if not mdmap:
-            mdmap = self._build_mdmap(addr, fname)
+            mdmap = self._get_mdmap(fname, addr)
 
         val = self._read(addr, fname, instance, regname, offset, mdmap)
         if width > 32:
