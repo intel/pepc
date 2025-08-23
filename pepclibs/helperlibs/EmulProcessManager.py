@@ -18,8 +18,8 @@ previously collected from a real SUT using the 'tdgen' tool.
 Terminology:
     - Test Data: Data collected from real SUTs, stored in the "test" sub-directory, used to emulate
       results of commands and file I/O operations.
-    - Emulation Data: Processed version of test data, either stored in memory or in a temporary
-      directory on the local file-system.
+    - Emulation Data (emd): Processed version of test data, either stored in memory or in a
+      temporary directory on the local file-system.
 """
 
 # TODO: finish adding type hints to this module.
@@ -27,13 +27,34 @@ from  __future__ import annotations # Remove when switching to Python 3.10+.
 
 import contextlib
 from pathlib import Path
-from typing import Generator, cast, IO
-
+from typing import Generator, cast, IO, TypedDict, NamedTuple
 from pepclibs.helperlibs import Logging, LocalProcessManager, Trivial, YAML, ClassHelpers
 from pepclibs.helperlibs import _ProcessManagerBase
 from pepclibs.helperlibs._ProcessManagerBase import ProcWaitResultType, LsdirTypedDict
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs.helperlibs.emul import _EmulDevMSR, _RWFile, _EmulFile
+
+class _EmulCmdResultType(NamedTuple):
+    """
+    Type for emulation command execution results.
+
+    Attributes:
+        stdout: The standard output of the command.
+        stderr: The standard error of the command.
+        exitcode: The exit code of the command.
+    """
+
+    stdout: list[str]
+    stderr: list[str]
+    exitcode: int
+
+class _EmulDataTypedDict(TypedDict, total=False):
+    """
+    A typed dictionary for the emulation data.
+    """
+
+    cmds: dict[str, _EmulCmdResultType]
+
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
@@ -51,7 +72,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         - Filesystem-related methods (e.g., mkdir, lsdir, is_file) operate relative to the base
           directory (which is just a temporary directory), not the real local filesystem.
           So all file and directory operations are sandboxed within the base directory.
-        - The emulation data is intialized and populated from the test data.
+        - The emulation data (emd) are intialized and populated from the test data.
     """
 
     def __init__(self, hostname: str | None = None):
@@ -72,8 +93,11 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         self.hostmsg = f" on '{self.hostname}'"
         self.is_remote = False
 
-        self._cmds = {}
-        self._basepath = None
+        self._basepath: Path | None = None
+
+        # The emulation data dictionary.
+        self._emd: _EmulDataTypedDict = {"cmds": {}}
+
         # Set of all modules that were initialized.
         self._modules = set()
         # A dictionary mapping paths to emulated file objects.
@@ -94,15 +118,16 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
     def _get_predefined_result(self, cmd, join=True):
         """Return pre-defined value for the command 'cmd'."""
 
-        if cmd not in self._cmds:
+        if cmd not in self._emd["cmds"]:
             raise ErrorNotSupported(f"unsupported command: '{cmd}'")
 
-        stdout, stderr = self._cmds[cmd]
+        result = self._emd["cmds"][cmd]
         if join:
-            stdout = "".join(stdout)
-            stderr = "".join(stderr)
+            stdout, stderr = "".join(result.stdout), "".join(result.stderr)
+        else:
+            stdout, stderr = result.stdout, result.stderr
 
-        return (stdout, stderr)
+        return stdout, stderr
 
     def _get_basepath(self):
         """Return path to the temporary directory where all the files should be created."""
@@ -218,7 +243,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
     def _init_commands(self, cmdinfos, datapath):
         """
         Initialize commands described by the 'cmdinfos' dictionary. Read the stdout/stderr data of
-        the commands from 'datapath' and save them in 'self._cmds'.
+        the commands from 'datapath' and save them in 'self._emd["cmds"]'.
         """
 
         for cmdinfo in cmdinfos:
@@ -229,7 +254,8 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             with open(commandpath / "stderr.txt", encoding="utf-8") as fobj:
                 stderr = fobj.readlines()
 
-            self._cmds[cmdinfo["command"]] = (stdout, stderr)
+            result = _EmulCmdResultType(stdout=stdout, stderr=stderr, exitcode=0)
+            self._emd["cmds"][cmdinfo["command"]] = result
 
     def _init_inline_files(self, finfos, datapath):
         """
