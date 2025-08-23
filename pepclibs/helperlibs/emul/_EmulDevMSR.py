@@ -10,7 +10,6 @@
 """Emulate the '/dev/msr/*' device node files."""
 
 import types
-from pathlib import Path
 from pepclibs.helperlibs.emul import _EmulFileBase
 from pepclibs.helperlibs.Exceptions import Error
 
@@ -58,15 +57,12 @@ class EmulDevMSR(_EmulFileBase.EmulFileBase):
         self._set_seek_method(fobj, self.path)
         return fobj
 
-    def __init__(self, msrinfo, basepath):
+    def __init__(self, path, basepath, data):
         """
         Class constructor. Arguments are as follows:
-         * msrinfo - MSR information dictionary.
          * basepath - path to the temporary directory containing emulated files.
         """
 
-        super().__init__(Path(msrinfo["path"]), basepath)
+        super().__init__(path, basepath)
 
-        self.ro = msrinfo.get("readonly", False)
-
-        _populate_sparse_file(self.fullpath, msrinfo["data"])
+        _populate_sparse_file(self.fullpath, data)

@@ -344,7 +344,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
             msrinfo["path"] = path
             msrinfo["data"] = data
-            emul = _EmulDevMSR.EmulDevMSR(msrinfo, self._basepath)
+            emul = _EmulFile.get_emul_file(msrinfo, "", self._basepath)
             self._emuls[path] = emul
 
     def _init_files(self, finfos, datapath, module):
