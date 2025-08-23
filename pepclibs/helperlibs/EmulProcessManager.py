@@ -226,7 +226,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         if path in self._emuls:
             return self._emuls[path].open(mode)
 
-        return _EmulFileBase.EmulFileBase(path, self._basepath).open(mode)
+        return _EmulFileBase.EmulFileBase(Path(path), self._basepath).open(mode)
 
     def _init_commands(self, cmdinfos, datapath):
         """
@@ -281,7 +281,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
                     raise Error(f"Failed to create directory '{dirpath}':\n{errmsg}") from err
 
                 emul = _EmulFile.get_emul_file(finfo, datapath, self._basepath)
-                self._emuls[emul.path] = emul
+                self._emuls[finfo["path"]] = emul
 
     def _init_inline_dirs(self, finfos, datapath):
         """
@@ -345,14 +345,14 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             msrinfo["path"] = path
             msrinfo["data"] = data
             emul = _EmulDevMSR.EmulDevMSR(msrinfo, self._basepath)
-            self._emuls[emul.path] = emul
+            self._emuls[path] = emul
 
     def _init_files(self, finfos, datapath, module):
         """Initialize plain files, which are just copies of the original files."""
 
         for finfo in finfos:
             emul = _EmulFile.get_emul_file(finfo, datapath, self._basepath, module)
-            self._emuls[emul.path] = emul
+            self._emuls[finfo["path"]] = emul
 
     def _init_empty_dirs(self, finfos):
         """Initialize empty directories at paths in 'finfos'."""

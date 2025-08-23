@@ -30,7 +30,6 @@ class EmulFileBase:
                   'open()' function.
         """
 
-        path = self.basepath / str(self.path).strip("/")
         encoding: str | None
 
         # Allow for disabling buffering only in binary mode.
@@ -41,10 +40,10 @@ class EmulFileBase:
             buffering = -1
             encoding = "utf-8"
 
-        errmsg_prefix = f"Cannot open file '{path}' with mode '{mode}': "
+        errmsg_prefix = f"Cannot open file '{self.fullpath}' with mode '{mode}': "
         try:
             # pylint: disable-next=consider-using-with
-            fobj = open(path, mode, buffering=buffering, encoding=encoding)
+            fobj = open(self.fullpath, mode, buffering=buffering, encoding=encoding)
         except PermissionError as err:
             errmsg = Error(str(err)).indent(2)
             raise ErrorPermissionDenied(f"{errmsg_prefix}\n{errmsg}") from None
@@ -68,3 +67,9 @@ class EmulFileBase:
 
         self.path = path
         self.basepath = basepath
+
+        # Note about lstrip(): 'self.path' is usually an absolute path starting with '/', and
+        # joining it directly with 'self.basepath' would ignore the base path. For example,
+        # Path("/tmp") / "/sys" results in "/sys" instead of "/tmp/sys". Removing the leading '/'
+        # ensures the file is placed under the base path.
+        self.fullpath = self.basepath / str(self.path).lstrip("/")

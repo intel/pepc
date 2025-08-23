@@ -8,6 +8,7 @@
 
 """Provide the factory function to create emulated file objects."""
 
+from pathlib import Path
 from pepclibs.helperlibs.emul import _ROFile, _RWFile
 
 def get_emul_file(finfo, datapath, basepath, module=None):
@@ -21,13 +22,21 @@ def get_emul_file(finfo, datapath, basepath, module=None):
      * module - the name of the module which the file is a part of.
     """
 
+    path = Path(finfo["path"])
+    if "data" in finfo:
+        data = finfo["data"]
+    else:
+        src = datapath / module / finfo["path"].lstrip("/")
+        with open(src, "r", encoding="utf-8") as fobj:
+            data = fobj.read()
+
     if finfo.get("readonly", False):
         if finfo["path"].endswith("cpu/online"):
-            return _ROFile.ROSysfsFile(finfo, datapath, basepath, module)
+            return _ROFile.ROSysfsFile(path, basepath, data)
         else:
-            return _ROFile.ROFile(finfo, datapath, basepath, module)
+            return _ROFile.ROFile(path, basepath, data)
     else:
         if finfo["path"].startswith("/sys/"):
-            return _RWFile.RWSysinfoFile(finfo, datapath, basepath, module)
+            return _RWFile.RWSysinfoFile(path, basepath, data)
         else:
-            return _RWFile.RWFile(finfo, datapath, basepath, module)
+            return _RWFile.RWFile(path, basepath, data)

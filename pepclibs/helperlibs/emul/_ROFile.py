@@ -37,27 +37,17 @@ class ROFile(_EmulFileBase.EmulFileBase):
 
         return open_ro(self.ro_data, mode)
 
-    def __init__(self, finfo, datapath, basepath, module=None):
+    def __init__(self, path, basepath, data):
         """
         Class constructor. Arguments are as follows:
-         * finfo - file info dictionary.
-         * datapath - path to the directory containing data which is used for emulation.
          * basepath - The basepath is a
                           path to the directory where emulated files should be created.
-         * module - the name of the module which the file is a part of.
         """
 
-        if "data" in finfo:
-            data = finfo["data"]
-        else:
-            src = datapath / module / finfo["path"].lstrip("/")
-            with open(src, "r", encoding="utf-8") as fobj:
-                data = fobj.read()
+        super().__init__(path, basepath)
 
         self.ro = True
         self.ro_data = data
-
-        super().__init__(str(finfo["path"]), basepath)
 
 class ROSysfsFile(ROFile):
     """Emulate read-only sysfs files."""

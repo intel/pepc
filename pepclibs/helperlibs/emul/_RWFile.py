@@ -29,32 +29,21 @@ def populate_rw_file(path, data):
 class RWFile(_EmulFileBase.EmulFileBase):
     """Emulate read-write procfs and debugfs files."""
 
-    def __init__(self, finfo, datapath, basepath, module=None):
+    def __init__(self, path, basepath, data):
         """
         Class constructor. Arguments are as follows:
-         * finfo - file info dictionary.
-         * datapath - path to the directory containing data which is used for emulation.
          * basepath - The basepath is a
                           path to the directory where emulated files should be created.
-         * module - the name of the module which the file is a part of.
         """
 
         self.ro = False
 
-        if "data" in finfo:
-            data = finfo["data"]
-        else:
-            src = datapath / module / finfo["path"].lstrip("/")
-            with open(src, "r", encoding="utf-8") as fobj:
-                data = fobj.read()
+        super().__init__(path, basepath)
 
         # Create file in temporary directory. Here is an example.
         #   * Emulated path: "/sys/devices/system/cpu/cpu0".
         #   * Real path: "/tmp/emulprocs_861089_0s3hy8ye/sys/devices/system/cpu/cpu0".
-        path = basepath / finfo["path"].lstrip("/")
-        populate_rw_file(path, data)
-
-        super().__init__(finfo["path"], basepath)
+        populate_rw_file(self.fullpath, data)
 
 class RWSysinfoFile(RWFile):
     """Emulate read-write sysfs files."""
@@ -115,11 +104,12 @@ class RWSysinfoFile(RWFile):
         # pylint: disable=pepc-unused-variable,protected-access
         fobj._orig_write = fobj.write
 
-        if path.endswith("pcie_aspm/parameters/policy"):
+        path_str = str(path)
+        if path_str.endswith("pcie_aspm/parameters/policy"):
             policies = fobj.read().strip()
             fobj._policies = policies.replace("[", "").replace("]", "")
             setattr(fobj, "write", types.MethodType(_aspm_write, fobj))
-        elif path.endswith("/energy_perf_bias"):
+        elif path_str.endswith("/energy_perf_bias"):
             setattr(fobj, "write", types.MethodType(_epb_write, fobj))
         else:
             setattr(fobj, "write", types.MethodType(_truncate_write, fobj))

@@ -10,8 +10,8 @@
 """Emulate the '/dev/msr/*' device node files."""
 
 import types
-from pepclibs.helperlibs import ClassHelpers, _ProcessManagerBase
-from pepclibs.helperlibs.emul import _RWFile, _EmulFileBase
+from pathlib import Path
+from pepclibs.helperlibs.emul import _EmulFileBase
 from pepclibs.helperlibs.Exceptions import Error
 
 def _populate_sparse_file(path, data):
@@ -45,7 +45,7 @@ class EmulDevMSR(_EmulFileBase.EmulFileBase):
             """
             self._orig_seek(offset * 8, whence)
 
-        if path.endswith("/msr"):
+        if str(path).endswith("/msr"):
             fobj._orig_seek = fobj.seek # pylint: disable=protected-access,pepc-unused-variable
             setattr(fobj, "seek", types.MethodType(_seek_offset, fobj))
 
@@ -65,9 +65,8 @@ class EmulDevMSR(_EmulFileBase.EmulFileBase):
          * basepath - path to the temporary directory containing emulated files.
         """
 
-        super().__init__(msrinfo["path"], basepath)
+        super().__init__(Path(msrinfo["path"]), basepath)
 
         self.ro = msrinfo.get("readonly", False)
 
-        real_path = basepath / msrinfo["path"].lstrip("/")
-        _populate_sparse_file(real_path, msrinfo["data"])
+        _populate_sparse_file(self.fullpath, msrinfo["data"])
