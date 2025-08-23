@@ -8,35 +8,41 @@
 
 """Provide the factory function to create emulated file objects."""
 
+from typing import Any
 from pathlib import Path
-from pepclibs.helperlibs.emul import _ROFile, _RWFile, _EmulDevMSR
+from pepclibs.helperlibs.emul import _EmulFileBase, _ROFile, _RWFile, _EmulDevMSR
 
-def get_emul_file(finfo, datapath, basepath, module=None):
+def get_emul_file(path: str,
+                  basepath: Path,
+                  data: Any = None,
+                  datapath: Path | None = None,
+                  readonly: bool = False,
+                  module: str = ""):
     """
     Create and return an emulated file object representing the file described by the file
     information dictionary 'finfo'. Arguments are as follows:
      * finfo - file information dictionary which describes the file to be emulated.
-     * datapath - path to the directory containing data which is used for emulation.
      * basepath - The basepath is a
                       path to the directory where emulated files should be created.
+     * datapath - path to the directory containing data which is used for emulation.
      * module - the name of the module which the file is a part of.
     """
 
-    path = Path(finfo["path"])
-    if "data" in finfo:
-        data = finfo["data"]
-    else:
-        src = datapath / module / finfo["path"].lstrip("/")
-        with open(src, "r", encoding="utf-8") as fobj:
+    if datapath is None and data is None:
+        return _EmulFileBase.EmulFileBase(Path(path), basepath)
+
+    if datapath is not None:
+        data_path = datapath / module / path.lstrip("/")
+        with open(data_path, "r", encoding="utf-8") as fobj:
             data = fobj.read()
 
-    if finfo.get("readonly", False):
-        if finfo["path"].endswith("cpu/online"):
-            return _ROFile.ROSysfsFile(path, basepath, data)
-        return _ROFile.ROFile(path, basepath, data)
-    else:
-        if finfo["path"].startswith("/sys/"):
-            return _RWFile.RWSysinfoFile(path, basepath, data)
-        if finfo["path"].endswith("/msr"):
-            return _EmulDevMSR.EmulDevMSR(path, basepath, data)
-        return _RWFile.RWFile(path, basepath, data)
+    if readonly:
+        if path.endswith("cpu/online"):
+            return _ROFile.ROSysfsFile(Path(path), basepath, data)
+        return _ROFile.ROFile(Path(path), basepath, data)
+
+    if path.startswith("/sys/"):
+        return _RWFile.RWSysinfoFile(Path(path), basepath, data)
+    if path.endswith("/msr"):
+        return _EmulDevMSR.EmulDevMSR(Path(path), basepath, data)
+    return _RWFile.RWFile(Path(path), basepath, data)

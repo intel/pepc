@@ -27,12 +27,11 @@ from  __future__ import annotations # Remove when switching to Python 3.10+.
 
 import contextlib
 from pathlib import Path
-from typing import Generator, cast, IO, TypedDict, NamedTuple
-from pepclibs.helperlibs import Logging, LocalProcessManager, Trivial, YAML, ClassHelpers
-from pepclibs.helperlibs import _ProcessManagerBase
+from typing import Generator, TypedDict, NamedTuple
+from pepclibs.helperlibs import Logging, LocalProcessManager, Trivial, YAML
 from pepclibs.helperlibs._ProcessManagerBase import ProcWaitResultType, LsdirTypedDict
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
-from pepclibs.helperlibs.emul import _EmulDevMSR, _RWFile, _EmulFile, _EmulFileBase
+from pepclibs.helperlibs.emul import _EmulFile
 
 class _EmulCmdResultType(NamedTuple):
     """
@@ -226,7 +225,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         if path in self._emuls:
             return self._emuls[path].open(mode)
 
-        return _EmulFileBase.EmulFileBase(Path(path), self._basepath).open(mode)
+        return _EmulFile.get_emul_file(path, self._basepath).open(mode)
 
     def _init_commands(self, cmdinfos, datapath):
         """
@@ -280,7 +279,8 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
                     errmsg = Error(str(err)).indent(2)
                     raise Error(f"Failed to create directory '{dirpath}':\n{errmsg}") from err
 
-                emul = _EmulFile.get_emul_file(finfo, datapath, self._basepath)
+                emul = _EmulFile.get_emul_file(finfo["path"], self._basepath, data=finfo["data"],
+                                               readonly=finfo["readonly"])
                 self._emuls[finfo["path"]] = emul
 
     def _init_inline_dirs(self, finfos, datapath):
@@ -342,16 +342,15 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
                 # MSR register address are offset by 8 bytes.
                 data[regaddr * 8] = int.to_bytes(regval, 8, byteorder="little")
 
-            msrinfo["path"] = path
-            msrinfo["data"] = data
-            emul = _EmulFile.get_emul_file(msrinfo, "", self._basepath)
+            emul = _EmulFile.get_emul_file(path, self._basepath, data=data)
             self._emuls[path] = emul
 
     def _init_files(self, finfos, datapath, module):
         """Initialize plain files, which are just copies of the original files."""
 
         for finfo in finfos:
-            emul = _EmulFile.get_emul_file(finfo, datapath, self._basepath, module)
+            emul = _EmulFile.get_emul_file(finfo["path"], self._basepath, datapath=datapath,
+                                           module=module)
             self._emuls[finfo["path"]] = emul
 
     def _init_empty_dirs(self, finfos):
