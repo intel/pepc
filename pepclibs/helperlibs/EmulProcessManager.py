@@ -28,7 +28,7 @@ from  __future__ import annotations # Remove when switching to Python 3.10+.
 
 import contextlib
 from pathlib import Path
-from typing import Generator, TypedDict, NamedTuple, cast
+from typing import Generator, TypedDict, NamedTuple, cast, Sequence
 from pepclibs.helperlibs import Logging, LocalProcessManager, Trivial, YAML
 from pepclibs.helperlibs._ProcessManagerBase import ProcWaitResultType, LsdirTypedDict
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
@@ -58,8 +58,8 @@ class _TestDataCommandsTypedDict(TypedDict, total=False):
                  output of the emulated command.
     """
 
+    command: str
     dirname: str
-    filename: str
 
 class _TestDataInlineFilesTypedDict(TypedDict, total=False):
     """
@@ -104,8 +104,19 @@ class _TestDataFilesTypedDict(TypedDict, total=False):
 
     Attributes:
         path: The emulated file path. There is a file in the dataset category sub-directory with the
-        same relative path, it includes the emulated file contents.
+              same relative path, it includes the emulated file contents.
         readonly: Whether the emulated file is read-only.
+    """
+
+    path: str
+    readonly: bool
+
+class _TestDataDirectoriesTypedDict(TypedDict, total=False):
+    """
+    Typed dictionary describing empty directories in the YAML configuration.
+
+    Attributes:
+        path: The emulated empty directory path.
     """
 
     path: str
@@ -128,6 +139,7 @@ class _TestDataYAMLTypedDict(TypedDict, total=False):
     inlinefiles: list[_TestDataInlineFilesTypedDict]
     msrs: list[_TestDataMSRsTypedDict]
     files: list[_TestDataFilesTypedDict]
+    directories: list[_TestDataDirectoriesTypedDict]
 
 class _EmulCmdResultType(NamedTuple):
     """
@@ -318,141 +330,194 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
         return _EmulFile.get_emul_file(path, self._basepath).open(mode)
 
-    def _init_commands(self, cmdinfos, datapath):
+    def _process_inlinedirs(self, infos: Sequence[_TestDataInlineDirsTypedDict], dspath: Path):
         """
-        Initialize commands described by the 'cmdinfos' dictionary. Read the stdout/stderr data of
-        the commands from 'datapath' and save them in 'self._emd["cmds"]'.
-        """
+        Create emulated directories from the "inline directories" emulation data.
 
-        for cmdinfo in cmdinfos:
-            commandpath = datapath / cmdinfo["dirname"]
-
-            with open(commandpath / "stdout.txt", encoding="utf-8") as fobj:
-                stdout = fobj.readlines()
-            with open(commandpath / "stderr.txt", encoding="utf-8") as fobj:
-                stderr = fobj.readlines()
-
-            result = _EmulCmdResultType(stdout=stdout, stderr=stderr, exitcode=0)
-            self._emd["cmds"][cmdinfo["command"]] = result
-
-    def _init_inline_files(self, finfos, datapath):
-        """
-        Inline files are defined in text file where single line defines path and content for single
-        emulated file. Initialize predefined data for emulated files defined by dictionary 'finfos'.
+        Args:
+            infos: A collection of inline directories configuration dictionaries.
+            dspath: The dataset path.
         """
 
-        for finfo in finfos:
-            filepath = datapath / finfo["dirname"] / finfo["filename"]
+        for info in infos:
+            filepath = dspath / info["dirname"] / info["filename"]
 
-            with open(filepath, "r", encoding="utf-8") as fobj:
-                lines = fobj.readlines()
+            try:
+                with open(filepath, "r", encoding="utf-8") as fobj:
+                    lines = fobj.readlines()
+            except OSError as err:
+                errmsg = Error(str(err)).indent(2)
+                raise Error(f"Failed to read inline directories configuration file '{filepath}':\n"
+                            f"{errmsg}") from err
 
             for line in lines:
-                sep = finfo["separator"]
+                dirpath = self._basepath / line.strip().lstrip("/")
+                try:
+                    dirpath.mkdir(parents=True, exist_ok=True)
+                except OSError as err:
+                    errmsg = Error(str(err)).indent(2)
+                    raise Error(f"Failed to create emulated directory '{dirpath}':\n"
+                                f"{errmsg}") from err
+
+    def _process_inlinefiles(self, infos: list[_TestDataInlineFilesTypedDict], dspath: Path):
+        """
+        Create emulated files from "inline files" emulation data.
+
+        Args:
+            infos: A collection of inline files configuration dictionaries.
+            dspath: The dataset path.
+        """
+
+        for info in infos:
+            filepath = dspath / info["dirname"] / info["filename"]
+
+            try:
+                with open(filepath, "r", encoding="utf-8") as fobj:
+                    lines = fobj.readlines()
+            except OSError as err:
+                errmsg = Error(str(err)).indent(2)
+                raise Error(f"Failed to read inline files configuration file '{filepath}':\n"
+                            f"{errmsg}") from err
+
+            sep = info["separator"]
+
+            for line in lines:
                 split = line.split(sep)
 
                 if len(split) != 2:
-                    raise Error(f"unexpected line format, expected <path>{sep}<value>, received\n"
-                                f"{line}")
+                    raise Error(f"Unexpected line format in '{filepath}':\n"
+                                f"  Expected <path>{sep}<value>, received '{line}'")
 
-                finfo["path"] = split[0]
-                finfo["data"] = split[1]
+                path = split[0]
+                data = split[1]
 
-                # Note about lstrip(): it is necessary because the paths in 'finfo["path"]' is an
-                # absolute path starting with '/', and joining it with the base path would result
-                # in a base path ignored. E.g., Path("/tmp") / "/sys" results in "/sys" instead of
-                # "/tmp/sys".
-                dirpath = self._basepath / finfo["path"].lstrip("/")
+                # Note about lstrip(): it is required because 'path' is an absolute path starting
+                # with '/'. If not stripped, joining it with the base path would ignore the base
+                # path. For example, Path("/tmp") / "/sys" results in "/sys" instead of "/tmp/sys".
+                dirpath = self._basepath / path.lstrip("/")
                 dirpath = dirpath.parent
+
                 try:
                     dirpath.mkdir(parents=True, exist_ok=True)
                 except OSError as err:
                     errmsg = Error(str(err)).indent(2)
                     raise Error(f"Failed to create directory '{dirpath}':\n{errmsg}") from err
 
-                emul = _EmulFile.get_emul_file(finfo["path"], self._basepath, data=finfo["data"],
-                                               readonly=finfo["readonly"])
-                self._emuls[finfo["path"]] = emul
+                emul = _EmulFile.get_emul_file(path, self._basepath, data=data,
+                                               readonly=info["readonly"])
+                self._emuls[path] = emul
 
-    def _init_inline_dirs(self, finfos, dspath):
+    def _process_commands(self, infos: list[_TestDataCommandsTypedDict], dspath: Path):
         """
-        Directories are defined as paths in a text file. Create emulated directories as defined by
-        dictionary 'finfos'.
-        """
+        Read and save emulated commands stdout and stderr from "commands" emulation data.
 
-        for finfo in finfos:
-            filepath = dspath / finfo["dirname"] / finfo["filename"]
-
-            with open(filepath, "r", encoding="utf-8") as fobj:
-                lines = fobj.readlines()
-
-            for line in lines:
-                path = self._basepath / line.strip().lstrip("/")
-                path.mkdir(parents=True, exist_ok=True)
-
-    def _init_msrs(self, msrinfo, dspath):
-        """
-        MSR values are defined in text file where single line defines path used to access MSR values
-        and address value pairs. Initialize predefined data for emulated MSR files defined by
-        dictionary 'msrinfo'.
+        Args:
+            infos: A collection of commands configuration dictionaries.
+            dspath: The dataset path.
         """
 
-        dspath = dspath / msrinfo["dirname"] / msrinfo["filename"]
+        for info in infos:
+            dirpath = dspath / info["dirname"]
+
+            try:
+                path = dirpath / "stdout.txt"
+                with open(path, encoding="utf-8") as fobj:
+                    stdout = fobj.readlines()
+                path = dirpath / "stderr.txt"
+                with open(path, encoding="utf-8") as fobj:
+                    stderr = fobj.readlines()
+            except OSError as err:
+                errmsg = Error(str(err)).indent(2)
+                raise Error(f"Failed to read '{path}':\n{errmsg}") from err
+
+            result = _EmulCmdResultType(stdout=stdout, stderr=stderr, exitcode=0)
+            self._emd["cmds"][info["command"]] = result
+
+    def _process_msrs(self, info: _TestDataMSRsTypedDict, filepath: Path):
+        """
+        Create emulated MSR device files from MSR emulation data.
+
+        Args:
+            info: MSR configuration dictionary.
+            dspath: The dataset path.
+        """
+
+        filepath = filepath / info["dirname"] / info["filename"]
 
         try:
-            with open(dspath, "r", encoding="utf-8") as fobj:
+            with open(filepath, "r", encoding="utf-8") as fobj:
                 lines = fobj.readlines()
         except OSError as err:
-            msg = Error(err).indent(2)
-            raise Error(f"failed to read emulated MSR data from file '{dspath}':\n{msg}") from err
+            errmsg = Error(str(err)).indent(2)
+            raise Error(f"Failed to read emulated MSR data from '{filepath}':\n{errmsg}") from err
 
-        sep1 = msrinfo["separator1"]
-        sep2 = msrinfo["separator2"]
+        sep1 = info["separator1"]
+        sep2 = info["separator2"]
 
         for line in lines:
             split = line.split(sep1)
 
             if len(split) != 2:
-                raise Error(f"unexpected line format in file '{dspath}', expected <path>{sep1}"
-                            f"<reg_value_pairs>, received\n{line}")
+                raise Error(f"Unexpected line format in file '{filepath}':\n  "
+                            f"Expected <path>{sep1}<reg_value_pairs>, received '{line}'")
 
-            path = split[0].strip()
+            path = split[0]
             reg_val_pairs = split[1].split()
 
-            data = {}
+            data: dict[int, bytes] = {}
             for reg_val_pair in reg_val_pairs:
-                regaddr, regval = reg_val_pair.split(sep2)
+                regaddr_str, regval_str = reg_val_pair.split(sep2)
 
                 if len(split) != 2:
-                    raise Error(f"unexpected register-value format in file '{dspath}', "
-                                f"expected <regaddr>{sep2}<value>, received\n{line}")
+                    raise Error(f"Unexpected register-value format in file '{filepath}':\n  "
+                                f"Expected <regaddr>{sep2}<value>, received '{line}'")
 
-                regaddr = int(regaddr)
-                regval = int(regval, 16)
-
+                regaddr = int(regaddr_str)
+                regval = int(regval_str, 16)
                 data[regaddr] = int.to_bytes(regval, 8, byteorder="little")
 
             emul = _EmulFile.get_emul_file(path, self._basepath, data=data)
             self._emuls[path] = emul
 
-    def _init_files(self, finfos, dpath):
-        """Initialize plain files, which are just copies of the original files."""
+    def _process_files(self, infos: list[_TestDataFilesTypedDict], catpath: Path):
+        """
+        Create emulated files from the emulation data.
 
-        for finfo in finfos:
-            path = dpath / finfo["path"].lstrip("/")
-            with open(path, "r", encoding="utf-8") as fobj:
-                data = fobj.read()
+        Args:
+            infos: A collection of files configuration dictionaries.
+            catpath: The category path (a sub-directory in the dataset path).
+        """
 
-            emul = _EmulFile.get_emul_file(finfo["path"], self._basepath, data=data,
-                                           readonly=finfo["readonly"])
-            self._emuls[finfo["path"]] = emul
+        for info in infos:
+            filepath = catpath / info["path"].lstrip("/")
 
-    def _init_empty_dirs(self, finfos):
-        """Initialize empty directories at paths in 'finfos'."""
+            try:
+                with open(filepath, "r", encoding="utf-8") as fobj:
+                    data = fobj.read()
+            except OSError as err:
+                errmsg = Error(str(err)).indent(2)
+                raise Error(f"Failed to read '{filepath}':\n{errmsg}") from err
 
-        for finfo in finfos:
-            path = self._basepath / finfo["path"].lstrip("/")
-            path.mkdir(parents=True, exist_ok=True)
+            emul = _EmulFile.get_emul_file(info["path"], self._basepath, data=data,
+                                           readonly=info["readonly"])
+            self._emuls[info["path"]] = emul
+
+    def _process_directories(self, infos: list[_TestDataDirectoriesTypedDict]):
+        """
+        Create emulated directories from the emulation data.
+
+        Args:
+            infos: A collection of directories configuration dictionaries.
+        """
+
+        for info in infos:
+            dirpath = self._basepath / info["path"].lstrip("/")
+
+            try:
+                dirpath.mkdir(parents=True, exist_ok=True)
+            except OSError as err:
+                errmsg = Error(str(err)).indent(2)
+                raise Error(f"Failed to create directory '{dirpath}':\n{errmsg}") from err
 
     def _process_test_data_category(self, yaml_path: Path):
         """
@@ -463,26 +528,25 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         """
 
         yaml = cast(_TestDataYAMLTypedDict, YAML.load(yaml_path))
-
         dspath = yaml_path.parent
 
         if "inlinedirs" in yaml:
-            self._init_inline_dirs(yaml["inlinedirs"], dspath)
+            self._process_inlinedirs(yaml["inlinedirs"], dspath)
 
         if "inlinefiles" in yaml:
-            self._init_inline_files(yaml["inlinefiles"], dspath)
+            self._process_inlinefiles(yaml["inlinefiles"], dspath)
 
         if "commands" in yaml:
-            self._init_commands(yaml["commands"], dspath)
+            self._process_commands(yaml["commands"], dspath)
 
         if "msrs" in yaml:
-            self._init_msrs(yaml["msrs"], dspath)
+            self._process_msrs(yaml["msrs"], dspath)
 
         if "files" in yaml:
-            self._init_files(yaml["files"], dspath / yaml_path.stem)
+            self._process_files(yaml["files"], dspath / yaml_path.stem)
 
         if "directories" in yaml:
-            self._init_empty_dirs(yaml["directories"])
+            self._process_directories(yaml["directories"])
 
     def init_emul_data(self, dspath: Path):
         """
