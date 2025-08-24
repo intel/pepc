@@ -454,16 +454,6 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             path = self._basepath / finfo["path"].lstrip("/")
             path.mkdir(parents=True, exist_ok=True)
 
-    def _init_copied_dirs(self, finfos, dpath):
-        """Initialize copied directories."""
-
-        for finfo in finfos:
-            src = dpath / finfo["path"].lstrip("/")
-            if not src.exists() or src.is_dir():
-                self._init_empty_dirs((finfo,))
-            else:
-                self._init_files((finfo,), dpath)
-
     def _process_test_data_category(self, yaml_path: Path):
         """
         Process a test data category configuration file and initialize related emulation data.
@@ -473,7 +463,6 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         """
 
         yaml = cast(_TestDataYAMLTypedDict, YAML.load(yaml_path))
-        print(yaml)
 
         dspath = yaml_path.parent
 
@@ -491,9 +480,6 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
         if "files" in yaml:
             self._init_files(yaml["files"], dspath / yaml_path.stem)
-
-        if "recursive_copy" in yaml:
-            self._init_copied_dirs(yaml["recursive_copy"], dspath / yaml_path.stem)
 
         if "directories" in yaml:
             self._init_empty_dirs(yaml["directories"])

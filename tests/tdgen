@@ -424,17 +424,20 @@ def main():
                         collect_cmd_output(cmdinfo, pman, datapath)
                         cmdinfo["dirname"] = f"{modname}/{cmdinfo['dirname']}"
 
-                if "recursive_copy" in testdata:
-                    files = []
-                    for directory in testdata["recursive_copy"]:
-                        files += copy_dir(pman, directory["path"], datapath)
-
-                    del testdata["recursive_copy"]
-                    testdata["recursive_copy"] = files
-
                 if "files" in testdata:
                     for file in testdata["files"]:
                         copy_file(pman, file["path"], datapath)
+
+                if "recursive_copy" in testdata:
+                    files = []
+                    for directory in testdata["recursive_copy"]:
+                        # Skip empty directories.
+                        copied_files = copy_dir(pman, directory["path"], datapath)
+                        files += copied_files
+
+                    del testdata["recursive_copy"]
+                    if files:
+                        testdata["files"] = files
 
                 for section in ("inlinedirs", "inlinefiles"):
                     if section not in testdata:
