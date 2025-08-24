@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2022-2025 Intel Corporation
+# Copyright (C) 2022-2024 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Authors: Antti Laakso <antti.laakso@linux.intel.com>
@@ -22,7 +22,9 @@ Terminology:
       temporary directory on the local file-system.
 """
 
-# TODO: finish adding type hints to this module.
+# TODO: rework this file, make it more readable. Modernize it and add type annotations.
+# The concept of initializing only the test data for certain modules does not seem to be helpful,
+# only adds complications. Remove that.
 from  __future__ import annotations # Remove when switching to Python 3.10+.
 
 import contextlib
@@ -339,8 +341,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
                 regaddr = int(regaddr)
                 regval = int(regval, 16)
 
-                # MSR register address are offset by 8 bytes.
-                data[regaddr * 8] = int.to_bytes(regval, 8, byteorder="little")
+                data[regaddr] = int.to_bytes(regval, 8, byteorder="little")
 
             emul = _EmulFile.get_emul_file(path, self._basepath, data=data)
             self._emuls[path] = emul

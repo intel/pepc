@@ -12,11 +12,11 @@
 from typing import Any, Union
 from pathlib import Path
 from pepclibs.helperlibs.emul import (_EmulFileBase, _GeneralRWSysfsEmulFile, _CPUOnlineEmulFIle,
-                                      _EmulDevMSR, _EPBEmulFile, _ASPMPolicyEmulFile)
+                                      _DevMSREmulFile, _EPBEmulFile, _ASPMPolicyEmulFile)
 
 EmulFileType = Union[_EmulFileBase.EmulFileBase,
                      _CPUOnlineEmulFIle.CPUOnlineEmulFile,
-                     _EmulDevMSR.EmulDevMSR,
+                     _DevMSREmulFile.DevMSREmulFile,
                      _EPBEmulFile.EPBEmulFile,
                      _ASPMPolicyEmulFile.ASPMPolicyEmulFile]
 
@@ -60,6 +60,6 @@ def get_emul_file(path: str,
                                                               readonly=readonly, data=data)
 
     if path.endswith("/msr"):
-        return _EmulDevMSR.EmulDevMSR(Path(path), basepath, data)
+        return _DevMSREmulFile.DevMSREmulFile(Path(path), basepath, readonly=readonly, data=data)
 
     return _EmulFileBase.EmulFileBase(Path(path), basepath, readonly=readonly, data=data)

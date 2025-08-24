@@ -52,10 +52,14 @@ class EmulFileBase:
         self.fullpath = self.basepath / str(self.path).lstrip("/")
 
         if data is not None:
-            if not self.fullpath.parent.exists():
-                self.fullpath.parent.mkdir(parents=True)
-            with self._open("w") as fobj:
-                fobj.write(data)
+            try:
+                if not self.fullpath.parent.exists():
+                    self.fullpath.parent.mkdir(parents=True)
+                with self._open("w") as fobj:
+                    fobj.write(data)
+            except OSError as err:
+                errmsg = Error(str(err)).indent(2)
+                raise Error(f"Failed to prepare '{self.fullpath}':\n{errmsg}") from err
 
     def _open(self, mode: str) -> IO:
         """
