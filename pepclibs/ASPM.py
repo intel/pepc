@@ -66,6 +66,10 @@ class ASPM(ClassHelpers.SimpleCloseContext):
         policies = self._get_policies(strip=False)
         active = [policy for policy in policies if policy.startswith("[") and policy.endswith("]")]
 
+        if not active:
+            raise Error(f"No active ASPM policy found{self._pman.hostmsg}\nFound the following "
+                        f"policies in the '{self._policy_path}' file:\n  {','.join(policies)}")
+
         return active[0].strip("[]")
 
     def get_policies(self):
