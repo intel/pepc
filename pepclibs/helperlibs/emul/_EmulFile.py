@@ -11,10 +11,14 @@
 
 from typing import Any, Union
 from pathlib import Path
-from pepclibs.helperlibs.emul import _EmulFileBase, _CPUOnlineEmulFIle, _RWFile, _EmulDevMSR
+from pepclibs.helperlibs.emul import (_EmulFileBase, _GeneralRWSysfsEmulFile, _CPUOnlineEmulFIle,
+                                      _EmulDevMSR, _EPBEmulFile, _ASPMPolicyEmulFile)
 
-EmulFileType = Union[_EmulFileBase.EmulFileBase, _CPUOnlineEmulFIle.CPUOnlineEmulFile,
-                     _EmulDevMSR.EmulDevMSR]
+EmulFileType = Union[_EmulFileBase.EmulFileBase,
+                     _CPUOnlineEmulFIle.CPUOnlineEmulFile,
+                     _EmulDevMSR.EmulDevMSR,
+                     _EPBEmulFile.EPBEmulFile,
+                     _ASPMPolicyEmulFile.ASPMPolicyEmulFile]
 
 def get_emul_file(path: str,
                   basepath: Path,
@@ -37,20 +41,23 @@ def get_emul_file(path: str,
         ValueError: If the file type is not supported for emulation.
     """
 
-    # TODO: remove.
-    assert isinstance(path, str)
-    assert isinstance(basepath, Path)
-
     if data is None:
         # A pre-created file in the base directory.
         return _EmulFileBase.EmulFileBase(Path(path), basepath, readonly=readonly, data=data)
 
     if path.endswith("/sys/devices/system/cpu/online"):
-        # The global CPU online sysfs file.
-        return _CPUOnlineEmulFIle.CPUOnlineEmulFile(Path(path), basepath, data)
+        return _CPUOnlineEmulFIle.CPUOnlineEmulFile(Path(path), basepath, readonly=readonly,
+                                                    data=data)
+    if path.endswith("/energy_perf_bias"):
+        return _EPBEmulFile.EPBEmulFile(Path(path), basepath, readonly=readonly, data=data)
+
+    if path.endswith("pcie_aspm/parameters/policy"):
+        return _ASPMPolicyEmulFile.ASPMPolicyEmulFile(Path(path), basepath, readonly=readonly,
+                                                      data=data)
 
     if path.startswith("/sys/"):
-        return _RWFile.RWSysinfoFile(Path(path), basepath, data)
+        return _GeneralRWSysfsEmulFile.GeneralRWSysfsEmulFile(Path(path), basepath,
+                                                              readonly=readonly, data=data)
 
     if path.endswith("/msr"):
         return _EmulDevMSR.EmulDevMSR(Path(path), basepath, data)

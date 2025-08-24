@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2022-2024 Intel Corporation
+# Copyright (C) 2022-2025 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
-# Authors: Antti Laakso <antti.laakso@linux.intel.com>
-#          Niklas Neronin <niklas.neronin@intel.com>
+# Authors: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
+#          Antti Laakso <antti.laakso@linux.intel.com>
 
 """
 Provide 'CPUOnlineEmulFile' class to emulate the global '/sys/devices/system/cpu/online' file.
@@ -15,10 +15,10 @@ import types
 from pathlib import Path
 from typing import IO
 from pepclibs.helperlibs import Trivial
-from pepclibs.helperlibs.Exceptions import Error, ErrorBadFormat
+from pepclibs.helperlibs.Exceptions import ErrorBadFormat
 from pepclibs.helperlibs.emul import _EmulFileBase
 
-def _cpu_online_emul_file_read(self: IO) -> str:
+def _cpu_online_emul_file_read(self: IO[str]) -> str:
     """
     Implement the 'read()' method of a file object representing the global CPU online file
     ('/sys/devices/system/cpu/online').
@@ -78,25 +78,16 @@ class CPUOnlineEmulFile(_EmulFileBase.EmulFileBase):
     For example, if there are 4 CPUs in total, and CPU 2 is offline, the file will contain "0-1,3".
     """
 
-    def __init__(self, path: Path, basepath: Path, data: str):
+    def open(self, mode: str) -> IO[str]:
         """
-        Initialize a class instance.
+        Open the emulated global CPU online file.
 
         Args:
-            path: Path to the file to emulate.
-            basepath: Path to the base directory (where the emulated files are stored).
-            data: The initial data to populate the emulated file with.
-        """
+            mode: The mode in which to open the file, similar to 'mode' argument the built-in Python
+                  'open()' function.
 
-        if path != Path("/sys/devices/system/cpu/online"):
-            raise Error(f"BUG: Unexpected global CPU online file '{path}'")
-
-        super().__init__(path, basepath, readonly=True, data=data)
-
-    def open(self, mode):
-        """
-        Return an emulated read-only file object, opened with 'mode', representing the emulated
-        read-only Sysfs file.
+        Returns:
+            An emulated read-only file object with a patched `read()` method.
         """
 
         fobj = super().open(mode)

@@ -6,10 +6,12 @@
 #
 # Authors: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 #          Antti Laakso <antti.laakso@linux.intel.com>
-#          Niklas Neronin <niklas.neronin@intel.com>
 
 """
-Provide base class for emulated file classes.
+Base class for emulated file objects.
+
+Emulated file classes provide a single public method: open(). This method returns a file-like object
+for the emulated file, allowing users to perform standard I/O operations.
 """
 
 import types
@@ -39,10 +41,6 @@ class EmulFileBase:
                   do not create an empty file if None.
         """
 
-        # TODO: remove.
-        assert isinstance(path, Path)
-        assert isinstance(basepath, Path)
-
         self.path = path
         self.basepath = basepath
         self.readonly = readonly
@@ -66,6 +64,9 @@ class EmulFileBase:
         Args:
             mode: The mode in which to open the file, similar to 'mode' argument the built-in Python
                   'open()' function.
+
+        Returns:
+            An emulated read-only file object.
         """
 
         encoding: str | None
