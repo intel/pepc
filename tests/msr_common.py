@@ -53,10 +53,7 @@ def get_msr_objs(params):
 def get_params(hostspec):
     """Yield a dictionary with information we need for testing."""
 
-    emul_modules = ["CPUInfo"]
-
-    with common.get_pman(hostspec, modules=emul_modules) as pman, \
-         CPUInfo.CPUInfo(pman=pman) as cpuinfo:
+    with common.get_pman(hostspec) as pman, CPUInfo.CPUInfo(pman=pman) as cpuinfo:
         params = common.build_params(pman)
 
         params["cpuinfo"] = cpuinfo

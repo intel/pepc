@@ -25,9 +25,7 @@ def get_params(hostspec):
       * hostspec - the specification of the host to run the tests on.
     """
 
-    emul_modules = ["CPUInfo", "CPUOnline"]
-
-    with common.get_pman(hostspec, modules=emul_modules) as pman, \
+    with common.get_pman(hostspec) as pman, \
          CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
          CPUOnline.CPUOnline(pman=pman, cpuinfo=cpuinfo) as cpuonline:
         params = common.build_params(pman)

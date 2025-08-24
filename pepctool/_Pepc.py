@@ -949,44 +949,22 @@ def _get_next_dataset(dataset: str) -> Generator[Path, None, None]:
             _LOG.info("\n======= emulation:%s =======", name)
             yield base / name
 
-def _get_emul_pman(args: argparse.Namespace,
-                   commonpath: Path,
-                   path: Path) -> EmulProcessManager.EmulProcessManager:
+def _get_emul_pman(dspath: Path) -> EmulProcessManager.EmulProcessManager:
     """
     Configure and return an emulation process manager object for a dataset.
 
     Args:
-        args: Parsed command-line arguments.
-        commonpath: Path to the common dataset directory.
-        path: Path to the specific dataset directory.
+        dspath: Path to the dataset directory.
 
     Returns:
         An initialized 'EmulProcessManager' object.
     """
 
-    required_cmd_modules = {
-        "aspm": ["ASPM", "Systemctl"],
-        "cstates": ["CPUInfo", "CStates", "Systemctl"],
-        "pstates": ["CPUInfo", "PStates", "Systemctl"],
-        "pmqos": ["CPUInfo", "PMQoS"],
-        "topology": ["CPUInfo"],
-        "cpu_hotplug": ["CPUInfo", "CPUOnline", "Systemctl"],
-        "tpmi": ["TPMI"],
-    }
-
-    for cmd, _modules in required_cmd_modules.items():
-        if cmd in args.func.__name__:
-            modules = _modules
-            break
-    else:
-        raise Error(f"BUG: No modules specified for '{args.func.__name__}()'")
-
-    pman = EmulProcessManager.EmulProcessManager(hostname=path.name)
+    pman = EmulProcessManager.EmulProcessManager(hostname=dspath.name)
 
     try:
-        for module in modules:
-            pman.init_module(module, path, common_datapath=commonpath)
-    except Error:
+        pman.init_emul_data(dspath)
+    except:
         pman.close()
         raise
 
@@ -1052,10 +1030,8 @@ def main() -> int:
             username = privkey = None
 
         if dataset:
-            commonpath = ProjectFiles.find_project_data(TOOLNAME, "tests/data/common",
-                                                        what=f"common part of {TOOLNAME} datasets")
-            for path in _get_next_dataset(dataset):
-                with _get_emul_pman(args, commonpath, path) as pman:
+            for dspath in _get_next_dataset(dataset):
+                with _get_emul_pman(dspath) as pman:
                     args.func(args, pman)
         else:
             with ProcessManager.get_pman(hostname, username=username, privkeypath=privkey,

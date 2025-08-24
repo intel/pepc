@@ -25,10 +25,9 @@ def _get_enable_cache_param():
 def get_params(hostspec, request):
     """Yield a dictionary with information we need for testing."""
 
-    emul_modules = ["CPUInfo", "PStates"]
     enable_cache = request.param
 
-    with common.get_pman(hostspec, modules=emul_modules) as pman, \
+    with common.get_pman(hostspec) as pman, \
          CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
          PStates.PStates(pman=pman, cpuinfo=cpuinfo, enable_cache=enable_cache) as pobj:
         params = common.build_params(pman)

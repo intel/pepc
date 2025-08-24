@@ -18,22 +18,116 @@ previously collected from a real SUT using the 'tdgen' tool.
 Terminology:
     - Test Data: Data collected from real SUTs, stored in the "test" sub-directory, used to emulate
       results of commands and file I/O operations.
+    - Data Set: A directory containing test data for a single SUT.
     - Emulation Data (emd): Processed version of test data, either stored in memory or in a
       temporary directory on the local file-system.
 """
 
 # TODO: rework this file, make it more readable. Modernize it and add type annotations.
-# The concept of initializing only the test data for certain modules does not seem to be helpful,
-# only adds complications. Remove that.
 from  __future__ import annotations # Remove when switching to Python 3.10+.
 
 import contextlib
 from pathlib import Path
-from typing import Generator, TypedDict, NamedTuple
+from typing import Generator, TypedDict, NamedTuple, cast
 from pepclibs.helperlibs import Logging, LocalProcessManager, Trivial, YAML
 from pepclibs.helperlibs._ProcessManagerBase import ProcWaitResultType, LsdirTypedDict
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs.helperlibs.emul import _EmulFile
+
+class _TestDataInlineDirsTypedDict(TypedDict, total=False):
+    """
+    Typed dictionary describing inline directories in the YAML configuration.
+
+    Attributes:
+        dirname: Name of the sub-directory within the dataset containing the inline directories
+                 file.
+        filename: The inline directories file name. Contains a list of directory paths to
+                  emulate.
+    """
+
+    dirname: str
+    filename: str
+
+class _TestDataCommandsTypedDict(TypedDict, total=False):
+    """
+    Typed dictionary describing command results in the YAML configuration.
+
+    Attributes:
+        command: The emulated command, including options.
+        dirname: Name of the sub-directory within the dataset containing standard error and standard
+                 output of the emulated command.
+    """
+
+    dirname: str
+    filename: str
+
+class _TestDataInlineFilesTypedDict(TypedDict, total=False):
+    """
+    Typed dictionary describing inline files in the YAML configuration.
+
+    Attributes:
+        dirname: Name of the sub-directory within the dataset containing the inline files
+                 file.
+        filename: The inline files file name. Contains a list of file paths and their values.
+        separator: The separator used in the inline files file to separate paths and values.
+        readonly: Whether the inline files are read-only.
+    """
+
+    dirname: str
+    filename: str
+    separator: str
+    readonly: bool
+
+class _TestDataMSRsTypedDict(TypedDict, total=False):
+    """
+    Typed dictionary describing MSRs in the YAML configuration.
+
+    Attributes:
+        dirname: Name of the sub-directory within the dataset containing the MSRs file.
+        filename: The MSRs file name. Contains a list of MSR device node paths, MSR addresses and
+                  their values.
+        addresses: List of MSR addresses included in the MSR file.
+        separator1: The separator used in the MSRs file to separate MSR device node paths and the
+                    MSR values.
+        separator2: The separator used in the MSRs file to separate MSR addresses and MSR values.
+    """
+
+    dirname: str
+    filename: str
+    addresses: list[int]
+    separator1: str
+    separator2: str
+
+class _TestDataFilesTypedDict(TypedDict, total=False):
+    """
+    Typed dictionary describing files in the YAML configuration.
+
+    Attributes:
+        path: The emulated file path. There is a file in the dataset category sub-directory with the
+        same relative path, it includes the emulated file contents.
+        readonly: Whether the emulated file is read-only.
+    """
+
+    path: str
+    readonly: bool
+
+class _TestDataYAMLTypedDict(TypedDict, total=False):
+    """
+    Typed dictionary describing the YAML configuration for test data.
+
+    Attributes:
+        inlinedirs: List of inline directories configurations.
+        commands: List of command configurations.
+        inlinefiles: List of inline files configurations.
+        msrs: List of MSR configurations.
+        files: List of file configurations.
+    """
+
+    inlinedirs: list[_TestDataInlineDirsTypedDict]
+    commands: list[_TestDataCommandsTypedDict]
+    inlinefiles: list[_TestDataInlineFilesTypedDict]
+    msrs: list[_TestDataMSRsTypedDict]
+    files: list[_TestDataFilesTypedDict]
 
 class _EmulCmdResultType(NamedTuple):
     """
@@ -55,7 +149,6 @@ class _EmulDataTypedDict(TypedDict, total=False):
     """
 
     cmds: dict[str, _EmulCmdResultType]
-
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
@@ -100,12 +193,8 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         # The emulation data dictionary.
         self._emd: _EmulDataTypedDict = {"cmds": {}}
 
-        # Set of all modules that were initialized.
-        self._modules = set()
         # A dictionary mapping paths to emulated file objects.
         self._emuls = {}
-        # 'True' if common test data has already been initialized.
-        self._initialised_common_data = False
 
     def close(self):
         """Stop emulation."""
@@ -285,14 +374,14 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
                                                readonly=finfo["readonly"])
                 self._emuls[finfo["path"]] = emul
 
-    def _init_inline_dirs(self, finfos, datapath):
+    def _init_inline_dirs(self, finfos, dspath):
         """
         Directories are defined as paths in a text file. Create emulated directories as defined by
         dictionary 'finfos'.
         """
 
         for finfo in finfos:
-            filepath = datapath / finfo["dirname"] / finfo["filename"]
+            filepath = dspath / finfo["dirname"] / finfo["filename"]
 
             with open(filepath, "r", encoding="utf-8") as fobj:
                 lines = fobj.readlines()
@@ -301,21 +390,21 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
                 path = self._basepath / line.strip().lstrip("/")
                 path.mkdir(parents=True, exist_ok=True)
 
-    def _init_msrs(self, msrinfo, datapath):
+    def _init_msrs(self, msrinfo, dspath):
         """
         MSR values are defined in text file where single line defines path used to access MSR values
         and address value pairs. Initialize predefined data for emulated MSR files defined by
         dictionary 'msrinfo'.
         """
 
-        datapath = datapath / msrinfo["dirname"] / msrinfo["filename"]
+        dspath = dspath / msrinfo["dirname"] / msrinfo["filename"]
 
         try:
-            with open(datapath, "r", encoding="utf-8") as fobj:
+            with open(dspath, "r", encoding="utf-8") as fobj:
                 lines = fobj.readlines()
         except OSError as err:
             msg = Error(err).indent(2)
-            raise Error(f"failed to read emulated MSR data from file '{datapath}':\n{msg}") from err
+            raise Error(f"failed to read emulated MSR data from file '{dspath}':\n{msg}") from err
 
         sep1 = msrinfo["separator1"]
         sep2 = msrinfo["separator2"]
@@ -324,7 +413,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             split = line.split(sep1)
 
             if len(split) != 2:
-                raise Error(f"unexpected line format in file '{datapath}', expected <path>{sep1}"
+                raise Error(f"unexpected line format in file '{dspath}', expected <path>{sep1}"
                             f"<reg_value_pairs>, received\n{line}")
 
             path = split[0].strip()
@@ -335,7 +424,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
                 regaddr, regval = reg_val_pair.split(sep2)
 
                 if len(split) != 2:
-                    raise Error(f"unexpected register-value format in file '{datapath}', "
+                    raise Error(f"unexpected register-value format in file '{dspath}', "
                                 f"expected <regaddr>{sep2}<value>, received\n{line}")
 
                 regaddr = int(regaddr)
@@ -346,11 +435,11 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             emul = _EmulFile.get_emul_file(path, self._basepath, data=data)
             self._emuls[path] = emul
 
-    def _init_files(self, finfos, datapath, module):
+    def _init_files(self, finfos, dpath):
         """Initialize plain files, which are just copies of the original files."""
 
         for finfo in finfos:
-            path = datapath / module / finfo["path"].lstrip("/")
+            path = dpath / finfo["path"].lstrip("/")
             with open(path, "r", encoding="utf-8") as fobj:
                 data = fobj.read()
 
@@ -365,89 +454,89 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             path = self._basepath / finfo["path"].lstrip("/")
             path.mkdir(parents=True, exist_ok=True)
 
-    def _init_copied_dirs(self, finfos, datapath, module):
+    def _init_copied_dirs(self, finfos, dpath):
         """Initialize copied directories."""
 
         for finfo in finfos:
-            src = datapath / module / finfo["path"].lstrip("/")
+            src = dpath / finfo["path"].lstrip("/")
             if not src.exists() or src.is_dir():
                 self._init_empty_dirs((finfo,))
             else:
-                self._init_files((finfo,), datapath, module)
+                self._init_files((finfo,), dpath)
 
-    def _init_module(self, module, datapath):
-        """Implement 'init_module()'. Arguments are the same as in 'init_module()'."""
-
-        # TODO: the idea of initializing only some parts is not well-implemented, error-prone, and
-        # hard to maintain. I think it should be removed and everything should be initialized
-        # together.
-        if module == "CPUInfo":
-            # CPUInfo uses '/sys/devices/system/cpu/online' file, on emulated system the file is
-            # constructed using per-CPU '/sys/devices/system/cpu/cpu*/online' files that belong to
-            # CPUOnline.
-            self._init_module("CPUOnline", datapath)
-            # CPUInfo uses the uncore frequency sysfs files
-            # ('/sys/devices/system/cpu/intel_uncore_frequency/*'), which are initialized by the
-            # 'PStates' module.
-            self._init_module("PStates", datapath)
-            # CPUInfo used TPMI information to enumerate dies on some platforms.
-            self._init_module("TPMI", datapath)
-
-        confpath = datapath / f"{module}.yaml"
-        if not confpath.exists():
-            raise ErrorNotSupported(f"test data configuration for module '{module}' not found "
-                                    f"({confpath})")
-
-        config = YAML.load(confpath)
-
-        if "inlinedirs" in config:
-            self._init_inline_dirs(config["inlinedirs"], datapath)
-
-        if "commands" in config:
-            self._init_commands(config["commands"], datapath)
-
-        if "inlinefiles" in config:
-            self._init_inline_files(config["inlinefiles"], datapath)
-
-        if "msrs" in config:
-            self._init_msrs(config["msrs"], datapath)
-
-        if "files" in config:
-            self._init_files(config["files"], datapath, module)
-
-        if "recursive_copy" in config:
-            self._init_copied_dirs(config["recursive_copy"], datapath, module)
-
-        if "directories" in config:
-            self._init_empty_dirs(config["directories"])
-
-        self._modules.add(module)
-
-    def init_module(self, module, datapath, common_datapath=None):
+    def _process_test_data_category(self, yaml_path: Path):
         """
-        Initialize the module 'module' using test data in 'datapath' and 'common_datapath'. The
-        arguments are as follows.
-          * module - name of the pepc python module to initialize (e.g., "CPUInfo").
-          * datapath - path to the test data to use for initializing the module.
-          * common_datapath - path to the common part of the test data (there may be multiple
-                              datasets that have a common part, which is stored separately and
-                              shared between datasets). Find in the "common" sub-directory of the
-                              'datapath' parent directory by default.
+        Process a test data category configuration file and initialize related emulation data.
+
+        Args:
+            yaml_path: Path to the YAML configuration file describing the test data category.
         """
 
-        if module in self._modules:
-            return
+        yaml = cast(_TestDataYAMLTypedDict, YAML.load(yaml_path))
+        print(yaml)
 
-        if not self._initialised_common_data:
-            # There is a common part in the test data that is always initialized, but only once. By
-            # default, it resides in the "common" sub-directory of the directory where the test data
-            # are stored.
-            if not common_datapath:
-                common_datapath = datapath.parent / "common"
-            self._init_module("common", common_datapath)
-            self._initialised_common_data = True
+        dspath = yaml_path.parent
 
-        self._init_module(module, datapath)
+        if "inlinedirs" in yaml:
+            self._init_inline_dirs(yaml["inlinedirs"], dspath)
+
+        if "inlinefiles" in yaml:
+            self._init_inline_files(yaml["inlinefiles"], dspath)
+
+        if "commands" in yaml:
+            self._init_commands(yaml["commands"], dspath)
+
+        if "msrs" in yaml:
+            self._init_msrs(yaml["msrs"], dspath)
+
+        if "files" in yaml:
+            self._init_files(yaml["files"], dspath / yaml_path.stem)
+
+        if "recursive_copy" in yaml:
+            self._init_copied_dirs(yaml["recursive_copy"], dspath / yaml_path.stem)
+
+        if "directories" in yaml:
+            self._init_empty_dirs(yaml["directories"])
+
+    def init_emul_data(self, dspath: Path):
+        """
+        Load a dataset and initialize the emulation data.
+
+        Args:
+          dspath: Path to the dataset directory to load.
+
+        Test data is organized as follows:
+            - test_data_root/
+              - common/
+              - common.yaml
+            - dataset1/
+              - category1.yaml
+              - category1/
+              - category2.yaml
+              - category2/
+              ...
+            - dataset2/
+              ...
+
+        Each dataset represents a System Under Test (SUT). The 'common' directory contains data shared
+        across all datasets. Within each dataset, data is divided into multiple categories, each
+        described by a YAML file and a corresponding sub-directory containing the actual data.
+
+        Originally, categories matched pepc Python modules, but this mapping is no longer strict.
+        Categories now simply group related test data.
+        """
+
+        # TODO: Instead of eagerly building all emulation data up front, construct it lazily and
+        # only for the components that are actually required.
+
+        # Load the shared test data from the 'common' directory located in the parent of the dataset.
+        yaml_path = dspath.parent / "common" / "common.yaml"
+        self._process_test_data_category(yaml_path)
+
+        for yaml_path in dspath.iterdir():
+            if not str(yaml_path).endswith(".yaml"):
+                continue
+            self._process_test_data_category(yaml_path)
 
     def mkdir(self, dirpath: str | Path, parents: bool = False, exist_ok: bool = False):
         """Refer to 'ProcessManagerBase.mkdir()'."""

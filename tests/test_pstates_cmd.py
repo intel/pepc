@@ -27,9 +27,7 @@ _IGNORE = {ErrorNotSupported: "--mechanism",
 def get_params(hostspec, tmp_path_factory):
     """Yield a dictionary with information we need for testing."""
 
-    emul_modules = ["CPUInfo", "PStates", "Systemctl"]
-
-    with common.get_pman(hostspec, modules=emul_modules) as pman, \
+    with common.get_pman(hostspec) as pman, \
          CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
          PStates.PStates(pman=pman, cpuinfo=cpuinfo) as pobj:
         params = common.build_params(pman)

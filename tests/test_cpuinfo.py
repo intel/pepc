@@ -38,9 +38,7 @@ def get_params(hostspec: str) -> Generator[CommonTestParamsTypedDict, None, None
         A dictionary with test parameters.
     """
 
-    emul_modules = ["CPUInfo"]
-
-    with common.get_pman(hostspec, modules=emul_modules) as pman:
+    with common.get_pman(hostspec) as pman:
         params = common.build_params(pman)
         yield params
 

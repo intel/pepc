@@ -15,9 +15,9 @@ from  __future__ import annotations # Remove when switching to Python 3.10+.
 
 from pathlib import Path
 import typing
-from typing import TypedDict, Mapping
+from typing import TypedDict, Mapping, cast
 from pepclibs.helperlibs import ProcessManager, EmulProcessManager, TestRunner
-from pepclibs.helperlibs.Exceptions import Error, ExceptionType
+from pepclibs.helperlibs.Exceptions import ExceptionType
 from pepctool import _Pepc
 if typing.TYPE_CHECKING:
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
@@ -60,14 +60,13 @@ def is_emulated(pman: ProcessManagerType) -> bool:
 
     return hasattr(pman, "datapath")
 
-def get_pman(hostspec: str, modules: list[str] | None = None) -> ProcessManagerType:
+def get_pman(hostspec: str) -> ProcessManagerType:
     """
     Create and return a process manager for the specified host.
 
     Args:
         hostspec: The host specification/name to create a process manager for. If the hostspec
                   starts with "emulation:", it indicates an emulated environment.
-        modules: A list of Python module names to initialize for testing in an emulated environment.
 
     Returns:
         A process manager instance for the specified host. 'EmulProcessManager' in case of
@@ -75,23 +74,22 @@ def get_pman(hostspec: str, modules: list[str] | None = None) -> ProcessManagerT
         hosts.
     """
 
-    datapath: Path | None = None
+    dspath: Path | None = None
     username: str | None = None
     if hostspec.startswith("emulation:"):
         dataset = hostspec.split(":", maxsplit=2)[1]
-        datapath = _get_datapath(dataset)
+        dspath = _get_datapath(dataset)
     elif hostspec != "localhost":
         username = "root"
 
     pman = ProcessManager.get_pman(hostspec, username=username)
 
-    if modules and datapath:
-        assert isinstance(pman, EmulProcessManager.EmulProcessManager)
+    if dspath:
+        pman = cast(EmulProcessManager.EmulProcessManager, pman)
 
         try:
-            for module in modules:
-                pman.init_module(module, datapath)
-        except Error:
+            pman.init_emul_data(dspath)
+        except:
             pman.close()
             raise
 

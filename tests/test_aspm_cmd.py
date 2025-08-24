@@ -18,9 +18,7 @@ from pepclibs.helperlibs.Exceptions import Error, ErrorPermissionDenied, Excepti
 def get_params(hostspec):
     """Yield a dictionary with information we need for testing."""
 
-    emul_modules = ["ASPM", "Systemctl"]
-
-    with common.get_pman(hostspec, modules=emul_modules) as pman:
+    with common.get_pman(hostspec) as pman:
         params = common.build_params(pman)
         yield params
 
