@@ -201,7 +201,9 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         self.is_remote = False
 
         pid = Trivial.get_pid()
-        self._basepath: Path | None = super().mkdtemp(prefix=f"emulprocs_{pid}_")
+
+        self._basepath: Path = super().mkdtemp(prefix=f"emulprocs_{pid}_")
+        self._basepath_removed = False
 
         # The emulation data dictionary.
         self._emd: _EmulDataTypedDict = {"cmds": {}, "files": {}}
@@ -209,134 +211,26 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
     def __del__(self):
         """The class destructor."""
 
+        if getattr(self, "_basepath_removed", True):
+            return
+
         # Remove the emulation data in the temporary directory.
-        basepath: Path | None = getattr(self, "_basepath", None)
-        if basepath is not None:
-            self._basepath = None
-            with contextlib.suppress(Error, OSError):
-                super().rmtree(basepath)
+        self._basepath_removed = True
+
+        with contextlib.suppress(Error, OSError):
+            super().rmtree(self._basepath)
+
 
     def close(self):
         """Stop emulation."""
 
-        if self._basepath:
-            with contextlib.suppress(Error):
-                super().rmtree(self._basepath)
+        self._basepath_removed = True
+
+        with contextlib.suppress(Error):
+            super().rmtree(self._basepath)
 
         with contextlib.suppress(Exception):
             super().close()
-
-    def _get_predefined_result(self, cmd, join=True):
-        """Return pre-defined value for the command 'cmd'."""
-
-        if cmd not in self._emd["cmds"]:
-            raise ErrorNotSupported(f"unsupported command: '{cmd}'")
-
-        result = self._emd["cmds"][cmd]
-        if join:
-            stdout, stderr = "".join(result.stdout), "".join(result.stderr)
-        else:
-            stdout, stderr = result.stdout, result.stderr
-
-        return stdout, stderr
-
-    def _extract_path(self, cmd):
-        """
-        Parse command 'cmd' and find if it includes path which is also emulated. Returns the path if
-        found, otherwise returns 'None'.
-        """
-
-        for split in cmd.split():
-            if Path(self._basepath / split).exists():
-                return split
-            for strip_chr in ("'/", "\"/"):
-                if Path(self._basepath / split.strip(strip_chr)).exists():
-                    return split.strip(strip_chr)
-
-        return None
-
-    def _rebase_cmd(self, cmd):
-        """
-        Modify command 'cmd' so that it is run against emulated files. Returns 'None' if the command
-        doesn't include any paths, or paths are not emulated.
-        """
-
-        if str(self._basepath) in cmd:
-            return cmd
-
-        path = self._extract_path(cmd)
-        if path:
-            rebased_cmd = cmd.replace(path, f"{self._basepath}/{str(path).lstrip('/')}")
-            return rebased_cmd
-
-        return None
-
-    def run_verify(self, cmd, join=True, **kwargs):
-        """
-        Emulate running command 'cmd' and verifying the result. The arguments are as follows.
-          * cmd - the command to run (only a pre-defined set of commands is supported).
-          * join - whether the output of the command should be returned as a single string or as a
-                   list of lines (trailing newlines are not stripped).
-          * kwargs - the other arguments. Please, refer to '_ProcessManagerBase.run_verify()' for
-                     the details.
-
-        Pretend running the 'cmd' command return the pre-defined output data. Accept only a limited
-        set of known commands, raise 'ErrorNotSupported' for any unknown command.
-        """
-
-        # pylint: disable=unused-argument,arguments-differ
-        _LOG.debug("running the following emulated command:\n%s", cmd)
-
-        try:
-            return self._get_predefined_result(cmd, join=join)
-        except ErrorNotSupported:
-            cmd = self._rebase_cmd(cmd)
-            if cmd:
-                return super().run_verify(cmd, join=join, **kwargs)
-            raise
-
-    def run(self, cmd, join=True, **kwargs) -> ProcWaitResultType: # pylint: disable=unused-argument
-        """
-        Emulate running command 'cmd'. The arguments are as follows.
-          * cmd - the command to run (only a pre-defined set of commands is supported).
-          * join - whether the output of the command should be returned as a single string or as a
-                   list of lines (trailing newlines are not stripped).
-          * kwargs - the other arguments. Please, refer to '_ProcessManagerBase.run_verify()' for
-                     the details.
-
-        Pretend running the 'cmd' command return the pre-defined output data. Accept only a limited
-        set of known commands, raise 'ErrorNotSupported' for any unknown command.
-        """
-
-        # pylint: disable=unused-argument,arguments-differ
-        _LOG.debug("running the following emulated command:\n%s", cmd)
-
-        try:
-            stdout, stderr = self._get_predefined_result(cmd, join=join)
-        except ErrorNotSupported:
-            cmd = self._rebase_cmd(cmd)
-            if cmd:
-                return super().run(cmd, join=join, **kwargs)
-            raise
-
-        return ProcWaitResultType(stdout=stdout, stderr=stderr, exitcode=0)
-
-    def open(self, path, mode):
-        """
-        Open a file on the at 'path' and return a file-like object. The arguments are as follows.
-          * path - path to the file to open.
-          * mode - the same as in the standard python 'open()'.
-
-        Open a file at path 'path' relative to the emulation base directory. Create it if necessary.
-        """
-
-        _LOG.debug("Opening file '%s' with mode '%s'", path, mode)
-
-        path = str(path)
-        if path in self._emd["files"]:
-            return self._emd["files"][path].open(mode)
-
-        return _EmulFile.get_emul_file(path, self._basepath).open(mode)
 
     def _process_inlinedirs(self, infos: Sequence[_TestDataInlineDirsTypedDict], dspath: Path):
         """
@@ -595,6 +489,118 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             if not str(yaml_path).endswith(".yaml"):
                 continue
             self._process_test_data_category(yaml_path)
+
+    def _get_predefined_result(self, cmd, join=True):
+        """Return pre-defined value for the command 'cmd'."""
+
+        if cmd not in self._emd["cmds"]:
+            raise ErrorNotSupported(f"unsupported command: '{cmd}'")
+
+        result = self._emd["cmds"][cmd]
+        if join:
+            stdout, stderr = "".join(result.stdout), "".join(result.stderr)
+        else:
+            stdout, stderr = result.stdout, result.stderr
+
+        return stdout, stderr
+
+    def _extract_path(self, cmd):
+        """
+        Parse command 'cmd' and find if it includes path which is also emulated. Returns the path if
+        found, otherwise returns 'None'.
+        """
+
+        for split in cmd.split():
+            if Path(self._basepath / split).exists():
+                return split
+            for strip_chr in ("'/", "\"/"):
+                if Path(self._basepath / split.strip(strip_chr)).exists():
+                    return split.strip(strip_chr)
+
+        return None
+
+    def _rebase_cmd(self, cmd):
+        """
+        Modify command 'cmd' so that it is run against emulated files. Returns 'None' if the command
+        doesn't include any paths, or paths are not emulated.
+        """
+
+        if str(self._basepath) in cmd:
+            return cmd
+
+        path = self._extract_path(cmd)
+        if path:
+            rebased_cmd = cmd.replace(path, f"{self._basepath}/{str(path).lstrip('/')}")
+            return rebased_cmd
+
+        return None
+
+    def run_verify(self, cmd, join=True, **kwargs):
+        """
+        Emulate running command 'cmd' and verifying the result. The arguments are as follows.
+          * cmd - the command to run (only a pre-defined set of commands is supported).
+          * join - whether the output of the command should be returned as a single string or as a
+                   list of lines (trailing newlines are not stripped).
+          * kwargs - the other arguments. Please, refer to '_ProcessManagerBase.run_verify()' for
+                     the details.
+
+        Pretend running the 'cmd' command return the pre-defined output data. Accept only a limited
+        set of known commands, raise 'ErrorNotSupported' for any unknown command.
+        """
+
+        # pylint: disable=unused-argument,arguments-differ
+        _LOG.debug("running the following emulated command:\n%s", cmd)
+
+        try:
+            return self._get_predefined_result(cmd, join=join)
+        except ErrorNotSupported:
+            cmd = self._rebase_cmd(cmd)
+            if cmd:
+                return super().run_verify(cmd, join=join, **kwargs)
+            raise
+
+    def run(self, cmd, join=True, **kwargs) -> ProcWaitResultType: # pylint: disable=unused-argument
+        """
+        Emulate running command 'cmd'. The arguments are as follows.
+          * cmd - the command to run (only a pre-defined set of commands is supported).
+          * join - whether the output of the command should be returned as a single string or as a
+                   list of lines (trailing newlines are not stripped).
+          * kwargs - the other arguments. Please, refer to '_ProcessManagerBase.run_verify()' for
+                     the details.
+
+        Pretend running the 'cmd' command return the pre-defined output data. Accept only a limited
+        set of known commands, raise 'ErrorNotSupported' for any unknown command.
+        """
+
+        # pylint: disable=unused-argument,arguments-differ
+        _LOG.debug("running the following emulated command:\n%s", cmd)
+
+        try:
+            stdout, stderr = self._get_predefined_result(cmd, join=join)
+        except ErrorNotSupported:
+            cmd = self._rebase_cmd(cmd)
+            if cmd:
+                return super().run(cmd, join=join, **kwargs)
+            raise
+
+        return ProcWaitResultType(stdout=stdout, stderr=stderr, exitcode=0)
+
+    def open(self, path, mode):
+        """
+        Open a file on the at 'path' and return a file-like object. The arguments are as follows.
+          * path - path to the file to open.
+          * mode - the same as in the standard python 'open()'.
+
+        Open a file at path 'path' relative to the emulation base directory. Create it if necessary.
+        """
+
+        _LOG.debug("Opening file '%s' with mode '%s'", path, mode)
+
+        path = str(path)
+        if path in self._emd["files"]:
+            return self._emd["files"][path].open(mode)
+
+        return _EmulFile.get_emul_file(path, self._basepath).open(mode)
 
     def mkdir(self, dirpath: str | Path, parents: bool = False, exist_ok: bool = False):
         """Refer to 'ProcessManagerBase.mkdir()'."""
