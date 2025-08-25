@@ -161,6 +161,7 @@ class _EmulDataTypedDict(TypedDict, total=False):
     """
 
     cmds: dict[str, _EmulCmdResultType]
+    files: dict[str, _EmulFile.EmulFileType]
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
@@ -200,13 +201,20 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         self.is_remote = False
 
         pid = Trivial.get_pid()
-        self._basepath = super().mkdtemp(prefix=f"emulprocs_{pid}_")
+        self._basepath: Path | None = super().mkdtemp(prefix=f"emulprocs_{pid}_")
 
         # The emulation data dictionary.
-        self._emd: _EmulDataTypedDict = {"cmds": {}}
+        self._emd: _EmulDataTypedDict = {"cmds": {}, "files": {}}
 
-        # A dictionary mapping paths to emulated file objects.
-        self._emuls = {}
+    def __del__(self):
+        """The class destructor."""
+
+        # Remove the emulation data in the temporary directory.
+        basepath: Path | None = getattr(self, "_basepath", None)
+        if basepath is not None:
+            self._basepath = None
+            with contextlib.suppress(Error, OSError):
+                super().rmtree(basepath)
 
     def close(self):
         """Stop emulation."""
@@ -325,8 +333,8 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         _LOG.debug("Opening file '%s' with mode '%s'", path, mode)
 
         path = str(path)
-        if path in self._emuls:
-            return self._emuls[path].open(mode)
+        if path in self._emd["files"]:
+            return self._emd["files"][path].open(mode)
 
         return _EmulFile.get_emul_file(path, self._basepath).open(mode)
 
@@ -405,7 +413,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
                 emul = _EmulFile.get_emul_file(path, self._basepath, data=data,
                                                readonly=info["readonly"])
-                self._emuls[path] = emul
+                self._emd["files"][path] = emul
 
     def _process_commands(self, infos: list[_TestDataCommandsTypedDict], dspath: Path):
         """
@@ -477,7 +485,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
                 data[regaddr] = int.to_bytes(regval, 8, byteorder="little")
 
             emul = _EmulFile.get_emul_file(path, self._basepath, data=data)
-            self._emuls[path] = emul
+            self._emd["files"][path] = emul
 
     def _process_files(self, infos: list[_TestDataFilesTypedDict], catpath: Path):
         """
@@ -500,7 +508,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
             emul = _EmulFile.get_emul_file(info["path"], self._basepath, data=data,
                                            readonly=info["readonly"])
-            self._emuls[info["path"]] = emul
+            self._emd["files"][info["path"]] = emul
 
     def _process_directories(self, infos: list[_TestDataDirectoriesTypedDict]):
         """
@@ -612,7 +620,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         """
 
         path = str(path)
-        if path in self._emuls:
+        if path in self._emd["files"]:
             return True
 
         emul_path = Path(self._basepath / path.lstrip("/"))
@@ -627,7 +635,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         """
 
         path = str(path)
-        if path in self._emuls:
+        if path in self._emd["files"]:
             return True
 
         emul_path = Path(self._basepath / path.lstrip("/"))
