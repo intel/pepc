@@ -8,6 +8,7 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
  - Fix the '--debug-modules' option, which printed every message twice.
 ### Added
  - Add uncore frequency support via TPMI.
+ - Add an article about CPU frequency and C1E.
 ### Removed
 ### Changed
 
