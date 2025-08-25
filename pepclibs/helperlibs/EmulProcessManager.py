@@ -23,12 +23,11 @@ Terminology:
       temporary directory on the local file-system.
 """
 
-# TODO: rework this file, make it more readable. Modernize it and add type annotations.
 from  __future__ import annotations # Remove when switching to Python 3.10+.
 
 import contextlib
 from pathlib import Path
-from typing import Generator, TypedDict, NamedTuple, cast, Sequence
+from typing import Generator, TypedDict, NamedTuple, cast, Sequence, IO
 from pepclibs.helperlibs import Logging, LocalProcessManager, Trivial, YAML
 from pepclibs.helperlibs._ProcessManagerBase import ProcWaitResultType, LsdirTypedDict
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
@@ -137,7 +136,7 @@ class _TestDataYAMLTypedDict(TypedDict, total=False):
     inlinedirs: list[_TestDataInlineDirsTypedDict]
     commands: list[_TestDataCommandsTypedDict]
     inlinefiles: list[_TestDataInlineFilesTypedDict]
-    msrs: list[_TestDataMSRsTypedDict]
+    msrs: _TestDataMSRsTypedDict
     files: list[_TestDataFilesTypedDict]
     directories: list[_TestDataDirectoriesTypedDict]
 
@@ -470,9 +469,9 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             - dataset2/
               ...
 
-        Each dataset represents a System Under Test (SUT). The 'common' directory contains data shared
-        across all datasets. Within each dataset, data is divided into multiple categories, each
-        described by a YAML file and a corresponding sub-directory containing the actual data.
+        Each dataset represents a System Under Test (SUT). The 'common' directory contains data
+        shared across all datasets. Within each dataset, data is divided into multiple categories,
+        each described by a YAML file and a corresponding sub-directory containing the actual data.
 
         Originally, categories matched pepc Python modules, but this mapping is no longer strict.
         Categories now simply group related test data.
@@ -481,7 +480,8 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         # TODO: Instead of eagerly building all emulation data up front, construct it lazily and
         # only for the components that are actually required.
 
-        # Load the shared test data from the 'common' directory located in the parent of the dataset.
+        # Load the shared test data from the 'common' directory located in the parent of the
+        # dataset.
         yaml_path = dspath.parent / "common" / "common.yaml"
         self._process_test_data_category(yaml_path)
 
@@ -490,24 +490,42 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
                 continue
             self._process_test_data_category(yaml_path)
 
-    def _get_predefined_result(self, cmd, join=True):
-        """Return pre-defined value for the command 'cmd'."""
+    def _get_predefined_result(self,
+                               cmd: str,
+                               join: bool = True) -> tuple[str | list[str], str | list[str]]:
+        """
+        Return the predefined stdout and stderr values for a command.
+
+        Args:
+            cmd: The command string to look up the predefined result for.
+            join: Whether to join the output lists into strings (same as in 'run_verify()').
+
+        Returns:
+            A tuple containing stdout and stderr, either as strings or lists of strings.
+
+        Raises:
+            ErrorNotSupported: If there is no predefined result for the command.
+        """
 
         if cmd not in self._emd["cmds"]:
-            raise ErrorNotSupported(f"unsupported command: '{cmd}'")
+            raise ErrorNotSupported(f"Unsupported command: '{cmd}'")
 
         result = self._emd["cmds"][cmd]
         if join:
-            stdout, stderr = "".join(result.stdout), "".join(result.stderr)
-        else:
-            stdout, stderr = result.stdout, result.stderr
+            return "".join(result.stdout), "".join(result.stderr)
 
-        return stdout, stderr
+        return result.stdout, result.stderr
 
-    def _extract_path(self, cmd):
+    def _extract_path(self, cmd: str) -> str:
         """
-        Parse command 'cmd' and find if it includes path which is also emulated. Returns the path if
-        found, otherwise returns 'None'.
+        Parse the command string and search for a path that exists within the base directory.
+
+        Args:
+            cmd: Command string to parse and search for an emulated path in.
+
+        Returns:
+            The path found in the command if it exists under the base path, otherwise an empty
+            string.
         """
 
         for split in cmd.split():
@@ -517,82 +535,104 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
                 if Path(self._basepath / split.strip(strip_chr)).exists():
                     return split.strip(strip_chr)
 
-        return None
+        return ""
 
-    def _rebase_cmd(self, cmd):
+    def _rebase_cmd(self, cmd: str) -> str | None:
         """
-        Modify command 'cmd' so that it is run against emulated files. Returns 'None' if the command
-        doesn't include any paths, or paths are not emulated.
-        """
+        Modify a command to reference emulated files by rebasing paths in the command. If the
+        command contains a path that can be emulated, replace it with the corresponding path under
+        the base emulation directory.
 
-        if str(self._basepath) in cmd:
-            return cmd
+        Args:
+            cmd: The command to rebase.
 
-        path = self._extract_path(cmd)
-        if path:
-            rebased_cmd = cmd.replace(path, f"{self._basepath}/{str(path).lstrip('/')}")
-            return rebased_cmd
-
-        return None
-
-    def run_verify(self, cmd, join=True, **kwargs):
-        """
-        Emulate running command 'cmd' and verifying the result. The arguments are as follows.
-          * cmd - the command to run (only a pre-defined set of commands is supported).
-          * join - whether the output of the command should be returned as a single string or as a
-                   list of lines (trailing newlines are not stripped).
-          * kwargs - the other arguments. Please, refer to '_ProcessManagerBase.run_verify()' for
-                     the details.
-
-        Pretend running the 'cmd' command return the pre-defined output data. Accept only a limited
-        set of known commands, raise 'ErrorNotSupported' for any unknown command.
+        Returns:
+            The rebased command if a path is found in the emulation data, otherwise None.
         """
 
-        # pylint: disable=unused-argument,arguments-differ
-        _LOG.debug("running the following emulated command:\n%s", cmd)
+        # At the moment only a single path substitution is implemented.
+        path_str = self._extract_path(cmd)
+        if not path_str:
+            return None
+        return cmd.replace(path_str, f"{self._basepath}/{path_str.lstrip('/')}")
 
-        try:
-            return self._get_predefined_result(cmd, join=join)
-        except ErrorNotSupported:
-            cmd = self._rebase_cmd(cmd)
-            if cmd:
-                return super().run_verify(cmd, join=join, **kwargs)
-            raise
-
-    def run(self, cmd, join=True, **kwargs) -> ProcWaitResultType: # pylint: disable=unused-argument
+    def run(self,
+            cmd: str | Path,
+            timeout: int | float | None = None,
+            capture_output: bool = True,
+            mix_output: bool = False,
+            join: bool = True,
+            output_fobjs: tuple[IO[str] | None, IO[str] | None] = (None, None),
+            cwd: str | Path | None = None,
+            intsh: bool | None = None,
+            env: dict[str, str] | None = None,
+            newgrp: bool = False) -> ProcWaitResultType:
         """
-        Emulate running command 'cmd'. The arguments are as follows.
-          * cmd - the command to run (only a pre-defined set of commands is supported).
-          * join - whether the output of the command should be returned as a single string or as a
-                   list of lines (trailing newlines are not stripped).
-          * kwargs - the other arguments. Please, refer to '_ProcessManagerBase.run_verify()' for
-                     the details.
+        Pretend running command 'cmd', return predefined result. If there are no predefined results
+        for it, try to "rebase" the command and run it locally.
 
-        Pretend running the 'cmd' command return the pre-defined output data. Accept only a limited
-        set of known commands, raise 'ErrorNotSupported' for any unknown command.
+        The arguments and return value are the same as 'ProcessManagerBase.run()'.
         """
 
-        # pylint: disable=unused-argument,arguments-differ
+        cmd = str(cmd)
+
         _LOG.debug("running the following emulated command:\n%s", cmd)
 
         try:
             stdout, stderr = self._get_predefined_result(cmd, join=join)
         except ErrorNotSupported:
-            cmd = self._rebase_cmd(cmd)
-            if cmd:
-                return super().run(cmd, join=join, **kwargs)
-            raise
+            rebased_cmd = self._rebase_cmd(cmd)
+            if rebased_cmd is None:
+                raise
+
+            return super().run(rebased_cmd, timeout=timeout, capture_output=capture_output,
+                               mix_output=mix_output, join=join, output_fobjs=output_fobjs,
+                               cwd=cwd, intsh=intsh, env=env, newgrp=newgrp)
 
         return ProcWaitResultType(stdout=stdout, stderr=stderr, exitcode=0)
 
-    def open(self, path, mode):
+    def run_verify(self,
+                   cmd: str | Path,
+                   timeout: int | float | None = None,
+                   capture_output: bool = True,
+                   mix_output: bool = False,
+                   join: bool = True,
+                   output_fobjs: tuple[IO[str] | None, IO[str] | None] = (None, None),
+                   cwd: str | Path | None = None,
+                   intsh: bool | None = None,
+                   env: dict[str, str] | None = None,
+                   newgrp: bool = False) -> tuple[str | list[str], str | list[str]]:
         """
-        Open a file on the at 'path' and return a file-like object. The arguments are as follows.
-          * path - path to the file to open.
-          * mode - the same as in the standard python 'open()'.
+        Pretend running command 'cmd', return predefined result. If there are no predefined results
+        for it, try to "rebase" the command and run it locally.
 
-        Open a file at path 'path' relative to the emulation base directory. Create it if necessary.
+        The arguments and return value are the same as 'ProcessManagerBase.run_verify()'.
         """
+
+        cmd = str(cmd)
+
+        _LOG.debug("Running the following emulated command:\n%s", cmd)
+
+        try:
+            return self._get_predefined_result(cmd, join=join)
+        except ErrorNotSupported as err:
+            rebased_cmd = self._rebase_cmd(cmd)
+            if rebased_cmd is None:
+                raise
+
+            # Avoid running 'super().run_verify()', because it calls 'run()' of this class.
+            result = super().run(rebased_cmd, timeout=timeout, capture_output=capture_output,
+                                 mix_output=mix_output, join=join, output_fobjs=output_fobjs,
+                                 cwd=cwd, intsh=intsh, env=env, newgrp=newgrp)
+            if result.exitcode == 0:
+                return (result.stdout, result.stderr)
+
+            msg = self.get_cmd_failure_msg(cmd, result.stdout, result.stderr, result.exitcode,
+                                        timeout=timeout)
+            raise Error(msg) from err
+
+    def open(self, path: str | Path, mode: str) -> IO:
+        """Same as 'ProcessManagerBase.open()', but rebase 'path' to the base directory."""
 
         _LOG.debug("Opening file '%s' with mode '%s'", path, mode)
 
@@ -603,13 +643,13 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         return _EmulFile.get_emul_file(path, self._basepath).open(mode)
 
     def mkdir(self, dirpath: str | Path, parents: bool = False, exist_ok: bool = False):
-        """Refer to 'ProcessManagerBase.mkdir()'."""
+        """Same as 'ProcessManagerBase.mkdir()', but rebase 'path' to the base directory."""
 
         dirpath = self._basepath / str(dirpath).lstrip("/")
         super().mkdir(dirpath, parents=parents, exist_ok=exist_ok)
 
     def lsdir(self, path: str | Path) -> Generator[LsdirTypedDict, None, None]:
-        """Refer to 'ProcessManagerBase.lsdir()'."""
+        """Same as 'ProcessManagerBase.lsdir()', but rebase 'path' to the base directory."""
 
         emul_path = Path(self._basepath / str(path).lstrip("/"))
 
@@ -617,13 +657,8 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             entry["path"] = entry["path"].relative_to(self._basepath)
             yield entry
 
-    def exists(self, path):
-        """
-        Check if a file-system object at 'path' exists. The arguments are as follows.
-          * path - the path to check.
-
-        Return 'True' if path 'path' exists.
-        """
+    def exists(self, path: str | Path) -> bool:
+        """Same as 'ProcessManagerBase.exists()', but rebase 'path' to the base directory."""
 
         path = str(path)
         if path in self._emd["files"]:
@@ -632,13 +667,8 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         emul_path = Path(self._basepath / path.lstrip("/"))
         return super().exists(emul_path)
 
-    def is_file(self, path):
-        """
-        Check if a file-system object at 'path' is a regular file. The arguments are as follows.
-          * path - the path to check.
-
-        Return 'True' 'path' exists and it is a regular file, return 'False' otherwise.
-        """
+    def is_file(self, path: str | Path) -> bool:
+        """Same as 'ProcessManagerBase.is_file()', but rebase 'path' to the base directory."""
 
         path = str(path)
         if path in self._emd["files"]:
@@ -647,45 +677,28 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         emul_path = Path(self._basepath / path.lstrip("/"))
         return super().is_file(emul_path)
 
-    def is_dir(self, path):
-        """
-        Check if a file-system object at 'path' is a directory. The arguments are as follows.
-          * path - the path to check.
-
-        Return 'True' 'path' exists and it is a directory, return 'False' otherwise.
-        """
+    def is_dir(self, path: str | Path) -> bool:
+        """Same as 'ProcessManagerBase.is_dir()', but rebase 'path' to the base directory."""
 
         path = Path(self._basepath / str(path).lstrip("/"))
         return super().is_dir(path)
 
-    def is_exe(self, path):
-        """
-        Check if a file-system object at 'path' is a an executable file. The arguments are as
-        follows.
-          * path - the path to check.
-
-        Return 'True' 'path' exists and it is an executable file, return 'False' otherwise.
-        """
+    def is_exe(self, path: str | Path) -> bool:
+        """Same as 'ProcessManagerBase.is_exe()', but rebase 'path' to the base directory."""
 
         path = Path(self._basepath / str(path).lstrip("/"))
         return super().is_exe(path)
 
-    def is_socket(self, path):
-        """
-        Check if a file-system object at 'path' is a socket file. The arguments are as follows.
-          * path - the path to check.
-
-        Return 'True' 'path' exists and it is a socket file, return 'False' otherwise.
-        """
+    def is_socket(self, path: str | Path) -> bool:
+        """Same as 'ProcessManagerBase.is_socket()', but rebase 'path' to the base directory."""
 
         path = Path(self._basepath / str(path).lstrip("/"))
         return super().is_socket(path)
 
     def mkdtemp(self, prefix: str | None  = None, basedir: str | Path | None = None) -> Path:
         """
-        Create a temporary directory and return its path. The arguments are as follows.
-          * prefix - specifies the temporary directory name prefix.
-          * basedir - path to the base directory where the temporary directory should be created.
+        Same as 'ProcessManagerBase.mkdtemp()', but create the temporary directory under the
+        emulated files' base directory.
         """
 
         path = self._basepath

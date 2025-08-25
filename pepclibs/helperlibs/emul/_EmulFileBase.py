@@ -119,14 +119,14 @@ class EmulFileBase:
                 ErrorPermissionDenied: If a write operation is attempted on a read-only file.
             """
 
-            fullpath: str = getattr(self, "__fullpath", "")
+            fullpath: str = getattr(self, "__emul_fullpath", "")
             raise ErrorPermissionDenied(f"Cannot write to a read-only file '{fullpath}'")
 
         fobj = self._open(mode)
 
         if self.readonly:
             # Monkey-patch the 'write()' method to ensure writes fail.
-            setattr(fobj, "__fullpath", self.fullpath)
+            setattr(fobj, "__emul_fullpath", self.fullpath)
             setattr(fobj, "write", types.MethodType(_readonly_fobj_write, fobj))
 
         return fobj

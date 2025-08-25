@@ -41,7 +41,7 @@ def _cpu_online_emul_file_read(self: IO[str]) -> str:
         The contents of the global CPU online file.
     """
 
-    basepath = Path(getattr(self, "__basepath"))
+    basepath = Path(getattr(self, "__emul_basepath"))
     cpuonline_dir = basepath / "sys" / "devices" / "system" / "cpu"
 
     online_cpus: list[int] = []
@@ -93,7 +93,7 @@ class CPUOnlineEmulFile(_EmulFileBase.EmulFileBase):
         fobj = super().open(mode)
 
         # Save the base directory path in the file object.
-        setattr(fobj, "__basepath", self.basepath)
+        setattr(fobj, "__emul_basepath", self.basepath)
         # Monkey-patch the 'read()' method of the file object.
         setattr(fobj, "read", types.MethodType(_cpu_online_emul_file_read, fobj))
 
