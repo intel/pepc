@@ -12,13 +12,15 @@
 from typing import Any, Union
 from pathlib import Path
 from pepclibs.helperlibs.emul import (_EmulFileBase, _GeneralRWSysfsEmulFile, _CPUOnlineEmulFIle,
-                                      _DevMSREmulFile, _EPBEmulFile, _ASPMPolicyEmulFile)
+                                      _DevMSREmulFile, _EPBEmulFile, _ASPMPolicyEmulFile,
+                                      _TPMIEmulFile)
 
 EmulFileType = Union[_EmulFileBase.EmulFileBase,
                      _CPUOnlineEmulFIle.CPUOnlineEmulFile,
                      _DevMSREmulFile.DevMSREmulFile,
                      _EPBEmulFile.EPBEmulFile,
-                     _ASPMPolicyEmulFile.ASPMPolicyEmulFile]
+                     _ASPMPolicyEmulFile.ASPMPolicyEmulFile,
+                     _TPMIEmulFile.TPMIEmulFile]
 
 def get_emul_file(path: str,
                   basepath: Path,
@@ -54,7 +56,8 @@ def get_emul_file(path: str,
     if path.endswith("pcie_aspm/parameters/policy"):
         return _ASPMPolicyEmulFile.ASPMPolicyEmulFile(Path(path), basepath, readonly=readonly,
                                                       data=data)
-
+    if path.endswith("mem_write") and path.startswith("/sys/kernel/debug/tpmi-"):
+        return _TPMIEmulFile.TPMIEmulFile(Path(path), basepath, readonly=readonly, data=data)
     if path.startswith("/sys/"):
         return _GeneralRWSysfsEmulFile.GeneralRWSysfsEmulFile(Path(path), basepath,
                                                               readonly=readonly, data=data)

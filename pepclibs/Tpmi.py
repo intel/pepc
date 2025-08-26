@@ -572,7 +572,7 @@ class Tpmi():
                             line_pos += 9
                             offs += 4
                     else:
-                        raise Error("unexpected line in {path}:\n{line}")
+                        raise Error(f"Unexpected line in TPMI file '{path}:\n{line}")
 
                 pos += len(line) + 1
 
