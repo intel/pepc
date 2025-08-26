@@ -1,3 +1,11 @@
+pepc (1.5.42) unstable; urgency=low
+
+  * Fix the '--debug-modules' option, which printed every message twice.
+  * Add uncore frequency support via TPMI.
+  * Add an article about CPU frequency and C1E.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Tue, 26 Aug 2025 00:00:00 +0200
+
 pepc (1.5.41) unstable; urgency=low
 
   * Just minor helper module improvements to support derived projects.

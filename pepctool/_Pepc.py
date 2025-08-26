@@ -34,7 +34,7 @@ from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 from pepclibs.helperlibs.ArgParse import ArgTypedDict, ArgKwargsTypedDict
 from pepclibs._PropsClassBase import MECHANISMS, PropertyTypedDict
 
-_VERSION = "1.5.41"
+_VERSION = "1.5.42"
 TOOLNAME = "pepc"
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc").configure(prefix=TOOLNAME)

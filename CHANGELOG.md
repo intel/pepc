@@ -5,12 +5,16 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
+### Added
+### Removed
+### Changed
+
+## [1.5.42] - 2025-08-26
+### Fixed
  - Fix the '--debug-modules' option, which printed every message twice.
 ### Added
  - Add uncore frequency support via TPMI.
  - Add an article about CPU frequency and C1E.
-### Removed
-### Changed
 
 ## [1.5.41] - 2025-08-19
 ### Changed
