@@ -1,5 +1,3 @@
-/sys/devices/system/cpu/cpu1/online:1
-/sys/devices/system/cpu/cpu10/online:1
 /sys/devices/system/cpu/cpu100/online:1
 /sys/devices/system/cpu/cpu101/online:1
 /sys/devices/system/cpu/cpu102/online:1
@@ -10,7 +8,7 @@
 /sys/devices/system/cpu/cpu107/online:1
 /sys/devices/system/cpu/cpu108/online:1
 /sys/devices/system/cpu/cpu109/online:1
-/sys/devices/system/cpu/cpu11/online:1
+/sys/devices/system/cpu/cpu10/online:1
 /sys/devices/system/cpu/cpu110/online:1
 /sys/devices/system/cpu/cpu111/online:1
 /sys/devices/system/cpu/cpu112/online:1
@@ -21,7 +19,7 @@
 /sys/devices/system/cpu/cpu117/online:1
 /sys/devices/system/cpu/cpu118/online:1
 /sys/devices/system/cpu/cpu119/online:1
-/sys/devices/system/cpu/cpu12/online:1
+/sys/devices/system/cpu/cpu11/online:1
 /sys/devices/system/cpu/cpu120/online:1
 /sys/devices/system/cpu/cpu121/online:1
 /sys/devices/system/cpu/cpu122/online:1
@@ -32,7 +30,7 @@
 /sys/devices/system/cpu/cpu127/online:1
 /sys/devices/system/cpu/cpu128/online:1
 /sys/devices/system/cpu/cpu129/online:1
-/sys/devices/system/cpu/cpu13/online:1
+/sys/devices/system/cpu/cpu12/online:1
 /sys/devices/system/cpu/cpu130/online:1
 /sys/devices/system/cpu/cpu131/online:1
 /sys/devices/system/cpu/cpu132/online:1
@@ -43,7 +41,7 @@
 /sys/devices/system/cpu/cpu137/online:1
 /sys/devices/system/cpu/cpu138/online:1
 /sys/devices/system/cpu/cpu139/online:1
-/sys/devices/system/cpu/cpu14/online:1
+/sys/devices/system/cpu/cpu13/online:1
 /sys/devices/system/cpu/cpu140/online:1
 /sys/devices/system/cpu/cpu141/online:1
 /sys/devices/system/cpu/cpu142/online:1
@@ -54,7 +52,7 @@
 /sys/devices/system/cpu/cpu147/online:1
 /sys/devices/system/cpu/cpu148/online:1
 /sys/devices/system/cpu/cpu149/online:1
-/sys/devices/system/cpu/cpu15/online:1
+/sys/devices/system/cpu/cpu14/online:1
 /sys/devices/system/cpu/cpu150/online:1
 /sys/devices/system/cpu/cpu151/online:1
 /sys/devices/system/cpu/cpu152/online:1
@@ -65,7 +63,7 @@
 /sys/devices/system/cpu/cpu157/online:1
 /sys/devices/system/cpu/cpu158/online:1
 /sys/devices/system/cpu/cpu159/online:1
-/sys/devices/system/cpu/cpu16/online:1
+/sys/devices/system/cpu/cpu15/online:1
 /sys/devices/system/cpu/cpu160/online:1
 /sys/devices/system/cpu/cpu161/online:1
 /sys/devices/system/cpu/cpu162/online:1
@@ -76,7 +74,7 @@
 /sys/devices/system/cpu/cpu167/online:1
 /sys/devices/system/cpu/cpu168/online:1
 /sys/devices/system/cpu/cpu169/online:1
-/sys/devices/system/cpu/cpu17/online:1
+/sys/devices/system/cpu/cpu16/online:1
 /sys/devices/system/cpu/cpu170/online:1
 /sys/devices/system/cpu/cpu171/online:1
 /sys/devices/system/cpu/cpu172/online:1
@@ -87,7 +85,7 @@
 /sys/devices/system/cpu/cpu177/online:1
 /sys/devices/system/cpu/cpu178/online:1
 /sys/devices/system/cpu/cpu179/online:1
-/sys/devices/system/cpu/cpu18/online:1
+/sys/devices/system/cpu/cpu17/online:1
 /sys/devices/system/cpu/cpu180/online:1
 /sys/devices/system/cpu/cpu181/online:1
 /sys/devices/system/cpu/cpu182/online:1
@@ -98,7 +96,7 @@
 /sys/devices/system/cpu/cpu187/online:1
 /sys/devices/system/cpu/cpu188/online:1
 /sys/devices/system/cpu/cpu189/online:1
-/sys/devices/system/cpu/cpu19/online:1
+/sys/devices/system/cpu/cpu18/online:1
 /sys/devices/system/cpu/cpu190/online:1
 /sys/devices/system/cpu/cpu191/online:1
 /sys/devices/system/cpu/cpu192/online:1
@@ -109,8 +107,8 @@
 /sys/devices/system/cpu/cpu197/online:1
 /sys/devices/system/cpu/cpu198/online:1
 /sys/devices/system/cpu/cpu199/online:1
-/sys/devices/system/cpu/cpu2/online:1
-/sys/devices/system/cpu/cpu20/online:1
+/sys/devices/system/cpu/cpu19/online:1
+/sys/devices/system/cpu/cpu1/online:1
 /sys/devices/system/cpu/cpu200/online:1
 /sys/devices/system/cpu/cpu201/online:1
 /sys/devices/system/cpu/cpu202/online:1
@@ -121,7 +119,7 @@
 /sys/devices/system/cpu/cpu207/online:1
 /sys/devices/system/cpu/cpu208/online:1
 /sys/devices/system/cpu/cpu209/online:1
-/sys/devices/system/cpu/cpu21/online:1
+/sys/devices/system/cpu/cpu20/online:1
 /sys/devices/system/cpu/cpu210/online:1
 /sys/devices/system/cpu/cpu211/online:1
 /sys/devices/system/cpu/cpu212/online:1
@@ -132,11 +130,12 @@
 /sys/devices/system/cpu/cpu217/online:1
 /sys/devices/system/cpu/cpu218/online:1
 /sys/devices/system/cpu/cpu219/online:1
-/sys/devices/system/cpu/cpu22/online:1
+/sys/devices/system/cpu/cpu21/online:1
 /sys/devices/system/cpu/cpu220/online:1
 /sys/devices/system/cpu/cpu221/online:1
 /sys/devices/system/cpu/cpu222/online:1
 /sys/devices/system/cpu/cpu223/online:1
+/sys/devices/system/cpu/cpu22/online:1
 /sys/devices/system/cpu/cpu23/online:1
 /sys/devices/system/cpu/cpu24/online:1
 /sys/devices/system/cpu/cpu25/online:1
@@ -144,7 +143,7 @@
 /sys/devices/system/cpu/cpu27/online:1
 /sys/devices/system/cpu/cpu28/online:1
 /sys/devices/system/cpu/cpu29/online:1
-/sys/devices/system/cpu/cpu3/online:1
+/sys/devices/system/cpu/cpu2/online:1
 /sys/devices/system/cpu/cpu30/online:1
 /sys/devices/system/cpu/cpu31/online:1
 /sys/devices/system/cpu/cpu32/online:1
@@ -155,7 +154,7 @@
 /sys/devices/system/cpu/cpu37/online:1
 /sys/devices/system/cpu/cpu38/online:1
 /sys/devices/system/cpu/cpu39/online:1
-/sys/devices/system/cpu/cpu4/online:1
+/sys/devices/system/cpu/cpu3/online:1
 /sys/devices/system/cpu/cpu40/online:1
 /sys/devices/system/cpu/cpu41/online:1
 /sys/devices/system/cpu/cpu42/online:1
@@ -166,7 +165,7 @@
 /sys/devices/system/cpu/cpu47/online:1
 /sys/devices/system/cpu/cpu48/online:1
 /sys/devices/system/cpu/cpu49/online:1
-/sys/devices/system/cpu/cpu5/online:1
+/sys/devices/system/cpu/cpu4/online:1
 /sys/devices/system/cpu/cpu50/online:1
 /sys/devices/system/cpu/cpu51/online:1
 /sys/devices/system/cpu/cpu52/online:1
@@ -177,7 +176,7 @@
 /sys/devices/system/cpu/cpu57/online:1
 /sys/devices/system/cpu/cpu58/online:1
 /sys/devices/system/cpu/cpu59/online:1
-/sys/devices/system/cpu/cpu6/online:1
+/sys/devices/system/cpu/cpu5/online:1
 /sys/devices/system/cpu/cpu60/online:1
 /sys/devices/system/cpu/cpu61/online:1
 /sys/devices/system/cpu/cpu62/online:1
@@ -188,7 +187,7 @@
 /sys/devices/system/cpu/cpu67/online:1
 /sys/devices/system/cpu/cpu68/online:1
 /sys/devices/system/cpu/cpu69/online:1
-/sys/devices/system/cpu/cpu7/online:1
+/sys/devices/system/cpu/cpu6/online:1
 /sys/devices/system/cpu/cpu70/online:1
 /sys/devices/system/cpu/cpu71/online:1
 /sys/devices/system/cpu/cpu72/online:1
@@ -199,7 +198,7 @@
 /sys/devices/system/cpu/cpu77/online:1
 /sys/devices/system/cpu/cpu78/online:1
 /sys/devices/system/cpu/cpu79/online:1
-/sys/devices/system/cpu/cpu8/online:1
+/sys/devices/system/cpu/cpu7/online:1
 /sys/devices/system/cpu/cpu80/online:1
 /sys/devices/system/cpu/cpu81/online:1
 /sys/devices/system/cpu/cpu82/online:1
@@ -210,7 +209,7 @@
 /sys/devices/system/cpu/cpu87/online:1
 /sys/devices/system/cpu/cpu88/online:1
 /sys/devices/system/cpu/cpu89/online:1
-/sys/devices/system/cpu/cpu9/online:1
+/sys/devices/system/cpu/cpu8/online:1
 /sys/devices/system/cpu/cpu90/online:1
 /sys/devices/system/cpu/cpu91/online:1
 /sys/devices/system/cpu/cpu92/online:1
@@ -221,3 +220,4 @@
 /sys/devices/system/cpu/cpu97/online:1
 /sys/devices/system/cpu/cpu98/online:1
 /sys/devices/system/cpu/cpu99/online:1
+/sys/devices/system/cpu/cpu9/online:1

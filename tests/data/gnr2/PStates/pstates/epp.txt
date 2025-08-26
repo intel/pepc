@@ -1,6 +1,4 @@
 /sys/devices/system/cpu/cpufreq/policy0/energy_performance_preference:balance_performance
-/sys/devices/system/cpu/cpufreq/policy1/energy_performance_preference:balance_performance
-/sys/devices/system/cpu/cpufreq/policy10/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy100/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy101/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy102/energy_performance_preference:balance_performance
@@ -11,7 +9,7 @@
 /sys/devices/system/cpu/cpufreq/policy107/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy108/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy109/energy_performance_preference:balance_performance
-/sys/devices/system/cpu/cpufreq/policy11/energy_performance_preference:balance_performance
+/sys/devices/system/cpu/cpufreq/policy10/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy110/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy111/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy112/energy_performance_preference:balance_performance
@@ -22,7 +20,7 @@
 /sys/devices/system/cpu/cpufreq/policy117/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy118/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy119/energy_performance_preference:balance_performance
-/sys/devices/system/cpu/cpufreq/policy12/energy_performance_preference:balance_performance
+/sys/devices/system/cpu/cpufreq/policy11/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy120/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy121/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy122/energy_performance_preference:balance_performance
@@ -33,7 +31,7 @@
 /sys/devices/system/cpu/cpufreq/policy127/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy128/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy129/energy_performance_preference:balance_performance
-/sys/devices/system/cpu/cpufreq/policy13/energy_performance_preference:balance_performance
+/sys/devices/system/cpu/cpufreq/policy12/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy130/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy131/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy132/energy_performance_preference:balance_performance
@@ -44,7 +42,7 @@
 /sys/devices/system/cpu/cpufreq/policy137/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy138/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy139/energy_performance_preference:balance_performance
-/sys/devices/system/cpu/cpufreq/policy14/energy_performance_preference:balance_performance
+/sys/devices/system/cpu/cpufreq/policy13/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy140/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy141/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy142/energy_performance_preference:balance_performance
@@ -55,7 +53,7 @@
 /sys/devices/system/cpu/cpufreq/policy147/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy148/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy149/energy_performance_preference:balance_performance
-/sys/devices/system/cpu/cpufreq/policy15/energy_performance_preference:balance_performance
+/sys/devices/system/cpu/cpufreq/policy14/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy150/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy151/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy152/energy_performance_preference:balance_performance
@@ -66,7 +64,7 @@
 /sys/devices/system/cpu/cpufreq/policy157/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy158/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy159/energy_performance_preference:balance_performance
-/sys/devices/system/cpu/cpufreq/policy16/energy_performance_preference:balance_performance
+/sys/devices/system/cpu/cpufreq/policy15/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy160/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy161/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy162/energy_performance_preference:balance_performance
@@ -77,7 +75,7 @@
 /sys/devices/system/cpu/cpufreq/policy167/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy168/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy169/energy_performance_preference:balance_performance
-/sys/devices/system/cpu/cpufreq/policy17/energy_performance_preference:balance_performance
+/sys/devices/system/cpu/cpufreq/policy16/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy170/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy171/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy172/energy_performance_preference:balance_performance
@@ -88,7 +86,7 @@
 /sys/devices/system/cpu/cpufreq/policy177/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy178/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy179/energy_performance_preference:balance_performance
-/sys/devices/system/cpu/cpufreq/policy18/energy_performance_preference:balance_performance
+/sys/devices/system/cpu/cpufreq/policy17/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy180/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy181/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy182/energy_performance_preference:balance_performance
@@ -99,7 +97,7 @@
 /sys/devices/system/cpu/cpufreq/policy187/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy188/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy189/energy_performance_preference:balance_performance
-/sys/devices/system/cpu/cpufreq/policy19/energy_performance_preference:balance_performance
+/sys/devices/system/cpu/cpufreq/policy18/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy190/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy191/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy192/energy_performance_preference:balance_performance
@@ -110,8 +108,8 @@
 /sys/devices/system/cpu/cpufreq/policy197/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy198/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy199/energy_performance_preference:balance_performance
-/sys/devices/system/cpu/cpufreq/policy2/energy_performance_preference:balance_performance
-/sys/devices/system/cpu/cpufreq/policy20/energy_performance_preference:balance_performance
+/sys/devices/system/cpu/cpufreq/policy19/energy_performance_preference:balance_performance
+/sys/devices/system/cpu/cpufreq/policy1/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy200/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy201/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy202/energy_performance_preference:balance_performance
@@ -122,7 +120,7 @@
 /sys/devices/system/cpu/cpufreq/policy207/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy208/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy209/energy_performance_preference:balance_performance
-/sys/devices/system/cpu/cpufreq/policy21/energy_performance_preference:balance_performance
+/sys/devices/system/cpu/cpufreq/policy20/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy210/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy211/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy212/energy_performance_preference:balance_performance
@@ -133,11 +131,12 @@
 /sys/devices/system/cpu/cpufreq/policy217/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy218/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy219/energy_performance_preference:balance_performance
-/sys/devices/system/cpu/cpufreq/policy22/energy_performance_preference:balance_performance
+/sys/devices/system/cpu/cpufreq/policy21/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy220/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy221/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy222/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy223/energy_performance_preference:balance_performance
+/sys/devices/system/cpu/cpufreq/policy22/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy23/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy24/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy25/energy_performance_preference:balance_performance
@@ -145,7 +144,7 @@
 /sys/devices/system/cpu/cpufreq/policy27/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy28/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy29/energy_performance_preference:balance_performance
-/sys/devices/system/cpu/cpufreq/policy3/energy_performance_preference:balance_performance
+/sys/devices/system/cpu/cpufreq/policy2/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy30/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy31/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy32/energy_performance_preference:balance_performance
@@ -156,7 +155,7 @@
 /sys/devices/system/cpu/cpufreq/policy37/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy38/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy39/energy_performance_preference:balance_performance
-/sys/devices/system/cpu/cpufreq/policy4/energy_performance_preference:balance_performance
+/sys/devices/system/cpu/cpufreq/policy3/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy40/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy41/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy42/energy_performance_preference:balance_performance
@@ -167,7 +166,7 @@
 /sys/devices/system/cpu/cpufreq/policy47/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy48/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy49/energy_performance_preference:balance_performance
-/sys/devices/system/cpu/cpufreq/policy5/energy_performance_preference:balance_performance
+/sys/devices/system/cpu/cpufreq/policy4/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy50/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy51/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy52/energy_performance_preference:balance_performance
@@ -178,7 +177,7 @@
 /sys/devices/system/cpu/cpufreq/policy57/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy58/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy59/energy_performance_preference:balance_performance
-/sys/devices/system/cpu/cpufreq/policy6/energy_performance_preference:balance_performance
+/sys/devices/system/cpu/cpufreq/policy5/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy60/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy61/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy62/energy_performance_preference:balance_performance
@@ -189,7 +188,7 @@
 /sys/devices/system/cpu/cpufreq/policy67/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy68/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy69/energy_performance_preference:balance_performance
-/sys/devices/system/cpu/cpufreq/policy7/energy_performance_preference:balance_performance
+/sys/devices/system/cpu/cpufreq/policy6/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy70/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy71/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy72/energy_performance_preference:balance_performance
@@ -200,7 +199,7 @@
 /sys/devices/system/cpu/cpufreq/policy77/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy78/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy79/energy_performance_preference:balance_performance
-/sys/devices/system/cpu/cpufreq/policy8/energy_performance_preference:balance_performance
+/sys/devices/system/cpu/cpufreq/policy7/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy80/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy81/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy82/energy_performance_preference:balance_performance
@@ -211,7 +210,7 @@
 /sys/devices/system/cpu/cpufreq/policy87/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy88/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy89/energy_performance_preference:balance_performance
-/sys/devices/system/cpu/cpufreq/policy9/energy_performance_preference:balance_performance
+/sys/devices/system/cpu/cpufreq/policy8/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy90/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy91/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy92/energy_performance_preference:balance_performance
@@ -222,3 +221,4 @@
 /sys/devices/system/cpu/cpufreq/policy97/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy98/energy_performance_preference:balance_performance
 /sys/devices/system/cpu/cpufreq/policy99/energy_performance_preference:balance_performance
+/sys/devices/system/cpu/cpufreq/policy9/energy_performance_preference:balance_performance
