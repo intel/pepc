@@ -26,12 +26,13 @@ except ImportError:
     _ARGCOMPLETE_AVAILABLE = False
 
 from typing import Sequence, Any, Generator, cast
+from pepclibs import CStates, PStates, PMQoS, CPUInfo
 from pepclibs.helperlibs import ArgParse, Human, Logging, ProcessManager, ProjectFiles, Trivial
 from pepclibs.helperlibs import EmulProcessManager
 from pepclibs.helperlibs.Exceptions import Error
-from pepclibs import CStates, PStates, PMQoS, CPUInfo
-from pepclibs._PropsClassBase import MECHANISMS, PropertyTypedDict
+from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 from pepclibs.helperlibs.ArgParse import ArgTypedDict, ArgKwargsTypedDict
+from pepclibs._PropsClassBase import MECHANISMS, PropertyTypedDict
 
 _VERSION = "1.5.41"
 TOOLNAME = "pepc"
@@ -709,7 +710,7 @@ def parse_arguments() -> argparse.Namespace:
 
     return args
 
-def _topology_info_command(args, pman):
+def _topology_info_command(args: argparse.Namespace, pman: ProcessManagerType):
     """
     Implement the 'topology info' command.
 
@@ -723,7 +724,7 @@ def _topology_info_command(args, pman):
 
     _PepcTopology.topology_info_command(args, pman)
 
-def _tpmi_ls_command(args, pman):
+def _tpmi_ls_command(args: argparse.Namespace, pman: ProcessManagerType):
     """
     Implement the 'tpmi ls' command.
 
@@ -737,7 +738,7 @@ def _tpmi_ls_command(args, pman):
 
     _PepcTpmi.tpmi_ls_command(args, pman)
 
-def _tpmi_read_command(args, pman):
+def _tpmi_read_command(args: argparse.Namespace, pman: ProcessManagerType):
     """Implements the 'tpmi read' command."""
 
     # pylint: disable-next=import-outside-toplevel
@@ -745,7 +746,7 @@ def _tpmi_read_command(args, pman):
 
     _PepcTpmi.tpmi_read_command(args, pman)
 
-def _tpmi_write_command(args, pman):
+def _tpmi_write_command(args: argparse.Namespace, pman: ProcessManagerType):
     """Implements the 'tpmi write' command."""
 
     # pylint: disable-next=import-outside-toplevel
@@ -753,7 +754,7 @@ def _tpmi_write_command(args, pman):
 
     _PepcTpmi.tpmi_write_command(args, pman)
 
-def _cpu_hotplug_info_command(args, pman):
+def _cpu_hotplug_info_command(args: argparse.Namespace, pman: ProcessManagerType):
     """
     Implement the 'cpu-hotplug info' command.
 
@@ -767,7 +768,7 @@ def _cpu_hotplug_info_command(args, pman):
 
     _PepcCPUHotplug.cpu_hotplug_info_command(args, pman)
 
-def _cpu_hotplug_online_command(args, pman):
+def _cpu_hotplug_online_command(args: argparse.Namespace, pman: ProcessManagerType):
     """
     Implement the 'cpu-hotplug online' command.
 
@@ -781,7 +782,7 @@ def _cpu_hotplug_online_command(args, pman):
 
     _PepcCPUHotplug.cpu_hotplug_online_command(args, pman)
 
-def _cpu_hotplug_offline_command(args, pman):
+def _cpu_hotplug_offline_command(args: argparse.Namespace, pman: ProcessManagerType):
     """
     Implement the 'cpu-hotplug offline' command.
 
@@ -795,7 +796,7 @@ def _cpu_hotplug_offline_command(args, pman):
 
     _PepcCPUHotplug.cpu_hotplug_offline_command(args, pman)
 
-def _cstates_info_command(args, pman):
+def _cstates_info_command(args: argparse.Namespace, pman: ProcessManagerType):
     """
     Implement the 'cstates info' command.
 
@@ -809,7 +810,7 @@ def _cstates_info_command(args, pman):
 
     _PepcCStates.cstates_info_command(args, pman)
 
-def _cstates_config_command(args, pman):
+def _cstates_config_command(args: argparse.Namespace, pman: ProcessManagerType):
     """
     Implement the 'cstates config' command.
 
@@ -823,7 +824,7 @@ def _cstates_config_command(args, pman):
 
     _PepcCStates.cstates_config_command(args, pman)
 
-def _pstates_info_command(args, pman):
+def _pstates_info_command(args: argparse.Namespace, pman: ProcessManagerType):
     """
     Implement the 'pstates info' command.
 
@@ -837,7 +838,7 @@ def _pstates_info_command(args, pman):
 
     _PepcPStates.pstates_info_command(args, pman)
 
-def _pstates_config_command(args, pman):
+def _pstates_config_command(args: argparse.Namespace, pman: ProcessManagerType):
     """
     Implement the 'pstates config' command.
 
@@ -851,7 +852,7 @@ def _pstates_config_command(args, pman):
 
     _PepcPStates.pstates_config_command(args, pman)
 
-def _pmqos_info_command(args, pman):
+def _pmqos_info_command(args: argparse.Namespace, pman: ProcessManagerType):
     """
     Implement the 'pmqos info' command.
 
@@ -865,7 +866,7 @@ def _pmqos_info_command(args, pman):
 
     _PepcPMQoS.pmqos_info_command(args, pman)
 
-def _pmqos_config_command(args, pman):
+def _pmqos_config_command(args: argparse.Namespace, pman: ProcessManagerType):
     """
     Implement the 'pmqos config' command.
 
@@ -879,7 +880,7 @@ def _pmqos_config_command(args, pman):
 
     _PepcPMQoS.pmqos_config_command(args, pman)
 
-def _aspm_info_command(args, pman):
+def _aspm_info_command(args: argparse.Namespace, pman: ProcessManagerType):
     """
     Implement the 'aspm info' command.
 
@@ -893,7 +894,7 @@ def _aspm_info_command(args, pman):
 
     _PepcASPM.aspm_info_command(args, pman)
 
-def _aspm_config_command(args: argparse.Namespace, pman: ProcessManager.ProcessManagerType):
+def _aspm_config_command(args: argparse.Namespace, pman: ProcessManagerType):
     """
     Implement the 'aspm config' command.
 

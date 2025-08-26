@@ -11,14 +11,31 @@
 Provides API for changing properties.
 """
 
+# TODO: annotate and modernize this module.
+from __future__ import annotations # Remove when switching to Python 3.10+.
+
+from typing import TypedDict
 from pepctool import _PepcCommon
 from pepclibs.helperlibs import ClassHelpers, Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorBadOrder
 
+class PropSetInfoTypedDict(TypedDict, total=False):
+    """
+    A typed dictionary for property settings.
+
+    Attributes:
+        val: The value to assign to the property.
+        default_unit: The default unit of the property.
+    """
+
+    val: str
+    default_unit: str
+
 class _PropsSetter(ClassHelpers.SimpleCloseContext):
     """Provide API for changing properties."""
 
-    def _set_prop_sname(self, spinfo, pname, optar, mnames, mnames_info):
+    def _set_prop_sname(self, spinfo: dict[str, PropSetInfoTypedDict], pname, optar, mnames,
+                        mnames_info):
         """Set property 'pname'."""
 
         if pname not in spinfo:
@@ -29,7 +46,7 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
         del spinfo[pname]
         mnames_info[pname] = mname
 
-    def set_props(self, spinfo, optar, mnames=None):
+    def set_props(self, spinfo: dict[str, PropSetInfoTypedDict], optar, mnames=None):
         """
         Set properties for CPUs 'cpus'. The arguments are as follows.
           * spinfo - a dictionary defining names of the properties to set and the values to set the
@@ -154,7 +171,8 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
 class PStatesSetter(_PropsSetter):
     """Provide API for changing P-states properties."""
 
-    def _set_prop_sname(self, spinfo, pname, optar, mnames, mnames_info):
+    def _set_prop_sname(self, spinfo: dict[str, PropSetInfoTypedDict], pname, optar, mnames,
+                        mnames_info):
         """Set property 'pname' and handle frequency properties ordering."""
 
         try:

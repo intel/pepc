@@ -62,7 +62,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         _LOG.debug("Initializing the '%s' class object", self.__class__.__name__)
 
         # A short CPU description string.
-        self.cpudescr = None
+        self.cpudescr = ""
 
         self._close_pman = pman is None
 

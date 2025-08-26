@@ -16,7 +16,6 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import sys
 from typing import TypedDict, Iterable, Sequence, IO, Literal, Iterator, Union, get_args, cast
-
 from pepclibs import CStates, CPUInfo
 from pepclibs.helperlibs import Logging, ClassHelpers, Human, YAML, Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
@@ -31,7 +30,7 @@ from pepclibs.Props import PropertyValueType, PropertyTypedDict
 from pepclibs.CPUIdle import ReqCStateInfoTypedDict, ReqCStateInfoValuesType, ReqCStateInfoKeysType
 from pepclibs._PropsClassBaseTypes import PVInfoTypedDict
 
-_PrintFormatType = Literal["human", "yaml"]
+PrintFormatType = Literal["human", "yaml"]
 
 class _AggrSubPinfoTypdDict(TypedDict,):
     """
@@ -122,7 +121,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
                  pobj: PropsType,
                  cpuinfo: CPUInfo.CPUInfo,
                  fobj: IO[str] | None = None,
-                 fmt: _PrintFormatType = "human"):
+                 fmt: PrintFormatType = "human"):
         """
         Initialize the class instance.
 
@@ -139,7 +138,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         self._fobj = fobj
         self._fmt = fmt
 
-        names = get_args(_PrintFormatType)
+        names = get_args(PrintFormatType)
         if self._fmt not in names:
             formats = ", ".join(names)
             raise Error(f"Unsupported format '{self._fmt}', supported formats are: {formats}")
@@ -772,18 +771,18 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         return aggr_pinfo
 
     def _normalize_pnames(self,
-                          pnames: list[str] | Literal["all"],
-                          skip_ro: bool = False) -> list[str]:
+                          pnames: Iterable[str] | Literal["all"],
+                          skip_ro: bool = False) -> Iterable[str]:
         """
         Validate and normalize a list of property names.
 
         Args:
-            pnames: List of property names to validate and normalize, or the string "all" to include
-                    all properties.
+            pnames: Property names to validate and normalize, or the string "all" to include all
+                    properties.
             skip_ro: If True, excludes read-only properties from the returned list.
 
         Returns:
-            A list of validated and normalized property names.
+            An iterable of validated and normalized property names.
         """
 
         if pnames == "all":
@@ -799,7 +798,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         return [pname for pname in pnames if self._pobj.props[pname]["writable"]]
 
     def print_props(self,
-                    pnames: list[str] | Literal["all"],
+                    pnames: Iterable[str] | Literal["all"],
                     optar: _OpTarget.OpTarget,
                     mnames: Sequence[MechanismNameType] | None = None,
                     skip_ro: bool = False,
@@ -810,7 +809,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         Read and print properties for specified CPUs, cores, modules, etc.
 
         Args:
-            pnames: List of property names to read and print. Read all properties if set to "all".
+            pnames: Property names to read and print. Read all properties if set to "all".
             optar: An '_OpTarget.OpTarget()' object representing the CPUs, cores, modules, etc., for
                    which to print the properties.
             mnames: List of mechanism names allowed for retrieving properties. If None, all
@@ -936,7 +935,7 @@ class CStatesPrinter(_PropsPrinter):
         return aggr_pinfo
 
     def print_props(self,
-                    pnames: list[str] | Literal["all"],
+                    pnames: Iterable[str] | Literal["all"],
                     optar: _OpTarget.OpTarget,
                     mnames: Sequence[MechanismNameType] | None = None,
                     skip_ro: bool = False,
@@ -947,7 +946,7 @@ class CStatesPrinter(_PropsPrinter):
         Read and print properties for specified CPUs, cores, modules, etc.
 
         Args:
-            pnames: List of property names to read and print. Read all properties if set to "all".
+            pnames: Property names to read and print. Read all properties if set to "all".
             optar: An '_OpTarget.OpTarget()' object representing the CPUs, cores, modules, etc., for
                    which to print the properties.
             mnames: List of mechanism names allowed for retrieving properties. If None, all
