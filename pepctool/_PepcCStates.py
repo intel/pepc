@@ -40,8 +40,8 @@ def cstates_info_command(args, pman):
         pobj = CStates.CStates(pman=pman, cpuinfo=cpuinfo)
         stack.enter_context(pobj)
 
-        csprint = _PepcPrinter.CStatesPrinter(pobj, cpuinfo, fmt=fmt)
-        stack.enter_context(csprint)
+        pprinter = _PepcPrinter.CStatesPrinter(pobj, cpuinfo, fmt=fmt)
+        stack.enter_context(pprinter)
 
         mnames = None
         if args.mechanisms:
@@ -57,9 +57,9 @@ def cstates_info_command(args, pman):
         if not hasattr(args, "oargs") and args.csnames == "default":
             # No options were specified. Print all the information. Skip the unsupported ones as
             # they add clutter.
-            printed += csprint.print_cstates(csnames="all", cpus=optar.get_cpus(), mnames=mnames,
+            printed += pprinter.print_cstates(csnames="all", cpus=optar.get_cpus(), mnames=mnames,
                                              group=True)
-            printed += csprint.print_props("all", optar, mnames=mnames, skip_unsupported=True,
+            printed += pprinter.print_props("all", optar, mnames=mnames, skip_unsupported=True,
                                            group=True)
         else:
             if args.csnames != "default":
@@ -68,13 +68,13 @@ def cstates_info_command(args, pman):
                 csnames = args.csnames
                 if args.csnames is None:
                     csnames = "all"
-                printed += csprint.print_cstates(csnames=csnames, cpus=optar.get_cpus(),
+                printed += pprinter.print_cstates(csnames=csnames, cpus=optar.get_cpus(),
                                                  mnames=mnames)
 
             pnames = list(getattr(args, "oargs", []))
             pnames = _PepcCommon.expand_subprops(pnames, pobj.props)
             if pnames:
-                printed += csprint.print_props(pnames, optar, mnames=mnames, skip_unsupported=False)
+                printed += pprinter.print_props(pnames, optar, mnames=mnames, skip_unsupported=False)
 
         if not printed:
             _LOG.info("No C-states properties supported%s.", pman.hostmsg)
@@ -118,7 +118,7 @@ def cstates_config_command(args, pman):
         pobj = CStates.CStates(pman=pman, msr=msr, cpuinfo=cpuinfo)
         stack.enter_context(pobj)
 
-        mnames = None
+        mnames = []
         if args.mechanisms:
             mnames = _PepcCommon.parse_mechanisms(args.mechanisms, pobj)
 

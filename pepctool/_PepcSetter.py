@@ -8,16 +8,23 @@
 #          Antti Laakso <antti.laakso@intel.com>
 
 """
-Provides API for changing properties.
+Provide API for changing properties.
 """
 
-# TODO: annotate and modernize this module.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
-from typing import TypedDict
+from typing import TypedDict, Sequence, cast, Iterable, Literal
 from pepctool import _PepcCommon
+from pepctool._PepcPrinter import PepcPrinterClassType
+from pepctool import _OpTarget, _PepcPrinter
+from pepclibs import CPUInfo, _SysfsIO, CStates
+from pepclibs.PropsTypes import PropsClassType, ScopeNameType, PropertyValueType
+from pepclibs.PropsTypes import AbsNumsType, RelNumsType
+from pepclibs._PropsClassBaseTypes import MechanismNameType
 from pepclibs.helperlibs import ClassHelpers, Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorBadOrder
+from pepclibs.helperlibs.ProcessManager import ProcessManagerType
+from pepclibs.msr import MSR
 
 class PropSetInfoTypedDict(TypedDict, total=False):
     """
@@ -32,11 +39,59 @@ class PropSetInfoTypedDict(TypedDict, total=False):
     default_unit: str
 
 class _PropsSetter(ClassHelpers.SimpleCloseContext):
-    """Provide API for changing properties."""
+    """Base class for pepc property setter classes."""
 
-    def _set_prop_sname(self, spinfo: dict[str, PropSetInfoTypedDict], pname, optar, mnames,
-                        mnames_info):
-        """Set property 'pname'."""
+    def __init__(self,
+                 pman: ProcessManagerType,
+                 pobj: PropsClassType,
+                 cpuinfo: CPUInfo.CPUInfo,
+                 pprinter: PepcPrinterClassType,
+                 msr: MSR.MSR | None = None,
+                 sysfs_io: _SysfsIO.SysfsIO | None = None):
+        """
+        Initialize a class instance.
+
+        Args:
+            pman: Process manager object for the target host.
+            pobj: The properties object (e.g., 'PStates') to print the properties for.
+            cpuinfo: The 'CPUInfo' object for to the host from which properties are read.
+            pprinter: The property printer object for and printing properties after they are set.
+            msr: Optional MSR object for an MSR transaction.
+            sysfs_io: Optional SysfsIO object for a file I/O transaction.
+        """
+
+        self._pman = pman
+        self._pobj = pobj
+        self._cpuinfo = cpuinfo
+        self._pprinter = pprinter
+        self._msr = msr
+        self._sysfs_io = sysfs_io
+
+    def close(self):
+        """Uninitialize the class object."""
+
+        ClassHelpers.close(self, unref_attrs=("_sysfs_io", "_msr", "_pprinter", "_cpuinfo", "_pobj",
+                                              "_pman"))
+
+    def _set_prop_sname(self,
+                        spinfo: dict[str, PropSetInfoTypedDict],
+                        pname: str,
+                        optar: _OpTarget.OpTarget,
+                        mnames: Sequence[MechanismNameType],
+                        mnames_info: dict[str, MechanismNameType]):
+        """
+        Set the property.
+
+        Args:
+            spinfo: Dictionary mapping property names to their information, such as the value to
+                    set.
+            pname: The name of the property to set.
+            optar: The operation target object defining the processor topology entities (CPUs,
+                   cores, etc) to set property for.
+            mnames: Mechanism names allowed for setting the property. An empty sequence (default)
+                    means that all mechanisms are allowed.
+            mname_info: A dictionary where the mechanism used for setting the property is stored.
+        """
 
         if pname not in spinfo:
             return
@@ -46,20 +101,53 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
         del spinfo[pname]
         mnames_info[pname] = mname
 
-    def set_props(self, spinfo: dict[str, PropSetInfoTypedDict], optar, mnames=None):
+    @staticmethod
+    def _set_prop(pobj: PropsClassType,
+                  pname: str,
+                  sname: ScopeNameType,
+                  val: PropertyValueType,
+                  nums: AbsNumsType | RelNumsType):
         """
-        Set properties for CPUs 'cpus'. The arguments are as follows.
-          * spinfo - a dictionary defining names of the properties to set and the values to set the
-                     properties to.
-          * optar - an '_OpTarget.OpTarget()' object representing the CPUs, cores, modules, etc to
-                    set the properties for.
-          * mnames - list of mechanism names allowed to be used for setting properties (default -
-                     all mechanisms are allowed).
+        Set a property for a given scope using the appropriate method.
+
+        Args:
+            pobj: The properties object that manages properties and provides methods for setting
+                  them.
+            pname: The name of the property to set.
+            sname: The scope name where to set the property (e.g., "CPU", "die", package)".
+            val: The value to assign to the property.
+            nums: The identifiers (absolute or relative) specifying the targets within the scope.
+        """
+
+        if sname == "CPU":
+            pobj.set_prop_cpus(pname, val, cast(AbsNumsType, nums))
+        elif sname == "die":
+            pobj.set_prop_dies(pname, val, cast(RelNumsType, nums))
+        elif sname == "package":
+            pobj.set_prop_packages(pname, val, cast(AbsNumsType, nums))
+        else:
+            raise Error(f"BUG: Unsupported scope name '{sname}' for property '{pname}'")
+
+    def set_props(self,
+                  spinfo: dict[str, PropSetInfoTypedDict],
+                  optar: _OpTarget.OpTarget,
+                  mnames: Sequence[MechanismNameType] = ()):
+        """
+        Set properties specified CPUs, cores, modules, or other targets.
+
+        Args:
+            spinfo: Dictionary mapping property names to their information, such as the value to
+                    set.
+            optar: The operation target object defining the processor topology entities (CPUs,
+                   cores, etc) to set properties for.
+            mnames: Mechanism names allowed for setting properties. An empty sequence (default)
+                    means that all mechanisms are allowed.
         """
 
         # Remember the mechanism used for every option.
-        mnames_info = {}
-        # '_set_props()' needs to modify the dictionary, so create a copy for that.
+        mnames_info: dict[str, MechanismNameType] = {}
+
+        # '_set_props()' needs to modify the 'spinfo' dictionary, so create a copy.
         spinfo_copy = spinfo.copy()
 
         # Translate values without unit to the default units.
@@ -70,7 +158,7 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
             try:
                 val = Trivial.str_to_num(pname_info["val"])
             except Error:
-                # Not a number, which means there is unit specified.
+                # Not a number, which means there is a unit specified.
                 continue
 
             # Append the default unit.
@@ -89,91 +177,26 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
         if self._sysfs_io:
             self._sysfs_io.commit_transaction()
 
-        if self._pcsprint:
+        if self._pprinter:
             for pname in spinfo:
                 mnames = (mnames_info[pname], )
-                self._pcsprint.print_props((pname,), optar, mnames=mnames, skip_ro=True,
+                self._pprinter.print_props((pname,), optar, mnames=mnames, skip_ro=True,
                                            skip_unsupported=False, action="set to")
 
-    @staticmethod
-    def _validate_loaded_data(ydict, known_ykeys):
-        """Validate data loaded from a YAML file into a 'ydict' dictionary."""
-
-        if not isinstance(ydict, dict):
-            raise Error(f"expected dictionary, got: '{type(ydict)}'")
-
-        for ykey, yvals in ydict.items():
-            if not isinstance(yvals, list):
-                raise Error(f"expected 'list' type values for the key '{ykey}', got: "
-                            f"'{type(yvals)}'")
-
-            if ykey not in known_ykeys:
-                all_pnames = ", ".join(known_ykeys)
-                raise Error(f"unknown key '{ykey}', known keys are:\n  {all_pnames}")
-
-            for yval in yvals:
-                if not isinstance(yval, dict):
-                    raise Error(f"expected list of dictionaries for the key '{ykey}', got list "
-                                f"of: '{type(yval)}'")
-
-                for key in ("value",):
-                    if key not in yval:
-                        raise Error(f"did not find key '{key}' in the '{ykey}' sub-dictionary")
-
-                sname_keys = ("CPU", "die", "package")
-                found = []
-                for key in sname_keys:
-                    if key in yval:
-                        found.append(key)
-
-                if len(found) == 0:
-                    raise Error(f"did not find one of the following keys in the '{ykey}' "
-                                f"sub-dictionary: {', '.join(sname_keys)}")
-                if len(found) > 1:
-                    raise Error(f"found multiple scope name keys in the '{ykey}' sub-dictionary, "
-                                f"expected only one of {', '.join(sname_keys)}")
-
-    @staticmethod
-    def _set_prop(pobj, pname, sname, val, nums):
-        """Set property 'pname' using the method suitable for scope 'sname'."""
-
-        if sname == "CPU":
-            pobj.set_prop_cpus(pname, val, nums)
-        elif sname == "die":
-            pobj.set_prop_dies(pname, val, nums)
-        elif sname == "package":
-            pobj.set_prop_packages(pname, val, nums)
-
-    def __init__(self, pman, pobj, cpuinfo, pcsprint, msr=None, sysfs_io=None):
-        """
-        Initialize a class instance. The arguments are as follows.
-          * pman - the process manager object that defines the target host.
-          * pobj - a properties object (e.g., 'PStates') to print the properties for.
-          * cpuinfo - a 'CPUInfo' object corresponding to the host the properties are read from.
-          * pcsprint - a 'PStatesPrinter' or 'CStatesPrinter' class instance to use for reading and
-                       printing the properties after they were set.
-          * msr - an optional 'MSR.MSR()' object which will be used for transactions.
-          * sysfs_io - an optional '_SysfsIO.SysfsIO()' object which will be used for transactions.
-        """
-
-        self._pman = pman
-        self._pobj = pobj
-        self._cpuinfo = cpuinfo
-        self._pcsprint = pcsprint
-        self._msr = msr
-        self._sysfs_io = sysfs_io
-
-    def close(self):
-        """Uninitialize the class object."""
-        ClassHelpers.close(self, unref_attrs=("_sysfs_io", "_msr", "_pcsprint", "_cpuinfo", "_pobj",
-                                              "_pman"))
-
 class PStatesSetter(_PropsSetter):
-    """Provide API for changing P-states properties."""
+    """Provide API for changing P-state properties."""
 
-    def _set_prop_sname(self, spinfo: dict[str, PropSetInfoTypedDict], pname, optar, mnames,
-                        mnames_info):
-        """Set property 'pname' and handle frequency properties ordering."""
+    def _set_prop_sname(self,
+                        spinfo: dict[str, PropSetInfoTypedDict],
+                        pname: str,
+                        optar: _OpTarget.OpTarget,
+                        mnames: Sequence[MechanismNameType],
+                        mnames_info: dict[str, MechanismNameType]):
+        """
+        Set property the property and handle frequency properties ordering.
+
+        The arguments are the same as in '_PropsSetter._set_prop_sname()'.
+        """
 
         try:
             super()._set_prop_sname(spinfo, pname, optar, mnames, mnames_info)
@@ -208,9 +231,9 @@ class PStatesSetter(_PropsSetter):
                 # maximum frequency.
                 other_freq_pname = pname.replace("min", "max")
             elif pname.startswith("max"):
-                other_freq_pname = pname.replace("max", "mim")
+                other_freq_pname = pname.replace("max", "min")
             else:
-                raise Error(f"BUG: unexpected property {pname}") from err
+                raise Error(f"BUG: Unexpected property {pname}") from err
 
             if other_freq_pname not in spinfo:
                 raise
@@ -222,25 +245,35 @@ class PStatesSetter(_PropsSetter):
                 mnames_info[pnm] = mname
 
 class PMQoSSetter(_PropsSetter):
-    """Provides API for changing PM QoS properties."""
+    """Provide API for changing PM QoS properties."""
 
 class CStatesSetter(_PropsSetter):
-    """Provide API for changing C-states properties."""
+    """Provide API for changing C-state properties."""
 
-    def set_cstates(self, csnames="all", cpus="all", enable=True, mnames=None):
+    def set_cstates(self,
+                    csnames: Iterable[str] | Literal["all"] = "all",
+                    cpus: AbsNumsType | Literal["all"] = "all",
+                    enable: bool = True,
+                    mnames: Sequence[MechanismNameType] = ()):
         """
-        Enable or disable requestable C-states. The arguments are as follows.
-          * csnames - C-state names to enable or disable (all C-states by default).
-          * cpus - CPU numbers enable/disable C-states for (all CPUs by default).
-          * enable - if 'True', enable C-states in 'csnames', otherwise disable them.
-          * mnames - list of mechanism names allowed to be used for setting properties (default -
-                     all mechanisms are allowed).
+        Enable or disable C-states for specified CPUs.
+
+        Args:
+            csnames: C-state names to enable or disable, or "all" to select all C-states.
+            cpus: CPU numbers to apply the operation to, or "all" for all CPUs.
+            enable: If True, enable the specified C-states, if False, disable them.
+            mnames: Mechanisms to use for setting the property. The mechanisms will be tried in the
+                    order specified in 'mnames'. By default, all mechanisms supported by the 'pname'
+                    property will be tried.
         """
 
-        # pylint: disable=unused-argument
+        pobj = cast(CStates.CStates, self._pobj)
+        pprinter = cast(_PepcPrinter.CStatesPrinter, self._pprinter)
+
         if enable:
-            self._pobj.enable_cstates(csnames=csnames, cpus=cpus)
+            pobj.enable_cstates(csnames=csnames, cpus=cpus)
         else:
-            self._pobj.disable_cstates(csnames=csnames, cpus=cpus)
+            pobj.disable_cstates(csnames=csnames, cpus=cpus)
 
-        self._pcsprint.print_cstates(csnames=csnames, cpus=cpus, skip_ro=True, action="set to")
+        pprinter.print_cstates(csnames=csnames, cpus=cpus, mnames=mnames, skip_ro=True,
+                               action="set to")

@@ -104,10 +104,10 @@ def pstates_info_command(args: argparse.Namespace, pman: ProcessManagerType):
         pobj = PStates.PStates(pman=pman, cpuinfo=cpuinfo)
         stack.enter_context(pobj)
 
-        psprint = _PepcPrinter.PStatesPrinter(pobj, cpuinfo, fmt=fmt)
-        stack.enter_context(psprint)
+        pprinter = _PepcPrinter.PStatesPrinter(pobj, cpuinfo, fmt=fmt)
+        stack.enter_context(pprinter)
 
-        mnames = None
+        mnames = []
         if cmdl.mechanisms:
             mnames = _PepcCommon.parse_mechanisms(cmdl.mechanisms, pobj)
 
@@ -118,12 +118,12 @@ def pstates_info_command(args: argparse.Namespace, pman: ProcessManagerType):
         stack.enter_context(optar)
 
         if cmdl.oargs:
-            printed = psprint.print_props("all", optar, mnames=mnames, skip_unsupported=True,
+            printed = pprinter.print_props("all", optar, mnames=mnames, skip_unsupported=True,
                                           group=True)
         else:
             pnames = cmdl.oargs
             pnames = _PepcCommon.expand_subprops(pnames, pobj.props)
-            printed = psprint.print_props(pnames, optar, mnames=mnames, skip_unsupported=False)
+            printed = pprinter.print_props(pnames, optar, mnames=mnames, skip_unsupported=False)
 
         if not printed:
             _LOG.info("No P-states properties supported%s.", pman.hostmsg)
@@ -170,7 +170,7 @@ def pstates_config_command(args: argparse.Namespace, pman: ProcessManagerType):
         pobj = PStates.PStates(pman=pman, msr=msr, sysfs_io=sysfs_io, cpuinfo=cpuinfo)
         stack.enter_context(pobj)
 
-        mnames = None
+        mnames = []
         if cmdl.mechanisms:
             mnames = _PepcCommon.parse_mechanisms(cmdl.mechanisms, pobj)
 

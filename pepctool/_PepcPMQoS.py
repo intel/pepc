@@ -36,8 +36,8 @@ def pmqos_info_command(args, pman):
         pobj = PMQoS.PMQoS(pman=pman, cpuinfo=cpuinfo)
         stack.enter_context(pobj)
 
-        psprint = _PepcPrinter.PMQoSPrinter(pobj, cpuinfo, fmt=fmt)
-        stack.enter_context(psprint)
+        pprinter = _PepcPrinter.PMQoSPrinter(pobj, cpuinfo, fmt=fmt)
+        stack.enter_context(pprinter)
 
         optar = _OpTarget.OpTarget(pman=pman, cpuinfo=cpuinfo, cpus=args.cpus, cores=args.cores,
                                    modules=args.modules, dies=args.dies, packages=args.packages,
@@ -46,12 +46,12 @@ def pmqos_info_command(args, pman):
         stack.enter_context(optar)
 
         if not hasattr(args, "oargs"):
-            printed = psprint.print_props("all", optar, skip_unsupported=True,
+            printed = pprinter.print_props("all", optar, skip_unsupported=True,
                                           group=True)
         else:
             pnames = list(getattr(args, "oargs"))
             pnames = _PepcCommon.expand_subprops(pnames, pobj.props)
-            printed = psprint.print_props(pnames, optar, skip_unsupported=False)
+            printed = pprinter.print_props(pnames, optar, skip_unsupported=False)
 
         if not printed:
             _LOG.info("No PM QoS properties supported%s.", pman.hostmsg)

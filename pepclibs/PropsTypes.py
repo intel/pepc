@@ -20,4 +20,4 @@ from pepclibs._CPUInfoBaseTypes import AbsNumsType, RelNumsType
 from pepclibs._PropsClassBaseTypes import PropertyTypedDict, PropertyValueType, MechanismNameType
 from pepclibs._PropsClassBaseTypes import ScopeNameType
 
-PropsType = Union[PStates.PStates, CStates.CStates]
+PropsClassType = Union[PStates.PStates, CStates.CStates]

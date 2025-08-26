@@ -24,9 +24,8 @@ from pepclibs.PStates import ErrorTryAnotherMechanism
 from pepctool import _PepcCommon, _OpTarget
 
 # pylint: disable-next=ungrouped-imports
-from pepclibs.Props import MechanismNameType
-from pepclibs.Props import PropsType, ScopeNameType, AbsNumsType, RelNumsType
-from pepclibs.Props import PropertyValueType, PropertyTypedDict
+from pepclibs.PropsTypes import MechanismNameType, PropertyValueType, PropertyTypedDict
+from pepclibs.PropsTypes import PropsClassType, ScopeNameType, AbsNumsType, RelNumsType
 from pepclibs.CPUIdle import ReqCStateInfoTypedDict, ReqCStateInfoValuesType, ReqCStateInfoKeysType
 from pepclibs._PropsClassBaseTypes import PVInfoTypedDict
 
@@ -118,7 +117,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
     """
 
     def __init__(self,
-                 pobj: PropsType,
+                 pobj: PropsClassType,
                  cpuinfo: CPUInfo.CPUInfo,
                  fobj: IO[str] | None = None,
                  fmt: PrintFormatType = "human"):
@@ -609,7 +608,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
     def _build_aggr_pinfo_pname(self,
                                 pname: str,
                                 optar: _OpTarget.OpTarget,
-                                mnames: Sequence[MechanismNameType] | None,
+                                mnames: Sequence[MechanismNameType],
                                 skip_unsupported: bool,
                                 override_sname: ScopeNameType | None = None) -> _AggrPinfoType:
         """
@@ -619,7 +618,8 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         Args:
             pname: Name of the property to aggregate.
             optar: Operation target specifying the hardware scope.
-            mnames: Mechanism names to use for reading properties. If None, all mechanisms are used.
+            mnames: Mechanism names to use for property retrieval. Use all available mechanisms in
+                    case of an empty sequence.
             skip_unsupported: Whether to skip unsupported properties.
             override_sname: Override the default scope name for the property.
 
@@ -694,7 +694,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
     def _build_aggr_pinfo(self,
                           pnames: Iterable[str],
                           optar: _OpTarget.OpTarget,
-                          mnames: Sequence[MechanismNameType] | None,
+                          mnames: Sequence[MechanismNameType],
                           skip_ro: bool,
                           skip_unsupported: bool,
                           skip_unsupported_mechanism: bool) -> _AggrPinfoType:
@@ -731,7 +731,8 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         Args:
             pnames: Names of the properties to aggregate.
             optar: Operation target specifying the hardware scope.
-            mnames: Mechanism names to use for reading properties. If None, all mechanisms are used.
+            mnames: Mechanism names to use for property retrieval. Use all available mechanisms in
+                    case of an empty sequence.
             skip_ro: Whether to skip read-only properties.
             skip_unsupported: Whether to skip unsupported properties.
             skip_unsupported_mechanism: If True, skip the properties that cannot be retrieved using
@@ -800,7 +801,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
     def print_props(self,
                     pnames: Iterable[str] | Literal["all"],
                     optar: _OpTarget.OpTarget,
-                    mnames: Sequence[MechanismNameType] | None = None,
+                    mnames: Sequence[MechanismNameType] = (),
                     skip_ro: bool = False,
                     skip_unsupported: bool = True,
                     group: bool = False,
@@ -812,8 +813,9 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
             pnames: Property names to read and print. Read all properties if set to "all".
             optar: An '_OpTarget.OpTarget()' object representing the CPUs, cores, modules, etc., for
                    which to print the properties.
-            mnames: List of mechanism names allowed for retrieving properties. If None, all
-                    mechanisms are allowed.
+            mnames: Mechanisms to use for property retrieval. The mechanisms will be tried in the
+                    order specified in 'mnames'. By default, all mechanisms supported by the 'pname'
+                    property will be tried.
             skip_ro: If True, skip read-only properties. If False, include read-only properties in
                      the output.
             skip_unsupported: If True, skip unsupported properties. If False, print "not supported"
@@ -875,8 +877,7 @@ class CStatesPrinter(_PropsPrinter):
     def _adjust_aggr_pinfo_pcs_limit(self,
                                      aggr_pinfo: _AggrPinfoType,
                                      cpus: AbsNumsType,
-                                     mnames: Sequence[MechanismNameType] | None) -> \
-                                                                            _AggrPinfoType:
+                                     mnames: Sequence[MechanismNameType] = ()) -> _AggrPinfoType:
         """
         Adjust the 'pkg_cstate_limit' property in the aggregate properties information dictionary by
         removing it for locked CPUs. This is necessary when user requested to exclude R/O
@@ -889,7 +890,8 @@ class CStatesPrinter(_PropsPrinter):
             aggr_pinfo: Dictionary containing aggregate properties information for CPUs, including
                         'pkg_cstate_limit'.
             cpus: CPU numbers for which to adjust the 'pkg_cstate_limit' property.
-            mnames: Mechanism names to use for reading properties. If None, all mechanisms are used.
+            mnames: Mechanism names to use for reading properties.  Use all available mechanisms in
+                    case of an empty sequence (default).
 
         Returns:
             The updated 'aggr_pinfo' dictionary with locked CPUs removed from the 'pkg_cstate_limit'
@@ -937,7 +939,7 @@ class CStatesPrinter(_PropsPrinter):
     def print_props(self,
                     pnames: Iterable[str] | Literal["all"],
                     optar: _OpTarget.OpTarget,
-                    mnames: Sequence[MechanismNameType] | None = None,
+                    mnames: Sequence[MechanismNameType] = (),
                     skip_ro: bool = False,
                     skip_unsupported: bool = True,
                     group: bool = False,
@@ -949,8 +951,8 @@ class CStatesPrinter(_PropsPrinter):
             pnames: Property names to read and print. Read all properties if set to "all".
             optar: An '_OpTarget.OpTarget()' object representing the CPUs, cores, modules, etc., for
                    which to print the properties.
-            mnames: List of mechanism names allowed for retrieving properties. If None, all
-                    mechanisms are allowed.
+            mnames: Mechanism names to use for property retrieval. Use all available mechanisms in
+                    case of an empty sequence (default).
             skip_ro: If True, skip read-only properties. If False, include read-only properties in
                      the output.
             skip_unsupported: If True, skip unsupported properties. If False, print "not supported"
@@ -1163,9 +1165,9 @@ class CStatesPrinter(_PropsPrinter):
         return aggr_rcsinfo
 
     def print_cstates(self,
-                      csnames: list[str] | Literal["all"] = "all",
+                      csnames: Iterable[str] | Literal["all"] = "all",
                       cpus: AbsNumsType | Literal["all"] = "all",
-                      mnames: Sequence[MechanismNameType] | None = None,
+                      mnames: Sequence[MechanismNameType] = (),
                       skip_ro: bool = False,
                       group: bool = False,
                       action: str | None = None) -> int:
@@ -1175,8 +1177,9 @@ class CStatesPrinter(_PropsPrinter):
         Args:
             csnames: Names of C-states to include in the output. Use "all" to include all C-states.
             cpus: CPU numbers to include in the output. Use "all" to include all CPUs.
-            mnames: Mechanism names to use for reading properties. If None, all mechanisms are used,
-                    although only the "sysfs" mechanism is currently supported.
+            mnames: Mechanisms to use for property retrieval. The mechanisms will be tried in the
+                    order specified in 'mnames'. By default, all mechanisms supported by the 'pname'
+                    property will be tried.
             skip_ro: If True, print only modifiable properties and skip read-only information.
             group: If True, properties are grouped and printed by their mechanism name. If False,
                    properties are printed without grouping.
@@ -1217,3 +1220,5 @@ class CStatesPrinter(_PropsPrinter):
             return self._print_aggr_rcsinfo_human(aggr_rcsinfo, group=group, action=action)
 
         return self._print_aggr_rcsinfo_yaml(aggr_rcsinfo)
+
+PepcPrinterClassType = Union[CStatesPrinter, PStatesPrinter, PMQoSPrinter]
