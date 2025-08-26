@@ -34,8 +34,8 @@ two variants of C6. Each idle state offers a distinct balance between power savi
   typically > ~100μs. The latency depends on the specific C6 variant and the platform.
 
 Intel Xeon users who have previously relied solely on the C1 idle state may observe changes in CPU
-frequency behavior when experimenting with C1E. Specifically, when a CPU enters C1E while idle,
-Linux monitoring tools such as turbostat may report a lower CPU frequency than anticipated.
+frequency behavior when enabling C1E. Specifically, when the system is profoundly idle,
+Linux monitoring tools such as turbostat may report lower CPU frequency than anticipated.
 
 This article aims to clarify the reasons behind this phenomenon, focusing on modern Intel Xeon
 platforms, including Sapphire Rapids, Emerald Rapids, Granite Rapids, and Sierra Forest.
