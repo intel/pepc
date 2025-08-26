@@ -1119,18 +1119,7 @@ class PStates(_PropsClassBase.PropsClassBase):
                        pname: str,
                        cpus: AbsNumsType,
                        mname: MechanismNameType) -> Generator[tuple[int, typing.Any], None, None]:
-        """
-        Retrieve and yield property values for the specified CPUs using the given mechanism.
-
-        Args:
-            pname: Name of the property to retrieve (e.g., "epp", "epb", "max_eff_freq").
-            cpus: CPU numbers to retrieve property values for.
-            mname: Name of the mechanism to use for property retrieval.
-
-        Yields:
-            Tuples of (cpu, value), where 'cpu' is the CPU identifier and 'value' is the property
-            value for that CPU.
-        """
+        """Refer to '_PropsClassBase._get_prop_cpus()'."""
 
         _LOG.debug("Getting property '%s' using mechanism '%s', cpus: %s",
                    pname, mname, self._cpuinfo.cpus_to_str(cpus))
@@ -1222,18 +1211,7 @@ class PStates(_PropsClassBase.PropsClassBase):
                        dies: RelNumsType,
                        mname: MechanismNameType) -> Generator[tuple[int, int, PropertyValueType],
                                                               None, None]:
-        """
-        Retrieve and yield property values for the specified dies using the given mechanism.
-
-        Args:
-            pname: Name of the property to retrieve.
-            dies: Mapping of package numbers to collections of die numbers.
-            mname: Name of the mechanism to use for property retrieval.
-
-        Yields:
-            Tuples of (package, die, value), where 'package' is the package number, 'die' is the
-            die number, and 'value' is the property value for that die.
-        """
+        """Refer to '_PropsClassBase._get_prop_dies()'."""
 
         _LOG.debug("Getting property '%s' using mechanism '%s', packages/dies: %s",
                    pname, mname, dies)
@@ -1503,16 +1481,7 @@ class PStates(_PropsClassBase.PropsClassBase):
                        val: typing.Any,
                        cpus: AbsNumsType,
                        mname: MechanismNameType):
-        """
-        Set the specified property to a given value for for specified CPUs using a specified
-        mechanism.
-
-        Args:
-            pname: Name of the property to set (e.g., 'epp', 'epb', 'turbo', etc.).
-            val: The value to assign to the property.
-            cpus: CPU numbers to apply the property setting to.
-            mname: Name of the mechanism to use for setting the property.
-        """
+        """Refer to '_PropsClassBase._set_prop_cpus()'."""
 
         _LOG.debug("Setting property '%s' to value '%s' using mechanism '%s', cpus: %s",
                    pname, val, mname, self._cpuinfo.cpus_to_str(cpus))
@@ -1644,16 +1613,7 @@ class PStates(_PropsClassBase.PropsClassBase):
                        val: typing.Any,
                        dies: RelNumsType,
                        mname: MechanismNameType):
-        """
-        Set the specified property to a given value for the provided dies using the specified
-        mechanism.
-
-        Args:
-            pname: Name of the property to set.
-            val: Value to assign to the property.
-            dies: Mapping of package numbers to collections of die numbers.
-            mname: Name of the mechanism to use for setting the property.
-        """
+        """Refer to '_PropsClassBase._set_prop_dies()'."""
 
         _LOG.debug("Setting property '%s' to value '%s' using mechanism '%s', packages/dies: %s",
                    pname, val, mname, dies)
