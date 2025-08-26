@@ -564,7 +564,8 @@ class PStates(_PropsClassBase.PropsClassBase):
         # Sometimes the frequency CPPC sysfs files are not readable, but the "performance" files
         # are. The base frequency is required to turn performance values to Hz.
 
-        base_freq_iter = self._get_prop_cpus_mnames("base_freq", cpus)
+        base_freq_iter = self._get_prop_cpus_mnames("base_freq", cpus,
+                                                    self._props["base_freq"]["mnames"])
         nominal_perf_iter = cpufreq_obj.get_base_perf(cpus)
 
         if pname == "max_turbo_freq":
@@ -903,9 +904,11 @@ class PStates(_PropsClassBase.PropsClassBase):
             ErrorNotSupported: If the CPU frequency driver is not 'intel_pstate'.
         """
 
-        driver_iter = self._get_prop_cpus_mnames("driver", cpus)
-        min_freq_iter = self._get_prop_cpus_mnames("min_freq", cpus)
-        max_freq_iter = self._get_prop_cpus_mnames("max_freq", cpus)
+        driver_iter = self._get_prop_cpus_mnames("driver", cpus, self._props["driver"]["mnames"])
+        min_freq_iter = self._get_prop_cpus_mnames("min_freq", cpus,
+                                                   self._props["min_freq"]["mnames"])
+        max_freq_iter = self._get_prop_cpus_mnames("max_freq", cpus,
+                                                   self._props["max_freq"]["mnames"])
         bclks_iter = self._get_bclks_cpus(cpus)
 
         iter_zip = zip(driver_iter, min_freq_iter, max_freq_iter, bclks_iter)
@@ -1325,7 +1328,8 @@ class PStates(_PropsClassBase.PropsClassBase):
         msg = str(err)
 
         with contextlib.suppress(Error):
-            frequencies = cast(list[int], self._get_cpu_prop_mnames("frequencies", cpu))
+            frequencies = cast(list[int], self._get_cpu_prop_mnames("frequencies", cpu,
+                                                                    self._props["frequencies"]["mnames"]))
             frequencies_set = set(frequencies)
             if freq not in frequencies_set and read_freq in frequencies_set:
                 fvals = ", ".join([Human.num2si(v, unit="Hz", decp=4) for v in frequencies])
@@ -1334,8 +1338,9 @@ class PStates(_PropsClassBase.PropsClassBase):
                        f"{freq_human}, use one of the following values instead:\n  {fvals}"
 
         with contextlib.suppress(Error):
-            if self._get_cpu_prop_mnames("turbo", cpu) == "off":
-                base_freq = cast(int, self._get_cpu_prop_mnames("base_freq", cpu))
+            if self._get_cpu_prop_mnames("turbo", cpu, self._props["turbo"]["mnames"]) == "off":
+                base_freq = cast(int, self._get_cpu_prop_mnames("base_freq", cpu,
+                                                                self._props["base_freq"]["mnames"]))
                 if base_freq and freq > base_freq:
                     base_freq_str = Human.num2si(base_freq, unit="Hz", decp=4)
                     msg += f".\n  Hint: turbo is disabled, base frequency is {base_freq_str}, " \
@@ -1385,19 +1390,20 @@ class PStates(_PropsClassBase.PropsClassBase):
 
         if freq == "min":
             yield from cast(Generator[tuple[int, int], None, None],
-                            self._get_prop_cpus_mnames("min_freq_limit", cpus, mnames=("sysfs",)))
+                            self._get_prop_cpus_mnames("min_freq_limit", cpus, ("sysfs",)))
         elif freq == "max":
             yield from cast(Generator[tuple[int, int], None, None],
-                            self._get_prop_cpus_mnames("max_freq_limit", cpus, mnames=("sysfs",)))
+                            self._get_prop_cpus_mnames("max_freq_limit", cpus, ("sysfs",)))
         elif freq in {"base", "hfm", "P1"}:
             yield from cast(Generator[tuple[int, int], None, None],
-                            self._get_prop_cpus_mnames("base_freq", cpus))
+                            self._get_prop_cpus_mnames("base_freq", cpus,
+                                                       self._props["base_freq"]["mnames"]))
         elif freq in {"eff", "lfm", "Pn"}:
             yield from cast(Generator[tuple[int, int], None, None],
-                            self._get_prop_cpus_mnames("max_eff_freq", cpus, mnames=("msr",)))
+                            self._get_prop_cpus_mnames("max_eff_freq", cpus, ("msr",)))
         elif freq == "Pm":
             yield from cast(Generator[tuple[int, int], None, None],
-                            self._get_prop_cpus_mnames("min_oper_freq", cpus, mnames=("msr",)))
+                            self._get_prop_cpus_mnames("min_oper_freq", cpus, ("msr",)))
         else:
             for cpu in cpus:
                 yield cpu, cast(int, freq)
@@ -1463,13 +1469,16 @@ class PStates(_PropsClassBase.PropsClassBase):
             return None
 
         cpus = [err.cpu]
-        _, driver = next(self._get_prop_cpus_mnames("driver", cpus))
+        _, driver = next(self._get_prop_cpus_mnames("driver", cpus,
+                                                    self._props["driver"]["mnames"]))
         if driver != "intel_pstate":
             return None
-        _, mode = next(self._get_prop_cpus_mnames("intel_pstate_mode", cpus))
+        _, mode = next(self._get_prop_cpus_mnames("intel_pstate_mode", cpus,
+                                                  self._props["intel_pstate_mode"]["mnames"]))
         if mode != "active":
             return None
-        _, governor = next(self._get_prop_cpus_mnames("governor", cpus))
+        _, governor = next(self._get_prop_cpus_mnames("governor", cpus,
+                                                      self._props["governor"]["mnames"]))
         if governor != "performance":
             return None
 
@@ -1556,18 +1565,14 @@ class PStates(_PropsClassBase.PropsClassBase):
 
         if freq == "min":
             yield from cast(Generator[tuple[int, int, int], None, None],
-                            self._get_prop_dies_mnames("min_uncore_freq_limit", dies,
-                                                       mnames=("sysfs",)))
+                            self._get_prop_dies_mnames("min_uncore_freq_limit", dies, ("sysfs",)))
         elif freq == "max":
             yield from cast(Generator[tuple[int, int, int], None, None],
-                            self._get_prop_dies_mnames("max_uncore_freq_limit", dies,
-                                                       mnames=("sysfs",)))
+                            self._get_prop_dies_mnames("max_uncore_freq_limit", dies, ("sysfs",)))
         elif freq == "mdl":
             bclks_iter = self._get_bclks_dies(dies)
-            min_limit_iter = self._get_prop_dies_mnames("min_uncore_freq_limit", dies,
-                                                        mnames=("sysfs",))
-            max_limit_iter = self._get_prop_dies_mnames("max_uncore_freq_limit", dies,
-                                                        mnames=("sysfs",))
+            min_limit_iter = self._get_prop_dies_mnames("min_uncore_freq_limit", dies, ("sysfs",))
+            max_limit_iter = self._get_prop_dies_mnames("max_uncore_freq_limit", dies, ("sysfs",))
             iter_zip = zip(bclks_iter, min_limit_iter, max_limit_iter)
             iterator = cast(Generator[tuple[tuple[int, int, int], tuple[int, int, int],
                                             tuple[int, int, int]], None, None], iter_zip)
