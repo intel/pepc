@@ -67,8 +67,8 @@ For example, [this link](https://github.com/torvalds/linux/tree/v6.16/tools/powe
 points to the Linux kernel v6.16 turbostat source code.
 
 At a high level, turbostat periodically wakes up (every 5 seconds by default), captures snapshots of
-various hardware counters, computes the difference between consecutive snapshots and reports metrics
-such as CPU frequency and C-state residency.
+various counters, computes the difference between consecutive snapshots and reports metrics such as
+CPU frequency and C-state residency.
 
 Below is a simplified example of turbostat output.
 
