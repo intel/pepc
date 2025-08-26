@@ -30,8 +30,8 @@ _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc").configure(prefix=TO
 # pylint: disable=line-too-long
 CPUInfoData = {
     "commands" : [
-        {"command": "lscpu",
-         "dirname": "lscpu"}],
+        {"command": "lscpu", "dirname": "lscpu"},
+        {"command": "uname -a", "dirname": "uname"},],
     "files" : [
         {"path": "/proc/cpuinfo",
          "readonly": True}],
@@ -269,8 +269,11 @@ def collect_cmd_output(cmdinfo, pman, outdir):
         _LOG.error("running command '%s' failed and returned '%s'", cmdinfo["command"], res.exitcode)
 
     for fname, data in ("stdout", res.stdout), ("stderr", res.stderr):
-        path = datapath / f"{fname}.txt"
+        if not data:
+            # No output.
+            continue
 
+        path = datapath / f"{fname}.txt"
         with open(path, "w", encoding="utf-8") as fobj:
             fobj.write(data)
 
@@ -379,9 +382,6 @@ def copy_dir(pman, src, outdir):
             copy_file(pman, str(entry["path"]), outdir)
             files += [{"path": entry["path"], "readonly": is_readonly}]
 
-    if not files:
-        files = [{"path": src.parent}]
-
     return files
 
 def generate_config_file(modname, testdata, outdir):
@@ -431,9 +431,7 @@ def main():
                 if "recursive_copy" in testdata:
                     files = []
                     for directory in testdata["recursive_copy"]:
-                        # Skip empty directories.
-                        copied_files = copy_dir(pman, directory["path"], datapath)
-                        files += copied_files
+                        files += copy_dir(pman, directory["path"], datapath)
 
                     del testdata["recursive_copy"]
                     if files:
@@ -453,7 +451,8 @@ def main():
                     collect_msrs(testdata["msrs"], pman, datapath)
                     testdata["msrs"]["dirname"] = f"{modname}/{testdata['msrs']['dirname']}"
 
-                generate_config_file(modname, testdata, outdir)
+                if testdata:
+                    generate_config_file(modname, testdata, outdir)
 
     except KeyboardInterrupt:
         _LOG.info("\nInterrupted, exiting")

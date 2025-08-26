@@ -322,11 +322,18 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
             try:
                 path = dirpath / "stdout.txt"
-                with open(path, encoding="utf-8") as fobj:
-                    stdout = fobj.readlines()
+                if path.exists():
+                    with open(path, encoding="utf-8") as fobj:
+                        stdout = fobj.readlines()
+                else:
+                    stdout = []
+
                 path = dirpath / "stderr.txt"
-                with open(path, encoding="utf-8") as fobj:
-                    stderr = fobj.readlines()
+                if path.exists():
+                    with open(path, encoding="utf-8") as fobj:
+                        stderr = fobj.readlines()
+                else:
+                    stderr = []
             except OSError as err:
                 errmsg = Error(str(err)).indent(2)
                 raise Error(f"Failed to read '{path}':\n{errmsg}") from err
