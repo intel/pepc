@@ -174,6 +174,22 @@ PROPS: dict[str, PropertyTypedDict] = {
         "mnames": ("sysfs",),
         "writable": False,
     },
+    "uncore_elc_low_threshold": {
+        "name": "Uncore ELC low threshold",
+        "unit": "%",
+        "type": "int",
+        "sname": "die",
+        "mnames": ("sysfs", "tpmi"),
+        "writable": True,
+    },
+    "uncore_elc_high_threshold": {
+        "name": "Uncore ELC high threshold",
+        "unit": "%",
+        "type": "int",
+        "sname": "die",
+        "mnames": ("sysfs", "tpmi"),
+        "writable": True,
+    },
     "hwp": {
         "name": "Hardware power management",
         "type": "bool",
@@ -291,7 +307,8 @@ class PStates(_PropsClassBase.PropsClassBase):
         """
 
         return pname in {"min_uncore_freq", "max_uncore_freq",
-                         "min_uncore_freq_limit", "max_uncore_freq_limit"}
+                         "min_uncore_freq_limit", "max_uncore_freq_limit",
+                         "uncore_elc_low_threshold", "uncore_elc_high_threshold"}
 
     def _get_fsbfreq(self) -> FSBFreq.FSBFreq:
         """
@@ -811,6 +828,13 @@ class PStates(_PropsClassBase.PropsClassBase):
             yield from uncfreq_obj.get_max_freq_cpus(cpus)
             return
 
+        if pname == "uncore_elc_low_threshold":
+            yield from uncfreq_obj.get_elc_low_threshold_cpus(cpus)
+            return
+        if pname == "uncore_elc_high_threshold":
+            yield from uncfreq_obj.get_elc_high_threshold_cpus(cpus)
+            return
+
         if mname == "sysfs":
             uncfreq_sysfs_obj = self._get_uncfreq_sysfs_obj()
             if pname == "min_uncore_freq_limit":
@@ -1195,6 +1219,13 @@ class PStates(_PropsClassBase.PropsClassBase):
             return
         if pname == "max_uncore_freq":
             yield from uncfreq_obj.get_max_freq_dies(dies)
+            return
+
+        if pname == "uncore_elc_low_threshold":
+            yield from uncfreq_obj.get_elc_low_threshold_dies(dies)
+            return
+        if pname == "uncore_elc_high_threshold":
+            yield from uncfreq_obj.get_elc_high_threshold_dies(dies)
             return
 
         if mname == "sysfs":

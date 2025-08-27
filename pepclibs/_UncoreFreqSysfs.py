@@ -37,6 +37,7 @@ from pathlib import Path
 from pepclibs import _SysfsIO, CPUInfo, _UncoreFreqBase
 from pepclibs._PropsClassBaseTypes import MechanismNameType
 from pepclibs._UncoreFreqBase import FreqValueType as _FreqValueType
+from pepclibs._UncoreFreqBase import ELCThresholdType as _ELCThresholdType
 from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 from pepclibs.CPUInfo import RelNumsType, AbsNumsType
 from pepclibs.msr import UncoreRatioLimit
@@ -108,6 +109,7 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
        * Per-CPU:
            - 'get_min_freq_limit_cpus()'
            - 'get_max_freq_limit_cpus()'
+    3. TODO: Document ELC methods.
 
     Note: Methods of this class do not validate the 'cpus' and 'dies' arguments. The caller is
     responsible for ensuring that the provided package, die, and CPU numbers exist and that CPUs are
@@ -347,22 +349,7 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
                        ftype: _FreqValueType,
                        dies: RelNumsType,
                        limit: bool = False) -> Generator[tuple[int, int, int], None, None]:
-        """
-        Retrieve and yield an uncore frequency for each die in the provided packages->dies mapping.
-
-        Args:
-            ftype: The uncore frequency value type (e.g., "min" for the minimum frequency).
-            dies: Dictionary mapping package numbers to sequences of die numbers for which to yield
-                  the uncore frequency.
-            limit: If True, retrieve the frequency limit value instead of the current frequency
-                   value.
-
-        Yields:
-            Tuple (package, die, value), where 'value' is the uncore frequency in Hz.
-
-        Raises:
-            ErrorNotSupported: If the uncore frequency sysfs file does not exist.
-        """
+        """Refer to '_UncoreFreqBase._get_freq_dies()'."""
 
         what = f"{ftype} uncore frequency"
         if limit:
@@ -572,15 +559,7 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
                                  min_freq=min_freq, max_freq=max_freq)
 
     def _set_freq_dies(self, freq: int, ftype: _FreqValueType, dies: RelNumsType):
-        """
-        Set the minimum or maximum uncore frequency for each die in the specified packages->dies
-        mapping.
-
-        Args:
-            freq: The frequency value to set, in Hz.
-            ftype: The uncore frequency value type (e.g., "min" for the minimum frequency).
-            dies: The package->dies mapping defining die numbers to set the uncore frequency for.
-        """
+        """Refer to '_UncoreFreqBase._set_freq_dies()'."""
 
         if self._use_new_sysfs_api():
             self._unlock_new_sysfs_api()
@@ -773,3 +752,18 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
 
         if errmsg:
             raise ErrorNotSupported(errmsg)
+
+    def _get_elc_threshold_dies(self,
+                                thrtype: _ELCThresholdType,
+                                dies: RelNumsType) -> Generator[tuple[int, int, int], None, None]:
+        """Refer to '_UncoreFreqBase._get_elc_threshold_dies()'."""
+
+        raise Error("Not implemented")
+
+    def _set_elc_threshold_dies(self,
+                                threshold: int,
+                                thrtype: _ELCThresholdType,
+                                dies: RelNumsType):
+        """Refer to '_UncoreFreqBase._set_elc_threshold_dies()'."""
+
+        raise Error("Not implemented")
