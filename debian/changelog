@@ -1,3 +1,10 @@
+pepc (1.5.43) unstable; urgency=low
+
+  * Fixes for the newly added "tpmi" uncore frequency mechanism.
+  * Improve uncore frequency documentation sections.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Wed, 27 Aug 2025 00:00:00 +0200
+
 pepc (1.5.42) unstable; urgency=low
 
   * Fix the '--debug-modules' option, which printed every message twice.

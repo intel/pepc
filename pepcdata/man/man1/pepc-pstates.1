@@ -463,18 +463,45 @@ In case of \[aq]intel_pstate\[aq] driver, use
 Set the minimum uncore frequency.
 The default unit is \[aq]Hz\[aq], but \[aq]kHz\[aq], \[aq]MHz\[aq], and
 \[aq]GHz\[aq] can also be used (for example \[aq]900MHz\[aq]).
+The supported mechanisms are: \[aq]sysfs\[aq], \[aq]msr\[aq].
+.RS
+.PP
+In case of the \[aq]sysfs\[aq] mechanism, the sysfs path depends on what
+uncore driver is used.
 In case of the \[aq]intel_uncore_frequency_tpmi\[aq] driver, use
 \[aq]/sys/devices/system/cpu/intel_uncore_frequency/uncore<NUMBER>/min_freq_khz\[aq].
 In case of the \[aq]intel_uncore_frequency\[aq] driver, use
 \[aq]/sys/devices/system/cpu/intel_uncore_frequency/package_<NUMBER>_die_<NUMBER>/min_freq_khz\[aq].
-.RS
+.PP
+The \[aq]tpmi\[aq] mechanism uses the tpmi driver debugfs interface to
+access TPMI registers.
+The exact path depends on the target die number.
+Example of the debugfs file path is
+\[aq]/sys/kernel/debug/tpmi\-0000:00:03.1/tpmi\-id\-02/mem_dump\[aq]
 .PP
 The following special values can also be used: \f[B]min\f[R] Minimum
-uncore frequency supported (see \[aq]\-\-min\-freq\-limit\[aq]).
+uncore frequency supported (see \[aq]\-\-min\-uncore\-freq\-limit\[aq]).
+Regardless of the \[aq]\-\-mechanisms\[aq] option, the \[aq]sysfs\[aq]
+mechanism is always used to resolve \[aq]min\[aq] to the actual minimum
+frequency.
 \f[B]max\f[R] Maximum uncore frequency supported (see
-\[aq]\-\-max\-freq\-limit\[aq]).
-\f[B]mdl\f[R] Middle uncore frequency between minimum and maximum
-rounded to nearest 100MHz.
+\[aq]\-\-max\-uncore\-freq\-limit\[aq]).
+Regardless of the \[aq]\-\-mechanisms\[aq] option, the \[aq]sysfs\[aq]
+mechanism is always used to resolve \[aq]max\[aq] to the actual maximum
+frequency.
+\f[B]mdl\f[R] The middle uncore frequency value between minimum and
+maximum rounded to nearest 100MHz.
+Regardless of the \[aq]\-\-mechanisms\[aq] option, the \[aq]sysfs\[aq]
+mechanism is always used to resolve \[aq]mdl\[aq] to the actual middle
+frequency.
+.PP
+Note, the \[aq]tpmi\[aq] mechanism does not provide minimum or maximum
+uncore frequency limits (the allowed range).
+As a result, it is possible to set uncore frequency values outside the
+supported limits, such as setting the minimum frequency below the actual
+minimum limit.
+Use caution when configuring uncore frequencies with the \[aq]tpmi\[aq]
+mechanism.
 .RE
 .TP
 \f[B]\-\-max\-uncore\-freq\f[R] \f[I]MAX_UNCORE_FREQ\f[R]
