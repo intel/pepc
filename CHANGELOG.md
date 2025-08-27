@@ -5,10 +5,13 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
- - Fix 'pepc pstates info' broken since version 1.5.42.
 ### Added
 ### Removed
 ### Changed
+
+## [1.5.44] - 2025-08-27
+### Fixed
+ - Fix 'pepc pstates info' broken since version 1.5.42.
 
 ## [1.5.43] - 2025-08-27
 ### Fixed

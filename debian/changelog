@@ -1,3 +1,9 @@
+pepc (1.5.44) unstable; urgency=low
+
+  * Fix 'pepc pstates info' broken since version 1.5.42.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Wed, 27 Aug 2025 00:00:00 +0200
+
 pepc (1.5.43) unstable; urgency=low
 
   * Fixes for the newly added "tpmi" uncore frequency mechanism.
