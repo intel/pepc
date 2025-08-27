@@ -5,9 +5,11 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
+ - Fixes for the newly added "tpmi" uncore frequency mechanism.
 ### Added
 ### Removed
 ### Changed
+ - Improve uncore frequency documentation sections.
 
 ## [1.5.42] - 2025-08-26
 ### Fixed
