@@ -353,18 +353,36 @@ packages.
 
 **--min-uncore-freq** *MIN_UNCORE_FREQ*
    Set the minimum uncore frequency. The default unit is 'Hz', but 'kHz', 'MHz', and 'GHz' can also
-   be used (for example '900MHz'). In case of the 'intel_uncore_frequency_tpmi' driver, use
+   be used (for example '900MHz'). The supported mechanisms are: 'sysfs', 'msr'.
+
+   In case of the 'sysfs' mechanism, the sysfs path depends on what uncore driver is used. In case
+   of the 'intel_uncore_frequency_tpmi' driver, use
    '/sys/devices/system/cpu/intel_uncore_frequency/uncore<NUMBER>/min_freq_khz'. In case of the
    'intel_uncore_frequency' driver, use
    '/sys/devices/system/cpu/intel_uncore_frequency/package\_<NUMBER>_die\_<NUMBER>/min_freq_khz'.
 
+   The 'tpmi' mechanism uses the tpmi driver debugfs interface to access TPMI registers. The exact
+   path depends on the target die number. Example of the debugfs file path is
+   '/sys/kernel/debug/tpmi-0000:00:03.1/tpmi-id-02/mem_dump'
+
    The following special values can also be used:
    **min**
-      Minimum uncore frequency supported (see '--min-freq-limit').
+      Minimum uncore frequency supported (see '--min-uncore-freq-limit'). Regardless of the
+      '--mechanisms' option, the 'sysfs' mechanism is always used to resolve 'min' to the actual
+      minimum frequency.
    **max**
-      Maximum uncore frequency supported (see '--max-freq-limit').
+      Maximum uncore frequency supported (see '--max-uncore-freq-limit'). Regardless of the
+      '--mechanisms' option, the 'sysfs' mechanism is always used to resolve 'max' to the actual
+      maximum frequency.
    **mdl**
-      Middle uncore frequency between minimum and maximum rounded to nearest 100MHz.
+      The middle uncore frequency value between minimum and maximum rounded to nearest 100MHz.
+      Regardless of the '--mechanisms' option, the 'sysfs' mechanism is always used to resolve 'mdl'
+      to the actual middle frequency.
+
+   Note, the 'tpmi' mechanism does not provide minimum or maximum uncore frequency limits (the
+   allowed range). As a result, it is possible to set uncore frequency values outside the supported
+   limits, such as setting the minimum frequency below the actual minimum limit. Use caution when
+   configuring uncore frequencies with the 'tpmi' mechanism.
 
 **--max-uncore-freq** *MAX_UNCORE_FREQ*
    Set the maximum uncore frequency. Similar to '--min-uncore-freq', but applies to the maximum
