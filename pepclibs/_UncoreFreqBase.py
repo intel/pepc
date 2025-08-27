@@ -577,3 +577,20 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
         """
 
         self._set_elc_threshold_cpus(threshold, "low", cpus)
+
+    def set_elc_high_threshold_cpus(self, threshold: int, cpus: AbsNumsType):
+        """
+        Set ELC high threshold for the dies corresponding to the specified CPUs.
+
+        Args:
+            threshold: The ELC high threshold value to set.
+            cpus: A collection of integer CPU numbers to set the ELC high threshold for.
+
+        Raises:
+            ErrorNotSupported: If the ELC high threshold operation is not supported.
+            ErrorOutOfRange: If the ELC high threshold value is outside the alhighed range.
+            ErrorBadOrder: If min. ELC high threshold is greater than ELC high threshold and vice
+                           versa.
+        """
+
+        self._set_elc_threshold_cpus(threshold, "high", cpus)

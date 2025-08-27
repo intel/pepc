@@ -22,7 +22,7 @@ from pepclibs.helperlibs.Exceptions import Error, ErrorBadOrder, ErrorNotSupport
 
 _UncoreFreqObjType = Union[_UncoreFreqSysfs.UncoreFreqSysfs, _UncoreFreqTpmi.UncoreFreqTpmi]
 
-class TestParamsTypedDict(CommonTestParamsTypedDict, total=False):
+class _TestParamsTypedDict(CommonTestParamsTypedDict, total=False):
     """
     The test parameters dictionary.
 
@@ -53,12 +53,12 @@ def get_params(hostspec: str) -> Generator[CommonTestParamsTypedDict, None, None
 
     with common.get_pman(hostspec) as pman, CPUInfo.CPUInfo(pman=pman) as cpuinfo:
         params = common.build_params(pman)
-        params = cast(TestParamsTypedDict, params)
+        params = cast(_TestParamsTypedDict, params)
 
         params["cpuinfo"] = cpuinfo
         yield params
 
-def _iter_uncore_freq_objects(params: TestParamsTypedDict) -> Generator[_UncoreFreqObjType,
+def _iter_uncore_freq_objects(params: _TestParamsTypedDict) -> Generator[_UncoreFreqObjType,
                                                                         None, None]:
     """
     Yield uncore frequency objects to test.
@@ -88,7 +88,7 @@ def _iter_uncore_freq_objects(params: TestParamsTypedDict) -> Generator[_UncoreF
     except ErrorNotSupported:
         return
 
-def _test_freq_get_set_die_good(uncfreq_obj: _UncoreFreqObjType, all_dies: RelNumsType):
+def _test_freq_methods_dies_good(uncfreq_obj: _UncoreFreqObjType, all_dies: RelNumsType):
     """
     Test the per-die min/max uncore frequency get/set methods of an uncore frequency object. Use
     good input.
@@ -134,7 +134,7 @@ def _test_freq_get_set_die_good(uncfreq_obj: _UncoreFreqObjType, all_dies: RelNu
         _, _, read_freq = next(uncfreq_obj.get_max_freq_dies({package: [die]}))
         assert read_freq == max_freq, f"Expected {max_freq}, but got {read_freq}\n{errmsg_suffix}"
 
-def _test_freq_get_set_die_bad(uncfreq_obj: _UncoreFreqObjType, all_dies: RelNumsType):
+def _test_freq_methods_dies_bad(uncfreq_obj: _UncoreFreqObjType, all_dies: RelNumsType):
     """
     Test the per-die min/max uncore frequency get/set methods of an uncore frequency object. Use bad
     input.
@@ -229,7 +229,7 @@ def _test_freq_get_set_die_bad(uncfreq_obj: _UncoreFreqObjType, all_dies: RelNum
         _, _, read_freq = next(uncfreq_obj.get_max_freq_dies({package: [die]}))
         assert read_freq == max_freq, f"Expected {max_freq}, but got {read_freq}\n{errmsg_suffix}"
 
-def test_min_max_get_set_methods(params: TestParamsTypedDict):
+def test_freq_methods_dies(params: _TestParamsTypedDict):
     """
     Test the per-die min/max uncore frequency get/set methods for uncore frequency objects of
     different mechanisms and configurations. The tested methods are:
@@ -245,10 +245,10 @@ def test_min_max_get_set_methods(params: TestParamsTypedDict):
     all_dies = params["cpuinfo"].get_dies()
 
     for uncfreq_obj in _iter_uncore_freq_objects(params):
-        _test_freq_get_set_die_good(uncfreq_obj, all_dies)
-        _test_freq_get_set_die_bad(uncfreq_obj, all_dies)
+        _test_freq_methods_dies_good(uncfreq_obj, all_dies)
+        _test_freq_methods_dies_bad(uncfreq_obj, all_dies)
 
-def _test_freq_get_set_cpu_good(uncfreq_obj: _UncoreFreqObjType, cpu: int):
+def _test_freq_methods_cpu_good(uncfreq_obj: _UncoreFreqObjType, cpu: int):
     """
     Test the per-CPU min/max uncore frequency get/set methods of an uncore frequency object. Use
     good input.
@@ -291,7 +291,7 @@ def _test_freq_get_set_cpu_good(uncfreq_obj: _UncoreFreqObjType, cpu: int):
     _, read_freq = next(uncfreq_obj.get_max_freq_cpus((cpu,)))
     assert read_freq == max_freq, f"Expected {max_freq}, but got {read_freq}\n{errmsg_suffix}"
 
-def test_min_max_get_set_cpu_methods(params: TestParamsTypedDict):
+def test_freq_methods_cpus(params: _TestParamsTypedDict):
     """
     Test the per-CPU min/max uncore frequency get/set methods for uncore frequency objects of
     different mechanisms and configurations. The tested methods are:
@@ -307,4 +307,173 @@ def test_min_max_get_set_cpu_methods(params: TestParamsTypedDict):
     cpu = params["cpuinfo"].get_cpus()[-1]
 
     for uncfreq_obj in _iter_uncore_freq_objects(params):
-        _test_freq_get_set_cpu_good(uncfreq_obj, cpu)
+        _test_freq_methods_cpu_good(uncfreq_obj, cpu)
+
+def _test_elc_threshold_methods_dies(uncfreq_obj: _UncoreFreqObjType, all_dies: RelNumsType):
+    """
+    Test the per-die ELC threshold get/set methods of an uncore frequency object.
+
+    Args:
+        uncfreq_obj: The uncore frequency object to test.
+        all_dies: The dictionary mapping all available packages to their dies.
+    """
+
+    errmsg_suffix = f"Mechanism: {uncfreq_obj.mname}, cache enabled: {uncfreq_obj.cache_enabled}"
+
+    lo_thresh_iter = uncfreq_obj.get_elc_low_threshold_dies(all_dies)
+    hi_thresh_iter = uncfreq_obj.get_elc_high_threshold_dies(all_dies)
+
+    # Save current threshold values.
+    saved_thresh: dict[int, dict[int, tuple[int, int]]] = {}
+    for (package, die, lo_thresh), (_, _, hi_thresh) in zip(lo_thresh_iter, hi_thresh_iter):
+        if package not in saved_thresh:
+            saved_thresh[package] = {}
+        saved_thresh[package][die] = (lo_thresh, hi_thresh)
+
+    # Set low/high thresholds to new values, using unique values for each die.
+    for package, dies in all_dies.items():
+        for die in dies:
+            uncfreq_obj.set_elc_low_threshold_dies(25 + package + die, {package: [die]})
+            uncfreq_obj.set_elc_high_threshold_dies(25 + package + die + 1, {package: [die]})
+
+    # Verify the values.
+    lo_thresh_iter = uncfreq_obj.get_elc_low_threshold_dies(all_dies)
+    hi_thresh_iter = uncfreq_obj.get_elc_high_threshold_dies(all_dies)
+    for (package, die, lo_thresh), (_, _, hi_thresh) in zip(lo_thresh_iter, hi_thresh_iter):
+        expected_lo_thresh = 25 + package + die
+        expected_hi_thresh = 25 + package + die + 1
+        assert lo_thresh == expected_lo_thresh, \
+               f"Expected ELC low threshold {expected_lo_thresh}%, but got {lo_thresh}%\n" \
+               f"{errmsg_suffix}"
+        assert hi_thresh == expected_hi_thresh, \
+               f"Expected ELC high threshold {expected_hi_thresh}%, but got {hi_thresh}%\n" \
+               f"{errmsg_suffix}"
+
+    # Test setting and getting various threshold values.
+    for package, dies in all_dies.items():
+        for die in dies:
+            for lo_thresh, hi_thresh in ((0, 0), (0, 1), (1, 1), (99, 100), (100, 100)):
+                uncfreq_obj.set_elc_low_threshold_dies(0, {package: [die]})
+                uncfreq_obj.set_elc_high_threshold_dies(hi_thresh, {package: [die]})
+                uncfreq_obj.set_elc_low_threshold_dies(lo_thresh, {package: [die]})
+
+                read_pkg, read_die, read_lo_thresh = \
+                                    next(uncfreq_obj.get_elc_low_threshold_dies({package: [die]}))
+                assert read_pkg == package and read_die == die and read_lo_thresh == lo_thresh, \
+                    f"Expected ({package}, {die}, {lo_thresh}), " \
+                    f"but got ({read_pkg}, {read_die}, {read_lo_thresh})\n{errmsg_suffix}"
+
+                read_pkg, read_die, read_hi_thresh = \
+                    next(uncfreq_obj.get_elc_high_threshold_dies({package: [die]}))
+                assert read_pkg == package and read_die == die and read_hi_thresh == hi_thresh, \
+                    f"Expected ({package}, {die}, {hi_thresh}), " \
+                    f"but got ({read_pkg}, {read_die}, {read_hi_thresh})\n{errmsg_suffix}"
+
+    # Pick the first die.
+    package = die = 0
+    for package, dies in all_dies.items():
+        for die in dies:
+            break
+
+    # Test values that are out of range.
+    for lo_thresh in -1, 101:
+        try:
+            uncfreq_obj.set_elc_low_threshold_dies(lo_thresh, {package: [die]})
+        except ErrorOutOfRange:
+            pass
+        else:
+            raise Error(f"Tried to ELC lo threshold to {lo_thresh}, expected "
+                        f"'ErrorOutOfRange', but no exception was raised\n{errmsg_suffix}")
+
+    # Test setting low/high thresholds to values that violate the ordering requirement.
+    uncfreq_obj.set_elc_low_threshold_dies(0, {package: [die]})
+    uncfreq_obj.set_elc_high_threshold_dies(50, {package: [die]})
+
+    try:
+        uncfreq_obj.set_elc_low_threshold_dies(51, {package: [die]})
+    except ErrorBadOrder:
+        pass
+    else:
+        raise Error(f"Expected 'ErrorBadOrder', but no exception was raised\n{errmsg_suffix}")
+
+    uncfreq_obj.set_elc_low_threshold_dies(50, {package: [die]})
+
+    try:
+        uncfreq_obj.set_elc_high_threshold_dies(49, {package: [die]})
+    except ErrorBadOrder:
+        pass
+    else:
+        raise Error(f"Expected 'ErrorBadOrder', but no exception was raised\n{errmsg_suffix}")
+
+    # Restore saved thresholds.
+    for package, info in saved_thresh.items():
+        for die, (lo_thresh, hi_thresh) in info.items():
+            uncfreq_obj.set_elc_low_threshold_dies(0, {package: [die]})
+            uncfreq_obj.set_elc_high_threshold_dies(hi_thresh, {package: [die]})
+            uncfreq_obj.set_elc_low_threshold_dies(lo_thresh, {package: [die]})
+
+def test_elc_threshold_methods_dies(params: _TestParamsTypedDict):
+    """
+    Test the per-die ELC threshold get/set methods for uncore frequency objects of different
+    mechanisms and configurations. The tested methods are:
+      - 'get_elc_low_threshold_dies()'
+      - 'get_elc_high_threshold_dies()'
+      - 'set_elc_low_threshold_dies()'
+      - 'set_elc_high_threshold_dies()'
+
+    Args:
+        params: The test parameters.
+    """
+
+    all_dies = params["cpuinfo"].get_dies()
+
+    for uncfreq_obj in _iter_uncore_freq_objects(params):
+        _test_elc_threshold_methods_dies(uncfreq_obj, all_dies)
+
+def _test_elc_threshold_methods_cpu(uncfreq_obj: _UncoreFreqObjType, cpu: int):
+    """
+    Test the per-CPU ELC threshold get/set methods of an uncore frequency object.
+
+    Args:
+        uncfreq_obj: The uncore frequency object to test.
+        cpu: The CPU to test.
+    """
+
+    errmsg_suffix = f"Mechanism: {uncfreq_obj.mname}, cache enabled: {uncfreq_obj.cache_enabled}"
+
+    # Save thresholds.
+    _, saved_lo_thresh = next(uncfreq_obj.get_elc_low_threshold_cpus((cpu,)))
+    _, saved_hi_thresh = next(uncfreq_obj.get_elc_high_threshold_cpus((cpu,)))
+
+    uncfreq_obj.set_elc_low_threshold_cpus(0, (cpu,))
+    uncfreq_obj.set_elc_high_threshold_cpus(50, (cpu,))
+    uncfreq_obj.set_elc_low_threshold_cpus(20, (cpu,))
+
+    _, lo_thresh = next(uncfreq_obj.get_elc_low_threshold_cpus((cpu,)))
+    assert lo_thresh == 20, f"Expected ELC low threshold 20%, but got {lo_thresh}%\n{errmsg_suffix}"
+
+    _, hi_thresh = next(uncfreq_obj.get_elc_high_threshold_cpus((cpu,)))
+    assert hi_thresh == 50, f"Expected ELC high threshold 50%, but got {hi_thresh}%\n{errmsg_suffix}"
+
+    # Restore saved thresholds.
+    uncfreq_obj.set_elc_low_threshold_cpus(0, (cpu,))
+    uncfreq_obj.set_elc_high_threshold_cpus(saved_hi_thresh, (cpu,))
+    uncfreq_obj.set_elc_low_threshold_cpus(saved_lo_thresh, (cpu,))
+
+def test_elc_threshold_methods_cpus(params: _TestParamsTypedDict):
+    """
+    Test the per-CPU ELC threshold get/set methods for uncore frequency objects of different
+    mechanisms and configurations. The tested methods are:
+      - 'get_elc_low_threshold_cpus()'
+      - 'get_elc_high_threshold_cpus()'
+      - 'set_elc_low_threshold_cpus()'
+      - 'set_elc_high_threshold_cpus()'
+
+    Args:
+        params: The test parameters.
+    """
+
+    cpu = params["cpuinfo"].get_cpus()[-1]
+
+    for uncfreq_obj in _iter_uncore_freq_objects(params):
+        _test_elc_threshold_methods_cpu(uncfreq_obj, cpu)
