@@ -331,34 +331,36 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
 
             return step
 
-        def _format_unit(val: int | float, unit: str | None) -> str:
+        def _format_unit(val: int | float, prop: PropertyTypedDict) -> str:
             """
             Format a numeric value with its unit, applying SI prefixes when appropriate.
 
             Args:
                 val: Numeric value to format.
-                unit: Unit of measurement, e.g., "Hz", "W", "s". If None, no unit is applied.
+                prop: The property description dictionary for the property whose value is being
+                      formatted.
+
 
             Returns:
                 Formatted string representing the value with its unit.
             """
 
+            unit = prop.get("unit")
+
             if unit:
-                if unit == "s" and val > 100:
+                if unit == "%" or (unit == "s" and val > 100):
                     # Avoid kiloseconds and the like.
-                    if Trivial.is_int(val):
-                        return f"{int(val)}s"
-                    return f"{val:.2f}s"
+                    if prop["type"] == "int":
+                        return f"{int(val)}{unit}"
+                    return f"{val:.2f}{unit}"
                 return Human.num2si(val, unit=unit, decp=2)
             return str(val)
-
-        unit = prop.get("unit")
 
         if prop["type"] in ("str", "bool"):
             return str(val)
 
         if prop["type"] in ("int", "float"):
-            return _format_unit(val, unit) # type: ignore[arg-type]
+            return _format_unit(val, prop) # type: ignore[arg-type]
 
         result = ""
 
@@ -370,7 +372,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
             has_tar = False
 
             if len(cval) == 1:
-                result = _format_unit(cval[0], unit)
+                result = _format_unit(cval[0], prop)
             elif not step and len(cval) > 1:
                 # The frequency numbers are expected to be sorted in the ascending order. The last
                 # frequency number is often the Turbo Activation Ration (TAR) - a value just
@@ -378,21 +380,21 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
                 # and use concise notation for it too.
                 step = _detect_progression(cval[:-1], 3)
                 if not step:
-                    result = ", ".join([_format_unit(v, unit) for v in cval])
+                    result = ", ".join([_format_unit(v, prop) for v in cval])
                 else:
                     has_tar = True
 
             if step:
                 # This is an arithmetic progression, use concise notation.
-                first = _format_unit(cval[0], unit)
+                first = _format_unit(cval[0], prop)
                 if has_tar:
-                    last = _format_unit(cval[-2], unit)
-                    tar = _format_unit(cval[-1], unit)
+                    last = _format_unit(cval[-2], prop)
+                    tar = _format_unit(cval[-1], prop)
                 else:
-                    last = _format_unit(cval[-1], unit)
+                    last = _format_unit(cval[-1], prop)
                     tar = None
 
-                step_str = _format_unit(step, unit)
+                step_str = _format_unit(step, prop)
                 result = f"{first} - {last} with step {step_str}"
                 if has_tar:
                     result += f", {tar}"

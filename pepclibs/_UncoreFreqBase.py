@@ -17,13 +17,18 @@ from pepclibs import CPUInfo
 from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 from pepclibs.CPUInfo import AbsNumsType, RelNumsType
 from pepclibs.helperlibs import LocalProcessManager, ClassHelpers, Human
-from pepclibs.helperlibs.Exceptions import ErrorNotSupported, ErrorOutOfRange, ErrorBadOrder
+from pepclibs.helperlibs.Exceptions import ErrorNotSupported, ErrorOutOfRange, ErrorBadOrder, Error
 
 # An uncore frequency type. Possible values:
-#   - "min": a minimum uncore frequency
-#   - "max": a maximum uncore frequency
-#   - "current": a current uncore frequency
+#   - "min": Minimum uncore frequency
+#   - "max": Maximum uncore frequency
+#   - "current": Current uncore frequency
 FreqValueType = Literal["min", "max", "current"]
+
+# The ELC threshold type.
+#   - "low": Low ELC threshold
+#   - "high": High ELC threshold
+ELCThresholdType = Literal["low", "high"]
 
 class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
     """
@@ -83,7 +88,7 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
             Tuple (package, die, value), where 'value' is the uncore frequency in Hz.
 
         Raises:
-            ErrorNotSupported: If the uncore frequency sysfs file does not exist.
+            ErrorNotSupported: If the uncore frequency operation is not supported.
         """
 
         raise NotImplementedError("BUG: The sub-class must implement this method")
@@ -104,10 +109,6 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
             tuple: A tuple (cpu, frequency) for each CPU, where frequency is in Hz.
         """
 
-        what = f"{ftype} uncore frequency"
-        if limit:
-            what += " limit"
-
         freq_cache: dict[int, dict[int, int]] = {}
 
         for cpu in cpus:
@@ -122,10 +123,9 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
             else:
                 freq_cache[package] = {}
 
-            _, _, freq = next(self._get_freq_dies(ftype, {package: [die]}))
+            _, _, freq = next(self._get_freq_dies(ftype, {package: [die]}, limit=limit))
             freq_cache[package][die] = freq
             yield cpu, freq
-
 
     def get_min_freq_cpus(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
@@ -139,7 +139,7 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
             corresponding to 'cpu', in Hz.
 
         Raises:
-            ErrorNotSupported: If the uncore frequency sysfs file does not exist.
+            ErrorNotSupported: If the uncore frequency operation is not supported.
         """
 
         yield from self._get_freq_cpus("min", cpus)
@@ -156,7 +156,7 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
             corresponding to 'cpu', in Hz.
 
         Raises:
-            ErrorNotSupported: If the uncore frequency sysfs file does not exist.
+            ErrorNotSupported: If the uncore frequency operation is not supported.
         """
 
         yield from self._get_freq_cpus("max", cpus)
@@ -173,7 +173,7 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
             corresponding to 'cpu', in Hz.
 
         Raises:
-            ErrorNotSupported: If the uncore frequency sysfs file does not exist.
+            ErrorNotSupported: If the uncore frequency operation is not supported.
         """
 
         yield from self._get_freq_cpus("current", cpus)
@@ -281,7 +281,7 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
             cpus: A collection of integer CPU numbers to set the uncore frequency for.
 
         Raises:
-            ErrorNotSupported: If the uncore frequency sysfs file does not exist.
+            ErrorNotSupported: If the uncore frequency operation is not supported.
             ErrorOutOfRange: If the uncore frequency value is outside the allowed range.
             ErrorBadOrder: If min. uncore frequency is greater than max. uncore frequency and vice
                            versa.
@@ -298,10 +298,282 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
             cpus: A collection of integer CPU numbers to set the uncore frequency for.
 
         Raises:
-            ErrorNotSupported: If the uncore frequency sysfs file does not exist.
+            ErrorNotSupported: If the uncore frequency operation is not supported.
             ErrorOutOfRange: If the uncore frequency value is outside the allowed range.
             ErrorBadOrder: If min. uncore frequency is greater than max. uncore frequency and vice
                            versa.
         """
 
         self._set_freq_cpus(freq, "max", cpus)
+
+    def _get_elc_threshold_dies(self,
+                           thrtype: ELCThresholdType,
+                           dies: RelNumsType) -> Generator[tuple[int, int, int], None, None]:
+        """
+        Retrieve and yield ELC threshold for each die in the provided packages->dies mapping.
+
+        Args:
+            thrtype: The type of ELC threshold ("low" or "high").
+            dies: Dictionary mapping package numbers to sequences of die numbers for which to yield
+                  the ELC threshold.
+
+        Yields:
+            Tuple (package, die, value), where 'value' is the ELC threshold value.
+
+        Raises:
+            ErrorNotSupported: If the ELC threshold operation is not supported.
+        """
+
+        raise NotImplementedError("BUG: The sub-class must implement this method")
+
+    def get_elc_low_threshold_dies(self, dies: RelNumsType) -> Generator[tuple[int, int, int],
+                                                                               None, None]:
+        """
+        Retrieve and yield the ELC low threshold for each die in the provided packages->dies
+        mapping.
+
+        The ELC low threshold defines the aggregate CPU utilization percentage. When utilization
+        falls below this threshold, the platform sets the uncore frequency floor to the low ELC
+        frequency (subject to the global minimum uncore frequency limit - if the limit is higher
+        than the low ELC frequency, the limit is used as the floor instead).
+
+        Args:
+            dies: Dictionary mapping package numbers to sequences of die numbers for which to yield
+                  the ELC low threshold.
+
+        Yields:
+            Tuples of (package, die, threshold), where 'threshold' is the ELC low threshold value
+            for the specified die in the specified package.
+
+        Raises:
+            ErrorNotSupported: If the ELC low threshold operation is not supported.
+        """
+
+        yield from self._get_elc_threshold_dies("low", dies)
+
+    def get_elc_high_threshold_dies(self, dies: RelNumsType) -> Generator[tuple[int, int, int],
+                                                                                None, None]:
+        """
+        Retrieve and yield the ELC high threshold for each die in the provided packages->dies
+        mapping.
+
+        The ELC high threshold defines the aggregate CPU utilization percentage at which the
+        platform begins increasing the uncore frequency more enthusiastically than before. When
+        utilization exceeds this threshold, the platform gradually raises the uncore frequency until
+        utilization drops below the threshold or the frequency reaches its maximum limit. Further
+        increases may be prevented by other constraints, such as thermal or power limits.
+
+        Args:
+            dies: Dictionary mapping package numbers to sequences of die numbers for which to yield
+                  the ELC high threshold.
+
+        Yields:
+            Tuples of (package, die, threshold), where 'threshold' is the ELC high threshold value
+            for the specified die in the specified package.
+
+        Raises:
+            ErrorNotSupported: If the ELC high threshold operation is not supported.
+        """
+
+        yield from self._get_elc_threshold_dies("high", dies)
+
+    def _validate_elc_threshold(self,
+                                threshold: int,
+                                thrtype: ELCThresholdType,
+                                package: int,
+                                die: int):
+        """
+        Validate that an ELC threshold value is within the acceptable range.
+
+        Args:
+            threshold: The ELC threshold value to validate.
+            thrtype: The type of ELC threshold ("low" or "high").
+            package: Package number to validate the threshold for.
+            die: Die number to validate the threshold for.
+
+        Raises:
+            ErrorOutOfRange: If the ELC threshold value is outside the allowed range.
+            ErrorBadOrder: If min. ELC threshold is greater than max. ELC threshold and vice
+                           versa.
+        """
+
+        if threshold < 0 or threshold > 100:
+            raise ErrorOutOfRange(f"Bad {thrtype} ELC threshold value '{threshold}', must be "
+                                  f"between 0 and 100")
+
+        if thrtype == "low":
+            _, _, high_threshold = next(self._get_elc_threshold_dies("high", {package: [die]}))
+            if threshold > high_threshold:
+                raise ErrorBadOrder(f"Cannot set the ELC low threshold to {threshold}%: it is "
+                                    f"higher than the currently configured high threshold of "
+                                    f"{high_threshold}%")
+        elif thrtype == "high":
+            _, _, low_threshold = next(self._get_elc_threshold_dies("low", {package: [die]}))
+            if threshold < low_threshold:
+                raise ErrorBadOrder(f"Cannot set the ELC high threshold to {threshold}%: it is "
+                                    f"lower than the currently configured low threshold of "
+                                    f"{low_threshold}%")
+        else:
+            raise Error(f"BUG: bad ELC threshold type '{thrtype}'")
+
+    def _set_elc_threshold_dies(self,
+                                threshold: int,
+                                thrtype: ELCThresholdType,
+                                dies: RelNumsType):
+        """
+        Set the ELC threshold for each die in the provided packages->dies mapping.
+
+        Args:
+            threshold: The ELC low threshold value to set, representing aggregate CPU utilization
+                       as a percentage.
+            thrtype: The type of ELC threshold ("low" or "high").
+            dies: Dictionary mapping package numbers to die numbers.
+        """
+
+        raise NotImplementedError("BUG: The sub-class must implement this method")
+
+    def set_elc_low_threshold_dies(self, threshold: int, dies: RelNumsType):
+        """
+        Set the ELC low threshold for each die in the specified packages->dies mapping.
+
+        Args:
+            threshold: The ELC low threshold value to set, representing aggregate CPU utilization
+                       as a percentage.
+            dies: Dictionary mapping package numbers to sequences of die numbers.
+
+        Raises:
+            ErrorNotSupported: If setting the ELC low threshold is not supported.
+        """
+
+        self._set_elc_threshold_dies(threshold, "low", dies)
+
+    def set_elc_high_threshold_dies(self, threshold: int, dies: RelNumsType):
+        """
+        Set the ELC high threshold for each die in the specified packages->dies mapping.
+
+        Args:
+            threshold: The ELC high threshold value to set, representing aggregate CPU utilization
+                       as a percentage.
+            dies: Dictionary mapping package numbers to sequences of die numbers.
+
+        Raises:
+            ErrorNotSupported: If setting the ELC high threshold is not supported.
+        """
+
+        self._set_elc_threshold_dies(threshold, "high", dies)
+
+    def _get_elc_threshold_cpus(self,
+                                thrtype: ELCThresholdType,
+                                cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
+        """
+        Yield an ELC threshold value for each CPU in the provided collection of CPU numbers.
+
+        Args:
+            thrtype: The type of ELC threshold ("low" or "high").
+            cpus: A collection of integer CPU numbers to read the ELC threshold for.
+
+        Yields:
+            tuple: A tuple (cpu, threshold) for each CPU in 'cpus'.
+        """
+
+        thrashold_cache: dict[int, dict[int, int]] = {}
+
+        for cpu in cpus:
+            tline = self._cpuinfo.get_tline_by_cpu(cpu, snames=("package", "die"))
+            package = tline["package"]
+            die = tline["die"]
+
+            if package in thrashold_cache:
+                if die in thrashold_cache[package]:
+                    yield cpu, thrashold_cache[package][die]
+                    continue
+            else:
+                thrashold_cache[package] = {}
+
+            _, _, threshold = next(self._get_elc_threshold_dies(thrtype, {package: [die]}))
+            thrashold_cache[package][die] = threshold
+            yield cpu, threshold
+
+    def get_elc_low_threshold_cpus(self, cpus: AbsNumsType) -> Generator[tuple[int, int],
+                                                                         None, None]:
+        """
+        Retrieve and yield the ELC low threshold for each CPU in 'cpus'.
+
+        Args:
+            cpus: A collection of integer CPU numbers to retrieve the ELC low threshold for.
+
+        Yields:
+            Tuple (cpu, value), where 'value' is the ELC low threshold for the die corresponding to
+            'cpu'.
+
+        Raises:
+            ErrorNotSupported: If the ELC low threshold operation is not supported.
+        """
+
+        yield from self._get_elc_threshold_cpus("low", cpus)
+
+    def get_elc_high_threshold_cpus(self, cpus: AbsNumsType) -> Generator[tuple[int, int],
+                                                                         None, None]:
+        """
+        Retrieve and yield the ELC high threshold for each CPU in 'cpus'.
+
+        Args:
+            cpus: A collection of integer CPU numbers to retrieve the ELC high threshold for.
+
+        Yields:
+            Tuple (cpu, value), where 'value' is the ELC high threshold for the die corresponding to
+            'cpu'.
+
+        Raises:
+            ErrorNotSupported: If the ELC high threshold operation is not supported.
+        """
+
+        yield from self._get_elc_threshold_cpus("high", cpus)
+
+    def _set_elc_threshold_cpus(self,
+                                threshold: int,
+                                thrtype: ELCThresholdType,
+                                cpus: AbsNumsType):
+        """
+        Set the ELC threshold for each die corresponding to the specified CPUs.
+
+        Args:
+            threshold: The ELC threshold value to set, representing aggregate CPU utilization
+                       as a percentage.
+            thrtype: The type of ELC threshold ("low" or "high").
+            cpus: A collection of integer CPU numbers to set the ELC threshold for.
+        """
+
+        set_dies_cache: dict[int, set[int]] = {}
+
+        for cpu in cpus:
+            tline = self._cpuinfo.get_tline_by_cpu(cpu, snames=("package", "die"))
+            package = tline["package"]
+            die = tline["die"]
+
+            if package in set_dies_cache:
+                if die in set_dies_cache[package]:
+                    continue
+            else:
+                set_dies_cache[package] = set()
+
+            set_dies_cache[package].add(die)
+
+            self._set_elc_threshold_dies(threshold, thrtype, {package: [die]})
+
+    def set_elc_low_threshold_cpus(self, threshold: int, cpus: AbsNumsType):
+        """
+        Set ELC low threshold for the dies corresponding to the specified CPUs.
+
+        Args:
+            threshold: The ELC low threshold value to set.
+            cpus: A collection of integer CPU numbers to set the ELC low threshold for.
+
+        Raises:
+            ErrorNotSupported: If the ELC low threshold operation is not supported.
+            ErrorOutOfRange: If the ELC low threshold value is outside the allowed range.
+            ErrorBadOrder: If min. ELC low threshold is greater than ELC high threshold and vice
+                           versa.
+        """
+
+        self._set_elc_threshold_cpus(threshold, "low", cpus)

@@ -32,11 +32,13 @@ platforms the uncore domain IDs correspond to die IDs, and this project refers t
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import re
+import math
 from typing import Generator
 from pathlib import Path
 from pepclibs import _SysfsIO, CPUInfo, _UncoreFreqBase
 from pepclibs._PropsClassBaseTypes import MechanismNameType
 from pepclibs._UncoreFreqBase import FreqValueType as _FreqValueType
+from pepclibs._UncoreFreqBase import ELCThresholdType as _ELCThresholdType
 from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 from pepclibs.CPUInfo import RelNumsType, AbsNumsType
 from pepclibs.msr import UncoreRatioLimit
@@ -88,26 +90,37 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
 
     Overview of public methods:
 
-    1. Get or set uncore frequency via Linux sysfs interfaces:
-       * Per-die (uncore frequency domain):
-           - 'get_min_freq_dies()'
-           - 'get_max_freq_dies()'
-           - 'set_min_freq_dies()'
-           - 'set_max_freq_dies()'
-           - 'get_cur_freq_dies()'
-       * Per-CPU:
-           - 'get_min_freq_cpus()'
-           - 'get_max_freq_cpus()'
-           - 'set_min_freq_cpus()'
-           - 'set_max_freq_cpus()'
-           - 'get_cur_freq_cpus()'
+    1. Get or set uncore frequency via Linux sysfs interface:
+        * Per-die:
+            - get_min_freq_dies()
+            - get_max_freq_dies()
+            - set_min_freq_dies()
+            - set_max_freq_dies()
+            - get_cur_freq_dies()
+        * Per-CPU:
+            - get_min_freq_cpus()
+            - get_max_freq_cpus()
+            - set_min_freq_cpus()
+            - set_max_freq_cpus()
+            - get_cur_freq_cpus()
     2. Retrieve uncore frequency limits via Linux sysfs interfaces:
-       * Per-die:
-           - 'get_min_freq_limit_dies()'
-           - 'get_max_freq_limit_dies()'
-       * Per-CPU:
-           - 'get_min_freq_limit_cpus()'
-           - 'get_max_freq_limit_cpus()'
+        * Per-die:
+            - 'get_min_freq_limit_dies()'
+            - 'get_max_freq_limit_dies()'
+        * Per-CPU:
+            - 'get_min_freq_limit_cpus()'
+            - 'get_max_freq_limit_cpus()'
+    3. Get or set ELC thresholds.
+        * Per-die:
+            - get_elc_low_threshold_dies()
+            - get_elc_high_threshold_dies()
+            - set_elc_low_threshold_dies()
+            - set_elc_high_threshold_dies()
+        * Per-CPU:
+            - get_elc_low_threshold_cpus()
+            - get_elc_high_threshold_cpus()
+            - set_elc_low_threshold_cpus()
+            - set_elc_high_threshold_cpus()
 
     Note: Methods of this class do not validate the 'cpus' and 'dies' arguments. The caller is
     responsible for ensuring that the provided package, die, and CPU numbers exist and that CPUs are
@@ -258,11 +271,11 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
             self._build_dies_info()
         return self._dirmap
 
-    def _construct_new_sysfs_path(self,
-                                  ftype: _FreqValueType,
-                                  package: int,
-                                  die: int,
-                                  limit: bool = False) -> Path:
+    def _construct_new_freq_path(self,
+                                 ftype: _FreqValueType,
+                                 package: int,
+                                 die: int,
+                                 limit: bool = False) -> Path:
         """
         Construct and return the new sysfs API file path for uncore frequency read or write
         operations.
@@ -281,11 +294,11 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
         fname = prefix + ftype + "_freq_khz"
         return self._sysfs_base / self._get_dirmap()[package][die] / fname
 
-    def _construct_legacy_sysfs_path(self,
-                                     ftype: _FreqValueType,
-                                     package: int,
-                                     die: int,
-                                     limit: bool = False) -> Path:
+    def _construct_legacy_freq_path(self,
+                                    ftype: _FreqValueType,
+                                    package: int,
+                                    die: int,
+                                    limit: bool = False) -> Path:
         """
         Construct and return the legacy sysfs API file path for uncore frequency read or write
         operations.
@@ -304,11 +317,11 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
         fname = prefix + ftype + "_freq_khz"
         return self._sysfs_base / f"package_{package:02d}_die_{die:02d}" / fname
 
-    def _construct_sysfs_path_die(self,
-                                  ftype: _FreqValueType,
-                                  package: int,
-                                  die: int,
-                                  limit: bool = False) -> Path:
+    def _construct_freq_path_die(self,
+                                 ftype: _FreqValueType,
+                                 package: int,
+                                 die: int,
+                                 limit: bool = False) -> Path:
         """
         Retrieve the sysfs file path for an uncore frequency read or write operation.
 
@@ -336,9 +349,9 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
             return cached_path
 
         if self._use_new_sysfs_api():
-            path = self._construct_new_sysfs_path(ftype, package, die, limit=limit)
+            path = self._construct_new_freq_path(ftype, package, die, limit=limit)
         else:
-            path = self._construct_legacy_sysfs_path(ftype, package, die, limit=limit)
+            path = self._construct_legacy_freq_path(ftype, package, die, limit=limit)
 
         self._path_cache[ftype][package][die][limit] = path
         return path
@@ -347,22 +360,7 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
                        ftype: _FreqValueType,
                        dies: RelNumsType,
                        limit: bool = False) -> Generator[tuple[int, int, int], None, None]:
-        """
-        Retrieve and yield an uncore frequency for each die in the provided packages->dies mapping.
-
-        Args:
-            ftype: The uncore frequency value type (e.g., "min" for the minimum frequency).
-            dies: Dictionary mapping package numbers to sequences of die numbers for which to yield
-                  the uncore frequency.
-            limit: If True, retrieve the frequency limit value instead of the current frequency
-                   value.
-
-        Yields:
-            Tuple (package, die, value), where 'value' is the uncore frequency in Hz.
-
-        Raises:
-            ErrorNotSupported: If the uncore frequency sysfs file does not exist.
-        """
+        """Refer to '_UncoreFreqBase._get_freq_dies()'."""
 
         what = f"{ftype} uncore frequency"
         if limit:
@@ -370,7 +368,7 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
 
         for package, pkg_dies in dies.items():
             for die in pkg_dies:
-                path = self._construct_sysfs_path_die(ftype, package, die, limit=limit)
+                path = self._construct_freq_path_die(ftype, package, die, limit=limit)
                 freq = self._sysfs_io.read_int(path, what=what)
                 # The frequency value is in kHz in sysfs.
                 yield package, die, freq * 1000
@@ -500,12 +498,12 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
         for package, dies in self._get_dies_info().items():
             for ftype in "min", "max":
                 # Get the frequency limit value via the legacy API.
-                path_legacy_limit = self._construct_legacy_sysfs_path(ftype, package, 0, limit=True)
+                path_legacy_limit = self._construct_legacy_freq_path(ftype, package, 0, limit=True)
                 what_limit = f"{ftype} uncore frequency limit"
                 freq_limit_legacy = self._sysfs_io.read_int(path_legacy_limit, what=what_limit)
 
                 # Get min. or max. frequency value via the legacy API.
-                path_legacy = self._construct_legacy_sysfs_path(ftype, package, 0, limit=False)
+                path_legacy = self._construct_legacy_freq_path(ftype, package, 0, limit=False)
                 what = f"{ftype} uncore frequency"
                 freq_legacy = self._sysfs_io.read_int(path_legacy, what=what)
                 if freq_legacy == freq_limit_legacy:
@@ -518,7 +516,7 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
                 paths_new = {}
                 freqs_new = {}
                 for die in dies:
-                    paths_new[die] = self._construct_new_sysfs_path(ftype, package, die,
+                    paths_new[die] = self._construct_new_freq_path(ftype, package, die,
                                                                     limit=False)
                     freqs_new[die] = self._sysfs_io.read_int(paths_new[die], what=what)
 
@@ -548,11 +546,11 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
                            versa.
         """
 
-        path = self._construct_sysfs_path_die("min", package, die, limit=True)
+        path = self._construct_freq_path_die("min", package, die, limit=True)
         what = f"min uncore frequency limit for package {package} die {die}"
         min_freq_limit = self._sysfs_io.read_int(path, what=what) * 1000
 
-        path = self._construct_sysfs_path_die("max", package, die, limit=True)
+        path = self._construct_freq_path_die("max", package, die, limit=True)
         what = f"max uncore frequency limit for package {package} die {die}"
         max_freq_limit = self._sysfs_io.read_int(path, what=what) * 1000
 
@@ -560,11 +558,11 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
         max_freq: int | None = None
 
         if ftype == "min":
-            path = self._construct_sysfs_path_die("max", package, die)
+            path = self._construct_freq_path_die("max", package, die)
             what = f"max package {package} die {die} uncore frequency"
             max_freq = self._sysfs_io.read_int(path, what=what) * 1000
         else:
-            path = self._construct_sysfs_path_die("min", package, die)
+            path = self._construct_freq_path_die("min", package, die)
             what = f"min package {package} die {die} uncore frequency"
             min_freq = self._sysfs_io.read_int(path, what=what) * 1000
 
@@ -572,15 +570,7 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
                                  min_freq=min_freq, max_freq=max_freq)
 
     def _set_freq_dies(self, freq: int, ftype: _FreqValueType, dies: RelNumsType):
-        """
-        Set the minimum or maximum uncore frequency for each die in the specified packages->dies
-        mapping.
-
-        Args:
-            freq: The frequency value to set, in Hz.
-            ftype: The uncore frequency value type (e.g., "min" for the minimum frequency).
-            dies: The package->dies mapping defining die numbers to set the uncore frequency for.
-        """
+        """Refer to '_UncoreFreqBase._set_freq_dies()'."""
 
         if self._use_new_sysfs_api():
             self._unlock_new_sysfs_api()
@@ -590,10 +580,10 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
         for package, pkg_dies in dies.items():
             for die in pkg_dies:
                 self._validate_freq(freq, ftype, package, die)
-                path = self._construct_sysfs_path_die(ftype, package, die)
+                path = self._construct_freq_path_die(ftype, package, die)
                 self._sysfs_io.write_int(path, freq // 1000, what=what)
 
-    def set_min_freq_dies(self, freq: int, dies: RelNumsType):
+    def set_uncore_low_freq_dies(self, freq: int, dies: RelNumsType):
         """
         Set the minimum uncore frequency for each die in the provided packages->dies mapping.
 
@@ -773,3 +763,50 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
 
         if errmsg:
             raise ErrorNotSupported(errmsg)
+
+    def _construct_elc_threshold_path_die(self,
+                                          thrtype: _ELCThresholdType,
+                                          package: int,
+                                          die: int) -> Path:
+        """
+        Construct and return the sysfs file path for an ELC threshold read or write operation.
+
+        Args:
+            thrtype: The type of ELC threshold ("low" or "high").
+            package: The package number to construct the path for.
+            die: The die number within the package to construct the path for.
+
+        Returns:
+            Path to the requested uncore frequency sysfs file.
+        """
+
+        fname = f"elc_{thrtype}_threshold_percent"
+        return self._sysfs_base / self._get_dirmap()[package][die] / fname
+
+    def _get_elc_threshold_dies(self,
+                                thrtype: _ELCThresholdType,
+                                dies: RelNumsType) -> Generator[tuple[int, int, int], None, None]:
+        """Refer to '_UncoreFreqBase._get_elc_threshold_dies()'."""
+
+        what = f"ELC {thrtype} threshold"
+
+        for package, pkg_dies in dies.items():
+            for die in pkg_dies:
+                path = self._construct_elc_threshold_path_die(thrtype, package, die)
+                threshold = self._sysfs_io.read_int(path, what=what)
+                yield package, die, int(threshold)
+
+    def _set_elc_threshold_dies(self,
+                                threshold: int,
+                                thrtype: _ELCThresholdType,
+                                dies: RelNumsType):
+        """Refer to '_UncoreFreqBase._set_elc_threshold_dies()'."""
+
+        what = f"ELC {thrtype} threshold"
+
+        for package, pkg_dies in dies.items():
+            for die in pkg_dies:
+                self._validate_elc_threshold(threshold, thrtype, package, die)
+                path = self._construct_elc_threshold_path_die(thrtype, package, die)
+                # Round the threshold up, following the kernel driver approach.
+                self._sysfs_io.write_int(path, math.ceil(threshold), what=what)
