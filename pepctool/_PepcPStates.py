@@ -117,9 +117,10 @@ def pstates_info_command(args: argparse.Namespace, pman: ProcessManagerType):
                                    module_siblings=cmdl.module_siblings)
         stack.enter_context(optar)
 
-        if cmdl.oargs:
+        if not cmdl.oargs:
+            # No options, print everything.
             printed = pprinter.print_props("all", optar, mnames=mnames, skip_unsupported=True,
-                                          group=True)
+                                           group=True)
         else:
             pnames = cmdl.oargs
             pnames = _PepcCommon.expand_subprops(pnames, pobj.props)
