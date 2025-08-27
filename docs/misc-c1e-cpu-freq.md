@@ -42,10 +42,10 @@ platforms, including Sapphire Rapids, Emerald Rapids, Granite Rapids, and Sierra
 
 # Assumptions
 
-This article assumes that the user has pinned the CPU frequency to a fixed value at or below the
-base frequency (we will use 2GHz in the examples). This can be achieved by setting both the minimum
-and maximum CPU frequency to the same value for all CPUs via the Linux sysfs interface, or by using
-utilities such as 'cpupower' or 'pepc'.
+This article assumes that CPU frequency is pinned to a fixed value at or below the base frequency
+(we will use 2GHz in the examples). This can be achieved by setting both the minimum and maximum CPU
+frequency to the same value for all CPUs via the Linux sysfs interface, or by using utilities such
+as 'cpupower' or 'pepc'.
 
 Pinning the CPU frequency eliminates the non-essential complexities introduced by dynamic frequency
 scaling, making the analysis more straightforward. However, this simplification does not
@@ -99,8 +99,8 @@ APERF, its increment rate is tied to the base CPU frequency. This means that reg
 actual CPU frequency, MPERF always increases at a constant rate determined by the processor’s base
 frequency.
 
-Both APERF and MPERF counters increment only while the CPU is in C0. When the processor enters a
-C-state, these counters stop incrementing until the CPU exits the C-state and returns to C0.
+Both APERF and MPERF counters increment only while the CPU is in C0. When the CPU enters a C-state,
+these counters stop incrementing until the it exits the C-state and returns to C0.
 
 # CPU frequency and C1
 
