@@ -37,12 +37,12 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import copy
 import typing
-from typing import Any, Sequence, Literal, Generator, cast, get_args
+from typing import Any, Sequence, Literal, Generator, cast, get_args, Final
 
 from pepclibs.helperlibs import Logging, Trivial, Human, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 
-from pepclibs._PropsClassBaseTypes import PropertyTypedDict, PropertyValueType
+from pepclibs._PropsClassBaseTypes import PropertyTypedDict
 from pepclibs.CPUInfoTypes import ScopeNameType
 
 if typing.TYPE_CHECKING:
@@ -51,26 +51,26 @@ if typing.TYPE_CHECKING:
     from pepclibs.CPUInfo import CPUInfo
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepclibs._PropsClassBaseTypes import MechanismTypedDict, MechanismNameType
-    from pepclibs._PropsClassBaseTypes import PVInfoTypedDict
+    from pepclibs._PropsClassBaseTypes import PVInfoTypedDict, PropertyValueType
     from pepclibs.CPUInfoTypes import AbsNumsType, RelNumsType
 
-class _PropertyTypedDict(PropertyTypedDict):
-    """
-    Represents the internal property description dictionary used for property metadata.
+    class _PropertyTypedDict(PropertyTypedDict):
+        """
+        Represents the internal property description dictionary used for property metadata.
 
-    This class extends 'PropertyTypedDict' and is intended for internal use to describe properties
-    with additional metadata, such as the I/O scope name.
+        This class extends 'PropertyTypedDict' and is intended for internal use to describe
+        properties with additional metadata, such as the I/O scope name.
 
-    Attributes:
-        iosname: The name of the I/O scope associated with the property, or None if not applicable.
-                 Type for the internal property description dictionary.
-    """
+        Attributes:
+            iosname: The name of the I/O scope associated with the property, or None if not
+                     applicable. Type for the internal property description dictionary.
+        """
 
-    iosname: ScopeNameType | None
+        iosname: ScopeNameType | None
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
-MECHANISMS: dict[MechanismNameType, MechanismTypedDict] = {
+MECHANISMS: Final[dict[MechanismNameType, MechanismTypedDict]] = {
     "sysfs" : {
         "short": "sysfs",
         "long":  "Linux sysfs file-system",
@@ -2095,7 +2095,11 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
     def _init_props_dict(self, props: dict[str, PropertyTypedDict]):
         """Initialize the 'props' and 'mechanisms' dictionaries."""
 
-        self._props = copy.deepcopy(cast(dict[str, _PropertyTypedDict], props))
+        if typing.TYPE_CHECKING:
+            self._props = cast(dict[str, _PropertyTypedDict], copy.deepcopy(props))
+        else:
+            self._props = copy.deepcopy(props)
+
         self.props = props
 
         # Initialize the 'ioscope' to the same value as 'scope'. I/O scope may be different to the
