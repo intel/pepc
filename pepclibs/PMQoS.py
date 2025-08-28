@@ -20,7 +20,7 @@ from pepclibs.helperlibs import ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error
 
 if typing.TYPE_CHECKING:
-    from pepclibs._PropsClassBaseTypes import PropertyTypedDict
+    from pepclibs.PropsTypes import PropertyTypedDict
 
 # This dictionary describes the CPU properties this module supports.
 #

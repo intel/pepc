@@ -18,13 +18,14 @@ import typing
 from typing import Iterable
 import contextlib
 from pathlib import Path
-from pepclibs import CPUModels, Tpmi
+from pepclibs import CPUModels
 from pepclibs.helperlibs import Logging, LocalProcessManager, ClassHelpers, Trivial, KernelVersion
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorNotFound
 
 from pepclibs.CPUInfoTypes import CPUInfoTypedDict
 
 if typing.TYPE_CHECKING:
+    from pepclibs import Tpmi
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepclibs.CPUInfoTypes import (CPUInfoKeyType, ScopeNameType, AbsNumsType,
                                        HybridCPUKeyType, HybridCPUKeyInfoType)
@@ -137,6 +138,9 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
         if not self._tpmi:
             _LOG.debug("Creating an instance of 'Tpmi.Tpmi'")
+
+            # pylint: disable-next=import-outside-toplevel
+            from pepclibs import Tpmi
 
             try:
                 self._tpmi = Tpmi.Tpmi(pman=self._pman)

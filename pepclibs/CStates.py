@@ -28,7 +28,7 @@ from pepclibs._PropsClassBase import ErrorUsePerCPU, ErrorTryAnotherMechanism
 
 if typing.TYPE_CHECKING:
     from pepclibs.CPUInfoTypes import AbsNumsType
-    from pepclibs._PropsClassBaseTypes import PropertyTypedDict
+    from pepclibs.PropsTypes import PropertyTypedDict
 
 # This dictionary describes the C-state properties this module supports. Many of the properties are
 # just features controlled by an MSR, such as "c1e_autopromote" from 'PowerCtl.FEATURES'.

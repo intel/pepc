@@ -16,15 +16,15 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 import typing
 from typing import TypedDict, Sequence, cast, Iterable, Literal, Union
 from pepctool import _PepcCommon
-from pepctool import _OpTarget, _PepcPrinter
-from pepclibs import CPUInfo, _SysfsIO, CStates, PStates, PMQoS
 from pepclibs.helperlibs import ClassHelpers, Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorBadOrder
 from pepclibs.msr import MSR
 
 if typing.TYPE_CHECKING:
+    from pepctool import _OpTarget, _PepcPrinter
+    from pepclibs import CPUInfo, _SysfsIO, CStates, PStates, PMQoS
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
-    from pepclibs._PropsClassBaseTypes import MechanismNameType, PropertyValueType
+    from pepclibs.PropsTypes import MechanismNameType, PropertyValueType
     from pepclibs.CPUInfoTypes import AbsNumsType, RelNumsType, ScopeNameType
 
     _PropsClassType = Union[PStates.PStates, CStates.CStates, PMQoS.PMQoS]

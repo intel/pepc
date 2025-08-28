@@ -36,7 +36,7 @@ import math
 from typing import Generator
 from pathlib import Path
 from pepclibs import _SysfsIO, CPUInfo, _UncoreFreqBase
-from pepclibs._PropsClassBaseTypes import MechanismNameType
+from pepclibs.PropsTypes import MechanismNameType
 from pepclibs._UncoreFreqBase import FreqValueType as _FreqValueType
 from pepclibs._UncoreFreqBase import ELCThresholdType as _ELCThresholdType
 from pepclibs.helperlibs.ProcessManager import ProcessManagerType

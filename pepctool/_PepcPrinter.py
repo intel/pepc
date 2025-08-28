@@ -17,19 +17,21 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 import sys
 import typing
 from typing import TypedDict, Iterable, Sequence, IO, Literal, Iterator, Union, get_args, cast
-from pepclibs import PStates, CStates, PMQoS, CPUInfo
+from pepctool import _PepcCommon
+from pepclibs import CPUInfo
 from pepclibs.helperlibs import Logging, ClassHelpers, Human, YAML, Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs._PropsClassBase import ErrorUsePerCPU, ErrorTryAnotherMechanism
-from pepctool import _PepcCommon, _OpTarget
 
 PrintFormatType = Literal["human", "yaml"]
 
 if typing.TYPE_CHECKING:
+    from pepctool import _OpTarget
+    from pepclibs import PStates, CStates, PMQoS
     from pepclibs.CPUIdle import ReqCStateInfoTypedDict, ReqCStateInfoValuesType
     from pepclibs.CPUIdle import ReqCStateInfoKeysType
-    from pepclibs._PropsClassBaseTypes import PropertyTypedDict, PropertyValueType
-    from pepclibs._PropsClassBaseTypes import PVInfoTypedDict, MechanismNameType
+    from pepclibs.PropsTypes import PropertyTypedDict, PropertyValueType, PVInfoTypedDict
+    from pepclibs.PropsTypes import MechanismNameType
     from pepclibs.CPUInfoTypes import AbsNumsType, RelNumsType, ScopeNameType
 
     _PropsClassType = Union[PStates.PStates, CStates.CStates, PMQoS.PMQoS]

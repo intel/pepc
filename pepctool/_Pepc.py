@@ -36,7 +36,7 @@ from pepclibs._PropsClassBase import MECHANISMS
 if typing.TYPE_CHECKING:
     from pepclibs.helperlibs.ArgParse import ArgTypedDict, ArgKwargsTypedDict
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
-    from pepclibs._PropsClassBaseTypes import PropertyTypedDict
+    from pepclibs.PropsTypes import PropertyTypedDict
 
 _VERSION: Final[str] = "1.5.44"
 TOOLNAME: Final[str] = "pepc"
