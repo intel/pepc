@@ -26,24 +26,24 @@ except ImportError:
     _ARGCOMPLETE_AVAILABLE = False
 
 import typing
-from typing import Sequence, Any, Generator, cast
+from typing import Sequence, Any, Generator, cast, Final
 from pepclibs import PMQoS, CStates, PStates, CPUInfo
 from pepclibs.helperlibs import ArgParse, Human, Logging, ProcessManager, ProjectFiles, Trivial
 from pepclibs.helperlibs import EmulProcessManager
 from pepclibs.helperlibs.Exceptions import Error
-from pepclibs.helperlibs.ProcessManager import ProcessManagerType
-from pepclibs.helperlibs.ArgParse import ArgTypedDict, ArgKwargsTypedDict
 from pepclibs._PropsClassBase import MECHANISMS
 
 if typing.TYPE_CHECKING:
+    from pepclibs.helperlibs.ArgParse import ArgTypedDict, ArgKwargsTypedDict
+    from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepclibs._PropsClassBaseTypes import PropertyTypedDict
 
-_VERSION = "1.5.44"
-TOOLNAME = "pepc"
+_VERSION: Final[str] = "1.5.44"
+TOOLNAME: Final[str] = "pepc"
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc").configure(prefix=TOOLNAME)
 
-_DATASET_OPTION: ArgTypedDict = {
+_DATASET_OPTION: Final[ArgTypedDict] = {
     "short": "-D",
     "long":  "--dataset",
     "argcomplete": None,
@@ -54,7 +54,7 @@ _DATASET_OPTION: ArgTypedDict = {
     },
 }
 
-_OVERRIDE_CPU_OPTION: ArgTypedDict = {
+_OVERRIDE_CPU_OPTION: Final[ArgTypedDict] = {
     "short": None,
     "long":  "--override-cpu-model",
     "argcomplete": None,
@@ -67,7 +67,7 @@ _OVERRIDE_CPU_OPTION: ArgTypedDict = {
     },
 }
 
-_MECHANISMS_OPTIONS: list[ArgTypedDict] = [
+_MECHANISMS_OPTIONS: Final[list[ArgTypedDict]] = [
     {
         "short": None,
         "long":  "--list-mechanisms",

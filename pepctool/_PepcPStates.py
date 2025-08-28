@@ -18,14 +18,14 @@ import typing
 from typing import NamedTuple
 from pepclibs.msr import MSR
 from pepclibs.helperlibs import Logging
-from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs import PStates, CPUInfo, _SysfsIO
 from pepctool import _PepcCommon, _OpTarget, _PepcPrinter, _PepcSetter
-from pepctool._PepcPrinter import PrintFormatType
 
 if typing.TYPE_CHECKING:
+    from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepctool._PepcSetter  import PropSetInfoTypedDict
+    from pepctool._PepcPrinter import PrintFormatType
 
 class _CmdlineArgsType(NamedTuple):
     """
