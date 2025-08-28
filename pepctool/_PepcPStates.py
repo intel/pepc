@@ -14,6 +14,7 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import contextlib
 import argparse
+import typing
 from typing import NamedTuple
 from pepclibs.msr import MSR
 from pepclibs.helperlibs import Logging
@@ -22,7 +23,9 @@ from pepclibs.helperlibs.Exceptions import Error
 from pepclibs import PStates, CPUInfo, _SysfsIO
 from pepctool import _PepcCommon, _OpTarget, _PepcPrinter, _PepcSetter
 from pepctool._PepcPrinter import PrintFormatType
-from pepctool._PepcSetter  import PropSetInfoTypedDict
+
+if typing.TYPE_CHECKING:
+    from pepctool._PepcSetter  import PropSetInfoTypedDict
 
 class _CmdlineArgsType(NamedTuple):
     """

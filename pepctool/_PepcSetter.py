@@ -16,30 +16,32 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 import typing
 from typing import TypedDict, Sequence, cast, Iterable, Literal, Union
 from pepctool import _PepcCommon
-from pepctool._PepcPrinter import PepcPrinterClassType
 from pepctool import _OpTarget, _PepcPrinter
 from pepclibs import CPUInfo, _SysfsIO, CStates, PStates, PMQoS
-from pepclibs.CPUInfoTypes import AbsNumsType, RelNumsType, ScopeNameType
-from pepclibs._PropsClassBaseTypes import MechanismNameType, PropertyValueType
 from pepclibs.helperlibs import ClassHelpers, Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorBadOrder
-from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 from pepclibs.msr import MSR
 
 if typing.TYPE_CHECKING:
+    from pepclibs.helperlibs.ProcessManager import ProcessManagerType
+    from pepclibs._PropsClassBaseTypes import MechanismNameType, PropertyValueType
+    from pepclibs.CPUInfoTypes import AbsNumsType, RelNumsType, ScopeNameType
+
     _PropsClassType = Union[PStates.PStates, CStates.CStates, PMQoS.PMQoS]
+    _PepcPrinterClassType = Union[_PepcPrinter.CStatesPrinter, _PepcPrinter.PStatesPrinter,
+                                  _PepcPrinter.PMQoSPrinter]
 
-class PropSetInfoTypedDict(TypedDict, total=False):
-    """
-    A typed dictionary for property settings.
+    class PropSetInfoTypedDict(TypedDict, total=False):
+        """
+        A typed dictionary for property settings.
 
-    Attributes:
-        val: The value to assign to the property.
-        default_unit: The default unit of the property.
-    """
+        Attributes:
+            val: The value to assign to the property.
+            default_unit: The default unit of the property.
+        """
 
-    val: str
-    default_unit: str
+        val: str
+        default_unit: str
 
 class _PropsSetter(ClassHelpers.SimpleCloseContext):
     """Base class for pepc property setter classes."""
@@ -48,7 +50,7 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
                  pman: ProcessManagerType,
                  pobj: _PropsClassType,
                  cpuinfo: CPUInfo.CPUInfo,
-                 pprinter: PepcPrinterClassType,
+                 pprinter: _PepcPrinterClassType,
                  msr: MSR.MSR | None = None,
                  sysfs_io: _SysfsIO.SysfsIO | None = None):
         """

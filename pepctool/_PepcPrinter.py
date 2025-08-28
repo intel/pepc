@@ -1225,5 +1225,3 @@ class CStatesPrinter(_PropsPrinter):
             return self._print_aggr_rcsinfo_human(aggr_rcsinfo, group=group, action=action)
 
         return self._print_aggr_rcsinfo_yaml(aggr_rcsinfo)
-
-PepcPrinterClassType = Union[CStatesPrinter, PStatesPrinter, PMQoSPrinter]
