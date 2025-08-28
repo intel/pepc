@@ -15,100 +15,102 @@ Provide API for printing properties.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import sys
+import typing
 from typing import TypedDict, Iterable, Sequence, IO, Literal, Iterator, Union, get_args, cast
-from pepclibs import PStates, CStates, CPUInfo
+from pepclibs import PStates, CStates, PMQoS, CPUInfo
 from pepclibs.helperlibs import Logging, ClassHelpers, Human, YAML, Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
-from pepclibs.CStates import ErrorUsePerCPU
-from pepclibs.PStates import ErrorTryAnotherMechanism
+from pepclibs._PropsClassBase import ErrorUsePerCPU, ErrorTryAnotherMechanism
 from pepctool import _PepcCommon, _OpTarget
 
-# pylint: disable-next=ungrouped-imports
-from pepclibs.CPUIdle import ReqCStateInfoTypedDict, ReqCStateInfoValuesType, ReqCStateInfoKeysType
-from pepclibs._PropsClassBaseTypes import PropertyTypedDict, PropertyValueType, MechanismNameType
-from pepclibs._PropsClassBaseTypes import PVInfoTypedDict
-from pepclibs.CPUInfoTypes import AbsNumsType, RelNumsType, ScopeNameType
-
-PropsClassType = Union[PStates.PStates, CStates.CStates]
 PrintFormatType = Literal["human", "yaml"]
 
-class _AggrSubPinfoTypdDict(TypedDict,):
-    """
-    Type for the aggregate properties sub-dictionary for human-readable output.
+if typing.TYPE_CHECKING:
+    from pepclibs.CPUIdle import ReqCStateInfoTypedDict, ReqCStateInfoValuesType
+    from pepclibs.CPUIdle import ReqCStateInfoKeysType
+    from pepclibs._PropsClassBaseTypes import PropertyTypedDict, PropertyValueType
+    from pepclibs._PropsClassBaseTypes import PVInfoTypedDict, MechanismNameType
+    from pepclibs.CPUInfoTypes import AbsNumsType, RelNumsType, ScopeNameType
 
-    Attributes:
-        sname: Scope name used for reading the property (e.g., "CPU", "die", "package").
-        vals: A dictionary mapping property values to lists of CPUs, dies, or package numbers that
-              have this value.
-    """
+    _PropsClassType = Union[PStates.PStates, CStates.CStates, PMQoS.PMQoS]
 
-    sname: ScopeNameType
-    vals: dict[PropertyValueType, AbsNumsType | RelNumsType]
+    class _AggrSubPinfoTypdDict(TypedDict, total=False):
+        """
+        Type for the aggregate properties sub-dictionary for human-readable output.
 
-# The aggregate properties dictionary for human-readable output.
-_AggrPinfoType = dict[MechanismNameType, dict[str, _AggrSubPinfoTypdDict]]
+        Attributes:
+            sname: Scope name used for reading the property (e.g., "CPU", "die", "package").
+            vals: A dictionary mapping property values to lists of CPUs, dies, or package numbers
+                  that have this value.
+        """
 
-# Type for a property value in the aggregate properties dictionary for YAML output.
-_YAMLPinfoValueType = Union[int, float, str, list[int], list[float], list[str]]
+        sname: ScopeNameType
+        vals: dict[PropertyValueType, AbsNumsType | RelNumsType]
 
-class _YAMLAggrPinfoValueTypedDict(TypedDict, total=False):
-    """
-    Type for property value in the aggregate properties sub-dictionary.
+    # The aggregate properties dictionary for human-readable output.
+    _AggrPinfoType = dict[MechanismNameType, dict[str, _AggrSubPinfoTypdDict]]
 
-    Attributes:
-        value: The value of the property.
-        CPU: CPUs for which the property value applies.
-        die: Dies for which the property value applies.
-        package: Packages for which the property value applies.
-    """
+    # Type for a property value in the aggregate properties dictionary for YAML output.
+    _YAMLPinfoValueType = Union[int, float, str, list[int], list[float], list[str]]
 
-    value: _YAMLPinfoValueType
-    CPU: str
-    die: dict[int, str]
-    package: str
+    class _YAMLAggrPinfoValueTypedDict(TypedDict, total=False):
+        """
+        Type for property value in the aggregate properties sub-dictionary.
 
-class _YAMLAggrSubPinfoTypedDict(TypedDict, total=False):
-    """
-    Type for the aggregate properties sub-dictionary for YAML output. Describes a single property
-    and its value on one or multiple CPUs, dies, or packages.
+        Attributes:
+            value: The value of the property.
+            CPU: CPUs for which the property value applies.
+            die: Dies for which the property value applies.
+            package: Packages for which the property value applies.
+        """
 
-    Attributes:
-        mechanism: Name of the mechanism used for reading the property.
-        unit: The unit of the property value (e.g., "Hz", "W").
-        values: A list of dictionaries mapping property values to their corresponding CPU, die, or
-                package.
-    """
+        value: _YAMLPinfoValueType
+        CPU: str
+        die: dict[int, str]
+        package: str
 
-    mechanism: MechanismNameType
-    unit: str
-    values: list[_YAMLAggrPinfoValueTypedDict]
+    class _YAMLAggrSubPinfoTypedDict(TypedDict, total=False):
+        """
+        Type for the aggregate properties sub-dictionary for YAML output. Describes a single
+        property and its value on one or multiple CPUs, dies, or packages.
 
-# Type for the aggregate properties dictionary for YAML output.
-_YAMLAggrPinfoType = dict[str, _YAMLAggrSubPinfoTypedDict]
+        Attributes:
+            mechanism: Name of the mechanism used for reading the property.
+            unit: The unit of the property value (e.g., "Hz", "W").
+            values: A list of dictionaries mapping property values to their corresponding CPU, die,
+                    or package.
+        """
 
-# Type for the requestable C-state aggregate properties dictionary for human output.
-_RCAggrPinfoType = dict[str, dict[ReqCStateInfoKeysType,
-                                       dict[ReqCStateInfoValuesType, list[int]]]]
+        mechanism: MechanismNameType
+        unit: str
+        values: list[_YAMLAggrPinfoValueTypedDict]
 
-# Type for a requestable C-state property for YAML output.
-_YAMLRCAggrPinfoPropertyTypedDict = dict[Union[ReqCStateInfoKeysType, Literal["CPU"]],
-                                         Union[ReqCStateInfoValuesType, str]]
+    # Type for the aggregate properties dictionary for YAML output.
+    _YAMLAggrPinfoType = dict[str, _YAMLAggrSubPinfoTypedDict]
 
-class _YAMLRCAggrSubPinfoTypedDict(TypedDict, total=False):
-    """
-    Type for the requestable C-state aggregate properties sub-dictionary for YAML output.
+    # Type for the requestable C-state aggregate properties dictionary for human output.
+    _RCAggrPinfoType = dict[str, dict[ReqCStateInfoKeysType,
+                                      dict[ReqCStateInfoValuesType, list[int]]]]
 
-    Attributes:
-        mechanism: Name of the mechanism used for reading the property.
-        values: A list of dictionaries mapping, each dictionary contains a property value and its
-                CPU numbers (as a rangified string).
-    """
+    # Type for a requestable C-state property for YAML output.
+    _YAMLRCAggrPinfoPropertyTypedDict = dict[Union[ReqCStateInfoKeysType, Literal["CPU"]],
+                                             Union[ReqCStateInfoValuesType, str]]
 
-    mechanism: MechanismNameType
-    properties: list[_YAMLRCAggrPinfoPropertyTypedDict]
+    class _YAMLRCAggrSubPinfoTypedDict(TypedDict, total=False):
+        """
+        Type for the requestable C-state aggregate properties sub-dictionary for YAML output.
 
-# Type for the requestable C-state aggregate properties dictionary for YAML output.
-_YAMLRCAggrPinfoType = dict[str, _YAMLRCAggrSubPinfoTypedDict]
+        Attributes:
+            mechanism: Name of the mechanism used for reading the property.
+            values: A list of dictionaries mapping, each dictionary contains a property value and
+                    its CPU numbers (as a rangified string).
+        """
+
+        mechanism: MechanismNameType
+        properties: list[_YAMLRCAggrPinfoPropertyTypedDict]
+
+    # Type for the requestable C-state aggregate properties dictionary for YAML output.
+    _YAMLRCAggrPinfoType = dict[str, _YAMLRCAggrSubPinfoTypedDict]
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
@@ -118,7 +120,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
     """
 
     def __init__(self,
-                 pobj: PropsClassType,
+                 pobj: _PropsClassType,
                  cpuinfo: CPUInfo.CPUInfo,
                  fobj: IO[str] | None = None,
                  fmt: PrintFormatType = "human"):
@@ -850,8 +852,30 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
 class PStatesPrinter(_PropsPrinter):
     """Provide API for printing P-states information."""
 
+    def __init__(self,
+                 pobj: PStates.PStates,
+                 cpuinfo: CPUInfo.CPUInfo,
+                 fobj: IO[str] | None = None,
+                 fmt: PrintFormatType = "human"):
+        """Refer to '_PropsPrinter.__init__()'."""
+
+        super().__init__(pobj, cpuinfo, fobj=fobj, fmt=fmt)
+
+        self._pobj: PStates.PStates
+
 class PMQoSPrinter(_PropsPrinter):
     """Provide API for printing PM QoS information."""
+
+    def __init__(self,
+                 pobj: PMQoS.PMQoS,
+                 cpuinfo: CPUInfo.CPUInfo,
+                 fobj: IO[str] | None = None,
+                 fmt: PrintFormatType = "human"):
+        """Refer to '_PropsPrinter.__init__()'."""
+
+        super().__init__(pobj, cpuinfo, fobj=fobj, fmt=fmt)
+
+        self._pobj: PMQoS.PMQoS
 
     def _format_value_human(self, pname, prop: PropertyTypedDict, val: PropertyValueType) -> str:
         """
@@ -878,6 +902,17 @@ class PMQoSPrinter(_PropsPrinter):
 
 class CStatesPrinter(_PropsPrinter):
     """Provide API for printing C-states information."""
+
+    def __init__(self,
+                 pobj: CStates.CStates,
+                 cpuinfo: CPUInfo.CPUInfo,
+                 fobj: IO[str] | None = None,
+                 fmt: PrintFormatType = "human"):
+        """Refer to '_PropsPrinter.__init__()'."""
+
+        super().__init__(pobj, cpuinfo, fobj=fobj, fmt=fmt)
+
+        self._pobj: CStates.CStates
 
     def _adjust_aggr_pinfo_pcs_limit(self,
                                      aggr_pinfo: _AggrPinfoType,
@@ -1157,8 +1192,9 @@ class CStatesPrinter(_PropsPrinter):
                     if key not in keys or val is None:
                         continue
 
-                    val = cast(ReqCStateInfoValuesType, val)
-                    key = cast(ReqCStateInfoKeysType, key)
+                    if typing.TYPE_CHECKING:
+                        val = cast(ReqCStateInfoValuesType, val)
+                        key = cast(ReqCStateInfoKeysType, key)
 
                     if key not in aggr_rcsinfo[csname]:
                         aggr_rcsinfo[csname][key] = {val: [cpu]}
@@ -1211,8 +1247,7 @@ class CStatesPrinter(_PropsPrinter):
         else:
             keys = {"disable", "latency", "residency", "desc"}
 
-        pobj = cast(CStates.CStates, self._pobj)
-        csinfo_iter = pobj.get_cstates_info(csnames=csnames, cpus=cpus)
+        csinfo_iter = self._pobj.get_cstates_info(csnames=csnames, cpus=cpus)
 
         try:
             aggr_rcsinfo = self._build_aggr_rcsinfo(csinfo_iter, keys)
