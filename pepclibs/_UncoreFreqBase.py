@@ -332,11 +332,6 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
         Retrieve and yield the ELC low threshold for each die in the provided packages->dies
         mapping.
 
-        The ELC low threshold defines the aggregate CPU utilization percentage. When utilization
-        falls below this threshold, the platform sets the uncore frequency floor to the low ELC
-        frequency (subject to the global minimum uncore frequency limit - if the limit is higher
-        than the low ELC frequency, the limit is used as the floor instead).
-
         Args:
             dies: Dictionary mapping package numbers to sequences of die numbers for which to yield
                   the ELC low threshold.
@@ -356,12 +351,6 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
         """
         Retrieve and yield the ELC high threshold for each die in the provided packages->dies
         mapping.
-
-        The ELC high threshold defines the aggregate CPU utilization percentage at which the
-        platform begins increasing the uncore frequency more enthusiastically than before. When
-        utilization exceeds this threshold, the platform gradually raises the uncore frequency until
-        utilization drops below the threshold or the frequency reaches its maximum limit. Further
-        increases may be prevented by other constraints, such as thermal or power limits.
 
         Args:
             dies: Dictionary mapping package numbers to sequences of die numbers for which to yield

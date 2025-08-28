@@ -227,30 +227,57 @@ target CPU specification options to define a subset of CPUs, cores, dies, or pac
    nominal_perf: '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/nominal_perf'.
 
 **--min-uncore-freq**
-   Retrieve the minimum uncore frequency. In case of the 'intel_uncore_frequency_tpmi' driver, read
+   Retrieve the minimum uncore frequency. The supported mechanisms are: 'sysfs', 'tpmi'.
+   In case of the 'sysfs' mechanism, the sysfs path depends on what uncore driver is used. In case
+   of the 'intel_uncore_frequency_tpmi' driver, use
    '/sys/devices/system/cpu/intel_uncore_frequency/uncore<NUMBER>/min_freq_khz'. In case of the
-   'intel_uncore_frequency' driver, read
+   'intel_uncore_frequency' driver, use
    '/sys/devices/system/cpu/intel_uncore_frequency/package\_<NUMBER>_die\_<NUMBER>/min_freq_khz'.
 
+   The 'tpmi' mechanism uses the tpmi driver debugfs interface to access TPMI registers. The exact
+   path depends on the target die number. Example of the debugfs file path is
+   '/sys/kernel/debug/tpmi-0000:00:03.1/tpmi-id-02/mem_dump'
+
 **--max-uncore-freq**
-   Retrieve the maximum uncore frequency. In case of the 'intel_uncore_frequency_tpmi' driver, read
-   '/sys/devices/system/cpu/intel_uncore_frequency/uncore<NUMBER>/max_freq_khz'. In case of the
-   'intel_uncore_frequency' driver, read
-   '/sys/devices/system/cpu/intel_uncore_frequency/package\_<NUMBER>_die\_<NUMBER>/max_freq_khz'.
+   Retrieve the maximum uncore frequency. Similar to '--min-uncore-freq', but for the maximum uncore
+   frequency. Uses the same mechanisms as '--min-uncore-freq', but the sysfs mechanism uses the
+   'max_freq_khz' file instead of 'min_freq_khz'.
 
 **--min-uncore-freq-limit**
-   Get minimum uncore frequency limit supported but the kernel. In case of the
-   'intel_uncore_frequency_tpmi' driver, read
+   Get minimum uncore frequency limit supported but the kernel. The supported mechanism is 'sysfs'.
+   In case of the 'intel_uncore_frequency_tpmi' driver, read
    /sys/devices/system/cpu/intel_uncore_frequency/uncore<NUMBER>/initial_min_freq_khz'. In case of
    the 'intel_uncore_frequency' driver, read
    '/sys/devices/system/cpu/intel_uncore_frequency/package\_<NUMBER>_die\_<NUMBER>/initial_min_freq_khz'.
 
+   The 'tpmi' mechanism does not provide min/max uncore frequency limits, therefore not available.
+
 **--max-uncore-freq-limit**
-   Get maximum uncore frequency limit supported but the kernel. In case of the
-   'intel_uncore_frequency_tpmi' driver, read
-   /sys/devices/system/cpu/intel_uncore_frequency/uncore<NUMBER>/initial_max_freq_khz'. In case of
-   the 'intel_uncore_frequency' driver, read
-   '/sys/devices/system/cpu/intel_uncore_frequency/package\_<NUMBER>_die\_<NUMBER>/initial_max_freq_khz'.
+   Retrieve the maximum uncore frequency limit. Similar to '--min-uncore-freq-limit', but for the
+   maximum uncore frequency limit. Uses the same mechanisms as '--min-uncore-freq-limit', but the
+   sysfs mechanism uses the 'initial_max_freq_khz' file instead of 'initial_min_freq_khz'.
+
+**--uncore-elc-low-threshold**
+   Get the uncore ELC low threshold. The threshold defines the aggregate CPU utilization percentage.
+   When utilization falls below this threshold, the platform sets the uncore frequency floor to the
+   low ELC frequency (subject to the the '--min-uncore-freq-limit' - if the limit is higher than the
+   low ELC frequency, the limit is used as the floor instead).
+
+   Supported mechanisms are: 'sysfs', 'tpmi'. The 'sysfs' mechanism reads the
+   '/sys/devices/system/cpu/intel_uncore_frequency/uncore<NUMBER>/elc_low_threshold_percent'. The
+   TPMI reads the same debugfs file as '--min-uncore-freq'.
+
+**--uncore-elc-high-threshold**
+   Get the uncore ELC high threshold. The threshold defines the aggregate CPU utilization percentage
+   at which the platform begins increasing the uncore frequency more enthusiastically than before.
+   When utilization exceeds this threshold, the platform gradually raises the uncore frequency until
+   utilization drops below the threshold or the frequency reaches the '--max-uncore-freq' limit.
+   In addition, uncore frequency increases may be prevented by other constraints, such as thermal or
+   power limits.
+
+   Supported mechanisms are: 'sysfs', 'tpmi'. The 'sysfs' mechanism reads the
+   '/sys/devices/system/cpu/intel_uncore_frequency/uncore<NUMBER>/elc_high_threshold_percent'. The
+   TPMI reads the same debugfs file as '--max-uncore-freq'.
 
 **--hwp**
    Check if hardware power management is enabled. When enabled, CPUs can scale their frequency
@@ -343,7 +370,8 @@ packages.
    will succeed.
 
 **--max-freq** *MAX_FREQ*
-   Set the maximum CPU frequency. Similar to '--min-freq', but applies to the maximum frequency.
+   Set the maximum CPU frequency. Uses the same mechanisms as described in the 'info' sub-command.
+   Similar to '--min-freq', but applies to the maximum frequency.
 
 **--turbo** *on|off*
    Toggle turbo mode globally via sysfs. When enabled, CPUs can exceed the base frequency if allowed
@@ -353,17 +381,7 @@ packages.
 
 **--min-uncore-freq** *MIN_UNCORE_FREQ*
    Set the minimum uncore frequency. The default unit is 'Hz', but 'kHz', 'MHz', and 'GHz' can also
-   be used (for example '900MHz'). The supported mechanisms are: 'sysfs', 'msr'.
-
-   In case of the 'sysfs' mechanism, the sysfs path depends on what uncore driver is used. In case
-   of the 'intel_uncore_frequency_tpmi' driver, use
-   '/sys/devices/system/cpu/intel_uncore_frequency/uncore<NUMBER>/min_freq_khz'. In case of the
-   'intel_uncore_frequency' driver, use
-   '/sys/devices/system/cpu/intel_uncore_frequency/package\_<NUMBER>_die\_<NUMBER>/min_freq_khz'.
-
-   The 'tpmi' mechanism uses the tpmi driver debugfs interface to access TPMI registers. The exact
-   path depends on the target die number. Example of the debugfs file path is
-   '/sys/kernel/debug/tpmi-0000:00:03.1/tpmi-id-02/mem_dump'
+   be used (for example '900MHz'). Uses the same mechanisms as described in the 'info' sub-command.
 
    The following special values can also be used:
    **min**
@@ -385,8 +403,8 @@ packages.
    configuring uncore frequencies with the 'tpmi' mechanism.
 
 **--max-uncore-freq** *MAX_UNCORE_FREQ*
-   Set the maximum uncore frequency. Similar to '--min-uncore-freq', but applies to the maximum
-   frequency.
+   Set the maximum uncore frequency. Uses the same mechanisms as described in the 'info'
+   sub-command. Similar to '--min-uncore-freq', but applies to the maximum frequency.
 
 **--epp** *EPP*
    Set EPP (Energy Performance Preference) using 'sysfs' (preferred) or 'msr' mechanisms. EPP
