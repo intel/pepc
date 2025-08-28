@@ -13,11 +13,12 @@ Provide API for changing properties.
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
+import typing
 from typing import TypedDict, Sequence, cast, Iterable, Literal, Union
 from pepctool import _PepcCommon
 from pepctool._PepcPrinter import PepcPrinterClassType
 from pepctool import _OpTarget, _PepcPrinter
-from pepclibs import CPUInfo, _SysfsIO, CStates, PStates
+from pepclibs import CPUInfo, _SysfsIO, CStates, PStates, PMQoS
 from pepclibs.CPUInfoTypes import AbsNumsType, RelNumsType, ScopeNameType
 from pepclibs._PropsClassBaseTypes import MechanismNameType, PropertyValueType
 from pepclibs.helperlibs import ClassHelpers, Trivial
@@ -25,7 +26,8 @@ from pepclibs.helperlibs.Exceptions import Error, ErrorBadOrder
 from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 from pepclibs.msr import MSR
 
-PropsClassType = Union[PStates.PStates, CStates.CStates]
+if typing.TYPE_CHECKING:
+    _PropsClassType = Union[PStates.PStates, CStates.CStates, PMQoS.PMQoS]
 
 class PropSetInfoTypedDict(TypedDict, total=False):
     """
@@ -44,7 +46,7 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
 
     def __init__(self,
                  pman: ProcessManagerType,
-                 pobj: PropsClassType,
+                 pobj: _PropsClassType,
                  cpuinfo: CPUInfo.CPUInfo,
                  pprinter: PepcPrinterClassType,
                  msr: MSR.MSR | None = None,
@@ -103,7 +105,7 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
         mnames_info[pname] = mname
 
     @staticmethod
-    def _set_prop(pobj: PropsClassType,
+    def _set_prop(pobj: _PropsClassType,
                   pname: str,
                   sname: ScopeNameType,
                   val: PropertyValueType,
@@ -187,6 +189,20 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
 class PStatesSetter(_PropsSetter):
     """Provide API for changing P-state properties."""
 
+    def __init__(self,
+                 pman: ProcessManagerType,
+                 pobj: PStates.PStates,
+                 cpuinfo: CPUInfo.CPUInfo,
+                 pprinter: _PepcPrinter.PStatesPrinter,
+                 msr: MSR.MSR | None = None,
+                 sysfs_io: _SysfsIO.SysfsIO | None = None):
+        """Refer to '_PropsSetter.__init__()'."""
+
+        super().__init__(pman, pobj, cpuinfo, pprinter, msr=msr, sysfs_io=sysfs_io)
+
+        self._pobj: PStates.PStates
+        self._pprinter: _PepcPrinter.PStatesPrinter
+
     def _set_prop_sname(self,
                         spinfo: dict[str, PropSetInfoTypedDict],
                         pname: str,
@@ -248,8 +264,36 @@ class PStatesSetter(_PropsSetter):
 class PMQoSSetter(_PropsSetter):
     """Provide API for changing PM QoS properties."""
 
+    def __init__(self,
+                 pman: ProcessManagerType,
+                 pobj: PMQoS.PMQoS,
+                 cpuinfo: CPUInfo.CPUInfo,
+                 pprinter: _PepcPrinter.PMQoSPrinter,
+                 msr: MSR.MSR | None = None,
+                 sysfs_io: _SysfsIO.SysfsIO | None = None):
+        """Refer to '_PropsSetter.__init__()'."""
+
+        super().__init__(pman, pobj, cpuinfo, pprinter, msr=msr, sysfs_io=sysfs_io)
+
+        self._pobj: PMQoS.PMQoS
+        self._pprinter: _PepcPrinter.PMQoSPrinter
+
 class CStatesSetter(_PropsSetter):
     """Provide API for changing C-state properties."""
+
+    def __init__(self,
+                 pman: ProcessManagerType,
+                 pobj: CStates.CStates,
+                 cpuinfo: CPUInfo.CPUInfo,
+                 pprinter: _PepcPrinter.CStatesPrinter,
+                 msr: MSR.MSR | None = None,
+                 sysfs_io: _SysfsIO.SysfsIO | None = None):
+        """Refer to '_PropsSetter.__init__()'."""
+
+        super().__init__(pman, pobj, cpuinfo, pprinter, msr=msr, sysfs_io=sysfs_io)
+
+        self._pobj: CStates.CStates
+        self._pprinter: _PepcPrinter.CStatesPrinter
 
     def set_cstates(self,
                     csnames: Iterable[str] | Literal["all"] = "all",
@@ -268,13 +312,10 @@ class CStatesSetter(_PropsSetter):
                     property will be tried.
         """
 
-        pobj = cast(CStates.CStates, self._pobj)
-        pprinter = cast(_PepcPrinter.CStatesPrinter, self._pprinter)
-
         if enable:
-            pobj.enable_cstates(csnames=csnames, cpus=cpus)
+            self._pobj.enable_cstates(csnames=csnames, cpus=cpus)
         else:
-            pobj.disable_cstates(csnames=csnames, cpus=cpus)
+            self._pobj.disable_cstates(csnames=csnames, cpus=cpus)
 
-        pprinter.print_cstates(csnames=csnames, cpus=cpus, mnames=mnames, skip_ro=True,
+        self._pprinter.print_cstates(csnames=csnames, cpus=cpus, mnames=mnames, skip_ro=True,
                                action="set to")
