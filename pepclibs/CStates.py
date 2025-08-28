@@ -24,7 +24,7 @@ from pepclibs.msr import PowerCtl, PCStateConfigCtl
 # pylint: disable=unused-import
 from pepclibs.CPUIdle import ReqCStateInfoTypedDict, ReqCStateInfoValuesType, ReqCStateInfoKeysType
 from pepclibs._PropsClassBase import ErrorUsePerCPU, ErrorTryAnotherMechanism, PropertyTypedDict
-from pepclibs._CPUInfoBaseTypes import AbsNumsType
+from pepclibs.CPUInfoTypes import AbsNumsType
 
 # This dictionary describes the C-state properties this module supports. Many of the properties are
 # just features controlled by an MSR, such as "c1e_autopromote" from 'PowerCtl.FEATURES'.

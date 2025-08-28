@@ -25,9 +25,10 @@ from pepctool import _PepcCommon, _OpTarget
 
 # pylint: disable-next=ungrouped-imports
 from pepclibs.PropsTypes import MechanismNameType, PropertyValueType, PropertyTypedDict
-from pepclibs.PropsTypes import PropsClassType, ScopeNameType, AbsNumsType, RelNumsType
+from pepclibs.PropsTypes import PropsClassType
 from pepclibs.CPUIdle import ReqCStateInfoTypedDict, ReqCStateInfoValuesType, ReqCStateInfoKeysType
 from pepclibs._PropsClassBaseTypes import PVInfoTypedDict
+from pepclibs.CPUInfoTypes import AbsNumsType, RelNumsType, ScopeNameType
 
 PrintFormatType = Literal["human", "yaml"]
 

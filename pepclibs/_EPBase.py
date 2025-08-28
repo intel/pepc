@@ -21,7 +21,7 @@ from pepclibs import CPUInfo, _PropsCache
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 
 if typing.TYPE_CHECKING:
-    from pepclibs._PropsClassBaseTypes import ScopeNameType
+    from pepclibs.CPUInfoTypes import ScopeNameType
 
 # Supported mechanism names.
 _MNAMES = ("sysfs", "msr")

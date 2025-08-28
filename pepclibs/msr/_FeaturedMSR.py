@@ -26,7 +26,7 @@ from pepclibs import CPUModels, CPUInfo
 from pepclibs.helperlibs import Logging, LocalProcessManager, ClassHelpers, Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs.helperlibs.ProcessManager import ProcessManagerType
-from pepclibs._CPUInfoBaseTypes import ScopeNameType
+from pepclibs.CPUInfoTypes import ScopeNameType
 from pepclibs.msr import MSR
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")

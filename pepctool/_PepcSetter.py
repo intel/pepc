@@ -18,8 +18,9 @@ from pepctool import _PepcCommon
 from pepctool._PepcPrinter import PepcPrinterClassType
 from pepctool import _OpTarget, _PepcPrinter
 from pepclibs import CPUInfo, _SysfsIO, CStates
-from pepclibs.PropsTypes import PropsClassType, ScopeNameType, PropertyValueType
+from pepclibs.PropsTypes import PropsClassType, PropertyValueType
 from pepclibs.PropsTypes import AbsNumsType, RelNumsType
+from pepclibs.CPUInfoTypes import ScopeNameType
 from pepclibs._PropsClassBaseTypes import MechanismNameType
 from pepclibs.helperlibs import ClassHelpers, Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorBadOrder

@@ -21,7 +21,7 @@ from pepclibs.helperlibs import Logging
 from pepclibs.helperlibs import ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorVerifyFailed, ErrorNotFound
 from pepclibs.helperlibs.ProcessManager import ProcessManagerType
-from pepclibs._CPUInfoBaseTypes import ScopeNameType
+from pepclibs.CPUInfoTypes import ScopeNameType
 from pepclibs.msr import _SimpleMSR
 from pepclibs.msr._SimpleMSR import _CPU_BYTEORDER
 from pepclibs import _PerCPUCache, CPUInfo

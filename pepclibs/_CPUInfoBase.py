@@ -22,11 +22,12 @@ from pepclibs import CPUModels, Tpmi
 from pepclibs.helperlibs import Logging, LocalProcessManager, ClassHelpers, Trivial, KernelVersion
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorNotFound
 
-from pepclibs._CPUInfoBaseTypes import CPUInfoTypedDict
+from pepclibs.CPUInfoTypes import CPUInfoTypedDict
+
 if typing.TYPE_CHECKING:
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
-    from pepclibs._CPUInfoBaseTypes import CPUInfoKeyType, ScopeNameType, AbsNumsType
-    from pepclibs._CPUInfoBaseTypes import HybridCPUKeyType, HybridCPUKeyInfoType
+    from pepclibs.CPUInfoTypes import (CPUInfoKeyType, ScopeNameType, AbsNumsType,
+                                       HybridCPUKeyType, HybridCPUKeyInfoType)
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 

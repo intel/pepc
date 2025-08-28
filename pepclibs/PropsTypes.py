@@ -16,8 +16,7 @@ from typing import Union
 from pepclibs import PStates, CStates
 
 # pylint: disable=unused-import
-from pepclibs._CPUInfoBaseTypes import AbsNumsType, RelNumsType
+from pepclibs.CPUInfoTypes import AbsNumsType, RelNumsType
 from pepclibs._PropsClassBaseTypes import PropertyTypedDict, PropertyValueType, MechanismNameType
-from pepclibs._PropsClassBaseTypes import ScopeNameType
 
 PropsClassType = Union[PStates.PStates, CStates.CStates]

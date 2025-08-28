@@ -42,7 +42,8 @@ from typing import Any, Sequence, Literal, Generator, cast, get_args
 from pepclibs.helperlibs import Logging, Trivial, Human, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 
-from pepclibs._PropsClassBaseTypes import PropertyTypedDict, ScopeNameType, PropertyValueType
+from pepclibs._PropsClassBaseTypes import PropertyTypedDict, PropertyValueType
+from pepclibs.CPUInfoTypes import ScopeNameType
 
 if typing.TYPE_CHECKING:
     from pepclibs.msr import MSR
