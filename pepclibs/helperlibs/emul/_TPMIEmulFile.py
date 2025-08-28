@@ -56,7 +56,6 @@ def _mem_write_emul_file_write(self: IO[str], data: str) -> int:
     try:
         with open(md_fullpath, "r+", encoding="utf-8") as fobj:
             fobj.seek(mdmap[instance][offset])
-            print(f"{data}, writing {value_str}")
             fobj.write(value_str)
     except Error as err:
         errmsg = Error(str(err)).indent(2)

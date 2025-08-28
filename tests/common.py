@@ -17,22 +17,23 @@ from pathlib import Path
 import typing
 from typing import TypedDict, Mapping, cast
 from pepclibs.helperlibs import ProcessManager, EmulProcessManager, TestRunner
-from pepclibs.helperlibs.Exceptions import ExceptionType
 from pepctool import _Pepc
+
 if typing.TYPE_CHECKING:
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
+    from pepclibs.helperlibs.Exceptions import ExceptionType
 
-class CommonTestParamsTypedDict(TypedDict):
-    """
-    A dictionary of common test parameters.
+    class CommonTestParamsTypedDict(TypedDict):
+        """
+        A dictionary of common test parameters.
 
-    Attributes:
-        hostname: The hostname of the target system.
-        pman: The process manager instance for managing processes on the target system.
-    """
+        Attributes:
+            hostname: The hostname of the target system.
+            pman: The process manager instance for managing processes on the target system.
+        """
 
-    hostname: str
-    pman: ProcessManagerType
+        hostname: str
+        pman: ProcessManagerType
 
 def _get_datapath(dataset: str) -> Path:
     """
@@ -106,7 +107,7 @@ def build_params(pman: ProcessManagerType) -> CommonTestParamsTypedDict:
         A 'CommonTestParams' object initialized with the hostname and process manager.
     """
 
-    return CommonTestParamsTypedDict(hostname=pman.hostname, pman=pman)
+    return {"hostname": pman.hostname, "pman": pman}
 
 def run_pepc(arguments: str,
              pman: ProcessManagerType,

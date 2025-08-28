@@ -10,9 +10,13 @@
 
 """Test module for 'pepc' project 'aspm' command."""
 
+import typing
 import pytest
 import common
-from pepclibs.helperlibs.Exceptions import Error, ErrorPermissionDenied, ExceptionType
+from pepclibs.helperlibs.Exceptions import Error, ErrorPermissionDenied
+
+if typing.TYPE_CHECKING:
+    from pepclibs.helperlibs.Exceptions import ExceptionType
 
 @pytest.fixture(name="params", scope="module")
 def get_params(hostspec):

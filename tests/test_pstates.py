@@ -3,27 +3,64 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2022 Intel Corporation
+# Copyright (C) 2020-2025 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
-# Author: Niklas Neronin <niklas.neronin@intel.com>
+# Authors: Niklas Neronin <niklas.neronin@intel.com>
+#          Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
-"""Tests for the public methods of the 'PStates' module."""
+"""
+Test for the 'PStates' module.
+"""
 
+from  __future__ import annotations # Remove when switching to Python 3.10+.
+
+import typing
+from typing import Generator, cast
 import pytest
 import common
 import props_common
 from pepclibs import CPUInfo, PStates
 
-def _get_enable_cache_param():
-    """Yield each dataset with a bool. Used for toggling PStates 'enable_cache'."""
+if typing.TYPE_CHECKING:
+    from common import CommonTestParamsTypedDict
+
+    class _TestParamsTypedDict(CommonTestParamsTypedDict, total=False):
+        """
+        The test parameters dictionary.
+
+        Attributes:
+            cpuinfo: A 'CPUInfo.CPUInfo' object.
+            pobj: A 'PStates.PStates' object.
+        """
+
+        cpuinfo: CPUInfo.CPUInfo
+        pobj: PStates.PStates
+
+def _get_enable_cache_param() -> Generator[bool, None, None]:
+    """
+    Yield boolean values to toggle the 'enable_cache' parameter for the 'PStates' module.
+
+    Yields:
+        bool: The next value for the 'enable_cache' parameter (True or False).
+    """
 
     yield True
     yield False
 
 @pytest.fixture(name="params", scope="module", params=_get_enable_cache_param())
-def get_params(hostspec, request):
-    """Yield a dictionary with information we need for testing."""
+def get_params(hostspec: str,
+               request: pytest.FixtureRequest) -> Generator[_TestParamsTypedDict, None, None]:
+    """
+    Yield a dictionary containing parameters required 'CPUInfo' tests.
+
+    Args:
+        hostspec: The host specification/name to create a process manager for. If the hostspec
+                  starts with "emulation:", it indicates an emulated environment.
+
+    Yields:
+        A dictionary with test parameters.
+    """
 
     enable_cache = request.param
 
@@ -32,18 +69,31 @@ def get_params(hostspec, request):
          PStates.PStates(pman=pman, cpuinfo=cpuinfo, enable_cache=enable_cache) as pobj:
         params = common.build_params(pman)
 
+        if typing.TYPE_CHECKING:
+            params = cast(_TestParamsTypedDict, params)
+
         params["cpuinfo"] = cpuinfo
         params["pobj"] = pobj
 
         yield params
 
-def _get_set_and_verify_data(params, cpu):
-    """Yield ('pname', 'value') tuples for the 'test_pstates_set_and_verify()' test-case."""
+def _get_set_and_verify_data(params: _TestParamsTypedDict,
+                             cpu: int) -> Generator[tuple[str, str | int], None, None]:
+    """
+    Yield property name and value pairs running various tests for the property and the value.
+
+    Args:
+        params: Dictionary containing test parameters and objects required for property retrieval.
+        cpu: CPU to test property with.
+
+    Yields:
+        tuple: A pair containing the property name and the value to run a test with.
+    """
 
     pobj = params["pobj"]
 
-    # Current value of the property is not known, so we yield more than one value for each #
-    # property. This makes sure the property actually gets changed.
+    # The initial value of each property is unknown, so multiple values are yielded per property.
+    # This ensures that the property is actually modified during testing.
 
     pvinfo = pobj.get_cpu_prop("driver", cpu)
     if pvinfo["val"] == "intel_pstate":
@@ -52,6 +102,7 @@ def _get_set_and_verify_data(params, cpu):
 
     yield "turbo", "off"
     yield "turbo", "on"
+    yield "turbo", "off"
 
     yield "epp", "1"
     yield "epp", "254"
@@ -61,8 +112,9 @@ def _get_set_and_verify_data(params, cpu):
 
     pvinfo = pobj.get_cpu_prop("governors", cpu)
     if pvinfo["val"] is not None:
-        yield "governor", pvinfo["val"][0]
-        yield "governor", pvinfo["val"][-1]
+        governors = cast(list[str], pvinfo["val"])
+        yield "governor", governors[0]
+        yield "governor", governors[-1]
 
     freq_pairs = (("min_freq", "max_freq"), ("min_uncore_freq", "max_uncore_freq"))
     for pname_min, pname_max in freq_pairs:
@@ -74,31 +126,54 @@ def _get_set_and_verify_data(params, cpu):
         else:
             max_limit = props_common.get_max_cpu_freq(params, cpu, numeric=True)
 
+        if typing.TYPE_CHECKING:
+            min_limit = cast(int, min_limit)
+            max_limit = cast(int, max_limit)
+
         yield pname_min, min_limit
         yield pname_max, min_limit
 
         yield pname_max, max_limit
         yield pname_min, max_limit
 
-def test_pstates_set_and_verify(params):
-    """Verify that 'get_prop_cpus()' returns same values as set by 'set_prop_cpus()'."""
+def test_pstates_set_and_verify(params: _TestParamsTypedDict):
+    """
+    Verify that 'get_prop_cpus()' returns the same values as set by 'set_prop_cpus()'.
+
+    Args:
+        params: The test parameters.
+    """
 
     props_vals = _get_set_and_verify_data(params, 0)
     props_common.set_and_verify(params, props_vals, 0)
 
-def test_pstates_property_type(params):
-    """Verify that 'get_prop_cpus()' returns values of the correct type."""
+def test_pstates_property_type(params: _TestParamsTypedDict):
+    """
+    Test that 'get_prop_cpus()' returns values of the expected type.
+
+    Args:
+        params: The test parameters.
+    """
 
     props_common.verify_props_value_type(params, 0)
 
-def test_pstates_get_props_mechanisms(params):
-    """Verify that the 'mname' arguments of 'get_prop_cpus()' works correctly."""
+def test_pstates_get_props_mechanisms(params: _TestParamsTypedDict):
+    """
+    Verify correct behavior of the 'mname' argument in 'get_prop_cpus()'.
+
+    Args:
+        params: The test parameters.
+    """
 
     props_common.verify_get_props_mechanisms(params, 0)
 
-def test_pstates_set_props_mechanisms_bool(params):
+def test_pstates_set_props_mechanisms_bool(params: _TestParamsTypedDict):
     """
-    Verify that the 'mname' arguments of 'get_prop_cpus()' works correctly for boolean properties.
+    Verify correct behavior of 'get_prop_cpus()' when using the 'mname' argument for boolean
+    properties.
+
+    Args:
+        params: The test parameters.
     """
 
     props_common.verify_set_props_mechanisms_bool(params, 0)

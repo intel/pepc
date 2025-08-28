@@ -3,13 +3,18 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2021 Intel Corporation
+# Copyright (C) 2021-2025 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
-# Author: Antti Laakso <antti.laakso@linux.intel.com>
+# Authors: Antti Laakso <antti.laakso@linux.intel.com>
+#          Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
-"""Test module for 'pepc' project 'pstates' command."""
+"""Test 'pepc pstates' commands."""
 
+from  __future__ import annotations # Remove when switching to Python 3.10+.
+
+import typing
+from typing import Final, Generator, cast
 import pytest
 import common
 import props_common
@@ -18,13 +23,33 @@ from pepclibs.helperlibs import Trivial
 from pepclibs import CPUInfo, PStates
 from pepclibs.PStates import ErrorTryAnotherMechanism
 
+if typing.TYPE_CHECKING:
+    from common import CommonTestParamsTypedDict
+    from pepclibs.helperlibs.Exceptions import ExceptionType
+
+    class _TestParamsTypedDict(CommonTestParamsTypedDict, total=False):
+        """
+        The test parameters dictionary.
+
+        Attributes:
+            cpuinfo: A 'CPUInfo.CPUInfo' object.
+            pobj: A 'PStates.PStates' object.
+            cpus: List of CPU numbers available on the test platform.
+            packages: List of package numbers available on the test platform.
+        """
+
+        cpuinfo: CPUInfo.CPUInfo
+        pobj: PStates.PStates
+        cpus: list[int]
+        packages: list[int]
+
 # If the '--mechanism' option is present, the command may fail because the mechanism may not be
 # supported. Ignore these failures.
-_IGNORE = {ErrorNotSupported: "--mechanism",
-           ErrorTryAnotherMechanism: "--mechanism"}
+_IGNORE: Final[dict[ExceptionType, str]] = {ErrorNotSupported: "--mechanism",
+                                            ErrorTryAnotherMechanism: "--mechanism"}
 
 @pytest.fixture(name="params", scope="module")
-def get_params(hostspec, tmp_path_factory):
+def get_params(hostspec: str) -> Generator[_TestParamsTypedDict, None, None]:
     """Yield a dictionary with information we need for testing."""
 
     with common.get_pman(hostspec) as pman, \
@@ -32,9 +57,11 @@ def get_params(hostspec, tmp_path_factory):
          PStates.PStates(pman=pman, cpuinfo=cpuinfo) as pobj:
         params = common.build_params(pman)
 
+        if typing.TYPE_CHECKING:
+            params = cast(_TestParamsTypedDict, params)
+
         params["cpuinfo"] = cpuinfo
         params["pobj"] = pobj
-        params["tmp_path"] = tmp_path_factory.mktemp(params["hostname"])
 
         params["cpus"] = cpuinfo.get_cpus()
         params["packages"] = cpuinfo.get_packages()

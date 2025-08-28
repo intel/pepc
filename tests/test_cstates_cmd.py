@@ -23,7 +23,7 @@ _IGNORE = {ErrorNotSupported: "--mechanism",
            ErrorTryAnotherMechanism: "--mechanism"}
 
 @pytest.fixture(name="params", scope="module")
-def get_params(hostspec, tmp_path_factory):
+def get_params(hostspec):
     """Yield a dictionary with information we need for testing."""
 
     with common.get_pman(hostspec) as pman, \
@@ -33,7 +33,6 @@ def get_params(hostspec, tmp_path_factory):
 
         params["pobj"] = pobj
         params["cpuinfo"] = cpuinfo
-        params["tmp_path"] = tmp_path_factory.mktemp(params["hostname"])
 
         allcpus = cpuinfo.get_cpus()
         params["cpus"] = allcpus

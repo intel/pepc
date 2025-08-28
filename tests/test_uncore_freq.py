@@ -12,34 +12,37 @@ Test the for the '_UncoreFreqSysfs' and '_UncoreFreqTpmi' modules.
 
 from  __future__ import annotations # Remove when switching to Python 3.10+.
 
+import typing
 from typing import cast, Literal, Union, Generator
 import pytest
 import common
-from common import CommonTestParamsTypedDict
 from pepclibs import CPUInfo, _UncoreFreqSysfs, _UncoreFreqTpmi
-from pepclibs.CPUInfoTypes import RelNumsType
 from pepclibs.helperlibs.Exceptions import Error, ErrorBadOrder, ErrorNotSupported, ErrorOutOfRange
 
-_UncoreFreqObjType = Union[_UncoreFreqSysfs.UncoreFreqSysfs, _UncoreFreqTpmi.UncoreFreqTpmi]
+if typing.TYPE_CHECKING:
+    from common import CommonTestParamsTypedDict
+    from pepclibs.CPUInfoTypes import RelNumsType
 
-class _TestParamsTypedDict(CommonTestParamsTypedDict, total=False):
-    """
-    The test parameters dictionary.
+    _UncoreFreqObjType = Union[_UncoreFreqSysfs.UncoreFreqSysfs, _UncoreFreqTpmi.UncoreFreqTpmi]
 
-    Attributes:
-        cpuinfo: A 'CPUInfo.CPUInfo' object describing the CPU of the SUT.
-        mechanism: The uncore frequency mechanism being tested.
-        uncfreq_obj: The uncore frequency object being tested.
-        cache_enabled: Whether the caching is enabled for 'uncfreq_obj'.
-    """
+    class _TestParamsTypedDict(CommonTestParamsTypedDict, total=False):
+        """
+        The test parameters dictionary.
 
-    cpuinfo: CPUInfo.CPUInfo
-    mechanism: Literal["sysfs", "tpmi"]
-    uncfreq_obj: _UncoreFreqObjType
-    cache_enabled: bool
+        Attributes:
+            cpuinfo: A 'CPUInfo.CPUInfo' object.
+            mechanism: The uncore frequency mechanism being tested.
+            uncfreq_obj: The uncore frequency object being tested.
+            cache_enabled: Whether the caching is enabled for 'uncfreq_obj'.
+        """
+
+        cpuinfo: CPUInfo.CPUInfo
+        mechanism: Literal["sysfs", "tpmi"]
+        uncfreq_obj: _UncoreFreqObjType
+        cache_enabled: bool
 
 @pytest.fixture(name="params", scope="module")
-def get_params(hostspec: str) -> Generator[CommonTestParamsTypedDict, None, None]:
+def get_params(hostspec: str) -> Generator[_TestParamsTypedDict, None, None]:
     """
     Yield a dictionary containing parameters required 'CPUInfo' tests.
 
@@ -53,13 +56,15 @@ def get_params(hostspec: str) -> Generator[CommonTestParamsTypedDict, None, None
 
     with common.get_pman(hostspec) as pman, CPUInfo.CPUInfo(pman=pman) as cpuinfo:
         params = common.build_params(pman)
-        params = cast(_TestParamsTypedDict, params)
+
+        if typing.TYPE_CHECKING:
+            params = cast(_TestParamsTypedDict, params)
 
         params["cpuinfo"] = cpuinfo
         yield params
 
 def _iter_uncore_freq_objects(params: _TestParamsTypedDict) -> Generator[_UncoreFreqObjType,
-                                                                        None, None]:
+                                                                         None, None]:
     """
     Yield uncore frequency objects to test.
 
@@ -453,7 +458,8 @@ def _test_elc_threshold_methods_cpu(uncfreq_obj: _UncoreFreqObjType, cpu: int):
     assert lo_thresh == 20, f"Expected ELC low threshold 20%, but got {lo_thresh}%\n{errmsg_suffix}"
 
     _, hi_thresh = next(uncfreq_obj.get_elc_high_threshold_cpus((cpu,)))
-    assert hi_thresh == 50, f"Expected ELC high threshold 50%, but got {hi_thresh}%\n{errmsg_suffix}"
+    assert hi_thresh == 50, f"Expected ELC high threshold 50%, but got {hi_thresh}%\n" \
+                            f"{errmsg_suffix}"
 
     # Restore saved thresholds.
     uncfreq_obj.set_elc_low_threshold_cpus(0, (cpu,))
