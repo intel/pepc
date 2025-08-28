@@ -25,14 +25,18 @@ except ImportError:
     # We can live without argcomplete, we only lose tab completions.
     _ARGCOMPLETE_AVAILABLE = False
 
+import typing
 from typing import Sequence, Any, Generator, cast
-from pepclibs import CStates, PStates, PMQoS, CPUInfo
+from pepclibs import PMQoS, CStates, PStates, CPUInfo
 from pepclibs.helperlibs import ArgParse, Human, Logging, ProcessManager, ProjectFiles, Trivial
 from pepclibs.helperlibs import EmulProcessManager
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 from pepclibs.helperlibs.ArgParse import ArgTypedDict, ArgKwargsTypedDict
-from pepclibs._PropsClassBase import MECHANISMS, PropertyTypedDict
+from pepclibs._PropsClassBase import MECHANISMS
+
+if typing.TYPE_CHECKING:
+    from pepclibs._PropsClassBaseTypes import PropertyTypedDict
 
 _VERSION = "1.5.44"
 TOOLNAME = "pepc"

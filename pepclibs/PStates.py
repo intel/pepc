@@ -20,14 +20,13 @@ import typing
 import contextlib
 import statistics
 from pathlib import Path
-from typing import Generator, NoReturn, cast, Union
+from typing import Generator, NoReturn, cast, Union, Final
 from pepclibs import _PropsClassBase
 from pepclibs.helperlibs import Trivial, Human, ClassHelpers, Logging
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorVerifyFailed
-from pepclibs._PropsClassBase import ErrorTryAnotherMechanism
-# Make the exception class be available for users.
+
 # pylint: disable-next=unused-import
-from pepclibs._PropsClassBase import ErrorUsePerCPU
+from pepclibs._PropsClassBase import ErrorTryAnotherMechanism, ErrorUsePerCPU
 
 if typing.TYPE_CHECKING:
     from pepclibs.msr import MSR, FSBFreq
@@ -53,7 +52,7 @@ _SPECIAL_UNCORE_FREQ_VALS = {"min", "max", "mdl"}
 #
 # Some properties have their scope name set to 'None' because the scope may vary depending on the
 # platform. In such cases, the scope can be determined using 'PStates.get_sname()'.
-PROPS: dict[str, PropertyTypedDict] = {
+PROPS: Final[dict[str, PropertyTypedDict]] = {
     "turbo": {
         "name": "Turbo",
         "type": "bool",

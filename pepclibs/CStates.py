@@ -15,7 +15,8 @@ This module provides C-state management API.
 # TODO: finish annotating and modernizing this module.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
-from typing import Generator, Literal, Iterable
+import typing
+from typing import Generator, Literal, Iterable, Final
 from pepclibs.helperlibs import ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs import _PropsClassBase, CPUIdle
@@ -23,8 +24,11 @@ from pepclibs.msr import PowerCtl, PCStateConfigCtl
 
 # pylint: disable=unused-import
 from pepclibs.CPUIdle import ReqCStateInfoTypedDict, ReqCStateInfoValuesType, ReqCStateInfoKeysType
-from pepclibs._PropsClassBase import ErrorUsePerCPU, ErrorTryAnotherMechanism, PropertyTypedDict
-from pepclibs.CPUInfoTypes import AbsNumsType
+from pepclibs._PropsClassBase import ErrorUsePerCPU, ErrorTryAnotherMechanism
+
+if typing.TYPE_CHECKING:
+    from pepclibs.CPUInfoTypes import AbsNumsType
+    from pepclibs._PropsClassBaseTypes import PropertyTypedDict
 
 # This dictionary describes the C-state properties this module supports. Many of the properties are
 # just features controlled by an MSR, such as "c1e_autopromote" from 'PowerCtl.FEATURES'.
@@ -35,7 +39,7 @@ from pepclibs.CPUInfoTypes import AbsNumsType
 #
 # Some properties have scope name set to 'None' because the scope may be different for different
 # systems. In such cases, the scope can be obtained via 'CStates.get_sname()'.
-PROPS: dict[str, PropertyTypedDict] = {
+PROPS: Final[dict[str, PropertyTypedDict]] = {
     "pkg_cstate_limit": {
         "name": "Package C-state limit",
         "type": "str",

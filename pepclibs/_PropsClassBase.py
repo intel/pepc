@@ -42,7 +42,6 @@ from typing import Any, Sequence, Literal, Generator, cast, get_args, Final
 from pepclibs.helperlibs import Logging, Trivial, Human, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 
-from pepclibs._PropsClassBaseTypes import PropertyTypedDict
 from pepclibs.CPUInfoTypes import ScopeNameType
 
 if typing.TYPE_CHECKING:
@@ -52,6 +51,7 @@ if typing.TYPE_CHECKING:
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepclibs._PropsClassBaseTypes import MechanismTypedDict, MechanismNameType
     from pepclibs._PropsClassBaseTypes import PVInfoTypedDict, PropertyValueType
+    from pepclibs._PropsClassBaseTypes import PropertyTypedDict
     from pepclibs.CPUInfoTypes import AbsNumsType, RelNumsType
 
     class _PropertyTypedDict(PropertyTypedDict):
