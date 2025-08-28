@@ -17,7 +17,7 @@ import typing
 from typing import Generator, cast, Literal
 import contextlib
 from pepclibs import CPUInfo, CPUModels
-from pepclibs._PropsClassBaseTypes import AbsNumsType
+from pepclibs.CPUInfoTypes import AbsNumsType
 from pepclibs.helperlibs import Logging, LocalProcessManager, ClassHelpers, Human
 from pepclibs.helperlibs.Exceptions import ErrorNotSupported, ErrorOutOfRange, ErrorBadOrder
 

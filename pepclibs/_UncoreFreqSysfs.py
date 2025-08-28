@@ -40,7 +40,7 @@ from pepclibs._PropsClassBaseTypes import MechanismNameType
 from pepclibs._UncoreFreqBase import FreqValueType as _FreqValueType
 from pepclibs._UncoreFreqBase import ELCThresholdType as _ELCThresholdType
 from pepclibs.helperlibs.ProcessManager import ProcessManagerType
-from pepclibs.CPUInfo import RelNumsType, AbsNumsType
+from pepclibs.CPUInfoTypes import RelNumsType, AbsNumsType
 from pepclibs.msr import UncoreRatioLimit
 from pepclibs.helperlibs import Logging, ClassHelpers, KernelModule, FSHelpers
 from pepclibs.helperlibs import Trivial

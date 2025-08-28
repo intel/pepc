@@ -19,7 +19,7 @@ import typing
 from typing import Generator, Literal
 from pathlib import Path
 from pepclibs import CPUInfo, _SysfsIO
-from pepclibs._PropsClassBaseTypes import AbsNumsType
+from pepclibs.CPUInfoTypes import AbsNumsType
 from pepclibs.helperlibs import Logging, LocalProcessManager, ClassHelpers, Trivial, KernelVersion
 from pepclibs.helperlibs import Human
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorVerifyFailed

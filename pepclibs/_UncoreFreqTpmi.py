@@ -21,7 +21,7 @@ from pepclibs._UncoreFreqBase import FreqValueType as _FreqValueType
 from pepclibs._UncoreFreqBase import ELCThresholdType as _ELCThresholdType
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs.helperlibs.ProcessManager import ProcessManagerType
-from pepclibs.CPUInfo import RelNumsType
+from pepclibs.CPUInfoTypes import RelNumsType
 from pepclibs.helperlibs import Logging, ClassHelpers
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")

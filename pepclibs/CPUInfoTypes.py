@@ -7,7 +7,7 @@
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
-Provide types for '_CPUInfoBase' and 'CPUInfo' classes.
+Provide types related to the 'CPUInfo' module.
 """
 
 from __future__ import annotations # Remove when switching to Python 3.10+.

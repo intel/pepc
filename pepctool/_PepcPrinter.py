@@ -16,7 +16,7 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import sys
 from typing import TypedDict, Iterable, Sequence, IO, Literal, Iterator, Union, get_args, cast
-from pepclibs import CStates, CPUInfo
+from pepclibs import PStates, CStates, CPUInfo
 from pepclibs.helperlibs import Logging, ClassHelpers, Human, YAML, Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs.CStates import ErrorUsePerCPU
@@ -24,12 +24,12 @@ from pepclibs.PStates import ErrorTryAnotherMechanism
 from pepctool import _PepcCommon, _OpTarget
 
 # pylint: disable-next=ungrouped-imports
-from pepclibs.PropsTypes import MechanismNameType, PropertyValueType, PropertyTypedDict
-from pepclibs.PropsTypes import PropsClassType
 from pepclibs.CPUIdle import ReqCStateInfoTypedDict, ReqCStateInfoValuesType, ReqCStateInfoKeysType
+from pepclibs._PropsClassBaseTypes import PropertyTypedDict, PropertyValueType, MechanismNameType
 from pepclibs._PropsClassBaseTypes import PVInfoTypedDict
 from pepclibs.CPUInfoTypes import AbsNumsType, RelNumsType, ScopeNameType
 
+PropsClassType = Union[PStates.PStates, CStates.CStates]
 PrintFormatType = Literal["human", "yaml"]
 
 class _AggrSubPinfoTypdDict(TypedDict,):

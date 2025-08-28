@@ -15,7 +15,7 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 from typing import Literal, Generator
 from pepclibs import CPUInfo
 from pepclibs.helperlibs.ProcessManager import ProcessManagerType
-from pepclibs.CPUInfo import AbsNumsType, RelNumsType
+from pepclibs.CPUInfoTypes import AbsNumsType, RelNumsType
 from pepclibs.helperlibs import LocalProcessManager, ClassHelpers, Human
 from pepclibs.helperlibs.Exceptions import ErrorNotSupported, ErrorOutOfRange, ErrorBadOrder, Error
 

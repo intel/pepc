@@ -17,7 +17,7 @@ import pytest
 import common
 from common import CommonTestParamsTypedDict
 from pepclibs import CPUInfo, _UncoreFreqSysfs, _UncoreFreqTpmi
-from pepclibs.CPUInfo import RelNumsType
+from pepclibs.CPUInfoTypes import RelNumsType
 from pepclibs.helperlibs.Exceptions import Error, ErrorBadOrder, ErrorNotSupported, ErrorOutOfRange
 
 _UncoreFreqObjType = Union[_UncoreFreqSysfs.UncoreFreqSysfs, _UncoreFreqTpmi.UncoreFreqTpmi]

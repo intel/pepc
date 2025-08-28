@@ -51,7 +51,8 @@ if typing.TYPE_CHECKING:
     from pepclibs.CPUInfo import CPUInfo
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepclibs._PropsClassBaseTypes import MechanismTypedDict, MechanismNameType
-    from pepclibs._PropsClassBaseTypes import PVInfoTypedDict, AbsNumsType, RelNumsType
+    from pepclibs._PropsClassBaseTypes import PVInfoTypedDict
+    from pepclibs.CPUInfoTypes import AbsNumsType, RelNumsType
 
 class _PropertyTypedDict(PropertyTypedDict):
     """

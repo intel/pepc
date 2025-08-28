@@ -15,9 +15,7 @@ Provide types for the property classes.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 from typing import TypedDict, Literal, Union
-
-# pylint: disable-next=unused-import
-from pepclibs.CPUInfoTypes import AbsNumsType, RelNumsType, ScopeNameType
+from pepclibs.CPUInfoTypes import ScopeNameType
 
 class MechanismTypedDict(TypedDict):
     """

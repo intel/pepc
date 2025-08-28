@@ -19,45 +19,13 @@ import queue
 import codecs
 import threading
 import contextlib
-from typing import NamedTuple, IO, Any, cast, Generator, TypedDict
+from typing import IO, Any, cast, Generator
 from pathlib import Path
 from pepclibs.helperlibs import Logging, Human, Trivial, ClassHelpers, ToolChecker
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound
+from pepclibs.helperlibs.ProcessManagerTypes import ProcWaitResultType, LsdirTypedDict
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
-
-class ProcWaitResultType(NamedTuple):
-    """
-    The result of the 'wait()' method for a process.
-
-    Attributes:
-        stdout: The standard output of the process. Can be a single string or a list of strings
-                lines. The tailing newline is not stripped.
-        stderr: The standard error of the process. Can be a single string or a list of strings
-                lines. The tailing newline is not stripped.
-        exitcode: The exit code of the process. Can be an integer or None if the process is still
-                  running.
-    """
-
-    stdout: str | list[str]
-    stderr: str | list[str]
-    exitcode: int | None
-
-class LsdirTypedDict(TypedDict):
-    """
-    A directory entry information dictionary.
-
-    Attributes:
-        name: The name of the directory entry (a file, a directory, etc).
-        path: The full path to the directory entry.
-        mode: The mode (permissions) of the directory entry.
-        ctime: The creation time of the directory entry in seconds since the epoch.
-    """
-
-    name: str
-    path: Path
-    mode: int
-    ctime: float
 
 # The default process timeout in seconds.
 TIMEOUT = 24 * 60 * 60

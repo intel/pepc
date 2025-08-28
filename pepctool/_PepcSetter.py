@@ -13,19 +13,19 @@ Provide API for changing properties.
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
-from typing import TypedDict, Sequence, cast, Iterable, Literal
+from typing import TypedDict, Sequence, cast, Iterable, Literal, Union
 from pepctool import _PepcCommon
 from pepctool._PepcPrinter import PepcPrinterClassType
 from pepctool import _OpTarget, _PepcPrinter
-from pepclibs import CPUInfo, _SysfsIO, CStates
-from pepclibs.PropsTypes import PropsClassType, PropertyValueType
-from pepclibs.PropsTypes import AbsNumsType, RelNumsType
-from pepclibs.CPUInfoTypes import ScopeNameType
-from pepclibs._PropsClassBaseTypes import MechanismNameType
+from pepclibs import CPUInfo, _SysfsIO, CStates, PStates
+from pepclibs.CPUInfoTypes import AbsNumsType, RelNumsType, ScopeNameType
+from pepclibs._PropsClassBaseTypes import MechanismNameType, PropertyValueType
 from pepclibs.helperlibs import ClassHelpers, Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorBadOrder
 from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 from pepclibs.msr import MSR
+
+PropsClassType = Union[PStates.PStates, CStates.CStates]
 
 class PropSetInfoTypedDict(TypedDict, total=False):
     """

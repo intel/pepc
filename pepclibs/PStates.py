@@ -35,8 +35,9 @@ if typing.TYPE_CHECKING:
     from pepclibs import _SysfsIO, EPP, EPB, _UncoreFreqSysfs, _UncoreFreqTpmi
     from pepclibs.CPUInfo import CPUInfo
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
-    from pepclibs._PropsClassBaseTypes import AbsNumsType, RelNumsType, MechanismNameType
     from pepclibs._PropsClassBaseTypes import PropertyTypedDict, PropertyValueType
+    from pepclibs._PropsClassBaseTypes import MechanismNameType
+    from pepclibs.CPUInfoTypes import AbsNumsType, RelNumsType
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
