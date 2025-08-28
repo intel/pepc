@@ -13,31 +13,33 @@ Provide information about CPU topology and other CPU details.
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
-from typing import TypedDict
+import typing
+from typing import TypedDict, Final
 from pepclibs.helperlibs.Exceptions import ErrorNotSupported
 
-class CPUModelTypedDict(TypedDict):
-    """
-    CPU model information.
+if typing.TYPE_CHECKING:
+    class CPUModelTypedDict(TypedDict):
+        """
+        CPU model information.
 
-    Attributes:
-        vendor: The vendor of the CPU.
-        family: The family of the CPU.
-        model: The model number of the CPU.
-        vfm: The VFM (Vendor, Family, Model) code of the CPU.
-        codename: The codename of the CPU.
-    """
+        Attributes:
+            vendor: The vendor of the CPU.
+            family: The family of the CPU.
+            model: The model number of the CPU.
+            vfm: The VFM (Vendor, Family, Model) code of the CPU.
+            codename: The codename of the CPU.
+        """
 
-    vendor: int
-    family: int
-    model: int
-    vfm: int
-    codename: str
+        vendor: int
+        family: int
+        model: int
+        vfm: int
+        codename: str
 
-X86_VENDOR_INTEL = 0
-X86_VENDOR_AMD = 2
+X86_VENDOR_INTEL: Final[int] = 0
+X86_VENDOR_AMD: Final[int] = 2
 
-X86_CPU_VENDORS = {
+X86_CPU_VENDORS: Final[dict[str, int]] = {
     "GenuineIntel": X86_VENDOR_INTEL,
     "AuthenticAMD": X86_VENDOR_AMD,
 }
@@ -78,7 +80,7 @@ def make_intel_vfm(family: int, model: int) -> int:
 
     return make_vfm(X86_VENDOR_INTEL, family, model)
 
-MODELS: dict[str, CPUModelTypedDict] = {
+MODELS: Final[dict[str, CPUModelTypedDict]] = {
     # Xeons.
     "ATOM_DARKMONT_X": {
         "vendor": X86_VENDOR_INTEL,
@@ -606,7 +608,7 @@ MODELS: dict[str, CPUModelTypedDict] = {
 #
 # Various handy CPU groups.
 #
-CPU_GROUPS: dict[str, tuple[int, ...]] = {
+CPU_GROUPS: Final[dict[str, tuple[int, ...]]] = {
     "LUNARLAKE": (MODELS["LUNARLAKE_M"]["vfm"],),
     "GNR": (MODELS["GRANITERAPIDS_X"]["vfm"],
             MODELS["GRANITERAPIDS_D"]["vfm"]),
@@ -684,6 +686,6 @@ CPU_GROUPS: dict[str, tuple[int, ...]] = {
 }
 
 # CPU models that have dies but they are not enumerated via the CPUID instruction.
-MODELS_WITH_HIDDEN_DIES= CPU_GROUPS["GNR"] + \
-                         CPU_GROUPS["DARKMONT"] + \
-                         CPU_GROUPS["CRESTMONT"]
+MODELS_WITH_HIDDEN_DIES: Final[tuple[int, ...]] = CPU_GROUPS["GNR"] + \
+                                                  CPU_GROUPS["DARKMONT"] + \
+                                                  CPU_GROUPS["CRESTMONT"]

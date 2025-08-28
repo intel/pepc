@@ -22,7 +22,9 @@ from pepclibs.helperlibs.Exceptions import Error
 from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 # pylint: disable-next=unused-import
 from pepclibs._CPUInfoBase import SCOPE_NAMES, HYBRID_TYPE_INFO, NA, INVALID
-from pepclibs.CPUInfoTypes import HybridCPUKeyType, ScopeNameType, AbsNumsType, RelNumsType
+
+if typing.TYPE_CHECKING:
+    from pepclibs.CPUInfoTypes import HybridCPUKeyType, ScopeNameType, AbsNumsType, RelNumsType
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
