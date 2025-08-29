@@ -11,7 +11,6 @@
 
 """Common functions for the P-state and C-state command-line option tets."""
 
-# TODO: finish annotating.
 from  __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
@@ -22,6 +21,7 @@ from pepctool import _Pepc
 if typing.TYPE_CHECKING:
     from pepclibs import CPUInfo, PStates
     from common import CommonTestParamsTypedDict
+    from pepclibs.CPUInfoTypes import ScopeNameType
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepclibs.helperlibs.Exceptions import ExceptionType
 
@@ -125,16 +125,31 @@ def get_mechanism_opts(params: PropsCmdlTestParamsTypedDict,
             continue
         yield f"--mechanism {mname}"
 
-def get_good_cpu_opts(params, sname="package"):
+def get_good_optarget_opts(params: PropsCmdlTestParamsTypedDict,
+                           sname: ScopeNameType = "package") -> Generator[str, None, None]:
     """
-    Return a list of good options that specify CPU numbers ('--cpus', '--packages', etc). The
-    arguments are as follows.
-      * params - test parameters.
-      * sname - scope name to get CPU numbers for.
+    Yield valid command-line options for specifying the operation target options, such as '--cpus',
+    '--packages', etc.
+
+    Args:
+        params: The test parameters dictionary.
+        sname: Scope name indicating the topology level for which to generate options.
+
+    Yields:
+        Valid operation target command-line options for the specified scope.
     """
 
     def _get_package_opts(params, pkg):
-        """Return package scope options for package 'pkg'."""
+        """
+        Yield operation target command-line options for the package scope.
+
+        Args:
+            params: The test parameters dictionary.
+            pkg: The package number for which to generate options.
+
+        Yields:
+            str: Package scope command-line option string for the specified package.
+        """
 
         pkg = params["packages"][0]
         pkg_cores_range = Trivial.rangify(params["cores"][pkg])
@@ -145,120 +160,137 @@ def get_good_cpu_opts(params, sname="package"):
                 f"--packages {pkg} --cores {pkg_cores_range}",
                 f"--packages {pkg} --dies {pkg_dies_range}",
                 f"--packages {pkg}-{params['packages'][-1]}"]
-        return opts
 
-    def _get_die_opts(params, pkg):
-        """Return die scope options for package 'pkg'."""
+        yield from opts
+
+    def _get_die_opts(params: PropsCmdlTestParamsTypedDict, pkg: int) -> Generator[str, None, None]:
+        """
+        Yield operation target command-line options for the die scope.
+
+        Args:
+            params: The test parameters dictionary.
+            pkg: The package number for which to generate die options.
+
+        Yields:
+            str: Command-line option string for the specified die within the package.
+        """
 
         first_die = params["dies"][pkg][0]
         last_die = params["dies"][pkg][-1]
 
-        opts = [f"--package {pkg} --dies {first_die}", f"--package {pkg} --dies all"]
+        yield from [f"--package {pkg} --dies {first_die}", f"--package {pkg} --dies all"]
 
         if first_die != last_die:
-            opts.append(f"--package {pkg} --dies {last_die}")
+            yield f"--package {pkg} --dies {last_die}"
         else:
-            return opts
+            return
 
         if len(params["dies"][pkg]) > 1:
             pkg_dies_range_partial = Trivial.rangify(params["dies"][pkg][1:])
-            opts.append(f"--packages {pkg} --dies {pkg_dies_range_partial}")
+            yield f"--packages {pkg} --dies {pkg_dies_range_partial}"
             pkg_dies_range_partial = Trivial.rangify(params["dies"][pkg][:-1])
-            opts.append(f"--packages {pkg} --dies {pkg_dies_range_partial}")
+            yield f"--packages {pkg} --dies {pkg_dies_range_partial}"
 
-        return opts
+    def _get_module_opts(params: PropsCmdlTestParamsTypedDict,
+                         pkg: int) -> Generator[str, None, None]:
+        """
+        Yield operation target command-line options for the module scope.
 
-    def _get_module_opts(params, pkg):
-        """Return module scope options for package 'pkg'."""
+        Args:
+            params: The test parameters dictionary.
+            pkg: The package number for which to generate module options.
+
+        Yields:
+            str: Command-line option string for the specified module within the package.
+        """
 
         first_module = params["modules"][pkg][0]
         last_module = params["modules"][pkg][-1]
 
-        opts = [f"--package {pkg} --modules {first_module}", f"--package {pkg} --modules all"]
+        yield from [f"--package {pkg} --modules {first_module}", f"--package {pkg} --modules all"]
 
         if first_module != last_module:
-            opts.append(f"--package {pkg} --modules {last_module}")
+            yield f"--package {pkg} --modules {last_module}"
         else:
-            return opts
+            return
 
         if len(params["modules"][pkg]) > 1:
             pkg_modules_range_part = Trivial.rangify(params["modules"][pkg][1:])
-            opts.append(f"--packages {pkg} --modules {pkg_modules_range_part}")
+            yield f"--packages {pkg} --modules {pkg_modules_range_part}"
             pkg_modules_range_part = Trivial.rangify(params["modules"][pkg][:-1])
-            opts.append(f"--packages {pkg} --modules {pkg_modules_range_part}")
+            yield f"--packages {pkg} --modules {pkg_modules_range_part}"
 
             if len(params["packages"]) > 1:
                 pkgs_range_part = Trivial.rangify(params["packages"][1:])
-                opts.append(f"--packages {pkgs_range_part} --modules {first_module}")
+                yield f"--packages {pkgs_range_part} --modules {first_module}"
                 pkg_modules_range_part = Trivial.rangify(params["modules"][pkg][1:])
-                opts.append(f"--packages {pkgs_range_part} --modules {pkg_modules_range_part}")
-
-        return opts
+                yield f"--packages {pkgs_range_part} --modules {pkg_modules_range_part}"
 
     if sname == "global":
         opts = ["",
                 "--dies all --modules all --cores all --cpus all",
                 "--packages all --dies all --cores all",
                 f"--cpus  0-{params['cpus'][-1]}"]
-        return opts
+        yield from opts
+        return
 
     if sname == "package":
-        opts = _get_package_opts(params, params["packages"][0])
+        yield from _get_package_opts(params, params["packages"][0])
         if len(params["packages"]) > 1:
-            opts += _get_package_opts(params, params["packages"][-1])
-        return opts
+            yield from _get_package_opts(params, params["packages"][-1])
+        return
 
     if sname == "die":
-        opts = _get_die_opts(params, params["packages"][0])
+        yield from _get_die_opts(params, params["packages"][0])
         if len(params["packages"]) > 1:
-            opts += _get_die_opts(params, params["packages"][-1])
-        return opts
+            yield from _get_die_opts(params, params["packages"][-1])
+        return
 
     if sname == "module":
-        opts = _get_module_opts(params, params["packages"][0])
+        yield from _get_module_opts(params, params["packages"][0])
         if len(params["packages"]) > 1:
-            opts += _get_module_opts(params, params["packages"][-1])
-        return opts
+            yield from _get_module_opts(params, params["packages"][-1])
+        return
 
-    if sname == "CPU":
-        opts = ["--core-siblings 0", "--module-siblings 0"]
+    assert sname == "CPU", f"BUG: Bad scope name {sname}"
 
-        cpus_per_pkg = len(params["cpus"]) // len(params["packages"])
-        cores_per_pkg = len(params["cores"][0])
-        modules_per_pkg = len(params["modules"][0])
+    yield from ["--core-siblings 0", "--module-siblings 0"]
 
-        cpus_per_core = cpus_per_pkg // cores_per_pkg
-        if cpus_per_core > 1:
-            siblings = ",".join([str(i) for i in range(0, cpus_per_core + 1)])
-            opts.append(f"--core-siblings {siblings}")
-            siblings = ",".join([str(i) for i in range(1, cpus_per_core)])
-            opts.append(f"--core-siblings {siblings}")
+    cpus_per_pkg = len(params["cpus"]) // len(params["packages"])
+    cores_per_pkg = len(params["cores"][0])
+    modules_per_pkg = len(params["modules"][0])
 
-        cpus_per_module = cpus_per_pkg // modules_per_pkg
-        if cpus_per_module > 1:
-            siblings = ",".join([str(i) for i in range(0, cpus_per_module + 1)])
-            opts.append(f"--module-siblings {siblings}")
-            siblings = ",".join([str(i) for i in range(1, cpus_per_module)])
-            opts.append(f"--module-siblings {siblings}")
+    cpus_per_core = cpus_per_pkg // cores_per_pkg
+    if cpus_per_core > 1:
+        siblings = ",".join([str(i) for i in range(0, cpus_per_core + 1)])
+        yield f"--core-siblings {siblings}"
+        siblings = ",".join([str(i) for i in range(1, cpus_per_core)])
+        yield f"--core-siblings {siblings}"
 
-        return opts
+    cpus_per_module = cpus_per_pkg // modules_per_pkg
+    if cpus_per_module > 1:
+        siblings = ",".join([str(i) for i in range(0, cpus_per_module + 1)])
+        yield f"--module-siblings {siblings}"
+        siblings = ",".join([str(i) for i in range(1, cpus_per_module)])
+        yield f"--module-siblings {siblings}"
 
-    assert False, f"BUG: bad scope name {sname}"
-
-def get_bad_cpu_opts(params):
+def get_bad_optarget_opts(params: PropsCmdlTestParamsTypedDict) -> Generator[str, None, None]:
     """
-    Return bad target CPU specification options. The arguments are as follows.
-      * params - test parameters.
+    Yield invalid command-line options for specifying the operation target options.
+
+    Args:
+        params: The test parameters dictionary.
+
+    Yields:
+        Valid operation target command-line options.
     """
 
-    opts = [f"--cpus {params['cpus'][-1] + 1}",
-            f"--packages 0 --cores {params['cores'][0][-1] + 1}",
-            f"--packages {params['packages'][-1] + 1}"]
+    yield from [f"--cpus {params['cpus'][-1] + 1}",
+                f"--packages 0 --cores {params['cores'][0][-1] + 1}",
+                f"--packages {params['packages'][-1] + 1}"]
 
-    # Option '--cores' must be used with '--packages', except for 1-package systems, or single
-    # socket system.
+    # The '--cores' option must be used together with '--packages', except on single-package or
+    # single-socket systems.
     if len(params["packages"]) > 1:
         pkg0_core_ranges = Trivial.rangify(params["cores"][0])
-        opts += [f"--cores {pkg0_core_ranges}"]
-
-    return opts
+        yield f"--cores {pkg0_core_ranges}"
