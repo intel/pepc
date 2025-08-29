@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2022 Intel Corporation
+# Copyright (C) 2020-2025 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Authors: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
@@ -9,113 +9,137 @@
 #          Niklas Neronin <niklas.neronin@intel.com>
 
 """
-This class implements per-CPU data caching. The cache is indexed by an element name and CPU number.
+Implement per-CPU data caching, indexed by data element key and CPU number. The cache accounts for
+CPU scope (e.g., global, package, core) and uses a write-through policy to ensure consistency.
 """
 
+from __future__ import annotations # Remove when switching to Python 3.10+.
+
+import typing
 from pepclibs.helperlibs import ClassHelpers
 from pepclibs.helperlibs.Exceptions import ErrorNotFound
 
+if typing.TYPE_CHECKING:
+    from typing import Any
+    from collections.abc import Hashable
+    from pepclibs import CPUInfo
+    from pepclibs.CPUInfoTypes import ScopeNameType
+
 class PerCPUCache:
     """
-    This class implements per_CPU data caching. The cache is indexed by data element name and CPU
-    number. It takes the CPU scope (global 0, package 3, etc) into account as well. The cache uses
-    the write-through policy.
+    Implement per-CPU data caching, indexed by data element key and CPU number. The cache accounts
+    for CPU scope (e.g., global, package, core) and uses a write-through policy to ensure
+    consistency.
     """
 
-    def is_cached(self, name, cpu):
+    def __init__(self, cpuinfo: CPUInfo.CPUInfo, enable_cache: bool = True):
         """
-        Check if '(name, cpu)' exists in the cache. Return 'True' if the item was found and 'False'
-        otherwise. Arguments are the same as in 'get()'.
+        Initialize a class instance.
+
+        Args:
+            cpuinfo: The CPU information object.
+            enable_cache: Set to False to disable caching.
         """
 
-        try:
-            self.get(name, cpu)
-        except ErrorNotFound:
-            return False
-        return True
+        self._cpuinfo = cpuinfo
+        self._enable_cache = enable_cache
 
-    def get(self, name, cpu):
+        self._cache: dict[Hashable, dict[int, Any]] = {}
+
+    def close(self):
+        """Uninitialize the class object."""
+
+        ClassHelpers.close(self, unref_attrs=("_cpuinfo",))
+
+    def get(self, key: Hashable, cpu: int) -> Any:
         """
-        Look up the '(name, cpu)' in the cache. Return the value if the item was found, raise
-        'ErrorNotFound' otherwise. The argument are as follows.
-          * name - name of the data element.
-          * cpu - an integer CPU number.
+        Retrieve the cached entry for the specified key and CPU.
+
+        Args:
+            key: The key of the cache entry to retrieve.
+            cpu: The CPU number of the cache entry to retrieve.
+
+        Returns:
+            The retrieved cache entry.
+
+        Raises:
+            ErrorNotFound: If caching is disabled or the item is not found in the cache.
         """
 
         if not self._enable_cache:
-            raise ErrorNotFound("caching is disabled")
+            raise ErrorNotFound("Caching is disabled")
 
         try:
-            return self._cache[name][cpu]
+            return self._cache[key][cpu]
         except KeyError:
-            raise ErrorNotFound(f"'{name}' is not cached for CPU {cpu}") from None
+            raise ErrorNotFound(f"'{key}' is not cached for CPU {cpu}") from None
 
-    def remove(self, name, cpu, sname="CPU"):
+    def is_cached(self, key: Hashable, cpu: int):
         """
-        Remove '(name, cpu)' and all the other items sharing the same scope from the cache.
-          * name - name of the data element.
-          * cpu - an integer CPU number.
-          * sname - scope name (e.g. "package", "core").
+        Check if the cache contains an entry for the given key and CPU.
 
-        Returns 'True' if there are elements in the cache left, and 'False' if there are no more
-        elements in the cache.
+        Args:
+            key: The key of the cache entry to check.
+            cpu: The CPU number of the cache entry to check.
+
+        Returns:
+            bool: True if the entry is present in the cache, False otherwise.
+        """
+
+        if key not in self._cache or cpu not in self._cache[key]:
+            return False
+        return True
+
+    def remove(self, key: Hashable, cpu: int, sname: ScopeNameType = "CPU"):
+        """
+        Remove the specified key and CPU entry, along with all items sharing the same scope.
+
+        Args:
+            key: The key of the cache entry to remove.
+            cpu: The CPU number of the cache entry to remove.
+            sname: The scope of the cache entry.
         """
 
         if not self._enable_cache:
             return
 
         if sname == "global":
-            del self._cache[name]
+            del self._cache[key]
             return
 
         cpus = self._cpuinfo.get_cpu_siblings(cpu, sname)
+        for rmcpu in cpus:
+            if key in self._cache and cpu in self._cache[key]:
+                del self._cache[key][rmcpu]
 
-        for cpu in cpus: # pylint: disable=redefined-argument-from-local
-            try:
-                del self._cache[name][cpu]
-            except KeyError:
-                pass
-
-    def add(self, name, cpu, val, sname="CPU"):
+    def add(self, key: Hashable, cpu: int, entry: Any, sname: ScopeNameType = "CPU") -> Any:
         """
-        Add value 'val' for item '(name, cpu)' to the cache. Add it also for each CPU sharing the
-        same scope. The argument are as follows.
-          * name - name of the data element.
-          * cpu - an integer CPU number.
-          * val - value to get cached.
-          * sname - scope name (e.g. "package", "core").
+        Add an entry to the cache for a specific key and CPU, and propagate it to all CPUs sharing
+        the same scope.
 
-        Return 'val'.
+        Args:
+            key: The key of the cache entry to add.
+            cpu: The CPU number of the cache entry to add.
+            entry: The entry to add to the cache.
+            sname: The scope of the cache entry.
+
+        Returns:
+            The entry that was cached.
+
+        Notes:
+            - If caching is disabled, return the entry without modifying the cache.
+            - The entry is stored for the specified CPU and all CPUs that share the same scope as
+              determined by 'sname'.
         """
 
         if not self._enable_cache:
-            return val
+            return entry
 
         cpus = self._cpuinfo.get_cpu_siblings(cpu, sname)
 
-        if name not in self._cache:
-            self._cache[name] = {}
-        for cpu in cpus: # pylint: disable=redefined-argument-from-local
-            self._cache[name][cpu] = val
+        if key not in self._cache:
+            self._cache[key] = {}
+        for rmcpu in cpus:
+            self._cache[key][rmcpu] = entry
 
-        return val
-
-    def __init__(self, cpuinfo, enable_cache=True):
-        """
-        The class constructor. The argument are as follows.
-          * cpuinfo - CPU information object generated by 'CPUInfo.CPUInfo()'.
-          * enable_cache - this argument can be used to disable caching.
-        """
-
-        self._cpuinfo = cpuinfo
-        self._enable_cache = enable_cache
-
-        if not self._enable_cache:
-            return
-
-        self._cache = {}
-
-    def close(self):
-        """Uninitialize the class object."""
-
-        ClassHelpers.close(self, unref_attrs=("_cpuinfo",))
+        return entry
