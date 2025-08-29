@@ -26,7 +26,7 @@ except ImportError:
     _ARGCOMPLETE_AVAILABLE = False
 
 import typing
-from typing import Sequence, Any, Generator, cast, Final
+from typing import cast
 from pepclibs import PMQoS, CStates, PStates, CPUInfo
 from pepclibs.helperlibs import ArgParse, Human, Logging, ProcessManager, ProjectFiles, Trivial
 from pepclibs.helperlibs import EmulProcessManager
@@ -34,6 +34,7 @@ from pepclibs.helperlibs.Exceptions import Error
 from pepclibs._PropsClassBase import MECHANISMS
 
 if typing.TYPE_CHECKING:
+    from typing import Sequence, Any, Generator, Final
     from pepclibs.helperlibs.ArgParse import ArgTypedDict, ArgKwargsTypedDict
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepclibs.PropsTypes import PropertyTypedDict
