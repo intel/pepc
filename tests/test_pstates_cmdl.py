@@ -15,7 +15,6 @@
 from  __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
-from typing import Final, Generator
 import pytest
 import common
 import props_cmdl_common
@@ -25,6 +24,7 @@ from pepclibs import CPUInfo, PStates
 from pepclibs.PStates import ErrorTryAnotherMechanism
 
 if typing.TYPE_CHECKING:
+    from typing import Final, Generator
     from props_cmdl_common import PropsCmdlTestParamsTypedDict
     from pepclibs.helperlibs.Exceptions import ExceptionType
 

@@ -15,10 +15,10 @@ from  __future__ import annotations # Remove when switching to Python 3.10+.
 
 from pathlib import Path
 import typing
-from typing import TypedDict, cast
 from pepclibs.helperlibs import ProcessManager, EmulProcessManager
 
 if typing.TYPE_CHECKING:
+    from typing import TypedDict, cast
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepclibs.helperlibs.Exceptions import ExceptionType
 
@@ -85,7 +85,8 @@ def get_pman(hostspec: str) -> ProcessManagerType:
     pman = ProcessManager.get_pman(hostspec, username=username)
 
     if dspath:
-        pman = cast(EmulProcessManager.EmulProcessManager, pman)
+        if typing.TYPE_CHECKING:
+            pman = cast(EmulProcessManager.EmulProcessManager, pman)
 
         try:
             pman.init_emul_data(dspath)

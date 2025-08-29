@@ -16,13 +16,14 @@ Test for the 'PStates' module.
 from  __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
-from typing import Generator, cast
+from typing import cast
 import pytest
 import common
 import props_common
 from pepclibs import CPUInfo, PStates
 
 if typing.TYPE_CHECKING:
+    from typing import Generator
     from props_common import PropsTestParamsTypedDict
 
 @pytest.fixture(name="params", scope="module", params=props_common.get_enable_cache_param())

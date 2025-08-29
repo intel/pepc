@@ -12,11 +12,15 @@ Tests for the 'ClassHelpers.WrapExceptions' class.
 
 from  __future__ import annotations # Remove when switching to Python 3.10+.
 
-from typing import cast, Any
+import typing
+from typing import cast
 from pepclibs.helperlibs import ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorPermissionDenied, ErrorNotFound
 
-_TEST_VALUE = 42
+if typing.TYPE_CHECKING:
+    from typing import Any, Final
+
+_TEST_VALUE: Final[int] = 42
 
 class _TestClass:
     """

@@ -13,15 +13,16 @@
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
-from typing import Generator, cast
 import random
 import pytest
+from typing import cast
 import common
 from pepclibs import CPUModels, CPUInfo, CPUOnline
 from pepclibs.CPUInfoTypes import AbsNumsType, RelNumsType, ScopeNameType
 from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
 if typing.TYPE_CHECKING:
+    from typing import Generator
     from common import CommonTestParamsTypedDict
 
 # A unique object used in '_run_method()' for ignoring method's return value by default.

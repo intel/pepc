@@ -15,12 +15,14 @@ from  __future__ import annotations # Remove when switching to Python 3.10+.
 import stat
 from pathlib import Path
 import typing
-from typing import Generator, cast
+from typing import cast
 import pytest
 import common
 from pepclibs.helperlibs import Trivial, LocalProcessManager
 from pepclibs.helperlibs.Exceptions import Error, ErrorExists, ErrorNotFound
+
 if typing.TYPE_CHECKING:
+    from typing import Generator
     from common import CommonTestParamsTypedDict
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 

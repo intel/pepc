@@ -12,18 +12,21 @@ Tests for the 'Human' module.
 
 from  __future__ import annotations # Remove when switching to Python 3.10+.
 
-from typing import TypedDict
+import typing
 from pepclibs.helperlibs import Human
 
-class _BytesizeTestDataType(TypedDict, total=False):
-    """Type for the '_BYTESIZE_TEST_DATA' list."""
-    size: int | float
-    decp: int
-    sep: str | None
-    strip_zeroes: bool
-    result: str
+if typing.TYPE_CHECKING:
+    from typing import TypedDict, Final
 
-_BYTESIZE_TEST_DATA: list[_BytesizeTestDataType] = [
+    class _BytesizeTestDataType(TypedDict, total=False):
+        """Type for the '_BYTESIZE_TEST_DATA' list."""
+        size: int | float
+        decp: int
+        sep: str | None
+        strip_zeroes: bool
+        result: str
+
+_BYTESIZE_TEST_DATA: Final[list[_BytesizeTestDataType]] = [
     {"size": 0, "decp": 0, "sep": None, "strip_zeroes": True, "result": "0 bytes"},
     {"size": 0, "decp": 1, "sep": None, "strip_zeroes": True, "result": "0 bytes"},
     {"size": 0, "decp": 1, "sep": None, "strip_zeroes": False, "result": "0 bytes"},
@@ -106,12 +109,13 @@ def test_bytesize():
                f"strip_zeroes={strip_zeroes}):\n" \
                f"expected '{expected}', got '{result}'"
 
-class _SeparateSiPrefixTestDataType(TypedDict, total=False):
-    """Type for the '_SEPARATE_SI_PREFIX_TEST_DATA' list."""
-    unit: str
-    result: tuple[str | None, str]
+if typing.TYPE_CHECKING:
+    class _SeparateSiPrefixTestDataType(TypedDict, total=False):
+        """Type for the '_SEPARATE_SI_PREFIX_TEST_DATA' list."""
+        unit: str
+        result: tuple[str | None, str]
 
-_SEPARATE_SI_PREFIX_TEST_DATA: list[_SeparateSiPrefixTestDataType] = [
+_SEPARATE_SI_PREFIX_TEST_DATA: Final[list[_SeparateSiPrefixTestDataType]] = [
     {"unit": "B", "result": (None, "B")},
     {"unit": "kB", "result": ("k", "B")},
     {"unit": "MB", "result": ("M", "B")},
@@ -135,16 +139,17 @@ def test_separate_si_prefix():
                f"Bad result of separate_si_prefix('{unit}'):\n" \
                f"expected '{expected}', got '{result}'"
 
-class _Num2SiTestDataType(TypedDict, total=False):
-    """Type for the '_NUM2SI_TEST_DATA' list."""
-    value: float
-    unit: str
-    decp: int
-    sep: str | None
-    strip_zeroes: bool
-    result: str
+if typing.TYPE_CHECKING:
+    class _Num2SiTestDataType(TypedDict, total=False):
+        """Type for the '_NUM2SI_TEST_DATA' list."""
+        value: float
+        unit: str
+        decp: int
+        sep: str | None
+        strip_zeroes: bool
+        result: str
 
-_NUM2SI_TEST_DATA: list[_Num2SiTestDataType] = [
+_NUM2SI_TEST_DATA: Final[list[_Num2SiTestDataType]] = [
     {"value": 0.00009999001,
      "unit": "uW", "decp": 5, "sep": " ", "strip_zeroes": False, "result": "0.09999 nW"},
     {"value": 0.00009999001,
@@ -214,14 +219,15 @@ def test_num2si():
                f"expected '{expected}', got '{result}'"
 
 
-class _ScaleSiValTestDataType(TypedDict, total=False):
-    """Type for the '_SCALE_SI_VAL_TEST_DATA' list."""
+if typing.TYPE_CHECKING:
+    class _ScaleSiValTestDataType(TypedDict, total=False):
+        """Type for the '_SCALE_SI_VAL_TEST_DATA' list."""
 
-    value: float
-    unit: str
-    result: float
+        value: float
+        unit: str
+        result: float
 
-_SCALE_SI_VAL_TEST_DATA: list[_ScaleSiValTestDataType] = [
+_SCALE_SI_VAL_TEST_DATA: Final[list[_ScaleSiValTestDataType]] = [
     {"value": 0, "unit": "kW", "result": 0},
     {"value": -5, "unit": "kW", "result": -5000},
     {"value": 1000000, "unit": "uHz", "result": 1},
@@ -242,14 +248,15 @@ def test_scale_si_val():
                f"Bad result of scale_si_val({value}, '{unit}'):\n" \
                f"expected '{expected}', got '{result}'"
 
-class _DurationTestDataType(TypedDict, total=False):
-    """Type for the '_DURATION_TEST_DATA' list."""
+if typing.TYPE_CHECKING:
+    class _DurationTestDataType(TypedDict, total=False):
+        """Type for the '_DURATION_TEST_DATA' list."""
 
-    seconds: float
-    s: bool
-    result: str
+        seconds: float
+        s: bool
+        result: str
 
-_DURATION_TEST_DATA: list[_DurationTestDataType] = [
+_DURATION_TEST_DATA: Final[list[_DurationTestDataType]] = [
     {"seconds": 0.001, "s": True, "result": "1ms"},
     {"seconds": 0, "s": True, "result": "0s"},
     {"seconds": -0, "s": True, "result": "0s"},
@@ -273,16 +280,17 @@ def test_duration():
         assert result == expected, \
                f"Bad result of duration({value}, s={s}):\nexpected '{expected}', got '{result}'"
 
-class _ParseHumanTestDataType(TypedDict, total=False):
-    """Type for the '_PARSE_HUMAN_DATA' list."""
+if typing.TYPE_CHECKING:
+    class _ParseHumanTestDataType(TypedDict, total=False):
+        """Type for the '_PARSE_HUMAN_DATA' list."""
 
-    hval: str | int | float
-    unit: str
-    target_unit: str | None
-    integer: bool
-    result: int | float
+        hval: str | int | float
+        unit: str
+        target_unit: str | None
+        integer: bool
+        result: int | float
 
-_PARSE_HUMAN_DATA: list[_ParseHumanTestDataType] = [
+_PARSE_HUMAN_DATA: Final[list[_ParseHumanTestDataType]] = [
     {"hval": "0", "unit": "s", "target_unit": "s", "integer": True, "result": 0},
     {"hval": 0, "unit": "s", "target_unit": "s", "integer": True, "result": 0},
     {"hval": 0.0, "unit": "s", "target_unit": "s", "integer": True, "result": 0},
@@ -322,7 +330,7 @@ def test_parse_human():
                f"Bad result of parse_human('{hval}', '{unit}', target_unit='{target_unit}', " \
                f"integer={integer}):\nexpected '{expected}', got '{result}'"
 
-_PARSE_HUMAN_RANGE = [
+_PARSE_HUMAN_RANGE: Final = [
     {"hval": "1,2", "unit": "s", "target_unit": "s", "integer": True, "sep": ",",
      "result": (1, 2)},
     {"hval": "-1,2", "unit": "s", "target_unit": "s", "integer": True, "sep": ",",
@@ -349,7 +357,7 @@ def test_parse_human_range():
                f"target_unit='{target_unit}', integer={integer}, sep='{sep}):\n" \
                f"expected '{expected}', got '{result}'"
 
-_CAPITALIZE_TEST_DATA = [
+_CAPITALIZE_TEST_DATA: Final = [
     {"sentence": "hello, world!", "result": "Hello, world!"},
     {"sentence": "DMA latency", "result": "DMA latency"},
     {"sentence": "c-state latency", "result": "C-state latency"},
@@ -368,7 +376,7 @@ def test_capitalize():
                f"Bad result of capitalize('{sentence}'):\n" \
                f"expected '{expected}', got '{result}'"
 
-_UNCAPITALIZE_TEST_DATA = [
+_UNCAPITALIZE_TEST_DATA: Final = [
     {"sentence": "Hello, world!", "result": "hello, world!"},
     {"sentence": "DMA latency", "result": "DMA latency"},
     {"sentence": "C-state latency", "result": "C-state latency"},

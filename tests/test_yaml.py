@@ -13,9 +13,12 @@ Test the YAML module.
 from  __future__ import annotations # Remove when switching to Python 3.10+.
 
 import io
-from typing import Any, IO
+import typing
 from pathlib import Path
 from pepclibs.helperlibs import YAML
+
+if typing.TYPE_CHECKING:
+    from typing import Any, IO
 
 def _assert(fobj: IO[str], expected: str):
     """

@@ -14,11 +14,11 @@
 from  __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
-from typing import Generator, cast, Mapping
 from pepclibs.helperlibs import Trivial, TestRunner
 from pepctool import _Pepc
 
 if typing.TYPE_CHECKING:
+    from typing import Generator, cast, Mapping
     from pepclibs import CPUInfo, PStates
     from common import CommonTestParamsTypedDict
     from pepclibs.CPUInfoTypes import ScopeNameType

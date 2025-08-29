@@ -14,14 +14,17 @@
 from  __future__ import annotations # Remove when switching to Python 3.10+.
 
 import os
+import typing
 from pathlib import Path
-from typing import Generator
 import pytest
 
+if typing.TYPE_CHECKING:
+    from typing import Generator, Final
+
 # The test modules that are host-agnostic.
-_NOHOST_MODULES = {"test_human", "test_wrap_exceptions", "test_yaml"}
+_NOHOST_MODULES: Final[set[str]] = {"test_human", "test_wrap_exceptions", "test_yaml"}
 # The test modules that work only on the local host or a remote host, but not emulation.
-_NOEMULATION_MODULES = {"test_process_manager"}
+_NOEMULATION_MODULES: Final[set[str]] = {"test_process_manager"}
 
 def pytest_addoption(parser: pytest.Parser):
     """Add custom command-line options for pytest."""
@@ -56,7 +59,7 @@ def _get_datasets() -> Generator[str, None, None]:
 
 def pytest_generate_tests(metafunc: pytest.Metafunc):
     """
-    Paramtrize test cases based on custom options.
+    Parametrize test cases based on custom options.
 
     Args:
         metafunc: The pytest 'Metafunc' object that provides information about the test function

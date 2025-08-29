@@ -14,16 +14,15 @@
 from  __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
-from typing import Final, Generator, cast
 import pytest
 import common
-import props_common
 import props_cmdl_common
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs import CPUInfo, CStates
 from pepclibs.CStates import ErrorTryAnotherMechanism
 
 if typing.TYPE_CHECKING:
+    from typing import Final, Generator, cast
     from props_cmdl_common import PropsCmdlTestParamsTypedDict
     from pepclibs.helperlibs.Exceptions import ExceptionType
 
