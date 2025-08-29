@@ -17,7 +17,7 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 import pprint
 from typing import Generator, TypedDict, Literal, Sequence
 from pathlib import Path
-from pepclibs.helperlibs import Logging
+from pepclibs.helperlibs import EmulProcessManager, Logging
 from pepclibs.helperlibs import ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorVerifyFailed, ErrorNotFound
 from pepclibs.helperlibs.ProcessManager import ProcessManagerType
@@ -106,6 +106,16 @@ class MSR(_SimpleMSR.SimpleMSR):
 
         self._cpuinfo = cpuinfo
         self._enable_cache = enable_cache
+        self._enable_scope = True
+
+        if isinstance(pman, EmulProcessManager.EmulProcessManager):
+            # The emulation layer does not support MSR scope, so disable the scope optimization, and
+            # make sure writes go to all CPUs, not just one CPU in the scope.
+            self._enable_scope = False
+
+        self._cache = _PerCPUCache.PerCPUCache(cpuinfo, enable_cache=self._enable_cache,
+                                               enable_scope=self._enable_scope)
+        self._cache._cpuinfo = cpuinfo
 
         # The write-through per-CPU MSR values cache.
         self._cache = _PerCPUCache.PerCPUCache(cpuinfo, enable_cache=self._enable_cache)
@@ -377,6 +387,10 @@ for cpu, cpus_info in transaction_buffer.items():
 
             if self._cache.is_cached(regaddr, cpu):
                 dont_read.add(cpu)
+                continue
+
+            if not self._enable_scope:
+                do_read.append(cpu)
                 continue
 
             # Read the MSR only for 'iosname' sibling CPU, because MSR value should be the same

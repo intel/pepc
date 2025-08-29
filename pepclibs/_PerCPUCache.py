@@ -32,17 +32,20 @@ class PerCPUCache:
     consistency.
     """
 
-    def __init__(self, cpuinfo: CPUInfo.CPUInfo, enable_cache: bool = True):
+    def __init__(self, cpuinfo: CPUInfo.CPUInfo, enable_cache: bool = True,
+                 enable_scope: bool = True):
         """
         Initialize a class instance.
 
         Args:
             cpuinfo: The CPU information object.
             enable_cache: Set to False to disable caching.
+            enable_scope: Set to False to disable the CPU scope optimization.
         """
 
         self._cpuinfo = cpuinfo
         self._enable_cache = enable_cache
+        self._enable_scope = enable_scope
 
         self._cache: dict[Hashable, dict[int, Any]] = {}
 
@@ -103,13 +106,18 @@ class PerCPUCache:
         if not self._enable_cache:
             return
 
+        if not self._enable_scope:
+            if key in self._cache and cpu in self._cache[key]:
+                del self._cache[key][cpu]
+            return
+
         if sname == "global":
             del self._cache[key]
             return
 
         cpus = self._cpuinfo.get_cpu_siblings(cpu, sname)
         for rmcpu in cpus:
-            if key in self._cache and cpu in self._cache[key]:
+            if key in self._cache and rmcpu in self._cache[key]:
                 del self._cache[key][rmcpu]
 
     def add(self, key: Hashable, cpu: int, entry: Any, sname: ScopeNameType = "CPU") -> Any:
@@ -135,11 +143,14 @@ class PerCPUCache:
         if not self._enable_cache:
             return entry
 
-        cpus = self._cpuinfo.get_cpu_siblings(cpu, sname)
+        if self._enable_scope:
+            cpus = self._cpuinfo.get_cpu_siblings(cpu, sname)
+        else:
+            cpus = [cpu]
 
         if key not in self._cache:
             self._cache[key] = {}
-        for rmcpu in cpus:
-            self._cache[key][rmcpu] = entry
+        for addcpu in cpus:
+            self._cache[key][addcpu] = entry
 
         return entry

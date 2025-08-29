@@ -39,7 +39,7 @@ import copy
 import typing
 from typing import Any, Sequence, Literal, Generator, cast, get_args, Final
 
-from pepclibs.helperlibs import Logging, Trivial, Human, ClassHelpers
+from pepclibs.helperlibs import Logging, Trivial, Human, ClassHelpers, EmulProcessManager
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 
 from pepclibs.CPUInfoTypes import ScopeNameType
@@ -187,6 +187,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         # are not cached, because they implement their own caching.
         self._enable_cache = enable_cache
 
+        self._enable_scope = True
+
         # The properties dictionary, has to be initialized by the sub-class.
         self.props: dict[str, PropertyTypedDict]
         # Internal version of 'self.props'. Contains some data which we don't want to expose to the
@@ -200,6 +202,10 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         if pman:
             self._pman = pman
+            if isinstance(pman, EmulProcessManager.EmulProcessManager):
+                # The emulation layer does not support MSR scope, so disable the scope optimization, and
+                # make sure writes go to all CPUs, not just one CPU in the scope.
+                self._enable_scope = False
         else:
             # pylint: disable-next=import-outside-toplevel
             from pepclibs.helperlibs import LocalProcessManager
@@ -1759,6 +1765,9 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         Returns:
             List of reduced CPU numbers, containing one CPU per I/O scope group.
         """
+
+        if not self._enable_scope:
+            return cpus
 
         if iosname == "CPU":
             return cpus

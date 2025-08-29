@@ -163,7 +163,6 @@ class SimpleMSR(ClassHelpers.SimpleCloseContext):
         Args:
             regaddr: The address of the MSR to read.
             cpus: CPU numbers to read the MSR from.
-            iosname: The name of the I/O scope, used to determine sibling CPUs.
 
         Yields:
             Tuples of (cpu, regval), where 'cpu' is the CPU number and 'regval' is the value read
