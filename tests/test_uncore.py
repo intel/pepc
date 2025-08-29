@@ -3,24 +3,22 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2025 Intel Corporation
+# Copyright (C) 2021-2025 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
-# Authors: Niklas Neronin <niklas.neronin@intel.com>
-#          Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
+# Authors: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
-Test for the 'PStates' module.
+Test for the 'Uncore' module.
 """
 
 from  __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
-from typing import cast
 import pytest
 import common
 import props_common
-from pepclibs import CPUInfo, PStates
+from pepclibs import CPUInfo, Uncore
 
 if typing.TYPE_CHECKING:
     from typing import Generator
@@ -44,7 +42,7 @@ def get_params(hostspec: str,
 
     with common.get_pman(hostspec) as pman, \
          CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
-         PStates.PStates(pman=pman, cpuinfo=cpuinfo, enable_cache=enable_cache) as pobj:
+         Uncore.Uncore(pman=pman, cpuinfo=cpuinfo, enable_cache=enable_cache) as pobj:
         params = common.build_params(pman)
         yield props_common.extend_params(params, pobj, cpuinfo)
 
@@ -63,30 +61,7 @@ def _get_set_and_verify_data(params: PropsTestParamsTypedDict,
 
     pobj = params["pobj"]
 
-    # The initial value of each property is unknown, so multiple values are yielded per property.
-    # This ensures that the property is actually modified during testing.
-
-    pvinfo = pobj.get_cpu_prop("driver", cpu)
-    if pvinfo["val"] == "intel_pstate":
-        yield "intel_pstate_mode", "active"
-        yield "intel_pstate_mode", "passive"
-
-    yield "turbo", "off"
-    yield "turbo", "on"
-    yield "turbo", "off"
-
-    yield "epp", "1"
-    yield "epp", "254"
-
-    yield "epb", 0
-    yield "epb", 15
-
-    pvinfo = pobj.get_cpu_prop("governors", cpu)
-    if pvinfo["val"] is not None:
-        governors = cast(list[str], pvinfo["val"])
-        yield "governor", governors[0]
-        yield "governor", governors[-1]
-
+    # TODO: add ELC opts.
     min_limit = pobj.get_cpu_prop("min_freq_limit", cpu)["val"]
     max_limit = pobj.get_cpu_prop("max_freq_limit", cpu)["val"]
     if min_limit is not None or max_limit is not None:
@@ -96,7 +71,7 @@ def _get_set_and_verify_data(params: PropsTestParamsTypedDict,
         yield "max_freq", "max"
         yield "min_freq", "max"
 
-def test_pstates_set_and_verify(params: PropsTestParamsTypedDict):
+def test_uncore_set_and_verify(params: PropsTestParamsTypedDict):
     """
     Verify that 'get_prop_cpus()' returns the same values as set by 'set_prop_cpus()'.
 
@@ -107,7 +82,7 @@ def test_pstates_set_and_verify(params: PropsTestParamsTypedDict):
     props_vals = _get_set_and_verify_data(params, 0)
     props_common.set_and_verify(params, props_vals, 0)
 
-def test_pstates_get_all_props(params: PropsTestParamsTypedDict):
+def test_uncore_get_all_props(params: PropsTestParamsTypedDict):
     """
     Verify 'get_cpu_prop()' works for all available properties.
 
@@ -117,7 +92,7 @@ def test_pstates_get_all_props(params: PropsTestParamsTypedDict):
 
     props_common.verify_get_all_props(params, 0)
 
-def test_pstates_set_props_mechanisms_bool(params: PropsTestParamsTypedDict):
+def test_uncore_set_props_mechanisms_bool(params: PropsTestParamsTypedDict):
     """
     Verify correct behavior of 'get_prop_cpus()' when using the 'mname' argument for boolean
     properties.

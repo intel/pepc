@@ -74,10 +74,6 @@ def _get_good_info_opts(sname: ScopeNameType = "package") -> Generator[str, None
     elif sname == "package":
         yield from ["--bus-clock",
                     "--epp"]
-    elif sname == "die":
-        yield from ["--min-uncore-freq-limit",
-                    "--min-uncore-freq",
-                    "--max-uncore-freq --max-uncore-freq-limit"]
     elif sname == "CPU":
         yield from ["--min-freq",
                     "--base-freq",
@@ -148,14 +144,6 @@ def _get_good_config_freq_opts(params: PropsCmdlTestParamsTypedDict,
                             "--max-freq hfm",
                             "--min-freq base",
                             "--min-freq hfm"]
-    elif sname == "die":
-        if pobj.prop_is_supported_cpu("min_uncore_freq", cpu):
-            yield from ["--min-uncore-freq",
-                        "--max-uncore-freq",
-                        "--min-uncore-freq --max-uncore-freq",
-                        "--min-uncore-freq min",
-                        "--max-uncore-freq max",
-                        "--max-uncore-freq min --max-uncore-freq max"]
     else:
         assert False, f"BUG: Bad scope name {sname}"
 
@@ -163,16 +151,6 @@ def test_pstates_config_freq_good(params: PropsCmdlTestParamsTypedDict):
     """Test the 'pepc pstates config' command with good frequency options."""
 
     pman = params["pman"]
-
-    for opt in _get_good_config_freq_opts(params, sname="die"):
-        for mopt in props_cmdl_common.get_mechanism_opts(params, allow_readonly=True):
-            for cpu_opt in props_cmdl_common.get_good_optarget_opts(params, sname="global"):
-                cmd = f"pstates config {opt} {cpu_opt} {mopt}"
-                props_cmdl_common.run_pepc(cmd, pman, ignore=_IGNORE)
-
-            for cpu_opt in props_cmdl_common.get_bad_optarget_opts(params):
-                props_cmdl_common.run_pepc(f"pstates config {opt} {cpu_opt} {mopt}", pman,
-                                           exp_exc=Error)
 
     for opt in _get_good_config_freq_opts(params, sname="CPU"):
         for mopt in props_cmdl_common.get_mechanism_opts(params, allow_readonly=True):
@@ -184,7 +162,7 @@ def test_pstates_config_freq_good(params: PropsCmdlTestParamsTypedDict):
                 props_cmdl_common.run_pepc(f"pstates config {opt} {cpu_opt} {mopt}", pman,
                                            exp_exc=Error)
 
-def _get_bad_config_freq_opts(params: PropsCmdlTestParamsTypedDict) -> Generator[str, None, None]:
+def _get_bad_config_freq_opts() -> Generator[str, None, None]:
     """
     Generate invalid frequency command-line options for testing 'pepc pstates config'.
 
@@ -195,22 +173,18 @@ def _get_bad_config_freq_opts(params: PropsCmdlTestParamsTypedDict) -> Generator
         str: A string representing an invalid frequency option for command-line testing.
     """
 
-    cpu = 0
     yield from ["--min-freq 1000ghz",
                 "--max-freq 3",
                 "--max-freq hfm --mechanism kuku",
                 "--min-freq maximum",
                 "--min-freq max --max-freq min"]
 
-    if params["pobj"].prop_is_supported_cpu("min_uncore_freq", cpu):
-        yield "min-uncore-freq max --max-uncore-freq min"
-
 def test_pstates_config_freq_bad(params: PropsCmdlTestParamsTypedDict):
     """Test the 'pepc pstates config' command with bad frequency options."""
 
     pman = params["pman"]
 
-    for opt in _get_bad_config_freq_opts(params):
+    for opt in _get_bad_config_freq_opts():
         props_cmdl_common.run_pepc(f"pstates config {opt}", pman, exp_exc=Error)
 
     for opt in _get_good_config_freq_opts(params):
@@ -332,8 +306,7 @@ def test_pstates_config_non_freq_bad(params: PropsCmdlTestParamsTypedDict):
 
 def _set_freq_pairs(params: PropsCmdlTestParamsTypedDict, min_pname: str, max_pname: str):
     """
-    Set minimum and maximum frequency pairs for CPU or uncore properties, taking care of the
-    ordering constraints.
+    Set minimum and maximum CPU frequency pairs, taking care of the ordering constraints.
 
     Args:
         params: The test parameters dictionary.
@@ -345,40 +318,18 @@ def _set_freq_pairs(params: PropsCmdlTestParamsTypedDict, min_pname: str, max_pn
     pman = params["pman"]
     pobj = params["pobj"]
 
-    if "uncore" in min_pname:
-        bclk = pobj.get_cpu_prop("bus_clock", cpu)["val"]
-        if not bclk:
-            return
+    pvinfo = pobj.get_cpu_prop("frequencies", cpu)
+    if pvinfo["val"] is None:
+        return
 
-        min_limit = pobj.get_cpu_prop(f"{min_pname}_limit", cpu)["val"]
-        max_limit = pobj.get_cpu_prop(f"{max_pname}_limit", cpu)["val"]
-        if not min_limit or not max_limit:
-            return
+    frequencies = cast(list[int], pvinfo["val"])
+    if len(frequencies) < 2:
+        return
 
-        bclk = cast(int, bclk)
-        min_limit = cast(int, min_limit)
-        max_limit = cast(int, max_limit)
-
-        delta = (max_limit - min_limit) // 4
-        delta -= delta % bclk
-
-        freq0 = min_limit
-        freq1 = min_limit + delta
-        freq2 = max_limit - delta
-        freq3 = max_limit
-    else:
-        pvinfo = pobj.get_cpu_prop("frequencies", cpu)
-        if pvinfo["val"] is None:
-            return
-
-        frequencies = cast(list[int], pvinfo["val"])
-        if len(frequencies) < 2:
-            return
-
-        freq0 = frequencies[0]
-        freq1 = frequencies[1]
-        freq2 = frequencies[-2]
-        freq3 = frequencies[-1]
+    freq0 = frequencies[0]
+    freq1 = frequencies[1]
+    freq2 = frequencies[-2]
+    freq3 = frequencies[-1]
 
     min_opt = f"--{min_pname.replace('_', '-')}"
     max_opt = f"--{max_pname.replace('_', '-')}"
@@ -421,6 +372,3 @@ def test_pstates_frequency_set_order(params: PropsCmdlTestParamsTypedDict):
 
     if pobj.prop_is_supported_cpu("min_freq", cpu):
         _set_freq_pairs(params, "min_freq", "max_freq")
-
-    if pobj.prop_is_supported_cpu("min_uncore_freq", cpu):
-        _set_freq_pairs(params, "min_uncore_freq", "max_uncore_freq")

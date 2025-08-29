@@ -9,8 +9,8 @@
 # Author: Niklas Neronin <niklas.neronin@intel.com>
 
 """
-Common functions for class-level P-state and C-state property tests ('PStates.Pstates',
-'CStates.CStates').
+Common functions for class-level C-state, P-state, and uncore property tests ('CStates.Cstates',
+'PStates.PStates', 'Uncore.Uncore').
 """
 
 from  __future__ import annotations # Remove when switching to Python 3.10+.
@@ -23,9 +23,9 @@ if typing.TYPE_CHECKING:
     from common import CommonTestParamsTypedDict
     from pepclibs.CPUInfoTypes import ScopeNameType, AbsNumsType, RelNumsType
     from pepclibs.PropsTypes import PropertyTypeType, PropertyValueType, MechanismNameType
-    from pepclibs import CPUInfo, PStates, CStates
+    from pepclibs import CPUInfo, CStates, PStates, Uncore
 
-    _PropsClassType = PStates.PStates | CStates.CStates
+    _PropsClassType = CStates.CStates | PStates.PStates | Uncore.Uncore
 
     class PropsTestParamsTypedDict(CommonTestParamsTypedDict, total=False):
         """
@@ -33,7 +33,7 @@ if typing.TYPE_CHECKING:
 
         Attributes:
             cpuinfo: A 'CPUInfo.CPUInfo' object.
-            pobj: A 'PStates.PStates' or 'CStates.CStates' object.
+            pobj: A 'CStates.CStates', 'PStates.PStates' or 'Uncore.Uncore' object.
         """
 
         cpuinfo: CPUInfo.CPUInfo
@@ -41,8 +41,8 @@ if typing.TYPE_CHECKING:
 
 def get_enable_cache_param() -> Generator[bool, None, None]:
     """
-    Yield boolean values to toggle the 'enable_cache' parameter for the 'PStates' or 'CStates'
-    modules.
+    Yield boolean values to toggle the 'enable_cache' parameter for the 'CStates', 'PStates' or
+    'Uncore' modules.
 
     Yields:
         bool: The next value for the 'enable_cache' parameter (True or False).
@@ -60,7 +60,7 @@ def extend_params(params: CommonTestParamsTypedDict,
 
     Args:
         params: The common test parameters dictionary.
-        pobj: The 'PStates.Pstates' object for the host under test.
+        pobj: The properties object for the host under test.
         cpuinfo: The 'CPUInfo.CPUInfo' object for the host under test.
 
     Yields:
@@ -96,10 +96,7 @@ def _verify_after_set_per_cpu(pobj: _PropsClassType,
         val = orig_val
 
         if val in ("min", "max") and "freq" in pname:
-            if "uncore" in pname:
-                limit_pname = f"{val}_uncore_freq_limit"
-            else:
-                limit_pname = f"{val}_freq_limit"
+            limit_pname = f"{val}_freq_limit"
             val = pobj.get_cpu_prop(limit_pname, pvinfo["cpu"])["val"]
 
         if pvinfo["val"] != val:
@@ -145,10 +142,7 @@ def _verify_after_set_per_die(pobj: _PropsClassType,
         val = orig_val
 
         if val in ("min", "max") and "freq" in pname:
-            if "uncore" in pname:
-                limit_pname = f"{val}_uncore_freq_limit"
-            else:
-                limit_pname = f"{val}_freq_limit"
+            limit_pname = f"{val}_freq_limit"
             val = pobj.get_die_prop(limit_pname, pvinfo["package"], pvinfo["die"])["val"]
 
         pkg = pvinfo["package"]

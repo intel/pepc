@@ -9,7 +9,7 @@
 # Authors: Niklas Neronin <niklas.neronin@intel.com>
 #          Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
-"""Common functions for the P-state and C-state command-line option tets."""
+"""Common functions for the C-state, P-state and uncore command-line option tets."""
 
 from  __future__ import annotations # Remove when switching to Python 3.10+.
 
@@ -19,11 +19,13 @@ from pepctool import _Pepc
 
 if typing.TYPE_CHECKING:
     from typing import Generator, cast, Mapping
-    from pepclibs import CPUInfo, PStates
+    from pepclibs import CPUInfo, CStates, PStates, Uncore
     from common import CommonTestParamsTypedDict
     from pepclibs.CPUInfoTypes import ScopeNameType
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepclibs.helperlibs.Exceptions import ExceptionType
+
+    _PropsClassType = CStates.CStates | PStates.PStates | Uncore.Uncore
 
     class PropsCmdlTestParamsTypedDict(CommonTestParamsTypedDict, total=False):
         """
@@ -32,7 +34,7 @@ if typing.TYPE_CHECKING:
 
         Attributes:
             cpuinfo: A 'CPUInfo.CPUInfo' object.
-            pobj: A 'PStates.PStates' object.
+            pobj: A property object.
             cpus: List of CPU numbers available on the test platform.
             cores: A dictionary mapping package numbers to lists of core numbers in the package.
             modules: A dictionary mapping package numbers to lists of module numbers in the package.
@@ -41,7 +43,7 @@ if typing.TYPE_CHECKING:
         """
 
         cpuinfo: CPUInfo.CPUInfo
-        pobj: PStates.PStates
+        pobj: _PropsClassType
         cpus: list[int]
         cores: dict[int, list[int]]
         modules: dict[int, list[int]]
@@ -49,7 +51,7 @@ if typing.TYPE_CHECKING:
         packages: list[int]
 
 def extend_params(params: CommonTestParamsTypedDict,
-                  pobj: PStates.PStates,
+                  pobj: _PropsClassType,
                   cpuinfo: CPUInfo.CPUInfo) -> PropsCmdlTestParamsTypedDict:
     """
     Extend the common test parameters dictionary with additional keys required for running
@@ -57,7 +59,7 @@ def extend_params(params: CommonTestParamsTypedDict,
 
     Args:
         params: The common test parameters dictionary.
-        pobj: The 'PStates.Pstates' object for the host under test.
+        pobj: A property object for the host under test.
         cpuinfo: The 'CPUInfo.CPUInfo' object for the host under test.
 
     Yields:
