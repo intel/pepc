@@ -9,12 +9,13 @@
 # Authors: Antti Laakso <antti.laakso@linux.intel.com>
 #          Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
-"""Test 'pepc pstates' commands."""
+"""Test 'pepc pstates' command-line options."""
 
+# TODO: finnish annotating.
 from  __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
-from typing import Final, Generator, cast
+from typing import Final, Generator
 import pytest
 import common
 import props_common
@@ -24,24 +25,8 @@ from pepclibs import CPUInfo, PStates
 from pepclibs.PStates import ErrorTryAnotherMechanism
 
 if typing.TYPE_CHECKING:
-    from common import CommonTestParamsTypedDict
+    from props_common import PropsCmdlTestParamsTypedDict
     from pepclibs.helperlibs.Exceptions import ExceptionType
-
-    class _TestParamsTypedDict(CommonTestParamsTypedDict, total=False):
-        """
-        The test parameters dictionary.
-
-        Attributes:
-            cpuinfo: A 'CPUInfo.CPUInfo' object.
-            pobj: A 'PStates.PStates' object.
-            cpus: List of CPU numbers available on the test platform.
-            packages: List of package numbers available on the test platform.
-        """
-
-        cpuinfo: CPUInfo.CPUInfo
-        pobj: PStates.PStates
-        cpus: list[int]
-        packages: list[int]
 
 # If the '--mechanism' option is present, the command may fail because the mechanism may not be
 # supported. Ignore these failures.
@@ -49,33 +34,23 @@ _IGNORE: Final[dict[ExceptionType, str]] = {ErrorNotSupported: "--mechanism",
                                             ErrorTryAnotherMechanism: "--mechanism"}
 
 @pytest.fixture(name="params", scope="module")
-def get_params(hostspec: str) -> Generator[_TestParamsTypedDict, None, None]:
-    """Yield a dictionary with information we need for testing."""
+def get_params(hostspec: str) -> Generator[PropsCmdlTestParamsTypedDict, None, None]:
+    """
+    Yield a dictionary containing parameters required for running the test.
+
+    Args:
+        hostspec: The host specification/name to create a process manager for. If the hostspec
+                  starts with "emulation:", it indicates an emulated environment.
+
+    Yields:
+        A dictionary with test parameters.
+    """
 
     with common.get_pman(hostspec) as pman, \
          CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
          PStates.PStates(pman=pman, cpuinfo=cpuinfo) as pobj:
         params = common.build_params(pman)
-
-        if typing.TYPE_CHECKING:
-            params = cast(_TestParamsTypedDict, params)
-
-        params["cpuinfo"] = cpuinfo
-        params["pobj"] = pobj
-
-        params["cpus"] = cpuinfo.get_cpus()
-        params["packages"] = cpuinfo.get_packages()
-
-        params["cores"] = {}
-        params["modules"] = {}
-        params["dies"] = {}
-
-        for pkg in params["packages"]:
-            params["cores"][pkg] = cpuinfo.get_package_cores(package=pkg)
-            params["modules"][pkg] = cpuinfo.package_to_modules(package=pkg)
-            params["dies"][pkg] = cpuinfo.get_package_dies(package=pkg, io_dies=False)
-
-        yield params
+        yield props_common.extend_params(params, pobj, cpuinfo)
 
 def _get_good_info_opts(sname="package"):
     """Return good options for testing 'pepc pstates config'."""

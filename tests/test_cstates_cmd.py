@@ -8,8 +8,13 @@
 #
 # Author: Antti Laakso <antti.laakso@linux.intel.com>
 
-"""Test module for 'pepc' project 'cstates' command."""
+"""Test 'pepc cstates' command-line options."""
 
+# TODO: finnish annotating.
+from  __future__ import annotations # Remove when switching to Python 3.10+.
+
+import typing
+from typing import Final, Generator, cast
 import pytest
 import common
 import props_common
@@ -17,36 +22,49 @@ from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs import CPUInfo, CStates
 from pepclibs.CStates import ErrorTryAnotherMechanism
 
+if typing.TYPE_CHECKING:
+    from props_common import PropsCmdlTestParamsTypedDict
+    from pepclibs.helperlibs.Exceptions import ExceptionType
+
+    class TestParamsTypedDict(PropsCmdlTestParamsTypedDict, total=False):
+        """
+        The test parameters dictionary with keys used by the common part of the command-line
+        property tests.
+
+        Attributes:
+            cstates: A list of supported requestable C-state names.
+        """
+
+        cstates: list[str]
+
 # If the '--mechanism' option is present, the command may fail because the mechanism may not be
 # supported. Ignore these failures.
-_IGNORE = {ErrorNotSupported: "--mechanism",
-           ErrorTryAnotherMechanism: "--mechanism"}
+_IGNORE: Final[dict[ExceptionType, str]] = {ErrorNotSupported: "--mechanism",
+                                            ErrorTryAnotherMechanism: "--mechanism"}
 
 @pytest.fixture(name="params", scope="module")
-def get_params(hostspec):
-    """Yield a dictionary with information we need for testing."""
+def get_params(hostspec: str) -> Generator[PropsCmdlTestParamsTypedDict, None, None]:
+    """
+    Yield a dictionary containing parameters required for running the test.
+
+    Args:
+        hostspec: The host specification/name to create a process manager for. If the hostspec
+                  starts with "emulation:", it indicates an emulated environment.
+
+    Yields:
+        A dictionary with test parameters.
+    """
 
     with common.get_pman(hostspec) as pman, \
          CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
          CStates.CStates(pman=pman, cpuinfo=cpuinfo) as pobj:
         params = common.build_params(pman)
+        params = props_common.extend_params(params, pobj, cpuinfo)
 
-        params["pobj"] = pobj
-        params["cpuinfo"] = cpuinfo
+        if typing.TYPE_CHECKING:
+            params = cast(TestParamsTypedDict, params)
 
-        allcpus = cpuinfo.get_cpus()
-        params["cpus"] = allcpus
-        params["packages"] = cpuinfo.get_packages()
-
-        params["cores"] = {}
-        params["modules"] = {}
-        params["dies"] = {}
-
-        for pkg in params["packages"]:
-            params["cores"][pkg] = cpuinfo.get_package_cores(package=pkg)
-            params["modules"][pkg] = cpuinfo.package_to_modules(package=pkg)
-            params["dies"][pkg] = cpuinfo.get_package_dies(package=pkg)
-
+        allcpus = params["cpus"]
         medidx = int(len(allcpus)/2)
         testcpus = [allcpus[0], allcpus[medidx], allcpus[-1]]
         params["cstates"] = []

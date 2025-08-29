@@ -10,8 +10,75 @@
 
 """Common functions for the property class tests (e.g., 'CStates', 'PStates')."""
 
+# TODO: finish annotating.
+from  __future__ import annotations # Remove when switching to Python 3.10+.
+
+import typing
+from typing import cast
 from pepclibs.helperlibs import Trivial
 from pepclibs.helperlibs.Exceptions import ErrorNotSupported
+
+if typing.TYPE_CHECKING:
+    from pepclibs import CPUInfo, PStates
+    from common import CommonTestParamsTypedDict
+
+    class PropsCmdlTestParamsTypedDict(CommonTestParamsTypedDict, total=False):
+        """
+        The test parameters dictionary with keys used by the common part of the command-line
+        property tests.
+
+        Attributes:
+            cpuinfo: A 'CPUInfo.CPUInfo' object.
+            pobj: A 'PStates.PStates' object.
+            cpus: List of CPU numbers available on the test platform.
+            cores: A dictionary mapping package numbers to lists of core numbers in the package.
+            modules: A dictionary mapping package numbers to lists of module numbers in the package.
+            dies: A dictionary mapping package numbers to lists of die numbers in the package.
+            packages: List of package numbers available on the test platform.
+        """
+
+        cpuinfo: CPUInfo.CPUInfo
+        pobj: PStates.PStates
+        cpus: list[int]
+        cores: dict[int, list[int]]
+        modules: dict[int, list[int]]
+        dies: dict[int, list[int]]
+        packages: list[int]
+
+def extend_params(params: CommonTestParamsTypedDict,
+                  pobj: PStates.PStates,
+                  cpuinfo: CPUInfo.CPUInfo) -> PropsCmdlTestParamsTypedDict:
+    """
+    Extend the common test parameters dictionary with additional keys required for running
+    properties tests.
+
+    Args:
+        hostspec: The host specification/name to create a process manager for. If the hostspec
+                  starts with "emulation:", it indicates an emulated environment.
+
+    Yields:
+        A dictionary with test parameters.
+    """
+
+    if typing.TYPE_CHECKING:
+        params = cast(PropsCmdlTestParamsTypedDict, params)
+
+    params["cpuinfo"] = cpuinfo
+    params["pobj"] = pobj
+
+    params["cpus"] = cpuinfo.get_cpus()
+    params["packages"] = cpuinfo.get_packages()
+
+    params["cores"] = {}
+    params["modules"] = {}
+    params["dies"] = {}
+
+    for pkg in params["packages"]:
+        params["cores"][pkg] = cpuinfo.get_package_cores(package=pkg)
+        params["modules"][pkg] = cpuinfo.package_to_modules(package=pkg)
+        params["dies"][pkg] = cpuinfo.get_package_dies(package=pkg, io_dies=False)
+
+    return params
 
 def is_prop_supported(pname, cpu0_pinfo):
     """
@@ -227,7 +294,7 @@ def _verify_after_set_per_die(pobj, pname, val, dies):
     assert not dies_left, f"Set property '{pname}' to value '{val}' for the following packages " \
                           f"and dies: {dies}.\n" \
                           f"Read back property '{pname}', but did not get value for the " \
-                          f"following prackages and dies: {dies_left}"
+                          f"following packages and dies: {dies_left}"
 
 def _verify_after_set_per_package(pobj, pname, val, packages):
     """

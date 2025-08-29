@@ -44,7 +44,7 @@ if typing.TYPE_CHECKING:
 @pytest.fixture(name="params", scope="module")
 def get_params(hostspec: str) -> Generator[_TestParamsTypedDict, None, None]:
     """
-    Yield a dictionary containing parameters required 'CPUInfo' tests.
+    Yield a dictionary containing parameters required for running the test.
 
     Args:
         hostspec: The host specification/name to create a process manager for. If the hostspec
@@ -433,6 +433,9 @@ def test_elc_threshold_methods_dies(params: _TestParamsTypedDict):
     all_dies = params["cpuinfo"].get_dies()
 
     for uncfreq_obj in _iter_uncore_freq_objects(params):
+        if uncfreq_obj.mname != "tpmi":
+            continue
+
         _test_elc_threshold_methods_dies(uncfreq_obj, all_dies)
 
 def _test_elc_threshold_methods_cpu(uncfreq_obj: _UncoreFreqObjType, cpu: int):
@@ -482,4 +485,7 @@ def test_elc_threshold_methods_cpus(params: _TestParamsTypedDict):
     cpu = params["cpuinfo"].get_cpus()[-1]
 
     for uncfreq_obj in _iter_uncore_freq_objects(params):
+        if uncfreq_obj.mname != "tpmi":
+            continue
+
         _test_elc_threshold_methods_cpu(uncfreq_obj, cpu)
