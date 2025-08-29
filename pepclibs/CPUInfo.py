@@ -40,6 +40,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         - 'get_cpus()'
         - 'get_cores()'
         - 'get_package_cores()'
+        - 'get_package_cores()'
         - 'get_modules()'
         - 'get_dies()'
         - 'get_package_dies()'
@@ -49,6 +50,8 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         - 'get_tline_by_cpu()'
         - 'get_cpu_siblings()'
     3. Get list of packages/cores/etc for a subset of CPUs/cores/etc.
+        - 'cpu_to_die()'
+        - 'cpu_to_package()'
         - 'package_to_cpus()'
         - 'package_to_cores()'
         - 'package_to_modules()'
@@ -58,7 +61,6 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         - 'modules_to_cpus()'
         - 'dies_to_cpus()'
         - 'nodes_to_cpus()'
-        - 'packages_to_cpus()'
     4. Get packages/core/etc counts.
         - 'get_cpus_count()'
         - 'get_cores_count()'
@@ -603,6 +605,34 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
             return self.cores_to_cpus(cores=(tline[sname],), packages=(tline["package"],))
 
         raise Error(f"Unsupported scope name \"{sname}\"")
+
+    def cpu_to_die(self, cpu: int) -> int:
+        """
+        Return the die number for the specified CPU.
+
+        Args:
+            cpu: The CPU number to retrieve the die number for.
+
+        Returns:
+            The die number that contains the specified CPU.
+        """
+
+        tline = self.get_tline_by_cpu(cpu, snames=("die",))
+        return tline["die"]
+
+    def cpu_to_package(self, cpu: int) -> int:
+        """
+        Return the package number for the specified CPU.
+
+        Args:
+            cpu: The CPU number to retrieve the package number for.
+
+        Returns:
+            The package number that contains the specified CPU.
+        """
+
+        tline = self.get_tline_by_cpu(cpu, snames=("package",))
+        return tline["package"]
 
     def package_to_cpus(self, package: int, order: ScopeNameType = "CPU") -> list[int]:
         """
