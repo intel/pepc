@@ -18,12 +18,13 @@ from typing import Final, Generator, cast
 import pytest
 import common
 import props_common
+import props_cmdl_common
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs import CPUInfo, CStates
 from pepclibs.CStates import ErrorTryAnotherMechanism
 
 if typing.TYPE_CHECKING:
-    from props_common import PropsCmdlTestParamsTypedDict
+    from props_cmdl_common import PropsCmdlTestParamsTypedDict
     from pepclibs.helperlibs.Exceptions import ExceptionType
 
     class TestParamsTypedDict(PropsCmdlTestParamsTypedDict, total=False):
@@ -59,7 +60,7 @@ def get_params(hostspec: str) -> Generator[PropsCmdlTestParamsTypedDict, None, N
          CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
          CStates.CStates(pman=pman, cpuinfo=cpuinfo) as pobj:
         params = common.build_params(pman)
-        params = props_common.extend_params(params, pobj, cpuinfo)
+        params = props_cmdl_common.extend_params(params, pobj, cpuinfo)
 
         if typing.TYPE_CHECKING:
             params = cast(TestParamsTypedDict, params)
@@ -81,10 +82,10 @@ def test_cstates_info(params):
 
     pman = params["pman"]
 
-    for opt in props_common.get_good_cpu_opts(params, sname="package"):
+    for opt in props_cmdl_common.get_good_cpu_opts(params, sname="package"):
         common.run_pepc(f"cstates info {opt}", pman)
 
-    for opt in props_common.get_bad_cpu_opts(params):
+    for opt in props_cmdl_common.get_bad_cpu_opts(params):
         common.run_pepc(f"cstates info {opt}", pman, exp_exc=Error)
 
     for cstate in params["cstates"]:
@@ -162,30 +163,30 @@ def test_cstates_config_good(params):
     pman = params["pman"]
 
     for opt in _get_good_config_opts(params, sname="CPU"):
-        for cpu_opt in props_common.get_good_cpu_opts(params, sname="CPU"):
-            for mopt in props_common.get_mechanism_opts(params, allow_readonly=False):
+        for cpu_opt in props_cmdl_common.get_good_cpu_opts(params, sname="CPU"):
+            for mopt in props_cmdl_common.get_mechanism_opts(params, allow_readonly=False):
                 cmd = f"cstates config {opt} {cpu_opt} {mopt}"
                 common.run_pepc(cmd, pman, ignore=_IGNORE)
 
-        for cpu_opt in props_common.get_bad_cpu_opts(params):
+        for cpu_opt in props_cmdl_common.get_bad_cpu_opts(params):
             common.run_pepc(f"cstates config {opt} {cpu_opt}", pman, exp_exc=Error)
 
     for opt in _get_good_config_opts(params, sname="package"):
-        for cpu_opt in props_common.get_good_cpu_opts(params, sname="global"):
-            for mopt in props_common.get_mechanism_opts(params, allow_readonly=False):
+        for cpu_opt in props_cmdl_common.get_good_cpu_opts(params, sname="global"):
+            for mopt in props_cmdl_common.get_mechanism_opts(params, allow_readonly=False):
                 cmd = f"cstates config {opt} {cpu_opt} {mopt}"
                 common.run_pepc(cmd , pman, ignore=_IGNORE)
 
-        for cpu_opt in props_common.get_bad_cpu_opts(params):
+        for cpu_opt in props_cmdl_common.get_bad_cpu_opts(params):
             common.run_pepc(f"cstates config {opt} {cpu_opt}", pman, exp_exc=Error)
 
     for opt in _get_good_config_opts(params, sname="global"):
-        for cpu_opt in props_common.get_good_cpu_opts(params, sname="global"):
-            for mopt in props_common.get_mechanism_opts(params, allow_readonly=False):
+        for cpu_opt in props_cmdl_common.get_good_cpu_opts(params, sname="global"):
+            for mopt in props_cmdl_common.get_mechanism_opts(params, allow_readonly=False):
                 cmd = f"cstates config {opt} {cpu_opt} {mopt}"
                 common.run_pepc(cmd , pman, ignore=_IGNORE)
 
-        for cpu_opt in props_common.get_bad_cpu_opts(params):
+        for cpu_opt in props_cmdl_common.get_bad_cpu_opts(params):
             common.run_pepc(f"cstates config {opt} {cpu_opt}", pman, exp_exc=Error)
 
 def test_cstates_config_bad(params):
@@ -196,11 +197,11 @@ def test_cstates_config_bad(params):
     for opt in _get_bad_config_opts():
         common.run_pepc(f"cstates config {opt}", pman, exp_exc=Error)
 
-        for cpu_opt in props_common.get_good_cpu_opts(params, sname="package"):
+        for cpu_opt in props_cmdl_common.get_good_cpu_opts(params, sname="package"):
             common.run_pepc(f"cstates config {opt} {cpu_opt}", pman, exp_exc=Error)
 
-        for cpu_opt in props_common.get_bad_cpu_opts(params):
+        for cpu_opt in props_cmdl_common.get_bad_cpu_opts(params):
             common.run_pepc(f"cstates config {opt} {cpu_opt}", pman, exp_exc=Error)
 
-        for mopt in props_common.get_mechanism_opts(params):
+        for mopt in props_cmdl_common.get_mechanism_opts(params):
             common.run_pepc(f"cstates config {opt} {mopt}", pman, exp_exc=Error)
