@@ -7,8 +7,6 @@
 # Authors: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 #          Antti Laakso <antti.laakso@linux.intel.com>
 #          Niklas Neronin <niklas.neronin@intel.com>
-#
-# TODO: This file grew large, needs to be split.
 
 """
 Provide a capability of retrieving and setting P-state related properties.
@@ -17,26 +15,24 @@ Provide a capability of retrieving and setting P-state related properties.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
-from typing import cast
+from typing import cast, Generator
 import contextlib
-import statistics
-from pathlib import Path
 from pepclibs import _PropsClassBase
 from pepclibs.PStatesVars import PROPS
-from pepclibs.helperlibs import Trivial, Human, ClassHelpers, Logging
+from pepclibs.helperlibs import Human, ClassHelpers, Logging
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorVerifyFailed
 
 # pylint: disable-next=unused-import
 from pepclibs._PropsClassBase import ErrorTryAnotherMechanism, ErrorUsePerCPU
 
 if typing.TYPE_CHECKING:
-    from typing import Generator, NoReturn, Union
+    from typing import NoReturn
     from pepclibs.msr import MSR, FSBFreq
     from pepclibs import _CPUFreqSysfs, _CPUFreqCPPC, _CPUFreqMSR
-    from pepclibs import _SysfsIO, EPP, EPB, _UncoreFreqSysfs, _UncoreFreqTpmi
+    from pepclibs import _SysfsIO, EPP, EPB
     from pepclibs.CPUInfo import CPUInfo
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
-    from pepclibs.PropsTypes import PropertyValueType, MechanismNameType
+    from pepclibs.PropsTypes import MechanismNameType
     from pepclibs.CPUInfoTypes import AbsNumsType, RelNumsType
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
@@ -78,19 +74,13 @@ class PStates(_PropsClassBase.PropsClassBase):
         self._cpufreq_cppc_obj: _CPUFreqCPPC.CPUFreqCPPC | None = None
         self._cpufreq_msr_obj: _CPUFreqMSR.CPUFreqMSR | None= None
 
-        self._uncfreq_sysfs_obj: _UncoreFreqSysfs.UncoreFreqSysfs | None = None
-        self._uncfreq_sysfs_err: str | None = None
-
-        self._uncfreq_tpmi_obj: _UncoreFreqTpmi.UncoreFreqTpmi | None = None
-        self._uncfreq_tpmi_err: str | None = None
-
         super()._init_props_dict(PROPS)
 
     def close(self):
         """Uninitialize the class instance."""
 
         close_attrs = ("_eppobj", "_epbobj", "_fsbfreq", "_cpufreq_sysfs_obj", "_cpufreq_cppc_obj",
-                       "_cpufreq_msr_obj", "_uncfreq_sysfs_obj")
+                       "_cpufreq_msr_obj")
         ClassHelpers.close(self, close_attrs=close_attrs)
 
         super().close()
@@ -202,57 +192,6 @@ class PStates(_PropsClassBase.PropsClassBase):
             self._cpufreq_msr_obj = _CPUFreqMSR.CPUFreqMSR(cpuinfo=self._cpuinfo, pman=self._pman,
                                                            msr=msr, enable_cache=self._enable_cache)
         return self._cpufreq_msr_obj
-
-    def _get_uncfreq_sysfs_obj(self) -> _UncoreFreqSysfs.UncoreFreqSysfs:
-        """
-        Get an 'UncoreFreqSysfs' object.
-
-        Returns:
-            An instance of '_UncoreFreqSysfs.UncoreFreqSysfs'.
-        """
-
-        if self._uncfreq_sysfs_err:
-            raise ErrorNotSupported(self._uncfreq_sysfs_err)
-
-        if not self._uncfreq_sysfs_obj:
-            # pylint: disable-next=import-outside-toplevel
-            from pepclibs import _UncoreFreqSysfs
-
-            sysfs_io = self._get_sysfs_io()
-            try:
-                obj = _UncoreFreqSysfs.UncoreFreqSysfs(self._cpuinfo, pman=self._pman,
-                                                       sysfs_io=sysfs_io,
-                                                       enable_cache=self._enable_cache)
-                self._uncfreq_sysfs_obj = obj
-            except ErrorNotSupported as err:
-                self._uncfreq_sysfs_err = str(err)
-                raise
-
-        return self._uncfreq_sysfs_obj
-
-    def _get_uncfreq_tpmi_obj(self) -> _UncoreFreqTpmi.UncoreFreqTpmi:
-        """
-        Get an 'UncoreFreqTpmi' object.
-
-        Returns:
-            An instance of '_UncoreFreqTpmi.UncoreFreqTpmi'.
-        """
-
-        if self._uncfreq_tpmi_err:
-            raise ErrorNotSupported(self._uncfreq_tpmi_err)
-
-        if not self._uncfreq_tpmi_obj:
-            # pylint: disable-next=import-outside-toplevel
-            from pepclibs import _UncoreFreqTpmi
-
-            try:
-                obj = _UncoreFreqTpmi.UncoreFreqTpmi(self._cpuinfo, pman=self._pman)
-                self._uncfreq_tpmi_obj = obj
-            except ErrorNotSupported as err:
-                self._uncfreq_tpmi_err = str(err)
-                raise
-
-        return self._uncfreq_tpmi_obj
 
     def _get_epp(self,
                  cpus: AbsNumsType,
@@ -504,7 +443,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         elif pname == "max_freq_limit":
             yield from cpufreq_obj.get_max_freq_limit(cpus)
         else:
-            raise Error(f"BUG: unexpected CPU frequency property {pname}")
+            raise Error(f"BUG: Unexpected CPU frequency property {pname}")
 
     def _get_freq_msr(self,
                       pname: str,
@@ -579,85 +518,6 @@ class PStates(_PropsClassBase.PropsClassBase):
 
         yield from self._get_freq_sysfs(pname, cpus)
 
-    def _get_uncore_freq_cpus(self,
-                              pname: str,
-                              cpus: AbsNumsType,
-                              mname: MechanismNameType) -> Generator[tuple[int, int], None, None]:
-        """
-        Retrieve and yield uncore frequency values for the specified CPUs.
-
-        Args:
-            pname: Name of the uncore frequency property to retrieve. Supported values are
-                   "min_uncore_freq", "max_uncore_freq", "min_uncore_freq_limit", and
-                   "max_uncore_freq_limit".
-            cpus: CPU numbers to retrieve uncore frequency values for.
-            mname: Name of the mechanism to use for retrieving the uncore frequency values.
-
-        Yields:
-            Tuples of (cpu, val), where 'cpu' is the CPU number and 'val' is its uncore frequency in
-            Hz.
-        """
-
-        uncfreq_obj: Union[_UncoreFreqSysfs.UncoreFreqSysfs, _UncoreFreqTpmi.UncoreFreqTpmi]
-        if mname == "sysfs":
-            uncfreq_obj = self._get_uncfreq_sysfs_obj()
-        elif mname == "tpmi":
-            uncfreq_obj = self._get_uncfreq_tpmi_obj()
-        else:
-            raise Error(f"BUG: Unexpected mechanism '{mname}'")
-
-        if pname == "min_uncore_freq":
-            yield from uncfreq_obj.get_min_freq_cpus(cpus)
-            return
-        if pname == "max_uncore_freq":
-            yield from uncfreq_obj.get_max_freq_cpus(cpus)
-            return
-
-        if mname == "sysfs":
-            uncfreq_sysfs_obj = self._get_uncfreq_sysfs_obj()
-            if pname == "min_uncore_freq_limit":
-                yield from uncfreq_sysfs_obj.get_min_freq_limit_cpus(cpus)
-                return
-            if pname == "max_uncore_freq_limit":
-                yield from uncfreq_sysfs_obj.get_max_freq_limit_cpus(cpus)
-                return
-
-        raise Error(f"BUG: Unexpected uncore frequency property {pname}")
-
-    def _get_elc_threshold_cpus(self,
-                                pname: str,
-                                cpus: AbsNumsType,
-                                mname: MechanismNameType) -> Generator[tuple[int, int], None, None]:
-        """
-        Retrieve and yield ELC threshold values for the specified CPUs.
-
-        Args:
-            pname: Name of the ELC threshold property to retrieve.
-            cpus: CPU numbers to retrieve ELC threshold values for.
-            mname: Name of the mechanism to use for retrieving the ELC threshold values.
-
-        Yields:
-            Tuples of (cpu, val), where 'cpu' is the CPU number and 'val' is its ELC threshold
-            value.
-        """
-
-        uncfreq_obj: Union[_UncoreFreqSysfs.UncoreFreqSysfs, _UncoreFreqTpmi.UncoreFreqTpmi]
-        if mname == "sysfs":
-            uncfreq_obj = self._get_uncfreq_sysfs_obj()
-        elif mname == "tpmi":
-            uncfreq_obj = self._get_uncfreq_tpmi_obj()
-        else:
-            raise Error(f"BUG: Unexpected mechanism '{mname}'")
-
-        if pname == "uncore_elc_low_threshold":
-            yield from uncfreq_obj.get_elc_low_threshold_cpus(cpus)
-            return
-        if pname == "uncore_elc_high_threshold":
-            yield from uncfreq_obj.get_elc_high_threshold_cpus(cpus)
-            return
-
-        raise Error(f"BUG: Unexpected ELC threshold property {pname}")
-
     def _get_bclks_cpus(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield bus clock speed for the specified CPUs using the MSR mechanism.
@@ -705,8 +565,7 @@ class PStates(_PropsClassBase.PropsClassBase):
                 for die in pkg_dies:
                     yield package, die, 100000000
         else:
-            # Only legacy platforms support 'MSR_FSB_FREQ', and they do not have uncore frequency
-            # control, so this code should never be executed.
+            # Only legacy platforms support 'MSR_FSB_FREQ'.
             raise Error("BUG: Not implemented, contact project maintainers")
 
     def _get_bclk(self, cpu: int) -> int:
@@ -831,23 +690,6 @@ class PStates(_PropsClassBase.PropsClassBase):
             raise ErrorTryAnotherMechanism(f"Use the 'msr' mechanism for {self._cpuinfo.cpudescr}")
 
         raise Error(f"BUG: Unexpected mechanism '{mname}'")
-
-    def _read_int(self, path: Path) -> int:
-        """
-        Read an integer value from the specified file path.
-
-        Args:
-            path: The file system path to read the integer value from.
-
-        Returns:
-            The integer value read from the file.
-        """
-
-        val = self._pman.read_file(path).strip()
-        if not Trivial.is_int(val):
-            raise Error(f"Read an unexpected non-integer value from '{path}'"
-                        f"{self._pman.hostmsg}")
-        return int(val)
 
     def _get_turbo(self,
                    cpus: AbsNumsType,
@@ -981,11 +823,6 @@ class PStates(_PropsClassBase.PropsClassBase):
             yield from self._get_freq(pname, cpus, mname)
         elif pname in {"min_freq_limit", "max_freq_limit"}:
             yield from self._get_freq_limit(pname, cpus, mname)
-        elif pname in {"min_uncore_freq", "max_uncore_freq",
-                       "min_uncore_freq_limit", "max_uncore_freq_limit"}:
-            yield from self._get_uncore_freq_cpus(pname, cpus, mname)
-        elif pname in {"uncore_elc_low_threshold", "uncore_elc_high_threshold"}:
-            yield from self._get_elc_threshold_cpus(pname, cpus, mname)
         elif pname == "frequencies":
             yield from self._get_frequencies(cpus, mname)
         elif pname == "bus_clock":
@@ -1002,113 +839,6 @@ class PStates(_PropsClassBase.PropsClassBase):
             yield from self._get_governors(cpus, mname)
         else:
             raise Error(f"BUG: Unknown property '{pname}'")
-
-    def _get_uncore_freq_dies(self,
-                              pname: str,
-                              dies: RelNumsType,
-                              mname: MechanismNameType) -> Generator[tuple[int, int, int],
-                                                                     None, None]:
-        """
-        Retrieve and yield uncore frequency values for the specified dies.
-
-        Args:
-            pname: Name of the uncore frequency property to retrieve (e.g., "min_uncore_freq").
-            dies: Dictionary mapping package numbers to collections of die numbers.
-            mname: Name of the mechanism to use for property retrieval.
-
-        Yields:
-            Tuples of (package, die, val), where 'package' is the package number, 'die' is the die
-            number, and 'val' is the uncore frequency or limit.
-        """
-
-        uncfreq_obj: Union[_UncoreFreqSysfs.UncoreFreqSysfs, _UncoreFreqTpmi.UncoreFreqTpmi]
-        if mname == "sysfs":
-            uncfreq_obj = self._get_uncfreq_sysfs_obj()
-        elif mname == "tpmi":
-            uncfreq_obj = self._get_uncfreq_tpmi_obj()
-        else:
-            raise Error(f"BUG: Unexpected mechanism '{mname}'")
-
-        if pname == "min_uncore_freq":
-            yield from uncfreq_obj.get_min_freq_dies(dies)
-            return
-        if pname == "max_uncore_freq":
-            yield from uncfreq_obj.get_max_freq_dies(dies)
-            return
-
-        if mname == "sysfs":
-            uncfreq_sysfs_obj = self._get_uncfreq_sysfs_obj()
-
-            if pname == "min_uncore_freq_limit":
-                yield from uncfreq_sysfs_obj.get_min_freq_limit_dies(dies)
-                return
-            if pname == "max_uncore_freq_limit":
-                yield from uncfreq_sysfs_obj.get_max_freq_limit_dies(dies)
-                return
-
-        raise Error(f"BUG: unexpected uncore frequency property {pname}")
-
-    def _get_elc_threshold_dies(self,
-                                pname: str,
-                                dies: RelNumsType,
-                                mname: MechanismNameType) -> Generator[tuple[int, int, int],
-                                                                       None, None]:
-        """
-        Retrieve and yield ELC threshold values for the specified dies.
-
-        Args:
-            pname: Name of the ELC threshold property to retrieve.
-            dies: Dictionary mapping package numbers to collections of die numbers.
-            mname: Name of the mechanism to use for property retrieval.
-
-        Yields:
-            Tuples of (package, die, val), where 'package' is the package number, 'die' is the die
-            number, and 'val' is the ELC threshold value.
-        """
-
-        uncfreq_obj: Union[_UncoreFreqSysfs.UncoreFreqSysfs, _UncoreFreqTpmi.UncoreFreqTpmi]
-        if mname == "sysfs":
-            uncfreq_obj = self._get_uncfreq_sysfs_obj()
-        elif mname == "tpmi":
-            uncfreq_obj = self._get_uncfreq_tpmi_obj()
-        else:
-            raise Error(f"BUG: Unexpected mechanism '{mname}'")
-
-        if pname == "uncore_elc_low_threshold":
-            yield from uncfreq_obj.get_elc_low_threshold_dies(dies)
-            return
-        if pname == "uncore_elc_high_threshold":
-            yield from uncfreq_obj.get_elc_high_threshold_dies(dies)
-            return
-
-        raise Error(f"BUG: unexpected uncore frequency property {pname}")
-
-    def _get_prop_dies(self,
-                       pname: str,
-                       dies: RelNumsType,
-                       mname: MechanismNameType) -> Generator[tuple[int, int, PropertyValueType],
-                                                              None, None]:
-        """Refer to '_PropsClassBase._get_prop_dies()'."""
-
-        _LOG.debug("Getting property '%s' using mechanism '%s', packages/dies: %s",
-                   pname, mname, dies)
-
-        if pname not in {"min_uncore_freq", "max_uncore_freq",
-                         "min_uncore_freq_limit", "max_uncore_freq_limit",
-                         "uncore_elc_low_threshold", "uncore_elc_high_threshold"}:
-            # Use the default implementation for anything but uncore frequency.
-            yield from super()._get_prop_dies(pname, dies, mname)
-            return
-
-        # In case of uncore properties, there may be I/O dies, which have no CPUs, so implement
-        # per-die access.
-        if pname in {"min_uncore_freq", "max_uncore_freq",
-                     "min_uncore_freq_limit", "max_uncore_freq_limit"}:
-            yield from self._get_uncore_freq_dies(pname, dies, mname)
-            return
-
-        if pname in {"uncore_elc_low_threshold", "uncore_elc_high_threshold"}:
-            yield from self._get_elc_threshold_dies(pname, dies, mname)
 
     def _set_turbo(self, enable: bool, cpus: AbsNumsType, mname: MechanismNameType):
         """
@@ -1399,153 +1129,6 @@ class PStates(_PropsClassBase.PropsClassBase):
             self._set_cpu_freq(pname, val, cpus, mname)
         else:
             raise Error(f"BUG: Unsupported property '{pname}'")
-
-    def _set_uncore_freq_dies(self,
-                              pname: str,
-                              freq: int,
-                              dies: RelNumsType,
-                              mname: MechanismNameType):
-        """
-        Set the minimum or maximum uncore frequency for specified dies.
-
-        Args:
-            pname: The property name, either "min_uncore_freq" or "max_uncore_freq".
-            freq: The frequency value to set.
-            dies: Dictionary mapping package numbers to collections of die numbers.
-            mname: Name of the mechanism to use for setting the property.
-        """
-
-        uncfreq_obj: Union[_UncoreFreqSysfs.UncoreFreqSysfs, _UncoreFreqTpmi.UncoreFreqTpmi]
-        if mname == "sysfs":
-            uncfreq_obj = self._get_uncfreq_sysfs_obj()
-        elif mname == "tpmi":
-            uncfreq_obj = self._get_uncfreq_tpmi_obj()
-        else:
-            raise Error(f"BUG: Unexpected mechanism '{mname}'")
-
-        if pname == "min_uncore_freq":
-            uncfreq_obj.set_uncore_low_freq_dies(freq, dies)
-        elif pname == "max_uncore_freq":
-            uncfreq_obj.set_max_freq_dies(freq, dies)
-        else:
-            raise Error(f"BUG: Unexpected uncore frequency property {pname}")
-
-    def _set_elc_threshold_dies(self,
-                                pname: str,
-                                threshold: int,
-                                dies: RelNumsType,
-                                mname: MechanismNameType):
-        """
-        Set the minimum or maximum ELC threshold for specified dies.
-
-        Args:
-            pname: The property name.
-            threshold: The ELC threshold value to set.
-            dies: Dictionary mapping package numbers to collections of die numbers.
-            mname: Name of the mechanism to use for setting the property.
-        """
-
-        uncfreq_obj: Union[_UncoreFreqSysfs.UncoreFreqSysfs, _UncoreFreqTpmi.UncoreFreqTpmi]
-        if mname == "sysfs":
-            uncfreq_obj = self._get_uncfreq_sysfs_obj()
-        elif mname == "tpmi":
-            uncfreq_obj = self._get_uncfreq_tpmi_obj()
-        else:
-            raise Error(f"BUG: Unexpected mechanism '{mname}'")
-
-        if pname == "uncore_elc_low_threshold":
-            uncfreq_obj.set_elc_low_threshold_dies(threshold, dies)
-        elif pname == "uncore_elc_high_threshold":
-            uncfreq_obj.set_elc_high_threshold_dies(threshold, dies)
-        else:
-            raise Error(f"BUG: Unexpected uncore ELC threshold property {pname}")
-
-    def _get_numeric_uncore_freq(self,
-                                 freq: str | int,
-                                 dies: RelNumsType) -> Generator[tuple[int, int, int], None, None]:
-        """
-        Convert a user-provided uncore frequency value to its numeric representation in Hz for each
-        die.
-
-        Args:
-            freq: The frequency value to convert. Can be a numeric value or a special string
-                  ("min", "max", "mdl").
-            dies: A dictionary mapping package numbers to collections of die numbers.
-
-        Yields:
-            Tuples of (package, die, val), where 'package' is the package number, 'die' is the die
-            number, and 'val' is the resolved frequency in Hz.
-        """
-
-        if freq == "min":
-            yield from cast(Generator[tuple[int, int, int], None, None],
-                            self._get_prop_dies_mnames("min_uncore_freq_limit", dies, ("sysfs",)))
-        elif freq == "max":
-            yield from cast(Generator[tuple[int, int, int], None, None],
-                            self._get_prop_dies_mnames("max_uncore_freq_limit", dies, ("sysfs",)))
-        elif freq == "mdl":
-            bclks_iter = self._get_bclks_dies(dies)
-            min_limit_iter = self._get_prop_dies_mnames("min_uncore_freq_limit", dies, ("sysfs",))
-            max_limit_iter = self._get_prop_dies_mnames("max_uncore_freq_limit", dies, ("sysfs",))
-            iter_zip = zip(bclks_iter, min_limit_iter, max_limit_iter)
-            iterator = cast(Generator[tuple[tuple[int, int, int], tuple[int, int, int],
-                                            tuple[int, int, int]], None, None], iter_zip)
-            for (package, die, bclk), (_, _, min_limit), (_, _, max_limit) in iterator:
-                yield package, die, bclk * round(statistics.mean([min_limit, max_limit]) / bclk)
-        elif isinstance(freq, int):
-            for package, pkg_dies in dies.items():
-                for die in pkg_dies:
-                    yield package, die, freq
-        else:
-            raise Error(f"BUG: Unexpected non-integer uncore frequency value '{freq}'")
-
-    def _set_uncore_freq(self,
-                         pname: str,
-                         val: str | int,
-                         dies: RelNumsType,
-                         mname: MechanismNameType):
-        """
-        Set the uncore frequency property for specified dies using a given method.
-
-        Args:
-            pname: Name of the uncore frequency property to set (e.g., 'min_uncore_freq',
-                   'max_uncore_freq').
-            val: The value to set for the property. Can be a numeric value or a special string
-                 (e.g., 'min', 'max', 'mdl').
-            dies: Mapping of package numbers to collections of die numbers.
-            mname: Name of the mechanism to use for setting the property.
-        """
-
-        freq2dies: dict[int, dict[int, list[int]]] = {}
-        for (package, die, new_freq) in self._get_numeric_uncore_freq(val, dies):
-            if new_freq not in freq2dies:
-                freq2dies[new_freq] = {}
-            if package not in freq2dies[new_freq]:
-                freq2dies[new_freq][package] = []
-            freq2dies[new_freq][package].append(die)
-
-        for new_freq, freq_dies in freq2dies.items():
-            self._set_uncore_freq_dies(pname, new_freq, freq_dies, mname)
-
-    def _set_prop_dies(self,
-                       pname: str,
-                       val: typing.Any,
-                       dies: RelNumsType,
-                       mname: MechanismNameType):
-        """Refer to '_PropsClassBase._set_prop_dies()'."""
-
-        _LOG.debug("Setting property '%s' to value '%s' using mechanism '%s', packages/dies: %s",
-                   pname, val, mname, dies)
-
-        if pname not in {"min_uncore_freq", "max_uncore_freq",
-                         "uncore_elc_low_threshold", "uncore_elc_high_threshold"}:
-            super()._set_prop_dies(pname, val, dies, mname)
-            return
-
-        if pname in {"min_uncore_freq", "max_uncore_freq"}:
-            self._set_uncore_freq(pname, val, dies, mname)
-        else:
-            self._set_elc_threshold_dies(pname, val, dies, mname)
 
     def _set_sname(self, pname: str):
         """

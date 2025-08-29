@@ -26,6 +26,9 @@ from pepclibs.helperlibs import Logging, ClassHelpers
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
+# The uncore frequency ratio -> uncore frequency Hz multiplier.
+RATIO_MULTIPLIER: Final[int] = 100_000_000 # 100MHz
+
 # Unfortunately TPMI does not provide the limit values. The way the Linux kernel driver
 # works-around this is it assumes that the initial min/max values at the driver
 # initialization time (boot time) are the actual limits. But in theory, these my not be the
@@ -89,9 +92,6 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
 
         # The package number -> uncore TPMI PCI device address map.
         self._addrmap: dict[int, str] = {}
-
-        # The uncore frequency ratio -> uncore frequency Hz multiplier.
-        self._ratio_multiplier: int = 100000000
 
     def close(self):
         """Uninitialize the class object."""
@@ -158,7 +158,7 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
             addr = self._get_pci_addr(package)
             for die in pkg_dies:
                 ratio = self._tpmi.read_register("uncore", addr, die, regname, bfname=bfname)
-                yield (package, die, ratio * self._ratio_multiplier)
+                yield (package, die, ratio * RATIO_MULTIPLIER)
 
     def get_min_freq_dies(self, dies: RelNumsType) -> Generator[tuple[int, int, int], None, None]:
         """
@@ -241,11 +241,11 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
         if ftype == "min":
             regname, bfname = self._get_freq_regname("max")
             ratio = self._tpmi.read_register("uncore", addr, die, regname, bfname=bfname)
-            max_freq = ratio * self._ratio_multiplier
+            max_freq = ratio * RATIO_MULTIPLIER
         else:
             regname, bfname = self._get_freq_regname("min")
             ratio = self._tpmi.read_register("uncore", addr, die, regname, bfname=bfname)
-            min_freq = ratio * self._ratio_multiplier
+            min_freq = ratio * RATIO_MULTIPLIER
 
         self._validate_frequency(freq, ftype, package, die, MIN_FREQ_LIMIT, MAX_FREQ_LIMIT,
                                  min_freq=min_freq, max_freq=max_freq)
@@ -253,7 +253,7 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
     def _set_freq_dies(self, freq: int, ftype: _FreqValueType, dies: RelNumsType):
         """Refer to '_UncoreFreqBase._set_freq_dies()'."""
 
-        ratio = int(freq / self._ratio_multiplier)
+        ratio = int(freq / RATIO_MULTIPLIER)
         regname, bfname = self._get_freq_regname(ftype)
 
         for package, pkg_dies in dies.items():
@@ -262,7 +262,7 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
                 self._validate_freq(freq, ftype, package, die)
                 self._tpmi.write_register(ratio, "uncore", addr, die, regname, bfname=bfname)
 
-    def set_uncore_low_freq_dies(self, freq: int, dies: RelNumsType):
+    def set_min_freq_dies(self, freq: int, dies: RelNumsType):
         """
         Set the minimum uncore frequency for each die in the provided packages->dies mapping.
 

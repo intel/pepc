@@ -27,14 +27,14 @@ except ImportError:
 
 import typing
 from typing import cast
-from pepclibs import PMQoSVars, CStatesVars, PStatesVars, CPUInfoVars
+from pepclibs import PMQoSVars, CStatesVars, PStatesVars, UncoreVars, CPUInfoVars
 from pepclibs.helperlibs import ArgParse, Human, Logging, ProjectFiles, Trivial
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs._PropsClassBase import MECHANISMS
 
 if typing.TYPE_CHECKING:
     from typing import Sequence, Any, Generator, Final
-    from pepclibs.helperlibs import EmulProcessManager, ProcessManager
+    from pepclibs.helperlibs import EmulProcessManager
     from pepclibs.helperlibs.ArgParse import ArgTypedDict, ArgKwargsTypedDict
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepclibs.PropsTypes import PropertyTypedDict
@@ -395,7 +395,7 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     #
     # Create parser for the 'pstates' command.
     #
-    text = "P-state commands."
+    text = "CPU P-state commands."
     man_msg = "Refer to 'pepc-pstates' manual page for more information."
     descr = "Various commands related to P-states (CPU performance states). " + man_msg
     subpars = subparsers.add_parser("pstates", help=text, description=descr)
@@ -406,7 +406,7 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     #
     # Create parser for the 'pstates info' command.
     #
-    text = "Get P-states information."
+    text = "Get CPU P-states information."
     descr = """Get P-states information for specified CPUs. By default, print all information for
                all CPUs. """ + man_msg
     subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
@@ -425,7 +425,7 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     #
     # Create parser for the 'pstates config' command.
     #
-    text = """Configure P-states."""
+    text = """Configure CPU P-states."""
     descr = """Configure P-states on specified CPUs. All options can be used without a parameter,
                in which case the currently configured value(s) will be printed. """ + man_msg
     subpars2 = subparsers2.add_parser("config", help=text, description=descr, epilog=man_msg)
@@ -434,9 +434,55 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
 
     ArgParse.add_options(subpars2, all_options)
 
-    _add_target_cpus_arguments(subpars2, "List of %s to configure P-States on.")
+    _add_target_cpus_arguments(subpars2, "List of %s to configure P-states for.")
 
     _add_config_subcommand_options(PStatesVars.PROPS, subpars2)
+
+    #
+    # Create parser for the 'uncore' command.
+    #
+    text = "Uncore commands."
+    man_msg = "Refer to 'pepc-uncore' manual page for more information."
+    descr = "Various commands related to uncore. " + man_msg
+    subpars = subparsers.add_parser("uncore", help=text, description=descr)
+    subpars = cast(ArgParse.ArgsParser, subpars)
+    subparsers2 = subpars.add_subparsers(title="Further sub-commands")
+    subparsers2.required = True
+
+    #
+    # Create parser for the 'uncore info' command.
+    #
+    text = "Get uncore information."
+    descr = """Get uncore information for specified uncore domains (e.g., package). By default,
+               print all information for all uncore domains of the processors. """ + man_msg
+    subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
+    subpars2 = cast(ArgParse.ArgsParser, subpars2)
+    subpars2.set_defaults(func=_uncore_info_command)
+
+    ArgParse.add_options(subpars2, all_options)
+
+    _add_target_cpus_arguments(subpars2, "List of %s to get information about.")
+
+    text = """Print information in YAML format."""
+    subpars2.add_argument("--yaml", action="store_true", help=text)
+
+    _add_info_subcommand_options(UncoreVars.PROPS, subpars2)
+
+    #
+    # Create parser for the 'uncore config' command.
+    #
+    text = """Configure uncore."""
+    descr = """Configure uncore. All options can be used without a parameter, in which case the
+               currently configured value(s) will be printed. """ + man_msg
+    subpars2 = subparsers2.add_parser("config", help=text, description=descr, epilog=man_msg)
+    subpars2 = cast(ArgParse.ArgsParser, subpars2)
+    subpars2.set_defaults(func=_uncore_config_command)
+
+    ArgParse.add_options(subpars2, all_options)
+
+    _add_target_cpus_arguments(subpars2, "List of %s to configure uncore for.")
+
+    _add_config_subcommand_options(UncoreVars.PROPS, subpars2)
 
     #
     # Create parser for the 'pmqos' command.
@@ -480,7 +526,7 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
 
     ArgParse.add_options(subpars2, ssh_mechanisms_options)
 
-    _add_target_cpus_arguments(subpars2, "List of %s to configure P-States on.")
+    _add_target_cpus_arguments(subpars2, "List of %s to configure PM QoS for.")
 
     _add_config_subcommand_options(PMQoSVars.PROPS, subpars2)
 
@@ -857,6 +903,34 @@ def _pstates_config_command(args: argparse.Namespace, pman: ProcessManagerType):
 
     _PepcPStates.pstates_config_command(args, pman)
 
+def _uncore_info_command(args: argparse.Namespace, pman: ProcessManagerType):
+    """
+    Implement the 'uncore info' command.
+
+    Args:
+        args: Parsed command-line arguments.
+        pman: Process manager object for the host to run the command for.
+    """
+
+    # pylint: disable-next=import-outside-toplevel
+    from pepctool import _PepcUncore
+
+    _PepcUncore.uncore_info_command(args, pman)
+
+def _uncore_config_command(args: argparse.Namespace, pman: ProcessManagerType):
+    """
+    Implement the 'uncore config' command.
+
+    Args:
+        args: Parsed command-line arguments.
+        pman: Process manager object for the host to run the command for.
+    """
+
+    # pylint: disable-next=import-outside-toplevel
+    from pepctool import _PepcUncore
+
+    _PepcUncore.uncore_config_command(args, pman)
+
 def _pmqos_info_command(args: argparse.Namespace, pman: ProcessManagerType):
     """
     Implement the 'pmqos info' command.
@@ -989,10 +1063,12 @@ def _list_mechanisms(args: argparse.Namespace):
 
     props: dict[str, PropertyTypedDict]
     fname: str = args.func.__name__
-    if fname.startswith("_pstates_"):
-        props = PStatesVars.PROPS
-    elif fname.startswith("_cstates_"):
+    if fname.startswith("_cstates_"):
         props = CStatesVars.PROPS
+    elif fname.startswith("_pstates_"):
+        props = PStatesVars.PROPS
+    elif fname.startswith("_uncore_"):
+        props = UncoreVars.PROPS
     elif fname.startswith("_pmqos_"):
         props = PMQoSVars.PROPS
     else:

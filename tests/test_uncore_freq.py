@@ -117,14 +117,14 @@ def _test_freq_methods_dies_good(uncfreq_obj: _UncoreFreqObjType, all_dies: RelN
         mid_freq = (mid_freq + round_hz - 1) // round_hz * round_hz
 
         # Set the min uncore frequency to the middle value and check it.
-        uncfreq_obj.set_uncore_low_freq_dies(mid_freq, {package: [die]})
+        uncfreq_obj.set_min_freq_dies(mid_freq, {package: [die]})
         read_pkg, read_die, read_freq = next(uncfreq_obj.get_min_freq_dies({package: [die]}))
         assert read_pkg == package and read_die == die and read_freq == mid_freq, \
                f"Expected ({package}, {die}, {mid_freq}), but got ({read_pkg}, {read_die}, " \
                f"{read_freq})\n{errmsg_suffix}"
 
         # Restore the original min uncore frequency.
-        uncfreq_obj.set_uncore_low_freq_dies(min_freq, {package: [die]})
+        uncfreq_obj.set_min_freq_dies(min_freq, {package: [die]})
         _, _, read_freq = next(uncfreq_obj.get_min_freq_dies({package: [die]}))
         assert read_freq == min_freq, f"Expected {min_freq}, but got {read_freq}\n{errmsg_suffix}"
 
@@ -167,7 +167,7 @@ def _test_freq_methods_dies_bad(uncfreq_obj: _UncoreFreqObjType, all_dies: RelNu
         mid_freq = (mid_freq + round_hz - 1) // round_hz * round_hz
 
         # Set the min uncore frequency to the middle value and check it.
-        uncfreq_obj.set_uncore_low_freq_dies(mid_freq, {package: [die]})
+        uncfreq_obj.set_min_freq_dies(mid_freq, {package: [die]})
         read_pkg, read_die, read_freq = next(uncfreq_obj.get_min_freq_dies({package: [die]}))
         assert read_pkg == package and read_die == die and read_freq == mid_freq, \
                f"Expected ({package}, {die}, {mid_freq}), but got ({read_pkg}, {read_die}, " \
@@ -183,7 +183,7 @@ def _test_freq_methods_dies_bad(uncfreq_obj: _UncoreFreqObjType, all_dies: RelNu
         # Try to set min uncore frequency to a value higher than the max frequency. This should
         # fail.
         try:
-            uncfreq_obj.set_uncore_low_freq_dies(mid_freq + 100_000_000, {package: [die]})
+            uncfreq_obj.set_min_freq_dies(mid_freq + 100_000_000, {package: [die]})
         except ErrorBadOrder:
             pass
         else:
@@ -209,7 +209,7 @@ def _test_freq_methods_dies_bad(uncfreq_obj: _UncoreFreqObjType, all_dies: RelNu
 
         try:
             try_min = min_freq_limit - 100_000_000
-            uncfreq_obj.set_uncore_low_freq_dies(try_min, {package: [die]})
+            uncfreq_obj.set_min_freq_dies(try_min, {package: [die]})
         except ErrorOutOfRange:
             pass
         else:
@@ -226,7 +226,7 @@ def _test_freq_methods_dies_bad(uncfreq_obj: _UncoreFreqObjType, all_dies: RelNu
                         f"'ErrorOutOfRange', but no exception was raised\n{errmsg_suffix}")
 
         # Restore the original min uncore frequency.
-        uncfreq_obj.set_uncore_low_freq_dies(min_freq, {package: [die]})
+        uncfreq_obj.set_min_freq_dies(min_freq, {package: [die]})
         _, _, read_freq = next(uncfreq_obj.get_min_freq_dies({package: [die]}))
         assert read_freq == min_freq, f"Expected {min_freq}, but got {read_freq}\n{errmsg_suffix}"
 

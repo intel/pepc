@@ -583,7 +583,7 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
                 path = self._construct_freq_path_die(ftype, package, die)
                 self._sysfs_io.write_int(path, freq // 1000, what=what)
 
-    def set_uncore_low_freq_dies(self, freq: int, dies: RelNumsType):
+    def set_min_freq_dies(self, freq: int, dies: RelNumsType):
         """
         Set the minimum uncore frequency for each die in the provided packages->dies mapping.
 

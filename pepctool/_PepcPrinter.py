@@ -16,7 +16,7 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import sys
 import typing
-from typing import TypedDict, Iterable, Sequence, IO, Literal, Iterator, Union, get_args, cast
+from typing import Literal, Union, get_args, cast
 from pepctool import _PepcCommon
 from pepclibs import CPUInfo
 from pepclibs.helperlibs import Logging, ClassHelpers, Human, YAML, Trivial
@@ -26,15 +26,16 @@ from pepclibs._PropsClassBase import ErrorUsePerCPU, ErrorTryAnotherMechanism
 PrintFormatType = Literal["human", "yaml"]
 
 if typing.TYPE_CHECKING:
+    from typing import TypedDict, Iterable, Sequence, IO, Iterator
     from pepctool import _OpTarget
-    from pepclibs import PStates, CStates, PMQoS
+    from pepclibs import CStates, PStates, Uncore, PMQoS
     from pepclibs.CPUIdle import ReqCStateInfoTypedDict, ReqCStateInfoValuesType
     from pepclibs.CPUIdle import ReqCStateInfoKeysType
     from pepclibs.PropsTypes import PropertyTypedDict, PropertyValueType, PVInfoTypedDict
     from pepclibs.PropsTypes import MechanismNameType
     from pepclibs.CPUInfoTypes import AbsNumsType, RelNumsType, ScopeNameType
 
-    _PropsClassType = Union[PStates.PStates, CStates.CStates, PMQoS.PMQoS]
+    _PropsClassType = Union[CStates.CStates, PStates.PStates, Uncore.Uncore, PMQoS.PMQoS]
 
     class _AggrSubPinfoTypdDict(TypedDict, total=False):
         """
@@ -864,6 +865,20 @@ class PStatesPrinter(_PropsPrinter):
         super().__init__(pobj, cpuinfo, fobj=fobj, fmt=fmt)
 
         self._pobj: PStates.PStates
+
+class UncorePrinter(_PropsPrinter):
+    """Provide API for printing uncore information."""
+
+    def __init__(self,
+                 pobj: Uncore.Uncore,
+                 cpuinfo: CPUInfo.CPUInfo,
+                 fobj: IO[str] | None = None,
+                 fmt: PrintFormatType = "human"):
+        """Refer to '_PropsPrinter.__init__()'."""
+
+        super().__init__(pobj, cpuinfo, fobj=fobj, fmt=fmt)
+
+        self._pobj: Uncore.Uncore
 
 class PMQoSPrinter(_PropsPrinter):
     """Provide API for printing PM QoS information."""

@@ -122,8 +122,8 @@ def cstates_config_command(args, pman):
         if args.mechanisms:
             mnames = _PepcCommon.parse_mechanisms(args.mechanisms, pobj)
 
-        csprint = _PepcPrinter.CStatesPrinter(pobj, cpuinfo)
-        stack.enter_context(csprint)
+        printer = _PepcPrinter.CStatesPrinter(pobj, cpuinfo)
+        stack.enter_context(printer)
 
         optar = _OpTarget.OpTarget(pman=pman, cpuinfo=cpuinfo, cpus=args.cpus, cores=args.cores,
                                    modules=args.modules, dies=args.dies, packages=args.packages,
@@ -137,25 +137,25 @@ def cstates_config_command(args, pman):
                 # Handle the special case of '--enable' and '--disable' option without arguments. In
                 # this case we just print the C-states enable/disable status.
                 if not all_cstates_printed:
-                    csprint.print_cstates(csnames="all", cpus=optar.get_cpus(), mnames=mnames)
+                    printer.print_cstates(csnames="all", cpus=optar.get_cpus(), mnames=mnames)
                     all_cstates_printed = True
                 del enable_opts[optname]
 
         if print_opts:
-            csprint.print_props(print_opts, optar, mnames=mnames, skip_unsupported=False)
+            printer.print_props(print_opts, optar, mnames=mnames, skip_unsupported=False)
 
         if set_opts or enable_opts:
-            csset = _PepcSetter.CStatesSetter(pman, pobj, cpuinfo, csprint, msr=msr)
-            stack.enter_context(csset)
+            setter = _PepcSetter.CStatesSetter(pman, pobj, cpuinfo, printer, msr=msr)
+            stack.enter_context(setter)
 
         if enable_opts:
             for optname, optval in enable_opts.items():
                 enable = optname == "enable"
-                csset.set_cstates(csnames=optval, cpus=optar.get_cpus(), enable=enable,
-                                  mnames=mnames)
+                setter.set_cstates(csnames=optval, cpus=optar.get_cpus(), enable=enable,
+                                   mnames=mnames)
 
         if set_opts:
-            csset.set_props(set_opts, optar, mnames=mnames)
+            setter.set_props(set_opts, optar, mnames=mnames)
 
     if enable_opts or set_opts:
         _PepcCommon.check_tuned_presence(pman)

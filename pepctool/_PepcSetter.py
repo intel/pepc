@@ -14,22 +14,23 @@ Provide API for changing properties.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
-from typing import TypedDict, Sequence, cast, Iterable, Literal, Union
+from typing import cast
 from pepctool import _PepcCommon
 from pepclibs.helperlibs import ClassHelpers, Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorBadOrder
 from pepclibs.msr import MSR
 
 if typing.TYPE_CHECKING:
+    from typing import TypedDict, Sequence, Iterable, Literal, Union
     from pepctool import _OpTarget, _PepcPrinter
-    from pepclibs import CPUInfo, _SysfsIO, CStates, PStates, PMQoS
+    from pepclibs import CPUInfo, _SysfsIO, PStates, CStates, Uncore, PMQoS
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepclibs.PropsTypes import MechanismNameType, PropertyValueType
     from pepclibs.CPUInfoTypes import AbsNumsType, RelNumsType, ScopeNameType
 
-    _PropsClassType = Union[PStates.PStates, CStates.CStates, PMQoS.PMQoS]
+    _PropsClassType = Union[CStates.CStates, PStates.PStates, Uncore.Uncore, PMQoS.PMQoS]
     _PepcPrinterClassType = Union[_PepcPrinter.CStatesPrinter, _PepcPrinter.PStatesPrinter,
-                                  _PepcPrinter.PMQoSPrinter]
+                                  _PepcPrinter.UncorePrinter, _PepcPrinter.PMQoSPrinter]
 
     class PropSetInfoTypedDict(TypedDict, total=False):
         """
@@ -188,22 +189,19 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
                 self._pprinter.print_props((pname,), optar, mnames=mnames, skip_ro=True,
                                            skip_unsupported=False, action="set to")
 
-class PStatesSetter(_PropsSetter):
-    """Provide API for changing P-state properties."""
+class _PStatesUncoreSetter(_PropsSetter):
+    """Base class for the P-state and Uncore property setters."""
 
     def __init__(self,
                  pman: ProcessManagerType,
-                 pobj: PStates.PStates,
+                 pobj: PStates.PStates | Uncore.Uncore,
                  cpuinfo: CPUInfo.CPUInfo,
-                 pprinter: _PepcPrinter.PStatesPrinter,
+                 pprinter: _PepcPrinter.PStatesPrinter | _PepcPrinter.UncorePrinter,
                  msr: MSR.MSR | None = None,
                  sysfs_io: _SysfsIO.SysfsIO | None = None):
         """Refer to '_PropsSetter.__init__()'."""
 
         super().__init__(pman, pobj, cpuinfo, pprinter, msr=msr, sysfs_io=sysfs_io)
-
-        self._pobj: PStates.PStates
-        self._pprinter: _PepcPrinter.PStatesPrinter
 
     def _set_prop_sname(self,
                         spinfo: dict[str, PropSetInfoTypedDict],
@@ -221,7 +219,7 @@ class PStatesSetter(_PropsSetter):
             super()._set_prop_sname(spinfo, pname, optar, mnames, mnames_info)
             return
         except ErrorBadOrder as err:
-            if pname not in {"min_freq", "max_freq", "min_uncore_freq", "max_uncore_freq"}:
+            if pname not in {"min_freq", "max_freq"}:
                 raise
 
             # Setting frequencies may be tricky because of the ordering constraints. Here is an
@@ -262,6 +260,40 @@ class PStatesSetter(_PropsSetter):
                                                    mnames=mnames)
                 del spinfo[pnm]
                 mnames_info[pnm] = mname
+
+class PStatesSetter(_PStatesUncoreSetter):
+    """Provide API for changing P-state properties."""
+
+    def __init__(self,
+                 pman: ProcessManagerType,
+                 pobj: PStates.PStates,
+                 cpuinfo: CPUInfo.CPUInfo,
+                 pprinter: _PepcPrinter.PStatesPrinter,
+                 msr: MSR.MSR | None = None,
+                 sysfs_io: _SysfsIO.SysfsIO | None = None):
+        """Refer to '_PropsSetter.__init__()'."""
+
+        super().__init__(pman, pobj, cpuinfo, pprinter, msr=msr, sysfs_io=sysfs_io)
+
+        self._pobj: PStates.PStates
+        self._pprinter: _PepcPrinter.PStatesPrinter
+
+class UncoreSetter(_PStatesUncoreSetter):
+    """Provide API for changing uncore properties."""
+
+    def __init__(self,
+                 pman: ProcessManagerType,
+                 pobj: Uncore.Uncore,
+                 cpuinfo: CPUInfo.CPUInfo,
+                 pprinter: _PepcPrinter.UncorePrinter,
+                 msr: MSR.MSR | None = None,
+                 sysfs_io: _SysfsIO.SysfsIO | None = None):
+        """Refer to '_PropsSetter.__init__()'."""
+
+        super().__init__(pman, pobj, cpuinfo, pprinter, msr=msr, sysfs_io=sysfs_io)
+
+        self._pobj: Uncore.Uncore
+        self._pprinter: _PepcPrinter.UncorePrinter
 
 class PMQoSSetter(_PropsSetter):
     """Provide API for changing PM QoS properties."""

@@ -21,8 +21,6 @@ if typing.TYPE_CHECKING:
 
 # Special values for writable CPU frequency properties.
 _SPECIAL_FREQ_VALS = {"min", "max", "base", "hfm", "P1", "eff", "lfm", "Pn", "Pm"}
-# Special values for writable uncore frequency properties.
-_SPECIAL_UNCORE_FREQ_VALS = {"min", "max", "mdl"}
 
 # This properties dictionary defines the CPU properties supported by this module.
 #
@@ -120,56 +118,6 @@ PROPS: Final[dict[str, PropertyTypedDict]] = {
         "sname": "CPU",
         "mnames": ("sysfs",),
         "writable": False,
-    },
-    "min_uncore_freq": {
-        "name": "Min. uncore frequency",
-        "unit": "Hz",
-        "type": "int",
-        "sname": "die",
-        "mnames": ("sysfs", "tpmi"),
-        "writable": True,
-        "special_vals": _SPECIAL_UNCORE_FREQ_VALS,
-    },
-    "max_uncore_freq": {
-        "name": "Max. uncore frequency",
-        "unit": "Hz",
-        "type": "int",
-        "sname": "die",
-        "mnames": ("sysfs", "tpmi"),
-        "writable": True,
-        "special_vals": _SPECIAL_UNCORE_FREQ_VALS,
-    },
-    "min_uncore_freq_limit": {
-        "name": "Min. supported uncore frequency",
-        "unit": "Hz",
-        "type": "int",
-        "sname": "die",
-        "mnames": ("sysfs",),
-        "writable": False,
-    },
-    "max_uncore_freq_limit": {
-        "name": "Max. supported uncore frequency",
-        "unit": "Hz",
-        "type": "int",
-        "sname": "die",
-        "mnames": ("sysfs",),
-        "writable": False,
-    },
-    "uncore_elc_low_threshold": {
-        "name": "Uncore ELC low threshold",
-        "unit": "%",
-        "type": "int",
-        "sname": "die",
-        "mnames": ("sysfs", "tpmi"),
-        "writable": True,
-    },
-    "uncore_elc_high_threshold": {
-        "name": "Uncore ELC high threshold",
-        "unit": "%",
-        "type": "int",
-        "sname": "die",
-        "mnames": ("sysfs", "tpmi"),
-        "writable": True,
     },
     "hwp": {
         "name": "Hardware power management",

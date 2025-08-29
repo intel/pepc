@@ -90,8 +90,8 @@ def pmqos_config_command(args, pman):
         pobj = PMQoS.PMQoS(pman=pman, sysfs_io=sysfs_io, cpuinfo=cpuinfo)
         stack.enter_context(pobj)
 
-        psprint = _PepcPrinter.PMQoSPrinter(pobj, cpuinfo)
-        stack.enter_context(psprint)
+        printer = _PepcPrinter.PMQoSPrinter(pobj, cpuinfo)
+        stack.enter_context(printer)
 
         optar = _OpTarget.OpTarget(pman=pman, cpuinfo=cpuinfo, cpus=args.cpus, cores=args.cores,
                                    modules=args.modules, dies=args.dies, packages=args.packages,
@@ -100,12 +100,12 @@ def pmqos_config_command(args, pman):
         stack.enter_context(optar)
 
         if print_opts:
-            psprint.print_props(print_opts, optar, skip_unsupported=False)
+            printer.print_props(print_opts, optar, skip_unsupported=False)
 
         if set_opts:
-            psset = _PepcSetter.PMQoSSetter(pman, pobj, cpuinfo, psprint, sysfs_io=sysfs_io)
-            stack.enter_context(psset)
-            psset.set_props(set_opts, optar)
+            setter = _PepcSetter.PMQoSSetter(pman, pobj, cpuinfo, printer, sysfs_io=sysfs_io)
+            stack.enter_context(setter)
+            setter.set_props(set_opts, optar)
 
     if set_opts:
         _PepcCommon.check_tuned_presence(pman)

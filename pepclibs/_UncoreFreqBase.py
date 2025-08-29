@@ -577,7 +577,7 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
 
         Raises:
             ErrorNotSupported: If the ELC high threshold operation is not supported.
-            ErrorOutOfRange: If the ELC high threshold value is outside the alhighed range.
+            ErrorOutOfRange: If the ELC high threshold value is outside the allowed range.
             ErrorBadOrder: If min. ELC high threshold is greater than ELC high threshold and vice
                            versa.
         """
