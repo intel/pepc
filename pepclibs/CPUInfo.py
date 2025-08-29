@@ -15,15 +15,16 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import copy
 import typing
-from typing import Iterable, Literal
 from pepclibs import _CPUInfoBase
 from pepclibs.helperlibs import Logging, Trivial
 from pepclibs.helperlibs.Exceptions import Error
-from pepclibs.helperlibs.ProcessManager import ProcessManagerType
+
 # pylint: disable-next=unused-import
-from pepclibs._CPUInfoBase import SCOPE_NAMES, HYBRID_TYPE_INFO, NA, INVALID
+from pepclibs.CPUInfoVars import SCOPE_NAMES, HYBRID_TYPE_INFO, NA, INVALID
 
 if typing.TYPE_CHECKING:
+    from typing import Iterable, Literal
+    from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepclibs.CPUInfoTypes import HybridCPUKeyType, ScopeNameType, AbsNumsType, RelNumsType
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")

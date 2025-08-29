@@ -27,14 +27,14 @@ except ImportError:
 
 import typing
 from typing import cast
-from pepclibs import PMQoS, CStates, PStates, CPUInfo
-from pepclibs.helperlibs import ArgParse, Human, Logging, ProcessManager, ProjectFiles, Trivial
-from pepclibs.helperlibs import EmulProcessManager
+from pepclibs import PMQoSVars, CStatesVars, PStatesVars, CPUInfoVars
+from pepclibs.helperlibs import ArgParse, Human, Logging, ProjectFiles, Trivial
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs._PropsClassBase import MECHANISMS
 
 if typing.TYPE_CHECKING:
     from typing import Sequence, Any, Generator, Final
+    from pepclibs.helperlibs import EmulProcessManager, ProcessManager
     from pepclibs.helperlibs.ArgParse import ArgTypedDict, ArgKwargsTypedDict
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepclibs.PropsTypes import PropertyTypedDict
@@ -366,7 +366,7 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     subpars2.add_argument("--cstates", dest="csnames", metavar="CSTATES", nargs="?", help=text,
                           default="default")
 
-    _add_info_subcommand_options(CStates.PROPS, subpars2)
+    _add_info_subcommand_options(CStatesVars.PROPS, subpars2)
 
     #
     # Create parser for the 'cstates config' command.
@@ -390,7 +390,7 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     subpars2.add_argument("--disable", metavar="CSTATES", action=ArgParse.OrderedArg, help=text,
                           nargs="?")
 
-    _add_config_subcommand_options(CStates.PROPS, subpars2)
+    _add_config_subcommand_options(CStatesVars.PROPS, subpars2)
 
     #
     # Create parser for the 'pstates' command.
@@ -420,7 +420,7 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     text = """Print information in YAML format."""
     subpars2.add_argument("--yaml", action="store_true", help=text)
 
-    _add_info_subcommand_options(PStates.PROPS, subpars2)
+    _add_info_subcommand_options(PStatesVars.PROPS, subpars2)
 
     #
     # Create parser for the 'pstates config' command.
@@ -436,7 +436,7 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
 
     _add_target_cpus_arguments(subpars2, "List of %s to configure P-States on.")
 
-    _add_config_subcommand_options(PStates.PROPS, subpars2)
+    _add_config_subcommand_options(PStatesVars.PROPS, subpars2)
 
     #
     # Create parser for the 'pmqos' command.
@@ -466,7 +466,7 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     text = """Print information in YAML format."""
     subpars2.add_argument("--yaml", action="store_true", help=text)
 
-    _add_info_subcommand_options(PMQoS.PROPS, subpars2)
+    _add_info_subcommand_options(PMQoSVars.PROPS, subpars2)
 
     #
     # Create parser for the 'pmqos config' command.
@@ -482,7 +482,7 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
 
     _add_target_cpus_arguments(subpars2, "List of %s to configure P-States on.")
 
-    _add_config_subcommand_options(PMQoS.PROPS, subpars2)
+    _add_config_subcommand_options(PMQoSVars.PROPS, subpars2)
 
     #
     # Create parser for the 'aspm' command.
@@ -568,7 +568,7 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
 
     _add_target_cpus_arguments(subpars2, "List of %s to print topology information for.")
 
-    orders = ", ".join([lvl.lower() for lvl in CPUInfo.SCOPE_NAMES])
+    orders = ", ".join([lvl.lower() for lvl in CPUInfoVars.SCOPE_NAMES])
     text = f"""By default, the topology table is printed in CPU number order. Use this option to
                print it in a different order (e.g., core or package number order). Here are the
                supported order names: {orders}."""
@@ -577,7 +577,7 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     text = """Include only online CPUs. By default offline and online CPUs are included."""
     subpars2.add_argument("--online-only", action="store_true", help=text)
 
-    columns = ", ".join(list(CPUInfo.SCOPE_NAMES) + ["hybrid"])
+    columns = ", ".join(list(CPUInfoVars.SCOPE_NAMES) + ["hybrid"])
     text = f"""Comma-separated list of the topology columns to print. Available columns are:
             {columns}. Example: --columns Package,Core,CPU."""
     subpars2.add_argument("--columns", help=text)
@@ -966,6 +966,9 @@ def _get_emul_pman(dspath: Path) -> EmulProcessManager.EmulProcessManager:
         An initialized 'EmulProcessManager' object.
     """
 
+    # pylint: disable-next=import-outside-toplevel
+    from pepclibs.helperlibs import EmulProcessManager
+
     pman = EmulProcessManager.EmulProcessManager(hostname=dspath.name)
 
     try:
@@ -987,9 +990,9 @@ def _list_mechanisms(args: argparse.Namespace):
     props: dict[str, PropertyTypedDict]
     fname: str = args.func.__name__
     if fname.startswith("_pstates_"):
-        props = PStates.PROPS
+        props = PStatesVars.PROPS
     elif fname.startswith("_cstates_"):
-        props = CStates.PROPS
+        props = CStatesVars.PROPS
     else:
         raise Error(f"BUG: Unknown function '{fname}' for '--list-mechanisms'")
 
@@ -1040,6 +1043,9 @@ def main() -> int:
                 with _get_emul_pman(dspath) as pman:
                     args.func(args, pman)
         else:
+            # pylint: disable-next=import-outside-toplevel
+            from pepclibs.helperlibs import ProcessManager
+
             with ProcessManager.get_pman(hostname, username=username, privkeypath=privkey,
                                          timeout=timeout) as pman:
                 args.func(args, pman)

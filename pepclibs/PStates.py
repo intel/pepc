@@ -17,11 +17,12 @@ Provide a capability of retrieving and setting P-state related properties.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
+from typing import cast
 import contextlib
 import statistics
 from pathlib import Path
-from typing import Generator, NoReturn, cast, Union, Final
 from pepclibs import _PropsClassBase
+from pepclibs.PStatesVars import PROPS
 from pepclibs.helperlibs import Trivial, Human, ClassHelpers, Logging
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorVerifyFailed
 
@@ -29,218 +30,16 @@ from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorVerify
 from pepclibs._PropsClassBase import ErrorTryAnotherMechanism, ErrorUsePerCPU
 
 if typing.TYPE_CHECKING:
+    from typing import Generator, NoReturn, Union
     from pepclibs.msr import MSR, FSBFreq
     from pepclibs import _CPUFreqSysfs, _CPUFreqCPPC, _CPUFreqMSR
     from pepclibs import _SysfsIO, EPP, EPB, _UncoreFreqSysfs, _UncoreFreqTpmi
     from pepclibs.CPUInfo import CPUInfo
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
-    from pepclibs.PropsTypes import PropertyTypedDict, PropertyValueType, MechanismNameType
+    from pepclibs.PropsTypes import PropertyValueType, MechanismNameType
     from pepclibs.CPUInfoTypes import AbsNumsType, RelNumsType
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
-
-# Special values for writable CPU frequency properties.
-_SPECIAL_FREQ_VALS = {"min", "max", "base", "hfm", "P1", "eff", "lfm", "Pn", "Pm"}
-# Special values for writable uncore frequency properties.
-_SPECIAL_UNCORE_FREQ_VALS = {"min", "max", "mdl"}
-
-# This properties dictionary defines the CPU properties supported by this module.
-#
-# Although this dictionary is user-visible and may be accessed directly, it is not recommended
-# because it is incomplete. Prefer using 'PStates.props' instead.
-#
-# Some properties have their scope name set to 'None' because the scope may vary depending on the
-# platform. In such cases, the scope can be determined using 'PStates.get_sname()'.
-PROPS: Final[dict[str, PropertyTypedDict]] = {
-    "turbo": {
-        "name": "Turbo",
-        "type": "bool",
-        "sname": "global",
-        "mnames": ("sysfs",),
-        "writable": True,
-    },
-    "min_freq": {
-        "name": "Min. CPU frequency",
-        "unit": "Hz",
-        "type": "int",
-        "sname": "CPU",
-        "mnames": ("sysfs", "msr"),
-        "writable": True,
-        "special_vals": _SPECIAL_FREQ_VALS,
-    },
-    "max_freq": {
-        "name": "Max. CPU frequency",
-        "unit": "Hz",
-        "type": "int",
-        "sname": "CPU",
-        "mnames": ("sysfs", "msr"),
-        "writable": True,
-        "special_vals": _SPECIAL_FREQ_VALS,
-    },
-    "min_freq_limit": {
-        "name": "Min. supported CPU frequency",
-        "unit": "Hz",
-        "type": "int",
-        "sname": "CPU",
-        "mnames": ("sysfs",),
-        "writable": False,
-    },
-    "max_freq_limit": {
-        "name": "Max. supported CPU frequency",
-        "unit": "Hz",
-        "type": "int",
-        "sname": "CPU",
-        "mnames": ("sysfs",),
-        "writable": False,
-    },
-    "base_freq": {
-        "name": "Base CPU frequency",
-        "unit": "Hz",
-        "type": "int",
-        "sname": "CPU",
-        "mnames": ("sysfs", "cppc", "msr"),
-        "writable": False,
-    },
-    "bus_clock": {
-        "name": "Bus clock speed",
-        "unit": "Hz",
-        "type": "int",
-        "sname": None,
-        "mnames": ("msr", "doc"),
-        "writable": False,
-    },
-    "min_oper_freq": {
-        "name": "Min. CPU operating frequency",
-        "unit": "Hz",
-        "type": "int",
-        "sname": "CPU",
-        "mnames": ("msr", "cppc"),
-        "writable": False,
-    },
-    "max_eff_freq": {
-        "name": "Max. CPU efficiency frequency",
-        "unit": "Hz",
-        "type": "int",
-        "sname": "CPU",
-        "mnames": ("msr",),
-        "writable": False,
-    },
-    "max_turbo_freq": {
-        "name": "Max. CPU turbo frequency",
-        "unit": "Hz",
-        "type": "int",
-        "sname": "CPU",
-        "mnames": ("msr","cppc"),
-        "writable": False,
-    },
-    "frequencies": {
-        "name": "Acceptable CPU frequencies",
-        "unit": "Hz",
-        "type": "list[int]",
-        "sname": "CPU",
-        "mnames": ("sysfs",),
-        "writable": False,
-    },
-    "min_uncore_freq": {
-        "name": "Min. uncore frequency",
-        "unit": "Hz",
-        "type": "int",
-        "sname": "die",
-        "mnames": ("sysfs", "tpmi"),
-        "writable": True,
-        "special_vals": _SPECIAL_UNCORE_FREQ_VALS,
-    },
-    "max_uncore_freq": {
-        "name": "Max. uncore frequency",
-        "unit": "Hz",
-        "type": "int",
-        "sname": "die",
-        "mnames": ("sysfs", "tpmi"),
-        "writable": True,
-        "special_vals": _SPECIAL_UNCORE_FREQ_VALS,
-    },
-    "min_uncore_freq_limit": {
-        "name": "Min. supported uncore frequency",
-        "unit": "Hz",
-        "type": "int",
-        "sname": "die",
-        "mnames": ("sysfs",),
-        "writable": False,
-    },
-    "max_uncore_freq_limit": {
-        "name": "Max. supported uncore frequency",
-        "unit": "Hz",
-        "type": "int",
-        "sname": "die",
-        "mnames": ("sysfs",),
-        "writable": False,
-    },
-    "uncore_elc_low_threshold": {
-        "name": "Uncore ELC low threshold",
-        "unit": "%",
-        "type": "int",
-        "sname": "die",
-        "mnames": ("sysfs", "tpmi"),
-        "writable": True,
-    },
-    "uncore_elc_high_threshold": {
-        "name": "Uncore ELC high threshold",
-        "unit": "%",
-        "type": "int",
-        "sname": "die",
-        "mnames": ("sysfs", "tpmi"),
-        "writable": True,
-    },
-    "hwp": {
-        "name": "Hardware power management",
-        "type": "bool",
-        "sname": "global",
-        "mnames": ("msr",),
-        "writable": False,
-    },
-    "epp": {
-        "name": "EPP",
-        "type": "str",
-        "sname": "CPU",
-        "mnames": ("sysfs", "msr"),
-        "writable": True,
-    },
-    "epb": {
-        "name": "EPB",
-        "type": "int",
-        "sname": None,
-        "mnames": ("sysfs", "msr"),
-        "writable": True,
-    },
-    "driver": {
-        "name": "CPU frequency driver",
-        "type": "str",
-        "sname": "global",
-        "mnames": ("sysfs",),
-        "writable": False,
-    },
-    "intel_pstate_mode": {
-        "name": "Mode of 'intel_pstate' driver",
-        "type": "str",
-        "sname": "global",
-        "mnames": ("sysfs",),
-        "writable": True,
-    },
-    "governor": {
-        "name": "CPU frequency governor",
-        "type": "str",
-        "sname": "CPU",
-        "mnames": ("sysfs",),
-        "writable": True,
-    },
-    "governors": {
-        "name": "Available CPU frequency governors",
-        "type": "list[str]",
-        "sname": "global",
-        "mnames": ("sysfs",),
-        "writable": False,
-    },
-}
 
 class PStates(_PropsClassBase.PropsClassBase):
     """

@@ -15,36 +15,23 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import re
 import typing
-from typing import Iterable
 import contextlib
 from pathlib import Path
 from pepclibs import CPUModels
 from pepclibs.helperlibs import Logging, LocalProcessManager, ClassHelpers, Trivial, KernelVersion
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorNotFound
+from pepclibs.CPUInfoVars import SCOPE_NAMES, NA
 
 from pepclibs.CPUInfoTypes import CPUInfoTypedDict
 
 if typing.TYPE_CHECKING:
+    from typing import Iterable
     from pepclibs import Tpmi
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepclibs.CPUInfoTypes import (CPUInfoKeyType, ScopeNameType, AbsNumsType,
                                        HybridCPUKeyType, HybridCPUKeyInfoType)
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
-
-SCOPE_NAMES: tuple[ScopeNameType, ...] = ("CPU", "core", "module", "die", "node", "package")
-
-# 'NA' is used as the CPU/core/module number for I/O dies, which lack CPUs, cores, or modules.
-NA = 0xFFFFFFFF
-# A helpful CPU/code/etc (all scopes) number that is guaranteed to never be used.
-INVALID = NA - 1
-
-# Thy hybrid CPU information dictionary.
-HYBRID_TYPE_INFO: dict[HybridCPUKeyType, HybridCPUKeyInfoType] = {
-        "pcore":   {"name": "P-core", "title": "Performance core"},
-        "ecore":   {"name": "E-core", "title": "Efficiency core"},
-        "lpecore": {"name": "LPE-core", "title": "Low Power Efficiency core"},
-}
 
 class CPUInfoBase(ClassHelpers.SimpleCloseContext):
     """

@@ -13,9 +13,9 @@
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
+from typing import cast
 import random
 import pytest
-from typing import cast
 import common
 from pepclibs import CPUModels, CPUInfo, CPUOnline
 from pepclibs.CPUInfoTypes import AbsNumsType, RelNumsType, ScopeNameType

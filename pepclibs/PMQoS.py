@@ -7,49 +7,16 @@
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
-This module provides PM QoS management API.
+Provide a capability of retrieving and setting Linux PM QoS properties.
 """
 
 # TODO: finish annotating and modernizing this module.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
-import typing
-from typing import Final
 from pepclibs import _PropsClassBase
+from pepclibs.PMQoSVars import PROPS
 from pepclibs.helperlibs import ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error
-
-if typing.TYPE_CHECKING:
-    from pepclibs.PropsTypes import PropertyTypedDict
-
-# This dictionary describes the CPU properties this module supports.
-#
-# While this dictionary is user-visible and can be used, it is not recommended, because it is not
-# complete. This dictionary is extended by 'PMQoS' objects. Use the full dictionary via
-# 'PMQoS.props'.
-#
-# Some properties have scope name set to 'None' because the scope may be different for different
-# systems. In such cases, the scope can be obtained via 'PMQoS.get_sname()'.
-PROPS: Final[dict[str, PropertyTypedDict]] = {
-    "latency_limit": {
-        "name": "Linux per-CPU PM QoS latency limit",
-        "unit": "s",
-        "type": "float",
-        "sname": "CPU",
-        "mnames": ("sysfs",),
-        "writable": True,
-    },
-    # In general, the global latency limit is writable, but the limit is active only as long as the
-    # process keeps the character device open.
-    "global_latency_limit": {
-        "name": "Linux global PM QoS latency limit",
-        "unit": "s",
-        "type": "float",
-        "sname": "global",
-        "mnames": ("cdev",),
-        "writable": False,
-    },
-}
 
 class PMQoS(_PropsClassBase.PropsClassBase):
     """
