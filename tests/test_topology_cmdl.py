@@ -8,7 +8,7 @@
 #
 # Author: Niklas Neronin <niklas.neronin@intel.com>
 
-"""Test module for 'pepc' project 'topology' command."""
+"""Test 'pepc topology' command-line options."""
 
 import pytest
 import common

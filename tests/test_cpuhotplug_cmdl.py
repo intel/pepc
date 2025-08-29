@@ -10,7 +10,7 @@
 #          Niklas Neronin <niklas.neronin@intel.com>
 #          Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
-"""Test the 'pepc cpu-hotplug' command."""
+"""Test 'pepc cpu-hotplug' command-line options."""
 
 import contextlib
 import pytest

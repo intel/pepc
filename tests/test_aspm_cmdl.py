@@ -8,7 +8,7 @@
 #
 # Author: Antti Laakso <antti.laakso@linux.intel.com>
 
-"""Test module for 'pepc' project 'aspm' command."""
+"""Test 'pepc aspm' command-line options."""
 
 import typing
 import pytest

@@ -8,7 +8,7 @@
 #
 # Author: Antti Laakso <antti.laakso@linux.intel.com>
 
-"""Test module for 'pepc' project 'pmqos' command."""
+"""Test 'pepc pmqos' command-line options."""
 
 import pytest
 import common
