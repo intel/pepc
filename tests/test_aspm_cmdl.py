@@ -13,6 +13,7 @@
 import typing
 import pytest
 import common
+import props_cmdl_common
 from pepclibs.helperlibs.Exceptions import Error, ErrorPermissionDenied
 
 if typing.TYPE_CHECKING:
@@ -36,7 +37,7 @@ def test_aspm_info(params):
         "--policy --policies"]
 
     for option in good:
-        common.run_pepc(f"aspm info {option}", params["pman"])
+        props_cmdl_common.run_pepc(f"aspm info {option}", params["pman"])
 
 def test_aspm_config(params):
     """Test 'pepc aspm config' command."""
@@ -58,6 +59,6 @@ def test_aspm_config(params):
         ignore = { ErrorPermissionDenied : "aspm config --policy " }
 
     for option in good:
-        common.run_pepc(f"aspm config {option}", pman, ignore=ignore)
+        props_cmdl_common.run_pepc(f"aspm config {option}", pman, ignore=ignore)
 
-    common.run_pepc("aspm config --policy badpolicyname", pman, exp_exc=Error)
+    props_cmdl_common.run_pepc("aspm config --policy badpolicyname", pman, exp_exc=Error)

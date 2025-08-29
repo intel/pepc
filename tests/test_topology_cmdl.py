@@ -12,6 +12,7 @@
 
 import pytest
 import common
+import props_cmdl_common
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs import CPUInfo
 
@@ -61,7 +62,7 @@ def test_topology_info(params):
         pass
 
     for option in good:
-        common.run_pepc(f"topology info {option}", params["pman"])
+        props_cmdl_common.run_pepc(f"topology info {option}", params["pman"])
 
     for option in bad:
-        common.run_pepc(f"topology info {option}", params["pman"], exp_exc=Error)
+        props_cmdl_common.run_pepc(f"topology info {option}", params["pman"], exp_exc=Error)

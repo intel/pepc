@@ -9,18 +9,21 @@
 # Authors: Niklas Neronin <niklas.neronin@intel.com>
 #          Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
-"""Common functions for the P-state and C-state command-line options testing."""
+"""Common functions for the P-state and C-state command-line option tets."""
 
 # TODO: finish annotating.
 from  __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
-from typing import Generator, cast
-from pepclibs.helperlibs import Trivial
+from typing import Generator, cast, Mapping
+from pepclibs.helperlibs import Trivial, TestRunner
+from pepctool import _Pepc
 
 if typing.TYPE_CHECKING:
     from pepclibs import CPUInfo, PStates
     from common import CommonTestParamsTypedDict
+    from pepclibs.helperlibs.ProcessManager import ProcessManagerType
+    from pepclibs.helperlibs.Exceptions import ExceptionType
 
     class PropsCmdlTestParamsTypedDict(CommonTestParamsTypedDict, total=False):
         """
@@ -81,7 +84,31 @@ def extend_params(params: CommonTestParamsTypedDict,
 
     return params
 
-def get_mechanism_opts(params: PropsCmdlTestParamsTypedDict, allow_readonly: bool = True) -> Generator[str, None, None]:
+def run_pepc(arguments: str,
+             pman: ProcessManagerType,
+             exp_exc: ExceptionType | None = None,
+             ignore: Mapping[ExceptionType, str] | None = None):
+    """
+    Execute the 'pepc' command and validate its outcome.
+
+    Args:
+        arguments: The command-line arguments to execute the 'pepc' command with, e.g.,
+                   'pstate info --cpus 0-43'.
+        pman: The process manager object that specifies the host to run the command on.
+        exp_exc: The expected exception. If set, the test fails if the command does not raise the
+                 expected exception. By default, any exception is considered a failure.
+        ignore: A dictionary mapping error types to command argument strings. Can be used for
+                ignoring certain exceptions.
+
+    Raises:
+        AssertionError: If the command execution does not match the expected outcome.
+    """
+
+    TestRunner.run_tool(_Pepc, _Pepc.TOOLNAME, arguments, pman=pman, exp_exc=exp_exc,
+                        ignore=ignore)
+
+def get_mechanism_opts(params: PropsCmdlTestParamsTypedDict,
+                       allow_readonly: bool = True) -> Generator[str, None, None]:
     """
     Generate the '--mechanism <mechanism name>' command-line options for testing.
 

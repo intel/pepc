@@ -15,6 +15,7 @@
 import contextlib
 import pytest
 import common
+import props_cmdl_common
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs import CPUInfo, CPUOnline
 
@@ -44,7 +45,7 @@ def get_params(hostspec):
 def _online_all_cpus(pman):
     """Online all CPUs."""
 
-    common.run_pepc("cpu-hotplug online --cpus all", pman)
+    props_cmdl_common.run_pepc("cpu-hotplug online --cpus all", pman)
 
 def test_cpuhotplug_info(params):
     """
@@ -54,7 +55,7 @@ def test_cpuhotplug_info(params):
 
     pman = params["pman"]
     _online_all_cpus(pman)
-    common.run_pepc("cpu-hotplug info", pman)
+    props_cmdl_common.run_pepc("cpu-hotplug info", pman)
 
 def _test_cpuhotplug(params):
     """Implement 'test_cpuhotplug()."""
@@ -67,7 +68,7 @@ def _test_cpuhotplug(params):
     for pkg, cores in params["cores"].items():
         for core in cores:
             if core % 2 == 0:
-                common.run_pepc(f"cpu-hotplug offline --packages {pkg} --cores {core}", pman)
+                props_cmdl_common.run_pepc(f"cpu-hotplug offline --packages {pkg} --cores {core}", pman)
 
     # Offline every 3nd core.
     for pkg, cores in params["cores"].items():
@@ -77,10 +78,10 @@ def _test_cpuhotplug(params):
                 cores_to_offline.append(core)
 
         cores = ",".join([str(core) for core in cores_to_offline])
-        common.run_pepc(f"cpu-hotplug offline --packages {pkg} --cores {cores}", pman)
+        props_cmdl_common.run_pepc(f"cpu-hotplug offline --packages {pkg} --cores {cores}", pman)
 
     # Make sure the 'info' sub-command works.
-    common.run_pepc("cpu-hotplug info", pman)
+    props_cmdl_common.run_pepc("cpu-hotplug info", pman)
 
     # Online every 2nd core.
     cpus_to_online = []
@@ -90,7 +91,7 @@ def _test_cpuhotplug(params):
                 cpus_to_online += cpuinfo.cores_to_cpus(cores=(core,), packages=(pkg,))
 
     cpus = ",".join([str(cpu) for cpu in cpus_to_online])
-    common.run_pepc(f"cpu-hotplug online --cpus {cpus}", pman)
+    props_cmdl_common.run_pepc(f"cpu-hotplug online --cpus {cpus}", pman)
 
     # Verify that the expected cores are offline, other cores are online.
     offline_cpus = []
@@ -117,14 +118,14 @@ def _test_cpuhotplug(params):
     # Offline / online every package separately.
     for pkg in params["packages"]:
         # Offline all CPUs in the package.
-        common.run_pepc(f"cpu-hotplug offline --packages {pkg}", pman)
+        props_cmdl_common.run_pepc(f"cpu-hotplug offline --packages {pkg}", pman)
 
         # Make sure the 'info' sub-command works.
-        common.run_pepc("cpu-hotplug info", pman)
+        props_cmdl_common.run_pepc("cpu-hotplug info", pman)
 
         # Online all CPUs in the package.
         cpus = ",".join(str(cpu) for cpu in cpuinfo.package_to_cpus(pkg))
-        common.run_pepc(f"cpu-hotplug online --cpus {cpus}", pman)
+        props_cmdl_common.run_pepc(f"cpu-hotplug online --cpus {cpus}", pman)
 
 def test_cpuhotplug(params):
     """
@@ -160,7 +161,7 @@ def _test_cpuhotplug_online_bad(params):
         bad += [f"--packages 0 --cores {params['cores'][0][1]}-{params['cores'][0][2]}"]
 
     for option in bad:
-        common.run_pepc(f"cpu-hotplug online {option}", pman, exp_exc=Error)
+        props_cmdl_common.run_pepc(f"cpu-hotplug online {option}", pman, exp_exc=Error)
 
 def _test_cpuhotplug_offline_bad(params):
     """Test 'pepc cpu-hotplug offline' sub-command with bad input."""
@@ -172,7 +173,7 @@ def _test_cpuhotplug_offline_bad(params):
            f"--cpus {params['cpus'][-1] + 1}"]
 
     for option in bad:
-        common.run_pepc(f"cpu-hotplug offline {option}", pman, exp_exc=Error)
+        props_cmdl_common.run_pepc(f"cpu-hotplug offline {option}", pman, exp_exc=Error)
 
 def test_cpuhotplug_bad(params):
     """

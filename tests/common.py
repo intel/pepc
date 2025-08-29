@@ -9,15 +9,14 @@
 # Author: Antti Laakso <antti.laakso@linux.intel.com>
 #         Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
-"""Common bits for the 'pepc' tests."""
+"""Common functions for pepc tests."""
 
 from  __future__ import annotations # Remove when switching to Python 3.10+.
 
 from pathlib import Path
 import typing
-from typing import TypedDict, Mapping, cast
-from pepclibs.helperlibs import ProcessManager, EmulProcessManager, TestRunner
-from pepctool import _Pepc
+from typing import TypedDict, cast
+from pepclibs.helperlibs import ProcessManager, EmulProcessManager
 
 if typing.TYPE_CHECKING:
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
@@ -108,26 +107,3 @@ def build_params(pman: ProcessManagerType) -> CommonTestParamsTypedDict:
     """
 
     return {"hostname": pman.hostname, "pman": pman}
-
-def run_pepc(arguments: str,
-             pman: ProcessManagerType,
-             exp_exc: ExceptionType | None = None,
-             ignore: Mapping[ExceptionType, str] | None = None):
-    """
-    Execute the 'pepc' command and validate its outcome.
-
-    Args:
-        arguments: The command-line arguments to execute the 'pepc' command with, e.g.,
-                   'pstate info --cpus 0-43'.
-        pman: The process manager object that specifies the host to run the command on.
-        exp_exc: The expected exception. If set, the test fails if the command does not raise the
-                 expected exception. By default, any exception is considered a failure.
-        ignore: A dictionary mapping error types to command argument strings. Can be used for
-                ignoring certain exceptions.
-
-    Raises:
-        AssertionError: If the command execution does not match the expected outcome.
-    """
-
-    TestRunner.run_tool(_Pepc, _Pepc.TOOLNAME, arguments, pman=pman, exp_exc=exp_exc,
-                        ignore=ignore)

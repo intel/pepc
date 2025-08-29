@@ -83,16 +83,16 @@ def test_cstates_info(params):
     pman = params["pman"]
 
     for opt in props_cmdl_common.get_good_cpu_opts(params, sname="package"):
-        common.run_pepc(f"cstates info {opt}", pman)
+        props_cmdl_common.run_pepc(f"cstates info {opt}", pman)
 
     for opt in props_cmdl_common.get_bad_cpu_opts(params):
-        common.run_pepc(f"cstates info {opt}", pman, exp_exc=Error)
+        props_cmdl_common.run_pepc(f"cstates info {opt}", pman, exp_exc=Error)
 
     for cstate in params["cstates"]:
-        common.run_pepc(f"cstates info --cpus 0 --cstates {cstate}", pman)
+        props_cmdl_common.run_pepc(f"cstates info --cpus 0 --cstates {cstate}", pman)
 
     # Cover '--list-mechanisms'.
-    common.run_pepc("cstates info --list-mechanisms", pman)
+    props_cmdl_common.run_pepc("cstates info --list-mechanisms", pman)
 
 def _get_good_config_opts(params, sname="package"):
     """Return good options for testing 'pepc cstates config'."""
@@ -166,28 +166,28 @@ def test_cstates_config_good(params):
         for cpu_opt in props_cmdl_common.get_good_cpu_opts(params, sname="CPU"):
             for mopt in props_cmdl_common.get_mechanism_opts(params, allow_readonly=False):
                 cmd = f"cstates config {opt} {cpu_opt} {mopt}"
-                common.run_pepc(cmd, pman, ignore=_IGNORE)
+                props_cmdl_common.run_pepc(cmd, pman, ignore=_IGNORE)
 
         for cpu_opt in props_cmdl_common.get_bad_cpu_opts(params):
-            common.run_pepc(f"cstates config {opt} {cpu_opt}", pman, exp_exc=Error)
+            props_cmdl_common.run_pepc(f"cstates config {opt} {cpu_opt}", pman, exp_exc=Error)
 
     for opt in _get_good_config_opts(params, sname="package"):
         for cpu_opt in props_cmdl_common.get_good_cpu_opts(params, sname="global"):
             for mopt in props_cmdl_common.get_mechanism_opts(params, allow_readonly=False):
                 cmd = f"cstates config {opt} {cpu_opt} {mopt}"
-                common.run_pepc(cmd , pman, ignore=_IGNORE)
+                props_cmdl_common.run_pepc(cmd , pman, ignore=_IGNORE)
 
         for cpu_opt in props_cmdl_common.get_bad_cpu_opts(params):
-            common.run_pepc(f"cstates config {opt} {cpu_opt}", pman, exp_exc=Error)
+            props_cmdl_common.run_pepc(f"cstates config {opt} {cpu_opt}", pman, exp_exc=Error)
 
     for opt in _get_good_config_opts(params, sname="global"):
         for cpu_opt in props_cmdl_common.get_good_cpu_opts(params, sname="global"):
             for mopt in props_cmdl_common.get_mechanism_opts(params, allow_readonly=False):
                 cmd = f"cstates config {opt} {cpu_opt} {mopt}"
-                common.run_pepc(cmd , pman, ignore=_IGNORE)
+                props_cmdl_common.run_pepc(cmd , pman, ignore=_IGNORE)
 
         for cpu_opt in props_cmdl_common.get_bad_cpu_opts(params):
-            common.run_pepc(f"cstates config {opt} {cpu_opt}", pman, exp_exc=Error)
+            props_cmdl_common.run_pepc(f"cstates config {opt} {cpu_opt}", pman, exp_exc=Error)
 
 def test_cstates_config_bad(params):
     """Test 'pepc cstates config' command with bad options."""
@@ -195,13 +195,13 @@ def test_cstates_config_bad(params):
     pman = params["pman"]
 
     for opt in _get_bad_config_opts():
-        common.run_pepc(f"cstates config {opt}", pman, exp_exc=Error)
+        props_cmdl_common.run_pepc(f"cstates config {opt}", pman, exp_exc=Error)
 
         for cpu_opt in props_cmdl_common.get_good_cpu_opts(params, sname="package"):
-            common.run_pepc(f"cstates config {opt} {cpu_opt}", pman, exp_exc=Error)
+            props_cmdl_common.run_pepc(f"cstates config {opt} {cpu_opt}", pman, exp_exc=Error)
 
         for cpu_opt in props_cmdl_common.get_bad_cpu_opts(params):
-            common.run_pepc(f"cstates config {opt} {cpu_opt}", pman, exp_exc=Error)
+            props_cmdl_common.run_pepc(f"cstates config {opt} {cpu_opt}", pman, exp_exc=Error)
 
         for mopt in props_cmdl_common.get_mechanism_opts(params):
-            common.run_pepc(f"cstates config {opt} {mopt}", pman, exp_exc=Error)
+            props_cmdl_common.run_pepc(f"cstates config {opt} {mopt}", pman, exp_exc=Error)

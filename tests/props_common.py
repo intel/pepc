@@ -9,8 +9,8 @@
 # Author: Niklas Neronin <niklas.neronin@intel.com>
 
 """
-Common functions for P-state and C-state property tests, used at both the class level
-('PStates.Pstates', 'CStates.CStates') and for command-line options testing.
+Common functions for class-level P-state and C-state property tests ('PStates.Pstates',
+'CStates.CStates').
 """
 
 # TODO: finish annotating.
@@ -24,8 +24,18 @@ def _verify_after_set_per_cpu(pobj, pname, val, cpus):
     """
 
     cpus_set = set(cpus)
+    orig_val = val
 
     for pvinfo in pobj.get_prop_cpus(pname, cpus=cpus):
+        val = orig_val
+
+        if val in ("min", "max") and "freq" in pname:
+            if "uncore" in pname:
+                limit_pname = f"{val}_uncore_freq_limit"
+            else:
+                limit_pname = f"{val}_freq_limit"
+            val = pobj.get_cpu_prop(limit_pname, pvinfo["cpu"])["val"]
+
         if pvinfo["val"] != val:
             cpus = ", ".join([str(cpu) for cpu in cpus])
             assert False, f"Set property '{pname}' to value '{val}' for the following CPUs: " \
@@ -142,45 +152,6 @@ def set_and_verify(params, props_vals, cpu):
 
         if pobj.props[pname]["sname"] in ("package", "global"):
             _verify_after_set_per_package(pobj, pname, val, packages)
-
-def get_max_cpu_freq(params, cpu, numeric=False):
-    """
-    Return the maximum CPU or uncore frequency the Linux frequency driver accepts. The arguments are
-    as follows.
-      * params - test parameters.
-      * cpu - CPU number to return the frequency for.
-      * numeric - if 'False', it is OK to return non-numeric values, such as "max" or "min".
-    """
-
-    pobj = params["pobj"]
-
-    maxfreq = None
-    turbo_status = pobj.get_cpu_prop("turbo", cpu)["val"]
-    freqs = pobj.get_cpu_prop("frequencies", cpu)["val"]
-
-    if turbo_status == "on":
-        # On some platforms running 'acpi-cpufreq' driver, the 'max_freq_limit' contains a value
-        # that cannot be used for setting the max. frequency. So check the available frequencies
-        # and take the max. available in that case.
-        max_limit = pobj.get_cpu_prop("max_freq_limit", cpu)["val"]
-
-        if freqs and max_limit:
-            if max_limit == freqs[-1]:
-                if numeric:
-                    maxfreq = max_limit
-                else:
-                    maxfreq = "max"
-            else:
-                maxfreq = freqs[-1]
-    elif freqs:
-        maxfreq = freqs[-1]
-
-    if not maxfreq:
-        if numeric:
-            maxfreq = pobj.get_cpu_prop("base_freq", cpu)["val"]
-        else:
-            maxfreq = "hfm"
-    return maxfreq
 
 def _verify_value_type(pname, ptype, val):
     """Verify that value 'val' matches the expected type 'ptype' of property 'pname'."""

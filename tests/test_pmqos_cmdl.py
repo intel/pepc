@@ -12,6 +12,7 @@
 
 import pytest
 import common
+import props_cmdl_common
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs import CPUInfo, PMQoS
 
@@ -38,8 +39,8 @@ def test_pmqos_info(params):
 
     pman = params["pman"]
 
-    common.run_pepc(f"pmqos info", pman)
-    common.run_pepc(f"pmqos info --cpus 0", pman)
+    props_cmdl_common.run_pepc(f"pmqos info", pman)
+    props_cmdl_common.run_pepc(f"pmqos info --cpus 0", pman)
 
 def _get_good_config_opts(params):
     """Return good options for testing 'pepc pmqos config'."""
@@ -68,7 +69,7 @@ def test_pmqos_config_good(params):
 
     for opt in _get_good_config_opts(params):
             cmd = f"pmqos config {opt} --cpus 0"
-            common.run_pepc(cmd, pman)
+            props_cmdl_common.run_pepc(cmd, pman)
 
 def test_pmqos_config_bad(params):
     """Test 'pepc pmqos config' command with bad options."""
@@ -76,5 +77,5 @@ def test_pmqos_config_bad(params):
     pman = params["pman"]
 
     for opt in _get_bad_config_opts():
-        common.run_pepc(f"pmqos config {opt}", pman, exp_exc=Error)
-        common.run_pepc(f"pmqos config --cpus 0 {opt}", pman, exp_exc=Error)
+        props_cmdl_common.run_pepc(f"pmqos config {opt}", pman, exp_exc=Error)
+        props_cmdl_common.run_pepc(f"pmqos config --cpus 0 {opt}", pman, exp_exc=Error)
