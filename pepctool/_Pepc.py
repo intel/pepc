@@ -993,6 +993,8 @@ def _list_mechanisms(args: argparse.Namespace):
         props = PStatesVars.PROPS
     elif fname.startswith("_cstates_"):
         props = CStatesVars.PROPS
+    elif fname.startswith("_pmqos_"):
+        props = PMQoSVars.PROPS
     else:
         raise Error(f"BUG: Unknown function '{fname}' for '--list-mechanisms'")
 
