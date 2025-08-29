@@ -18,6 +18,7 @@ from  __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
 from typing import Generator, cast, Iterable
+from pepclibs.CPUInfoTypes import ScopeNameType
 from pepclibs.PropsTypes import MechanismNameType
 from pepclibs.helperlibs.Exceptions import ErrorNotSupported
 
@@ -114,8 +115,18 @@ def _verify_after_set_per_die(pobj, pname, val, dies):
     dies_left = {}
     for pkg, dies_list in dies.items():
         dies_left[pkg] = set(dies_list)
+    orig_val = val
 
     for pvinfo in pobj.get_prop_dies(pname, dies=dies):
+        val = orig_val
+
+        if val in ("min", "max") and "freq" in pname:
+            if "uncore" in pname:
+                limit_pname = f"{val}_uncore_freq_limit"
+            else:
+                limit_pname = f"{val}_freq_limit"
+            val = pobj.get_die_prop(limit_pname, pvinfo["package"], pvinfo["die"])["val"]
+
         pkg = pvinfo["package"]
         die = pvinfo["die"]
         if pvinfo["val"] != val:
@@ -156,54 +167,67 @@ def _verify_after_set_per_package(pobj, pname, val, packages):
                              f"Read back property '{pname}', but did not get value for the " \
                              f"following CPUs: {packages_set}"
 
-def set_and_verify(params: PropsTestParamsTypedDict, props_vals: Iterable[tuple[str, PropertyValueType]], cpu: int):
+def set_and_verify(params: PropsTestParamsTypedDict,
+                   props_vals: Iterable[tuple[str, PropertyValueType]],
+                   cpu: int):
     """
-    Set property values, read them back and verify. The arguments are as follows.
-      * params - the test parameters dictionary.
-      * props_vals - an iterator of '(pname, value)' tuples, where 'pname' is the property to set
-                     and verify, and 'value' is the value to set the property to.
-      * cpu - CPU numbers to set the property for.
+    Set property values for a CPU, verify them by reading back, and check consistency across
+    different scopes (CPU, die, package).
+
+    Args:
+        params: The test parameters dictionary.
+        props_vals: Iterable of (property name, value) tuples to set and verify.
+        cpu: CPU number to set properties for.
     """
 
-    siblings = {}
     pobj = params["pobj"]
     cpuinfo = params["cpuinfo"]
 
     tline = cpuinfo.get_tline_by_cpu(cpu)
-    packages = (tline["package"],)
     dies = {tline["package"]: (tline["die"],)}
+    packages = (tline["package"],)
+    core_cpus = cpuinfo.cores_to_cpus(cores=(tline["core"],), packages=(tline["package"],))
 
     for pname, val in props_vals:
         sname = pobj.get_sname(pname)
         if sname is None:
             continue
 
-        if sname not in siblings:
-            siblings[sname] = cpuinfo.get_cpu_siblings(cpu, sname=sname)
-        cpus = siblings[sname]
-
-        if sname == "die":
-            # Set the property on per-die basis.
+        if sname == "CPU":
             try:
-                pobj.set_prop_dies(pname, val, dies, siblings[sname])
+                pobj.set_prop_cpus(pname, val, (cpu,))
+            except ErrorNotSupported:
+                continue
+        elif sname == "core":
+            try:
+                pobj.set_prop_cpus(pname, val, core_cpus)
+            except ErrorNotSupported:
+                continue
+        elif sname == "die":
+            try:
+                print(pname, val, dies)
+                pobj.set_prop_dies(pname, val, dies)
             except ErrorNotSupported:
                 continue
         elif sname == "package":
-            # Set the property on per-package basis.
             try:
-                pobj.set_prop_packages(pname, val, packages, siblings[sname])
+                pobj.set_prop_packages(pname, val, packages)
+            except ErrorNotSupported:
+                continue
+        elif sname == "global":
+            try:
+                pobj.set_prop_packages(pname, val, cpuinfo.get_packages())
             except ErrorNotSupported:
                 continue
         else:
-            # Set the property on per-CPU basis.
-            try:
-                pobj.set_prop_cpus(pname, val, cpus)
-            except ErrorNotSupported:
-                continue
+            assert False, f"Unknown scope name '{sname}'."
 
-        _verify_after_set_per_cpu(pobj, pname, val, cpus)
+        _verify_after_set_per_cpu(pobj, pname, val, (cpu,))
 
-        if pobj.props[pname]["sname"] in ("die", "package", "global"):
+        if pobj.props[pname]["sname"] in {"core", "die", "package", "global"}:
+            _verify_after_set_per_cpu(pobj, pname, val, core_cpus)
+
+        if pobj.props[pname]["sname"] in {"die", "package", "global"}:
             _verify_after_set_per_die(pobj, pname, val, dies)
 
         if pobj.props[pname]["sname"] in ("package", "global"):
