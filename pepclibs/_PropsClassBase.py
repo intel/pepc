@@ -203,8 +203,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         if pman:
             self._pman = pman
             if isinstance(pman, EmulProcessManager.EmulProcessManager):
-                # The emulation layer does not support MSR scope, so disable the scope optimization, and
-                # make sure writes go to all CPUs, not just one CPU in the scope.
+                # The emulation layer does not support MSR scope, so disable the scope optimization,
+                # and make sure writes go to all CPUs, not just one CPU in the scope.
                 self._enable_scope = False
         else:
             # pylint: disable-next=import-outside-toplevel

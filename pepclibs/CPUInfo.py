@@ -1542,6 +1542,9 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         if dies == "all":
             return dies
 
+        if not dies:
+            return "no dies"
+
         dies_strs = []
         for package, pkg_dies in dies.items():
             if len(pkg_dies) > 1:

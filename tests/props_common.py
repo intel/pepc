@@ -13,19 +13,19 @@ Common functions for class-level P-state and C-state property tests ('PStates.Ps
 'CStates.CStates').
 """
 
-# TODO: finish annotating.
 from  __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
-from typing import Generator, cast, Iterable
-from pepclibs.CPUInfoTypes import ScopeNameType
-from pepclibs.PropsTypes import MechanismNameType
 from pepclibs.helperlibs.Exceptions import ErrorNotSupported
 
 if typing.TYPE_CHECKING:
+    from typing import Generator, cast, Iterable
     from common import CommonTestParamsTypedDict
+    from pepclibs.CPUInfoTypes import ScopeNameType, AbsNumsType, RelNumsType
+    from pepclibs.PropsTypes import PropertyTypeType, PropertyValueType, MechanismNameType
     from pepclibs import CPUInfo, PStates, CStates
-    from pepclibs.PropsTypes import PropertyTypeType, PropertyValueType
+
+    _PropsClassType = PStates.PStates | CStates.CStates
 
     class PropsTestParamsTypedDict(CommonTestParamsTypedDict, total=False):
         """
@@ -37,7 +37,7 @@ if typing.TYPE_CHECKING:
         """
 
         cpuinfo: CPUInfo.CPUInfo
-        pobj: PStates.PStates | CStates.CStates
+        pobj: _PropsClassType
 
 def get_enable_cache_param() -> Generator[bool, None, None]:
     """
@@ -52,7 +52,7 @@ def get_enable_cache_param() -> Generator[bool, None, None]:
     yield False
 
 def extend_params(params: CommonTestParamsTypedDict,
-                  pobj: PStates.PStates | CStates.CStates,
+                  pobj: _PropsClassType,
                   cpuinfo: CPUInfo.CPUInfo) -> PropsTestParamsTypedDict:
     """
     Extend the common test parameters dictionary with additional keys required for running
@@ -75,9 +75,18 @@ def extend_params(params: CommonTestParamsTypedDict,
 
     return params
 
-def _verify_after_set_per_cpu(pobj, pname, val, cpus):
+def _verify_after_set_per_cpu(pobj: _PropsClassType,
+                              pname: str,
+                              val: PropertyValueType,
+                              cpus: AbsNumsType):
     """
-    Helper for 'set_and_verify(). Verify that the value was set to 'val', use the per-CPU interface.
+    Verify that a property value was correctly set for specified CPUs.
+
+    Args:
+        pobj: The property object.
+        pname: Name of the property to verify.
+        val: Expected value of the property.
+        cpus: List of CPU numbers to verify.
     """
 
     cpus_set = set(cpus)
@@ -94,25 +103,40 @@ def _verify_after_set_per_cpu(pobj, pname, val, cpus):
             val = pobj.get_cpu_prop(limit_pname, pvinfo["cpu"])["val"]
 
         if pvinfo["val"] != val:
-            cpus = ", ".join([str(cpu) for cpu in cpus])
+            cpus_str = ", ".join([str(cpu) for cpu in cpus])
             assert False, f"Set property '{pname}' to value '{val}' for the following CPUs: " \
-                          f"{cpus}.\n" \
+                          f"{cpus_str}.\n" \
                           f"Read back property '{pname}', got a different value " \
                           f"'{pvinfo['val']}' for CPU {pvinfo['cpu']}."
 
         cpus_set.remove(pvinfo["cpu"])
 
-    assert not cpus_set, f"Set property '{pname}' to value '{val}' for the following CPUs: " \
-                         f"{cpus}.\n" \
-                         f"Read back property '{pname}', but did not get value for the " \
-                         f"following CPUs: {cpus_set}"
+    if not cpus_set:
+        return
 
-def _verify_after_set_per_die(pobj, pname, val, dies):
+    cpus_str = ", ".join([str(cpu) for cpu in cpus])
+    assert False, f"Set property '{pname}' to value '{val}' for the following CPUs: " \
+                  f"{cpus_str}.\n" \
+                  f"Read back property '{pname}', but did not get value for the " \
+                  f"following CPUs: {cpus_set}"
+
+def _verify_after_set_per_die(pobj: _PropsClassType,
+                              cpuinfo: CPUInfo.CPUInfo,
+                              pname: str,
+                              val: PropertyValueType,
+                              dies: RelNumsType):
     """
-    Helper for 'set_and_verify(). Verify that the value was set to 'val', use the per-die interface.
+    Verify that a property value was correctly set for specified dies.
+
+    Args:
+        pobj: The property object.
+        cpuinfo: A 'CPUInfo.CPUInfo' object.
+        pname: Name of the property to verify.
+        val: Expected value of the property.
+        dies: Die numbers to verify for.
     """
 
-    dies_left = {}
+    dies_left: dict[int, set[int]] = {}
     for pkg, dies_list in dies.items():
         dies_left[pkg] = set(dies_list)
     orig_val = val
@@ -130,8 +154,9 @@ def _verify_after_set_per_die(pobj, pname, val, dies):
         pkg = pvinfo["package"]
         die = pvinfo["die"]
         if pvinfo["val"] != val:
+            dies_str = cpuinfo.dies_to_str(dies)
             assert False, f"Set property '{pname}' to value '{val}' for the following package " \
-                          f"and dies: {dies}\n" \
+                          f"and dies: {dies_str}\n" \
                           f"Read back property '{pname}', got a different value " \
                           f"'{pvinfo['val']}' for die {die} and package {pkg}."
 
@@ -139,33 +164,51 @@ def _verify_after_set_per_die(pobj, pname, val, dies):
         if not dies_left[pkg]:
             del dies_left[pkg]
 
-    assert not dies_left, f"Set property '{pname}' to value '{val}' for the following packages " \
-                          f"and dies: {dies}.\n" \
-                          f"Read back property '{pname}', but did not get value for the " \
-                          f"following packages and dies: {dies_left}"
+    if not dies_left:
+        return
 
-def _verify_after_set_per_package(pobj, pname, val, packages):
+    dies_str = cpuinfo.dies_to_str(dies)
+    dies_left_str = cpuinfo.dies_to_str({pkg: list(pkgdies) for pkg, pkgdies in dies_left.items()})
+    assert False, f"Set property '{pname}' to value '{val}' for the following packages " \
+                  f"and dies: {dies_str}.\n" \
+                  f"Read back property '{pname}', but did not get value for the " \
+                  f"following packages and dies: {dies_left_str}"
+
+def _verify_after_set_per_package(pobj: _PropsClassType,
+                                  pname: str,
+                                  val: PropertyValueType,
+                                  packages: AbsNumsType):
     """
-    Helper for 'set_and_verify(). Verify that the value was set to 'val', use the per-package
-    interface.
+    Verify that a property value was correctly set for specified packages.
+
+    Args:
+        pobj: The property object.
+        pname: Name of the property to verify.
+        val: Expected value of the property.
+        packages: List of package numbers to verify.
     """
 
     packages_set = set(packages)
 
     for pvinfo in pobj.get_prop_packages(pname, packages=packages):
         if pvinfo["val"] != val:
-            packages = ", ".join([str(pkg) for pkg in packages])
+            packages_str = ", ".join([str(pkg) for pkg in packages])
             assert False, f"Set property '{pname}' to value '{val}' for the following packages: " \
-                          f"{packages}'.\n" \
+                          f"{packages_str}.\n" \
                           f"Read back property '{pname}', got a different value " \
                           f"'{pvinfo['val']}' for package {pvinfo['package']}."
 
         packages_set.remove(pvinfo["package"])
 
-    assert not packages_set, f"Set property '{pname}' to value '{val}' for the following CPUs: " \
-                             f"{packages}'.\n" \
-                             f"Read back property '{pname}', but did not get value for the " \
-                             f"following CPUs: {packages_set}"
+    if not packages_set:
+        return
+
+    packages_str = ", ".join([str(pkg) for pkg in packages])
+    packages_set_str = ", ".join([str(pkg) for pkg in packages_set])
+    assert False, f"Set property '{pname}' to value '{val}' for the following " \
+                  f"packages: {packages_str}.\n" \
+                  f"Read back property '{pname}', but did not get value for the " \
+                  f"following packages: {packages_set_str}"
 
 def set_and_verify(params: PropsTestParamsTypedDict,
                    props_vals: Iterable[tuple[str, PropertyValueType]],
@@ -205,7 +248,6 @@ def set_and_verify(params: PropsTestParamsTypedDict,
                 continue
         elif sname == "die":
             try:
-                print(pname, val, dies)
                 pobj.set_prop_dies(pname, val, dies)
             except ErrorNotSupported:
                 continue
@@ -228,7 +270,7 @@ def set_and_verify(params: PropsTestParamsTypedDict,
             _verify_after_set_per_cpu(pobj, pname, val, core_cpus)
 
         if pobj.props[pname]["sname"] in {"die", "package", "global"}:
-            _verify_after_set_per_die(pobj, pname, val, dies)
+            _verify_after_set_per_die(pobj, cpuinfo, pname, val, dies)
 
         if pobj.props[pname]["sname"] in ("package", "global"):
             _verify_after_set_per_package(pobj, pname, val, packages)
