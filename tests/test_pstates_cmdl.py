@@ -182,7 +182,8 @@ def test_pstates_config_freq_good(params):
                 props_cmdl_common.run_pepc(cmd, pman, ignore=_IGNORE)
 
             for cpu_opt in props_cmdl_common.get_bad_optarget_opts(params):
-                props_cmdl_common.run_pepc(f"pstates config {opt} {cpu_opt} {mopt}", pman, exp_exc=Error)
+                props_cmdl_common.run_pepc(f"pstates config {opt} {cpu_opt} {mopt}", pman,
+                                           exp_exc=Error)
 
     for opt in _get_good_config_freq_opts(params, sname="CPU"):
         for mopt in props_cmdl_common.get_mechanism_opts(params, allow_readonly=True):
@@ -191,7 +192,8 @@ def test_pstates_config_freq_good(params):
                 props_cmdl_common.run_pepc(cmd, pman, ignore=_IGNORE)
 
             for cpu_opt in props_cmdl_common.get_bad_optarget_opts(params):
-                props_cmdl_common.run_pepc(f"pstates config {opt} {cpu_opt} {mopt}", pman, exp_exc=Error)
+                props_cmdl_common.run_pepc(f"pstates config {opt} {cpu_opt} {mopt}", pman,
+                                           exp_exc=Error)
 
 def test_pstates_config_freq_bad(params):
     """Test 'pepc pstates config' command with bad frequency options."""

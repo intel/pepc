@@ -10,20 +10,32 @@
 
 """Tests for the public methods of the 'CStates' module."""
 
+# TODO: Finish annotating types
+from  __future__ import annotations # Remove when switching to Python 3.10+.
+
+import typing
+from typing import Generator
 import pytest
 import common
 import props_common
 from pepclibs import CPUInfo, CStates
 
-def _get_enable_cache_param():
-    """Yield each dataset with a bool. Used for toggling CStates 'enable_cache'."""
+if typing.TYPE_CHECKING:
+    from props_common import PropsTestParamsTypedDict
 
-    yield True
-    yield False
+@pytest.fixture(name="params", scope="module", params=props_common.get_enable_cache_param())
+def get_params(hostspec: str,
+               request: pytest.FixtureRequest) -> Generator[PropsTestParamsTypedDict, None, None]:
+    """
+    Yield a dictionary containing parameters required 'CPUInfo' tests.
 
-@pytest.fixture(name="params", scope="module", params=_get_enable_cache_param())
-def get_params(hostspec, request):
-    """Yield a dictionary with information we need for testing."""
+    Args:
+        hostspec: The host specification/name to create a process manager for. If the hostspec
+                  starts with "emulation:", it indicates an emulated environment.
+
+    Yields:
+        A dictionary with test parameters.
+    """
 
     enable_cache = request.param
 
@@ -31,11 +43,7 @@ def get_params(hostspec, request):
          CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
          CStates.CStates(pman=pman, cpuinfo=cpuinfo, enable_cache=enable_cache) as pobj:
         params = common.build_params(pman)
-
-        params["cpuinfo"] = cpuinfo
-        params["pobj"] = pobj
-
-        yield params
+        yield props_common.extend_params(params, pobj, cpuinfo)
 
 def _get_set_and_verify_data(params, cpu):
     """Yield ('pname', 'value') tuples for the 'test_cstates_set_and_verify()' test-case."""
@@ -61,19 +69,19 @@ def test_cstates_set_and_verify(params):
     props_vals = _get_set_and_verify_data(params, 0)
     props_common.set_and_verify(params, props_vals, 0)
 
-def test_cstates_property_type(params):
-    """This test verifies that 'get_prop_cpus()' returns values of the correct type."""
+def test_cstates_get_all_props(params):
+    """
+    Verify 'get_cpu_prop()' works for all available properties.
 
-    props_common.verify_props_value_type(params, 0)
+    Args:
+        params: The test parameters.
+    """
 
-def test_cstates_get_props_mechanisms(params):
-    """Verify that the 'mname' arguments of 'get_prop_cpus()' works correctly."""
-
-    props_common.verify_get_props_mechanisms(params, 0)
+    props_common.verify_get_all_props(params, 0)
 
 def test_cstates_set_props_mechanisms_bool(params):
     """
     Verify that the 'mname' arguments of 'get_prop_cpus()' works correctly for boolean properties.
     """
 
-    props_common.verify_set_props_mechanisms_bool(params, 0)
+    props_common.verify_set_bool_props(params, 0)
