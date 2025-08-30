@@ -63,8 +63,9 @@ and offers a Python API for integration with other Python projects.
 # What is supported
 
 Pepc supports discovering and configuring the following features.
-* C-states: [documentation](docs/pepc-cstates.rst)
-* P-states: [documentation](docs/pepc-pstates.rst)
+* CPU C-states: [documentation](docs/pepc-cstates.rst)
+* CPU P-states: [documentation](docs/pepc-pstates.rst)
+* Uncore properties: [documentation](docs/pepc-uncore.rst)
 * PM QoS: [documentation](docs/pepc-pmqos.rst)
 * CPU onlining and offlining: [documentation](docs/pepc-cpu-hotplug.rst)
 * ASPM: [documentation](docs/pepc-aspm.rst)
