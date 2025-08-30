@@ -61,7 +61,6 @@ def _get_set_and_verify_data(params: PropsTestParamsTypedDict,
 
     pobj = params["pobj"]
 
-    # TODO: add ELC opts.
     min_limit = pobj.get_cpu_prop("min_freq_limit", cpu)["val"]
     max_limit = pobj.get_cpu_prop("max_freq_limit", cpu)["val"]
     if min_limit is not None or max_limit is not None:
@@ -70,6 +69,15 @@ def _get_set_and_verify_data(params: PropsTestParamsTypedDict,
 
         yield "max_freq", "max"
         yield "min_freq", "max"
+
+    yield "elc_low_threshold", 0
+    yield "elc_high_threshold", 100
+
+    yield "elc_low_threshold", 80
+    yield "elc_high_threshold", 81
+
+    yield "elc_low_threshold", 10
+    yield "elc_high_threshold", 90
 
 def test_uncore_set_and_verify(params: PropsTestParamsTypedDict):
     """

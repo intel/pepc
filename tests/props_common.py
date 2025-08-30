@@ -99,6 +99,8 @@ def _verify_after_set_per_cpu(pobj: _PropsClassType,
             limit_pname = f"{val}_freq_limit"
             val = pobj.get_cpu_prop(limit_pname, pvinfo["cpu"])["val"]
 
+        print(val, type(val))
+        print(pvinfo["val"], type(pvinfo["val"]))
         if pvinfo["val"] != val:
             cpus_str = ", ".join([str(cpu) for cpu in cpus])
             assert False, f"Set property '{pname}' to value '{val}' for the following CPUs: " \
