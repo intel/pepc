@@ -81,9 +81,9 @@ def test_uncore_info(params: PropsCmdlTestParamsTypedDict):
     # Cover '--list-mechanisms'.
     props_cmdl_common.run_pepc("uncore info --list-mechanisms", pman)
 
-def _get_good_config_freq_opts() -> Generator[str, None, None]:
+def _get_good_config_opts() -> Generator[str, None, None]:
     """
-    Yield valid frequency configuration options for testing the 'pepc uncore config' command.
+    Yield valid configuration options for testing the 'pepc uncore config' command.
 
     Yields:
         Command-line option strings suitable for the specified scope.
@@ -96,12 +96,17 @@ def _get_good_config_freq_opts() -> Generator[str, None, None]:
                 "--max-freq max",
                 "--max-freq min --max-freq max"]
 
-def test_uncore_config_freq_good(params: PropsCmdlTestParamsTypedDict):
-    """Test the 'pepc uncore config' command with good frequency options."""
+def test_uncore_config_good(params: PropsCmdlTestParamsTypedDict):
+    """
+    Test valid 'pepc uncore config' command options.
+
+    Args:
+        params: The test parameters dictionary.
+    """
 
     pman = params["pman"]
 
-    for opt in _get_good_config_freq_opts():
+    for opt in _get_good_config_opts():
         for mopt in props_cmdl_common.get_mechanism_opts(params, allow_readonly=True):
             for cpu_opt in props_cmdl_common.get_good_optarget_opts(params, sname="global"):
                 cmd = f"uncore config {opt} {cpu_opt} {mopt}"
@@ -137,126 +142,74 @@ def test_uncore_config_freq_bad(params: PropsCmdlTestParamsTypedDict):
     for opt in _get_bad_config_freq_opts():
         props_cmdl_common.run_pepc(f"uncore config {opt}", pman, exp_exc=Error)
 
-    for opt in _get_good_config_freq_opts():
+    for opt in _get_good_config_opts():
         for cpu_opt in props_cmdl_common.get_bad_optarget_opts(params):
             props_cmdl_common.run_pepc(f"uncore config {opt} {cpu_opt}", pman, exp_exc=Error)
 
-def _get_good_config_non_freq_opts(params: PropsCmdlTestParamsTypedDict,
-                                   sname: ScopeNameType = "package") -> Generator[str, None, None]:
+def _set_freq_pairs(params: PropsCmdlTestParamsTypedDict,
+                    min_pname: str,
+                    max_pname: str,
+                    val1: int,
+                    val2: int,
+                    val3: int,
+                    val4: int):
     """
-    Yield valid non-frequency configuration options for testing the 'pepc uncore config' command.
+    Set minimum and maximum uncore frequency or ELC threshold pairs, validating how the order is
+    handled.
 
     Args:
         params: The test parameters dictionary.
-        sname: Scope name indicating the topology level for which to generate options.
-
-    Yields:
-        Command-line option string suitable for testing 'pepc uncore config'.
+        min_pname: Name of the property for the minimum frequency/ELC threshold.
+        max_pname: Name of the property for the maximum frequency/ELC threshold.
+        val1: Any low value of the property.
+        val2: A value of the property > val1.
+        val3: A value of the property > val2.
+        val4: A value of the property > val3.
     """
-
-    # TODO: add threshold options.
-    yield from []
-
-def test_uncore_config_non_freq_good(params: PropsCmdlTestParamsTypedDict):
-    """Test the 'pepc uncore config' command with good options (excluding frequency)."""
 
     pman = params["pman"]
 
-    for opt in _get_good_config_non_freq_opts(params, sname="CPU"):
-        for cpu_opt in props_cmdl_common.get_good_optarget_opts(params, sname="CPU"):
-            for mopt in props_cmdl_common.get_mechanism_opts(params, allow_readonly=False):
-                cmd = f"uncore config {opt} {cpu_opt} {mopt}"
-                props_cmdl_common.run_pepc(cmd, pman, ignore=_IGNORE)
-
-    for opt in _get_good_config_non_freq_opts(params, sname="global"):
-        for cpu_opt in props_cmdl_common.get_good_optarget_opts(params, sname="global"):
-            for mopt in props_cmdl_common.get_mechanism_opts(params, allow_readonly=False):
-                cmd = f"uncore config {opt} {cpu_opt} {mopt}"
-                props_cmdl_common.run_pepc(cmd, pman, ignore=_IGNORE)
-
-def _get_bad_config_non_freq_opts(params: PropsCmdlTestParamsTypedDict,
-                                  sname: ScopeNameType = "package") -> Generator[str, None, None]:
-    """
-    Generate invalid non-frequency configuration options for 'pepc uncore config' command.
-
-    Args:
-        params: The test parameters dictionary.
-        sname: Scope name indicating the topology level for which to generate options.
-
-    Yields:
-        Invalid command-line option for 'pepc uncore config'.
-    """
-
-    # TODO: add threshold options.
-    yield from []
-
-def test_uncore_config_non_freq_bad(params: PropsCmdlTestParamsTypedDict):
-    """Test the 'pepc uncore config' command with bad options (excluding frequency)."""
-
-    pman = params["pman"]
-
-    for opt in _get_bad_config_non_freq_opts(params, sname="package"):
-        props_cmdl_common.run_pepc(f"uncore config {opt}", pman, exp_exc=Error)
-
-    for opt in _get_bad_config_non_freq_opts(params, sname="global"):
-        props_cmdl_common.run_pepc(f"uncore config {opt}", pman, exp_exc=Error)
-
-def _set_freq_pairs(params: PropsCmdlTestParamsTypedDict, min_pname: str, max_pname: str):
-    """
-    Set minimum and maximum frequency pairs for CPU or uncore properties, taking care of the
-    ordering constraints.
-
-    Args:
-        params: The test parameters dictionary.
-        min_pname: Name of the property for the minimum frequency.
-        max_pname: Name of the property for the maximum frequency.
-    """
-
-    cpu = 0
-    pman = params["pman"]
-    pobj = params["pobj"]
-
-    min_limit = pobj.get_cpu_prop(f"{min_pname}_limit", cpu)["val"]
-    max_limit = pobj.get_cpu_prop(f"{max_pname}_limit", cpu)["val"]
-    if not min_limit or not max_limit:
-        return
-
-    min_limit = cast(int, min_limit)
-    max_limit = cast(int, max_limit)
-
-    delta = (max_limit - min_limit) // 4
-    delta -= delta % _UncoreFreqTpmi.RATIO_MULTIPLIER
-
-    freq0 = min_limit
-    freq1 = min_limit + delta
-    freq2 = max_limit - delta
-    freq3 = max_limit
 
     min_opt = f"--{min_pname.replace('_', '-')}"
     max_opt = f"--{max_pname.replace('_', '-')}"
-
-    sname = pobj.get_sname(min_pname)
-    assert sname is not None
-
     cpus_opt = "--cpus all"
 
     # [Min ------------------ Max ----------------------------------------------------------]
-    freq_opts = f"{min_opt} {freq0} {max_opt} {freq1}"
+    freq_opts = f"{min_opt} {val1} {max_opt} {val2}"
     props_cmdl_common.run_pepc(f"uncore config {cpus_opt} {freq_opts}", pman)
 
     # [-------------------------------------------------------- Min -------------------- Max]
-    freq_opts = f"{min_opt} {freq2} {max_opt} {freq3}"
+    freq_opts = f"{min_opt} {val3} {max_opt} {val4}"
     props_cmdl_common.run_pepc(f"uncore config {cpus_opt} {freq_opts}", pman)
 
     # [Min ------------------ Max ----------------------------------------------------------]
-    freq_opts = f"{min_opt} {freq0} {max_opt} {freq1}"
+    freq_opts = f"{min_opt} {val1} {max_opt} {val2}"
     props_cmdl_common.run_pepc(f"uncore config {cpus_opt} {freq_opts}", pman)
 
-def test_uncore_frequency_set_order(params: PropsCmdlTestParamsTypedDict):
+def test_uncore_set_order(params: PropsCmdlTestParamsTypedDict):
     """
-    Test setting minimum and maximum frequency values in different orders. Since the system's
-    minimum and maximum frequencies may be configured in various ways, care must be taken when
-    updating both values simultaneously.
+    Test setting frequency and ELC threshold values in various orders to verify that the tool
+    correctly handles value ordering.
+
+    Args:
+        params: The test parameters dictionary.
     """
 
-    _set_freq_pairs(params, "min_freq", "max_freq")
+    cpu = 0
+    pobj = params["pobj"]
+
+    min_limit = pobj.get_cpu_prop("min_freq_limit", cpu)["val"]
+    max_limit = pobj.get_cpu_prop("max_freq_limit", cpu)["val"]
+    if min_limit and max_limit:
+        min_limit = cast(int, min_limit)
+        max_limit = cast(int, max_limit)
+
+        delta = (max_limit - min_limit) // 4
+        delta -= delta % _UncoreFreqTpmi.RATIO_MULTIPLIER
+
+        val2 = min_limit + delta
+        val3 = max_limit - delta
+        _set_freq_pairs(params, "min_freq", "max_freq", min_limit, val2, val3, max_limit)
+
+    if pobj.prop_is_supported_cpu("elc_low_threshold", 0):
+        _set_freq_pairs(params, "elc_low_threshold", "elc_high_threshold", 1, 2, 99, 100)

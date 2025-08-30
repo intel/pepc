@@ -243,7 +243,12 @@ def _get_good_config_non_freq_opts(params: PropsCmdlTestParamsTypedDict,
                     "--epb performance"]
 
 def test_pstates_config_non_freq_good(params: PropsCmdlTestParamsTypedDict):
-    """Test the 'pepc pstates config' command with good options (excluding frequency)."""
+    """
+    Test valid 'pepc pstates config' command options, not related to CPU frequency.
+
+    Args:
+        params: The test parameters dictionary.
+    """
 
     pman = params["pman"]
 
@@ -294,7 +299,12 @@ def _get_bad_config_non_freq_opts(params: PropsCmdlTestParamsTypedDict,
                     "--epb green_tree"]
 
 def test_pstates_config_non_freq_bad(params: PropsCmdlTestParamsTypedDict):
-    """Test the 'pepc pstates config' command with bad options (excluding frequency)."""
+    """
+    Test invalid 'pepc pstates config' command options, not related to CPU frequency.
+
+    Args:
+        params: The test parameters dictionary.
+    """
 
     pman = params["pman"]
 
@@ -306,7 +316,7 @@ def test_pstates_config_non_freq_bad(params: PropsCmdlTestParamsTypedDict):
 
 def _set_freq_pairs(params: PropsCmdlTestParamsTypedDict, min_pname: str, max_pname: str):
     """
-    Set minimum and maximum CPU frequency pairs, taking care of the ordering constraints.
+    Set minimum and maximum CPU frequency pairs, validating how the order is handled.
 
     Args:
         params: The test parameters dictionary.
