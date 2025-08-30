@@ -1,7 +1,7 @@
 .. -*- coding: utf-8 -*-
 .. vim: ts=4 sw=4 tw=100 et ai si
 
-:Title: P-states
+:Title: CPU P-states
 
 .. Contents::
    :depth: 2
@@ -128,8 +128,8 @@ options.
 Subcommand *'info'*
 ===================
 
-Retrieve P-states information for specified CPUs. By default, display all details for all CPUs. Use
-target CPU specification options to define a subset of CPUs, cores, dies, or packages.
+Retrieve CPU P-states information for specified CPUs. By default, display all details for all CPUs.
+Use target CPU specification options to define a subset of CPUs, cores, dies, or packages.
 
 **--yaml**
    Display output in YAML format.
@@ -141,7 +141,7 @@ target CPU specification options to define a subset of CPUs, cores, dies, or pac
    order. By default, all mechanisms are allowed, and the most preferred ones are tried first.
 
 **--list-mechanisms**
-   Display available mechanisms for retrieving P-states information.
+   Display available mechanisms for retrieving CPU P-states information.
 
 **--min-freq**
    Retrieve the minimum CPU frequency using the 'sysfs' or 'msr' mechanisms. The 'sysfs' mechanism
@@ -226,59 +226,6 @@ target CPU specification options to define a subset of CPUs, cores, dies, or pac
    highest_perf: '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/highest_perf',
    nominal_perf: '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/nominal_perf'.
 
-**--min-uncore-freq**
-   Retrieve the minimum uncore frequency. The supported mechanisms are: 'sysfs', 'tpmi'.
-   In case of the 'sysfs' mechanism, the sysfs path depends on what uncore driver is used. In case
-   of the 'intel_uncore_frequency_tpmi' driver, use
-   '/sys/devices/system/cpu/intel_uncore_frequency/uncore<NUMBER>/min_freq_khz'. In case of the
-   'intel_uncore_frequency' driver, use
-   '/sys/devices/system/cpu/intel_uncore_frequency/package\_<NUMBER>_die\_<NUMBER>/min_freq_khz'.
-
-   The 'tpmi' mechanism uses the tpmi driver debugfs interface to access TPMI registers. The exact
-   path depends on the target die number. Example of the debugfs file path is
-   '/sys/kernel/debug/tpmi-0000:00:03.1/tpmi-id-02/mem_dump'
-
-**--max-uncore-freq**
-   Retrieve the maximum uncore frequency. Similar to '--min-uncore-freq', but for the maximum uncore
-   frequency. Uses the same mechanisms as '--min-uncore-freq', but the sysfs mechanism uses the
-   'max_freq_khz' file instead of 'min_freq_khz'.
-
-**--min-uncore-freq-limit**
-   Get minimum uncore frequency limit supported but the kernel. The supported mechanism is 'sysfs'.
-   In case of the 'intel_uncore_frequency_tpmi' driver, read
-   /sys/devices/system/cpu/intel_uncore_frequency/uncore<NUMBER>/initial_min_freq_khz'. In case of
-   the 'intel_uncore_frequency' driver, read
-   '/sys/devices/system/cpu/intel_uncore_frequency/package\_<NUMBER>_die\_<NUMBER>/initial_min_freq_khz'.
-
-   The 'tpmi' mechanism does not provide min/max uncore frequency limits, therefore not available.
-
-**--max-uncore-freq-limit**
-   Retrieve the maximum uncore frequency limit. Similar to '--min-uncore-freq-limit', but for the
-   maximum uncore frequency limit. Uses the same mechanisms as '--min-uncore-freq-limit', but the
-   sysfs mechanism uses the 'initial_max_freq_khz' file instead of 'initial_min_freq_khz'.
-
-**--uncore-elc-low-threshold**
-   Get the uncore ELC low threshold. The threshold defines the aggregate CPU utilization percentage.
-   When utilization falls below this threshold, the platform sets the uncore frequency floor to the
-   low ELC frequency (subject to the the '--min-uncore-freq-limit' - if the limit is higher than the
-   low ELC frequency, the limit is used as the floor instead).
-
-   Supported mechanisms are: 'sysfs', 'tpmi'. The 'sysfs' mechanism reads the
-   '/sys/devices/system/cpu/intel_uncore_frequency/uncore<NUMBER>/elc_low_threshold_percent'. The
-   TPMI reads the same debugfs file as '--min-uncore-freq'.
-
-**--uncore-elc-high-threshold**
-   Get the uncore ELC high threshold. The threshold defines the aggregate CPU utilization percentage
-   at which the platform begins increasing the uncore frequency more enthusiastically than before.
-   When utilization exceeds this threshold, the platform gradually raises the uncore frequency until
-   utilization drops below the threshold or the frequency reaches the '--max-uncore-freq' limit.
-   In addition, uncore frequency increases may be prevented by other constraints, such as thermal or
-   power limits.
-
-   Supported mechanisms are: 'sysfs', 'tpmi'. The 'sysfs' mechanism reads the
-   '/sys/devices/system/cpu/intel_uncore_frequency/uncore<NUMBER>/elc_high_threshold_percent'. The
-   TPMI reads the same debugfs file as '--max-uncore-freq'.
-
 **--hwp**
    Check if hardware power management is enabled. When enabled, CPUs can scale their frequency
    automatically without OS involvement. Mechanism: 'msr', reads MSR_PM_ENABLE (0x770), bit 0.
@@ -300,7 +247,7 @@ target CPU specification options to define a subset of CPUs, cores, dies, or pac
    the 'msr' mechanism reads MSR_ENERGY_PERF_BIAS (0x1B0), bits 3:0.
 
 **--driver**
-   Retrieve the CPU frequency driver name. The driver enumerates and manages P-states on the
+   Retrieve the CPU frequency driver name. The driver enumerates and manages CPU P-states on the
    platform. The name is read from '/sys/devices/system/cpu/cpufreq/policy<NUMBER>/scaling_driver'.
    While sysfs provides a per-CPU API, Intel platforms typically use a single driver.
 
@@ -323,18 +270,19 @@ target CPU specification options to define a subset of CPUs, cores, dies, or pac
 Subcommand *'config'*
 =====================
 
-Configure P-states for specified CPUs. If no parameter is provided, the current value(s) will be
+Configure CPU P-states for specified CPUs. If no parameter is provided, the current value(s) will be
 displayed. Use target CPU specification options to define the subset of CPUs, cores, dies, or
 packages.
 
 **-m** *MECHANISMS*, **--mechanisms** *MECHANISMS*
-   A comma-separated list of mechanisms allowed for configuring P-states. Use '--list-mechanisms'
-   to view available mechanisms. Many options support only one mechanism (e.g., 'sysfs'), while
-   some support multiple (e.g., 'sysfs' and 'msr'). Mechanisms are tried in the specified order.
-   By default, all mechanisms are allowed, and the most preferred ones are tried first.
+   A comma-separated list of mechanisms allowed for configuring CPU P-states. Use
+   '--list-mechanisms' to view available mechanisms. Many options support only one mechanism (e.g.,
+   'sysfs'), while some support multiple (e.g., 'sysfs' and 'msr'). Mechanisms are tried in the
+   specified order.  By default, all mechanisms are allowed, and the most preferred ones are tried
+   first.
 
 **--list-mechanisms**
-   Display available mechanisms for configuring P-states.
+   Display available mechanisms for configuring CPU P-states.
 
 **--min-freq** *MIN_FREQ*
    Set the minimum CPU frequency. The default unit is 'Hz', but 'kHz', 'MHz', and 'GHz' can also be
@@ -378,33 +326,6 @@ packages.
    by the OS and thermal conditions. In case of 'intel_pstate' driver, use
    '/sys/devices/system/cpu/intel_pstate/no_turbo', in case of 'acpi-cpufreq' driver, use
    '/sys/devices/system/cpu/cpufreq/boost'.
-
-**--min-uncore-freq** *MIN_UNCORE_FREQ*
-   Set the minimum uncore frequency. The default unit is 'Hz', but 'kHz', 'MHz', and 'GHz' can also
-   be used (for example '900MHz'). Uses the same mechanisms as described in the 'info' sub-command.
-
-   The following special values can also be used:
-   **min**
-      Minimum uncore frequency supported (see '--min-uncore-freq-limit'). Regardless of the
-      '--mechanisms' option, the 'sysfs' mechanism is always used to resolve 'min' to the actual
-      minimum frequency.
-   **max**
-      Maximum uncore frequency supported (see '--max-uncore-freq-limit'). Regardless of the
-      '--mechanisms' option, the 'sysfs' mechanism is always used to resolve 'max' to the actual
-      maximum frequency.
-   **mdl**
-      The middle uncore frequency value between minimum and maximum rounded to nearest 100MHz.
-      Regardless of the '--mechanisms' option, the 'sysfs' mechanism is always used to resolve 'mdl'
-      to the actual middle frequency.
-
-   Note, the 'tpmi' mechanism does not provide minimum or maximum uncore frequency limits (the
-   allowed range). As a result, it is possible to set uncore frequency values outside the supported
-   limits, such as setting the minimum frequency below the actual minimum limit. Use caution when
-   configuring uncore frequencies with the 'tpmi' mechanism.
-
-**--max-uncore-freq** *MAX_UNCORE_FREQ*
-   Set the maximum uncore frequency. Uses the same mechanisms as described in the 'info'
-   sub-command. Similar to '--min-uncore-freq', but applies to the maximum frequency.
 
 **--epp** *EPP*
    Set EPP (Energy Performance Preference) using 'sysfs' (preferred) or 'msr' mechanisms. EPP
