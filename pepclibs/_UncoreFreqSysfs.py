@@ -33,56 +33,55 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import re
 import math
-from typing import Generator
+import typing
 from pathlib import Path
-from pepclibs import _SysfsIO, CPUInfo, _UncoreFreqBase
-from pepclibs.PropsTypes import MechanismNameType
-from pepclibs._UncoreFreqBase import FreqValueType as _FreqValueType
-from pepclibs._UncoreFreqBase import ELCThresholdType as _ELCThresholdType
-from pepclibs.helperlibs.ProcessManager import ProcessManagerType
-from pepclibs.CPUInfoTypes import RelNumsType, AbsNumsType
+from pepclibs import _SysfsIO, _UncoreFreqBase
 from pepclibs.msr import UncoreRatioLimit
 from pepclibs.helperlibs import Logging, ClassHelpers, KernelModule, FSHelpers
 from pepclibs.helperlibs import Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 
-_LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
+if typing.TYPE_CHECKING:
+    from typing import Generator, Literal
+    from pepclibs import CPUInfo
+    from pepclibs.PropsTypes import MechanismNameType
+    from pepclibs._UncoreFreqBase import FreqValueType as _FreqValueType
+    from pepclibs._UncoreFreqBase import ELCThresholdType as _ELCThresholdType
+    from pepclibs.helperlibs.ProcessManager import ProcessManagerType
+    from pepclibs.CPUInfoTypes import RelNumsType, AbsNumsType
 
-# Type for the uncore frequency driver sysfs paths cache. The indexing goes as follows.
-#
-#   ftype[_FreqValueType]: Whether the sysfs path is for a minimum, maximum or current uncore
-#                          frequency file.
-#   package[int] - The package number the sysfs path belongs to.
-#   die[int] - The die number the sysfs path belongs to.
-#   limit[bool] - If 'True', path is about an uncore frequency limit, otherwise the path is about
-#                  the current uncore frequency.
-#
-# Example:
-# {'max': {0: {0: {False:
-#                   '/sys/devices/system/cpu/intel_uncore_frequency/uncore00/max_freq_khz',
-#                  True:
-#                   '/sys/devices/system/cpu/intel_uncore_frequency/uncore00/initial_max_freq_khz'},
-#              1: {False:
-#                   '/sys/devices/system/cpu/intel_uncore_frequency/uncore01/max_freq_khz',
-#                  True:
-#                   '/sys/devices/system/cpu/intel_uncore_frequency/uncore01/initial_max_freq_khz'},
-#
-#               ... and so on for all dies of package 0 ...
-#
-#          1: {0: {False:
-#                   '/sys/devices/system/cpu/intel_uncore_frequency/uncore04/max_freq_khz',
-#                  True:
-#                  '/sys/devices/system/cpu/intel_uncore_frequency/uncore04/initial_max_freq_khz'},
-#
-#               ... and so on for all dies of package 1 ...
-#
-#  'min': {0: {0: {False:
-#                   '/sys/devices/system/cpu/intel_uncore_frequency/uncore00/min_freq_khz',
-#                  True:
-#                   '/sys/devices/system/cpu/intel_uncore_frequency/uncore00/initial_min_freq_khz'},
-#
-#               ... and so on for all packages and dies ...
-_SysfsPathCacheType = dict[_FreqValueType, dict[int, dict[int, dict[bool, Path]]]]
+    # Type for the uncore frequency driver sysfs paths cache. The indexing goes as follows.
+    #
+    #   ftype[_FreqValueType]: Whether the sysfs path is for a minimum, maximum or current uncore
+    #                          frequency file.
+    #   package[int] - The package number the sysfs path belongs to.
+    #   die[int] - The die number the sysfs path belongs to.
+    #   limit[bool] - If 'True', path is about an uncore frequency limit, otherwise the path is
+    #                 about the current uncore frequency.
+    #
+    # Example:
+    # {'max': {0: {0: {
+    #      False: '/sys/devices/system/cpu/intel_uncore_frequency/uncore00/max_freq_khz',
+    #      True:  '/sys/devices/system/cpu/intel_uncore_frequency/uncore00/initial_max_freq_khz'
+    #                 },
+    #              1: {
+    #      False: '/sys/devices/system/cpu/intel_uncore_frequency/uncore01/max_freq_khz',
+    #      True:  '/sys/devices/system/cpu/intel_uncore_frequency/uncore01/initial_max_freq_khz'
+    #                 },
+    #               ... and so on for all dies of package 0 ...
+    #          1: {0: {
+    #      False: '/sys/devices/system/cpu/intel_uncore_frequency/uncore04/max_freq_khz',
+    #      True:  '/sys/devices/system/cpu/intel_uncore_frequency/uncore04/initial_max_freq_khz'
+    #                 },
+    #               ... and so on for all dies of package 1 ...
+    #  'min': {0: {0: {
+    #      False: '/sys/devices/system/cpu/intel_uncore_frequency/uncore00/min_freq_khz',
+    #      True:  '/sys/devices/system/cpu/intel_uncore_frequency/uncore00/initial_min_freq_khz'
+    #                 },
+    #               ... and so on for all packages and dies ...
+    _SysfsPathCacheType = dict[_FreqValueType, dict[int, dict[int, dict[bool, Path]]]]
+
+_LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
 class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
     """
@@ -110,17 +109,21 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
         * Per-CPU:
             - 'get_min_freq_limit_cpus()'
             - 'get_max_freq_limit_cpus()'
-    3. Get or set ELC thresholds.
+    3. Get or set ELC threshold (percentage or enabled/disabled status).
         * Per-die:
             - get_elc_low_threshold_dies()
             - get_elc_high_threshold_dies()
+            - get_elc_high_threshold_status_dies()
             - set_elc_low_threshold_dies()
             - set_elc_high_threshold_dies()
+            - set_elc_high_threshold_status_dies()
         * Per-CPU:
             - get_elc_low_threshold_cpus()
             - get_elc_high_threshold_cpus()
+            - get_elc_high_threshold_status_cpus()
             - set_elc_low_threshold_cpus()
             - set_elc_high_threshold_cpus()
+            - set_elc_high_threshold_status_cpus()
 
     Note: Methods of this class do not validate the 'cpus' and 'dies' arguments. The caller is
     responsible for ensuring that the provided package, die, and CPU numbers exist and that CPUs are
@@ -767,7 +770,8 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
     def _construct_elc_threshold_path_die(self,
                                           thrtype: _ELCThresholdType,
                                           package: int,
-                                          die: int) -> Path:
+                                          die: int,
+                                          suffix: Literal["percent", "enable"]= "percent") -> Path:
         """
         Construct and return the sysfs file path for an ELC threshold read or write operation.
 
@@ -775,12 +779,14 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
             thrtype: The type of ELC threshold ("low" or "high").
             package: The package number to construct the path for.
             die: The die number within the package to construct the path for.
+            suffix: The sysfs file suffix, defaults to "percent", which corresponds to the ELC
+                    threshold percent sysfs file.
 
         Returns:
             Path to the requested uncore frequency sysfs file.
         """
 
-        fname = f"elc_{thrtype}_threshold_percent"
+        fname = f"elc_{thrtype}_threshold_{suffix}"
         return self._sysfs_base / self._get_dirmap()[package][die] / fname
 
     def _get_elc_threshold_dies(self,
@@ -794,7 +800,26 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
             for die in pkg_dies:
                 path = self._construct_elc_threshold_path_die(thrtype, package, die)
                 threshold = self._sysfs_io.read_int(path, what=what)
-                yield package, die, int(threshold)
+                _LOG.debug("Package %d die %d %s is %d%%, read file '%s'",
+                           package, die, what, threshold, path)
+                yield package, die, threshold
+
+    def _get_elc_threshold_status_dies(self,
+                                       thrtype: _ELCThresholdType,
+                                       dies: RelNumsType) -> Generator[tuple[int, int, bool],
+                                                                       None, None]:
+        """Refer to '_UncoreFreqBase._get_elc_threshold_status_dies()'."""
+
+        what = f"ELC {thrtype} threshold enabled/disabled status"
+
+        for package, pkg_dies in dies.items():
+            for die in pkg_dies:
+                path = self._construct_elc_threshold_path_die(thrtype, package, die,
+                                                              suffix="enable")
+                status = self._sysfs_io.read_int(path, what=what)
+                _LOG.debug("Package %d die %d %s is %s, read file '%s'",
+                           package, die, what, status, path)
+                yield package, die, bool(status)
 
     def _set_elc_threshold_dies(self,
                                 threshold: int,
@@ -809,4 +834,22 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
                 self._validate_elc_threshold(threshold, thrtype, package, die)
                 path = self._construct_elc_threshold_path_die(thrtype, package, die)
                 # Round the threshold up, following the kernel driver approach.
+                _LOG.debug("Setting package %d die %d %s to %d%% via file '%s'",
+                           package, die, what, threshold, path)
                 self._sysfs_io.write_int(path, math.ceil(threshold), what=what)
+
+    def _set_elc_threshold_status_dies(self,
+                                       status: bool,
+                                       thrtype: _ELCThresholdType,
+                                       dies: RelNumsType):
+        """Refer to '_UncoreFreqBase._set_elc_threshold_status_dies()'."""
+
+        what = f"ELC {thrtype} threshold enabled/disabled status"
+
+        for package, pkg_dies in dies.items():
+            for die in pkg_dies:
+                path = self._construct_elc_threshold_path_die(thrtype, package, die,
+                                                              suffix="enable")
+                _LOG.debug("Setting package %d die %d %s to %s via file '%s'",
+                           package, die, what, status, path)
+                self._sysfs_io.write_int(path, int(status), what=what)

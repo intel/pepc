@@ -70,8 +70,12 @@ def _get_set_and_verify_data(params: PropsTestParamsTypedDict,
         yield "max_freq", "max"
         yield "min_freq", "max"
 
+    yield "elc_high_threshold_status", "off"
+
     yield "elc_low_threshold", 0
     yield "elc_high_threshold", 100
+
+    yield "elc_high_threshold_status", "on"
 
     yield "elc_low_threshold", 80
     yield "elc_high_threshold", 81

@@ -99,8 +99,6 @@ def _verify_after_set_per_cpu(pobj: _PropsClassType,
             limit_pname = f"{val}_freq_limit"
             val = pobj.get_cpu_prop(limit_pname, pvinfo["cpu"])["val"]
 
-        print(val, type(val))
-        print(pvinfo["val"], type(pvinfo["val"]))
         if pvinfo["val"] != val:
             cpus_str = ", ".join([str(cpu) for cpu in cpus])
             assert False, f"Set property '{pname}' to value '{val}' for the following CPUs: " \
@@ -366,19 +364,7 @@ def verify_set_bool_props(params: PropsTestParamsTypedDict, cpu: int):
     for pname, pinfo in pobj.props.items():
         if not pinfo["writable"]:
             continue
-        if not pinfo["type"] == "bool":
-            continue
-
-        try:
-            pvinfo = pobj.get_cpu_prop(pname, cpu)
-        except ErrorNotSupported:
-            continue
-
-        if pvinfo["val"] == "on":
-            val = "off"
-        elif pvinfo["val"] == "off":
-            val = "on"
-        else:
+        if pinfo["type"] != "bool":
             continue
 
         sname = pobj.get_sname(pname)
@@ -389,22 +375,46 @@ def verify_set_bool_props(params: PropsTestParamsTypedDict, cpu: int):
             siblings[sname] = cpuinfo.get_cpu_siblings(cpu, sname=sname)
         cpus = siblings[sname]
 
-        all_mnames: list[tuple[MechanismNameType, ...]] = [(mname,) for mname in pinfo["mnames"]]
-        if len(pinfo["mnames"]) > 1:
-            all_mnames += [(pinfo["mnames"][0], pinfo["mnames"][-1]),
-                           (pinfo["mnames"][-1], pinfo["mnames"][0])]
-        for mnames in all_mnames:
+        dies: RelNumsType = {}
+        if sname == "die":
+            # Per-die properties do not support CPU-based API at the moment. Have to use per-die API
+            # instead.
+            dies = {cpuinfo.cpu_to_package(cpu): (cpuinfo.cpu_to_die(cpu),)}
+
+        for mname in pinfo["mnames"]:
             try:
-                mname = pobj.set_prop_cpus(pname, val, cpus, mnames=mnames)
+                pvinfo = pobj.get_cpu_prop(pname, cpu, mnames=(mname,))
+                if pvinfo["val"] is None:
+                    continue
+
+                if pvinfo["val"] == "on":
+                    val = "off"
+                else:
+                    val = "on"
+
+                if sname != "die":
+                    used_mname = pobj.set_prop_cpus(pname, val, cpus, mnames=(mname,))
+                else:
+                    used_mname = pobj.set_prop_dies(pname, val, dies, mnames=(mname,))
             except ErrorNotSupported:
                 continue
 
-            assert mname in mnames, f"Set property '{pname}' to value '{val}' on CPU {cpu} " \
-                                    f"using mechanisms '{','.join(mnames)}', but " \
-                                    f"'set_prop_cpus()' return machanism name '{mname}'."
+            if sname != "die":
+                what = f"CPU {cpu}"
+            else:
+                package = cpuinfo.cpu_to_package(cpu)
+                die = cpuinfo.cpu_to_die(cpu)
+                what = f"package {package} die {die}"
 
-            pvinfo1 = pobj.get_cpu_prop(pname, cpu)
-            assert pvinfo1["val"] == val, f"Set property '{pname}' to value '{val}' on " \
-                                          f"CPU {cpu}, but read back value '{pvinfo1['val']}'."
+            assert used_mname == mname, f"Set property '{pname}' to value '{val}' on {what} " \
+                                        f"using mechanism '{used_mname}', but 'set_prop_cpus()' " \
+                                        f"returned machanism name '{mname}'."
 
-            pobj.set_prop_cpus(pname, pvinfo["val"], cpus, mnames=mnames)
+            pvinfo = pobj.get_cpu_prop(pname, cpu, mnames=(mname,))
+            assert pvinfo["val"] == val, f"Set property '{pname}' to value '{val}' on " \
+                                          f"{what}, but read back value '{pvinfo['val']}'."
+
+            if sname != "die":
+                pobj.set_prop_cpus(pname, pvinfo["val"], cpus, mnames=(mname,))
+            else:
+                pobj.set_prop_dies(pname, pvinfo["val"], dies, mnames=(mname,))

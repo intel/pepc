@@ -19,6 +19,7 @@ from typing import cast, Generator
 import contextlib
 from pepclibs import _PropsClassBase
 from pepclibs.PStatesVars import PROPS
+from pepclibs.PropsTypes import PropertyValueType
 from pepclibs.helperlibs import Human, ClassHelpers, Logging
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorVerifyFailed
 
@@ -799,7 +800,8 @@ class PStates(_PropsClassBase.PropsClassBase):
     def _get_prop_cpus(self,
                        pname: str,
                        cpus: AbsNumsType,
-                       mname: MechanismNameType) -> Generator[tuple[int, typing.Any], None, None]:
+                       mname: MechanismNameType) -> Generator[tuple[int, PropertyValueType],
+                                                              None, None]:
         """Refer to '_PropsClassBase._get_prop_cpus()'."""
 
         _LOG.debug("Getting property '%s' using mechanism '%s', cpus: %s",
@@ -1101,7 +1103,7 @@ class PStates(_PropsClassBase.PropsClassBase):
 
     def _set_prop_cpus(self,
                        pname: str,
-                       val: typing.Any,
+                       val: PropertyValueType,
                        cpus: AbsNumsType,
                        mname: MechanismNameType):
         """Refer to '_PropsClassBase._set_prop_cpus()'."""
@@ -1113,20 +1115,20 @@ class PStates(_PropsClassBase.PropsClassBase):
             try:
                 self._get_eppobj().set_vals(val, cpus=cpus, mnames=(mname,))
             except Error as err:
-                msg = self._handle_epp_set_exception(val, mname, err)
+                msg = self._handle_epp_set_exception(str(val), mname, err)
                 if msg is None:
                     raise
                 raise type(err)(msg) from err
         elif pname == "epb":
             self._get_epbobj().set_vals(val, cpus=cpus, mnames=(mname,))
         elif pname == "turbo":
-            self._set_turbo(val, cpus, mname)
+            self._set_turbo(cast(bool, val), cpus, mname)
         elif pname == "intel_pstate_mode":
-            self._set_intel_pstate_mode(val, cpus, mname)
+            self._set_intel_pstate_mode(cast(str, val), cpus, mname)
         elif pname == "governor":
-            self._set_governor(val, cpus, mname)
+            self._set_governor(cast(str, val), cpus, mname)
         elif pname in ("min_freq", "max_freq"):
-            self._set_cpu_freq(pname, val, cpus, mname)
+            self._set_cpu_freq(pname, cast(str | int, val), cpus, mname)
         else:
             raise Error(f"BUG: Unsupported property '{pname}'")
 

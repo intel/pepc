@@ -12,23 +12,26 @@ Provide the base class for uncore frequency management classes.
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
-from typing import Literal, Generator
+import typing
 from pepclibs import CPUInfo
-from pepclibs.helperlibs.ProcessManager import ProcessManagerType
-from pepclibs.CPUInfoTypes import AbsNumsType, RelNumsType
 from pepclibs.helperlibs import LocalProcessManager, ClassHelpers, Human
 from pepclibs.helperlibs.Exceptions import ErrorNotSupported, ErrorOutOfRange, ErrorBadOrder, Error
 
-# An uncore frequency type. Possible values:
-#   - "min": Minimum uncore frequency
-#   - "max": Maximum uncore frequency
-#   - "current": Current uncore frequency
-FreqValueType = Literal["min", "max", "current"]
+if typing.TYPE_CHECKING:
+    from typing import Literal, Generator
+    from pepclibs.helperlibs.ProcessManager import ProcessManagerType
+    from pepclibs.CPUInfoTypes import AbsNumsType, RelNumsType
 
-# The ELC threshold type.
-#   - "low": Low ELC threshold
-#   - "high": High ELC threshold
-ELCThresholdType = Literal["low", "high"]
+    # An uncore frequency type. Possible values:
+    #   - "min": Minimum uncore frequency
+    #   - "max": Maximum uncore frequency
+    #   - "current": Current uncore frequency
+    FreqValueType = Literal["min", "max", "current"]
+
+    # The ELC threshold type.
+    #   - "low": Low ELC threshold
+    #   - "high": High ELC threshold
+    ELCThresholdType = Literal["low", "high"]
 
 class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
     """
@@ -307,8 +310,8 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
         self._set_freq_cpus(freq, "max", cpus)
 
     def _get_elc_threshold_dies(self,
-                           thrtype: ELCThresholdType,
-                           dies: RelNumsType) -> Generator[tuple[int, int, int], None, None]:
+                                thrtype: ELCThresholdType,
+                                dies: RelNumsType) -> Generator[tuple[int, int, int], None, None]:
         """
         Retrieve and yield ELC threshold for each die in the provided packages->dies mapping.
 
@@ -365,6 +368,50 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
         """
 
         yield from self._get_elc_threshold_dies("high", dies)
+
+    def _get_elc_threshold_status_dies(self,
+                                       thrtype: ELCThresholdType,
+                                       dies: RelNumsType) -> Generator[tuple[int, int, bool],
+                                                                       None, None]:
+        """
+        Retrieve and yield ELC threshold enabled/disabled statues for each die in the provided
+        packages->dies mapping.
+
+        Args:
+            thrtype: The type of ELC threshold ("low" or "high").
+            dies: Dictionary mapping package numbers to sequences of die numbers for which to yield
+                  the ELC threshold.
+
+        Yields:
+            Tuple (package, die, status), where 'status' is the ELC threshold enabled/disabled
+            status.
+
+        Raises:
+            ErrorNotSupported: If the ELC threshold operation is not supported.
+        """
+
+        raise NotImplementedError("BUG: The sub-class must implement this method")
+
+    def get_elc_high_threshold_status_dies(self,
+                                           dies: RelNumsType) -> Generator[tuple[int, int, bool],
+                                                                           None, None]:
+        """
+        Retrieve and yield the ELC high threshold enabled/disabled status for each die in the
+        provided packages->dies mapping.
+
+        Args:
+            dies: Dictionary mapping package numbers to sequences of die numbers for which to yield
+                  the ELC high threshold status.
+
+        Yields:
+            Tuples of (package, die, status), where 'status' is the ELC high threshold
+            enabled/disabled status for the specified die in the specified package.
+
+        Raises:
+            ErrorNotSupported: If the ELC high threshold status operation is not supported.
+        """
+
+        yield from self._get_elc_threshold_status_dies("high", dies)
 
     def _validate_elc_threshold(self,
                                 threshold: int,
@@ -451,6 +498,37 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
 
         self._set_elc_threshold_dies(threshold, "high", dies)
 
+    def _set_elc_threshold_status_dies(self,
+                                       status: bool,
+                                       thrtype: ELCThresholdType,
+                                       dies: RelNumsType):
+        """
+        Set the ELC threshold enabled/disable status for each die in the provided packages->dies
+        mapping.
+
+        Args:
+            status: The ELC high threshold enabled/disabled status to set.
+            thrtype: The type of ELC threshold ("low" or "high").
+            dies: Dictionary mapping package numbers to die numbers.
+        """
+
+        raise NotImplementedError("BUG: The sub-class must implement this method")
+
+    def set_elc_high_threshold_status_dies(self, status: bool, dies: RelNumsType):
+        """
+        Set the ELC high threshold enabled/disabled status for each die in the specified
+        packages->dies mapping.
+
+        Args:
+            status: The ELC high threshold enabled/disabled status to set.
+            dies: Dictionary mapping package numbers to sequences of die numbers.
+
+        Raises:
+            ErrorNotSupported: If setting the ELC high threshold status is not supported.
+        """
+
+        self._set_elc_threshold_status_dies(status, "high", dies)
+
     def _get_elc_threshold_cpus(self,
                                 thrtype: ELCThresholdType,
                                 cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
@@ -465,22 +543,22 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
             tuple: A tuple (cpu, threshold) for each CPU in 'cpus'.
         """
 
-        thrashold_cache: dict[int, dict[int, int]] = {}
+        threshold_cache: dict[int, dict[int, int]] = {}
 
         for cpu in cpus:
             tline = self._cpuinfo.get_tline_by_cpu(cpu, snames=("package", "die"))
             package = tline["package"]
             die = tline["die"]
 
-            if package in thrashold_cache:
-                if die in thrashold_cache[package]:
-                    yield cpu, thrashold_cache[package][die]
+            if package in threshold_cache:
+                if die in threshold_cache[package]:
+                    yield cpu, threshold_cache[package][die]
                     continue
             else:
-                thrashold_cache[package] = {}
+                threshold_cache[package] = {}
 
             _, _, threshold = next(self._get_elc_threshold_dies(thrtype, {package: [die]}))
-            thrashold_cache[package][die] = threshold
+            threshold_cache[package][die] = threshold
             yield cpu, threshold
 
     def get_elc_low_threshold_cpus(self, cpus: AbsNumsType) -> Generator[tuple[int, int],
@@ -518,6 +596,58 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
         """
 
         yield from self._get_elc_threshold_cpus("high", cpus)
+
+    def _get_elc_threshold_status_cpus(self,
+                                       thrtype: ELCThresholdType,
+                                       cpus: AbsNumsType) -> Generator[tuple[int, bool],
+                                                                       None, None]:
+        """
+        Yield an ELC threshold enabled/disabled status value for each CPU in the provided collection
+        of CPU numbers.
+
+        Args:
+            thrtype: The type of ELC threshold ("low" or "high").
+            cpus: A collection of integer CPU numbers to read the ELC threshold status for.
+
+        Yields:
+            tuple: A tuple (cpu, status) for each CPU in 'cpus'.
+        """
+
+        threshold_cache: dict[int, dict[int, bool]] = {}
+
+        for cpu in cpus:
+            tline = self._cpuinfo.get_tline_by_cpu(cpu, snames=("package", "die"))
+            package = tline["package"]
+            die = tline["die"]
+
+            if package in threshold_cache:
+                if die in threshold_cache[package]:
+                    yield cpu, threshold_cache[package][die]
+                    continue
+            else:
+                threshold_cache[package] = {}
+
+            _, _, threshold = next(self._get_elc_threshold_status_dies(thrtype, {package: [die]}))
+            threshold_cache[package][die] = threshold
+            yield cpu, threshold
+
+    def get_elc_high_threshold_status_cpus(self, cpus: AbsNumsType) -> Generator[tuple[int, bool],
+                                                                                 None, None]:
+        """
+        Retrieve and yield the ELC high threshold enabled/disabled status for each CPU in 'cpus'.
+
+        Args:
+            cpus: A collection of integer CPU numbers to retrieve the ELC high threshold status for.
+
+        Yields:
+            Tuple (cpu, status), where 'status' is the ELC high threshold status for the die
+            corresponding to 'cpu'.
+
+        Raises:
+            ErrorNotSupported: If the ELC high threshold status operation is not supported.
+        """
+
+        yield from self._get_elc_threshold_status_cpus("high", cpus)
 
     def _set_elc_threshold_cpus(self,
                                 threshold: int,
@@ -583,3 +713,49 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
         """
 
         self._set_elc_threshold_cpus(threshold, "high", cpus)
+
+    def _set_elc_threshold_status_cpus(self,
+                                       status: bool,
+                                       thrtype: ELCThresholdType,
+                                       cpus: AbsNumsType):
+        """
+        Set the ELC threshold enabled/disabled status for each die corresponding to the specified
+        CPUs.
+
+        Args:
+            status: The ELC threshold status to set.
+            thrtype: The type of ELC threshold ("low" or "high").
+            cpus: A collection of integer CPU numbers to set the ELC threshold status for.
+        """
+
+        set_dies_cache: dict[int, set[int]] = {}
+
+        for cpu in cpus:
+            tline = self._cpuinfo.get_tline_by_cpu(cpu, snames=("package", "die"))
+            package = tline["package"]
+            die = tline["die"]
+
+            if package in set_dies_cache:
+                if die in set_dies_cache[package]:
+                    continue
+            else:
+                set_dies_cache[package] = set()
+
+            set_dies_cache[package].add(die)
+
+            self._set_elc_threshold_status_dies(status, thrtype, {package: [die]})
+
+    def set_elc_high_threshold_status_cpus(self, status: bool, cpus: AbsNumsType):
+        """
+        Set ELC high threshold enabled/disabled status for the dies corresponding to the specified
+        CPUs.
+
+        Args:
+            status: The ELC high threshold status to set.
+            cpus: A collection of integer CPU numbers to set the ELC high threshold status for.
+
+        Raises:
+            ErrorNotSupported: If the ELC high threshold status operation is not supported.
+        """
+
+        self._set_elc_threshold_status_cpus(status, "high", cpus)

@@ -14,17 +14,19 @@ via TPMI.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import math
-from typing import Generator, Final
-from pepclibs import CPUInfo, Tpmi, _UncoreFreqBase
-from pepclibs.PropsTypes import MechanismNameType
-from pepclibs._UncoreFreqBase import FreqValueType as _FreqValueType
-from pepclibs._UncoreFreqBase import ELCThresholdType as _ELCThresholdType
+import typing
+from pepclibs import Tpmi, _UncoreFreqBase
 from pepclibs.helperlibs.Exceptions import Error
-from pepclibs.helperlibs.ProcessManager import ProcessManagerType
-from pepclibs.CPUInfoTypes import RelNumsType
-from pepclibs.helperlibs import Logging, ClassHelpers
+from pepclibs.helperlibs import ClassHelpers
 
-_LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
+if typing.TYPE_CHECKING:
+    from typing import Generator, Final
+    from pepclibs import CPUInfo
+    from pepclibs.helperlibs.ProcessManager import ProcessManagerType
+    from pepclibs._UncoreFreqBase import FreqValueType as _FreqValueType
+    from pepclibs._UncoreFreqBase import ELCThresholdType as _ELCThresholdType
+    from pepclibs.PropsTypes import MechanismNameType
+    from pepclibs.CPUInfoTypes import RelNumsType
 
 # The uncore frequency ratio -> uncore frequency Hz multiplier.
 RATIO_MULTIPLIER: Final[int] = 100_000_000 # 100MHz
@@ -57,17 +59,21 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
             - set_min_freq_cpus()
             - set_max_freq_cpus()
             - get_cur_freq_cpus()
-    2. Get or set ELC thresholds.
+    2. Get or set ELC threshold (percentage or enabled/disabled status).
         * Per-die:
             - get_elc_low_threshold_dies()
             - get_elc_high_threshold_dies()
+            - get_elc_high_threshold_status_dies()
             - set_elc_low_threshold_dies()
             - set_elc_high_threshold_dies()
+            - set_elc_high_threshold_status_dies()
         * Per-CPU:
             - get_elc_low_threshold_cpus()
             - get_elc_high_threshold_cpus()
+            - get_elc_high_threshold_status_cpus()
             - set_elc_low_threshold_cpus()
             - set_elc_high_threshold_cpus()
+            - set_elc_high_threshold_status_cpus()
 
     Note: Methods of this class do not validate the 'cpus' and 'dies' arguments. The caller is
     responsible for ensuring that the provided package, die, and CPU numbers exist and that CPUs are
@@ -291,12 +297,15 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
         self._set_freq_dies(freq, "max", dies)
 
     @staticmethod
-    def _get_elc_threshold_regname(thrtype: _ELCThresholdType) -> tuple[str, str]:
+    def _get_elc_threshold_regname(thrtype: _ELCThresholdType,
+                                   status: bool = False) -> tuple[str, str]:
         """
         Return the TPMI register name and bit-field name corresponding to the ELC threshold type.
 
         Args:
             thrtype: The ELC threshold type.
+            status: Return the register for the ELC threshold value if False, return the register
+                    for the ELC threshold enabled/disable status if True.
 
         Returns:
             Tuple containing:
@@ -305,11 +314,17 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
         """
 
         if thrtype == "low":
+            if status:
+                raise Error("BUG: ELC low threshold enabled/disabled status TPMI register does not "
+                            "exist")
             regname = "UFS_CONTROL"
             bfname = "EFFICIENCY_LATENCY_CTRL_LOW_THRESHOLD"
         elif thrtype == "high":
             regname = "UFS_CONTROL"
-            bfname = "EFFICIENCY_LATENCY_CTRL_HIGH_THRESHOLD"
+            if status:
+                bfname = "EFFICIENCY_LATENCY_CTRL_HIGH_THRESHOLD_ENABLE"
+            else:
+                bfname = "EFFICIENCY_LATENCY_CTRL_HIGH_THRESHOLD"
         else:
             raise Error(f"BUG: Bad ELC threshold type '{thrtype}'")
 
@@ -358,6 +373,20 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
                 threshold = self._tpmi.read_register("uncore", addr, die, regname, bfname=bfname)
                 yield (package, die, self._elc_threshold_raw2percent(threshold))
 
+    def _get_elc_threshold_status_dies(self,
+                                       thrtype: _ELCThresholdType,
+                                       dies: RelNumsType) -> Generator[tuple[int, int, bool],
+                                                                       None, None]:
+        """Refer to '_UncoreFreqBase._get_elc_threshold_status_dies()'."""
+
+        regname, bfname = self._get_elc_threshold_regname(thrtype, status=True)
+
+        for package, pkg_dies in dies.items():
+            addr = self._get_pci_addr(package)
+            for die in pkg_dies:
+                status = self._tpmi.read_register("uncore", addr, die, regname, bfname=bfname)
+                yield (package, die, bool(status))
+
     def _set_elc_threshold_dies(self,
                                 threshold: int,
                                 thrtype: _ELCThresholdType,
@@ -372,4 +401,18 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
                 self._validate_elc_threshold(threshold, thrtype, package, die)
                 threshold_raw = self._elc_threshold_percent2raw(threshold)
                 self._tpmi.write_register(threshold_raw, "uncore", addr, die, regname,
+                                          bfname=bfname)
+
+    def _set_elc_threshold_status_dies(self,
+                                       status: bool,
+                                       thrtype: _ELCThresholdType,
+                                       dies: RelNumsType):
+        """Refer to '_UncoreFreqBase._set_elc_threshold_status_dies()'."""
+
+        regname, bfname = self._get_elc_threshold_regname(thrtype, status=True)
+
+        for package, pkg_dies in dies.items():
+            addr = self._get_pci_addr(package)
+            for die in pkg_dies:
+                self._tpmi.write_register(int(status), "uncore", addr, die, regname,
                                           bfname=bfname)

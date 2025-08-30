@@ -80,4 +80,11 @@ PROPS: Final[dict[str, PropertyTypedDict]] = {
         "mnames": ("sysfs", "tpmi"),
         "writable": True,
     },
+    "elc_high_threshold_status": {
+        "name": "Uncore ELC high threshold status",
+        "type": "bool",
+        "sname": "die",
+        "mnames": ("sysfs", "tpmi"),
+        "writable": True,
+    },
 }

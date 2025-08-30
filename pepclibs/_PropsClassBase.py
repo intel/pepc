@@ -37,7 +37,7 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import copy
 import typing
-from typing import Any, Sequence, Literal, Generator, cast, get_args, Final
+from typing import cast, get_args
 
 from pepclibs.helperlibs import Logging, Trivial, Human, ClassHelpers, EmulProcessManager
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
@@ -45,6 +45,7 @@ from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs.CPUInfoTypes import ScopeNameType
 
 if typing.TYPE_CHECKING:
+    from typing import Any, Sequence, Literal, Generator, Final
     from pepclibs.msr import MSR
     from pepclibs import _SysfsIO
     from pepclibs.CPUInfo import CPUInfo
@@ -852,6 +853,9 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                                'raise_not_supported' is True.
         """
 
+        _LOG.debug("Request to get property '%s' CPUs for %s via mechanisms '%s'",
+                   pname, ", ".join([str(cpu) for cpu in cpus]), ", ".join(mnames))
+
         prop = self._props[pname]
         if not mnames:
             mnames = prop["mnames"]
@@ -1085,6 +1089,9 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             ErrorNotSupported: If none of the dies and mechanisms support the property and
                                'raise_not_supported' is True.
         """
+
+        _LOG.debug("Request to get property '%s' for %s via mechanisms '%s'",
+                   pname, self._cpuinfo.dies_to_str(dies), ", ".join(mnames))
 
         prop = self._props[pname]
         if not mnames:
@@ -1670,6 +1677,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                                       mechanisms.
         """
 
+        _LOG.debug("Setting property '%s' to '%s' for CPUs %s via mechanisms '%s'",
+                   pname,  ", ".join([str(cpu) for cpu in cpus]), ", ".join(mnames))
         exceptions = []
 
         for mname in mnames:
@@ -1855,6 +1864,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         exceptions = []
 
+        _LOG.debug("Setting property '%s' to '%s' for %s via mechanisms '%s'",
+                   pname, str(val), self._cpuinfo.dies_to_str(dies), ", ".join(mnames))
         for mname in mnames:
             try:
                 self._set_prop_dies(pname, val, dies, mname)

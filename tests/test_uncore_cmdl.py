@@ -62,7 +62,12 @@ def _get_good_info_opts() -> Generator[str, None, None]:
 
     yield from ["--min-freq-limit",
                 "--min-freq",
-                "--max-freq --max-freq-limit"]
+                "--max-freq",
+                "--max-freq --max-freq-limit",
+                "--elc-low-threshold",
+                "--elc-high-threshold",
+                "--elc-high-threshold-status",
+                "--elc-low-threshold --elc-high-threshold"]
 
 def test_uncore_info(params: PropsCmdlTestParamsTypedDict):
     """Test the 'pepc uncore info' command."""
@@ -94,7 +99,11 @@ def _get_good_config_opts() -> Generator[str, None, None]:
                 "--min-freq --max-freq",
                 "--min-freq min",
                 "--max-freq max",
-                "--max-freq min --max-freq max"]
+                "--max-freq min --max-freq max",
+                "--elc-high-threshold-status off",
+                "--elc-low-threshold 65",
+                "--elc-high-threshold 78",
+                "--elc-high-threshold-status on --elc-low-threshold 17"]
 
 def test_uncore_config_good(params: PropsCmdlTestParamsTypedDict):
     """
@@ -132,7 +141,11 @@ def _get_bad_config_freq_opts() -> Generator[str, None, None]:
                 "--max-freq 3",
                 "--max-freq hfm --mechanism kuku",
                 "--min-freq maximum",
-                "--min-freq max --max-freq min"]
+                "--min-freq max --max-freq min",
+                "--elc-low-threshold 101",
+                "--elc-high-threshold -10",
+                "--elc-low-threshold 10 --elc-high-threshold 5",
+                "--elc-high-threshold-status b1"]
 
 def test_uncore_config_freq_bad(params: PropsCmdlTestParamsTypedDict):
     """Test the 'pepc uncore config' command with bad frequency options."""

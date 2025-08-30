@@ -177,9 +177,11 @@ class Uncore(_PropsClassBase.PropsClassBase):
     def _get_elc_threshold_cpus(self,
                                 pname: str,
                                 cpus: AbsNumsType,
-                                mname: MechanismNameType) -> Generator[tuple[int, int], None, None]:
+                                mname: MechanismNameType) -> Generator[tuple[int, int | bool],
+                                                                       None, None]:
         """
-        Retrieve and yield ELC threshold values for the specified CPUs.
+        Retrieve and yield ELC threshold values for the specified CPUs (either a percentage or a
+        boolean indicating enabled/disabled status).
 
         Args:
             pname: Name of the ELC threshold property to retrieve.
@@ -188,7 +190,7 @@ class Uncore(_PropsClassBase.PropsClassBase):
 
         Yields:
             Tuples of (cpu, val), where 'cpu' is the CPU number and 'val' is its ELC threshold
-            value.
+            value (either a percentage or a boolean indicating enabled/disabled status).
         """
 
         uncfreq_obj: Union[_UncoreFreqSysfs.UncoreFreqSysfs, _UncoreFreqTpmi.UncoreFreqTpmi]
@@ -201,17 +203,18 @@ class Uncore(_PropsClassBase.PropsClassBase):
 
         if pname == "elc_low_threshold":
             yield from uncfreq_obj.get_elc_low_threshold_cpus(cpus)
-            return
-        if pname == "elc_high_threshold":
+        elif pname == "elc_high_threshold":
             yield from uncfreq_obj.get_elc_high_threshold_cpus(cpus)
-            return
-
-        raise Error(f"BUG: Unexpected ELC threshold property {pname}")
+        elif pname == "elc_high_threshold_status":
+            yield from uncfreq_obj.get_elc_high_threshold_status_cpus(cpus)
+        else:
+            raise Error(f"BUG: Unexpected ELC threshold property {pname}")
 
     def _get_prop_cpus(self,
                        pname: str,
                        cpus: AbsNumsType,
-                       mname: MechanismNameType) -> Generator[tuple[int, typing.Any], None, None]:
+                       mname: MechanismNameType) -> Generator[tuple[int, PropertyValueType],
+                                                                    None, None]:
         """Refer to '_PropsClassBase._get_prop_cpus()'."""
 
         _LOG.debug("Getting property '%s' using mechanism '%s', cpus: %s",
@@ -219,7 +222,7 @@ class Uncore(_PropsClassBase.PropsClassBase):
 
         if pname in {"min_freq", "max_freq", "min_freq_limit", "max_freq_limit"}:
             yield from self._get_freq_cpus(pname, cpus, mname)
-        elif pname in {"elc_low_threshold", "elc_high_threshold"}:
+        elif pname in {"elc_low_threshold", "elc_high_threshold", "elc_high_threshold_status"}:
             yield from self._get_elc_threshold_cpus(pname, cpus, mname)
         else:
             raise Error(f"BUG: Unknown property '{pname}'")
@@ -271,10 +274,11 @@ class Uncore(_PropsClassBase.PropsClassBase):
     def _get_elc_threshold_dies(self,
                                 pname: str,
                                 dies: RelNumsType,
-                                mname: MechanismNameType) -> Generator[tuple[int, int, int],
+                                mname: MechanismNameType) -> Generator[tuple[int, int, int | bool],
                                                                        None, None]:
         """
-        Retrieve and yield ELC threshold values for the specified dies.
+        Retrieve and yield ELC threshold values for the specified dies (either a percentage or a
+        boolean indicating enabled/disabled status).
 
         Args:
             pname: Name of the ELC threshold property to retrieve.
@@ -283,7 +287,8 @@ class Uncore(_PropsClassBase.PropsClassBase):
 
         Yields:
             Tuples of (package, die, val), where 'package' is the package number, 'die' is the die
-            number, and 'val' is the ELC threshold value.
+            number, and 'val' is the ELC threshold value (either a percentage or a boolean
+            indicating enabled/disabled status).
         """
 
         uncfreq_obj: Union[_UncoreFreqSysfs.UncoreFreqSysfs, _UncoreFreqTpmi.UncoreFreqTpmi]
@@ -296,12 +301,12 @@ class Uncore(_PropsClassBase.PropsClassBase):
 
         if pname == "elc_low_threshold":
             yield from uncfreq_obj.get_elc_low_threshold_dies(dies)
-            return
-        if pname == "elc_high_threshold":
+        elif pname == "elc_high_threshold":
             yield from uncfreq_obj.get_elc_high_threshold_dies(dies)
-            return
-
-        raise Error(f"BUG: Unexpected uncore frequency property {pname}")
+        elif pname == "elc_high_threshold_status":
+            yield from uncfreq_obj.get_elc_high_threshold_status_dies(dies)
+        else:
+            raise Error(f"BUG: Unexpected uncore frequency property {pname}")
 
     def _get_prop_dies(self,
                        pname: str,
@@ -318,21 +323,19 @@ class Uncore(_PropsClassBase.PropsClassBase):
         if pname in {"min_freq", "max_freq",
                      "min_freq_limit", "max_freq_limit"}:
             yield from self._get_freq_dies(pname, dies, mname)
-            return
-
-        if pname in {"elc_low_threshold", "elc_high_threshold"}:
+        elif pname in {"elc_low_threshold", "elc_high_threshold", "elc_high_threshold_status"}:
             yield from self._get_elc_threshold_dies(pname, dies, mname)
-            return
-
-        raise Error(f"BUG: Unexpected uncore frequency property {pname}")
+        else:
+            raise Error(f"BUG: Unexpected uncore frequency property {pname}")
 
     def _set_prop_cpus(self,
                        pname: str,
-                       val: typing.Any,
+                       val: PropertyValueType,
                        cpus: AbsNumsType,
                        mname: MechanismNameType):
         """Refer to '_PropsClassBase._set_prop_cpus()'."""
 
+        # TODO: implement by translating CPU numbers to die num
         raise Error(f"BUG: Unsupported property '{pname}'")
 
     def _set_freq_dies(self, pname: str, freq: int, dies: RelNumsType, mname: MechanismNameType):
@@ -363,15 +366,16 @@ class Uncore(_PropsClassBase.PropsClassBase):
 
     def _set_elc_threshold_dies(self,
                                 pname: str,
-                                threshold: int,
+                                val: int | bool,
                                 dies: RelNumsType,
                                 mname: MechanismNameType):
         """
-        Set the minimum or maximum ELC threshold for specified dies.
+        Enable/disable the an ELC threshold or set and ELC threshold value for specified dies
 
         Args:
             pname: The property name.
-            threshold: The ELC threshold value to set.
+            val: The ELC threshold value (either a percentage or a boolean to enable/disable the
+                 threshold).
             dies: Dictionary mapping package numbers to collections of die numbers.
             mname: Name of the mechanism to use for setting the property.
         """
@@ -385,9 +389,11 @@ class Uncore(_PropsClassBase.PropsClassBase):
             raise Error(f"BUG: Unexpected mechanism '{mname}'")
 
         if pname == "elc_low_threshold":
-            uncfreq_obj.set_elc_low_threshold_dies(threshold, dies)
+            uncfreq_obj.set_elc_low_threshold_dies(cast(int, val), dies)
         elif pname == "elc_high_threshold":
-            uncfreq_obj.set_elc_high_threshold_dies(threshold, dies)
+            uncfreq_obj.set_elc_high_threshold_dies(cast(int, val), dies)
+        elif pname == "elc_high_threshold_status":
+            uncfreq_obj.set_elc_high_threshold_status_dies(cast(bool, val), dies)
         else:
             raise Error(f"BUG: Unexpected uncore ELC threshold property {pname}")
 
@@ -459,7 +465,7 @@ class Uncore(_PropsClassBase.PropsClassBase):
 
     def _set_prop_dies(self,
                        pname: str,
-                       val: typing.Any,
+                       val: PropertyValueType,
                        dies: RelNumsType,
                        mname: MechanismNameType):
         """Refer to '_PropsClassBase._set_prop_dies()'."""
@@ -468,8 +474,8 @@ class Uncore(_PropsClassBase.PropsClassBase):
                    pname, val, mname, dies)
 
         if pname in {"min_freq", "max_freq"}:
-            self._set_freq(pname, val, dies, mname)
-        elif pname in {"elc_low_threshold", "elc_high_threshold"}:
-            self._set_elc_threshold_dies(pname, val, dies, mname)
+            self._set_freq(pname, cast(int, val), dies, mname)
+        elif pname in {"elc_low_threshold", "elc_high_threshold", "elc_high_threshold_status"}:
+            self._set_elc_threshold_dies(pname, cast(int | bool, val), dies, mname)
         else:
             raise Error(f"BUG: Unexpected uncore frequency property {pname}")

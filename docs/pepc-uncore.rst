@@ -181,7 +181,7 @@ target domain specification options to define a subset of CPUs, cores, dies, or 
 
    Supported mechanisms are: 'sysfs', 'tpmi'. The 'sysfs' mechanism reads the
    '/sys/devices/system/cpu/intel_uncore_frequency/uncore<NUMBER>/elc_low_threshold_percent'. The
-   TPMI reads the same debugfs file as '--min-freq'.
+   TPMI reads the same debugfs files as '--min-freq'.
 
 **--elc-high-threshold**
    Get the uncore ELC high threshold. The threshold defines the aggregate CPU utilization percentage
@@ -193,7 +193,15 @@ target domain specification options to define a subset of CPUs, cores, dies, or 
 
    Supported mechanisms are: 'sysfs', 'tpmi'. The 'sysfs' mechanism reads the
    '/sys/devices/system/cpu/intel_uncore_frequency/uncore<NUMBER>/elc_high_threshold_percent'. The
-   TPMI reads the same debugfs file as '--max-freq'.
+   TPMI reads the same debugfs files as '--max-freq'.
+
+**--elc-high-threshold-status**
+   Get the uncore ELC high threshold enabled/disabled status. If disabled, the high threshold is
+   ignored and the platform manages uncore frequency using the default algorithm.
+
+   Supported mechanisms are: 'sysfs', 'tpmi'. The 'sysfs' mechanism reads the
+   '/sys/devices/system/cpu/intel_uncore_frequency/uncore<NUMBER>/elc_high_threshold_enable'. The
+   TPMI reads the same debugfs files as '--max-freq'.
 
 Subcommand *'config'*
 =====================
@@ -245,3 +253,7 @@ dies, or packages.
 **--elc-high-threshold**
    Set the uncore ELC high threshold. Same as in the 'info' sub-command, but sets the ELC high
    threshold.
+
+**--elc-high-threshold-status**
+   Set the uncore ELC high threshold enabled/disabled status. Same as in the 'info' sub-command, but
+   sets the ELC high threshold status.

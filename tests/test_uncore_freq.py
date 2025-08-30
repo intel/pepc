@@ -328,31 +328,46 @@ def _test_elc_threshold_methods_dies(uncfreq_obj: _UncoreFreqObjType, all_dies: 
 
     lo_thresh_iter = uncfreq_obj.get_elc_low_threshold_dies(all_dies)
     hi_thresh_iter = uncfreq_obj.get_elc_high_threshold_dies(all_dies)
+    hi_thresh_status_iter = uncfreq_obj.get_elc_high_threshold_status_dies(all_dies)
 
     # Save current threshold values.
-    saved_thresh: dict[int, dict[int, tuple[int, int]]] = {}
-    for (package, die, lo_thresh), (_, _, hi_thresh) in zip(lo_thresh_iter, hi_thresh_iter):
+    saved_thresh: dict[int, dict[int, tuple[int, int, bool]]] = {}
+    iterator = zip(lo_thresh_iter, hi_thresh_iter, hi_thresh_status_iter)
+    for (package, die, lo_thresh), (_, _, hi_thresh), (_, _, status) in iterator:
         if package not in saved_thresh:
             saved_thresh[package] = {}
-        saved_thresh[package][die] = (lo_thresh, hi_thresh)
+        saved_thresh[package][die] = (lo_thresh, hi_thresh, status)
 
     # Set low/high thresholds to new values, using unique values for each die.
     for package, dies in all_dies.items():
         for die in dies:
-            uncfreq_obj.set_elc_low_threshold_dies(25 + package + die, {package: [die]})
-            uncfreq_obj.set_elc_high_threshold_dies(25 + package + die + 1, {package: [die]})
+            # Enable the high threshold.
+            val = 25 + package + die
+            uncfreq_obj.set_elc_high_threshold_status_dies(bool(val % 2), {package: [die]})
+            # In case high threshold happens to be lower than 'var', which would cause a failure,
+            # set it to 100% first.
+            uncfreq_obj.set_elc_high_threshold_dies(100, {package: [die]})
+            uncfreq_obj.set_elc_low_threshold_dies(val, {package: [die]})
+            uncfreq_obj.set_elc_high_threshold_dies(val + 1, {package: [die]})
 
     # Verify the values.
     lo_thresh_iter = uncfreq_obj.get_elc_low_threshold_dies(all_dies)
     hi_thresh_iter = uncfreq_obj.get_elc_high_threshold_dies(all_dies)
-    for (package, die, lo_thresh), (_, _, hi_thresh) in zip(lo_thresh_iter, hi_thresh_iter):
-        expected_lo_thresh = 25 + package + die
-        expected_hi_thresh = 25 + package + die + 1
+    hi_thresh_status_iter = uncfreq_obj.get_elc_high_threshold_status_dies(all_dies)
+    iterator = zip(lo_thresh_iter, hi_thresh_iter, hi_thresh_status_iter)
+    for (package, die, lo_thresh), (_, _, hi_thresh), (_, _, status) in iterator:
+        val = 25 + package + die
+        expected_lo_thresh = val
+        expected_hi_thresh = val + 1
+        expected_status = bool(val % 2)
         assert lo_thresh == expected_lo_thresh, \
                f"Expected ELC low threshold {expected_lo_thresh}%, but got {lo_thresh}%\n" \
                f"{errmsg_suffix}"
         assert hi_thresh == expected_hi_thresh, \
                f"Expected ELC high threshold {expected_hi_thresh}%, but got {hi_thresh}%\n" \
+               f"{errmsg_suffix}"
+        assert status == expected_status, \
+               f"Expected ELC high threshold status {expected_status}, but got {status}\n" \
                f"{errmsg_suffix}"
 
     # Test setting and getting various threshold values.
@@ -413,10 +428,11 @@ def _test_elc_threshold_methods_dies(uncfreq_obj: _UncoreFreqObjType, all_dies: 
 
     # Restore saved thresholds.
     for package, info in saved_thresh.items():
-        for die, (lo_thresh, hi_thresh) in info.items():
+        for die, (lo_thresh, hi_thresh, status) in info.items():
             uncfreq_obj.set_elc_low_threshold_dies(0, {package: [die]})
             uncfreq_obj.set_elc_high_threshold_dies(hi_thresh, {package: [die]})
             uncfreq_obj.set_elc_low_threshold_dies(lo_thresh, {package: [die]})
+            uncfreq_obj.set_elc_high_threshold_status_dies(status, {package: [die]})
 
 def test_elc_threshold_methods_dies(params: _TestParamsTypedDict):
     """
