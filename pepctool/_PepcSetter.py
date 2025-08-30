@@ -203,6 +203,8 @@ class _PStatesUncoreSetter(_PropsSetter):
 
         super().__init__(pman, pobj, cpuinfo, pprinter, msr=msr, sysfs_io=sysfs_io)
 
+        self._order_pnames: set[str] = set()
+
     def _set_prop_sname(self,
                         spinfo: dict[str, PropSetInfoTypedDict],
                         pname: str,
@@ -219,43 +221,48 @@ class _PStatesUncoreSetter(_PropsSetter):
             super()._set_prop_sname(spinfo, pname, optar, mnames, mnames_info)
             return
         except ErrorBadOrder as err:
-            if pname not in {"min_freq", "max_freq"}:
+            if pname not in self._order_pnames:
                 raise
 
-            # Setting frequencies may be tricky because of the ordering constraints. Here is an
-            # example illustrating why order matters. Suppose current min. and max. frequencies and
-            # new min. and max. frequencies are as follows:
-            #  ---- Cur. Min --- Cur. Max -------- New Min --- New Max ---------->
+            # Setting frequency or ELC threshold values requires careful handling due to ordering
+            # constraints. For example, consider the case of updating minimum and maximum
+            # frequencies:
             #
-            # Where the dotted line represents the horizontal frequency axis. Setting min. frequency
-            # before max. frequency leads to a failure (more precisely, the 'ErrorBadOrder'
-            # exception). Indeed, at step #2 below, current minimum frequency would be set to a
-            # value higher that current maximum frequency.
-            #  1. ---- Cur. Min --- Cur. Max -------- New Min --- New Max ---------->
-            #  2. ----------------- Cur. Max -------- Cur. Min -- New Max ----------> FAIL!
+            #  ---- Current Min --- Current Max -------- New Min --- New Max ---------->
             #
-            # To handle this situation, max. frequency should be set first.
-            #  1. ---- Cur. Min --- Cur. Max -------- New Min --- New Max ---------->
-            #  2. ---- Cur. Min --------------------- New Min --- Cur. Max --------->
-            #  3. ----------------------------------- Cur. Min -- Cur. Max --------->
+            # The dotted line represents the frequency axis. If the minimum frequency is set before
+            # the maximum frequency, an 'ErrorBadOrder' exception could be raised because the new
+            # minimum could exceed the current maximum. For instance:
+            #  1. ---- Current Min --- Current Max -------- New Min --- New Max ---------->
+            #  2. ----------------- Current Max -------- Current Min -- New Max ----------> FAIL!
             #
-            # Therefore, if both min. and max. frequencies should be changed, try changing them in
-            # different order.
+            # To avoid this, the maximum frequency should be set first:
+            #  1. ---- Current Min --- Current Max -------- New Min --- New Max ---------->
+            #  2. ---- Current Min --------------------- New Min --- Current Max --------->
+            #  3. ----------------------------------- Current Min -- Current Max --------->
+            #
+            # Therefore, if both minimum and maximum frequencies (or ELC thresholds) need to be
+            # changed, attempt to set them in the correct order to satisfy the constraints.
 
-            freq_pname = pname
-            if pname.startswith("min"):
+            if "min_" in pname:
                 # Trying to set minimum frequency to a value higher than currently configured
                 # maximum frequency.
-                other_freq_pname = pname.replace("min", "max")
-            elif pname.startswith("max"):
-                other_freq_pname = pname.replace("max", "min")
+                other_pname = pname.replace("min_", "max_")
+            elif "low_" in pname:
+                # Trying to set ELC low threshold to a value higher than currently configured
+                # high threshold.
+                other_pname = pname.replace("low_", "high_")
+            elif "max_" in pname:
+                other_pname = pname.replace("max_", "min_")
+            elif "high_" in pname:
+                other_pname = pname.replace("high_", "low_")
             else:
                 raise Error(f"BUG: Unexpected property {pname}") from err
 
-            if other_freq_pname not in spinfo:
+            if other_pname not in spinfo:
                 raise
 
-            for pnm in (other_freq_pname, freq_pname):
+            for pnm in (other_pname, pname):
                 mname = _PepcCommon.set_prop_sname(self._pobj, pnm, optar, spinfo[pnm]["val"],
                                                    mnames=mnames)
                 del spinfo[pnm]
@@ -277,6 +284,7 @@ class PStatesSetter(_PStatesUncoreSetter):
 
         self._pobj: PStates.PStates
         self._pprinter: _PepcPrinter.PStatesPrinter
+        self._order_pnames = {"min_freq", "max_freq"}
 
 class UncoreSetter(_PStatesUncoreSetter):
     """Provide API for changing uncore properties."""
@@ -294,6 +302,8 @@ class UncoreSetter(_PStatesUncoreSetter):
 
         self._pobj: Uncore.Uncore
         self._pprinter: _PepcPrinter.UncorePrinter
+
+        self._order_pnames = {"min_freq", "max_freq", "elc_low_threshold", "elc_high_threshold"}
 
 class PMQoSSetter(_PropsSetter):
     """Provide API for changing PM QoS properties."""
