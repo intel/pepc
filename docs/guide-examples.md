@@ -28,7 +28,7 @@ permissions and should only be used in a lab environment, not in production.
 
 ## P-states
 
-### Get all the generally interesting P-states information:
+### Get all the generally interesting CPU P-states information:
 
 ```
 $ pepc pstates info
@@ -39,10 +39,6 @@ Source: Linux sysfs file-system
  - Max. supported CPU frequency: '3.6GHz' for CPUs 0-87 (all CPUs)
  - Base CPU frequency: '2.2GHz' for CPUs 0-87 (all CPUs)
  - Turbo: 'on' for CPUs 0-87 (all CPUs)
- - Min. uncore frequency: '1.2GHz' for CPUs 0-87 (all CPUs)
- - Max. uncore frequency: '2.8GHz' for CPUs 0-87 (all CPUs)
- - Min. supported uncore frequency: '1.2GHz' for CPUs 0-87 (all CPUs)
- - Max. supported uncore frequency: '2.8GHz' for CPUs 0-87 (all CPUs)
  - EPB: '7' for CPUs 0-87 (all CPUs)
  - CPU frequency driver: intel_pstate
  - Operation mode of 'intel_pstate' driver: 'passive' for CPUs 0-87 (all CPUs)

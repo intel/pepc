@@ -96,8 +96,7 @@ def _iter_uncore_freq_objects(params: _TestParamsTypedDict) -> Generator[_Uncore
 
 def _test_freq_methods_dies_good(uncfreq_obj: _UncoreFreqObjType, all_dies: RelNumsType):
     """
-    Test the per-die min/max uncore frequency get/set methods of an uncore frequency object. Use
-    good input.
+    Test the per-die uncore frequency get/set methods. Use good input.
 
     Args:
         uncfreq_obj: The uncore frequency object to test.
@@ -140,10 +139,28 @@ def _test_freq_methods_dies_good(uncfreq_obj: _UncoreFreqObjType, all_dies: RelN
         _, _, read_freq = next(uncfreq_obj.get_max_freq_dies({package: [die]}))
         assert read_freq == max_freq, f"Expected {max_freq}, but got {read_freq}\n{errmsg_suffix}"
 
+        try:
+            # Set the ELC low zone min uncore frequency to the middle value and check it.
+            uncfreq_obj.set_elc_low_zone_min_freq_dies(mid_freq, {package: [die]})
+            iterator = uncfreq_obj.get_elc_low_zone_min_freq_dies({package: [die]})
+            read_pkg, read_die, read_freq = next(iterator)
+            assert read_pkg == package and read_die == die and read_freq == mid_freq, \
+                f"Expected ({package}, {die}, {mid_freq}), but got ({read_pkg}, {read_die}, " \
+                f"{read_freq})\n{errmsg_suffix}"
+
+            # Set the ELC middle zone min uncore frequency to the middle value and check it.
+            uncfreq_obj.set_elc_mid_zone_min_freq_dies(mid_freq, {package: [die]})
+            iterator = uncfreq_obj.get_elc_mid_zone_min_freq_dies({package: [die]})
+            read_pkg, read_die, read_freq = next(iterator)
+            assert read_pkg == package and read_die == die and read_freq == mid_freq, \
+                f"Expected ({package}, {die}, {mid_freq}), but got ({read_pkg}, {read_die}, " \
+                f"{read_freq})\n{errmsg_suffix}"
+        except ErrorNotSupported:
+            pass
+
 def _test_freq_methods_dies_bad(uncfreq_obj: _UncoreFreqObjType, all_dies: RelNumsType):
     """
-    Test the per-die min/max uncore frequency get/set methods of an uncore frequency object. Use bad
-    input.
+    Test the per-die uncore frequency get/set methods. Use bad input.
 
     Args:
         uncfreq_obj: The uncore frequency object to test.
@@ -179,6 +196,25 @@ def _test_freq_methods_dies_bad(uncfreq_obj: _UncoreFreqObjType, all_dies: RelNu
         assert read_pkg == package and read_die == die and read_freq == mid_freq, \
                f"Expected ({package}, {die}, {mid_freq}), but got ({read_pkg}, {read_die}, " \
                f"{read_freq})\n{errmsg_suffix}"
+
+        try:
+            # Set the ELC low zone min uncore frequency to the middle value and check it.
+            uncfreq_obj.set_elc_low_zone_min_freq_dies(mid_freq, {package: [die]})
+            iterator = uncfreq_obj.get_elc_low_zone_min_freq_dies({package: [die]})
+            read_pkg, read_die, read_freq = next(iterator)
+            assert read_pkg == package and read_die == die and read_freq == mid_freq, \
+                f"Expected ({package}, {die}, {mid_freq}), but got ({read_pkg}, {read_die}, " \
+                f"{read_freq})\n{errmsg_suffix}"
+
+            # Set the ELC middle zone min uncore frequency to the middle value and check it.
+            uncfreq_obj.set_elc_mid_zone_min_freq_dies(mid_freq, {package: [die]})
+            iterator = uncfreq_obj.get_elc_mid_zone_min_freq_dies({package: [die]})
+            read_pkg, read_die, read_freq = next(iterator)
+            assert read_pkg == package and read_die == die and read_freq == mid_freq, \
+                f"Expected ({package}, {die}, {mid_freq}), but got ({read_pkg}, {read_die}, " \
+                f"{read_freq})\n{errmsg_suffix}"
+        except ErrorNotSupported:
+            pass
 
         # Try to set min uncore frequency to a value higher than the max frequency. This should
         # fail.
@@ -217,6 +253,22 @@ def _test_freq_methods_dies_bad(uncfreq_obj: _UncoreFreqObjType, all_dies: RelNu
                         f"'ErrorOutOfRange', but no exception was raised\n{errmsg_suffix}")
 
         try:
+            uncfreq_obj.set_elc_low_zone_min_freq_dies(try_min, {package: [die]})
+        except (ErrorNotSupported, ErrorOutOfRange):
+            pass
+        else:
+            raise Error(f"Tried to set ELC low zone min. uncore frequency to {try_min}, expected "
+                        f"'ErrorOutOfRange', but no exception was raised\n{errmsg_suffix}")
+
+        try:
+            uncfreq_obj.set_elc_mid_zone_min_freq_dies(try_min, {package: [die]})
+        except (ErrorNotSupported, ErrorOutOfRange):
+            pass
+        else:
+            raise Error(f"Tried to set ELC middle zone min. uncore frequency to {try_min}, "
+                        f"expected 'ErrorOutOfRange', but no exception was raised\n{errmsg_suffix}")
+
+        try:
             try_max = max_freq_limit + 100_000_000
             uncfreq_obj.set_max_freq_dies(try_max, {package: [die]})
         except ErrorOutOfRange:
@@ -237,12 +289,7 @@ def _test_freq_methods_dies_bad(uncfreq_obj: _UncoreFreqObjType, all_dies: RelNu
 
 def test_freq_methods_dies(params: _TestParamsTypedDict):
     """
-    Test the per-die min/max uncore frequency get/set methods for uncore frequency objects of
-    different mechanisms and configurations. The tested methods are:
-      - 'get_min_freq_dies()'
-      - 'get_max_freq_dies()'
-      - 'set_min_freq_dies()'
-      - 'set_max_freq_dies()'
+    Test the per-die uncore frequency methods.
 
     Args:
         params: The test parameters.
@@ -256,8 +303,7 @@ def test_freq_methods_dies(params: _TestParamsTypedDict):
 
 def _test_freq_methods_cpu_good(uncfreq_obj: _UncoreFreqObjType, cpu: int):
     """
-    Test the per-CPU min/max uncore frequency get/set methods of an uncore frequency object. Use
-    good input.
+    Test the per-CPU uncore frequency get/set methods. Use good input.
 
     Args:
         uncfreq_obj: The uncore frequency object to test.
@@ -271,9 +317,6 @@ def _test_freq_methods_cpu_good(uncfreq_obj: _UncoreFreqObjType, cpu: int):
 
     # Calculate the middle uncore frequency value.
     mid_freq = (min_freq + max_freq) // 2
-    # Round it up to 100MHz.
-    round_hz = 100_000_000
-    mid_freq = (mid_freq + round_hz - 1) // round_hz * round_hz
 
     # Set the min uncore frequency to the middle value and check it.
     uncfreq_obj.set_min_freq_cpus(mid_freq, (cpu,))
@@ -297,14 +340,24 @@ def _test_freq_methods_cpu_good(uncfreq_obj: _UncoreFreqObjType, cpu: int):
     _, read_freq = next(uncfreq_obj.get_max_freq_cpus((cpu,)))
     assert read_freq == max_freq, f"Expected {max_freq}, but got {read_freq}\n{errmsg_suffix}"
 
+    try:
+        # Set the ELC low zone min uncore frequency to the middle value and check it.
+        uncfreq_obj.set_elc_low_zone_min_freq_cpus(mid_freq, (cpu,))
+        read_cpu, read_freq = next(uncfreq_obj.get_elc_low_zone_min_freq_cpus((cpu,)))
+        assert read_cpu == cpu and read_freq == mid_freq, \
+                f"Expected ({cpu}, {mid_freq}), but got ({read_cpu}, {read_freq})\n{errmsg_suffix}"
+
+        # Set the ELC middle zone min uncore frequency to the middle value and check it.
+        uncfreq_obj.set_elc_mid_zone_min_freq_cpus(mid_freq, (cpu,))
+        read_cpu, read_freq = next(uncfreq_obj.get_elc_mid_zone_min_freq_cpus((cpu,)))
+        assert read_cpu == cpu and read_freq == mid_freq, \
+                f"Expected ({cpu}, {mid_freq}), but got ({read_cpu}, {read_freq})\n{errmsg_suffix}"
+    except ErrorNotSupported:
+        pass
+
 def test_freq_methods_cpus(params: _TestParamsTypedDict):
     """
-    Test the per-CPU min/max uncore frequency get/set methods for uncore frequency objects of
-    different mechanisms and configurations. The tested methods are:
-      - 'get_min_freq_cpus()'
-      - 'get_max_freq_cpus()'
-      - 'set_min_freq_cpus()'
-      - 'set_max_freq_cpus()'
+    Test the per-CPU uncore frequency get/set methods.
 
     Args:
         params: The test parameters.

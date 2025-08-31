@@ -66,8 +66,12 @@ def _get_set_and_verify_data(params: PropsTestParamsTypedDict,
     if min_limit is not None or max_limit is not None:
         yield "min_freq", "min"
         yield "max_freq", "min"
-
         yield "max_freq", "max"
+        yield "min_freq", "max"
+
+        yield "min_freq", "min"
+        yield "elc_low_zone_min_freq", "min"
+        yield "elc_low_zone_min_freq", "max"
         yield "min_freq", "max"
 
     yield "elc_high_threshold_status", "off"

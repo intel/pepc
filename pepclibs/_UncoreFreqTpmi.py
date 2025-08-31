@@ -16,15 +16,16 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 import math
 import typing
 from pepclibs import Tpmi, _UncoreFreqBase
-from pepclibs.helperlibs.Exceptions import Error
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs.helperlibs import ClassHelpers
 
 if typing.TYPE_CHECKING:
     from typing import Generator, Final
     from pepclibs import CPUInfo
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
-    from pepclibs._UncoreFreqBase import FreqValueType as _FreqValueType
     from pepclibs._UncoreFreqBase import ELCThresholdType as _ELCThresholdType
+    from pepclibs._UncoreFreqBase import ELCZoneType as _ELCZoneType
+    from pepclibs._UncoreFreqBase import FreqValueType as _FreqValueType
     from pepclibs.PropsTypes import MechanismNameType
     from pepclibs.CPUInfoTypes import RelNumsType
 
@@ -157,7 +158,9 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
                        limit: bool = False) -> Generator[tuple[int, int, int], None, None]:
         """Refer to '_UncoreFreqBase._get_freq_dies()'."""
 
-        assert limit is False
+        if limit:
+            raise ErrorNotSupported("TPMI does not support min/max uncore frequency limit values")
+
         regname, bfname = self._get_freq_regname(ftype)
 
         for package, pkg_dies in dies.items():
@@ -166,72 +169,65 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
                 ratio = self._tpmi.read_register("uncore", addr, die, regname, bfname=bfname)
                 yield (package, die, ratio * RATIO_MULTIPLIER)
 
-    def get_min_freq_dies(self, dies: RelNumsType) -> Generator[tuple[int, int, int], None, None]:
+    @staticmethod
+    def _get_elc_zone_freq_regname(ztype: _ELCZoneType, ftype: _FreqValueType) -> tuple[str, str]:
         """
-        Retrieve and yield the minimum uncore frequency for each die in the provided packages->dies
-        mapping.
+        Return the TPMI register name and bit-field name for an the ELC zone frequency.
 
         Args:
-            dies: Dictionary mapping package numbers to sequences of die numbers for which to yield
-                  the minimum uncore frequency.
+            ztype: The ELC zone type.
+            ftype: The frequency value type.
 
-        Yields:
-            Tuples of (package, die, value), where 'value' is the minimum uncore frequency for the
-            specified die in the specified package, in Hz.
-
-        Raises:
-            ErrorNotSupported: If the uncore frequency operation is not supported.
+        Returns:
+            Tuple containing:
+                - regname: TPMI register name.
+                - bfname: TPMI bitfield name.
         """
 
-        yield from self._get_freq_dies("min", dies)
+        if ftype != "min":
+            raise ErrorNotSupported(f"ELC {ztype} zone {ftype} uncore frequency is not available")
 
-    def get_max_freq_dies(self, dies: RelNumsType) -> Generator[tuple[int, int, int], None, None]:
-        """
-        Retrieve and yield the maximum uncore frequency for each die in the provided packages->dies
-        mapping.
+        if ztype == "low":
+            regname = "UFS_CONTROL"
+            bfname = "EFFICIENCY_LATENCY_CTRL_RATIO"
+        elif ztype == "mid":
+            regname = "UFS_CONTROL"
+            bfname = "EFFICIENCY_LATENCY_CTRL_MID_RATIO"
+        else:
+            raise Error(f"BUG: Bad ELC zone type '{ztype}'")
 
-        Args:
-            dies: Dictionary mapping package numbers to sequences of die numbers for which to yield
-                  the maximum uncore frequency.
+        return regname, bfname
 
-        Yields:
-            Tuples of (package, die, value), where 'value' is the maximum uncore frequency for the
-            specified die in the specified package, in Hz.
+    def _get_elc_zone_freq_dies(self,
+                                ztype: _ELCZoneType,
+                                ftype: _FreqValueType,
+                                dies: RelNumsType) -> Generator[tuple[int, int, int], None, None]:
+        """Refer to '_UncoreFreqBase._get_elc_zone_freq_dies()'."""
 
-        Raises:
-            ErrorNotSupported: If the uncore frequency operation is not supported.
-        """
+        regname, bfname = self._get_elc_zone_freq_regname(ztype, ftype)
 
-        yield from self._get_freq_dies("max", dies)
+        for package, pkg_dies in dies.items():
+            addr = self._get_pci_addr(package)
+            for die in pkg_dies:
+                ratio = self._tpmi.read_register("uncore", addr, die, regname, bfname=bfname)
+                yield (package, die, ratio * RATIO_MULTIPLIER)
 
-    def get_cur_freq_dies(self, dies: RelNumsType) -> Generator[tuple[int, int, int], None, None]:
-        """
-        Retrieve and yield the current uncore frequency for each die in the provided packages->dies
-        mapping.
-
-        Args:
-            dies: Dictionary mapping package numbers to sequences of die numbers for which to yield
-                  the current uncore frequency.
-
-        Yields:
-            Tuples of (package, die, value), where 'value' is the current uncore frequency for the
-            specified die in the specified package, in Hz.
-
-        Raises:
-            ErrorNotSupported: If the uncore frequency operation is not supported.
-        """
-
-        yield from self._get_freq_dies("current", dies)
-
-    def _validate_freq(self, freq: int, ftype: _FreqValueType, package: int, die: int):
+    def _validate_freq(self,
+                       freq: int,
+                       package: int,
+                       die: int,
+                       ftype: _FreqValueType,
+                       ztype: _ELCZoneType | None = None):
         """
         Validate that a frequency value is within the acceptable range.
 
         Args:
             freq: The uncore frequency value to validate, in Hz.
-            ftype: The uncore frequency value type (e.g., "min" for the minimum frequency).
             package: Package number to validate the frequency for.
             die: Die number to validate the frequency for.
+            ftype: The uncore frequency value type (e.g., "min" for the minimum frequency).
+            ztype: The uncore frequency ELC zone type (e.g., "low" for the low zone). The default
+                   None value means that this is not an ELC zone frequency.
 
         Raises:
             ErrorOutOfRange: If the uncore frequency value is outside the allowed range.
@@ -253,8 +249,12 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
             ratio = self._tpmi.read_register("uncore", addr, die, regname, bfname=bfname)
             min_freq = ratio * RATIO_MULTIPLIER
 
+        if ztype:
+            zname = f"ELC {ztype} zone "
+        else:
+            zname = ""
         self._validate_frequency(freq, ftype, package, die, MIN_FREQ_LIMIT, MAX_FREQ_LIMIT,
-                                 min_freq=min_freq, max_freq=max_freq)
+                                 min_freq=min_freq, max_freq=max_freq, zname=zname)
 
     def _set_freq_dies(self, freq: int, ftype: _FreqValueType, dies: RelNumsType):
         """Refer to '_UncoreFreqBase._set_freq_dies()'."""
@@ -265,36 +265,24 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
         for package, pkg_dies in dies.items():
             addr = self._get_pci_addr(package)
             for die in pkg_dies:
-                self._validate_freq(freq, ftype, package, die)
+                self._validate_freq(freq, package, die, ftype)
                 self._tpmi.write_register(ratio, "uncore", addr, die, regname, bfname=bfname)
 
-    def set_min_freq_dies(self, freq: int, dies: RelNumsType):
-        """
-        Set the minimum uncore frequency for each die in the provided packages->dies mapping.
+    def _set_elc_zone_freq_dies(self,
+                                freq: int,
+                                ztype: _ELCZoneType,
+                                ftype: _FreqValueType,
+                                dies: RelNumsType):
+        """Refer to '_UncoreFreqBase._set_elc_zone_freq_dies()'."""
 
-        Args:
-            freq: The frequency value to set, in Hz.
-            dies: Dictionary mapping package numbers to die numbers.
+        ratio = int(freq / RATIO_MULTIPLIER)
+        regname, bfname = self._get_elc_zone_freq_regname(ztype, ftype)
 
-        Raises:
-            ErrorNotSupported: If the uncore frequency operation is not supported.
-        """
-
-        self._set_freq_dies(freq, "min", dies)
-
-    def set_max_freq_dies(self, freq: int, dies: RelNumsType):
-        """
-        Set the maximum uncore frequency for each die in the provided packages->dies mapping.
-
-        Args:
-            freq: The frequency value to set, in Hz.
-            dies: Dictionary mapping package numbers to die numbers.
-
-        Raises:
-            ErrorNotSupported: If the uncore frequency operation is not supported.
-        """
-
-        self._set_freq_dies(freq, "max", dies)
+        for package, pkg_dies in dies.items():
+            addr = self._get_pci_addr(package)
+            for die in pkg_dies:
+                self._validate_freq(freq, package, die, ftype, ztype=ztype)
+                self._tpmi.write_register(ratio, "uncore", addr, die, regname, bfname=bfname)
 
     @staticmethod
     def _get_elc_threshold_regname(thrtype: _ELCThresholdType,

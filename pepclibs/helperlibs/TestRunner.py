@@ -9,12 +9,25 @@
 
 """This module contains helper functions for test runners."""
 
+# TODO: annotate and modernize this module.
+from  __future__ import annotations # Remove when switching to Python 3.10+.
+
 import sys
+import typing
 from pepclibs.helperlibs import Logging
+
+if typing.TYPE_CHECKING:
+    from types import ModuleType
+    from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
-def run_tool(tool, toolname, arguments, pman=None, exp_exc=None, ignore=None):
+def run_tool(tool: ModuleType,
+             toolname: str,
+             arguments: str,
+             pman: ProcessManagerType | None = None,
+             exp_exc: type[Exception] | None = None,
+             ignore: dict[type[Exception], str] | None = None):
     """
     Run pepc command and verify the outcome. The arguments are as follows.
     * tool - the main Python module of the tool to run.
@@ -33,7 +46,7 @@ def run_tool(tool, toolname, arguments, pman=None, exp_exc=None, ignore=None):
         ignore = {}
 
     cmd = f"{tool.__file__} {arguments}"
-    _LOG.debug("running: %s", cmd)
+    _LOG.debug("Running: %s", cmd)
     sys.argv = cmd.split()
     try:
         args = tool.parse_arguments()
@@ -42,24 +55,25 @@ def run_tool(tool, toolname, arguments, pman=None, exp_exc=None, ignore=None):
         else:
             ret = args.func(args)
     except Exception as err: # pylint: disable=broad-except
+        err_type = type(err)
+        msg = f"Command '{toolname} {arguments}' raised the following exception:\n" \
+              f"- {type(err).__name__}({err})"
+        if err_type in ignore and (not ignore[err_type] or ignore[err_type] in arguments):
+            _LOG.debug(msg)
+            return None
+
         if exp_exc is None:
-            err_type = type(err)
-            msg = f"command '{toolname} {arguments}' raised the following exception:\n" \
-                  f"- {type(err).__name__}({err})"
-            if err_type in ignore and (ignore[err_type] is None or ignore[err_type] in arguments):
-                _LOG.debug(msg)
-                return None
             assert False, msg
 
         if isinstance(err, exp_exc):
             return None
 
-        assert False, f"command '{toolname} {arguments}' raised the following exception:\n" \
+        assert False, f"Command '{toolname} {arguments}' raised the following exception:\n" \
                       f"- {type(err).__name__}({err})\nbut it was expected to raise the following" \
                       f"exception:\n- {exp_exc.__name__}"
 
     if exp_exc is not None:
-        assert False, f"command '{toolname} {arguments}' did not raise the following " \
+        assert False, f"Command '{toolname} {arguments}' did not raise the following " \
                       f"exception type:\n- {exp_exc.__name__}"
 
     return ret

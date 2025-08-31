@@ -45,8 +45,9 @@ if typing.TYPE_CHECKING:
     from typing import Generator, Literal
     from pepclibs import CPUInfo
     from pepclibs.PropsTypes import MechanismNameType
-    from pepclibs._UncoreFreqBase import FreqValueType as _FreqValueType
     from pepclibs._UncoreFreqBase import ELCThresholdType as _ELCThresholdType
+    from pepclibs._UncoreFreqBase import ELCZoneType as _ELCZoneType
+    from pepclibs._UncoreFreqBase import FreqValueType as _FreqValueType
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepclibs.CPUInfoTypes import RelNumsType, AbsNumsType
 
@@ -87,43 +88,6 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
     """
     Provide functionality for reading and modifying uncore frequency on Intel CPUs via sysfs.
 
-    Overview of public methods:
-
-    1. Get or set uncore frequency via Linux sysfs interface:
-        * Per-die:
-            - get_min_freq_dies()
-            - get_max_freq_dies()
-            - set_min_freq_dies()
-            - set_max_freq_dies()
-            - get_cur_freq_dies()
-        * Per-CPU:
-            - get_min_freq_cpus()
-            - get_max_freq_cpus()
-            - set_min_freq_cpus()
-            - set_max_freq_cpus()
-            - get_cur_freq_cpus()
-    2. Retrieve uncore frequency limits via Linux sysfs interfaces:
-        * Per-die:
-            - 'get_min_freq_limit_dies()'
-            - 'get_max_freq_limit_dies()'
-        * Per-CPU:
-            - 'get_min_freq_limit_cpus()'
-            - 'get_max_freq_limit_cpus()'
-    3. Get or set ELC threshold (percentage or enabled/disabled status).
-        * Per-die:
-            - get_elc_low_threshold_dies()
-            - get_elc_high_threshold_dies()
-            - get_elc_high_threshold_status_dies()
-            - set_elc_low_threshold_dies()
-            - set_elc_high_threshold_dies()
-            - set_elc_high_threshold_status_dies()
-        * Per-CPU:
-            - get_elc_low_threshold_cpus()
-            - get_elc_high_threshold_cpus()
-            - get_elc_high_threshold_status_cpus()
-            - set_elc_low_threshold_cpus()
-            - set_elc_high_threshold_cpus()
-            - set_elc_high_threshold_status_cpus()
 
     Note: Methods of this class do not validate the 'cpus' and 'dies' arguments. The caller is
     responsible for ensuring that the provided package, die, and CPU numbers exist and that CPUs are
@@ -177,6 +141,8 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
         # 'True' if the uncore frequency was "unlocked" via the legacy sysfs API before starting to
         # use the new sysfs API.
         self._new_sysfs_api_unlocked = False
+        # 'True' if ELC sysfs files are present.
+        self._elc_supported: bool | None = None
 
         self._sysfs_io: _SysfsIO.SysfsIO
         if not sysfs_io:
@@ -247,6 +213,56 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
         _LOG.debug("Using the %s uncore frequency sysfs interface",
                    "new" if self._has_sysfs_new_api else "old")
         return self._has_sysfs_new_api
+
+    def _add_die(self, package: int, die: int, dirname: str):
+        """
+        Add package, die and sysfs sub-directory name information to the 'self._pkg2dies' and
+        'self._dirmap' caches.
+
+        Args:
+            package: Package number to add.
+            die: Die number to add.
+            dirname: Sysfs subdirectory name to add.
+        """
+
+        if package not in self._pkg2dies:
+            self._pkg2dies[package] = []
+        self._pkg2dies[package].append(die)
+
+        if package not in self._dirmap:
+            self._dirmap[package] = {}
+        self._dirmap[package][die] = dirname
+
+    def _build_dies_info(self):
+        """
+        Build the dies information dictionary that maps package and die numbers to corresponding
+        uncore frequency driver sysfs sub-directory names.
+        """
+
+        self._dirmap = {}
+        sysfs_base_lsdir = self._lsdir_sysfs_base()
+
+        if self._use_new_sysfs_api():
+            for dirname in sysfs_base_lsdir:
+                match = re.match(r"^uncore(\d+)$", dirname)
+                if not match:
+                    continue
+
+                path = self._sysfs_base / dirname
+                with self._pman.open(path / "package_id", "r") as fobj:
+                    package = Trivial.str_to_int(fobj.read(), what="package ID")
+
+                with self._pman.open(path / "domain_id", "r") as fobj:
+                    die = Trivial.str_to_int(fobj.read(), what="uncore frequency domain ID")
+
+                self._add_die(package, die, dirname)
+        else:
+            for dirname in sysfs_base_lsdir:
+                match = re.match(r"package_(\d+)_die_(\d+)", dirname)
+                if match:
+                    package = int(match.group(1))
+                    die = int(match.group(2))
+                    self._add_die(package, die, dirname)
 
     def _get_dies_info(self) -> RelNumsType:
         """
@@ -336,8 +352,7 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
                    retrieve the path for a current frequency value file.
 
         Returns:
-            The sysfs file path as a string for the specified sysfs file type, package, die, and
-            limit.
+            The sysfs file path for the specified sysfs file type, package, die, and limit.
         """
 
         if ftype not in self._path_cache:
@@ -376,102 +391,72 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
                 # The frequency value is in kHz in sysfs.
                 yield package, die, freq * 1000
 
-    def get_min_freq_dies(self, dies: RelNumsType) -> Generator[tuple[int, int, int], None, None]:
+    def _construct_elc_zone_freq_path_die(self,
+                                          ztype: _ELCZoneType,
+                                          ftype: _FreqValueType,
+                                          package: int,
+                                          die: int) -> Path:
         """
-        Retrieve and yield the minimum uncore frequency for each die in the provided packages->dies
-        mapping.
+        Retrieve the sysfs file path for an ELC zone frequency.
 
         Args:
-            dies: Dictionary mapping package numbers to sequences of die numbers for which to yield
-                  the minimum uncore frequency.
+            ztype: The type of ELC zone (e.g., "low").
+            ftype: The uncore frequency value type (e.g., "min" for the minimum frequency).
+            package: The package number.
+            die: The die number within the package.
 
-        Yields:
-            Tuples of (package, die, value), where 'value' is the minimum uncore frequency for the
-            specified die in the specified package, in Hz.
-
-        Raises:
-            ErrorNotSupported: If the uncore frequency sysfs file does not exist.
+        Returns:
+            The sysfs file path for the specified ELC zone frequency.
         """
 
-        yield from self._get_freq_dies("min", dies)
+        if ftype != "min" or ztype != "low":
+            raise ErrorNotSupported(f"ELC {ztype} zone {ftype} uncore frequency is not available")
 
-    def get_max_freq_dies(self, dies: RelNumsType) -> Generator[tuple[int, int, int], None, None]:
+        return self._sysfs_base / self._get_dirmap()[package][die] / "elc_floor_freq_khz"
+
+    def _check_elc_is_supported(self) -> bool:
         """
-        Retrieve and yield the maximum uncore frequency for each die in the provided packages->dies
-        mapping.
+        Check if the ELC feature is supported on the current system.
 
-        Args:
-            dies: Dictionary mapping package numbers to sequences of die numbers for which to yield
-                  the maximum uncore frequency.
-
-        Yields:
-            Tuples of (package, die, value), where 'value' is the maximum uncore frequency for the
-            specified die in the specified package, in Hz.
-
-        Raises:
-            ErrorNotSupported: If the uncore frequency sysfs file does not exist.
+        Returns:
+            bool: True if ELC is supported, False otherwise.
         """
 
-        yield from self._get_freq_dies("max", dies)
+        if self._elc_supported is not None:
+            return self._elc_supported
 
-    def get_min_freq_limit_dies(self,
+        dirmap = self._get_dirmap()
+        package = die = -1
+        for package, dies in dirmap.items():
+            for die in dies:
+                break
+            break
+
+        if package == -1 or die == -1:
+            self._elc_supported = False
+        else:
+            path = self._construct_elc_zone_freq_path_die("low", "min", package, die)
+            self._elc_supported = self._pman.exists(path)
+
+        return self._elc_supported
+
+    def _get_elc_zone_freq_dies(self,
+                                ztype: _ELCZoneType,
+                                ftype: _FreqValueType,
                                 dies: RelNumsType) -> Generator[tuple[int, int, int], None, None]:
-        """
-        Retrieve and yield the minimum uncore frequency limit for each die in the provided
-        package->die mapping.
+        """Refer to '_UncoreFreqBase._get_elc_zone_freq_dies()'."""
 
-        Args:
-            dies: Dictionary mapping package numbers to sequences of die numbers for which to yield
-                  the minimum uncore frequency limit.
+        if not self._check_elc_is_supported():
+            raise ErrorNotSupported("ELC is not supported on this system")
 
-        Yields:
-            Tuples of (package, die, value), where 'value' is the minimum uncore frequency limit for
-            the specified die in the specified package, in Hz.
+        what = f"ELC {ztype} zone {ftype} uncore frequency"
 
-        Raises:
-            ErrorNotSupported: If the uncore frequency limit sysfs file does not exist.
-        """
-
-        yield from self._get_freq_dies("min", dies, limit=True)
-
-    def get_max_freq_limit_dies(self,
-                                dies: RelNumsType) -> Generator[tuple[int, int, int], None, None]:
-        """
-        Retrieve and yield the maximum uncore frequency limit for each die in the provided
-        package->die mapping.
-
-        Args:
-            dies: Dictionary mapping package numbers to sequences of die numbers for which to yield
-                  the maximum uncore frequency limit.
-
-        Yields:
-            Tuples of (package, die, value), where 'value' is the maximum uncore frequency limit for
-            the specified die in the specified package, in Hz.
-
-        Raises:
-            ErrorNotSupported: If the uncore frequency limit sysfs file does not exist.
-        """
-
-        yield from self._get_freq_dies("max", dies, limit=True)
-
-    def get_cur_freq_dies(self, dies: RelNumsType) -> Generator[tuple[int, int, int], None, None]:
-        """
-        Retrieve and yield the current uncore frequency for each die in the provided packages->dies
-        mapping.
-
-        Args:
-            dies: Dictionary mapping package numbers to sequences of die numbers for which to yield
-                  the current uncore frequency.
-
-        Yields:
-            Tuples of (package, die, value), where 'value' is the current uncore frequency for the
-            specified die in the specified package, in Hz.
-
-        Raises:
-            ErrorNotSupported: If the uncore frequency sysfs file does not exist.
-        """
-
-        yield from self._get_freq_dies("current", dies)
+        for package, pkg_dies in dies.items():
+            for die in pkg_dies:
+                path = self._construct_elc_zone_freq_path_die(ztype, ftype, package, die)
+                freq = self._sysfs_io.read_int(path, what=what)
+                # The frequency value is in kHz in sysfs.
+                yield package, die, freq * 1000
 
     def _unlock_new_sysfs_api(self):
         """
@@ -533,7 +518,12 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
 
         self._new_sysfs_api_unlocked = True
 
-    def _validate_freq(self, freq: int, ftype: _FreqValueType, package: int, die: int):
+    def _validate_freq(self,
+                       freq: int,
+                       package: int,
+                       die: int,
+                       ftype: _FreqValueType,
+                       ztype: _ELCZoneType | None = None):
         """
         Validate that a frequency value is within the acceptable range.
 
@@ -542,6 +532,8 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
             ftype: The uncore frequency value type (e.g., "min" for the minimum frequency).
             package: Package number to validate the frequency for.
             die: Die number to validate the frequency for.
+            ztype: The uncore frequency ELC zone type (e.g., "low" for the low zone). The default
+                   None value means that this is not an ELC zone frequency.
 
         Raises:
             ErrorOutOfRange: If the uncore frequency value is outside the allowed range.
@@ -549,12 +541,17 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
                            versa.
         """
 
+        if ztype:
+            zname = f"ELC {ztype} zone "
+        else:
+            zname = ""
+
         path = self._construct_freq_path_die("min", package, die, limit=True)
-        what = f"min uncore frequency limit for package {package} die {die}"
+        what = f"{zname}min uncore frequency limit for package {package} die {die}"
         min_freq_limit = self._sysfs_io.read_int(path, what=what) * 1000
 
         path = self._construct_freq_path_die("max", package, die, limit=True)
-        what = f"max uncore frequency limit for package {package} die {die}"
+        what = f"{zname}max uncore frequency limit for package {package} die {die}"
         max_freq_limit = self._sysfs_io.read_int(path, what=what) * 1000
 
         min_freq: int | None = None
@@ -562,15 +559,15 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
 
         if ftype == "min":
             path = self._construct_freq_path_die("max", package, die)
-            what = f"max package {package} die {die} uncore frequency"
+            what = f"{zname}max package {package} die {die} uncore frequency"
             max_freq = self._sysfs_io.read_int(path, what=what) * 1000
         else:
             path = self._construct_freq_path_die("min", package, die)
-            what = f"min package {package} die {die} uncore frequency"
+            what = f"{zname}min package {package} die {die} uncore frequency"
             min_freq = self._sysfs_io.read_int(path, what=what) * 1000
 
         self._validate_frequency(freq, ftype, package, die, min_freq_limit, max_freq_limit,
-                                 min_freq=min_freq, max_freq=max_freq)
+                                 min_freq=min_freq, max_freq=max_freq, zname=zname)
 
     def _set_freq_dies(self, freq: int, ftype: _FreqValueType, dies: RelNumsType):
         """Refer to '_UncoreFreqBase._set_freq_dies()'."""
@@ -582,129 +579,27 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
 
         for package, pkg_dies in dies.items():
             for die in pkg_dies:
-                self._validate_freq(freq, ftype, package, die)
+                self._validate_freq(freq, package, die, ftype)
                 path = self._construct_freq_path_die(ftype, package, die)
                 self._sysfs_io.write_int(path, freq // 1000, what=what)
 
-    def set_min_freq_dies(self, freq: int, dies: RelNumsType):
-        """
-        Set the minimum uncore frequency for each die in the provided packages->dies mapping.
+    def _set_elc_zone_freq_dies(self,
+                                freq: int,
+                                ztype: _ELCZoneType,
+                                ftype: _FreqValueType,
+                                dies: RelNumsType):
+        """Refer to '_UncoreFreqBase._set_elc_zone_freq_dies()'."""
 
-        Args:
-            freq: The frequency value to set, in Hz.
-            dies: Dictionary mapping package numbers to die numbers.
+        if not self._check_elc_is_supported():
+            raise ErrorNotSupported("ELC is not supported on this system")
 
-        Raises:
-            ErrorNotSupported: If the uncore frequency sysfs file does not exist.
-            ErrorOutOfRange: If the uncore frequency value is outside the allowed range.
-            ErrorBadOrder: If min. uncore frequency is greater than max. uncore frequency and vice
-                           versa.
-        """
+        what = f"ELC {ztype} zone {ftype} uncore frequency"
 
-        self._set_freq_dies(freq, "min", dies)
-
-    def set_max_freq_dies(self, freq: int, dies: RelNumsType):
-        """
-        Set the maximum uncore frequency for each die in the provided packages->dies mapping.
-
-        Args:
-            freq: The frequency value to set, in Hz.
-            dies: Dictionary mapping package numbers to die numbers.
-
-        Raises:
-            ErrorNotSupported: If the uncore frequency sysfs file does not exist.
-            ErrorOutOfRange: If the uncore frequency value is outside the allowed range.
-            ErrorBadOrder: If min. uncore frequency is greater than max. uncore frequency and vice
-                           versa.
-        """
-
-        self._set_freq_dies(freq, "max", dies)
-
-    def get_min_freq_limit_cpus(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
-        """
-        Yield the minimum uncore frequency limit for each CPU in 'cpus'.
-
-        Args:
-            cpus: A collection of integer CPU numbers to retrieve the minimum uncore frequency limit
-                  for.
-
-        Yields:
-            Tuple (cpu, value), where 'value' is the minimum uncore frequency limit for the die
-            corresponding to 'cpu', in Hz.
-
-        Raises:
-            ErrorNotSupported: If the uncore frequency limit sysfs file does not exist.
-        """
-
-        yield from self._get_freq_cpus("min", cpus, limit=True)
-
-    def get_max_freq_limit_cpus(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
-        """
-        Yield the maximum uncore frequency limit for each CPU in 'cpus'.
-
-        Args:
-            cpus: A collection of integer CPU numbers to retrieve the maximum uncore frequency limit
-                  for.
-
-        Yields:
-            Tuple (cpu, value), where 'value' is the maximum uncore frequency limit for the die
-            corresponding to 'cpu', in Hz.
-
-        Raises:
-            ErrorNotSupported: If the uncore frequency limit sysfs file does not exist.
-        """
-
-        yield from self._get_freq_cpus("max", cpus, limit=True)
-
-    def _add_die(self, package: int, die: int, dirname: str):
-        """
-        Add package, die and sysfs sub-directory name information to the 'self._pkg2dies' and
-        'self._dirmap' caches.
-
-        Args:
-            package: Package number to add.
-            die: Die number to add.
-            dirname: Sysfs subdirectory name to add.
-        """
-
-        if package not in self._pkg2dies:
-            self._pkg2dies[package] = []
-        self._pkg2dies[package].append(die)
-
-        if package not in self._dirmap:
-            self._dirmap[package] = {}
-        self._dirmap[package][die] = dirname
-
-    def _build_dies_info(self):
-        """
-        Build the dies information dictionary that maps package and die numbers to corresponding
-        uncore frequency driver sysfs sub-directory names.
-        """
-
-        self._dirmap = {}
-        sysfs_base_lsdir = self._lsdir_sysfs_base()
-
-        if self._use_new_sysfs_api():
-            for dirname in sysfs_base_lsdir:
-                match = re.match(r"^uncore(\d+)$", dirname)
-                if not match:
-                    continue
-
-                path = self._sysfs_base / dirname
-                with self._pman.open(path / "package_id", "r") as fobj:
-                    package = Trivial.str_to_int(fobj.read(), what="package ID")
-
-                with self._pman.open(path / "domain_id", "r") as fobj:
-                    die = Trivial.str_to_int(fobj.read(), what="uncore frequency domain ID")
-
-                self._add_die(package, die, dirname)
-        else:
-            for dirname in sysfs_base_lsdir:
-                match = re.match(r"package_(\d+)_die_(\d+)", dirname)
-                if match:
-                    package = int(match.group(1))
-                    die = int(match.group(2))
-                    self._add_die(package, die, dirname)
+        for package, pkg_dies in dies.items():
+            for die in pkg_dies:
+                self._validate_freq(freq, package, die, ftype, ztype=ztype)
+                path = self._construct_elc_zone_freq_path_die(ztype, ftype, package, die)
+                self._sysfs_io.write_int(path, freq // 1000, what=what)
 
     def _probe_driver(self):
         """
@@ -794,6 +689,9 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
                                 dies: RelNumsType) -> Generator[tuple[int, int, int], None, None]:
         """Refer to '_UncoreFreqBase._get_elc_threshold_dies()'."""
 
+        if not self._check_elc_is_supported():
+            raise ErrorNotSupported("ELC is not supported on this system")
+
         what = f"ELC {thrtype} threshold"
 
         for package, pkg_dies in dies.items():
@@ -809,6 +707,9 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
                                        dies: RelNumsType) -> Generator[tuple[int, int, bool],
                                                                        None, None]:
         """Refer to '_UncoreFreqBase._get_elc_threshold_status_dies()'."""
+
+        if not self._check_elc_is_supported():
+            raise ErrorNotSupported("ELC is not supported on this system")
 
         what = f"ELC {thrtype} threshold enabled/disabled status"
 
@@ -827,6 +728,9 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
                                 dies: RelNumsType):
         """Refer to '_UncoreFreqBase._set_elc_threshold_dies()'."""
 
+        if not self._check_elc_is_supported():
+            raise ErrorNotSupported("ELC is not supported on this system")
+
         what = f"ELC {thrtype} threshold"
 
         for package, pkg_dies in dies.items():
@@ -843,6 +747,9 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
                                        thrtype: _ELCThresholdType,
                                        dies: RelNumsType):
         """Refer to '_UncoreFreqBase._set_elc_threshold_status_dies()'."""
+
+        if not self._check_elc_is_supported():
+            raise ErrorNotSupported("ELC is not supported on this system")
 
         what = f"ELC {thrtype} threshold enabled/disabled status"
 

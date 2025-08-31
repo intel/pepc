@@ -22,7 +22,7 @@ if typing.TYPE_CHECKING:
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepclibs.CPUInfoTypes import AbsNumsType, RelNumsType
 
-    # An uncore frequency type. Possible values:
+    # An uncore frequency type.
     #   - "min": Minimum uncore frequency
     #   - "max": Maximum uncore frequency
     #   - "current": Current uncore frequency
@@ -33,9 +33,68 @@ if typing.TYPE_CHECKING:
     #   - "high": High ELC threshold
     ELCThresholdType = Literal["low", "high"]
 
+    # The ELC zone type.
+    #   - "low": Low utilization zone, aggregate die utilization is less than the ELC low threshold
+    #            value.
+    #   - "mid": Middle utilization zone, aggregate die utilization is greater than or equal to the
+    #            ELC low threshold value and less than the ELC high threshold value.
+    ELCZoneType = Literal["low", "mid"]
+
 class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
     """
     Provide the base class for uncore frequency management classes.
+
+    Overview of public methods:
+    1. Per-die, uncore frequency related methods.
+        1. Retrieve uncore frequency.
+            - get_min_freq_dies()
+            - get_max_freq_dies()
+            - get_cur_freq_dies()
+            - get_min_freq_limit_dies()
+            - get_max_freq_limit_dies()
+        2. Retrieve ELC zone uncore frequency.
+            - get_elc_low_zone_min_freq_dies()
+            - get_elc_mid_zone_min_freq_dies()
+        3. Set uncore frequency.
+            - set_min_freq_dies()
+            - set_max_freq_dies()
+        4. Set ELC zone uncore frequency.
+            - set_elc_low_zone_min_freq_dies()
+            - set_elc_mid_zone_min_freq_dies()
+    2. Per-CPU, uncore frequency related methods.
+        1. Retrieve uncore frequency.
+            - get_min_freq_cpus()
+            - get_max_freq_cpus()
+            - get_cur_freq_cpus()
+            - get_min_freq_limit_cpus()
+            - get_max_freq_limit_cpus()
+        2. Retrieve ELC zone uncore frequency.
+            - get_elc_low_zone_min_freq_cpus()
+            - get_elc_mid_zone_min_freq_cpus()
+        3. Set uncore frequency.
+            - set_min_freq_cpus()
+            - set_max_freq_cpus()
+        4. Set ELC zone uncore frequency.
+            - set_elc_low_zone_min_freq_cpus()
+            - set_elc_mid_zone_min_freq_cpus()
+    3. Per-die, ELC threshold related methods.
+        1. Retrieve ELC thresholds.
+            - get_elc_low_threshold_dies()
+            - get_elc_high_threshold_dies()
+            - get_elc_high_threshold_status_dies()
+        2. Set ELC thresholds.
+            - set_elc_low_threshold_dies()
+            - set_elc_high_threshold_dies()
+            - set_elc_high_threshold_status_dies()
+    3. Per-CPU, ELC threshold related methods.
+        1. Retrieve ELC thresholds.
+            - get_elc_low_threshold_cpus()
+            - get_elc_high_threshold_cpus()
+            - get_elc_high_threshold_status_cpus()
+        2. Set ELC thresholds.
+            - set_elc_low_threshold_cpus()
+            - set_elc_high_threshold_cpus()
+            - set_elc_high_threshold_status_cpus()
     """
 
     def __init__(self, cpuinfo: CPUInfo.CPUInfo, pman: ProcessManagerType | None = None,
@@ -96,6 +155,257 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
 
         raise NotImplementedError("BUG: The sub-class must implement this method")
 
+    def get_min_freq_dies(self, dies: RelNumsType) -> Generator[tuple[int, int, int], None, None]:
+        """
+        Retrieve and yield the minimum uncore frequency for each die in the provided packages->dies
+        mapping.
+
+        Args:
+            dies: Dictionary mapping package numbers to sequences of die numbers for which to yield
+                  the minimum uncore frequency.
+
+        Yields:
+            Tuples of (package, die, value), where 'value' is the minimum uncore frequency for the
+            specified die in the specified package, in Hz.
+
+        Raises:
+            ErrorNotSupported: If the uncore frequency operation is not supported.
+        """
+
+        yield from self._get_freq_dies("min", dies)
+
+    def get_max_freq_dies(self, dies: RelNumsType) -> Generator[tuple[int, int, int], None, None]:
+        """
+        Retrieve and yield the maximum uncore frequency for each die in the provided packages->dies
+        mapping.
+
+        Args:
+            dies: Dictionary mapping package numbers to sequences of die numbers for which to yield
+                  the maximum uncore frequency.
+
+        Yields:
+            Tuples of (package, die, value), where 'value' is the maximum uncore frequency for the
+            specified die in the specified package, in Hz.
+
+        Raises:
+            ErrorNotSupported: If the uncore frequency operation is not supported.
+        """
+
+        yield from self._get_freq_dies("max", dies)
+
+    def get_cur_freq_dies(self, dies: RelNumsType) -> Generator[tuple[int, int, int], None, None]:
+        """
+        Retrieve and yield the current uncore frequency for each die in the provided packages->dies
+        mapping.
+
+        Args:
+            dies: Dictionary mapping package numbers to sequences of die numbers for which to yield
+                  the current uncore frequency.
+
+        Yields:
+            Tuples of (package, die, value), where 'value' is the current uncore frequency for the
+            specified die in the specified package, in Hz.
+
+        Raises:
+            ErrorNotSupported: If the uncore frequency operation is not supported.
+        """
+
+        yield from self._get_freq_dies("current", dies)
+
+    def get_min_freq_limit_dies(self,
+                                dies: RelNumsType) -> Generator[tuple[int, int, int], None, None]:
+        """
+        Retrieve and yield the minimum uncore frequency limit for each die in the provided
+        package->die mapping.
+
+        Args:
+            dies: Dictionary mapping package numbers to sequences of die numbers for which to yield
+                  the minimum uncore frequency limit.
+
+        Yields:
+            Tuples of (package, die, value), where 'value' is the minimum uncore frequency limit for
+            the specified die in the specified package, in Hz.
+
+        Raises:
+            ErrorNotSupported: If the uncore frequency limit sysfs file does not exist.
+        """
+
+        yield from self._get_freq_dies("min", dies, limit=True)
+
+    def get_max_freq_limit_dies(self,
+                                dies: RelNumsType) -> Generator[tuple[int, int, int], None, None]:
+        """
+        Retrieve and yield the maximum uncore frequency limit for each die in the provided
+        package->die mapping.
+
+        Args:
+            dies: Dictionary mapping package numbers to sequences of die numbers for which to yield
+                  the maximum uncore frequency limit.
+
+        Yields:
+            Tuples of (package, die, value), where 'value' is the maximum uncore frequency limit for
+            the specified die in the specified package, in Hz.
+
+        Raises:
+            ErrorNotSupported: If the uncore frequency operation is not supported.
+        """
+
+        yield from self._get_freq_dies("max", dies, limit=True)
+
+    def _get_elc_zone_freq_dies(self,
+                                ztype: ELCZoneType,
+                                ftype: FreqValueType,
+                                dies: RelNumsType) -> Generator[tuple[int, int, int], None, None]:
+        """
+        Retrieve and yield an ELC zone frequency value for each die in the provided packages->dies
+        mapping.
+
+        Args:
+            ztype: The type of ELC zone (e.g., "low").
+            ftype: The uncore frequency value type (e.g., "min" for the minimum frequency).
+            dies: Dictionary mapping package numbers to sequences of die numbers for which to yield
+                  the ELC threshold.
+
+        Yields:
+            Tuples of (package, die, frequency), where 'frequency' is the requested ELC zone
+            frequency value for the specified die in the specified package.
+        """
+
+        raise NotImplementedError("BUG: The sub-class must implement this method")
+
+    def get_elc_low_zone_min_freq_dies(self,
+                                       dies: RelNumsType) -> Generator[tuple[int, int, int],
+                                                                       None, None]:
+        """
+        Retrieve and yield the ELC low zone minimum frequency for each die in the provided
+        packages->dies mapping.
+
+        Args:
+            dies: Dictionary mapping package numbers to sequences of die numbers for which to yield
+                  the ELC low zone minimum frequency.
+
+        Yields:
+            Tuples of (package, die, frequency), where 'frequency' is the ELC low zone minimum
+            frequency value for the specified die in the specified package.
+
+        Raises:
+            ErrorNotSupported: If the uncore frequency operation is not supported.
+        """
+
+        yield from self._get_elc_zone_freq_dies("low", "min", dies)
+
+    def get_elc_mid_zone_min_freq_dies(self,
+                                       dies: RelNumsType) -> Generator[tuple[int, int, int],
+                                                                       None, None]:
+        """
+        Retrieve and yield the ELC middle zone minimum frequency for each die in the provided
+        packages->dies mapping.
+
+        Args:
+            dies: Dictionary mapping package numbers to sequences of die numbers for which to yield
+                  the ELC middle zone minimum frequency.
+
+        Yields:
+            Tuples of (package, die, frequency), where 'frequency' is the ELC low zone minimum
+            frequency value for the specified die in the specified package.
+
+        Raises:
+            ErrorNotSupported: If the uncore frequency operation is not supported.
+        """
+
+        yield from self._get_elc_zone_freq_dies("mid", "min", dies)
+
+    def _set_freq_dies(self, freq: int, ftype: FreqValueType, dies: RelNumsType):
+        """
+        Set the minimum or maximum uncore frequency for each die in the specified packages->dies
+        mapping.
+
+        Args:
+            freq: The frequency value to set, in Hz.
+            ftype: The uncore frequency value type (e.g., "min" for the minimum frequency).
+            dies: The package->dies mapping defining die numbers to set the uncore frequency for.
+        """
+
+        raise NotImplementedError("BUG: The sub-class must implement this method")
+
+    def set_min_freq_dies(self, freq: int, dies: RelNumsType):
+        """
+        Set the minimum uncore frequency for each die in the provided packages->dies mapping.
+
+        Args:
+            freq: The frequency value to set, in Hz.
+            dies: Dictionary mapping package numbers to die numbers.
+
+        Raises:
+            ErrorNotSupported: If the uncore frequency operation is not supported.
+        """
+
+        self._set_freq_dies(freq, "min", dies)
+
+    def set_max_freq_dies(self, freq: int, dies: RelNumsType):
+        """
+        Set the maximum uncore frequency for each die in the provided packages->dies mapping.
+
+        Args:
+            freq: The frequency value to set, in Hz.
+            dies: Dictionary mapping package numbers to die numbers.
+
+        Raises:
+            ErrorNotSupported: If the uncore frequency operation is not supported.
+        """
+
+        self._set_freq_dies(freq, "max", dies)
+
+    def _set_elc_zone_freq_dies(self,
+                                freq: int,
+                                ztype: ELCZoneType,
+                                ftype: FreqValueType,
+                                dies: RelNumsType):
+        """
+        Set the specified ELC zone uncore frequency to 'freq' for each die in the specified
+        packages->dies mapping.
+
+        Args:
+            freq: The frequency value to set, in Hz.
+            ztype: The type of ELC zone (e.g., "low").
+            ftype: The ELC zone uncore frequency value type (e.g., "min" for ELC zone minimum
+                   uncore frequency).
+            dies: The package->dies mapping defining die numbers to set the ELC zone uncore
+                  frequency for.
+        """
+
+        raise NotImplementedError("BUG: The sub-class must implement this method")
+
+    def set_elc_low_zone_min_freq_dies(self, freq: int, dies: RelNumsType):
+        """
+        Set ELC low zone minimum uncore frequency to 'freq' for each die in the specified
+        packages->dies mapping.
+
+        Args:
+            freq: The frequency value to set, in Hz.
+            dies: Dictionary mapping package numbers to die numbers.
+
+        Raises:
+            ErrorNotSupported: If the uncore frequency operation is not supported.
+        """
+
+        self._set_elc_zone_freq_dies(freq, "low", "min", dies)
+
+    def set_elc_mid_zone_min_freq_dies(self, freq: int, dies: RelNumsType):
+        """
+        Set ELC middle zone minimum uncore frequency to 'freq' for each die in the specified
+        packages->dies mapping.
+
+        Args:
+            freq: The frequency value to set, in Hz.
+            dies: Dictionary mapping package numbers to die numbers.
+
+        Raises:
+            ErrorNotSupported: If the uncore frequency operation is not supported.
+        """
+
+        self._set_elc_zone_freq_dies(freq, "mid", "min", dies)
+
     def _get_freq_cpus(self,
                        ftype: FreqValueType,
                        cpus: AbsNumsType,
@@ -126,9 +436,10 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
             else:
                 freq_cache[package] = {}
 
-            _, _, freq = next(self._get_freq_dies(ftype, {package: [die]}, limit=limit))
-            freq_cache[package][die] = freq
-            yield cpu, freq
+            for _, _, freq in self._get_freq_dies(ftype, {package: [die]}, limit=limit):
+                freq_cache[package][die] = freq
+                yield cpu, freq
+                break
 
     def get_min_freq_cpus(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
@@ -181,6 +492,116 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
 
         yield from self._get_freq_cpus("current", cpus)
 
+    def get_min_freq_limit_cpus(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
+        """
+        Yield the minimum uncore frequency limit for each CPU in 'cpus'.
+
+        Args:
+            cpus: A collection of integer CPU numbers to retrieve the minimum uncore frequency limit
+                  for.
+
+        Yields:
+            Tuple (cpu, value), where 'value' is the minimum uncore frequency limit for the die
+            corresponding to 'cpu', in Hz.
+
+        Raises:
+            ErrorNotSupported: If the uncore frequency operation is not supported.
+        """
+
+        yield from self._get_freq_cpus("min", cpus, limit=True)
+
+    def get_max_freq_limit_cpus(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
+        """
+        Yield the maximum uncore frequency limit for each CPU in 'cpus'.
+
+        Args:
+            cpus: A collection of integer CPU numbers to retrieve the maximum uncore frequency limit
+                  for.
+
+        Yields:
+            Tuple (cpu, value), where 'value' is the maximum uncore frequency limit for the die
+            corresponding to 'cpu', in Hz.
+
+        Raises:
+            ErrorNotSupported: If the uncore frequency operation is not supported.
+        """
+
+        yield from self._get_freq_cpus("max", cpus, limit=True)
+
+    def _get_elc_zone_freq_cpus(self,
+                                ztype: ELCZoneType,
+                                ftype: FreqValueType,
+                                cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
+        """
+        Retrieve and yield an ELC zone frequency value for each CPU in 'cpus'.
+
+        Args:
+            ztype: The type of ELC zone (e.g., "low").
+            ftype: The uncore frequency value type (e.g., "min" for the minimum frequency).
+            cpus: A collection of integer CPU numbers to retrieve the ELC zone frequency values for.
+
+        Yields:
+            Tuples of (cpu, frequency), where 'frequency' is the requested ELC zone
+            frequency value for the die corresponding to 'cpu'.
+        """
+
+        freq_cache: dict[int, dict[int, int]] = {}
+
+        for cpu in cpus:
+            tline = self._cpuinfo.get_tline_by_cpu(cpu, snames=("package", "die"))
+            package = tline["package"]
+            die = tline["die"]
+
+            if package in freq_cache:
+                if die in freq_cache[package]:
+                    yield cpu, freq_cache[package][die]
+                    continue
+            else:
+                freq_cache[package] = {}
+
+            for _, _, freq in self._get_elc_zone_freq_dies(ztype, ftype, {package: [die]}):
+                freq_cache[package][die] = freq
+                yield cpu, freq
+                break
+
+    def get_elc_low_zone_min_freq_cpus(self,
+                                       cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
+        """
+        Retrieve and yield an ELC low zone minimum frequency value for each CPU in 'cpus'.
+
+        Args:
+            cpus: A collection of integer CPU numbers to retrieve the ELC low zone minimum frequency
+                  values for.
+
+        Yields:
+            Tuples of (cpu, frequency), where 'frequency' is the ELC low zone minimum frequency
+            value for the die corresponding to 'cpu'.
+
+        Raises:
+            ErrorNotSupported: If the ELC low zone minimum frequency operation is not supported.
+        """
+
+        yield from self._get_elc_zone_freq_cpus("low", "min", cpus)
+
+    def get_elc_mid_zone_min_freq_cpus(self,
+                                       cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
+        """
+        Retrieve and yield an ELC middle zone minimum frequency value for each CPU in 'cpus'.
+
+        Args:
+            cpus: A collection of integer CPU numbers to retrieve the ELC middle zone minimum
+                  frequency values for.
+
+        Yields:
+            Tuples of (cpu, frequency), where 'frequency' is the ELC middle zone minimum frequency
+            value for the die corresponding to 'cpu'.
+
+        Raises:
+            ErrorNotSupported: If the ELC middle zone minimum frequency operation is not supported.
+        """
+
+        yield from self._get_elc_zone_freq_cpus("mid", "min", cpus)
+
     def _validate_frequency(self,
                             freq: int,
                             ftype: FreqValueType,
@@ -189,9 +610,10 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
                             min_freq_limit: int,
                             max_freq_limit: int,
                             min_freq: int | None = None,
-                            max_freq: int | None = None):
+                            max_freq: int | None = None,
+                            zname: str = ""):
         """
-        Validate that a frequency value is within the acceptable range.
+        Validate that a minimum or maximum uncore frequency value is within the acceptable range.
 
         Args:
             freq: The uncore frequency value to validate, in Hz.
@@ -202,6 +624,7 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
             max_freq_limit: The maximum uncore frequency limit in Hz.
             min_freq: The minimum uncore frequency in Hz.
             max_freq: The maximum uncore frequency in Hz.
+            zname: ELC zone name in case of ELC zone frequency validation.
 
         Raises:
             ErrorOutOfRange: If the uncore frequency value is outside the allowed range.
@@ -210,42 +633,29 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
         """
 
         if freq < min_freq_limit or freq > max_freq_limit:
-            name = f"{ftype} package {package} die {die} uncore frequency"
-            freq_str = Human.num2si(freq, unit="Hz", decp=4)
-            min_limit_str = Human.num2si(min_freq_limit, unit="Hz", decp=4)
-            max_limit_str = Human.num2si(max_freq_limit, unit="Hz", decp=4)
+            name = f"Package {package} die {die} {zname}{ftype} uncore frequency"
+            freq_str = Human.num2si(freq, unit="Hz", decp=2)
+            min_limit_str = Human.num2si(min_freq_limit, unit="Hz", decp=2)
+            max_limit_str = Human.num2si(max_freq_limit, unit="Hz", decp=2)
             raise ErrorOutOfRange(f"{name} value of '{freq_str}' is out of range, must be within "
                                   f"[{min_limit_str},{max_limit_str}]")
 
         if ftype == "min":
             assert max_freq is not None
             if freq > max_freq:
-                name = f"{ftype} package {package} die {die} uncore frequency"
-                freq_str = Human.num2si(freq, unit="Hz", decp=4)
-                max_freq_str = Human.num2si(max_freq, unit="Hz", decp=4)
+                name = f"Package {package} die {die} {zname}{ftype} uncore frequency"
+                freq_str = Human.num2si(freq, unit="Hz", decp=2)
+                max_freq_str = Human.num2si(max_freq, unit="Hz", decp=2)
                 raise ErrorBadOrder(f"{name} value of '{freq_str}' is greater than the currently "
                                     f"configured max frequency of {max_freq_str}")
         else:
             assert min_freq is not None
             if freq < min_freq:
-                name = f"{ftype} package {package} die {die} uncore frequency"
-                freq_str = Human.num2si(freq, unit="Hz", decp=4)
-                min_freq_str = Human.num2si(min_freq, unit="Hz", decp=4)
+                name = f"Package {package} die {die} {zname}{ftype} uncore frequency"
+                freq_str = Human.num2si(freq, unit="Hz", decp=2)
+                min_freq_str = Human.num2si(min_freq, unit="Hz", decp=2)
                 raise ErrorBadOrder(f"{name} value of '{freq_str}' is less than the currently "
                                     f"configured min frequency of {min_freq_str}")
-
-    def _set_freq_dies(self, freq: int, ftype: FreqValueType, dies: RelNumsType):
-        """
-        Set the minimum or maximum uncore frequency for each die in the specified packages->dies
-        mapping.
-
-        Args:
-            freq: The frequency value to set, in Hz.
-            ftype: The uncore frequency value type (e.g., "min" for the minimum frequency).
-            dies: The package->dies mapping defining die numbers to set the uncore frequency for.
-        """
-
-        raise NotImplementedError("BUG: The sub-class must implement this method")
 
     def _set_freq_cpus(self, freq: int, ftype: FreqValueType, cpus: AbsNumsType):
         """
@@ -272,7 +682,6 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
                 set_dies_cache[package] = set()
 
             set_dies_cache[package].add(die)
-
             self._set_freq_dies(freq, ftype, {package: [die]})
 
     def set_min_freq_cpus(self, freq: int, cpus: AbsNumsType):
@@ -308,6 +717,69 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
         """
 
         self._set_freq_cpus(freq, "max", cpus)
+
+    def _set_elc_zone_freq_cpus(self,
+                                freq: int,
+                                ztype: ELCZoneType,
+                                ftype: FreqValueType,
+                                cpus: AbsNumsType):
+        """
+        Set the specified ELC zone uncore frequency to 'freq' for dies corresponding to the
+        specified CPUs.
+
+        Args:
+            freq: The frequency value to set, in Hz.
+            ztype: The type of ELC zone (e.g., "low").
+            ftype: The ELC zone uncore frequency value type (e.g., "min" for ELC zone minimum
+                   uncore frequency).
+            cpus: A collection of integer CPU numbers to set the ELC zone uncore frequency for.
+        """
+
+        set_dies_cache: dict[int, set[int]] = {}
+
+        for cpu in cpus:
+            tline = self._cpuinfo.get_tline_by_cpu(cpu, snames=("package", "die"))
+            package = tline["package"]
+            die = tline["die"]
+
+            if package in set_dies_cache:
+                if die in set_dies_cache[package]:
+                    continue
+            else:
+                set_dies_cache[package] = set()
+
+            set_dies_cache[package].add(die)
+            self._set_elc_zone_freq_dies(freq, ztype, ftype, {package: [die]})
+
+    def set_elc_low_zone_min_freq_cpus(self, freq: int, cpus: AbsNumsType):
+        """
+        Set ELC low zone minimum uncore frequency to 'freq' for dies corresponding to the specified
+        CPUs.
+
+        Args:
+            freq: The frequency value to set, in Hz.
+            cpus: A collection of integer CPU numbers to set the ELC zone uncore frequency for.
+
+        Raises:
+            ErrorNotSupported: If the uncore frequency operation is not supported.
+        """
+
+        self._set_elc_zone_freq_cpus(freq, "low", "min", cpus)
+
+    def set_elc_mid_zone_min_freq_cpus(self, freq: int, cpus: AbsNumsType):
+        """
+        Set ELC middle zone minimum uncore frequency to 'freq' for dies corresponding to the
+        specified CPUs.
+
+        Args:
+            freq: The frequency value to set, in Hz.
+            cpus: A collection of integer CPU numbers to set the ELC zone uncore frequency for.
+
+        Raises:
+            ErrorNotSupported: If the uncore frequency operation is not supported.
+        """
+
+        self._set_elc_zone_freq_cpus(freq, "mid", "min", cpus)
 
     def _get_elc_threshold_dies(self,
                                 thrtype: ELCThresholdType,
@@ -438,17 +910,19 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
                                   f"between 0 and 100")
 
         if thrtype == "low":
-            _, _, high_threshold = next(self._get_elc_threshold_dies("high", {package: [die]}))
-            if threshold > high_threshold:
-                raise ErrorBadOrder(f"Cannot set the ELC low threshold to {threshold}%: it is "
-                                    f"higher than the currently configured high threshold of "
-                                    f"{high_threshold}%")
+            for _, _, high_threshold in self._get_elc_threshold_dies("high", {package: [die]}):
+                if threshold > high_threshold:
+                    raise ErrorBadOrder(f"Cannot set the ELC low threshold to {threshold}%: it is "
+                                        f"higher than the currently configured high threshold of "
+                                        f"{high_threshold}%")
+                break
         elif thrtype == "high":
-            _, _, low_threshold = next(self._get_elc_threshold_dies("low", {package: [die]}))
-            if threshold < low_threshold:
-                raise ErrorBadOrder(f"Cannot set the ELC high threshold to {threshold}%: it is "
-                                    f"lower than the currently configured low threshold of "
-                                    f"{low_threshold}%")
+            for _, _, low_threshold in self._get_elc_threshold_dies("low", {package: [die]}):
+                if threshold < low_threshold:
+                    raise ErrorBadOrder(f"Cannot set the ELC high threshold to {threshold}%: it is "
+                                        f"lower than the currently configured low threshold of "
+                                        f"{low_threshold}%")
+                break
         else:
             raise Error(f"BUG: bad ELC threshold type '{thrtype}'")
 
@@ -557,9 +1031,10 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
             else:
                 threshold_cache[package] = {}
 
-            _, _, threshold = next(self._get_elc_threshold_dies(thrtype, {package: [die]}))
-            threshold_cache[package][die] = threshold
-            yield cpu, threshold
+            for _, _, threshold in self._get_elc_threshold_dies(thrtype, {package: [die]}):
+                threshold_cache[package][die] = threshold
+                yield cpu, threshold
+                break
 
     def get_elc_low_threshold_cpus(self, cpus: AbsNumsType) -> Generator[tuple[int, int],
                                                                          None, None]:
@@ -627,9 +1102,10 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
             else:
                 threshold_cache[package] = {}
 
-            _, _, threshold = next(self._get_elc_threshold_status_dies(thrtype, {package: [die]}))
-            threshold_cache[package][die] = threshold
-            yield cpu, threshold
+            for _, _, threshold in self._get_elc_threshold_status_dies(thrtype, {package: [die]}):
+                threshold_cache[package][die] = threshold
+                yield cpu, threshold
+                break
 
     def get_elc_high_threshold_status_cpus(self, cpus: AbsNumsType) -> Generator[tuple[int, bool],
                                                                                  None, None]:

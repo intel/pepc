@@ -207,6 +207,10 @@ class Uncore(_PropsClassBase.PropsClassBase):
             yield from uncfreq_obj.get_elc_high_threshold_cpus(cpus)
         elif pname == "elc_high_threshold_status":
             yield from uncfreq_obj.get_elc_high_threshold_status_cpus(cpus)
+        elif pname == "elc_low_zone_min_freq":
+            yield from uncfreq_obj.get_elc_low_zone_min_freq_cpus(cpus)
+        elif pname == "elc_mid_zone_min_freq":
+            yield from uncfreq_obj.get_elc_mid_zone_min_freq_cpus(cpus)
         else:
             raise Error(f"BUG: Unexpected ELC threshold property {pname}")
 
@@ -222,7 +226,8 @@ class Uncore(_PropsClassBase.PropsClassBase):
 
         if pname in {"min_freq", "max_freq", "min_freq_limit", "max_freq_limit"}:
             yield from self._get_freq_cpus(pname, cpus, mname)
-        elif pname in {"elc_low_threshold", "elc_high_threshold", "elc_high_threshold_status"}:
+        elif pname in {"elc_low_threshold", "elc_high_threshold", "elc_high_threshold_status",
+                       "elc_low_zone_min_freq", "elc_mid_zone_min_freq"}:
             yield from self._get_elc_threshold_cpus(pname, cpus, mname)
         else:
             raise Error(f"BUG: Unknown property '{pname}'")
@@ -254,22 +259,20 @@ class Uncore(_PropsClassBase.PropsClassBase):
 
         if pname == "min_freq":
             yield from uncfreq_obj.get_min_freq_dies(dies)
-            return
-        if pname == "max_freq":
+        elif pname == "max_freq":
             yield from uncfreq_obj.get_max_freq_dies(dies)
-            return
-
-        if mname == "sysfs":
+        elif pname == "elc_low_zone_min_freq":
+            yield from uncfreq_obj.get_elc_low_zone_min_freq_dies(dies)
+        elif pname == "elc_mid_zone_min_freq":
+            yield from uncfreq_obj.get_elc_mid_zone_min_freq_dies(dies)
+        elif mname == "sysfs":
             uncfreq_sysfs_obj = self._get_uncfreq_sysfs_obj()
-
             if pname == "min_freq_limit":
                 yield from uncfreq_sysfs_obj.get_min_freq_limit_dies(dies)
-                return
-            if pname == "max_freq_limit":
+            elif pname == "max_freq_limit":
                 yield from uncfreq_sysfs_obj.get_max_freq_limit_dies(dies)
-                return
-
-        raise Error(f"BUG: Unexpected uncore frequency property {pname}")
+        else:
+            raise Error(f"BUG: Unexpected uncore frequency property '{pname}'")
 
     def _get_elc_threshold_dies(self,
                                 pname: str,
@@ -320,8 +323,8 @@ class Uncore(_PropsClassBase.PropsClassBase):
 
         # In case of uncore properties, there may be I/O dies, which have no CPUs, so implement
         # per-die access.
-        if pname in {"min_freq", "max_freq",
-                     "min_freq_limit", "max_freq_limit"}:
+        if pname in {"min_freq", "max_freq", "min_freq_limit", "max_freq_limit",
+                     "elc_low_zone_min_freq", "elc_mid_zone_min_freq"}:
             yield from self._get_freq_dies(pname, dies, mname)
         elif pname in {"elc_low_threshold", "elc_high_threshold", "elc_high_threshold_status"}:
             yield from self._get_elc_threshold_dies(pname, dies, mname)
@@ -338,12 +341,16 @@ class Uncore(_PropsClassBase.PropsClassBase):
         # TODO: implement by translating CPU numbers to die num
         raise Error(f"BUG: Unsupported property '{pname}'")
 
-    def _set_freq_dies(self, pname: str, freq: int, dies: RelNumsType, mname: MechanismNameType):
+    def _set_numeric_freq_dies(self,
+                               pname: str,
+                               freq: int,
+                               dies: RelNumsType,
+                               mname: MechanismNameType):
         """
         Set the minimum or maximum uncore frequency for specified dies.
 
         Args:
-            pname: The property name, either "min_freq" or "max_freq".
+            pname: The property name (e.g., "min_freq").
             freq: The frequency value to set.
             dies: Dictionary mapping package numbers to collections of die numbers.
             mname: Name of the mechanism to use for setting the property.
@@ -361,41 +368,12 @@ class Uncore(_PropsClassBase.PropsClassBase):
             uncfreq_obj.set_min_freq_dies(freq, dies)
         elif pname == "max_freq":
             uncfreq_obj.set_max_freq_dies(freq, dies)
+        elif pname == "elc_low_zone_min_freq":
+            uncfreq_obj.set_elc_low_zone_min_freq_dies(freq, dies)
+        elif pname == "elc_mid_zone_min_freq":
+            uncfreq_obj.set_elc_mid_zone_min_freq_dies(freq, dies)
         else:
             raise Error(f"BUG: Unexpected uncore frequency property {pname}")
-
-    def _set_elc_threshold_dies(self,
-                                pname: str,
-                                val: int | bool,
-                                dies: RelNumsType,
-                                mname: MechanismNameType):
-        """
-        Enable/disable the an ELC threshold or set and ELC threshold value for specified dies
-
-        Args:
-            pname: The property name.
-            val: The ELC threshold value (either a percentage or a boolean to enable/disable the
-                 threshold).
-            dies: Dictionary mapping package numbers to collections of die numbers.
-            mname: Name of the mechanism to use for setting the property.
-        """
-
-        uncfreq_obj: Union[_UncoreFreqSysfs.UncoreFreqSysfs, _UncoreFreqTpmi.UncoreFreqTpmi]
-        if mname == "sysfs":
-            uncfreq_obj = self._get_uncfreq_sysfs_obj()
-        elif mname == "tpmi":
-            uncfreq_obj = self._get_uncfreq_tpmi_obj()
-        else:
-            raise Error(f"BUG: Unexpected mechanism '{mname}'")
-
-        if pname == "elc_low_threshold":
-            uncfreq_obj.set_elc_low_threshold_dies(cast(int, val), dies)
-        elif pname == "elc_high_threshold":
-            uncfreq_obj.set_elc_high_threshold_dies(cast(int, val), dies)
-        elif pname == "elc_high_threshold_status":
-            uncfreq_obj.set_elc_high_threshold_status_dies(cast(bool, val), dies)
-        else:
-            raise Error(f"BUG: Unexpected uncore ELC threshold property {pname}")
 
     def _get_numeric_freq(self,
                           freq: str | int,
@@ -439,13 +417,17 @@ class Uncore(_PropsClassBase.PropsClassBase):
         else:
             raise Error(f"BUG: Unexpected non-integer uncore frequency value '{freq}'")
 
-    def _set_freq(self, pname: str, val: str | int, dies: RelNumsType, mname: MechanismNameType):
+    def _set_freq_dies(self,
+                       pname: str,
+                       val: str | int,
+                       dies: RelNumsType,
+                       mname: MechanismNameType):
         """
-        Set the uncore frequency property for specified dies using a given method.
+        Set the uncore frequency property for specified dies using a given method. Handle
+        non-numeric values.
 
         Args:
-            pname: Name of the uncore frequency property to set (e.g., 'min_freq',
-                   'max_freq').
+            pname: Name of the uncore frequency property to set (e.g., 'min_freq').
             val: The value to set for the property. Can be a numeric value or a special string
                  (e.g., 'min', 'max', 'mdl').
             dies: Mapping of package numbers to collections of die numbers.
@@ -461,7 +443,40 @@ class Uncore(_PropsClassBase.PropsClassBase):
             freq2dies[new_freq][package].append(die)
 
         for new_freq, freq_dies in freq2dies.items():
-            self._set_freq_dies(pname, new_freq, freq_dies, mname)
+            self._set_numeric_freq_dies(pname, new_freq, freq_dies, mname)
+
+    def _set_elc_threshold_dies(self,
+                                pname: str,
+                                val: int | bool,
+                                dies: RelNumsType,
+                                mname: MechanismNameType):
+        """
+        Enable/disable the an ELC threshold or set and ELC threshold value for specified dies
+
+        Args:
+            pname: The property name.
+            val: The ELC threshold value (either a percentage or a boolean to enable/disable the
+                 threshold).
+            dies: Dictionary mapping package numbers to collections of die numbers.
+            mname: Name of the mechanism to use for setting the property.
+        """
+
+        uncfreq_obj: Union[_UncoreFreqSysfs.UncoreFreqSysfs, _UncoreFreqTpmi.UncoreFreqTpmi]
+        if mname == "sysfs":
+            uncfreq_obj = self._get_uncfreq_sysfs_obj()
+        elif mname == "tpmi":
+            uncfreq_obj = self._get_uncfreq_tpmi_obj()
+        else:
+            raise Error(f"BUG: Unexpected mechanism '{mname}'")
+
+        if pname == "elc_low_threshold":
+            uncfreq_obj.set_elc_low_threshold_dies(cast(int, val), dies)
+        elif pname == "elc_high_threshold":
+            uncfreq_obj.set_elc_high_threshold_dies(cast(int, val), dies)
+        elif pname == "elc_high_threshold_status":
+            uncfreq_obj.set_elc_high_threshold_status_dies(cast(bool, val), dies)
+        else:
+            raise Error(f"BUG: Unexpected uncore ELC threshold property {pname}")
 
     def _set_prop_dies(self,
                        pname: str,
@@ -473,8 +488,8 @@ class Uncore(_PropsClassBase.PropsClassBase):
         _LOG.debug("Setting property '%s' to value '%s' using mechanism '%s', packages/dies: %s",
                    pname, val, mname, dies)
 
-        if pname in {"min_freq", "max_freq"}:
-            self._set_freq(pname, cast(int, val), dies, mname)
+        if pname in {"min_freq", "max_freq", "elc_low_zone_min_freq", "elc_mid_zone_min_freq"}:
+            self._set_freq_dies(pname, cast(str | int, val), dies, mname)
         elif pname in {"elc_low_threshold", "elc_high_threshold", "elc_high_threshold_status"}:
             self._set_elc_threshold_dies(pname, cast(int | bool, val), dies, mname)
         else:

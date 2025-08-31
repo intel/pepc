@@ -173,8 +173,33 @@ target domain specification options to define a subset of CPUs, cores, dies, or 
    maximum uncore frequency limit. Uses the same mechanisms as '--min-freq-limit', but the
    sysfs mechanism uses the 'initial_max_freq_khz' file instead of 'initial_min_freq_khz'.
 
+**--elc-low-zone-min-freq**
+   Retrieve the ELC low zone minimum uncore frequency. The supported mechanisms are: 'sysfs', 'tpmi'.
+   In case of the 'sysfs' mechanism read.
+   '/sys/devices/system/cpu/intel_uncore_frequency/uncore<NUMBER>/elc_floor_freq_khz'.
+
+   The 'tpmi' mechanism uses the tpmi driver debugfs interface to access TPMI registers. The exact
+   path depends on the target die number. Example of the debugfs file path is
+   '/sys/kernel/debug/tpmi-0000:00:03.1/tpmi-id-02/mem_dump'
+
+   When the aggregate die utilization falls below or equals the ELC low threshold value
+   (--elc-low-threshold), the die enters the ELC low zone. Its uncore frequency floor is set to
+   the ELC low zone minimum frequency (--elc-low-zone-min-freq), unless the global minimum uncore
+   frequency (--min-freq) is higher, in which case the global minimum uncore frequency is used as
+   the floor.
+
+**--elc-mid-zone-min-freq**
+   Retrieve the ELC middle zone minimum uncore frequency. Only the 'tpmi' mechanism is supported.
+   Reads the same TPMI debugfs files as '--elc-low-zone-min-freq'.
+
+   When the aggregate die utilization is above the ELC low threshold value (--elc-low-threshold),
+   but below the ELC high threshold value (--elc-high-threshold), the die enters the ELC middle
+   zone. Its uncore frequency floor is set to the ELC middle zone minimum frequency
+   (--elc-mid-zone-min-freq), unless the global minimum uncore frequency (--min-freq) is higher, in
+   which case the global minimum uncore frequency is used as the floor.
+
 **--elc-low-threshold**
-   Get the uncore ELC low threshold. The threshold defines the aggregate CPU utilization percentage.
+   Get the uncore ELC low threshold. The threshold defines the aggregate die utilization percentage.
    When utilization falls below this threshold, the platform sets the uncore frequency floor to the
    low ELC frequency (subject to the the '--min-freq-limit' - if the limit is higher than the
    low ELC frequency, the limit is used as the floor instead).
@@ -184,12 +209,11 @@ target domain specification options to define a subset of CPUs, cores, dies, or 
    TPMI reads the same debugfs files as '--min-freq'.
 
 **--elc-high-threshold**
-   Get the uncore ELC high threshold. The threshold defines the aggregate CPU utilization percentage
-   at which the platform begins increasing the uncore frequency more enthusiastically than before.
-   When utilization exceeds this threshold, the platform gradually raises the uncore frequency until
-   utilization drops below the threshold or the frequency reaches the '--max-freq' limit.
-   In addition, uncore frequency increases may be prevented by other constraints, such as thermal or
-   power limits.
+   Get the uncore ELC high threshold. The threshold defines the aggregate die utilization
+   percentage. When die utilization exceeds this threshold, the platform rapidly raises the uncore
+   frequency until die utilization drops below the threshold or the frequency reaches the
+   '--max-freq' limit. In addition, uncore frequency increases may be prevented by other
+   constraints, such as thermal or power limits.
 
    Supported mechanisms are: 'sysfs', 'tpmi'. The 'sysfs' mechanism reads the
    '/sys/devices/system/cpu/intel_uncore_frequency/uncore<NUMBER>/elc_high_threshold_percent'. The
@@ -245,6 +269,16 @@ dies, or packages.
 **--max-freq** *MAX_FREQ*
    Set the maximum uncore frequency. Uses the same mechanisms as described in the 'info'
    sub-command. Similar to '--min-freq', but applies to the maximum frequency.
+
+**--elc-low-zone-min-freq**
+   Set the ELC low zone minimum uncore frequency. Uses the same mechanisms as described in the
+   'info' sub-command. Supports special values **min**, **max**, and **mdl**, similar to
+   '--min-freq'.
+
+**--elc-mid-zone-min-freq**
+   Set the ELC middle zone minimum uncore frequency. Uses the same mechanisms as described in the
+   'info' sub-command. Supports special values **min**, **max**, and **mdl**, similar to
+   '--min-freq'.
 
 **--elc-low-threshold**
    Set the uncore ELC low threshold. Same as in the 'info' sub-command, but sets the ELC low

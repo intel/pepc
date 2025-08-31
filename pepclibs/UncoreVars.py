@@ -64,8 +64,27 @@ PROPS: Final[dict[str, PropertyTypedDict]] = {
         "mnames": ("sysfs",),
         "writable": False,
     },
+    "elc_low_zone_min_freq": {
+        "name": "ELC low zone min. uncore frequency",
+        "unit": "Hz",
+        "type": "int",
+        "sname": "die",
+        "mnames": ("sysfs", "tpmi"),
+        "writable": True,
+        "special_vals": _SPECIAL_UNCORE_FREQ_VALS,
+    },
+    "elc_mid_zone_min_freq": {
+        "name": "ELC middle zone min. uncore frequency",
+        "unit": "Hz",
+        "type": "int",
+        "sname": "die",
+        # Not a typo, not available via the sysfs.
+        "mnames": ("tpmi",),
+        "writable": True,
+        "special_vals": _SPECIAL_UNCORE_FREQ_VALS,
+    },
     "elc_low_threshold": {
-        "name": "Uncore ELC low threshold",
+        "name": "ELC low threshold",
         "unit": "%",
         "type": "int",
         "sname": "die",
@@ -73,7 +92,7 @@ PROPS: Final[dict[str, PropertyTypedDict]] = {
         "writable": True,
     },
     "elc_high_threshold": {
-        "name": "Uncore ELC high threshold",
+        "name": "ELC high threshold",
         "unit": "%",
         "type": "int",
         "sname": "die",
@@ -81,7 +100,7 @@ PROPS: Final[dict[str, PropertyTypedDict]] = {
         "writable": True,
     },
     "elc_high_threshold_status": {
-        "name": "Uncore ELC high threshold status",
+        "name": "ELC high threshold status",
         "type": "bool",
         "sname": "die",
         "mnames": ("sysfs", "tpmi"),
