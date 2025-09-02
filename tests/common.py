@@ -58,7 +58,7 @@ def is_emulated(pman: ProcessManagerType) -> bool:
         True if the process manager corresponds to an emulated system, False otherwise.
     """
 
-    return hasattr(pman, "datapath")
+    return pman.hostname.startswith("emulation:")
 
 def get_pman(hostspec: str) -> ProcessManagerType:
     """

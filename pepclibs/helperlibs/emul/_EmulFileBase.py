@@ -14,6 +14,8 @@ Emulated file classes provide a single public method: open(). This method return
 for the emulated file, allowing users to perform standard I/O operations.
 """
 
+from __future__ import annotations # Remove when switching to Python 3.10+.
+
 import types
 from typing import IO
 from pathlib import Path

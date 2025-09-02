@@ -10,6 +10,8 @@
 Provide 'TPMIEmulFile' class to emulate TPMI debugfs 'mem_write' files.
 """
 
+from __future__ import annotations # Remove when switching to Python 3.10+.
+
 import re
 import types
 from typing import IO, Callable

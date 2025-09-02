@@ -15,7 +15,7 @@ Provide a capability of retrieving and setting P-state related properties.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
-from typing import cast, Generator
+from typing import cast, Generator, Union
 import contextlib
 from pepclibs import _PropsClassBase
 from pepclibs.PStatesVars import PROPS
@@ -1128,7 +1128,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         elif pname == "governor":
             self._set_governor(cast(str, val), cpus, mname)
         elif pname in ("min_freq", "max_freq"):
-            self._set_cpu_freq(pname, cast(str | int, val), cpus, mname)
+            self._set_cpu_freq(pname, cast(Union[str, int], val), cpus, mname)
         else:
             raise Error(f"BUG: Unsupported property '{pname}'")
 

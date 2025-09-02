@@ -13,6 +13,8 @@ Provide 'DevMSREmulFile' class, which emulates '/dev/cpu/*/msr' character device
 and writing CPU Model Specific Registers (MSRs).
 """
 
+from __future__ import annotations # Remove when switching to Python 3.10+.
+
 import types
 from typing import IO, Callable
 from pathlib import Path

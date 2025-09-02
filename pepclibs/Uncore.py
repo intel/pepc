@@ -14,7 +14,7 @@ Provide a capability of retrieving and setting uncore-related properties.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
-from typing import Generator, cast
+from typing import Generator, Union, cast
 import statistics
 from pepclibs import _PropsClassBase
 from pepclibs.UncoreVars import PROPS
@@ -25,7 +25,7 @@ from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs._PropsClassBase import ErrorTryAnotherMechanism, ErrorUsePerCPU
 
 if typing.TYPE_CHECKING:
-    from typing import Union, Any
+    from typing import Any
     from pepclibs import _SysfsIO, _UncoreFreqSysfs, _UncoreFreqTpmi
     from pepclibs.CPUInfo import CPUInfo
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
@@ -489,8 +489,8 @@ class Uncore(_PropsClassBase.PropsClassBase):
                    pname, val, mname, dies)
 
         if pname in {"min_freq", "max_freq", "elc_low_zone_min_freq", "elc_mid_zone_min_freq"}:
-            self._set_freq_dies(pname, cast(str | int, val), dies, mname)
+            self._set_freq_dies(pname, cast(Union[str, int], val), dies, mname)
         elif pname in {"elc_low_threshold", "elc_high_threshold", "elc_high_threshold_status"}:
-            self._set_elc_threshold_dies(pname, cast(int | bool, val), dies, mname)
+            self._set_elc_threshold_dies(pname, cast(Union[int, bool], val), dies, mname)
         else:
             raise Error(f"BUG: Unexpected uncore frequency property {pname}")
