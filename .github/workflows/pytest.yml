@@ -1,0 +1,80 @@
+on:
+  workflow_call:
+    inputs:
+      runs_on:
+        type: string
+        required: false
+        default: 'ubuntu-latest'
+
+# Define the jobs to run in this workflow
+jobs:
+  checks:
+    name: "Check with python-${{ matrix.python-version }}"
+    runs-on: ${{ inputs.runs_on }}
+
+    # Define a matrix strategy to run the job for multiple Python versions
+    strategy:
+      # Ensure all matrix jobs run even if one fails
+      fail-fast: false
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - name: "Install packages"
+        run: |
+          sudo -E apt-get -qq update
+          sudo -E apt-get -qq -y install file rsync
+
+      - name: "Checkout Repository"
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: "Find modified files"
+        run: |
+          # Determine the base commit for comparison based on the event type
+          # For push events, use the default branch
+          # For pull requests, use the base commit of the PR
+          [ "${{ github.event_name }}" = "push" ] &&
+            from="refs/remotes/origin/${{ github.event.repository.default_branch }}" ||
+            from="${{ github.event.pull_request.base.sha }}"
+
+          mkdir -- .tmp
+
+          # Find modified files, filter for Python scripts, and save them to modified-files
+          git diff-tree --diff-filter=d --no-commit-id --name-status -r "$from..HEAD" | \
+            cut -f2- > .tmp/all-modified-files
+
+          xargs -a .tmp/all-modified-files -r file -Ni -- | \
+            sed -n -e 's#: text/x-script.python;.*##p' > .tmp/python-files;
+
+          if [ -s .tmp/python-files ] || grep -qs '^tests/' .tmp/all-modified-files; then
+            touch .tmp/pytest-required
+          fi
+
+      - name: "Set up Python ${{ matrix.python-version }}"
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+
+      - name: "Install dependencies"
+        run: |
+          if [ -e .tmp/pytest-required ]; then
+            python -m pip install --upgrade pip
+            pip install --upgrade .
+            pip install pytest coverage
+          fi
+
+      - name: "Run pytest to execute tests and collect coverage data"
+        run: |
+          if [ -e .tmp/pytest-required ]; then
+            coverage run --module pytest -v
+          fi
+        env:
+          SHELL: /bin/sh
+
+      - name: "Display the test coverage report"
+        run: |
+          if [ -e .tmp/pytest-required ]; then
+            coverage report
+          fi

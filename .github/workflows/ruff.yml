@@ -1,0 +1,79 @@
+on:
+  workflow_call:
+    inputs:
+      runs_on:
+        type: string
+        required: false
+        default: 'ubuntu-latest'
+      python_version:
+        type: string
+        required: false
+        default: '3.13'
+
+jobs:
+  checks:
+    runs-on: ${{ inputs.runs_on }}
+
+    steps:
+      - name: "Install packages"
+        run: |
+          sudo -E apt-get -qq update
+          sudo -E apt-get -qq -y install file
+
+      - name: "Checkout Repository"
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: "Information about changes"
+        run: |
+          # Determine the base commit for comparison based on the event type
+          [ "${{ github.event_name }}" = "push" ] &&
+            from="refs/remotes/origin/${{ github.event.repository.default_branch }}" ||
+            from="${{ github.event.pull_request.base.sha }}"
+
+          # List all commits in the range and display them
+          git rev-list --pretty=oneline "$from..HEAD" --
+
+      - name: "Set up Python ${{ inputs.python_version }}"
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ inputs.python_version }}
+          cache: 'pip'
+
+      - name: "Install dependencies"
+        run: |
+          python -m pip install --upgrade pip
+
+          pip install --upgrade .
+          pip install ruff
+
+      - name: "Find modified files"
+        run: |
+          # Determine the base commit for comparison based on the event type
+          # For push events, use the default branch
+          # For pull requests, use the base commit of the PR
+          [ "${{ github.event_name }}" = "push" ] &&
+            from="refs/remotes/origin/${{ github.event.repository.default_branch }}" ||
+            from="${{ github.event.pull_request.base.sha }}"
+
+          mkdir -- .tmp
+          touch .tmp/modified-files
+
+          # Find modified files, filter for Python scripts, and save them to modified-files
+          git diff-tree --diff-filter=d --no-commit-id --name-status -r "$from..HEAD" | \
+            cut -f2- | xargs -r file -Ni -- | \
+            sed -n -e 's#: text/x-script.python;.*##p' > .tmp/modified-files;
+
+          echo "Files to check:"
+          cat .tmp/modified-files
+
+      - name: "Run ruff for fast linting on modified files"
+        run: |
+          xargs -a .tmp/modified-files -r ruff check --output-format github > .tmp/ruff.results 2>&1 || retcode=1
+
+          # Format the ruff output for GitHub annotations
+          sed < .tmp/ruff.results -r \
+             -e 's#^(::.*),title=(.*)::#\1::[ruff] \2: #'
+
+          exit ${retcode:-0}

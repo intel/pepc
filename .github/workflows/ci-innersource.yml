@@ -1,0 +1,40 @@
+# Name of the workflow, visible in the GitHub Actions UI
+name: "CI on innersource"
+# Define the events that trigger this workflow
+on:
+  # Trigger on push events
+  push:
+    branches:
+      - "main"
+      - "feature/**"
+
+  # Trigger on pull request events
+  pull_request:
+    branches:
+      - "main"
+
+# Define the jobs to run in this workflow
+jobs:
+  mypy:
+    if: ${{ github.repository_owner == 'intel-innersource' }}
+    uses: ./.github/workflows/mypy.yml
+    with:
+      runs_on: innersource.prod.amr.dind
+
+  pylint:
+    if: ${{ github.repository_owner == 'intel-innersource' }}
+    uses: ./.github/workflows/pylint.yml
+    with:
+      runs_on: innersource.prod.amr.dind
+
+  ruff:
+    if: ${{ github.repository_owner == 'intel-innersource' }}
+    uses: ./.github/workflows/ruff.yml
+    with:
+      runs_on: innersource.prod.amr.dind
+
+  pytest:
+    if: ${{ github.repository_owner == 'intel-innersource' }}
+    uses: ./.github/workflows/pytest.yml
+    with:
+      runs_on: innersource.prod.amr.dind
