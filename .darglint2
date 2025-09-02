@@ -1,3 +1,0 @@
-[darglint2]
-ignore_raise=Error,NotImplementedError
-strictness=short

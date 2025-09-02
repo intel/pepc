@@ -58,10 +58,8 @@ jobs:
           python -m pip install --upgrade pip
 
           pip install --upgrade .
-          pip install pytest pylint mypy ruff darglint2 pydoclint coverage \
+          pip install pytest pylint mypy ruff pydoclint coverage \
             types-PyYAML types-paramiko types-colorama
-
-          mypy --install-types --verbose
 
       - name: "Find modified files"
         run: |
@@ -112,13 +110,6 @@ jobs:
           # Format the ruff output for GitHub annotations
           sed < .tmp/pylint.results -r \
              -e 's#^(::.*),title=(.*)::#\1::[ruff] \2: #'
-
-          exit ${retcode:-0}
-
-      - name: "Run darglint2 to check docstring compliance on modified files"
-        run: |
-          # Run darglint2 on the modified files and format the output for GitHub annotations
-          xargs -a .tmp/modified-files -r darglint2 -m '::error file={path},line={line},endline=,col=1::[darglint2] {msg_id}: {obj}: {msg}' || retcode=1
 
           exit ${retcode:-0}
 
