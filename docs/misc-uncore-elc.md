@@ -42,8 +42,8 @@ to this article.
 
 # Terminology
 
-- **Uncore**: The non-core components of a processors, such as the fabric between cores, memory
-  controllers, last-level cache (LLC), PCIe/CXL controllers.
+- **Uncore**: Processor components excluding the cores themselves, such as the inter-core fabric,
+  memory controllers, last-level cache (LLC), and PCIe/CXL controllers.
 - **Uncore Frequency Scaling (UFS)**: Intel's algorithm for dynamically adjusting uncore frequency
   based on workload demands.
 - **Efficiency Latency Control (ELC)**: A UFS feature for configurable trade-offs between energy
