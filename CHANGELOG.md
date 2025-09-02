@@ -6,8 +6,11 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
 ### Added
+ - Uncore ELC options and user document.
 ### Removed
+ - Remove the '--max-eff-freq' option.
 ### Changed
+ - Separate out uncore options from 'pepc pstates' to 'pepc uncore'.
 
 ## [1.5.44] - 2025-08-27
 ### Fixed

@@ -46,7 +46,6 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         - set_max_freq(freq, cpus): Set the maximum frequency for specified CPUs.
         - get_base_freq(cpus): Yield (cpu, value) pairs for the base frequency.
         - get_min_oper_freq(cpus): Yield (cpu, value) pairs for the minimum operating frequency.
-        - get_max_eff_freq(cpus): Yield (cpu, value) pairs for the maximum efficiency frequency.
         - get_max_turbo_freq(cpus): Yield (cpu, value) pairs for the maximum turbo frequency.
         - get_hwp(cpus): Yield (cpu, value) pairs indicating HWP on/off status.
 
@@ -660,34 +659,6 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         """
 
         yield from self._get_platinfo_freq("min_oper_ratio", cpus)
-
-    def get_max_eff_freq(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
-        """
-        Retrieve and yield the maximum efficiency frequency for specified CPUs.
-
-        Args:
-            cpus: CPU numbers to get the maximum efficiency frequency for.
-
-        Yields:
-            Tuple of (cpu, frequency), where 'cpu' is the CPU number and 'frequency' is the maximum
-            efficiency frequency in Hz.
-
-        Raises:
-            ErrorNotSupported: If MSRs are not supported.
-        """
-
-        yielded = False
-        try:
-            for cpu, freq in self._get_hwpcap_freq("eff_perf", cpus):
-                yielded = True
-                yield cpu, freq
-        except ErrorNotSupported:
-            if yielded:
-                raise
-        else:
-            return
-
-        yield from self._get_platinfo_freq("max_eff_ratio", cpus)
 
     def _get_max_turbo_freq_trl(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """

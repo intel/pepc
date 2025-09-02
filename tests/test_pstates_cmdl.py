@@ -124,15 +124,6 @@ def _get_good_config_freq_opts(params: PropsCmdlTestParamsTypedDict,
                         "--min-freq min",
                         "--max-freq min"]
 
-            # Note, on some platforms (e.g., ADL) max. efficiency frequency may be higher than base
-            # frequency.
-            if pobj.prop_is_supported_cpu("max_eff_freq", cpu):
-                yield from ["--max-freq lfm",
-                            "--max-freq eff",
-                            "--min-freq lfm",
-                            "--min-freq eff",
-                            "--min-freq min"]
-
             if pobj.prop_is_supported_cpu("min_freq", cpu) and \
                pobj.prop_is_supported_cpu("max_freq", cpu):
                 yield from ["--max-freq max",

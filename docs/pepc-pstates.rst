@@ -201,11 +201,6 @@ Use target CPU specification options to define a subset of CPUs, cores, dies, or
    lowest_perf: '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/lowest_perf',
    nominal_perf: '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/nominal_perf'.
 
-**--max-eff-freq**
-   Retrieve the maximum CPU efficiency frequency, also known as LFM (Low Frequency Mode) or Pn.
-   Mechanism: 'msr', reads MSR_HWP_CAPABILITIES (0x771), bits 23:16 on if CPU hardware power
-   management is enabled, otherwise reads MSR_PLATFORM_INFO (0xCE), bits 47:40.
-
 **--turbo**
    Check if turbo is enabled or disabled. When enabled, CPUs can run at frequencies above the base
    frequency if allowed by the OS and thermal conditions. Reads the sysfs file based on the CPU
@@ -302,10 +297,6 @@ packages.
    **base**, **hfm**, **P1**
       Base CPU frequency (see '--base-freq'). Regardless of the '--mechanisms' option, all available
       mechanisms are tried to resolve these special values to the actual base frequency.
-   **eff**, **lfm**, **Pn**
-      Maximum CPU efficiency frequency (see '--max-eff-freq'). Regardless of the '--mechanisms'
-      option, the 'msr' mechanism is always used to resolve these special values to the actual
-      maximum CPU efficiency frequency.
    **Pm**
       Minimum CPU operating frequency (see '--min-oper-freq'). Regardless of the '--mechanisms'
       option, the 'msr' mechanism is always used to resolve these special values to the actual

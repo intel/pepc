@@ -233,27 +233,6 @@ class PStates(_PropsClassBase.PropsClassBase):
         for cpu, val, _ in self._get_epbobj().get_vals(cpus=cpus, mnames=(mname,)):
             yield cpu, val
 
-    def _get_max_eff_freq(self,
-                          cpus: AbsNumsType,
-                          mname: MechanismNameType) -> Generator[tuple[int, int], None, None]:
-        """
-        Retrieve and yield the maximum efficiency frequency for the specified CPUs.
-
-        Args:
-            cpus: CPU numbers to retrieve maximum efficiency frequency for.
-            mname: Mechanism name to use for retrieving maximum efficiency frequency.
-
-        Yields:
-            Tuple of (cpu, val), where 'cpu' is the CPU number and 'val' is its maximum efficiency
-            frequency.
-        """
-
-        if mname != "msr":
-            raise Error(f"BUG: Unexpected mechanism '{mname}'")
-
-        cpufreq_obj = self._get_cpufreq_msr_obj()
-        yield from cpufreq_obj.get_max_eff_freq(cpus=cpus)
-
     def _get_hwp(self,
                  cpus: AbsNumsType,
                  mname: MechanismNameType) -> Generator[tuple[int, bool], None, None]:
@@ -811,8 +790,6 @@ class PStates(_PropsClassBase.PropsClassBase):
             yield from self._get_epp(cpus, mname)
         elif pname == "epb":
             yield from self._get_epb(cpus, mname)
-        elif pname == "max_eff_freq":
-            yield from self._get_max_eff_freq(cpus, mname)
         elif pname == "hwp":
             yield from self._get_hwp(cpus, mname)
         elif pname == "min_oper_freq":
@@ -1014,9 +991,6 @@ class PStates(_PropsClassBase.PropsClassBase):
             yield from cast(Generator[tuple[int, int], None, None],
                             self._get_prop_cpus_mnames("base_freq", cpus,
                                                        self._props["base_freq"]["mnames"]))
-        elif freq in {"eff", "lfm", "Pn"}:
-            yield from cast(Generator[tuple[int, int], None, None],
-                            self._get_prop_cpus_mnames("max_eff_freq", cpus, ("msr",)))
         elif freq == "Pm":
             yield from cast(Generator[tuple[int, int], None, None],
                             self._get_prop_cpus_mnames("min_oper_freq", cpus, ("msr",)))
