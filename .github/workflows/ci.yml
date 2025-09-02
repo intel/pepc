@@ -59,7 +59,8 @@ jobs:
 
           pip install --upgrade .
           pip install pytest pylint mypy ruff pydoclint coverage \
-            types-PyYAML types-paramiko types-colorama
+            types-PyYAML types-paramiko types-colorama \
+            pandas-stubs plotly-stubs
 
       - name: "Find modified files"
         run: |
