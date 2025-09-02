@@ -1039,8 +1039,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         """
         Retrieve and yield property values for the specified dies using the specified mechanism.
 
-        If the property is not supported for a die, yield None the value. Raise 'ErrorNotSupported'
-        if the property is not supported for any die in 'dies'.
+        If the property is not supported for a die, yield None as the value. Raise
+        'ErrorNotSupported' if the property is not supported for any die in 'dies'.
 
         Args:
             pname: Name of the property to retrieve.
@@ -1058,6 +1058,9 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         for package, pkg_dies in dies.items():
             for die in pkg_dies:
                 cpus = self._cpuinfo.dies_to_cpus(dies=(die,), packages=(package,))
+                if not cpus:
+                    raise Error(f"Cannot get property '{pname}': no CPUs in package {package}, "
+                                f"die {die}")
                 val = self._get_cpu_prop_mnames(pname, cpus[0], (mname,))
                 yield package, die, val
 
@@ -1141,8 +1144,9 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         """
         Retrieve and yield property values for the specified dies using the specified mechanisms.
 
-        If the property is not supported for a die, yield None the value. Raise 'ErrorNotSupported'
-        if the property is not supported for any die in 'dies' and any mechanism.
+        If the property is not supported for a die, yield None the as the value. Raise
+        'ErrorNotSupported' if the property is not supported for any die in 'dies' and any
+        mechanism.
 
         Args:
             pname: Name of the property to retrieve.
@@ -1825,7 +1829,11 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         cpus = []
         for package, pkg_dies in dies.items():
             for die in pkg_dies:
-                cpus += self._cpuinfo.dies_to_cpus(dies=(die,), packages=(package,))
+                die_cpus = self._cpuinfo.dies_to_cpus(dies=(die,), packages=(package,))
+                if not die_cpus:
+                    raise Error(f"Cannot get property '{pname}': no CPUs in package {package}, "
+                                f"die {die}")
+                cpus += die_cpus
 
         iosname = self._props[pname]["iosname"]
         if iosname is None:
