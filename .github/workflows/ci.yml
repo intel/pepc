@@ -85,7 +85,7 @@ jobs:
 
       - name: "Run mypy for type checking on modified files"
         run: |
-          xargs -a .tmp/modified-files -r mypy > .tmp/mypy.results || retcode=1
+          xargs -a .tmp/modified-files -r mypy --follow-imports=silent -- > .tmp/mypy.results || retcode=1
 
           # Format the mypy output for GitHub annotations
           sed < .tmp/mypy.results -r -n \
