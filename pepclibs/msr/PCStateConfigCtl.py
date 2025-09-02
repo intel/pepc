@@ -15,14 +15,12 @@ present on many Intel platforms.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
-from typing import cast
 from pepclibs import CPUModels
 from pepclibs.helperlibs import Logging
-from pepclibs.helperlibs.Exceptions import Error
 from pepclibs.msr import _FeaturedMSR
 
 if typing.TYPE_CHECKING:
-    from typing import TypedDict, Sequence, Literal, Generator
+    from typing import TypedDict
     from pepclibs import CPUInfo
     from pepclibs.msr import MSR
     from pepclibs.msr ._FeaturedMSR import PartialFeatureTypedDict
@@ -284,76 +282,6 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
             finfo["iosname"] = iosname
 
         super().__init__(cpuinfo, pman=pman, msr=msr)
-
-    def _read_pkg_cstate_limit(self, cpus: Sequence[int] | Literal["all"] = "all") -> \
-                                                            Generator[tuple[int, str], None, None]:
-        """
-        Retrieve the package C-state limit for the specified CPUs.
-
-        Args:
-            cpus: CPU numbers to read the package C-state limit from. If 'cpus' is "all", read the
-                  limits from all CPUs in the system.
-
-        Yields:
-            Tuple of (cpu, limit), where 'cpu' is the CPU number and 'limit' is the package C-state
-            limit name in lowercase.
-        """
-
-        finfo = self._features["pkg_cstate_limit"]
-
-        for cpu, code in self._msr.read_bits(self.regaddr, finfo["bits"], cpus=cpus,
-                                             iosname=finfo["iosname"]):
-            if code not in finfo["rvals"]:
-                # No exact match. The limit is the closest lower known number. For example, if the
-                # known numbers are 0(PC0), 2(PC6), and 7(unlimited), and 'code' is 3, then the
-                # limit is PC6.
-                #
-                # On some platforms code 0 is "unlimited" (e.g., Denverton). Do not resolve unknown
-                # numbers to "unlimited".
-                for cde in sorted(finfo["rvals"], reverse=True):
-                    if cde <= code and finfo["rvals"][cde] != "unlimited":
-                        limit = finfo["rvals"][cde]
-                        break
-                else:
-                    known_codes = [f"{cde} ({lmt})" for cde, lmt in finfo["rvals"].items()]
-                    _LOG.warn_once("Unexpected package C-state limit code '%d' read from '%s' MSR "
-                                   "(%#x) on CPU %d%s. Known codes are: %s", code, self.regname,
-                                   self.regaddr, cpu, self._pman.hostmsg, ", ".join(known_codes))
-                    limit = str(code)
-            else:
-                limit = finfo["rvals"][code]
-
-            yield (cpu, cast(str, limit))
-
-    def _write_pkg_cstate_limit(self, limit: str, cpus: Sequence[int] | Literal["all"] = "all"):
-        """
-        Set the package C-state limit for the specified CPUs.
-
-        Args:
-            limit: The package C-state limit to set.
-            cpus: CPU numbers to set the package C-state limit for. If 'cpus' is "all", set the
-                  limit for all CPUs in the system.
-        """
-
-        finfo = self._features["pkg_cstate_limit"]
-        regvals: dict[int, list[int]] = {}
-
-        for cpu, regval in self._msr.read(self.regaddr, cpus=cpus, iosname=finfo["iosname"]):
-            if self._msr.get_bits(regval, self._features["pkg_cstate_limit_lock"]["bits"]):
-                raise Error(f"Cannot set package C-state limit{self._pman.hostmsg} for CPU "
-                            f"'{cpu}', MSR {MSR_PKG_CST_CONFIG_CONTROL:#x} is locked. Sometimes, "
-                            f"depending on the vendor, there is a BIOS knob to unlock it")
-
-            new_regval = self._msr.set_bits(regval, finfo["bits"], limit)
-            if regval == new_regval:
-                continue
-
-            if new_regval not in regvals:
-                regvals[new_regval] = []
-            regvals[new_regval].append(cpu)
-
-        for regval, regval_cpus in regvals.items():
-            self._msr.write(self.regaddr, regval, regval_cpus, iosname=finfo["iosname"])
 
     def _init_features_dict_pkg_cstate_limit(self):
         """
