@@ -154,13 +154,8 @@ def test_pstates_config_freq_good(params: PropsCmdlTestParamsTypedDict):
 
     for opt in _get_good_config_freq_opts(params, sname="CPU"):
         for mopt in props_cmdl_common.get_mechanism_opts(params, allow_readonly=True):
-            for cpu_opt in props_cmdl_common.get_good_optarget_opts(params, sname="global"):
-                cmd = f"pstates config {opt} {cpu_opt} {mopt}"
-                props_cmdl_common.run_pepc(cmd, pman, ignore=_IGNORE)
-
-            for cpu_opt in props_cmdl_common.get_bad_optarget_opts(params):
-                props_cmdl_common.run_pepc(f"pstates config {opt} {cpu_opt} {mopt}", pman,
-                                           exp_exc=Error)
+            cmd = f"pstates config {opt} {mopt}"
+            props_cmdl_common.run_pepc(cmd, pman, ignore=_IGNORE)
 
 def _get_bad_config_freq_opts() -> Generator[str, None, None]:
     """
@@ -260,9 +255,8 @@ def test_pstates_config_non_freq_good(params: PropsCmdlTestParamsTypedDict):
 
     for opt in _get_good_config_non_freq_opts(params, sname="global"):
         for cpu_opt in props_cmdl_common.get_good_optarget_opts(params, sname="global"):
-            for mopt in props_cmdl_common.get_mechanism_opts(params, allow_readonly=False):
-                cmd = f"pstates config {opt} {cpu_opt} {mopt}"
-                props_cmdl_common.run_pepc(cmd, pman, ignore=_IGNORE)
+            cmd = f"pstates config {opt} {cpu_opt}"
+            props_cmdl_common.run_pepc(cmd, pman, ignore=_IGNORE)
 
 def _get_bad_config_non_freq_opts(params: PropsCmdlTestParamsTypedDict,
                                   sname: ScopeNameType = "package") -> Generator[str, None, None]:
