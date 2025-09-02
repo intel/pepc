@@ -18,8 +18,8 @@ Notes:
       disabled.
     - Artem Bityutskiy verified many Atom-based server platforms and Client platforms - the C-state
       pre-wake bit is a "no-op" on those platforms. The 'wult' tool showed no difference in CC6
-      exit latency when the C-state pre-wake bit was toggled. The verified platforms include: Knights
-      Landing, Snow Ridge, Denverton.
+      exit latency when the C-state pre-wake bit was toggled. The verified platforms include:
+      Knights Landing, Snow Ridge, Denverton.
     - Artem Bityutskiy verified that the C-state pre-wake feature is a "no-op" on many client
       platforms, including Alder Lake, Raptor Lake, Meteor Lake, Arrow Lake, and Lunar Lake.
     - On some platforms BIOS may have a "C-state pre-wake" option, but the platform does not really
@@ -28,10 +28,17 @@ Notes:
       Otherwise, the feature is reported as "not supported".
 """
 
-from pepclibs import CPUModels, CPUInfo
-from pepclibs.msr import _FeaturedMSR, MSR
-from pepclibs.msr ._FeaturedMSR import PartialFeatureTypedDict
-from pepclibs.helperlibs.ProcessManager import ProcessManagerType
+from __future__ import annotations # Remove when switching to Python 3.10+.
+
+import typing
+from pepclibs import CPUModels
+from pepclibs.msr import _FeaturedMSR
+
+if typing.TYPE_CHECKING:
+    from pepclibs import CPUInfo
+    from pepclibs.msr import MSR
+    from pepclibs.msr ._FeaturedMSR import PartialFeatureTypedDict
+    from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
 # The Power Control Model Specific Register.
 MSR_POWER_CTL = 0x1FC

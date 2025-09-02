@@ -13,10 +13,16 @@ platforms.
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
-from pepclibs import CPUModels, CPUInfo
-from pepclibs.msr import _FeaturedMSR, MSR
-from pepclibs.msr ._FeaturedMSR import PartialFeatureTypedDict
-from pepclibs.helperlibs.ProcessManager import ProcessManagerType
+import typing
+from pepclibs import CPUModels
+from pepclibs.msr import _FeaturedMSR
+
+if typing.TYPE_CHECKING:
+    from pepclibs import CPUInfo
+    from pepclibs.msr import MSR
+    from pepclibs.msr ._FeaturedMSR import PartialFeatureTypedDict
+    from pepclibs.helperlibs.ProcessManager import ProcessManagerType
+    from pepclibs.CPUInfoTypes import ScopeNameType
 
 # The Energy Performance Bias Model Specific Register.
 MSR_ENERGY_PERF_BIAS = 0x1B0
@@ -71,6 +77,7 @@ class EnergyPerfBias(_FeaturedMSR.FeaturedMSR):
         self._partial_features = FEATURES
         vfm = cpuinfo.info["vfm"]
 
+        sname: ScopeNameType
         if vfm in _CORE_SCOPE_VFMS:
             sname = "core"
         elif vfm in _PACKAGE_SCOPE_VFMS:

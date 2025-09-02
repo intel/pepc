@@ -12,10 +12,15 @@ Provide an API for MSR 0x772 (MSR_HWP_REQUEST_PKG), an architectural MSR availab
 platforms.
 """
 
+from __future__ import annotations # Remove when switching to Python 3.10+.
+
+import typing
 from pepclibs import CPUInfo
 from pepclibs.msr import _FeaturedMSR, PMEnable, MSR
-from pepclibs.msr ._FeaturedMSR import PartialFeatureTypedDict
-from pepclibs.helperlibs.ProcessManager import ProcessManagerType
+
+if typing.TYPE_CHECKING:
+    from pepclibs.msr ._FeaturedMSR import PartialFeatureTypedDict
+    from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
 # The Hardware Power Management Request Package Model Specific Register.
 MSR_HWP_REQUEST_PKG = 0x772

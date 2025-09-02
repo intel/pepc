@@ -12,10 +12,16 @@ register to communicate software-defined Latency Tolerance Report (LTR) requirem
 PCIe LTR, from the operating system to the CPU's power management unit.
 """
 
-from pepclibs import CPUInfo
-from pepclibs.msr import _FeaturedMSR, PowerCtl, MSR
+from __future__ import annotations # Remove when switching to Python 3.10+.
+
+import typing
+from pepclibs.msr import _FeaturedMSR, PowerCtl
 from pepclibs.msr ._FeaturedMSR import PartialFeatureTypedDict
-from pepclibs.helperlibs.ProcessManager import ProcessManagerType
+
+if typing.TYPE_CHECKING:
+    from pepclibs import CPUInfo
+    from pepclibs.msr import MSR
+    from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
 # The Software LTR Override Model Specific Register.
 MSR_SW_LTR_OVRD = 0xA02

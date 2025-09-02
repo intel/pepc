@@ -10,12 +10,17 @@
 Provide a capability to read and write CPU Model Specific Registers.
 """
 
-from typing import Literal, Generator, Sequence
+from __future__ import annotations # Remove when switching to Python 3.10+.
+
+import typing
 from pathlib import Path
 from pepclibs.helperlibs import ClassHelpers, Trivial
 from pepclibs.helperlibs import Logging, LocalProcessManager, KernelModule, FSHelpers
-from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 from pepclibs.helperlibs.Exceptions import Error
+
+if typing.TYPE_CHECKING:
+    from typing import Literal, Generator, Sequence
+    from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 

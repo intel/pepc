@@ -20,109 +20,115 @@ Terminology:
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
+import typing
 import copy
-from typing import TypedDict, Sequence, Literal, Union, Generator, Protocol, cast
-from pepclibs import CPUModels, CPUInfo
+from typing import cast
+from pepclibs import CPUModels
 from pepclibs.helperlibs import Logging, LocalProcessManager, ClassHelpers, Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
-from pepclibs.helperlibs.ProcessManager import ProcessManagerType
-from pepclibs.CPUInfoTypes import ScopeNameType
 from pepclibs.msr import MSR
 
+if typing.TYPE_CHECKING:
+    from typing import TypedDict, Sequence, Literal, Union, Generator, Protocol
+    from pepclibs import CPUInfo
+    from pepclibs.helperlibs.ProcessManager import ProcessManagerType
+    from pepclibs.CPUInfoTypes import ScopeNameType
+
+    # The type of the feature value.
+    FeatureValueType = Union[int, float, bool, str]
+
+    _FeatureValsType = Union[dict[int, int], dict[float, int], dict[bool, int], dict[str, int]]
+    _FeatureReversValsType = Union[dict[int, int], dict[int, float], dict[int, bool],
+                                   dict[int, str]]
+
+    class FeatureTypedDict(TypedDict, total=False):
+        """
+        Typed dictionary for MSR feature information.
+
+        Keys:
+            - name: The feature name.
+            - sname: The functional scope name of the feature.
+            - iosname: The I/O scope name for the feature.
+            - help: A short description of the feature.
+            - type: The feature type (e.g., "int", "str", etc.).
+            - writable: Whether the feature can be modified (default is 'True').
+            - cpuflags: A set of CPU flags that must be present for the feature to be supported.
+            - vfms: A list of valid VFM values for the feature.
+            - vals: A dictionary mapping user-friendly names to MSR values.
+            - bits: The MSR bits range for the feature.
+        """
+
+        name: str
+        sname: ScopeNameType
+        iosname: ScopeNameType
+        help: str
+        type: str
+        writable: bool
+        cpuflags: set[str]
+        vfms: set[int]
+        vals: _FeatureValsType
+        bits: tuple[int, int]
+
+    class _ReadFeatureMethodType(Protocol):
+        """
+        The type for a feature get method.
+        """
+
+        def __call__(self, cpus: Sequence[int] | Literal["all"] = "all") -> \
+                                        Generator[tuple[int, FeatureValueType], None, None]: ...
+
+    class _WriteFeatureMethodType(Protocol):
+        """
+        The type for a feature set method.
+        """
+
+        def __call__(self, val: FeatureValueType, cpus: Sequence[int] | Literal["all"] = "all"): ...
+
+    class PartialFeatureTypedDict(TypedDict, total=False):
+        """
+        Partially initialized MSR feature information. May include 'None' values for some keys.
+
+        Keys:
+            - name: The feature name.
+            - sname: The functional scope name of the feature.
+            - iosname: The I/O scope name for the feature.
+            - help: A short description of the feature.
+            - type: The feature type (e.g., "int", "str", etc.).
+            - writable: Whether the feature can be modified (default is 'True').
+            - cpuflags: A set of CPU flags that must be present for the feature to be supported.
+            - vfms: A list of valid VFM values for the feature.
+            - vals: A dictionary mapping user-friendly names to MSR values.
+            - bits: The MSR bits range for the feature.
+        """
+
+        name: str
+        sname: ScopeNameType | None
+        iosname: ScopeNameType | None
+        help: str
+        type: str
+        writable: bool
+        cpuflags: set[str]
+        vfms: set[int]
+        vals: _FeatureValsType | None
+        bits: tuple[int, int] | None
+
+    class _FeatureTypedDict(FeatureTypedDict, total=False):
+        """
+        Internal version of feature information dictionary.
+
+        Keys:
+            - supported: A dictionary indicating whether the feature is supported on each CPU.
+            - rvals: A dictionary mapping MSR values to user-friendly names.
+            - vals_nocase: A case-insensitive version of 'vals'.
+            - rvals_nocase: A case-insensitive version of 'rvals'.
+        """
+
+        supported: dict[int, bool]
+        rvals: dict[int, FeatureValueType]
+        vals_nocase: dict[str, int]
+        rvals_nocase: dict[int, str]
+
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
-
-# The type of the feature value.
-FeatureValueType = Union[int, float, bool, str]
-
-_FeatureValsType = Union[dict[int, int], dict[float, int], dict[bool, int] | dict[str, int]]
-_FeatureReversValsType = Union[dict[int, int], dict[int, float], dict[int, bool] | dict[int, str]]
-
-class FeatureTypedDict(TypedDict, total=False):
-    """
-    Typed dictionary for MSR feature information.
-
-    Keys:
-        - name: The feature name.
-        - sname: The functional scope name of the feature.
-        - iosname: The I/O scope name for the feature.
-        - help: A short description of the feature.
-        - type: The feature type (e.g., "int", "str", etc.).
-        - writable: Whether the feature can be modified (default is 'True').
-        - cpuflags: A set of CPU flags that must be present for the feature to be supported.
-        - vfms: A list of valid VFM values for the feature.
-        - vals: A dictionary mapping user-friendly names to MSR values.
-        - bits: The MSR bits range for the feature.
-    """
-
-    name: str
-    sname: ScopeNameType
-    iosname: ScopeNameType
-    help: str
-    type: str
-    writable: bool
-    cpuflags: set[str]
-    vfms: set[int]
-    vals: _FeatureValsType
-    bits: tuple[int, int]
-
-class _ReadFeatureMethodType(Protocol):
-    """
-    The type for a feature get method.
-    """
-
-    def __call__(self, cpus: Sequence[int] | Literal["all"] = "all") -> \
-                                   Generator[tuple[int, FeatureValueType], None, None]: ...
-
-class _WriteFeatureMethodType(Protocol):
-    """
-    The type for a feature set method.
-    """
-
-    def __call__(self, val: FeatureValueType, cpus: Sequence[int] | Literal["all"] = "all"): ...
-
-class PartialFeatureTypedDict(TypedDict, total=False):
-    """
-    Partially initialized MSR feature information. May include 'None' values for some keys.
-
-    Keys:
-        - name: The feature name.
-        - sname: The functional scope name of the feature.
-        - iosname: The I/O scope name for the feature.
-        - help: A short description of the feature.
-        - type: The feature type (e.g., "int", "str", etc.).
-        - writable: Whether the feature can be modified (default is 'True').
-        - cpuflags: A set of CPU flags that must be present for the feature to be supported.
-        - vfms: A list of valid VFM values for the feature.
-        - vals: A dictionary mapping user-friendly names to MSR values.
-        - bits: The MSR bits range for the feature.
-    """
-
-    name: str
-    sname: ScopeNameType | None
-    iosname: ScopeNameType | None
-    help: str
-    type: str
-    writable: bool
-    cpuflags: set[str]
-    vfms: set[int]
-    vals: _FeatureValsType | None
-    bits: tuple[int, int] | None
-
-class _FeatureTypedDict(FeatureTypedDict, total=False):
-    """
-    Internal version of feature information dictionary.
-
-    Keys:
-        - supported: A dictionary indicating whether the feature is supported on each CPU.
-        - rvals: A dictionary mapping MSR values to user-friendly names.
-        - vals_nocase: A case-insensitive version of 'vals'.
-        - rvals_nocase: A case-insensitive version of 'rvals'.
-    """
-
-    supported: dict[int, bool]
-    rvals: dict[int, FeatureValueType]
-    vals_nocase: dict[str, int]
-    rvals_nocase: dict[int, str]
 
 def get_clx_ap_adjusted_msr_scope(cpuinfo: CPUInfo.CPUInfo) -> Literal["die", "package"]:
     """
@@ -216,7 +222,12 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
         else:
             self._msr = MSR.MSR(self._cpuinfo, pman=self._pman)
 
-        self._features = cast(dict[str, _FeatureTypedDict], copy.deepcopy(self._partial_features))
+        fdict = copy.deepcopy(self._partial_features)
+        if typing.TYPE_CHECKING:
+            self._features = cast(dict[str, _FeatureTypedDict], fdict)
+        else:
+            self._features = fdict
+
         self._init_features_dict()
 
     def close(self):
@@ -307,7 +318,10 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
                 del finfo["vals_nocase"]
                 del finfo["rvals_nocase"]
 
-        self.features = cast(dict[str, FeatureTypedDict], features_copy)
+        if typing.TYPE_CHECKING:
+            self.features = cast(dict[str, FeatureTypedDict], features_copy)
+        else:
+            self.features = features_copy
 
     def _init_features_dict(self):
         """

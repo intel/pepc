@@ -12,10 +12,16 @@ retrieve either turbo ratio information or turbo ratio group encoding. In the la
 it as 'MSR_TURBO_GROUP_CORECNT' (for Atom CPUs) or 'MSR_TURBO_RATIO_LIMIT_CORES' (for big cores).
 """
 
-from pepclibs import CPUInfo
-from pepclibs.msr import _FeaturedMSR, TurboRatioLimit, MSR
-from pepclibs.msr ._FeaturedMSR import PartialFeatureTypedDict
-from pepclibs.helperlibs.ProcessManager import ProcessManagerType
+from __future__ import annotations # Remove when switching to Python 3.10+.
+
+import typing
+from pepclibs.msr import _FeaturedMSR, TurboRatioLimit
+
+if typing.TYPE_CHECKING:
+    from pepclibs import CPUInfo
+    from pepclibs.msr import MSR
+    from pepclibs.msr ._FeaturedMSR import PartialFeatureTypedDict
+    from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
 # The Turbo Ratio Limit 1 Model Specific Register.
 MSR_TURBO_RATIO_LIMIT1 = 0x1AE

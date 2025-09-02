@@ -14,24 +14,30 @@ on certain Intel platforms.
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
-from typing import TypedDict
-from pepclibs import CPUModels, CPUInfo
-from pepclibs.msr import _FeaturedMSR, MSR
-from pepclibs.msr ._FeaturedMSR import PartialFeatureTypedDict
-from pepclibs.helperlibs.ProcessManager import ProcessManagerType
+import typing
+from pepclibs import CPUModels
+from pepclibs.msr import _FeaturedMSR
 
-class _FSBCodesTypedDict(TypedDict, total=False):
-    """
-    A dictionary that describes the FSB codes for a specific CPU model.
+if typing.TYPE_CHECKING:
+    from typing import TypedDict
+    from pepclibs import CPUInfo
+    from pepclibs.msr import MSR
+    from pepclibs.CPUInfoTypes import ScopeNameType
+    from pepclibs.msr ._FeaturedMSR import PartialFeatureTypedDict
+    from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
-    Attributes:
-        codes: A dictionary mapping bus clock speeds (in megahertz) to their corresponding
-               FSB codes.
-        bits: A tuple containing the bit positions for the FSB code in the MSR register.
-    """
+    class _FSBCodesTypedDict(TypedDict, total=False):
+        """
+        A dictionary that describes the FSB codes for a specific CPU model.
 
-    codes: dict[float, int]
-    bits: tuple[int, int]
+        Attributes:
+            codes: A dictionary mapping bus clock speeds (in megahertz) to their corresponding
+                   FSB codes.
+            bits: A tuple containing the bit positions for the FSB code in the MSR register.
+        """
+
+        codes: dict[float, int]
+        bits: tuple[int, int]
 
 # The Scalable Bus Speed Model Specific Register.
 MSR_FSB_FREQ = 0xCD
@@ -142,6 +148,7 @@ class FSBFreq(_FeaturedMSR.FeaturedMSR):
         self._partial_features = FEATURES
         vfm = cpuinfo.info["vfm"]
 
+        sname: ScopeNameType
         if vfm in _MODULE_SCOPE_VFMS:
             sname = "module"
         else:

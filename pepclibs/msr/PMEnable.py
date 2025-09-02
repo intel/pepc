@@ -11,10 +11,16 @@ Provide an API for accessing MSR 0x770 (MSR_PM_ENABLE), an architectural MSR pre
 platforms.
 """
 
-from pepclibs import CPUInfo
-from pepclibs.msr import _FeaturedMSR, MSR
-from pepclibs.msr ._FeaturedMSR import PartialFeatureTypedDict
-from pepclibs.helperlibs.ProcessManager import ProcessManagerType
+from __future__ import annotations # Remove when switching to Python 3.10+.
+
+import typing
+from pepclibs.msr import _FeaturedMSR
+
+if typing.TYPE_CHECKING:
+    from pepclibs import CPUInfo
+    from pepclibs.msr import MSR
+    from pepclibs.msr ._FeaturedMSR import PartialFeatureTypedDict
+    from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
 # The Power Management Enable Model Specific Register.
 MSR_PM_ENABLE = 0x770

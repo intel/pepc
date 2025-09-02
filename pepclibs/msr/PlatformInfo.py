@@ -11,10 +11,17 @@ Provide an API for MSR 0xCE (MSR_PLATFORM_INFO), a model-specific register prese
 platforms.
 """
 
-from pepclibs import CPUModels, CPUInfo
-from pepclibs.msr import _FeaturedMSR, MSR
-from pepclibs.msr ._FeaturedMSR import PartialFeatureTypedDict
-from pepclibs.helperlibs.ProcessManager import ProcessManagerType
+from __future__ import annotations # Remove when switching to Python 3.10+.
+
+import typing
+from pepclibs import CPUModels
+from pepclibs.msr import _FeaturedMSR
+
+if typing.TYPE_CHECKING:
+    from pepclibs import CPUInfo
+    from pepclibs.msr import MSR
+    from pepclibs.msr ._FeaturedMSR import PartialFeatureTypedDict
+    from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
 # The Power Control Model Specific Register.
 MSR_PLATFORM_INFO = 0xCE
