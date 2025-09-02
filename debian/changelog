@@ -558,7 +558,7 @@ pepc (1.4.14) unstable; urgency=low
 
 pepc (1.4.13) unstable; urgency=low
 
-  * Initial (may be not fully correct) Sierra Forrest platform support.
+  * Initial (may be not fully correct) Sierra Forest platform support.
 
  -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Fri, 21 Apr 2023 00:00:00 +0200
 

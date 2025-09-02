@@ -435,7 +435,7 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [1.4.13] - 2023-04-21
 ### Added
- - Initial (may be not fully correct) Sierra Forrest platform support.
+ - Initial (may be not fully correct) Sierra Forest platform support.
 
 ## [1.4.12] - 2023-04-17
 ### Fixed
