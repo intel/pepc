@@ -72,22 +72,23 @@ jobs:
             from="refs/remotes/origin/${{ github.event.repository.default_branch }}" ||
             from="${{ github.event.pull_request.base.sha }}"
 
-          touch /tmp/modified-files
+          mkdir -- .tmp
+          touch .tmp/modified-files
 
-          # Find modified files, filter for Python scripts, and save them to /tmp/modified-files
+          # Find modified files, filter for Python scripts, and save them to modified-files
           git diff-tree --diff-filter=d --no-commit-id --name-status -r "$from..HEAD" | \
             cut -f2- | xargs -r file -Ni -- | \
-            sed -n -e 's#: text/x-script.python;.*##p' > /tmp/modified-files;
+            sed -n -e 's#: text/x-script.python;.*##p' > .tmp/modified-files;
 
           echo "Files to check:"
-          cat /tmp/modified-files
+          cat .tmp/modified-files
 
       - name: "Run mypy for type checking on modified files"
         run: |
-          xargs -a /tmp/modified-files -r mypy > /tmp/mypy.results || retcode=1
+          xargs -a .tmp/modified-files -r mypy > .tmp/mypy.results || retcode=1
 
           # Format the mypy output for GitHub annotations
-          sed < /tmp/mypy.results -r -n \
+          sed < .tmp/mypy.results -r -n \
             -e 's#^(.*\.py):([0-9]+): ([^:]+): (.*)#::\3 file=\1,line=\2,endline=,col=1::[mypy] \4#' \
             -e 's#::note #::notice #' \
             -e '/^::/p'
@@ -96,20 +97,20 @@ jobs:
 
       - name: "Run pylint for code quality checks on modified files"
         run: |
-          xargs -a /tmp/modified-files -r pylint --output-format=github --score=no --jobs=0 --disable=similarities --no-docstring-rgx=^$ --verbose > /tmp/pylint.results || retcode=1
+          xargs -a .tmp/modified-files -r pylint --output-format=github --score=no --jobs=0 --disable=similarities --no-docstring-rgx=^$ --verbose > .tmp/pylint.results || retcode=1
 
           # Format the pylint output for GitHub annotations
-          sed < /tmp/pylint.results -r \
+          sed < .tmp/pylint.results -r \
             -e 's#^(::.*),title=(.*)::#\1::[pylint] \2: #'
 
           exit ${retcode:-0}
 
       - name: "Run ruff for fast linting on modified files"
         run: |
-          xargs -a /tmp/modified-files -r ruff check --output-format github > /tmp/ruff.results 2>&1 || retcode=1
+          xargs -a .tmp/modified-files -r ruff check --output-format github > .tmp/ruff.results 2>&1 || retcode=1
 
           # Format the ruff output for GitHub annotations
-          sed < /tmp/pylint.results -r \
+          sed < .tmp/pylint.results -r \
              -e 's#^(::.*),title=(.*)::#\1::[ruff] \2: #'
 
           exit ${retcode:-0}
@@ -117,16 +118,16 @@ jobs:
       - name: "Run darglint2 to check docstring compliance on modified files"
         run: |
           # Run darglint2 on the modified files and format the output for GitHub annotations
-          xargs -a /tmp/modified-files -r darglint2 -m '::error file={path},line={line},endline=,col=1::[darglint2] {msg_id}: {obj}: {msg}' || retcode=1
+          xargs -a .tmp/modified-files -r darglint2 -m '::error file={path},line={line},endline=,col=1::[darglint2] {msg_id}: {obj}: {msg}' || retcode=1
 
           exit ${retcode:-0}
 
       - name: "Run pydoclint to check for docstring style issues on modified files"
         run: |
-          xargs -a /tmp/modified-files -r pydoclint -sfn True > /tmp/pydoclint.results 2>&1 || retcode=1
+          xargs -a .tmp/modified-files -r pydoclint -sfn True > .tmp/pydoclint.results 2>&1 || retcode=1
 
           # Format the pydoclint output for GitHub annotations
-          sed < /tmp/pydoclint.results -r \
+          sed < .tmp/pydoclint.results -r \
             -e 's#^(.*\.py):([0-9]+): #::error file=\1,line=\2,endline=,col=1::[pydoclint] #'
 
           exit ${retcode:-0}
