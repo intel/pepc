@@ -12,6 +12,8 @@ uncore frequency on some older Intel platforms. Note, newer Intel platforms use 
 instead.
 """
 
+from __future__ import annotations # Remove when switching to Python 3.10+.
+
 from pepclibs import CPUModels, CPUInfo
 from pepclibs.msr import _FeaturedMSR, MSR
 from pepclibs.msr ._FeaturedMSR import PartialFeatureTypedDict

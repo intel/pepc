@@ -11,6 +11,8 @@ Provide API to MSR 0x1B1 (MSR_ENERGY_PERF_BIAS). This is an architectural MSR fo
 platforms.
 """
 
+from __future__ import annotations # Remove when switching to Python 3.10+.
+
 from pepclibs import CPUModels, CPUInfo
 from pepclibs.msr import _FeaturedMSR, MSR
 from pepclibs.msr ._FeaturedMSR import PartialFeatureTypedDict

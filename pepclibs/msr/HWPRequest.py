@@ -13,11 +13,17 @@ Provide an API for MSR 0x774 (MSR_HWP_REQUEST), an architectural MSR available o
 platforms.
 """
 
-from pepclibs import CPUInfo
-from pepclibs.msr import _FeaturedMSR, PMEnable, MSR
-from pepclibs.msr ._FeaturedMSR import PartialFeatureTypedDict
+from __future__ import annotations # Remove when switching to Python 3.10+.
+
+import typing
+from pepclibs.msr import _FeaturedMSR, PMEnable
 from pepclibs.helperlibs.Exceptions import ErrorNotSupported
-from pepclibs.helperlibs.ProcessManager import ProcessManagerType
+
+if typing.TYPE_CHECKING:
+    from pepclibs import CPUInfo
+    from pepclibs.msr import MSR
+    from pepclibs.msr._FeaturedMSR import PartialFeatureTypedDict
+    from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
 # The Hardware Power Management Request Model Specific Register.
 MSR_HWP_REQUEST = 0x774

@@ -12,6 +12,8 @@ Provide API for accessing MSR 0xCD (MSR_FSB_FREQ), which reports the bus clock s
 on certain Intel platforms.
 """
 
+from __future__ import annotations # Remove when switching to Python 3.10+.
+
 from typing import TypedDict
 from pepclibs import CPUModels, CPUInfo
 from pepclibs.msr import _FeaturedMSR, MSR

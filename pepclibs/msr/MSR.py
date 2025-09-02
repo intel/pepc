@@ -14,43 +14,47 @@ and transactions support.
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
+import typing
 import pprint
-from typing import Generator, TypedDict, Literal, Sequence
 from pathlib import Path
+from pepclibs import _PerCPUCache
 from pepclibs.helperlibs import EmulProcessManager, Logging
 from pepclibs.helperlibs import ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorVerifyFailed, ErrorNotFound
-from pepclibs.helperlibs.ProcessManager import ProcessManagerType
-from pepclibs.CPUInfoTypes import ScopeNameType
 from pepclibs.msr import _SimpleMSR
 from pepclibs.msr._SimpleMSR import _CPU_BYTEORDER
-from pepclibs import _PerCPUCache, CPUInfo
 
-class _TransactionBufferItemTypedDict(TypedDict, total=False):
-    """
-    The typed dictionary for a transaction buffer item.
+if typing.TYPE_CHECKING:
+    from typing import Generator, TypedDict, Literal, Sequence
+    from pepclibs import CPUInfo
+    from pepclibs.helperlibs.ProcessManager import ProcessManagerType
+    from pepclibs.CPUInfoTypes import ScopeNameType
 
-    Attributes:
-        regval: The MSR value to write.
-        verify: Whether to verify the written value.
-        iosname: The I/O scope name of the MSR (e.g. "package", "core").
-    """
+    class _TransactionBufferItemTypedDict(TypedDict, total=False):
+        """
+        The typed dictionary for a transaction buffer item.
 
-    regval: int
-    verify: bool
-    iosname: ScopeNameType
+        Attributes:
+            regval: The MSR value to write.
+            verify: Whether to verify the written value.
+            iosname: The I/O scope name of the MSR (e.g. "package", "core").
+        """
 
-class _TransactionVerifyItemTypedDict(TypedDict, total=False):
-    """
-    The typed dictionary for a transaction verification item.
+        regval: int
+        verify: bool
+        iosname: ScopeNameType
 
-    Attributes:
-        cpus: CPU numbers to verify the MSR on.
-        iosname: The I/O scope name of the MSR (e.g. "package", "core").
-    """
+    class _TransactionVerifyItemTypedDict(TypedDict, total=False):
+        """
+        The typed dictionary for a transaction verification item.
 
-    cpus: list[int]
-    iosname: ScopeNameType
+        Attributes:
+            cpus: CPU numbers to verify the MSR on.
+            iosname: The I/O scope name of the MSR (e.g. "package", "core").
+        """
+
+        cpus: list[int]
+        iosname: ScopeNameType
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 

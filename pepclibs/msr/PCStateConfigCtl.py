@@ -12,28 +12,37 @@ Provide an API for MSR 0xE2 (MSR_PKG_CST_CONFIG_CONTROL), a model-specific regis
 present on many Intel platforms.
 """
 
-from typing import TypedDict, Sequence, Literal, Generator, cast
-from pepclibs import CPUModels, CPUInfo
+from __future__ import annotations # Remove when switching to Python 3.10+.
+
+import typing
+from typing import cast
+from pepclibs import CPUModels
 from pepclibs.helperlibs import Logging
 from pepclibs.helperlibs.Exceptions import Error
-from pepclibs.msr import _FeaturedMSR, MSR
-from pepclibs.msr ._FeaturedMSR import PartialFeatureTypedDict
-from pepclibs.helperlibs.ProcessManager import ProcessManagerType
+from pepclibs.msr import _FeaturedMSR
+
+if typing.TYPE_CHECKING:
+    from typing import TypedDict, Sequence, Literal, Generator
+    from pepclibs import CPUInfo
+    from pepclibs.msr import MSR
+    from pepclibs.msr ._FeaturedMSR import PartialFeatureTypedDict
+    from pepclibs.helperlibs.ProcessManager import ProcessManagerType
+    from pepclibs.CPUInfoTypes import ScopeNameType
+
+    class _LimitsTypedDict(TypedDict, total=False):
+        """
+        The type of the package C-state limits dictionary.
+
+        Attributes:
+            codes: A dictionary mapping package C-state names to their codes.
+            bits: A tuple of two integers, the first is the start bit and the second is the end bit
+                  of the package C-state limit bits in MSR_PKG_CST_CONFIG_CONTROL.
+        """
+
+        codes: dict[str, int]
+        bits: tuple[int, int]
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
-
-class _LimitsTypedDict(TypedDict, total=False):
-    """
-    The type of the package C-state limits dictionary.
-
-    Attributes:
-        codes: A dictionary mapping package C-state names to their codes.
-        bits: A tuple of two integers, the first is the start bit and the second is the end bit
-              of the package C-state limit bits in MSR_PKG_CST_CONFIG_CONTROL.
-    """
-
-    codes: dict[str, int]
-    bits: tuple[int, int]
 
 # Package C-state configuration control Model Specific Register.
 MSR_PKG_CST_CONFIG_CONTROL = 0xE2
@@ -254,6 +263,7 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
 
         model = cpuinfo.info["vfm"]
 
+        iosname: ScopeNameType
         if model in _MODULE_IO_SCOPE_VFMS:
             iosname = "module"
         elif model in _PACKAGE_IO_SCOPE_VFMS:

@@ -441,7 +441,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
 
         return f"{self.regname} {self.regaddr:#x}{bits_str}"
 
-    def _normalize_feature_value(self, fname: str, val: FeatureValueType) -> FeatureValueType:
+    def _normalize_feature_value(self, fname: str, val: FeatureValueType) -> int:
         """
         Validate and normalize a feature value.
 
@@ -456,7 +456,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
         finfo = self._features[fname]
 
         if not finfo.get("vals"):
-            return val
+            return int(val)
 
         if finfo["type"] == "bool":
             # Treat boolean 'True' as "on", and 'False' as "off".
