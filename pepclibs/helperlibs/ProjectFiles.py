@@ -20,11 +20,11 @@ from pathlib import Path
 # TODO: remove the 'importlib_resources' import and use 'importlib.resources' instead when
 #       switching to Python 3.10+. This hack is needed only to support Python 3.9.
 try:
-    import importlib.resources
-    _importlib_resources_files = importlib.resources.files
-except ImportError:
     import importlib_resources
     _importlib_resources_files = importlib_resources.files
+except ImportError:
+    import importlib.resources
+    _importlib_resources_files = importlib.resources.files
 
 from pepclibs.helperlibs import ProcessManager, Logging
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound
