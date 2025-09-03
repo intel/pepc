@@ -2123,11 +2123,11 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         """Initialize the 'props' and 'mechanisms' dictionaries."""
 
         if typing.TYPE_CHECKING:
+            self.props = cast(dict[str, PropertyTypedDict], copy.deepcopy(props))
             self._props = cast(dict[str, _PropertyTypedDict], copy.deepcopy(props))
         else:
+            self.props = copy.deepcopy(props)
             self._props = copy.deepcopy(props)
-
-        self.props = props
 
         # Initialize the 'ioscope' to the same value as 'scope'. I/O scope may be different to the
         # scope for some MSR-based properties. Please, refer to 'MSR.py' for more information about
