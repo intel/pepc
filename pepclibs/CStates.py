@@ -27,9 +27,8 @@ from pepclibs.CPUIdle import ReqCStateInfoTypedDict, ReqCStateInfoValuesType, Re
 from pepclibs._PropsClassBase import ErrorUsePerCPU, ErrorTryAnotherMechanism
 
 if typing.TYPE_CHECKING:
-    from typing import Generator, Literal, Iterable, Final
+    from typing import Generator, Literal, Iterable
     from pepclibs.CPUInfoTypes import AbsNumsType
-    from pepclibs.PropsTypes import PropertyTypedDict
 
 class CStates(_PropsClassBase.PropsClassBase):
     """
