@@ -75,7 +75,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         self._cpufreq_cppc_obj: _CPUFreqCPPC.CPUFreqCPPC | None = None
         self._cpufreq_msr_obj: _CPUFreqMSR.CPUFreqMSR | None= None
 
-        super()._init_props_dict(PROPS)
+        self._init_props_dict(PROPS)
 
     def close(self):
         """Uninitialize the class instance."""

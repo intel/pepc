@@ -76,7 +76,7 @@ class PMQoS(_PropsClassBase.PropsClassBase):
 
         self._linux_pmqos_obj = None
 
-        super()._init_props_dict(PROPS)
+        self._init_props_dict(PROPS)
 
     def close(self):
         """Uninitialize the class object."""

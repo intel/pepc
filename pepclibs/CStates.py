@@ -221,11 +221,6 @@ class CStates(_PropsClassBase.PropsClassBase):
         else:
             raise Error(f"BUG: unexpected property \"{pname}\"")
 
-    def _init_props_dict(self): # pylint: disable=arguments-differ
-        """Initialize the 'props' dictionary."""
-
-        super()._init_props_dict(PROPS)
-
     def __init__(self, pman=None, cpuinfo=None, cpuidle=None, msr=None, enable_cache=True):
         """
         The class constructor. The arguments are as follows.
@@ -245,7 +240,7 @@ class CStates(_PropsClassBase.PropsClassBase):
         self._powerctl = None
         self._pcstatectl = None
 
-        self._init_props_dict()
+        self._init_props_dict(PROPS)
 
     def close(self):
         """Uninitialize the class object."""

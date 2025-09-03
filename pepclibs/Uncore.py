@@ -69,7 +69,7 @@ class Uncore(_PropsClassBase.PropsClassBase):
         self._uncfreq_tpmi_obj: _UncoreFreqTpmi.UncoreFreqTpmi | None = None
         self._uncfreq_tpmi_err: str | None = None
 
-        super()._init_props_dict(PROPS)
+        self._init_props_dict(PROPS)
 
     def close(self):
         """Uninitialize the class instance."""
