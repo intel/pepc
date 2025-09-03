@@ -21,7 +21,6 @@ from pepclibs._PropsClassBase import ErrorUsePerCPU, ErrorTryAnotherMechanism
 
 if typing.TYPE_CHECKING:
     from typing import Final
-    from pepclibs.CPUInfoTypes import AbsNumsType
     from pepclibs.PropsTypes import PropertyTypedDict
 
 # This dictionary describes the C-state properties this module supports. Many of the properties are
