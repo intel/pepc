@@ -25,21 +25,26 @@ import stat
 import types
 import shlex
 import random
+import typing
 import logging
 import threading
 import contextlib
 from pathlib import Path
 from operator import itemgetter
-from typing import IO, cast, Generator
+from typing import IO, cast
 from collections.abc import Callable
 try:
     import paramiko
 except (ModuleNotFoundError, ImportError):
     from pepclibs.helperlibs import DummyParamiko as paramiko  # type: ignore[no-redef]
 from pepclibs.helperlibs import Logging, _ProcessManagerBase, ClassHelpers, Trivial
-from pepclibs.helperlibs._ProcessManagerBase import ProcWaitResultType, LsdirTypedDict
+from pepclibs.helperlibs._ProcessManagerBase import ProcWaitResultType
 from pepclibs.helperlibs.Exceptions import Error, ErrorPermissionDenied, ErrorTimeOut, ErrorConnect
 from pepclibs.helperlibs.Exceptions import ErrorNotFound, ErrorExists
+
+if typing.TYPE_CHECKING:
+    from typing import Generator
+    from pepclibs.helperlibs._ProcessManagerBase import LsdirTypedDict
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
@@ -1049,7 +1054,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             # This is special case. We ran 'rsync' on the local system in order to copy files
             # to/from the remote system. The 'rsync' is available on the local system, but it is not
             # installed on the remote system.
-            errmsg = cast(str, result.stderr)
+            errmsg = str(result.stderr)
             raise self._command_not_found(cmd, errmsg=errmsg, toolname="rsync")
 
         msg = self.get_cmd_failure_msg(cmd, result.stdout, result.stderr, result.exitcode)

@@ -17,17 +17,21 @@ as if it was a local host.
 
 from  __future__ import annotations # Remove when switching to Python 3.10+.
 
+import typing
 import contextlib
-from typing import Union, cast
 from pepclibs.helperlibs import LocalProcessManager, SSHProcessManager, EmulProcessManager
 # pylint: disable-next=unused-import
-from pepclibs.helperlibs._ProcessManagerBase import ProcWaitResultType, LsdirTypedDict
+from pepclibs.helperlibs._ProcessManagerBase import ProcWaitResultType
 
-ProcessManagerType = Union[LocalProcessManager.LocalProcessManager,
-                           SSHProcessManager.SSHProcessManager,
-                           EmulProcessManager.EmulProcessManager]
+if typing.TYPE_CHECKING:
+    from typing import Union, cast
+    from pepclibs.helperlibs._ProcessManagerBase import LsdirTypedDict
 
-ProcessType = Union[LocalProcessManager.LocalProcess, SSHProcessManager.SSHProcess]
+    ProcessManagerType = Union[LocalProcessManager.LocalProcessManager,
+                               SSHProcessManager.SSHProcessManager,
+                               EmulProcessManager.EmulProcessManager]
+
+    ProcessType = Union[LocalProcessManager.LocalProcess, SSHProcessManager.SSHProcess]
 
 def get_pman(hostname: str,
              username: str | None = None,
@@ -112,6 +116,9 @@ def pman_or_local(pman: ProcessManagerType | None) -> ProcessManagerType:
     """
 
     if pman:
-        return cast(ProcessManagerType, contextlib.nullcontext(enter_result=pman))
+        if typing.TYPE_CHECKING:
+            return cast(ProcessManagerType, contextlib.nullcontext(enter_result=pman))
+        else:
+            return contextlib.nullcontext(enter_result=pman)
 
     return LocalProcessManager.LocalProcessManager()

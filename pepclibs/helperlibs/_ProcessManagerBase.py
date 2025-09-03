@@ -17,13 +17,49 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 import re
 import queue
 import codecs
+import typing
 import threading
 import contextlib
-from typing import IO, Any, cast, Generator
 from pathlib import Path
+from typing import NamedTuple
 from pepclibs.helperlibs import Logging, Human, Trivial, ClassHelpers, ToolChecker
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound
-from pepclibs.helperlibs.ProcessManagerTypes import ProcWaitResultType, LsdirTypedDict
+
+if typing.TYPE_CHECKING:
+    from typing import IO, Any, cast, Generator, TypedDict
+
+    class LsdirTypedDict(TypedDict):
+        """
+        A directory entry information dictionary.
+
+        Attributes:
+            name: The name of the directory entry (a file, a directory, etc).
+            path: The full path to the directory entry.
+            mode: The mode (permissions) of the directory entry.
+            ctime: The creation time of the directory entry in seconds since the epoch.
+        """
+
+        name: str
+        path: Path
+        mode: int
+        ctime: float
+
+class ProcWaitResultType(NamedTuple):
+    """
+    The result of the 'wait()' method for a process.
+
+    Attributes:
+        stdout: The standard output of the process. Can be a single string or a list of strings
+                lines. The tailing newline is not stripped.
+        stderr: The standard error of the process. Can be a single string or a list of strings
+                lines. The tailing newline is not stripped.
+        exitcode: The exit code of the process. Can be an integer or None if the process is still
+                  running.
+    """
+
+    stdout: str | list[str]
+    stderr: str | list[str]
+    exitcode: int | None
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
@@ -166,7 +202,10 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
             if not getattr(self.stdin, "name", None):
                 setattr(self.stdin, "name", "stdin")
             wrapped = ClassHelpers.WrapExceptions(self.stdin, get_err_prefix=get_err_prefix)
-            self.stdin = cast(IO[bytes], wrapped)
+            if typing.TYPE_CHECKING:
+                self.stdin = cast(IO[bytes], wrapped)
+            else:
+                self.stdin = wrapped
 
     def _reinit(self, cmd: str, real_cmd: str):
         """

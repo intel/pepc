@@ -19,15 +19,20 @@ import time
 import errno
 import shutil
 import socket
+import typing
 import tempfile
 import subprocess
 from pathlib import Path
-from typing import IO, cast, Generator
+from typing import IO, cast
 from operator import itemgetter
 from pepclibs.helperlibs import Logging, _ProcessManagerBase, ClassHelpers
-from pepclibs.helperlibs._ProcessManagerBase import ProcWaitResultType, LsdirTypedDict
+from pepclibs.helperlibs._ProcessManagerBase import ProcWaitResultType
 from pepclibs.helperlibs.Exceptions import Error, ErrorTimeOut, ErrorPermissionDenied
 from pepclibs.helperlibs.Exceptions import ErrorNotFound, ErrorExists
+
+if typing.TYPE_CHECKING:
+    from typing import Generator
+    from pepclibs.helperlibs._ProcessManagerBase import LsdirTypedDict
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 

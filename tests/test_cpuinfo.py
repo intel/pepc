@@ -19,11 +19,11 @@ import pytest
 import common
 from pepclibs import CPUModels, CPUInfo, CPUOnline
 from pepclibs.CPUInfoTypes import AbsNumsType, RelNumsType, ScopeNameType
-from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
 if typing.TYPE_CHECKING:
     from typing import Generator
     from common import CommonTestParamsTypedDict
+    from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
 # A unique object used in '_run_method()' for ignoring method's return value by default.
 _IGNORE = object()

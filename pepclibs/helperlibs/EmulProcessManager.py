@@ -25,120 +25,133 @@ Terminology:
 
 from  __future__ import annotations # Remove when switching to Python 3.10+.
 
+import typing
 import contextlib
 from pathlib import Path
-from typing import Generator, TypedDict, NamedTuple, cast, Sequence, IO
+from typing import NamedTuple
 from pepclibs.helperlibs import Logging, LocalProcessManager, Trivial, YAML
-from pepclibs.helperlibs._ProcessManagerBase import ProcWaitResultType, LsdirTypedDict
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs.helperlibs.emul import _EmulFile
 
-class _TestDataInlineDirsTypedDict(TypedDict, total=False):
-    """
-    Typed dictionary describing inline directories in the YAML configuration.
+if typing.TYPE_CHECKING:
+    from typing import Generator, TypedDict, Sequence, IO, cast
+    from pepclibs.helperlibs._ProcessManagerBase import ProcWaitResultType, LsdirTypedDict
 
-    Attributes:
-        dirname: Name of the sub-directory within the dataset containing the inline directories
-                 file.
-        filename: The inline directories file name. Contains a list of directory paths to
-                  emulate.
-    """
+    class _TestDataInlineDirsTypedDict(TypedDict, total=False):
+        """
+        Typed dictionary describing inline directories in the YAML configuration.
 
-    dirname: str
-    filename: str
+        Attributes:
+            dirname: Name of the sub-directory within the dataset containing the inline directories
+                     file.
+            filename: The inline directories file name. Contains a list of directory paths to
+                      emulate.
+        """
 
-class _TestDataCommandsTypedDict(TypedDict, total=False):
-    """
-    Typed dictionary describing command results in the YAML configuration.
+        dirname: str
+        filename: str
 
-    Attributes:
-        command: The emulated command, including options.
-        dirname: Name of the sub-directory within the dataset containing standard error and standard
-                 output of the emulated command.
-    """
+    class _TestDataCommandsTypedDict(TypedDict, total=False):
+        """
+        Typed dictionary describing command results in the YAML configuration.
 
-    command: str
-    dirname: str
+        Attributes:
+            command: The emulated command, including options.
+            dirname: Name of the sub-directory within the dataset containing standard error and
+                     standard output of the emulated command.
+        """
 
-class _TestDataInlineFilesTypedDict(TypedDict, total=False):
-    """
-    Typed dictionary describing inline files in the YAML configuration.
+        command: str
+        dirname: str
 
-    Attributes:
-        dirname: Name of the sub-directory within the dataset containing the inline files
-                 file.
-        filename: The inline files file name. Contains a list of file paths and their values.
-        separator: The separator used in the inline files file to separate paths and values.
-        readonly: Whether the inline files are read-only.
-    """
+    class _TestDataInlineFilesTypedDict(TypedDict, total=False):
+        """
+        Typed dictionary describing inline files in the YAML configuration.
 
-    dirname: str
-    filename: str
-    separator: str
-    readonly: bool
+        Attributes:
+            dirname: Name of the sub-directory within the dataset containing the inline files
+                     file.
+            filename: The inline files file name. Contains a list of file paths and their values.
+            separator: The separator used in the inline files file to separate paths and values.
+            readonly: Whether the inline files are read-only.
+        """
 
-class _TestDataMSRsTypedDict(TypedDict, total=False):
-    """
-    Typed dictionary describing MSRs in the YAML configuration.
+        dirname: str
+        filename: str
+        separator: str
+        readonly: bool
 
-    Attributes:
-        dirname: Name of the sub-directory within the dataset containing the MSRs file.
-        filename: The MSRs file name. Contains a list of MSR device node paths, MSR addresses and
-                  their values.
-        addresses: List of MSR addresses included in the MSR file.
-        separator1: The separator used in the MSRs file to separate MSR device node paths and the
-                    MSR values.
-        separator2: The separator used in the MSRs file to separate MSR addresses and MSR values.
-    """
+    class _TestDataMSRsTypedDict(TypedDict, total=False):
+        """
+        Typed dictionary describing MSRs in the YAML configuration.
 
-    dirname: str
-    filename: str
-    addresses: list[int]
-    separator1: str
-    separator2: str
+        Attributes:
+            dirname: Name of the sub-directory within the dataset containing the MSRs file.
+            filename: The MSRs file name. Contains a list of MSR device node paths, MSR addresses
+                      and their values.
+            addresses: List of MSR addresses included in the MSR file.
+            separator1: The separator used in the MSRs file to separate MSR device node paths and
+                        the MSR values.
+            separator2: The separator used in the MSRs file to separate MSR addresses and MSR
+                        values.
+        """
 
-class _TestDataFilesTypedDict(TypedDict, total=False):
-    """
-    Typed dictionary describing files in the YAML configuration.
+        dirname: str
+        filename: str
+        addresses: list[int]
+        separator1: str
+        separator2: str
 
-    Attributes:
-        path: The emulated file path. There is a file in the dataset category sub-directory with the
-              same relative path, it includes the emulated file contents.
-        readonly: Whether the emulated file is read-only.
-    """
+    class _TestDataFilesTypedDict(TypedDict, total=False):
+        """
+        Typed dictionary describing files in the YAML configuration.
 
-    path: str
-    readonly: bool
+        Attributes:
+            path: The emulated file path. There is a file in the dataset category sub-directory with
+                  the same relative path, it includes the emulated file contents.
+            readonly: Whether the emulated file is read-only.
+        """
 
-class _TestDataDirectoriesTypedDict(TypedDict, total=False):
-    """
-    Typed dictionary describing empty directories in the YAML configuration.
+        path: str
+        readonly: bool
 
-    Attributes:
-        path: The emulated empty directory path.
-    """
+    class _TestDataDirectoriesTypedDict(TypedDict, total=False):
+        """
+        Typed dictionary describing empty directories in the YAML configuration.
 
-    path: str
-    readonly: bool
+        Attributes:
+            path: The emulated empty directory path.
+        """
 
-class _TestDataYAMLTypedDict(TypedDict, total=False):
-    """
-    Typed dictionary describing the YAML configuration for test data.
+        path: str
+        readonly: bool
 
-    Attributes:
-        inlinedirs: List of inline directories configurations.
-        commands: List of command configurations.
-        inlinefiles: List of inline files configurations.
-        msrs: List of MSR configurations.
-        files: List of file configurations.
-    """
+    class _TestDataYAMLTypedDict(TypedDict, total=False):
+        """
+        Typed dictionary describing the YAML configuration for test data.
 
-    inlinedirs: list[_TestDataInlineDirsTypedDict]
-    commands: list[_TestDataCommandsTypedDict]
-    inlinefiles: list[_TestDataInlineFilesTypedDict]
-    msrs: _TestDataMSRsTypedDict
-    files: list[_TestDataFilesTypedDict]
-    directories: list[_TestDataDirectoriesTypedDict]
+        Attributes:
+            inlinedirs: List of inline directories configurations.
+            commands: List of command configurations.
+            inlinefiles: List of inline files configurations.
+            msrs: List of MSR configurations.
+            files: List of file configurations.
+        """
+
+        inlinedirs: list[_TestDataInlineDirsTypedDict]
+        commands: list[_TestDataCommandsTypedDict]
+        inlinefiles: list[_TestDataInlineFilesTypedDict]
+        msrs: _TestDataMSRsTypedDict
+        files: list[_TestDataFilesTypedDict]
+        directories: list[_TestDataDirectoriesTypedDict]
+
+    class _EmulDataTypedDict(TypedDict, total=False):
+        """
+        A typed dictionary for the emulation data.
+        """
+
+        cmds: dict[str, _EmulCmdResultType]
+        files: dict[str, _EmulFile.EmulFileType]
 
 class _EmulCmdResultType(NamedTuple):
     """
@@ -153,14 +166,6 @@ class _EmulCmdResultType(NamedTuple):
     stdout: list[str]
     stderr: list[str]
     exitcode: int
-
-class _EmulDataTypedDict(TypedDict, total=False):
-    """
-    A typed dictionary for the emulation data.
-    """
-
-    cmds: dict[str, _EmulCmdResultType]
-    files: dict[str, _EmulFile.EmulFileType]
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
@@ -435,7 +440,11 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             yaml_path: Path to the YAML configuration file describing the test data category.
         """
 
-        yaml = cast(_TestDataYAMLTypedDict, YAML.load(yaml_path))
+        if typing.TYPE_CHECKING:
+            yaml = cast(_TestDataYAMLTypedDict, YAML.load(yaml_path))
+        else:
+            yaml = YAML.load(yaml_path)
+
         dspath = yaml_path.parent
 
         if "inlinedirs" in yaml:
