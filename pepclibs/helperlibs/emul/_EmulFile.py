@@ -9,18 +9,24 @@
 
 """Provide the factory function to create emulated file objects."""
 
-from typing import Any, Union
+from __future__ import annotations # Remove when switching to Python 3.10+.
+
+import typing
 from pathlib import Path
+
 from pepclibs.helperlibs.emul import (_EmulFileBase, _GeneralRWSysfsEmulFile, _CPUOnlineEmulFIle,
                                       _DevMSREmulFile, _EPBEmulFile, _ASPMPolicyEmulFile,
                                       _TPMIEmulFile)
 
-EmulFileType = Union[_EmulFileBase.EmulFileBase,
-                     _CPUOnlineEmulFIle.CPUOnlineEmulFile,
-                     _DevMSREmulFile.DevMSREmulFile,
-                     _EPBEmulFile.EPBEmulFile,
-                     _ASPMPolicyEmulFile.ASPMPolicyEmulFile,
-                     _TPMIEmulFile.TPMIEmulFile]
+if typing.TYPE_CHECKING:
+    from typing import Any, Union
+
+    EmulFileType = Union[_EmulFileBase.EmulFileBase,
+                        _CPUOnlineEmulFIle.CPUOnlineEmulFile,
+                        _DevMSREmulFile.DevMSREmulFile,
+                        _EPBEmulFile.EPBEmulFile,
+                        _ASPMPolicyEmulFile.ASPMPolicyEmulFile,
+                        _TPMIEmulFile.TPMIEmulFile]
 
 def get_emul_file(path: str,
                   basepath: Path,
