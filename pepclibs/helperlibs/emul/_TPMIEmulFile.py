@@ -14,11 +14,14 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import re
 import types
-from typing import IO, Callable
+import typing
 from pathlib import Path
 from pepclibs.helperlibs import Trivial
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs.helperlibs.emul import _EmulFileBase
+
+if typing.TYPE_CHECKING:
+    from typing import IO, Callable
 
 def _mem_write_emul_file_write(self: IO[str], data: str) -> int:
     """

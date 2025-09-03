@@ -15,11 +15,14 @@ and writing CPU Model Specific Registers (MSRs).
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
+import typing
 import types
-from typing import IO, Callable
 from pathlib import Path
 from pepclibs.helperlibs.emul import _EmulFileBase
 from pepclibs.helperlibs.Exceptions import Error
+
+if typing.TYPE_CHECKING:
+    from typing import IO, Callable
 
 def _dev_msr_emul_file_seek(self: IO[bytes], addr: int, whence: int = 0) -> int:
     """

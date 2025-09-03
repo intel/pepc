@@ -13,7 +13,6 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
 from pathlib import Path
-
 from pepclibs.helperlibs.emul import (_EmulFileBase, _GeneralRWSysfsEmulFile, _CPUOnlineEmulFIle,
                                       _DevMSREmulFile, _EPBEmulFile, _ASPMPolicyEmulFile,
                                       _TPMIEmulFile)

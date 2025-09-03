@@ -11,12 +11,17 @@
 Provide 'CPUOnlineEmulFile' class to emulate the global '/sys/devices/system/cpu/online' file.
 """
 
+from __future__ import annotations # Remove when switching to Python 3.10+.
+
+import typing
 import types
 from pathlib import Path
-from typing import IO
 from pepclibs.helperlibs import Trivial
 from pepclibs.helperlibs.Exceptions import ErrorBadFormat
 from pepclibs.helperlibs.emul import _EmulFileBase
+
+if typing.TYPE_CHECKING:
+    from typing import IO
 
 def _cpu_online_emul_file_read(self: IO[str]) -> str:
     """

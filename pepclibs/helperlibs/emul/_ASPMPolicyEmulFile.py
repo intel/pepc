@@ -12,10 +12,15 @@ Provide 'ASPMPolicyEmulFile' class to emulate the global PCI ASPM policy file
 ('/sys/module/pcie_aspm/parameters/policy').
 """
 
+from __future__ import annotations # Remove when switching to Python 3.10+.
+
+import typing
 import types
-from typing import IO, Callable
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs.helperlibs.emul import _EmulFileBase
+
+if typing.TYPE_CHECKING:
+    from typing import IO, Callable
 
 def _aspm_policy_emul_file_write(self: IO[str], data: str) -> int:
     """

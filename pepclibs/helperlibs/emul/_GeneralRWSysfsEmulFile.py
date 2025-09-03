@@ -14,9 +14,14 @@ The specific feature of these files is that writes always start at offset 0, as 
 from the current file offset.
 """
 
+from __future__ import annotations # Remove when switching to Python 3.10+.
+
+import typing
 import types
-from typing import IO, Callable
 from pepclibs.helperlibs.emul import _EmulFileBase
+
+if typing.TYPE_CHECKING:
+    from typing import IO, Callable
 
 def _generic_sysfs_emul_file_write(self: IO[str], data: str) -> int:
     """

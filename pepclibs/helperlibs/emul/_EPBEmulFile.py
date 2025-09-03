@@ -12,11 +12,16 @@ Provide 'EPBEmulFile' class to emulate EPB sysfs files, for example
 '/sys/devices/system/cpu/cpu10/power/energy_perf_bias'.
 """
 
+from __future__ import annotations # Remove when switching to Python 3.10+.
+
+import typing
 import types
-from typing import IO, Final, Callable
 from pepclibs.helperlibs import Trivial
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs.helperlibs.emul import _EmulFileBase
+
+if typing.TYPE_CHECKING:
+    from typing import IO, Final, Callable
 
 # Dictionary mapping EPB policy names to their corresponding EPB values.
 _EPB_POLICIES: Final[dict[str, int]] = {"performance": 0, "balance-performance": 4, "normal": 6,

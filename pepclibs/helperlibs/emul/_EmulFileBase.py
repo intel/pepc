@@ -16,10 +16,13 @@ for the emulated file, allowing users to perform standard I/O operations.
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
+import typing
 import types
-from typing import IO
 from pathlib import Path
 from pepclibs.helperlibs.Exceptions import Error, ErrorPermissionDenied, ErrorNotFound
+
+if typing.TYPE_CHECKING:
+    from typing import IO
 
 class EmulFileBase:
     """
