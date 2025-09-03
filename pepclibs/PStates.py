@@ -1127,6 +1127,8 @@ class PStates(_PropsClassBase.PropsClassBase):
                 prop["sname"] = fsbfreq.features["fsb"]["sname"]
             except ErrorNotSupported:
                 prop["sname"] = "global"
+        else:
+            raise Error(f"BUG: Unsupported property '{pname}'")
 
         prop["iosname"] = prop["sname"]
         self.props[pname]["sname"] = prop["sname"]
