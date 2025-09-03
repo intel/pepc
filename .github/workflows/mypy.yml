@@ -17,8 +17,8 @@ jobs:
     steps:
       - name: "Install packages"
         run: |
-          sudo -E apt-get -qq update
-          sudo -E apt-get -qq -y install file
+          sudo -E apt-get -o Acquire::Retries=30 -qq update
+          sudo -E apt-get -o Acquire::Retries=30 -qq -y install file
 
       - name: "Checkout Repository"
         uses: actions/checkout@v4
