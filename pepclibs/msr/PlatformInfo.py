@@ -29,7 +29,7 @@ MSR_PLATFORM_INFO = 0xCE
 # CPUs supporting the "maximum efficiency ratio" feature.
 _EFREQ_VFMS = CPUModels.CPU_GROUPS["GNR"] +         \
               CPUModels.CPU_GROUPS["EMR"] +         \
-              CPUModels.CPU_GROUPS["ARROWLAKE"] +  \
+              CPUModels.CPU_GROUPS["ARROWLAKE"] +   \
               CPUModels.CPU_GROUPS["METEORLAKE"] +  \
               CPUModels.CPU_GROUPS["SPR"] +         \
               CPUModels.CPU_GROUPS["RAPTORLAKE"] +  \
@@ -47,7 +47,7 @@ _EFREQ_VFMS = CPUModels.CPU_GROUPS["GNR"] +         \
               CPUModels.CPU_GROUPS["SANDYBRIDGE"] + \
               CPUModels.CPU_GROUPS["WESTMERE"] +    \
               CPUModels.CPU_GROUPS["NEHALEM"] +     \
-              CPUModels.CPU_GROUPS["DARKMONT"] +   \
+              CPUModels.CPU_GROUPS["DARKMONT"] +    \
               CPUModels.CPU_GROUPS["CRESTMONT"] +   \
               CPUModels.CPU_GROUPS["TREMONT"] +     \
               CPUModels.CPU_GROUPS["GOLDMONT"] +    \
@@ -56,6 +56,7 @@ _EFREQ_VFMS = CPUModels.CPU_GROUPS["GNR"] +         \
 # CPUs supporting the "minimum operating ratio" feature.
 _MIN_OPER_RATIO_VFMS = CPUModels.CPU_GROUPS["GNR"] +              \
                        CPUModels.CPU_GROUPS["EMR"] +              \
+                       CPUModels.CPU_GROUPS["METEORLAKE"] +       \
                        CPUModels.CPU_GROUPS["SPR"] +              \
                        CPUModels.CPU_GROUPS["RAPTORLAKE"] +       \
                        CPUModels.CPU_GROUPS["ALDERLAKE"] +        \
@@ -69,7 +70,7 @@ _MIN_OPER_RATIO_VFMS = CPUModels.CPU_GROUPS["GNR"] +              \
                        CPUModels.CPU_GROUPS["BROADWELL"] +        \
                        CPUModels.CPU_GROUPS["HASWELL"] +          \
                        (CPUModels.MODELS["IVYBRIDGE"]["vfm"],) +  \
-                       CPUModels.CPU_GROUPS["DARKMONT"] +        \
+                       CPUModels.CPU_GROUPS["DARKMONT"] +         \
                        CPUModels.CPU_GROUPS["CRESTMONT"] +        \
                        CPUModels.CPU_GROUPS["TREMONT"] +          \
                        CPUModels.CPU_GROUPS["GOLDMONT"] +         \
