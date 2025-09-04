@@ -654,7 +654,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
                     continue
 
                 cfg = config.lookup(hostname)
-                if optname in cfg:
+                if optname in cfg and "user" in cfg:
                     return cfg[optname]
 
                 if "include" in cfg:
