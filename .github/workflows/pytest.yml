@@ -50,6 +50,8 @@ jobs:
           if [ -s .tmp/python-files ] || grep -qs '^tests/' .tmp/all-modified-files; then
             touch .tmp/pytest-required
           fi
+          # TODO: a workaround for the problem that nothing is tested.
+          touch .tmp/pytest-required
 
       - name: "Set up Python ${{ matrix.python-version }}"
         uses: actions/setup-python@v5
