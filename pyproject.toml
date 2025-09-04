@@ -59,6 +59,3 @@ skip-checking-raises = true
 
 [tool.mypy]
 check_untyped_defs = true
-
-[tool.pytest.ini_options]
-addopts = "--numprocesses auto --cov=pepclibs --cov=pepctool --cov-append"

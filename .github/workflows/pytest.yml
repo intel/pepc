@@ -70,7 +70,9 @@ jobs:
       - name: "Run pytest to execute tests and collect coverage data"
         run: |
           if [ -e .tmp/pytest-required ]; then
-            pytest -v
+            nproc=$(grep -c ^processor /proc/cpuinfo 2>/dev/null || echo 1)
+            [ "$nproc" -le 16 ] || nproc=16
+            pytest -v --numprocesses "$nproc" --cov=pepclibs --cov=pepctool --cov-append
           fi
         env:
           SHELL: /bin/sh
