@@ -646,7 +646,12 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
                         cfgfiles.append(cfgfile)
 
             for cfgfile in cfgfiles:
-                config = paramiko.SSHConfig().from_path(cfgfile)
+                try:
+                    config = paramiko.SSHConfig().from_path(cfgfile)
+                except paramiko.ConfigParseError as err:
+                    errmsg = Error(str(err)).indent(2)
+                    _LOG.debug("Cannot parse SSH config file '%s':\n%s", cfgfile, errmsg)
+                    continue
 
                 cfg = config.lookup(hostname)
                 if optname in cfg:

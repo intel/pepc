@@ -19,7 +19,10 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 from typing import Tuple
 
 class AuthenticationException(Exception):
-    """"A dummy version of 'paramiko.AuthenticationException'."""
+    """"A dummy version of 'paramiko.ConfigParseError'."""
+
+class ConfigParseError(Exception):
+    """"A dummy version of 'paramiko.ConfigParseError'."""
 
 class SSHConfig:
     """A dummy version of 'paramiko.SSHConfig'."""
