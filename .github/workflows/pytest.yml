@@ -26,32 +26,6 @@ jobs:
 
       - name: "Checkout Repository"
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: "Find modified files"
-        run: |
-          # Determine the base commit for comparison based on the event type
-          # For push events, use the default branch
-          # For pull requests, use the base commit of the PR
-          [ "${{ github.event_name }}" = "push" ] &&
-            from="refs/remotes/origin/${{ github.event.repository.default_branch }}" ||
-            from="${{ github.event.pull_request.base.sha }}"
-
-          mkdir -- .tmp
-
-          # Find modified files, filter for Python scripts, and save them to modified-files
-          git diff-tree --diff-filter=d --no-commit-id --name-status -r "$from..HEAD" | \
-            cut -f2- > .tmp/all-modified-files
-
-          xargs -a .tmp/all-modified-files -r file -Ni -- | \
-            sed -n -e 's#: text/x-script.python;.*##p' > .tmp/python-files;
-
-          if [ -s .tmp/python-files ] || grep -qs '^tests/' .tmp/all-modified-files; then
-            touch .tmp/pytest-required
-          fi
-          # TODO: a workaround for the problem that nothing is tested.
-          touch .tmp/pytest-required
 
       - name: "Set up Python ${{ matrix.python-version }}"
         uses: actions/setup-python@v5
@@ -61,19 +35,15 @@ jobs:
 
       - name: "Install dependencies"
         run: |
-          if [ -e .tmp/pytest-required ]; then
             python -m pip install --upgrade pip
             pip install --upgrade .
             pip install pytest pytest-xdist pytest-cov coverage
-          fi
 
       - name: "Run pytest to execute tests and collect coverage data"
         run: |
-          if [ -e .tmp/pytest-required ]; then
             nproc=$(grep -c ^processor /proc/cpuinfo 2>/dev/null || echo 1)
             [ "$nproc" -le 16 ] || nproc=16
             pytest -v --numprocesses "$nproc" --cov=pepclibs --cov=pepctool --cov-append
-          fi
         env:
           SHELL: /bin/sh
 
