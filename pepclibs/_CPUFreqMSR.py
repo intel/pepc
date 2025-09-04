@@ -276,6 +276,7 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
             # Round the frequency down to bus clock.
             # * Why rounding? CPU frequency changes in bus-clock increments.
             # * Why rounding down? Following how Linux 'intel_pstate' driver example.
+            _LOG.debug("Translated performance %d to frequency %d Hz for CPU %d", perf, freq, cpu)
             return freq - (freq % bclk)
 
         return perf * bclk
