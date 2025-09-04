@@ -645,9 +645,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
                     if os.path.exists(cfgfile):
                         cfgfiles.append(cfgfile)
 
-            # Sort configuration file paths to make the order somewhat predictable, as opposed to
-            # random.
-            for cfgfile in sorted(cfgfiles):
+            for cfgfile in cfgfiles:
                 config = paramiko.SSHConfig().from_path(cfgfile)
 
                 cfg = config.lookup(hostname)
@@ -655,8 +653,10 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
                     return cfg[optname]
 
                 if "include" in cfg:
-                    cfgfiles = glob.glob(cfg["include"])
-                    return self._cfg_lookup(optname, hostname, username, cfgfiles=cfgfiles)
+                    # The include directive may contain wildcards. Expand them. Sort the resulting
+                    # list to have a deterministic order.
+                    include_cfgfiles = sorted(glob.glob(cfg["include"]))
+                    return self._cfg_lookup(optname, hostname, username, cfgfiles=include_cfgfiles)
         finally:
             if old_username:
                 os.environ["USER"] = old_username
