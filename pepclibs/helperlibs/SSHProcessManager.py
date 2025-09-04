@@ -661,7 +661,9 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
                     # The include directive may contain wildcards. Expand them. Sort the resulting
                     # list to have a deterministic order.
                     include_cfgfiles = sorted(glob.glob(cfg["include"]))
-                    return self._cfg_lookup(optname, hostname, username, cfgfiles=include_cfgfiles)
+                    optval = self._cfg_lookup(optname, hostname, username, cfgfiles=include_cfgfiles)
+                    if optval:
+                        return optval
         finally:
             if old_username:
                 os.environ["USER"] = old_username
