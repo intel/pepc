@@ -15,9 +15,12 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 import os
 import grp
 import pwd
-from typing import Iterable
+import typing
 from itertools import groupby
 from pepclibs.helperlibs.Exceptions import Error, ErrorBadFormat
+
+if typing.TYPE_CHECKING:
+    from typing import Iterable
 
 def is_root() -> bool:
     """

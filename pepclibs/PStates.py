@@ -15,11 +15,10 @@ Provide a capability of retrieving and setting P-state related properties.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
-from typing import cast, Generator, Union
+from typing import cast
 import contextlib
 from pepclibs import _PropsClassBase
 from pepclibs.PStatesVars import PROPS
-from pepclibs.PropsTypes import PropertyValueType
 from pepclibs.helperlibs import Human, ClassHelpers, Logging
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorVerifyFailed
 
@@ -27,7 +26,8 @@ from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorVerify
 from pepclibs._PropsClassBase import ErrorTryAnotherMechanism, ErrorUsePerCPU
 
 if typing.TYPE_CHECKING:
-    from typing import NoReturn
+    from typing import NoReturn, Generator, Union
+    from pepclibs.PropsTypes import PropertyValueType
     from pepclibs.msr import MSR, FSBFreq
     from pepclibs import _CPUFreqSysfs, _CPUFreqCPPC, _CPUFreqMSR
     from pepclibs import _SysfsIO, EPP, EPB
@@ -297,8 +297,12 @@ class PStates(_PropsClassBase.PropsClassBase):
         bclks_iter = self._get_bclks_cpus(cpus)
 
         iter_zip = zip(base_freq_iter, nominal_perf_iter, perf_iter, bclks_iter)
-        iterator = cast(Generator[tuple[tuple[int, int], tuple[int, int], tuple[int, int],
-                                  tuple[int, int]], None, None], iter_zip)
+        if typing.TYPE_CHECKING:
+            iterator = cast(Generator[tuple[tuple[int, int], tuple[int, int], tuple[int, int],
+                                    tuple[int, int]], None, None], iter_zip)
+        else:
+            iterator = iter_zip
+
         for (cpu, base_freq), (_, nominal_perf), (_, perf), (_, bclk) in iterator:
             freq = base_freq * perf // nominal_perf
             # Align the frequency to the bus clock speed.
@@ -587,8 +591,11 @@ class PStates(_PropsClassBase.PropsClassBase):
         bclks_iter = self._get_bclks_cpus(cpus)
 
         iter_zip = zip(driver_iter, min_freq_iter, max_freq_iter, bclks_iter)
-        iterator = cast(Generator[tuple[tuple[int, str], tuple[int, int], tuple[int, int],
-                                  tuple[int, int]], None, None], iter_zip)
+        if typing.TYPE_CHECKING:
+            iterator = cast(Generator[tuple[tuple[int, str], tuple[int, int], tuple[int, int],
+                                    tuple[int, int]], None, None], iter_zip)
+        else:
+            iterator = iter_zip
 
         for (cpu, driver), (_, min_freq), (_, max_freq), (_, bclk) in iterator:
             if driver != "intel_pstate":
@@ -907,10 +914,12 @@ class PStates(_PropsClassBase.PropsClassBase):
 
         if err.expected is None:
             raise Error("BUG: Frequency is not set in the 'ErrorVerifyFailed' object")
+
         freq = cast(int, err.expected)
 
         if err.actual is None:
             raise Error("BUG: Read frequency is not set in the 'ErrorVerifyFailed' object")
+
         read_freq = cast(int, err.actual)
 
         if err.cpu is None:
@@ -920,9 +929,10 @@ class PStates(_PropsClassBase.PropsClassBase):
         msg = str(err)
 
         with contextlib.suppress(Error):
-            frequencies = cast(list[int],
-                               self._get_cpu_prop_mnames("frequencies", cpu,
-                                                         self._props["frequencies"]["mnames"]))
+            _frequencies = self._get_cpu_prop_mnames("frequencies", cpu,
+                                                     self._props["frequencies"]["mnames"])
+            frequencies = cast(list[int], _frequencies)
+
             frequencies_set = set(frequencies)
             if freq not in frequencies_set and read_freq in frequencies_set:
                 fvals = ", ".join([Human.num2si(v, unit="Hz", decp=4) for v in frequencies])
@@ -932,8 +942,10 @@ class PStates(_PropsClassBase.PropsClassBase):
 
         with contextlib.suppress(Error):
             if self._get_cpu_prop_mnames("turbo", cpu, self._props["turbo"]["mnames"]) == "off":
-                base_freq = cast(int, self._get_cpu_prop_mnames("base_freq", cpu,
-                                                                self._props["base_freq"]["mnames"]))
+                _base_freq = self._get_cpu_prop_mnames("base_freq", cpu,
+                                                       self._props["base_freq"]["mnames"])
+                base_freq = cast(int, _base_freq)
+
                 if base_freq and freq > base_freq:
                     base_freq_str = Human.num2si(base_freq, unit="Hz", decp=4)
                     msg += f".\n  Hint: turbo is disabled, base frequency is {base_freq_str}, " \
@@ -982,18 +994,33 @@ class PStates(_PropsClassBase.PropsClassBase):
         """
 
         if freq == "min":
-            yield from cast(Generator[tuple[int, int], None, None],
-                            self._get_prop_cpus_mnames("min_freq_limit", cpus, ("sysfs",)))
+            _iterator = self._get_prop_cpus_mnames("min_freq_limit", cpus, ("sysfs",))
+            if typing.TYPE_CHECKING:
+                iterator = cast(Generator[tuple[int, int], None, None], _iterator)
+            else:
+                iterator = _iterator
+            yield from iterator
         elif freq == "max":
-            yield from cast(Generator[tuple[int, int], None, None],
-                            self._get_prop_cpus_mnames("max_freq_limit", cpus, ("sysfs",)))
+            _iterator = self._get_prop_cpus_mnames("max_freq_limit", cpus, ("sysfs",))
+            if typing.TYPE_CHECKING:
+                iterator = cast(Generator[tuple[int, int], None, None], _iterator)
+            else:
+                iterator = _iterator
+            yield from iterator
         elif freq in {"base", "hfm", "P1"}:
-            yield from cast(Generator[tuple[int, int], None, None],
-                            self._get_prop_cpus_mnames("base_freq", cpus,
-                                                       self._props["base_freq"]["mnames"]))
+            _iterator = self._get_prop_cpus_mnames("base_freq", cpus, ("sysfs", "msr", "cppc"))
+            if typing.TYPE_CHECKING:
+                iterator = cast(Generator[tuple[int, int], None, None], _iterator)
+            else:
+                iterator = _iterator
+            yield from iterator
         elif freq == "Pm":
-            yield from cast(Generator[tuple[int, int], None, None],
-                            self._get_prop_cpus_mnames("min_oper_freq", cpus, ("msr",)))
+            _iterator = self._get_prop_cpus_mnames("min_oper_freq", cpus, ("msr",))
+            if typing.TYPE_CHECKING:
+                iterator = cast(Generator[tuple[int, int], None, None], _iterator)
+            else:
+                iterator = _iterator
+            yield from iterator
         else:
             for cpu in cpus:
                 yield cpu, cast(int, freq)
@@ -1102,7 +1129,11 @@ class PStates(_PropsClassBase.PropsClassBase):
         elif pname == "governor":
             self._set_governor(cast(str, val), cpus, mname)
         elif pname in ("min_freq", "max_freq"):
-            self._set_cpu_freq(pname, cast(Union[str, int], val), cpus, mname)
+            if typing.TYPE_CHECKING:
+                _val = cast(Union[str, int], val)
+            else:
+                _val = val
+            self._set_cpu_freq(pname, _val, cpus, mname)
         else:
             raise Error(f"BUG: Unsupported property '{pname}'")
 

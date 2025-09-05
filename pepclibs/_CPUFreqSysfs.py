@@ -16,25 +16,25 @@ frequency subsystem sysfs interface.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
-from typing import Generator, Literal
 from pathlib import Path
 from pepclibs import CPUInfo, _SysfsIO
-from pepclibs.CPUInfoTypes import AbsNumsType
 from pepclibs.helperlibs import Logging, LocalProcessManager, ClassHelpers, Trivial, KernelVersion
 from pepclibs.helperlibs import Human
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorVerifyFailed
 from pepclibs.helperlibs.Exceptions import ErrorOutOfRange, ErrorBadOrder
 
 if typing.TYPE_CHECKING:
+    from typing import Generator, Literal
     from pepclibs import _CPUFreqMSR
     from pepclibs.msr import MSR
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
+    from pepclibs.CPUInfoTypes import AbsNumsType
 
-# A CPU frequency sysfs file type. Possible values:
-#   - "min": a minimum CPU frequency file
-#   - "max": a maximum CPU frequency file
-#   - "current": a current CPU frequency file
-_SysfsFileType = Literal["min", "max", "current"]
+    # A CPU frequency sysfs file type. Possible values:
+    #   - "min": a minimum CPU frequency file
+    #   - "max": a maximum CPU frequency file
+    #   - "current": a current CPU frequency file
+    _SysfsFileType = Literal["min", "max", "current"]
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 

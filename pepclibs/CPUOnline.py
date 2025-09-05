@@ -13,13 +13,13 @@ Provide API for onlining and offlining CPUs.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
-from typing import Iterable, Literal
 from pathlib import Path
 from pepclibs.helperlibs import Logging, LocalProcessManager, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
 from pepclibs import CPUInfo
 
 if typing.TYPE_CHECKING:
+    from typing import Iterable, Literal
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")

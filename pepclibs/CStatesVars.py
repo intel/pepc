@@ -16,12 +16,13 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 import typing
 
 # pylint: disable=unused-import
-from pepclibs.CPUIdle import ReqCStateInfoTypedDict, ReqCStateInfoValuesType, ReqCStateInfoKeysType
 from pepclibs._PropsClassBase import ErrorUsePerCPU, ErrorTryAnotherMechanism
 
 if typing.TYPE_CHECKING:
     from typing import Final
     from pepclibs.PropsTypes import PropertyTypedDict
+    from pepclibs.CPUIdle import ReqCStateInfoTypedDict, ReqCStateInfoValuesType
+    from pepclibs.CPUIdle import ReqCStateInfoKeysType
 
 # This dictionary describes the C-state properties this module supports. Many of the properties are
 # just features controlled by an MSR, such as "c1e_autopromote" from 'PowerCtl.FEATURES'.

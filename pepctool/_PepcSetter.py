@@ -126,11 +126,17 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
         """
 
         if sname == "CPU":
-            pobj.set_prop_cpus(pname, val, cast(AbsNumsType, nums))
+            if typing.TYPE_CHECKING:
+                nums = cast(AbsNumsType, nums)
+            pobj.set_prop_cpus(pname, val, nums)
         elif sname == "die":
+            if typing.TYPE_CHECKING:
+                nums = cast(RelNumsType, nums)
             pobj.set_prop_dies(pname, val, cast(RelNumsType, nums))
         elif sname == "package":
-            pobj.set_prop_packages(pname, val, cast(AbsNumsType, nums))
+            if typing.TYPE_CHECKING:
+                nums = cast(AbsNumsType, nums)
+            pobj.set_prop_packages(pname, val, nums)
         else:
             raise Error(f"BUG: Unsupported scope name '{sname}' for property '{pname}'")
 

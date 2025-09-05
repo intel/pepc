@@ -14,10 +14,11 @@ Provide information about CPU topology and other CPU details.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
-from typing import TypedDict, Final
 from pepclibs.helperlibs.Exceptions import ErrorNotSupported
 
 if typing.TYPE_CHECKING:
+    from typing import TypedDict, Final
+
     class CPUModelTypedDict(TypedDict):
         """
         CPU model information.

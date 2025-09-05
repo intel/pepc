@@ -13,37 +13,42 @@ support "include" statements and pre-rendering.
 
 from  __future__ import annotations # Remove when switching to Python 3.10+.
 
+import typing
 from pathlib import Path, PosixPath
-from typing import Any, IO, cast, TypedDict
 from collections.abc import Callable
 import yaml
 from pepclibs.helperlibs import Logging
 from pepclibs.helperlibs.Exceptions import Error
 
+if typing.TYPE_CHECKING:
+    from typing import Any, IO, cast, TypedDict
+
+
+    class RenderTypedDict(TypedDict):
+        """
+        A dictionary type for the 'render' argument in the 'load()' function.
+
+        Attributes:
+            func: The function to call for rendering the file. It accepts the following arguments.
+                    - 'path': The path to the file to render, used for logging, messages, may be
+                              resolving some relative paths, but not for reading the contents.
+                    - 'fobj': A file-like object for the file to render, will be used for reading
+                              the contents of the file.
+                  The function returns a tuple containing the following:
+                    - 'path': The path to the rendered file.
+                    - 'fobj': An optional file-like object for the rendered file. If provided, it
+                              will be used for reading the contents of the rendered file, and 'path'
+                              will not be used for reading the contents (will only be used for
+                              logging and resolving relative 'include' paths) If not provided (None
+                              value), 'path' will be used for reading the contents of the rendered
+                              file.
+            args: The arguments to pass to the 'func' function.
+        """
+
+        func: Callable[[Path, IO[str], Any], tuple[Path, IO[str] | None]]
+        args: tuple[Any, ...] | list[Any]
+
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
-
-class RenderTypedDict(TypedDict):
-    """
-    A dictionary type for the 'render' argument in the 'load()' function.
-
-    Attributes:
-        func: The function to call for rendering the file. It accepts the following arguments.
-                - 'path': The path to the file to render, used for logging, messages, may be
-                          resolving some relative paths, but not for reading the contents.
-                - 'fobj': A file-like object for the file to render, will be used for reading the
-                          contents of the file.
-              The function returns a tuple containing the following:
-                - 'path': The path to the rendered file.
-                - 'fobj': An optional file-like object for the rendered file. If provided, it will
-                          be used for reading the contents of the rendered file, and 'path' will not
-                          be used for reading the contents (will only be used for logging and
-                          resolving relative 'include' paths) If not provided (None value), 'path'
-                          will be used for reading the contents of the rendered file.
-        args: The arguments to pass to the 'func' function.
-    """
-
-    func: Callable[[Path, IO[str], Any], tuple[Path, IO[str] | None]]
-    args: tuple[Any, ...] | list[Any]
 
 def _drop_none(data: dict[str, Any]) -> dict[str, Any]:
     """
@@ -123,7 +128,12 @@ def dump(data: dict[str, Any],
             A YAML scalar node representing the formatted floating-point number.
         """
 
-        return dumper.represent_scalar("tag:yaml.org,2002:float", cast(str, float_format) % data)
+        if typing.TYPE_CHECKING:
+            _data = cast(str, float_format) % data
+        else:
+            _data = float_format % data
+
+        return dumper.represent_scalar("tag:yaml.org,2002:float", _data)
 
     if skip_none:
         data = _drop_none(data)

@@ -12,9 +12,12 @@ Miscellaneous common helpers for class objects.
 
 from  __future__ import annotations # Remove when switching to Python 3.10+.
 
-from typing import Any, Callable
+import typing
 from pepclibs.helperlibs import Logging
 from pepclibs.helperlibs.Exceptions import Error, ErrorPermissionDenied, ErrorNotFound
+
+if typing.TYPE_CHECKING:
+    from typing import Any, Callable
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 

@@ -14,7 +14,6 @@ import os
 import sys
 import typing
 import contextlib
-from typing import Generator, Sequence
 from pathlib import Path
 
 # TODO: remove the 'importlib_resources' import and use 'importlib.resources' instead when
@@ -30,6 +29,7 @@ from pepclibs.helperlibs import ProcessManager, Logging
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound
 
 if typing.TYPE_CHECKING:
+    from typing import Generator, Sequence
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")

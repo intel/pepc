@@ -23,10 +23,11 @@ from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs.msr import PowerCtl, PCStateConfigCtl
 
 # pylint: disable=unused-import
-from pepclibs.CPUIdle import ReqCStateInfoTypedDict, ReqCStateInfoValuesType, ReqCStateInfoKeysType
 from pepclibs._PropsClassBase import ErrorUsePerCPU, ErrorTryAnotherMechanism
 
 if typing.TYPE_CHECKING:
+    from pepclibs.CPUIdle import ReqCStateInfoTypedDict, ReqCStateInfoValuesType
+    from pepclibs.CPUIdle import ReqCStateInfoKeysType
     from typing import Generator, Literal, Iterable
     from pepclibs.CPUInfoTypes import AbsNumsType
 

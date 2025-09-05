@@ -12,18 +12,19 @@
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
+from math import e
 import typing
 from typing import cast
 import random
 import pytest
 import common
 from pepclibs import CPUModels, CPUInfo, CPUOnline
-from pepclibs.CPUInfoTypes import AbsNumsType, RelNumsType, ScopeNameType
 
 if typing.TYPE_CHECKING:
     from typing import Generator
     from common import CommonTestParamsTypedDict
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
+    from pepclibs.CPUInfoTypes import AbsNumsType, RelNumsType, ScopeNameType
 
 # A unique object used in '_run_method()' for ignoring method's return value by default.
 _IGNORE = object()
@@ -225,8 +226,12 @@ def _test_get_good(cpuinfo: CPUInfo.CPUInfo):
             nums = _get_scope_nums(sname, cpuinfo, order=order)
             if sname in ("die", "core"):
                 # For dies and cores, the numbers are relative to the package numbers.
-                ref_nums_dict = cast(RelNumsType, ref_nums)
-                nums_dict = cast(RelNumsType, nums)
+                if typing.TYPE_CHECKING:
+                    ref_nums_dict = cast(RelNumsType, ref_nums)
+                    nums_dict = cast(RelNumsType, nums)
+                else:
+                    ref_nums_dict = ref_nums
+                    nums_dict = nums
 
                 sorted_ref_nums = {pkg: sorted(pkg_nums) for pkg, pkg_nums in ref_nums_dict.items()}
                 sorted_nums = {pkg: sorted(pkg_nums) for pkg, pkg_nums in nums_dict.items()}
@@ -265,7 +270,10 @@ def test_cpuinfo_get_count(params: CommonTestParamsTypedDict):
                 # TODO: cover I/O dies too.
                 kwargs = {"io_dies" : False}
             if sname in ("core", "die"):
-                nums_dict = cast(RelNumsType, nums)
+                if typing.TYPE_CHECKING:
+                    nums_dict = cast(RelNumsType, nums)
+                else:
+                    nums_dict = nums
                 count = sum(len(pkg_nums) for pkg_nums in nums_dict.values())
             else:
                 count = len(nums)
@@ -291,11 +299,17 @@ def _test_convert_good(cpuinfo: CPUInfo.CPUInfo):
     # also accept lists.
     for from_sname, from_nums in _get_snames_and_nums(cpuinfo):
         if from_sname in ("die", "core"):
-            from_nums_dict = cast(RelNumsType, from_nums)
+            if typing.TYPE_CHECKING:
+                from_nums_dict = cast(RelNumsType, from_nums)
+            else:
+                from_nums_dict = from_nums
             pkg_num = next(iter(from_nums_dict))
             from_nums_list = from_nums_dict[pkg_num]
         else:
-            from_nums_list = cast(AbsNumsType, from_nums)
+            if typing.TYPE_CHECKING:
+                from_nums_list = cast(AbsNumsType, from_nums)
+            else:
+                from_nums_list = from_nums
 
         single_args = [from_nums_list[0], from_nums_list[-1]]
         multi_args = [{from_nums_list[0], }, [from_nums_list[-1]]]
@@ -347,7 +361,10 @@ def _test_normalize_good(cpuinfo: CPUInfo.CPUInfo):
     multiple: list[tuple[AbsNumsType | RelNumsType, AbsNumsType | RelNumsType]]
     for sname, nums in _get_snames_and_nums(cpuinfo):
         if sname in ("die", "core"):
-            nums_dict = cast(RelNumsType, nums)
+            if typing.TYPE_CHECKING:
+                nums_dict = cast(RelNumsType, nums)
+            else:
+                nums_dict = nums
             pkg_num = next(iter(nums_dict))
             nums_list = nums_dict[pkg_num]
             multiple = [({pkg_num: [nums_list[0]]}, {pkg_num: [nums_list[0]]}),
@@ -359,7 +376,10 @@ def _test_normalize_good(cpuinfo: CPUInfo.CPUInfo):
                              ({pkg_num: (nums_list[-1],  nums_list[0])},
                               {pkg_num: [nums_list[-1],  nums_list[0]]})]
         else:
-            nums_list = cast(AbsNumsType, nums)
+            if typing.TYPE_CHECKING:
+                nums_list = cast(AbsNumsType, nums)
+            else:
+                nums_list = nums
             multiple = [([nums_list[0]], [nums_list[0]]),
                         ((nums_list[0], ), [nums_list[0]])]
             if len(nums_list) > 1:
@@ -448,11 +468,17 @@ def _test_cpuinfo_div(cpuinfo):
             continue
 
         if sname in ("die", "core"):
-            nums_dict = cast(RelNumsType, nums)
+            if typing.TYPE_CHECKING:
+                nums_dict = cast(RelNumsType, nums)
+            else:
+                nums_dict = nums
             pkg_num = next(iter(nums_dict))
             nums_list = nums_dict[pkg_num]
         else:
-            nums_list = cast(AbsNumsType, nums)
+            if typing.TYPE_CHECKING:
+                nums_list = cast(AbsNumsType, nums)
+            else:
+                nums_list = nums
 
         # Note! In the comments below we'll assume that 'sname' is packages, for simplicity.
         # However, it may be anything else, like 'cores'.

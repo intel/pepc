@@ -13,9 +13,9 @@ This module contains helper functions related to logging.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import sys
+import typing
 import logging
 import traceback
-from typing import NoReturn, Any, IO, cast, Sequence
 from pathlib import Path
 try:
     # It is OK if 'colorama' is not available, we only lose message coloring.
@@ -24,6 +24,9 @@ try:
 except ImportError:
     _COLORAMA_AVAILABLE = False
 from pepclibs.helperlibs.Exceptions import Error
+
+if typing.TYPE_CHECKING:
+    from typing import NoReturn, Any, IO, cast, Sequence
 
 # Names of the modules to accept debug log messages from. Can be set by the user. All modules are
 # accepted by default.
@@ -491,4 +494,8 @@ def getLogger(name: str | None = None) -> Logger:
 
     # Note, because of 'setLoggerClass()', this will return a 'Logger' instance (except for the root
     # logger case).
-    return cast(Logger, logging.getLogger(name=name))
+    logger = logging.getLogger(name=name)
+    if typing.TYPE_CHECKING:
+        return cast(Logger, logger)
+    else:
+        return logger

@@ -14,23 +14,24 @@ model-specific register (MSR).
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
-from typing import Generator, cast, Literal
 import contextlib
+from typing import cast
 from pepclibs import CPUInfo, CPUModels
-from pepclibs.CPUInfoTypes import AbsNumsType
 from pepclibs.helperlibs import Logging, LocalProcessManager, ClassHelpers, Human
 from pepclibs.helperlibs.Exceptions import ErrorNotSupported, ErrorOutOfRange, ErrorBadOrder
 
 if typing.TYPE_CHECKING:
+    from typing import Generator, Literal
     from pepclibs.msr import MSR, FSBFreq, PMEnable, HWPRequest, HWPRequestPkg, PlatformInfo
     from pepclibs.msr import TurboRatioLimit, HWPCapabilities
+    from pepclibs.CPUInfoTypes import AbsNumsType
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
-# A CPU frequency sysfs file type. Possible values:
-#   - "min": a minimum CPU frequency file
-#   - "max": a maximum CPU frequency file
-#   - "current": a current CPU frequency file
-_SysfsFileType = Literal["min", "max", "current"]
+    # A CPU frequency sysfs file type. Possible values:
+    #   - "min": a minimum CPU frequency file
+    #   - "max": a maximum CPU frequency file
+    #   - "current": a current CPU frequency file
+    _SysfsFileType = Literal["min", "max", "current"]
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 

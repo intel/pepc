@@ -16,7 +16,7 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import sys
 import typing
-from typing import Literal, Union, get_args, cast
+from typing import Literal, get_args, cast
 from pepctool import _PepcCommon
 from pepclibs import CPUInfo
 from pepclibs.helperlibs import Logging, ClassHelpers, Human, YAML, Trivial
@@ -26,7 +26,7 @@ from pepclibs._PropsClassBase import ErrorUsePerCPU, ErrorTryAnotherMechanism
 PrintFormatType = Literal["human", "yaml"]
 
 if typing.TYPE_CHECKING:
-    from typing import TypedDict, Iterable, Sequence, IO, Iterator
+    from typing import TypedDict, Iterable, Sequence, IO, Iterator, Union
     from pepctool import _OpTarget
     from pepclibs import CStates, PStates, Uncore, PMQoS
     from pepclibs.CPUIdle import ReqCStateInfoTypedDict, ReqCStateInfoValuesType
@@ -373,7 +373,10 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         if prop["type"] == "list[str]":
             result = ", ".join(cast(list[str], val))
         elif prop["type"] in ("list[int]", "list[float]"):
-            cval = cast(list[Union[float, int]], val)
+            if typing.TYPE_CHECKING:
+                cval = cast(list[Union[float, int]], val)
+            else:
+                cval = val
             step = _detect_progression(cval, 4)
             has_tar = False
 
@@ -983,7 +986,7 @@ class CStatesPrinter(_PropsPrinter):
             new_pcsl_info: _AggrSubPinfoTypdDict = {"sname": pcsl_info["sname"], "vals": {}}
             for val, _cpus in pcsl_info["vals"].items():
                 new_cpus = []
-                for cpu in cast(AbsNumsType, _cpus):
+                for cpu in _cpus:
                     if cpu not in locked_cpus:
                         new_cpus.append(cpu)
                 if new_cpus:

@@ -12,9 +12,12 @@ Exception types used in this project.
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
-from pathlib import Path
-from typing import Any, Match, Union
 import re
+import typing
+from pathlib import Path
+
+if typing.TYPE_CHECKING:
+    from typing import Any, Match, Union
 
 class Error(Exception):
     """The base class for all exceptions raised by this project."""
@@ -163,7 +166,8 @@ class ErrorBadOrder(Error):
     Something is in the wrong order.
     """
 
-ExceptionType = Union[type[Error], type[ErrorTimeOut], type[ErrorExists], type[ErrorNotFound],
-                      type[ErrorNotSupported], type[ErrorPermissionDenied], type[ErrorBadFormat],
-                      type[ErrorVerifyFailed], type[ErrorConnect], type[ErrorOutOfRange],
-                      type[ErrorBadOrder]]
+if typing.TYPE_CHECKING:
+    ExceptionType = Union[type[Error], type[ErrorTimeOut], type[ErrorExists], type[ErrorNotFound],
+                        type[ErrorNotSupported], type[ErrorPermissionDenied], type[ErrorBadFormat],
+                        type[ErrorVerifyFailed], type[ErrorConnect], type[ErrorOutOfRange],
+                        type[ErrorBadOrder]]

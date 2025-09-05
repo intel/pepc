@@ -13,15 +13,15 @@ Provide a capability for reading and CPU frequency settings from ACPI CPPC via L
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
-from typing import Generator
 from pathlib import Path
 from pepclibs import CPUInfo, _SysfsIO
-from pepclibs.CPUInfoTypes import AbsNumsType
 from pepclibs.helperlibs import Logging, LocalProcessManager, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorBadFormat, ErrorNotSupported
 
 if typing.TYPE_CHECKING:
+    from typing import Generator
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
+    from pepclibs.CPUInfoTypes import AbsNumsType
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 

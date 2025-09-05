@@ -14,7 +14,7 @@ Provide a capability of retrieving and setting uncore-related properties.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
-from typing import Generator, Union, cast
+from typing import cast
 import statistics
 from pepclibs import _PropsClassBase
 from pepclibs.UncoreVars import PROPS
@@ -25,7 +25,7 @@ from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs._PropsClassBase import ErrorTryAnotherMechanism, ErrorUsePerCPU
 
 if typing.TYPE_CHECKING:
-    from typing import Any
+    from typing import Any, Generator, Union
     from pepclibs import _SysfsIO, _UncoreFreqSysfs, _UncoreFreqTpmi
     from pepclibs.CPUInfo import CPUInfo
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
@@ -393,11 +393,19 @@ class Uncore(_PropsClassBase.PropsClassBase):
         """
 
         if freq == "min":
-            yield from cast(Generator[tuple[int, int, int], None, None],
-                            self._get_prop_dies_mnames("min_freq_limit", dies, ("sysfs",)))
+            _iterator = self._get_prop_dies_mnames("min_freq_limit", dies, ("sysfs",))
+            if typing.TYPE_CHECKING:
+                iterator_min = cast(Generator[tuple[int, int, int], None, None], _iterator)
+            else:
+                iterator_min = _iterator
+            yield from iterator_min
         elif freq == "max":
-            yield from cast(Generator[tuple[int, int, int], None, None],
-                            self._get_prop_dies_mnames("max_freq_limit", dies, ("sysfs",)))
+            _iterator = self._get_prop_dies_mnames("max_freq_limit", dies, ("sysfs",))
+            if typing.TYPE_CHECKING:
+                iterator_max = cast(Generator[tuple[int, int, int], None, None], _iterator)
+            else:
+                iterator_max = _iterator
+            yield from iterator_max
         elif freq == "mdl":
             # pylint: disable-next=import-outside-toplevel
             from pepclibs import _UncoreFreqTpmi
@@ -405,10 +413,13 @@ class Uncore(_PropsClassBase.PropsClassBase):
             min_limit_iter = self._get_prop_dies_mnames("min_freq_limit", dies, ("sysfs",))
             max_limit_iter = self._get_prop_dies_mnames("max_freq_limit", dies, ("sysfs",))
             iter_zip = zip(min_limit_iter, max_limit_iter)
-            iterator = cast(Generator[tuple[tuple[int, int, int], tuple[int, int, int]],
-                                                  None, None], iter_zip)
+            if typing.TYPE_CHECKING:
+                iterator_mdl = cast(Generator[tuple[tuple[int, int, int], tuple[int, int, int]],
+                                              None, None], iter_zip)
+            else:
+                iterator_mdl = iter_zip
             ratio = _UncoreFreqTpmi.RATIO_MULTIPLIER
-            for (package, die, min_limit), (_, _, max_limit) in iterator:
+            for (package, die, min_limit), (_, _, max_limit) in iterator_mdl:
                 yield package, die, ratio * round(statistics.mean([min_limit, max_limit]) / ratio)
         elif isinstance(freq, int):
             for package, pkg_dies in dies.items():
@@ -489,8 +500,16 @@ class Uncore(_PropsClassBase.PropsClassBase):
                    pname, val, mname, dies)
 
         if pname in {"min_freq", "max_freq", "elc_low_zone_min_freq", "elc_mid_zone_min_freq"}:
-            self._set_freq_dies(pname, cast(Union[str, int], val), dies, mname)
+            if typing.TYPE_CHECKING:
+                _val = cast(Union[str, int], val)
+            else:
+                _val = val
+            self._set_freq_dies(pname, _val, dies, mname)
         elif pname in {"elc_low_threshold", "elc_high_threshold", "elc_high_threshold_status"}:
-            self._set_elc_threshold_dies(pname, cast(Union[int, bool], val), dies, mname)
+            if typing.TYPE_CHECKING:
+                _val = cast(Union[int, bool], val)
+            else:
+                _val = val
+            self._set_elc_threshold_dies(pname, _val, dies, mname)
         else:
             raise Error(f"BUG: Unexpected uncore frequency property {pname}")
