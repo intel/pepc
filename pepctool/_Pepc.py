@@ -1110,11 +1110,27 @@ def main() -> int:
         hostname: str = getattr(args, "hostname", "localhost")
         username: str | None = getattr(args, "username", None)
         privkey: str | None = getattr(args, "privkey", None)
-        timeout = Trivial.str_to_num(getattr(args, "timeout"), what="--timeout option value")
+        timeout: int | float | None = getattr(args, "timeout", None)
         dataset: str | None = getattr(args, "dataset", None)
 
-        if hostname == "localhost":
-            username = privkey = None
+        if hostname != "localhost" and dataset:
+            raise Error("The '--dataset' option cannot be used with '--host'")
+
+        if hostname == "localhost" or dataset:
+            if username:
+                raise Error("The '--username' option requires the '--host' option")
+            if privkey:
+                raise Error("The '--priv-key' option requires the '--host' option")
+            if timeout:
+                raise Error("The '--timeout' option requires the '--host' option")
+        else:
+            if not username:
+                username = "root"
+            if timeout:
+                timeout = Trivial.str_to_num(getattr(args, "timeout"),
+                                                     what="--timeout option value")
+            else:
+                timeout = 8
 
         if dataset:
             for dspath in _get_next_dataset(dataset):

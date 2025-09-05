@@ -105,7 +105,7 @@ SSH_OPTIONS: list[ArgTypedDict] = [
         "argcomplete" : None,
         "kwargs" : {
             "dest" : "username",
-            "default" : "root",
+            "default" : "",
             "help" : "Name of the user to use for logging into the remote host over SSH. The "
                      "default user name is 'root'."
         },
@@ -116,6 +116,7 @@ SSH_OPTIONS: list[ArgTypedDict] = [
         "argcomplete" : "FilesCompleter",
         "kwargs" : {
             "dest" : "privkey",
+            "default" : "",
             "help" : "Path to the private SSH key for logging into the remote host. Defaults to "
                      "keys in standard paths like '$HOME/.ssh'."
         },
@@ -126,7 +127,7 @@ SSH_OPTIONS: list[ArgTypedDict] = [
         "argcomplete" : None,
         "kwargs" : {
             "dest" : "timeout",
-            "default" : "8",
+            "default" : "",
             "help" : "Timeout for establishing an SSH connection in seconds. Defaults to 8."
         },
     },
