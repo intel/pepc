@@ -33,17 +33,28 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
 
+# The commented part below implements parallell test execution with up to 16 workers. But
+# coverage always shows 0%, so does not seem to work.
+#      - name: "Install dependencies"
+#        run: |
+#            python -m pip install --upgrade pip
+#            pip install --upgrade .
+#            pip install pytest pytest-xdist pytest-cov coverage
+#
+#      - name: "Run pytest to execute tests and collect coverage data"
+#        run: |
+#            nproc=$(grep -c ^processor /proc/cpuinfo 2>/dev/null || echo 1)
+#            [ "$nproc" -le 16 ] || nproc=16
+#            pytest -v --numprocesses "$nproc" --cov=pepclibs --cov=pepctool --cov-append
       - name: "Install dependencies"
         run: |
             python -m pip install --upgrade pip
             pip install --upgrade .
-            pip install pytest pytest-xdist pytest-cov coverage
+            pip install pytest coverage
 
       - name: "Run pytest to execute tests and collect coverage data"
         run: |
-            nproc=$(grep -c ^processor /proc/cpuinfo 2>/dev/null || echo 1)
-            [ "$nproc" -le 16 ] || nproc=16
-            pytest -v --numprocesses "$nproc" --cov=pepclibs --cov=pepctool --cov-append
+            pytest -v
         env:
           SHELL: /bin/sh
 
