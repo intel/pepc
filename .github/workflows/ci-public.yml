@@ -1,5 +1,5 @@
 # Name of the workflow, visible in the GitHub Actions UI
-name: "CI"
+name: "CI public"
 # Define the events that trigger this workflow
 on:
   # Trigger on push events
