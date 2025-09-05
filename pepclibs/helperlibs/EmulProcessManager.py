@@ -711,7 +711,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         path = Path(self._basepath / str(path).lstrip("/"))
         return super().is_socket(path)
 
-    def mkdtemp(self, prefix: str | None  = None, basedir: str | Path | None = None) -> Path:
+    def mkdtemp(self, prefix: str = "", basedir: str | Path | None = None) -> Path:
         """
         Same as 'ProcessManagerBase.mkdtemp()', but create the temporary directory under the
         emulated files' base directory.

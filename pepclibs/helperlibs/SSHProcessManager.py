@@ -208,7 +208,7 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
         """
 
         exitcode: int | None = None
-        cdata: str | None = None
+        cdata: str = ""
         ll = self._ll[streamid]
         check_ll = self._check_ll[streamid]
 
@@ -475,10 +475,10 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
     def __init__(self,
                  hostname: str,
-                 ipaddr: str | None = None,
+                 ipaddr: str = "",
                  port: int | None = None,
-                 username: str | None = None,
-                 password: str | None = None,
+                 username: str = "",
+                 password: str = "",
                  privkeypath: str | Path | None = None,
                  timeout: int | float | None = None):
         """
@@ -516,13 +516,13 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         self.port = port
 
         if not username:
-            username = os.getenv("USER")
-            if not username:
+            _username = os.getenv("USER")
+            if _username:
+                username = _username
+            else:
                 username = Trivial.get_username()
         self.username = username
 
-        if not password:
-            password = ""
         self.password = password
         if privkeypath:
             self.privkeypath: str | None = str(privkeypath)
@@ -1447,13 +1447,10 @@ for ent in entries:
 
         return Path(rpath)
 
-    def mkdtemp(self, prefix: str | None  = None, basedir: str | Path | None = None) -> Path:
+    def mkdtemp(self, prefix: str = "", basedir: str | Path | None = None) -> Path:
         """Refer to 'ProcessManagerBase.mkdtemp()'."""
 
-        cmd = "mktemp -d -t '"
-        if prefix:
-            cmd += prefix
-        cmd += "XXXXXX'"
+        cmd = f"mktemp -d -t '{prefix}XXXXXX'"
         if basedir:
             cmd += f" -p '{basedir}'"
 

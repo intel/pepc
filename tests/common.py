@@ -75,7 +75,7 @@ def get_pman(hostspec: str) -> ProcessManagerType:
     """
 
     dspath: Path | None = None
-    username: str | None = None
+    username: str = ""
     if hostspec.startswith("emulation:"):
         dataset = hostspec.split(":", maxsplit=2)[1]
         dspath = _get_datapath(dataset)

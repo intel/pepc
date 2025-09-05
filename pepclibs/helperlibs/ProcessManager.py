@@ -19,6 +19,7 @@ from  __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
 import contextlib
+from pathlib import Path
 from pepclibs.helperlibs import LocalProcessManager, SSHProcessManager, EmulProcessManager
 # pylint: disable-next=unused-import
 from pepclibs.helperlibs._ProcessManagerBase import ProcWaitResultType
@@ -34,8 +35,8 @@ if typing.TYPE_CHECKING:
     ProcessType = Union[LocalProcessManager.LocalProcess, SSHProcessManager.SSHProcess]
 
 def get_pman(hostname: str,
-             username: str | None = None,
-             privkeypath: str | None =None,
+             username: str = "",
+             privkeypath: str | Path | None = None,
              timeout: int | float | None = None) -> ProcessManagerType:
     """
     Create and return a process manager object for the specified host.
@@ -78,7 +79,7 @@ def get_pman(hostname: str,
 
     pman: ProcessManagerType | None = None
 
-    if hostname == "localhost" and username is None:
+    if hostname == "localhost" and not username:
         pman = LocalProcessManager.LocalProcessManager()
     elif hostname.startswith("emulation"):
         pman = EmulProcessManager.EmulProcessManager(hostname=hostname)

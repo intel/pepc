@@ -599,7 +599,7 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
                             stderr: str | list[str],
                             exitcode: int | None,
                             timeout: int | float | None = None,
-                            startmsg: str | None = None,
+                            startmsg: str = "",
                             failed: bool = True):
         """
         Return a formatted message describing that the command has exited or failed.
@@ -923,10 +923,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         raise NotImplementedError("ProcessManagerBase.put()")
 
-    def _command_not_found(self,
-                           cmd: str,
-                           errmsg: str | None = None,
-                           toolname: str | None = None) -> ErrorNotFound:
+    def _command_not_found(self, cmd: str, errmsg: str = "", toolname: str = "") -> ErrorNotFound:
         """
         Handle the case when a command cannot be executed because the executable file was not found.
 
@@ -943,7 +940,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
             An ErrorNotFound exception object with a detailed error message.
         """
 
-        pkgname: str | None = None
+        pkgname: str = ""
         if not toolname:
             # Get the tool (program) name.
             toolname = cmd.split()[0].split("/")[-1]
@@ -975,7 +972,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
                             stderr: str | list[str],
                             exitcode: int | None,
                             timeout: int | float | None = None,
-                            startmsg: str | None = None,
+                            startmsg: str = "",
                             failed: bool = True):
         """
         Return a formatted message describing that the command has exited or failed.
@@ -1015,9 +1012,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
                 stream = "".join(stream)
             msg += f"{stream.strip()}\n"
 
-        if not startmsg:
-            startmsg = ""
-        else:
+        if startmsg:
             startmsg += "\n"
 
         if self.is_remote:
@@ -1292,7 +1287,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         raise NotImplementedError("ProcessManagerBase.abspath()")
 
-    def mkdtemp(self, prefix: str | None  = None, basedir: str | Path | None = None) -> Path:
+    def mkdtemp(self, prefix: str = "", basedir: str | Path | None = None) -> Path:
         """
         Create a temporary directory and return its path.
 
