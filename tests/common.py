@@ -60,13 +60,14 @@ def is_emulated(pman: ProcessManagerType) -> bool:
 
     return pman.hostname.startswith("emulation:")
 
-def get_pman(hostspec: str) -> ProcessManagerType:
+def get_pman(hostspec: str, username: str = "") -> ProcessManagerType:
     """
     Create and return a process manager for the specified host.
 
     Args:
         hostspec: The host specification/name to create a process manager for. If the hostspec
                   starts with "emulation:", it indicates an emulated environment.
+        username: Name of the user to use for logging into the remote host over SSH.
 
     Returns:
         A process manager instance for the specified host. 'EmulProcessManager' in case of
@@ -75,19 +76,15 @@ def get_pman(hostspec: str) -> ProcessManagerType:
     """
 
     dspath: Path | None = None
-    username: str = ""
     if hostspec.startswith("emulation:"):
         dataset = hostspec.split(":", maxsplit=2)[1]
         dspath = _get_datapath(dataset)
-    elif hostspec != "localhost":
-        username = "root"
 
     pman = ProcessManager.get_pman(hostspec, username=username)
 
     if dspath:
         if typing.TYPE_CHECKING:
             pman = cast(EmulProcessManager.EmulProcessManager, pman)
-
         try:
             pman.init_emul_data(dspath)
         except:

@@ -27,7 +27,7 @@ if typing.TYPE_CHECKING:
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
 @pytest.fixture(name="params", scope="module")
-def get_params(hostspec: str) -> Generator[CommonTestParamsTypedDict, None, None]:
+def get_params(hostspec: str, username: str) -> Generator[CommonTestParamsTypedDict, None, None]:
     """
     Generate a dictionary with testing parameters.
 
@@ -41,7 +41,7 @@ def get_params(hostspec: str) -> Generator[CommonTestParamsTypedDict, None, None
         A dictionary containing testing parameters.
     """
 
-    with common.get_pman(hostspec) as pman:
+    with common.get_pman(hostspec, username=username) as pman:
         params = common.build_params(pman)
         yield params
 
