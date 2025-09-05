@@ -553,10 +553,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             else:
                 self._vhostname = connhost = hostname
 
-        look_for_keys = False
         if not self.privkeypath:
-            # Try finding the key filename from the SSH configuration files.
-            look_for_keys = True
             try:
                 self.privkeypath = self._lookup_privkey(hostname, self.username)
             except Exception as err: # pylint: disable=broad-except
@@ -580,8 +577,9 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
                             f"Make sure 'others' cannot read/write/execute it")
 
         _LOG.debug("Establishing SSH connection to %s, port %d, username '%s', timeout '%s', "
-                   "priv. key '%s', SSH pman object ID: %s", self._vhostname, port, self.username,
-                   self.connection_timeout, self.privkeypath, id(self))
+                   "password '%s', priv. key '%s', SSH pman object ID: %s",
+                   self._vhostname, port, self.username, self.connection_timeout, self.password,
+                   self.privkeypath, id(self))
 
         try:
             self.ssh = paramiko.SSHClient()
@@ -589,7 +587,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             # We expect to be authenticated either with the key or an empty password.
             self.ssh.connect(username=self.username, hostname=connhost, port=port,
                              key_filename=self.privkeypath, timeout=self.connection_timeout,
-                             password=self.password, allow_agent=False, look_for_keys=look_for_keys)
+                             password=self.password, allow_agent=True, look_for_keys=True)
         except paramiko.AuthenticationException as err:
             msg = Error(str(err)).indent(2)
             raise ErrorConnect(f"SSH authentication failed when connecting to {self._vhostname} as "
@@ -654,7 +652,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
                     continue
 
                 cfg = config.lookup(hostname)
-                if optname in cfg and "user" in cfg:
+                if optname in cfg and cfg.get("user", None) == username:
                     return cfg[optname]
 
                 if "include" in cfg:
