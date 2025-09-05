@@ -252,13 +252,6 @@ nominal_perf:
 \[aq]/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/nominal_perf\[aq].
 .RE
 .TP
-\f[B]\-\-max\-eff\-freq\f[R]
-Retrieve the maximum CPU efficiency frequency, also known as LFM (Low
-Frequency Mode) or Pn.
-Mechanism: \[aq]msr\[aq], reads MSR_HWP_CAPABILITIES (0x771), bits 23:16
-on if CPU hardware power management is enabled, otherwise reads
-MSR_PLATFORM_INFO (0xCE), bits 47:40.
-.TP
 \f[B]\-\-turbo\f[R]
 Check if turbo is enabled or disabled.
 When enabled, CPUs can run at frequencies above the base frequency if
@@ -395,11 +388,6 @@ frequency.
 Regardless of the \[aq]\-\-mechanisms\[aq] option, all available
 mechanisms are tried to resolve these special values to the actual base
 frequency.
-\f[B]eff\f[R], \f[B]lfm\f[R], \f[B]Pn\f[R] Maximum CPU efficiency
-frequency (see \[aq]\-\-max\-eff\-freq\[aq]).
-Regardless of the \[aq]\-\-mechanisms\[aq] option, the \[aq]msr\[aq]
-mechanism is always used to resolve these special values to the actual
-maximum CPU efficiency frequency.
 \f[B]Pm\f[R] Minimum CPU operating frequency (see
 \[aq]\-\-min\-oper\-freq\[aq]).
 Regardless of the \[aq]\-\-mechanisms\[aq] option, the \[aq]msr\[aq]

@@ -5,6 +5,12 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
+### Added
+### Removed
+### Changed
+
+## [1.6.0] - 2025-09-05
+### Fixed
  - Fix crashes with python 3.9.
 ### Added
  - Uncore ELC options and user document.
