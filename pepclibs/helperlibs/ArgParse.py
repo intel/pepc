@@ -13,8 +13,7 @@ Helpful classes extending 'argparse.ArgumentParser' class functionality.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import types
-from typing import TypedDict, Iterable, Any, Sequence, cast
-from dataclasses import dataclass
+import typing
 import argparse
 
 try:
@@ -27,47 +26,66 @@ except ImportError:
 from pepclibs.helperlibs import DamerauLevenshtein, Trivial, Logging
 from pepclibs.helperlibs.Exceptions import Error
 
-# The class type returned by the 'add_subparsers()' method of the arguments classes. Even though the
-# class is private, it is documented and will unlikely to change.
-SubParsersType = argparse._SubParsersAction # pylint: disable=protected-access
+if typing.TYPE_CHECKING:
+    from typing import TypedDict, Iterable, Any, Sequence, cast, NamedTuple
 
-class ArgKwargsTypedDict(TypedDict, total=False):
-    """
-    The type of the "kwargs" sub-dictionary of the 'ArgDictType' dictionary type. It defines the
-    supported keyword arguments that are ultimately passed to the 'argparse.add_argument()' method.
+    # The class type returned by the 'add_subparsers()' method of the arguments classes. Even though
+    # the class is private, it is documented and will unlikely to change.
+    SubParsersType = argparse._SubParsersAction # pylint: disable=protected-access
 
-    Attributes:
-        dest: The 'argparse' attribute name where the command line argument will be stored.
-        default: The default value for the argument.
-        nargs: The number of command line arguments that should be consumed.
-        metavar: The name of the argument in the help text.
-        action: The 'argparse' action to use for the argument. For example, 'store_true' or
-                'store_const'.
-        help: A brief description of the argument.
-    """
+    class ArgKwargsTypedDict(TypedDict, total=False):
+        """
+        The type of the "kwargs" sub-dictionary of the 'ArgDictType' dictionary type. It defines the
+        supported keyword arguments that are ultimately passed to the 'argparse.add_argument()'
+        method.
 
-    dest: str
-    default: str | int
-    nargs: str | int
-    metavar: str
-    action: str | type[argparse.Action]
-    help: str
+        Attributes:
+            dest: The 'argparse' attribute name where the command line argument will be stored.
+            default: The default value for the argument.
+            nargs: The number of command line arguments that should be consumed.
+            metavar: The name of the argument in the help text.
+            action: The 'argparse' action to use for the argument. For example, 'store_true' or
+                    'store_const'.
+            help: A brief description of the argument.
+        """
 
-class ArgTypedDict(TypedDict, total=False):
-    """
-    A dictionary type the options definitions dictionary.
+        dest: str
+        default: str | int
+        nargs: str | int
+        metavar: str
+        action: str | type[argparse.Action]
+        help: str
 
-    Attributes:
-        short: The short option name.
-        long: The long option name.
-        argcomplete: The 'argcomplete' class name to use for tab completion of the option.
-        kwargs: Additional keyword arguments for 'argparse.add_argument()'.
-    """
+    class ArgTypedDict(TypedDict, total=False):
+        """
+        A dictionary type the options definitions dictionary.
 
-    short: str | None
-    long: str
-    argcomplete: str | None
-    kwargs: ArgKwargsTypedDict
+        Attributes:
+            short: The short option name.
+            long: The long option name.
+            argcomplete: The 'argcomplete' class name to use for tab completion of the option.
+            kwargs: Additional keyword arguments for 'argparse.add_argument()'.
+        """
+
+        short: str | None
+        long: str
+        argcomplete: str | None
+        kwargs: ArgKwargsTypedDict
+
+    class _CommonArgumentsType(NamedTuple):
+        """
+        The common command-line arguments.
+
+        Attributes:
+            quiet: Suppress non-essential output (-q option).
+            debug: Enable debugging output (-d option).
+            debug_modules: Comma-separated list modules for which to enable debugging output, or
+                           None to enable debugging for all modules (--debug-modules option).
+        """
+
+        quiet: bool
+        debug: bool
+        debug_modules: str | None
 
 SSH_OPTIONS: list[ArgTypedDict] = [
     {
@@ -113,22 +131,6 @@ SSH_OPTIONS: list[ArgTypedDict] = [
         },
     },
 ]
-
-@dataclass
-class _CommonArgumentsType:
-    """
-    The common command-line arguments.
-
-    Attributes:
-        quiet: Suppress non-essential output (-q option).
-        debug: Enable debugging output (-d option).
-        debug_modules: Comma-separated list modules for which to enable debugging output, or None
-                       to enable debugging for all modules (--debug-modules option).
-    """
-
-    quiet: bool
-    debug: bool
-    debug_modules: str | None
 
 def add_options(parser: argparse.ArgumentParser | ArgsParser, options: Iterable[ArgTypedDict]):
     """
@@ -304,7 +306,11 @@ class ArgsParser(argparse.ArgumentParser):
 
         arguments = super().parse_args(*args, **kwargs)
 
-        args_dc = cast(_CommonArgumentsType, arguments)
+        if typing.TYPE_CHECKING:
+            args_dc = cast(_CommonArgumentsType, arguments)
+        else:
+            args_dc = arguments
+
         self._check_arguments(args_dc)
         self._configure_debug_logging(args_dc)
 
