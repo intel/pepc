@@ -1108,7 +1108,7 @@ def main() -> int:
             return 0
 
         hostname: str = getattr(args, "hostname", "localhost")
-        username: str | None = getattr(args, "username", "")
+        username: str = getattr(args, "username", "")
         privkey: str | None = getattr(args, "privkey", None)
         timeout: int | float | None = getattr(args, "timeout", None)
         dataset: str | None = getattr(args, "dataset", None)
