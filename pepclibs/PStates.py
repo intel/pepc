@@ -1150,7 +1150,7 @@ class PStates(_PropsClassBase.PropsClassBase):
             return
 
         if pname == "epb":
-            epbobj = self._get_epbobj() # pylint: disable=protected-access
+            epbobj = self._get_epbobj()
             prop["sname"] = epbobj.sname
         elif pname == "bus_clock":
             try:
