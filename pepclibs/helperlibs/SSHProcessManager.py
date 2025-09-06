@@ -144,7 +144,7 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
 
         try:
             return self._streams[streamid](size)
-        except BaseException as err: # pylint: disable=broad-except
+        except BaseException as err:
             raise Error(str(err)) from err
 
     def _recv_exit_status_timeout(self, timeout: int | float) -> int | None:
@@ -591,7 +591,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             msg = Error(str(err)).indent(2)
             raise ErrorConnect(f"SSH authentication failed when connecting to {self._vhostname} as "
                                f"'{self.username}':\n{msg}") from err
-        except BaseException as err: # pylint: disable=broad-except
+        except BaseException as err:
             msg = Error(str(err)).indent(2)
             raise ErrorConnect(f"Cannot establish TCP connection to {self._vhostname} with "
                                f"{timeout} secs time-out:\n{msg}") from err
@@ -748,21 +748,21 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             if not transport:
                 raise Error(f"SSH transport is not available{self.hostmsg}")
             chan = transport.open_session(timeout=self.connection_timeout)
-        except BaseException as err: # pylint: disable=broad-except
+        except BaseException as err:
             msg = Error(str(err)).indent(2)
             raise Error(f"Cannot create a new SSH session for running the following "
                         f"command{self.hostmsg}:\n  {cmd}\nThe error is:\n{msg}") from err
 
         try:
             chan.exec_command(cmd)
-        except BaseException as err: # pylint: disable=broad-except
+        except BaseException as err:
             msg = Error(str(err)).indent(2)
             raise Error(f"Cannot execute the following command in a new SSH session"
                         f"{self.hostmsg}:\n  {cmd}\nThe error is:\n{msg}") from err
 
         try:
             stdin = chan.makefile("wb")
-        except BaseException as err: # pylint: disable=broad-except
+        except BaseException as err:
             msg = Error(str(err)).indent(2)
             raise Error(f"Failed to create the stdin file-like object for the following "
                         f"command{self.hostmsg}:\n  {cmd}\nThe Error is:\n{msg}") from err
@@ -770,7 +770,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         if mix_output:
             try:
                 chan.set_combine_stderr(True)
-            except BaseException as err: # pylint: disable=broad-except
+            except BaseException as err:
                 msg = Error(str(err)).indent(2)
                 raise Error(f"Failed combind stdout and stdert for the following "
                             f"command{self.hostmsg}:\n  {cmd}\nThe Error is:\n{msg}") from err
@@ -932,7 +932,6 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         # The 'newgrp' argument is ignored, because it makes no sense in a remote host case.
         # The 'stdin', 'stdout', and 'stderr' arguments are not supported.
 
-        # pylint: disable=unused-argument
         for arg, val in (("stdin", None), ("stdout", None), ("stderr", None)):
             if locals()[arg] != val:
                 raise Error(f"'SSHProcessManager.run_async()' doesn't support the '{arg}' argument")
@@ -961,8 +960,6 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             env: dict[str, str] | None = None,
             newgrp: bool = False) -> ProcWaitResultType:
         """Refer to 'ProcessManagerBase.run()'."""
-
-        # pylint: disable=unused-argument
 
         msg = f"Running the following command{self.hostmsg} (intsh {intsh}):\n{cmd}"
         if cwd:
@@ -994,8 +991,6 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
                    env: dict[str, str] | None = None,
                    newgrp: bool = False) -> tuple[str | list[str], str | list[str]]:
         """Refer to 'ProcessManagerBase.run_verify()'."""
-
-        # pylint: disable=unused-argument
 
         result = self.run(cmd, timeout=timeout, capture_output=capture_output,
                           mix_output=mix_output, join=join, output_fobjs=output_fobjs, cwd=cwd,
@@ -1119,7 +1114,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         try:
             self._sftp = self.ssh.open_sftp()
-        except BaseException as err: # pylint: disable=broad-except
+        except BaseException as err:
             msg = Error(str(err)).indent(2)
             raise Error(f"Failed to establish SFTP session with {self.hostname}:\n{msg}") from err
 
@@ -1149,7 +1144,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             if "b" not in orig_fmode:
                 try:
                     return data.decode("utf-8")
-                except BaseException as err: # pylint: disable=broad-except
+                except BaseException as err:
                     msg = Error(str(err)).indent(2)
                     errmsg = get_err_prefix(fobj, "read")
                     raise Error(f"{errmsg}: Failed to decode data after reading:\n{msg}") from None
@@ -1179,7 +1174,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
                 try:
                     data = data.encode("utf-8")
-                except BaseException as err: # pylint: disable=broad-except
+                except BaseException as err:
                     msg = Error(str(err)).indent(2)
                     errmsg = get_err_prefix(fobj, "write")
                     raise Error(f"{errmsg}:\nFailed to encode data before writing:\n"
