@@ -65,7 +65,7 @@ class LocalProcess(_ProcessManagerBase.ProcessBase):
 
             try:
                 return self._streams[streamid].read(size)
-            except BaseException as err: # pylint: disable=broad-except
+            except BaseException as err:
                 if getattr(err, "errno", None) == errno.EAGAIN:
                     continue
                 raise
@@ -360,7 +360,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         except FileNotFoundError as err:
             msg = Error(str(err)).indent(2)
             raise ErrorNotFound(f"{errmsg}\n{msg}") from None
-        except BaseException as err: # pylint: disable=broad-except
+        except BaseException as err:
             msg = Error(str(err)).indent(2)
             raise Error(f"{errmsg}\n{msg}") from None
 
