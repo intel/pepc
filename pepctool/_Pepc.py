@@ -107,43 +107,43 @@ def _add_target_cpus_arguments(subpars: ArgParse.ArgsParser, fmt: str, exclude: 
         exclude = set()
 
     if "--cpus" not in exclude:
-        text = fmt % "CPUs" # pylint: disable=consider-using-f-string
+        text = fmt % "CPUs"
         text += """ Specify individual CPU numbers or ranges (e.g., '1-4,7,8,10-12'). Use 'all' for
                     all CPUs. If not specified, all CPUs are used by default."""
         subpars.add_argument("--cpus", help=text)
 
     if "--cores" not in exclude:
-        text = fmt % "cores" # pylint: disable=consider-using-f-string
+        text = fmt % "cores"
         text += """ The list can include individual core numbers or ranges (e.g., '0-3,5'). Core
                    numbers are relative to their package."""
         subpars.add_argument("--cores", help=text)
 
     if "--modules" not in exclude:
-        text = fmt % "modules" # pylint: disable=consider-using-f-string
+        text = fmt % "modules"
         text += """ Specify individual module numbers or ranges (e.g., '0-3,5'). Format is similar
                     to '--cpus'."""
         subpars.add_argument("--modules", help=text)
 
     if "--dies" not in exclude:
-        text = fmt % "dies" # pylint: disable=consider-using-f-string
+        text = fmt % "dies"
         text += """ Specify die numbers or ranges (e.g., '0-3,5'). Format is similar to '--cpus'."""
         subpars.add_argument("--dies", help=text)
 
     if "--packages" not in exclude:
-        text = fmt % "packages" # pylint: disable=consider-using-f-string
+        text = fmt % "packages"
         text += """ Specify individual package numbers or ranges (e.g., '0-3,5'). Format is similar
                    to '--cpus'."""
         subpars.add_argument("--packages", help=text)
 
     if "--core-siblings" not in exclude:
-        text = fmt % "core sibling indices" # pylint: disable=consider-using-f-string
+        text = fmt % "core sibling indices"
         text += """ Specify core sibling indices or ranges (e.g., '0-1'). Core siblings are CPUs
                     sharing the same core. For example, if a core includes CPUs 2 and 3, '0' refers
                     to CPU 2 and '1' to CPU 3."""
         subpars.add_argument("--core-siblings", help=text)
 
     if "--module-siblings" not in exclude:
-        text = fmt % "module sibling indices" # pylint: disable=consider-using-f-string
+        text = fmt % "module sibling indices"
         text += """ Specify module sibling indices or ranges (e.g., '0-1'). Core siblings are CPUs
                     sharing the same module. For example, if a module includes CPUs 4, 5, 6, and 7,
                     index '0' refers to CPU 4, index '1' to CPU 5, and index '4' to CPU 7."""
