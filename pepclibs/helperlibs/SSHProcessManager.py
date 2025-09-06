@@ -305,9 +305,8 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
                 if exitcode[0] is None and exitcode[1] is None:
                     self._dbg("SSHProcess._wait_intsh(): Enough lines were captured, stop looping")
                     break
-                else:
-                    self._dbg("SSHProcess._wait_intsh(): Enough lines were captured, but waiting "
-                              "for the second marker")
+                self._dbg("SSHProcess._wait_intsh(): Enough lines were captured, but waiting "
+                          "for the second marker")
 
             if exitcode[0] is not None and exitcode[1] is not None:
                 self.exitcode = exitcode[0]
@@ -1356,7 +1355,7 @@ for ent in entries:
 
         if exitcode == 2:
             raise ErrorNotFound(f"Directory '{path}' does not exists{self.hostmsg}") from None
-        elif exitcode != 0:
+        if exitcode != 0:
             raise Error(self.get_cmd_failure_msg(cmd, stdout, stderr, exitcode))
 
         info: dict[str, LsdirTypedDict] = {}
