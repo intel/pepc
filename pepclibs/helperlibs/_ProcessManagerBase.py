@@ -551,7 +551,7 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
                                                   name='stream-fetcher',
                                                   args=(streamid,), daemon=True)
                         thread.start()
-                    except BaseException as err: # pylint: disable=broad-except
+                    except BaseException as err:
                         errmsg = Error(str(err)).indent(2)
                         raise Error(f"Failed to start the stream fetcher thread:\n{errmsg}\n"
                                     f"PID: {str(self.pid)}\nCommand: {self.cmd}") from err
