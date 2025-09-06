@@ -72,8 +72,9 @@ jobs:
         run: |
           xargs -a .tmp/modified-files -r pylint --output-format=github --score=no --jobs=0 --disable=similarities --no-docstring-rgx=^$ --verbose > .tmp/pylint.results || retcode=1
 
-          # Format the pylint output for GitHub annotations
+          # Format the pylint output for GitHub annotations.
+          # Example of a pylint message:
           sed < .tmp/pylint.results -r \
-            -e 's#^(::.*),title=(.*)::#\1::[pylint] \2: #'
+            -e 's#^(::.*) file=([^,]+),line=([0-9]+),(.*)::#\1::[pylint] \2:\3: #'
 
           exit ${retcode:-0}
