@@ -75,6 +75,8 @@ class PStates(_PropsClassBase.PropsClassBase):
         self._cpufreq_cppc_obj: _CPUFreqCPPC.CPUFreqCPPC | None = None
         self._cpufreq_msr_obj: _CPUFreqMSR.CPUFreqMSR | None= None
 
+        self._perf2freq: dict[int, int] = {}
+
         self._init_props_dict(PROPS)
 
     def close(self):

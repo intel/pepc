@@ -33,6 +33,9 @@ if typing.TYPE_CHECKING:
     #   - "current": a current CPU frequency file
     _SysfsFileType = Literal["min", "max", "current"]
 
+class ErrorNeedPerf2Freq(ErrorNotSupported):
+    """Indicate that performance-to-frequency scaling factors are needed but not provided."""
+
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
 class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
@@ -49,6 +52,7 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         - get_min_oper_freq(cpus): Yield (cpu, value) pairs for the minimum operating frequency.
         - get_max_turbo_freq(cpus): Yield (cpu, value) pairs for the maximum turbo frequency.
         - get_hwp(cpus): Yield (cpu, value) pairs indicating HWP on/off status.
+        - setup_perf2freq(perf2freq): Set the performance-to-frequency scaling factors.
 
     Notes:
         Methods do not validate the 'cpus' argument. Ensure that provided CPU numbers are valid and
@@ -102,6 +106,9 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
 
         # Bus clock frequency cache.
         self._bclks: dict[int, int] = {}
+        for cpu, bclk in self._get_bclks(self._cpuinfo.get_cpus()):
+            self._bclks[cpu] = bclk
+
         # Per-core performance scaling factors.
         self._perf2freq: dict[int, int] = {}
 
@@ -742,15 +749,15 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
 
     def _init_perf2freq(self):
         """
-        Initialize the performance-to-frequency scaling factors.
+        Initialize the performance-to-frequency scaling factors for CPUs.
+
+        Raises:
+            ErrorNotSupported: If the CPU model is not supported.
         """
 
-        for cpu, bclk in self._get_bclks(self._cpuinfo.get_cpus()):
-            self._bclks[cpu] = bclk
-
         if not self._cpuinfo.info["hybrid"]:
-            # Non-hybrid platforms use 100MHz scaling factor (except for very old platforms, which
-            # may use for example 133MHz).
+            # Non-hybrid platforms use 100MHz scaling factor (except for very old platforms,
+            # which may use for example 133MHz).
             for cpu, bclk in self._bclks.items():
                 self._perf2freq[cpu] = bclk
             return
@@ -768,12 +775,22 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
             factors["pcore"] = 86_957_000
             factors["ecore"] = 100_000_000
         else:
-            raise ErrorNotSupported(f"Unsupported hybrid CPU model '{self._cpuinfo.info['vfm']}'")
+            raise ErrorNeedPerf2Freq(f"Unsupported hybrid CPU model '{self._cpuinfo.info['vfm']}'")
 
         hybrid_cpus = self._cpuinfo.get_hybrid_cpus()
 
         for htype, cpus in hybrid_cpus.items():
             if htype not in factors and cpus:
-                raise Error(f"BUG: No scaling factor for hybrid core type '{htype}'")
+                raise Error(f"No scaling factor for hybrid core type '{htype}'")
             for cpu in cpus:
                 self._perf2freq[cpu] = factors[htype]
+
+    def setup_perf2freq(self, perf2freq: dict[int, int]):
+        """
+        Set the performance-to-frequency scaling factors.
+
+        Args:
+            perf2freq: A dictionary mapping CPU numbers to performance-to-frequency scaling factors.
+        """
+
+        self._perf2freq = perf2freq
