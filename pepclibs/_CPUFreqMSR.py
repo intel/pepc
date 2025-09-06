@@ -90,11 +90,6 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         self._platinfo: PlatformInfo.PlatformInfo | None = None
         self._trl: TurboRatioLimit.TurboRatioLimit | None = None
 
-        self._pcore_cpus: set[int] = set()
-
-        # Per-core performance scaling factors.
-        self._perf2freq: dict[int, int] = {}
-
         if not pman:
             self._pman = LocalProcessManager.LocalProcessManager()
         else:
@@ -105,11 +100,11 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         else:
             self._cpuinfo = cpuinfo
 
-        if self._cpuinfo.info["hybrid"]:
-            hybrid_cpus = self._cpuinfo.get_hybrid_cpus()
-            self._pcore_cpus = set(hybrid_cpus["pcore"])
-
-        self._init_scaling_factor()
+        # Bus clock frequency cache.
+        self._bclks: dict[int, int] = {}
+        # Per-core performance scaling factors.
+        self._perf2freq: dict[int, int] = {}
+        self._init_perf2freq()
 
     def close(self):
         """Uninitialize the class instance."""
@@ -194,24 +189,7 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         else:
             for cpu, bclk in fsbfreq.read_feature("fsb", cpus=cpus):
                 # Convert MHz to Hz.
-                yield cpu, int(bclk * 1000000)
-
-    def _get_bclk(self, cpu):
-        """
-        Retrieve the bus clock speed for the specified CPU.
-
-        Args:
-            cpu: CPU number to get the bus clock speed for.
-
-        Returns:
-            The bus clock speed in Hz for the given CPU.
-
-        Raises:
-            ErrorNotSupported: If the CPU vendor is not Intel.
-        """
-
-        _, val = next(self._get_bclks((cpu,)))
-        return val
+                yield cpu, int(bclk * 1_000_000)
 
     def _get_hwpreq(self) -> HWPRequest.HWPRequest:
         """
@@ -248,7 +226,7 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
 
         return self._hwpreq_pkg
 
-    def _perf_to_freq(self, cpu: int, perf: int, bclk: int) -> int:
+    def _perf_to_freq(self, cpu: int, perf: int) -> int:
         """
         Convert performance level units to CPU frequency in Hz.
 
@@ -260,28 +238,29 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         Args:
             cpu: The CPU number.
             perf: The performance level value to convert to frequency.
-            bclk: Bus clock frequency in Hz.
 
         Returns:
             CPU frequency in Hz.
         """
 
-        if self._cpuinfo.info["hybrid"] and cpu in self._pcore_cpus:
-            # In HWP mode, the Linux 'intel_pstate' driver changes CPU frequency by programming
-            # 'MSR_HWP_REQUEST'.
-            # On many Intel platforms,the MSR is programmed in terms of frequency ratio (frequency
-            # divided by 100MHz). But on hybrid Intel platform (e.g., Alder Lake), the MSR works in
-            # terms of platform-dependent abstract performance units on P-cores. Convert the
-            # performance units to CPU frequency in Hz.
-            freq = perf * self._perf2freq[cpu]
+        freq = perf * self._perf2freq[cpu]
+        # Round the frequency down to bus clock (following the Linux kernel behavior).
+        return freq - (freq % self._bclks[cpu])
 
-            # Round the frequency down to bus clock.
-            # * Why rounding? CPU frequency changes in bus-clock increments.
-            # * Why rounding down? Following how Linux 'intel_pstate' driver example.
-            _LOG.debug("Translated performance %d to frequency %d Hz for CPU %d", perf, freq, cpu)
-            return freq - (freq % bclk)
+    def _freq_to_perf(self, cpu: int, freq: int) -> int:
+        """
+        Convert CPU frequency in Hz to performance level units.
 
-        return perf * self._perf2freq[cpu]
+        Args:
+            cpu: The CPU number.
+            freq: The CPU frequency in Hz to convert to performance level units.
+
+        Returns:
+            The corresponding performance level value.
+        """
+
+        # Round up the performance level value up (following the Linux kernel behavior).
+        return int((freq + self._perf2freq[cpu] - 1) / self._perf2freq[cpu])
 
     def _get_freq_msr(self,
                       ftype: _SysfsFileType,
@@ -309,18 +288,16 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
 
         hwpreq = self._get_hwpreq()
         hwpreq_iter = hwpreq.read_feature(feature_name, cpus=cpus)
-        bclks_iter = self._get_bclks(cpus)
-        for (cpu, bclk), (_, perf) in zip(bclks_iter, hwpreq_iter):
-
+        for cpu, perf in hwpreq_iter:
             perf = cast(int, perf)
             if hwpreq.is_cpu_feature_pkg_controlled(feature_name, cpu):
                 run_again = True
                 break
             yielded_cpus.add(cpu)
 
-            freq = self._perf_to_freq(cpu, perf, bclk)
-            _LOG.debug("Read CPU %d frequency from %s (%#x): %d Hz. Perf = %d, bclk = %d",
-                       cpu, hwpreq.regname, hwpreq.regaddr, freq, perf, bclk )
+            freq = self._perf_to_freq(cpu, perf)
+            _LOG.debug("Read CPU %d frequency from %s (%#x): %d Hz. Perf = %d, factor = %d",
+                       cpu, hwpreq.regname, hwpreq.regaddr, freq, perf, self._perf2freq[cpu])
             yield cpu, freq
 
         if not run_again:
@@ -335,11 +312,9 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         hwpreq_pkg = self._get_hwpreq_pkg()
         hwpreq_iter = hwpreq.read_feature(feature_name, cpus=left_cpus)
         hwpreq_pkg_iter = hwpreq_pkg.read_feature(feature_name, cpus=left_cpus)
-        bclks_iter = self._get_bclks(left_cpus)
 
-        iterator = zip(bclks_iter, hwpreq_iter, hwpreq_pkg_iter)
-        for (_, bclk), (cpu, perf), (_, perf_pkg) in iterator:
-            assert cpu == _
+        iterator = zip(hwpreq_iter, hwpreq_pkg_iter)
+        for (cpu, perf), (_, perf_pkg) in iterator:
             perf = cast(int, perf)
             perf_pkg = cast(int, perf_pkg)
 
@@ -348,9 +323,10 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
             else:
                 val = perf
 
-            freq = self._perf_to_freq(cpu, val, bclk)
-            _LOG.debug("Read CPU %d frequency from %s (%#x): %d Hz. Perf = %d, bclk = %d",
-                       cpu, hwpreq_pkg.regname, hwpreq_pkg.regaddr, freq, perf, bclk )
+            freq = self._perf_to_freq(cpu, val)
+            _LOG.debug("Read CPU %d frequency from %s (%#x): %d Hz. Perf = %d, factor = %d",
+                       cpu, hwpreq_pkg.regname, hwpreq_pkg.regaddr, freq, perf,
+                       self._perf2freq[cpu])
             yield cpu, freq
 
     def get_min_freq(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
@@ -465,11 +441,8 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         # Prepare the values dictionary, which maps each value to the list of CPUs to write this
         # value to.
         vals: dict[int, list[int]] = {}
-        for cpu, bclk in self._get_bclks(cpus):
-            if cpu in self._pcore_cpus:
-                perf = int((freq + self._perf2freq[cpu] - 1) / self._perf2freq[cpu])
-            else:
-                perf = freq // bclk
+        for cpu in cpus:
+            perf = self._freq_to_perf(cpu, freq)
             if perf not in vals:
                 vals[perf] = []
             vals[perf].append(cpu)
@@ -581,12 +554,11 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
             return
 
         platinfo = self._get_platinfo()
-        bclks_iter = self._get_bclks(cpus)
         platinfo_iter = platinfo.read_feature(fname, cpus=cpus)
 
-        for (cpu, bclk), (_, ratio) in zip(bclks_iter, platinfo_iter):
+        for cpu, ratio in platinfo_iter:
             ratio = cast(int, ratio)
-            yield cpu, ratio * bclk
+            yield cpu, ratio * self._bclks[cpu]
 
     def _get_hwpcap_freq(self,
                          fname: str,
@@ -608,13 +580,11 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
             return
 
         hwpcap = self._get_hwpcap()
-        bclks_iter = self._get_bclks(cpus)
         hwpcap_iter = hwpcap.read_feature(fname, cpus=cpus)
 
-        for (cpu, bclk), (_, perf) in zip(bclks_iter, hwpcap_iter):
-            assert cpu == _
+        for cpu, perf in hwpcap_iter:
             perf = cast(int, perf)
-            yield cpu, self._perf_to_freq(cpu, perf, bclk)
+            yield cpu, self._perf_to_freq(cpu, perf)
 
     def get_base_freq(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
@@ -687,25 +657,23 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         yielded = False
         trl = self._get_trl()
         trl_iter = trl.read_feature("max_1c_turbo_ratio", cpus=cpus)
-        bclks_iter = self._get_bclks(cpus)
 
         try:
-            for (cpu, bclk), (_, ratio) in zip(bclks_iter, trl_iter):
+            for (cpu, ratio) in trl_iter:
                 ratio = cast(int, ratio)
                 yielded = True
-                yield cpu, ratio * bclk
+                yield cpu, ratio * self._bclks[cpu]
         except ErrorNotSupported as err1:
             if yielded:
                 raise
             trl_iter = trl.read_feature("max_g0_turbo_ratio", cpus=cpus)
-            bclks_iter = self._get_bclks(cpus)
             try:
                 # In this case 'MSR_TURBO_RATIO_LIMIT' encodes max. turbo ratio for groups of cores.
                 # We can safely assume that group 0 will correspond to max. 1-core turbo, so we do
                 # not need to look at 'MSR_TURBO_RATIO_LIMIT1'.
-                for (cpu, bclk), (_, ratio) in zip(bclks_iter, trl_iter):
+                for cpu, ratio in trl_iter:
                     ratio = cast(int, ratio)
-                    yield cpu, ratio * bclk
+                    yield cpu, ratio * self._bclks[cpu]
             except ErrorNotSupported as err2:
                 _LOG.warn_once("Module 'TurboRatioLimit' doesn't support "
                                "'MSR_TURBO_RATIO_LIMIT' for CPU '%s'%s\nPlease, contact project "
@@ -758,10 +726,20 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         pmenable = self._get_pmenable()
         yield from pmenable.is_feature_enabled("hwp", cpus=cpus)
 
-    def _init_scaling_factor(self):
+    def _init_perf2freq(self):
         """
-        Initialize the performance-to-frequency scaling factor for hybrid platforms.
+        Initialize the performance-to-frequency scaling factors.
         """
+
+        for cpu, bclk in self._get_bclks(self._cpuinfo.get_cpus()):
+            self._bclks[cpu] = bclk
+
+        if not self._cpuinfo.info["hybrid"]:
+            # Non-hybrid platforms use 100MHz scaling factor (except for very old platforms, which
+            # may use for example 133MHz).
+            for cpu, bclk in self._bclks.items():
+                self._perf2freq[cpu] = bclk
+            return
 
         factors: dict[HybridCPUKeyType, int] = {}
 
