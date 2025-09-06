@@ -309,19 +309,18 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         hwpreq = self._get_hwpreq()
         hwpreq_iter = hwpreq.read_feature(feature_name, cpus=cpus)
         bclks_iter = self._get_bclks(cpus)
-        for (cpu1, bclk), (cpu2, perf) in zip(bclks_iter, hwpreq_iter):
-            assert cpu1 == cpu2
+        for (cpu, bclk), (_, perf) in zip(bclks_iter, hwpreq_iter):
 
             perf = cast(int, perf)
-            if hwpreq.is_cpu_feature_pkg_controlled(feature_name, cpu1):
+            if hwpreq.is_cpu_feature_pkg_controlled(feature_name, cpu):
                 run_again = True
                 break
-            yielded_cpus.add(cpu1)
+            yielded_cpus.add(cpu)
 
-            freq = self._perf_to_freq(cpu1, perf, bclk)
+            freq = self._perf_to_freq(cpu, perf, bclk)
             _LOG.debug("Read CPU %d frequency from %s (%#x): %d Hz. Perf = %d, bclk = %d",
-                       cpu1, hwpreq.regname, hwpreq.regaddr, freq, perf, bclk )
-            yield cpu1, freq
+                       cpu, hwpreq.regname, hwpreq.regaddr, freq, perf, bclk )
+            yield cpu, freq
 
         if not run_again:
             # Nothing uses package control, nothing more to do.
@@ -338,20 +337,20 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         bclks_iter = self._get_bclks(left_cpus)
 
         iterator = zip(bclks_iter, hwpreq_iter, hwpreq_pkg_iter)
-        for (_, bclk), (cpu1, perf), (cpu2, perf_pkg) in iterator:
-            assert cpu1 == cpu2
+        for (_, bclk), (cpu, perf), (_, perf_pkg) in iterator:
+            assert cpu == _
             perf = cast(int, perf)
             perf_pkg = cast(int, perf_pkg)
 
-            if hwpreq.is_cpu_feature_pkg_controlled(feature_name, cpu1):
+            if hwpreq.is_cpu_feature_pkg_controlled(feature_name, cpu):
                 val = perf_pkg
             else:
                 val = perf
 
-            freq = self._perf_to_freq(cpu1, val, bclk)
+            freq = self._perf_to_freq(cpu, val, bclk)
             _LOG.debug("Read CPU %d frequency from %s (%#x): %d Hz. Perf = %d, bclk = %d",
-                       cpu1, hwpreq_pkg.regname, hwpreq_pkg.regaddr, freq, perf, bclk )
-            yield cpu1, freq
+                       cpu, hwpreq_pkg.regname, hwpreq_pkg.regaddr, freq, perf, bclk )
+            yield cpu, freq
 
     def get_min_freq(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
@@ -584,10 +583,9 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         bclks_iter = self._get_bclks(cpus)
         platinfo_iter = platinfo.read_feature(fname, cpus=cpus)
 
-        for (cpu1, bclk), (cpu2, ratio) in zip(bclks_iter, platinfo_iter):
-            assert cpu1 == cpu2
+        for (cpu, bclk), (_, ratio) in zip(bclks_iter, platinfo_iter):
             ratio = cast(int, ratio)
-            yield cpu1, ratio * bclk
+            yield cpu, ratio * bclk
 
     def _get_hwpcap_freq(self,
                          fname: str,
@@ -612,10 +610,10 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         bclks_iter = self._get_bclks(cpus)
         hwpcap_iter = hwpcap.read_feature(fname, cpus=cpus)
 
-        for (cpu1, bclk), (cpu2, perf) in zip(bclks_iter, hwpcap_iter):
-            assert cpu1 == cpu2
+        for (cpu, bclk), (_, perf) in zip(bclks_iter, hwpcap_iter):
+            assert cpu == _
             perf = cast(int, perf)
-            yield cpu1, self._perf_to_freq(cpu1, perf, bclk)
+            yield cpu, self._perf_to_freq(cpu, perf, bclk)
 
     def get_base_freq(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
@@ -691,11 +689,10 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         bclks_iter = self._get_bclks(cpus)
 
         try:
-            for (cpu1, bclk), (cpu2, ratio) in zip(bclks_iter, trl_iter):
-                assert cpu1 == cpu2
+            for (cpu, bclk), (_, ratio) in zip(bclks_iter, trl_iter):
                 ratio = cast(int, ratio)
                 yielded = True
-                yield cpu1, ratio * bclk
+                yield cpu, ratio * bclk
         except ErrorNotSupported as err1:
             if yielded:
                 raise
@@ -705,10 +702,9 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
                 # In this case 'MSR_TURBO_RATIO_LIMIT' encodes max. turbo ratio for groups of cores.
                 # We can safely assume that group 0 will correspond to max. 1-core turbo, so we do
                 # not need to look at 'MSR_TURBO_RATIO_LIMIT1'.
-                for (cpu1, bclk), (cpu2, ratio) in zip(bclks_iter, trl_iter):
-                    assert cpu1 == cpu2
+                for (cpu, bclk), (_, ratio) in zip(bclks_iter, trl_iter):
                     ratio = cast(int, ratio)
-                    yield cpu1, ratio * bclk
+                    yield cpu, ratio * bclk
             except ErrorNotSupported as err2:
                 _LOG.warn_once("Module 'TurboRatioLimit' doesn't support "
                                "'MSR_TURBO_RATIO_LIMIT' for CPU '%s'%s\nPlease, contact project "
