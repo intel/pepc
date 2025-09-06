@@ -18,13 +18,13 @@ import contextlib
 from typing import cast
 from pepclibs import CPUInfo, CPUModels
 from pepclibs.helperlibs import Logging, LocalProcessManager, ClassHelpers, Human
-from pepclibs.helperlibs.Exceptions import ErrorNotSupported, ErrorOutOfRange, ErrorBadOrder
+from pepclibs.helperlibs.Exceptions import ErrorNotSupported, ErrorOutOfRange, ErrorBadOrder, Error
 
 if typing.TYPE_CHECKING:
     from typing import Generator, Literal
     from pepclibs.msr import MSR, FSBFreq, PMEnable, HWPRequest, HWPRequestPkg, PlatformInfo
     from pepclibs.msr import TurboRatioLimit, HWPCapabilities
-    from pepclibs.CPUInfoTypes import AbsNumsType
+    from pepclibs.CPUInfoTypes import AbsNumsType, HybridCPUKeyType
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
     # A CPU frequency sysfs file type. Possible values:
@@ -92,8 +92,8 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
 
         self._pcore_cpus: set[int] = set()
 
-        # Performance to frequency factor.
-        self._perf_to_freq_factor: int = 0
+        # Per-core performance scaling factors.
+        self._perf2freq: dict[int, int] = {}
 
         if not pman:
             self._pman = LocalProcessManager.LocalProcessManager()
@@ -106,9 +106,10 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
             self._cpuinfo = cpuinfo
 
         if self._cpuinfo.info["hybrid"]:
-            self._init_scaling_factor()
             hybrid_cpus = self._cpuinfo.get_hybrid_cpus()
             self._pcore_cpus = set(hybrid_cpus["pcore"])
+
+        self._init_scaling_factor()
 
     def close(self):
         """Uninitialize the class instance."""
@@ -189,7 +190,7 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
                 raise
             # Fall back to 100MHz bus clock speed.
             for cpu in cpus:
-                yield cpu, 100000000
+                yield cpu, 100_000_000
         else:
             for cpu, bclk in fsbfreq.read_feature("fsb", cpus=cpus):
                 # Convert MHz to Hz.
@@ -272,7 +273,7 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
             # divided by 100MHz). But on hybrid Intel platform (e.g., Alder Lake), the MSR works in
             # terms of platform-dependent abstract performance units on P-cores. Convert the
             # performance units to CPU frequency in Hz.
-            freq = perf * self._perf_to_freq_factor
+            freq = perf * self._perf2freq[cpu]
 
             # Round the frequency down to bus clock.
             # * Why rounding? CPU frequency changes in bus-clock increments.
@@ -280,7 +281,7 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
             _LOG.debug("Translated performance %d to frequency %d Hz for CPU %d", perf, freq, cpu)
             return freq - (freq % bclk)
 
-        return perf * bclk
+        return perf * self._perf2freq[cpu]
 
     def _get_freq_msr(self,
                       ftype: _SysfsFileType,
@@ -466,7 +467,7 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         vals: dict[int, list[int]] = {}
         for cpu, bclk in self._get_bclks(cpus):
             if cpu in self._pcore_cpus:
-                perf = int((freq + self._perf_to_freq_factor - 1) / self._perf_to_freq_factor)
+                perf = int((freq + self._perf2freq[cpu] - 1) / self._perf2freq[cpu])
             else:
                 perf = freq // bclk
             if perf not in vals:
@@ -762,10 +763,25 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         Initialize the performance-to-frequency scaling factor for hybrid platforms.
         """
 
-        if self._cpuinfo.info["vfm"] in CPUModels.CPU_GROUPS["METEORLAKE"]:
-            self._perf_to_freq_factor = 80000000
+        factors: dict[HybridCPUKeyType, int] = {}
+
+        if self._cpuinfo.info["vfm"] in CPUModels.CPU_GROUPS["ALDERLAKE"] or \
+           self._cpuinfo.info["vfm"] in CPUModels.CPU_GROUPS["RAPTORLAKE"]:
+            factors["pcore"] = 78_741_000
+            factors["ecore"] = 100_000_000
+        elif self._cpuinfo.info["vfm"] in CPUModels.CPU_GROUPS["METEORLAKE"]:
+            factors["pcore"] = 80_000_000
+            factors["ecore"] = factors["lpecore"] = 100_000_000
         elif self._cpuinfo.info["vfm"] in CPUModels.CPU_GROUPS["LUNARLAKE"]:
-            self._perf_to_freq_factor = 86957000
+            factors["pcore"] = 86_957_000
+            factors["ecore"] = 100_000_000
         else:
-            # ADL and RPL.
-            self._perf_to_freq_factor = 78741000
+            raise ErrorNotSupported(f"Unsupported hybrid CPU model '{self._cpuinfo.info['vfm']}'")
+
+        hybrid_cpus = self._cpuinfo.get_hybrid_cpus()
+
+        for htype, cpus in hybrid_cpus.items():
+            if htype not in factors and cpus:
+                raise Error(f"BUG: No scaling factor for hybrid core type '{htype}'")
+            for cpu in cpus:
+                self._perf2freq[cpu] = factors[htype]
