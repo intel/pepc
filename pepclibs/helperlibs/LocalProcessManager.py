@@ -422,7 +422,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         path = Path(path)
 
         try:
-            entries = [entry for entry in os.listdir(path)]
+            entries = list(os.listdir(path))
         except FileNotFoundError:
             raise ErrorNotFound(f"Directory '{path}' does not exist") from None
         except OSError as err:
