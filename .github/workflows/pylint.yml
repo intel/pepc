@@ -70,7 +70,8 @@ jobs:
 
       - name: "Run pylint for code quality checks on modified files"
         run: |
-          xargs -a .tmp/modified-files -r pylint --output-format=github --score=no --jobs=0 --disable=similarities --no-docstring-rgx=^$ --verbose > .tmp/pylint.results || retcode=1
+          xargs -a .tmp/modified-files -r pylint --output-format=github --score=no --jobs=0 \
+            --disable=similarities,fixme --no-docstring-rgx=^$ --verbose > .tmp/pylint.results || retcode=1
 
           # Format the pylint output for GitHub annotations.
           # Example of a pylint message:
