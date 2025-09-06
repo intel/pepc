@@ -119,7 +119,6 @@ def pman_or_local(pman: ProcessManagerType | None) -> ProcessManagerType:
     if pman:
         if typing.TYPE_CHECKING:
             return cast(ProcessManagerType, contextlib.nullcontext(enter_result=pman))
-        else:
-            return contextlib.nullcontext(enter_result=pman)
+        return contextlib.nullcontext(enter_result=pman)
 
     return LocalProcessManager.LocalProcessManager()
