@@ -46,7 +46,7 @@ jobs:
           python -m pip install --upgrade pip
 
           pip install --upgrade .
-          pip install mypy types-PyYAML types-paramiko types-colorama pandas-stubs plotly-stubs
+          pip install mypy pytest types-pyyaml types-paramiko types-colorama pytest-mypy
 
       - name: "Find modified files"
         run: |
