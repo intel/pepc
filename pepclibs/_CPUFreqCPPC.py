@@ -19,9 +19,11 @@ from pepclibs.helperlibs import Logging, LocalProcessManager, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorBadFormat, ErrorNotSupported
 
 if typing.TYPE_CHECKING:
-    from typing import Generator
+    from typing import Generator, Literal
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepclibs.CPUInfoTypes import AbsNumsType
+
+    FreqType = Literal["min", "max", "base"]
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
@@ -33,9 +35,9 @@ class CPUFreqCPPC(ClassHelpers.SimpleCloseContext):
     Public Methods:
         - get_min_freq_limit(cpus): Yield minimum frequency limits for CPUs from ACPI CPPC.
         - get_max_freq_limit(cpus): Yield maximum frequency limits for CPUs from ACPI CPPC.
+        - get_base_freq(cpus): Yield base frequency for CPUs from ACPI CPPC.
         - get_min_perf_limit(cpus): Yield minimum performance limits for CPUs from ACPI CPPC.
         - get_max_perf_limit(cpus): Yield maximum performance limits for CPUs from ACPI CPPC.
-        - get_base_freq(cpus): Yield base frequency for CPUs from ACPI CPPC.
         - get_base_perf(cpus): Yield base performance for CPUs from ACPI CPPC.
 
     Notes:
@@ -69,6 +71,10 @@ class CPUFreqCPPC(ClassHelpers.SimpleCloseContext):
         self._close_sysfs_io = sysfs_io is None
 
         self._sysfs_base = Path("/sys/devices/system/cpu")
+
+        # The min. and max frequency limit files are often problematic. This flag helps to avoid
+        # repeated read attempts.
+        self._min_max_freq_supported = True
 
         if not pman:
             self._pman = LocalProcessManager.LocalProcessManager()
@@ -145,46 +151,6 @@ class CPUFreqCPPC(ClassHelpers.SimpleCloseContext):
 
         return self._sysfs_io.cache_add(path, val)
 
-    def get_min_freq_limit(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
-        """
-        Retrieve and yield the minimum frequency limit for specified CPUs.
-
-        Args:
-            cpus: CPU numbers to get the minimum frequency limit for.
-
-        Yields:
-            Tuple of (cpu, frequency), where 'cpu' is the CPU number and 'frequency' is the minimum
-            frequency limit in Hz.
-
-        Raises:
-            ErrorNotSupported: If the ACPI CPPC CPU frequency sysfs file does not exist.
-        """
-
-        for cpu in cpus:
-            val = self._read_cppc_sysfs_file(cpu, "lowest_freq", f"max. CPU {cpu} frequency limit")
-            # CPPC sysfs files use MHz.
-            yield cpu, val * 1000 * 1000
-
-    def get_max_freq_limit(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
-        """
-        Retrieve and yield the maximum frequency limit for specified CPUs.
-
-        Args:
-            cpus: CPU numbers to get the maximum frequency limit for.
-
-        Yields:
-            Tuple of (cpu, frequency), where 'cpu' is the CPU number and 'frequency' is the maximum
-            frequency limit in Hz.
-
-        Raises:
-            ErrorNotSupported: If the ACPI CPPC CPU frequency sysfs file does not exist.
-        """
-
-        for cpu in cpus:
-            val = self._read_cppc_sysfs_file(cpu, "highest_freq", f"max. CPU {cpu} frequency limit")
-            # CPPC sysfs files use MHz.
-            yield cpu, val * 1000 * 1000
-
     def get_min_perf_limit(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the the minimum performance level limit for specified CPUs.
@@ -225,26 +191,6 @@ class CPUFreqCPPC(ClassHelpers.SimpleCloseContext):
             val = self._read_cppc_sysfs_file(cpu, "highest_perf", what)
             yield cpu, val
 
-    def get_base_freq(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
-        """
-        Retrieve and yield the base frequency for specified CPUs.
-
-        Args:
-            cpus: CPU numbers to get the base frequency for.
-
-        Yields:
-            Tuple (cpu, frequency), where 'cpu' is the CPU number and 'frequency' is the base
-            frequency in Hz.
-
-        Raises:
-            ErrorNotSupported: If the ACPI CPPC CPU frequency sysfs file does not exist.
-        """
-
-        for cpu in cpus:
-            val = self._read_cppc_sysfs_file(cpu, "nominal_freq", f"base CPU {cpu} frequency")
-            # CPPC sysfs files use MHz.
-            yield cpu, val * 1000 * 1000
-
     def get_base_perf(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the base performance level value for specified CPUs.
@@ -263,3 +209,126 @@ class CPUFreqCPPC(ClassHelpers.SimpleCloseContext):
         for cpu in cpus:
             val = self._read_cppc_sysfs_file(cpu, "nominal_perf", f"base CPU {cpu} performance")
             yield cpu, val
+
+    def _get_freq(self,
+                  cpus: AbsNumsType,
+                  ftype: FreqType) -> Generator[tuple[int, int], None, None]:
+        """
+        Retrieve and yield or specified CPUs.
+
+        Args:
+            cpus: CPU numbers to get the frequency limit for.
+            ltype: Type of frequency to retrieve (e.g., "min").
+
+        Yields:
+            Tuple of (cpu, frequency), where 'cpu' is the CPU number and 'frequency' is the
+            frequency in Hz.
+        """
+
+        if ftype == "min":
+            fname = "lowest_freq"
+        elif ftype == "max":
+            fname = "highest_freq"
+        elif ftype == "base":
+            fname = "nominal_freq"
+        else:
+            raise Error(f"BUG: Unknown frequency type '{ftype}'")
+
+        if ftype == "base" or self._min_max_freq_supported:
+            yielded = False
+            try:
+                for cpu in cpus:
+                    val = self._read_cppc_sysfs_file(cpu, fname,
+                                                     f"{ftype} CPU {cpu} frequency")
+                    yield cpu, val * 1000 * 1000
+                    yielded = True
+            except Error:
+                if yielded:
+                    # Something was yielded, do not try to recover from the error.
+                    raise
+                if ftype == "base":
+                    # The base frequency file is not available, do not try to recover either,
+                    # because the recovery method requires the base frequency.
+                    raise
+                if self._cpuinfo.info["vendor"] != "GenuineIntel":
+                    # I did not see the recovery method giving realistic results on Intel CPUs, but
+                    # it seems to give correct results on AMD Server CPUs (checked Rome, Milan,
+                    # Genoa).
+                    raise
+
+                # Do not try reading frequency files again.
+                self._min_max_freq_supported = False
+
+            if self._min_max_freq_supported:
+                # All frequencies were read and yielded successfully.
+                return
+
+        # Reading min/max frequency files failed. Try to compute the frequency from the performance
+        # values and the base frequency.
+        if ftype == "min":
+            fname = "lowest_perf"
+        else:
+            fname = "highest_perf"
+
+        for cpu in cpus:
+            base_freq = self._read_cppc_sysfs_file(cpu, "nominal_freq",
+                                                   f"nominal CPU {cpu} frequency")
+            base_perf = self._read_cppc_sysfs_file(cpu, "nominal_perf",
+                                                   f"nominal CPU {cpu} performance")
+            perf = self._read_cppc_sysfs_file(cpu, fname, f"{ftype} CPU {cpu} performance limit")
+
+            freq = int(base_freq * perf / base_perf)
+            # Round down to the nearest 100MHz.
+            freq = freq - (freq % 100)
+            yield cpu, freq * 1000 * 1000
+
+    def get_min_freq_limit(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
+        """
+        Retrieve and yield the minimum frequency limit for specified CPUs.
+
+        Args:
+            cpus: CPU numbers to get the minimum frequency limit for.
+
+        Yields:
+            Tuple of (cpu, frequency), where 'cpu' is the CPU number and 'frequency' is the minimum
+            frequency limit in Hz.
+
+        Raises:
+            ErrorNotSupported: If the ACPI CPPC CPU frequency sysfs file does not exist.
+        """
+
+        yield from self._get_freq(cpus, "min")
+
+    def get_max_freq_limit(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
+        """
+        Retrieve and yield the maximum frequency limit for specified CPUs.
+
+        Args:
+            cpus: CPU numbers to get the maximum frequency limit for.
+
+        Yields:
+            Tuple of (cpu, frequency), where 'cpu' is the CPU number and 'frequency' is the maximum
+            frequency limit in Hz.
+
+        Raises:
+            ErrorNotSupported: If the ACPI CPPC CPU frequency sysfs file does not exist.
+        """
+
+        yield from self._get_freq(cpus, "max")
+
+    def get_base_freq(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
+        """
+        Retrieve and yield the base frequency for specified CPUs.
+
+        Args:
+            cpus: CPU numbers to get the base frequency for.
+
+        Yields:
+            Tuple (cpu, frequency), where 'cpu' is the CPU number and 'frequency' is the base
+            frequency in Hz.
+
+        Raises:
+            ErrorNotSupported: If the ACPI CPPC CPU frequency sysfs file does not exist.
+        """
+
+        yield from self._get_freq(cpus, "base")

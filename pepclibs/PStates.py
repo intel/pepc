@@ -271,47 +271,12 @@ class PStates(_PropsClassBase.PropsClassBase):
 
         if pname == "base_freq":
             yield from cpufreq_obj.get_base_freq(cpus)
-            return
-
-        with contextlib.suppress(ErrorNotSupported):
-            if pname == "max_turbo_freq":
-                yield from cpufreq_obj.get_max_freq_limit(cpus)
-            elif pname == "min_oper_freq":
-                yield from cpufreq_obj.get_min_freq_limit(cpus)
-            else:
-                raise Error(f"BUG: Unexpected property {pname}")
-            return
-
-        # Sometimes the frequency CPPC sysfs files are not readable, but the "performance" files
-        # are. The base frequency is required to turn performance values to Hz.
-
-        base_freq_iter = self._get_prop_cpus_mnames("base_freq", cpus,
-                                                    self._props["base_freq"]["mnames"])
-        nominal_perf_iter = cpufreq_obj.get_base_perf(cpus)
-
-        if pname == "max_turbo_freq":
-            perf_iter = cpufreq_obj.get_max_perf_limit(cpus)
+        elif pname == "max_turbo_freq":
+            yield from cpufreq_obj.get_max_freq_limit(cpus)
+        elif pname == "min_oper_freq":
+            yield from cpufreq_obj.get_min_freq_limit(cpus)
         else:
-            perf_iter = cpufreq_obj.get_min_perf_limit(cpus)
-
-        bclks_iter = self._get_bclks_cpus(cpus)
-
-        iter_zip = zip(base_freq_iter, nominal_perf_iter, perf_iter, bclks_iter)
-        if typing.TYPE_CHECKING:
-            iterator = cast(Generator[tuple[tuple[int, int], tuple[int, int], tuple[int, int],
-                                    tuple[int, int]], None, None], iter_zip)
-        else:
-            iterator = iter_zip
-
-        for (cpu, base_freq), (_, nominal_perf), (_, perf), (_, bclk) in iterator:
-            freq = base_freq * perf // nominal_perf
-            # Align the frequency to the bus clock speed.
-            freq_rounded = freq - (freq % bclk)
-            if freq_rounded == 0:
-                raise ErrorNotSupported(f"Got freq = {base_freq}*{perf}//{nominal_perf} = {freq}, "
-                                        f"which results in in 0 Hz after rounding to the bus clock "
-                                        f"speed of {bclk} Hz")
-            yield cpu, freq_rounded
+            raise Error(f"BUG: Unexpected property {pname}")
 
     def _get_min_oper_freq(self,
                            cpus: AbsNumsType,

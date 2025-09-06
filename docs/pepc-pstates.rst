@@ -195,8 +195,8 @@ Use target CPU specification options to define a subset of CPUs, cores, dies, or
    The 'msr' mechanism: 'msr', reads MSR_PLATFORM_INFO (0xCE), bits 55:48.
 
    The 'cppc' mechanism reads '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/lowest_freq'.
-   If unavailable, the frequency is calculated as "base_freq * lowest_perf / nominal_perf" using
-   values from:
+   If unavailable, on non-Intel platforms the frequency is calculated as
+   "base_freq * lowest_perf / nominal_perf" using values from:
    base_freq: '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/nominal_freq',
    lowest_perf: '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/lowest_perf',
    nominal_perf: '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/nominal_perf'.
@@ -215,8 +215,8 @@ Use target CPU specification options to define a subset of CPUs, cores, dies, or
    enabled, otherwise reads MSR_TURBO_RATIO_LIMIT (0x1AD), bits 7:0.
 
    The 'cppc' mechanism reads '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/highest_freq'.
-   If unavailable, the frequency is calculated as "base_freq * highest_perf / nominal_perf" using
-   values from:
+   If unavailable, on non-Intel platforms the frequency is calculated as
+   "base_freq * highest_perf / nominal_perf" using values from:
    base_freq: '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/nominal_freq',
    highest_perf: '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/highest_perf',
    nominal_perf: '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/nominal_perf'.
