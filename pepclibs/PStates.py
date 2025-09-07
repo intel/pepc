@@ -406,10 +406,10 @@ class PStates(_PropsClassBase.PropsClassBase):
         else:
             raise Error(f"BUG: Unexpected CPU frequency property {pname}")
 
-    def _get_freq(self,
-                  pname: str,
-                  cpus: AbsNumsType,
-                  mname: MechanismNameType) -> Generator[tuple[int, int], None, None]:
+    def _get_min_max_freq(self,
+                          pname: str,
+                          cpus: AbsNumsType,
+                          mname: MechanismNameType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the minimum or maximum CPU frequency for the specified CPUs using the
         specified mechanism.
@@ -433,12 +433,13 @@ class PStates(_PropsClassBase.PropsClassBase):
 
         raise Error(f"BUG: Unexpected mechanism '{mname}'")
 
-    def _get_freq_limit(self,
-                        pname: str,
-                        cpus: AbsNumsType,
-                        mname: MechanismNameType) -> Generator[tuple[int, int], None, None]:
+    def _get_min_max_freq_limit(self,
+                                pname: str,
+                                cpus: AbsNumsType,
+                                mname: MechanismNameType) -> Generator[tuple[int, int], None, None]:
         """
-        Retrieve and yield CPU frequency limits for the specified CPUs using the sysfs mechanism.
+        Retrieve and yield min or max CPU frequency limits for the specified CPUs using the sysfs
+        mechanism.
 
         Args:
             pname: Property name to retrieve ("min_freq_limit" or "max_freq_limit").
@@ -760,9 +761,9 @@ class PStates(_PropsClassBase.PropsClassBase):
         elif pname == "base_freq":
             yield from self._get_base_freq(cpus, mname)
         elif pname in {"min_freq", "max_freq"}:
-            yield from self._get_freq(pname, cpus, mname)
+            yield from self._get_min_max_freq(pname, cpus, mname)
         elif pname in {"min_freq_limit", "max_freq_limit"}:
-            yield from self._get_freq_limit(pname, cpus, mname)
+            yield from self._get_min_max_freq_limit(pname, cpus, mname)
         elif pname == "frequencies":
             yield from self._get_frequencies(cpus, mname)
         elif pname == "bus_clock":
