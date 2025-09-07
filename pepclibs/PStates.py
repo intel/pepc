@@ -266,6 +266,35 @@ class PStates(_PropsClassBase.PropsClassBase):
         else:
             raise Error(f"BUG: Unexpected property {pname}")
 
+    def _get_freq_msr(self,
+                      pname: str,
+                      cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
+        """
+        Retrieve and yield CPU frequency values for the specified CPUs using the MSR mechanism.
+
+        Args:
+            pname: The property to retrieve.
+            cpus: CPU numbers to retrieve frequency values for.
+
+        Yields:
+            Tuples of (cpu, val), where 'cpu' is the CPU number and 'val' is its frequency in Hz.
+        """
+
+        cpufreq_obj = self._get_cpufreq_msr_obj()
+
+        if pname == "min_freq":
+            yield from cpufreq_obj.get_min_freq(cpus)
+        elif pname == "max_freq":
+            yield from cpufreq_obj.get_max_freq(cpus)
+        elif pname == "base_freq":
+            yield from cpufreq_obj.get_base_freq(cpus)
+        elif pname == "max_turbo_freq":
+            yield from cpufreq_obj.get_max_turbo_freq(cpus)
+        elif pname == "min_oper_freq":
+            yield from cpufreq_obj.get_min_oper_freq(cpus)
+        else:
+            raise Error(f"BUG: Unexpected CPU frequency property {pname}")
+
     def _get_min_oper_freq(self,
                            cpus: AbsNumsType,
                            mname: MechanismNameType) -> Generator[tuple[int, int], None, None]:
@@ -283,15 +312,11 @@ class PStates(_PropsClassBase.PropsClassBase):
         """
 
         if mname == "msr":
-            cpufreq_obj = self._get_cpufreq_msr_obj()
-            yield from cpufreq_obj.get_min_oper_freq(cpus)
-            return
-
-        if mname == "cppc":
+            yield from self._get_freq_msr("min_oper_freq", cpus)
+        elif mname == "cppc":
             yield from self._get_cppc_freq("min_oper_freq", cpus)
-            return
-
-        raise Error(f"BUG: Unexpected mechanism '{mname}'")
+        else:
+            raise Error(f"BUG: Unexpected mechanism '{mname}'")
 
     def _get_max_turbo_freq(self,
                             cpus: AbsNumsType,
@@ -310,46 +335,11 @@ class PStates(_PropsClassBase.PropsClassBase):
         """
 
         if mname == "msr":
-            cpufreq_obj = self._get_cpufreq_msr_obj()
-            yield from cpufreq_obj.get_max_turbo_freq(cpus)
-            return
-
-        if mname == "cppc":
+            yield from self._get_freq_msr("max_turbo_freq", cpus)
+        elif mname == "cppc":
             yield from self._get_cppc_freq("max_turbo_freq", cpus)
-            return
-
-        raise Error(f"BUG: Unexpected mechanism '{mname}'")
-
-    def _get_base_freq(self,
-                       cpus: AbsNumsType,
-                       mname: MechanismNameType) -> Generator[tuple[int, int], None, None]:
-        """
-        Retrieve and yield the base frequency for the specified CPUs using the given mechanism.
-
-        Args:
-            cpus: CPU numbers to retrieve base frequency for.
-            mname: Name of the mechanism to use for retrieving the base frequency: are 'sysfs',
-                   'msr', and 'cppc'.
-
-        Yields:
-            Tuple of (cpu, val), where 'cpu' is the CPU number and 'val' is its base frequency.
-        """
-
-        if mname == "sysfs":
-            sysfs_cpufreq_obj = self._get_cpufreq_sysfs_obj()
-            yield from sysfs_cpufreq_obj.get_base_freq(cpus)
-            return
-
-        if mname == "msr":
-            msr_cpufreq_obj = self._get_cpufreq_msr_obj()
-            yield from msr_cpufreq_obj.get_base_freq(cpus)
-            return
-
-        if mname == "cppc":
-            yield from self._get_cppc_freq("base_freq", cpus)
-            return
-
-        raise Error(f"BUG: Unexpected mechanism '{mname}'")
+        else:
+            raise Error(f"BUG: Unexpected mechanism '{mname}'")
 
     def _get_freq_sysfs(self,
                         pname: str,
@@ -379,32 +369,34 @@ class PStates(_PropsClassBase.PropsClassBase):
             yield from cpufreq_obj.get_min_freq_limit(cpus)
         elif pname == "max_freq_limit":
             yield from cpufreq_obj.get_max_freq_limit(cpus)
+        elif pname == "base_freq":
+            yield from cpufreq_obj.get_base_freq(cpus)
         else:
             raise Error(f"BUG: Unexpected CPU frequency property {pname}")
 
-    def _get_freq_msr(self,
-                      pname: str,
-                      cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
+    def _get_base_freq(self,
+                       cpus: AbsNumsType,
+                       mname: MechanismNameType) -> Generator[tuple[int, int], None, None]:
         """
-        Retrieve and yield the minimum or maximum CPU frequency for the specified CPUs using the MSR
-        mechanism.
+        Retrieve and yield the base frequency for the specified CPUs using the given mechanism.
 
         Args:
-            pname: The property to retrieve. Must be either "min_freq" or "max_freq".
-            cpus: CPU numbers to retrieve frequency values for.
+            cpus: CPU numbers to retrieve base frequency for.
+            mname: Name of the mechanism to use for retrieving the base frequency: are 'sysfs',
+                   'msr', and 'cppc'.
 
         Yields:
-            Tuples of (cpu, val), where 'cpu' is the CPU number and 'val' is its frequency in Hz.
+            Tuple of (cpu, val), where 'cpu' is the CPU number and 'val' is its base frequency.
         """
 
-        cpufreq_obj = self._get_cpufreq_msr_obj()
-
-        if pname == "min_freq":
-            yield from cpufreq_obj.get_min_freq(cpus)
-        elif pname == "max_freq":
-            yield from cpufreq_obj.get_max_freq(cpus)
+        if mname == "sysfs":
+            yield from self._get_freq_sysfs("base_freq", cpus)
+        elif mname == "msr":
+            yield from self._get_freq_msr("base_freq", cpus)
+        elif mname == "cppc":
+            yield from self._get_cppc_freq("base_freq", cpus)
         else:
-            raise Error(f"BUG: Unexpected CPU frequency property {pname}")
+            raise Error(f"BUG: Unexpected mechanism '{mname}'")
 
     def _get_min_max_freq(self,
                           pname: str,
@@ -425,13 +417,10 @@ class PStates(_PropsClassBase.PropsClassBase):
 
         if mname == "sysfs":
             yield from self._get_freq_sysfs(pname, cpus)
-            return
-
-        if mname == "msr":
+        elif mname == "msr":
             yield from self._get_freq_msr(pname, cpus)
-            return
-
-        raise Error(f"BUG: Unexpected mechanism '{mname}'")
+        else:
+            raise Error(f"BUG: Unexpected mechanism '{mname}'")
 
     def _get_min_max_freq_limit(self,
                                 pname: str,
@@ -615,9 +604,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         if mname == "msr":
             for cpu, val in self._get_fsbfreq().read_feature("fsb", cpus=cpus):
                 yield cpu, int(val * 1000000)
-            return
-
-        if mname == "doc":
+        elif mname == "doc":
             try:
                 self._get_fsbfreq()
             except ErrorNotSupported:
@@ -629,8 +616,8 @@ class PStates(_PropsClassBase.PropsClassBase):
                     yield cpu, 100000000
                 return
             raise ErrorTryAnotherMechanism(f"Use the 'msr' mechanism for {self._cpuinfo.cpudescr}")
-
-        raise Error(f"BUG: Unexpected mechanism '{mname}'")
+        else:
+            raise Error(f"BUG: Unexpected mechanism '{mname}'")
 
     def _get_turbo(self,
                    cpus: AbsNumsType,
