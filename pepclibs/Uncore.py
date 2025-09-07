@@ -36,7 +36,7 @@ _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
 class Uncore(_PropsClassBase.PropsClassBase):
     """
-    This class provides API for managing platform settings related to uncore properties. Refer to
+    Provide API for managing platform settings related to uncore properties. Refer to
     '_PropsClassBase.PropsClassBase' docstring for public methods overview.
     """
 

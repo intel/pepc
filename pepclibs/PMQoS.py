@@ -28,7 +28,7 @@ if typing.TYPE_CHECKING:
 
 class PMQoS(_PropsClassBase.PropsClassBase):
     """
-    This class provides API for managing platform settings related to PM QoSs. Refer to
+    Provide API for managing platform settings related to PM QoSs. Refer to
     '_PropsClassBase.PropsClassBase' docstring for public methods overview.
     """
 
