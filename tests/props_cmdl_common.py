@@ -14,11 +14,12 @@
 from  __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
+from typing import cast
 from pepclibs.helperlibs import Trivial, TestRunner
 from pepctool import _Pepc
 
 if typing.TYPE_CHECKING:
-    from typing import Generator, cast, Mapping
+    from typing import Generator, Mapping
     from pepclibs import CPUInfo, CStates, PStates, Uncore
     from common import CommonTestParamsTypedDict
     from pepclibs.CPUInfoTypes import ScopeNameType
@@ -107,7 +108,7 @@ def run_pepc(arguments: str,
     """
 
     TestRunner.run_tool(_Pepc, _Pepc.TOOLNAME, arguments, pman=pman, exp_exc=exp_exc,
-                        ignore=ignore)
+                        ignore=cast(dict[type[Exception], str], ignore))
 
 def get_mechanism_opts(params: PropsCmdlTestParamsTypedDict,
                        allow_readonly: bool = True) -> Generator[str, None, None]:
