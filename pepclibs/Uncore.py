@@ -46,19 +46,7 @@ class Uncore(_PropsClassBase.PropsClassBase):
                  msr: Any = None,
                  sysfs_io: _SysfsIO.SysfsIO | None = None,
                  enable_cache: bool = True):
-        """
-        Initialize a class instance.
-
-        Args:
-            pman: The process manager object for the target system. If not provided, a local process
-                  manager is created.
-            cpuinfo: The CPU information object ('CPUInfo.CPUInfo()'). If not provided, one is
-                     created.
-            msr: Not used, ignored.
-            sysfs_io: The sysfs access object ('_SysfsIO.SysfsIO()'). If not provided, one is
-                      created.
-            enable_cache: Enable property caching if True.
-        """
+        """Refer to 'PropsClassBase._get_prop_cpus()'."""
 
         super().__init__(pman=pman, cpuinfo=cpuinfo, msr=msr, sysfs_io=sysfs_io,
                          enable_cache=enable_cache)
@@ -220,7 +208,7 @@ class Uncore(_PropsClassBase.PropsClassBase):
                        mname: MechanismNameType,
                        mnames: Sequence[MechanismNameType]) -> \
                                             Generator[tuple[int, PropertyValueType], None, None]:
-        """Refer to '_PropsClassBase._get_prop_cpus()'."""
+        """Refer to 'PropsClassBase._get_prop_cpus()'."""
 
         _LOG.debug("Getting property '%s' using mechanism '%s', cpus: %s",
                    pname, mname, self._cpuinfo.cpus_to_str(cpus))
@@ -318,7 +306,7 @@ class Uncore(_PropsClassBase.PropsClassBase):
                        mname: MechanismNameType,
                        mnames: Sequence[MechanismNameType]) -> \
                                     Generator[tuple[int, int, PropertyValueType], None, None]:
-        """Refer to '_PropsClassBase._get_prop_dies()'."""
+        """Refer to 'PropsClassBase._get_prop_dies()'."""
 
         _LOG.debug("Getting property '%s' using mechanism '%s', packages/dies: %s",
                    pname, mname, dies)
@@ -339,7 +327,7 @@ class Uncore(_PropsClassBase.PropsClassBase):
                        cpus: AbsNumsType,
                        mname: MechanismNameType,
                        mnames: Sequence[MechanismNameType]):
-        """Refer to '_PropsClassBase._set_prop_cpus()'."""
+        """Refer to 'PropsClassBase._set_prop_cpus()'."""
 
         # TODO: implement by translating CPU numbers to die num
         raise Error(f"BUG: Unsupported property '{pname}'")
@@ -498,7 +486,7 @@ class Uncore(_PropsClassBase.PropsClassBase):
                        dies: RelNumsType,
                        mname: MechanismNameType,
                        mnames: Sequence[MechanismNameType]):
-        """Refer to '_PropsClassBase._set_prop_dies()'."""
+        """Refer to 'PropsClassBase._set_prop_dies()'."""
 
         _LOG.debug("Setting property '%s' to value '%s' using mechanism '%s', packages/dies: %s",
                    pname, val, mname, dies)

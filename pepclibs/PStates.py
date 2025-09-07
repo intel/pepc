@@ -27,13 +27,11 @@ from pepclibs._PropsClassBase import ErrorTryAnotherMechanism, ErrorUsePerCPU
 
 if typing.TYPE_CHECKING:
     from typing import NoReturn, Generator, Union, Sequence
-    from pepclibs.PropsTypes import PropertyValueType
     from pepclibs.msr import MSR, FSBFreq
     from pepclibs import _CPUFreqSysfs, _CPUFreqCPPC, _CPUFreqMSR
-    from pepclibs import _SysfsIO, EPP, EPB
-    from pepclibs.CPUInfo import CPUInfo
+    from pepclibs import _SysfsIO, EPP, EPB, CPUInfo
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
-    from pepclibs.PropsTypes import MechanismNameType
+    from pepclibs.PropsTypes import PropertyValueType, MechanismNameType
     from pepclibs.CPUInfoTypes import AbsNumsType, RelNumsType
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
@@ -46,23 +44,11 @@ class PStates(_PropsClassBase.PropsClassBase):
 
     def __init__(self,
                  pman: ProcessManagerType | None = None,
-                 cpuinfo: CPUInfo | None = None,
+                 cpuinfo: CPUInfo.CPUInfo | None = None,
                  msr: MSR.MSR | None = None,
                  sysfs_io: _SysfsIO.SysfsIO | None = None,
                  enable_cache: bool = True):
-        """
-        Initialize a class instance.
-
-        Args:
-            pman: The process manager object for the target system. If not provided, a local process
-                  manager is created.
-            cpuinfo: The CPU information object ('CPUInfo.CPUInfo()'). If not provided, one is
-                     created.
-            msr: The MSR access object ('MSR.MSR()'). If not provided, one is created.
-            sysfs_io: The sysfs access object ('_SysfsIO.SysfsIO()'). If not provided, one is
-                      created.
-            enable_cache: Enable property caching if True.
-        """
+        """Refer to 'PropsClassBase.__init__()'."""
 
         super().__init__(pman=pman, cpuinfo=cpuinfo, msr=msr, sysfs_io=sysfs_io,
                          enable_cache=enable_cache)
@@ -756,7 +742,7 @@ class PStates(_PropsClassBase.PropsClassBase):
                        mname: MechanismNameType,
                        mnames: Sequence[MechanismNameType]) -> \
                                             Generator[tuple[int, PropertyValueType], None, None]:
-        """Refer to '_PropsClassBase._get_prop_cpus()'."""
+        """Refer to 'PropsClassBase._get_prop_cpus()'."""
 
         _LOG.debug("Getting property '%s' using mechanism '%s', cpus: %s",
                    pname, mname, self._cpuinfo.cpus_to_str(cpus))
@@ -1076,7 +1062,7 @@ class PStates(_PropsClassBase.PropsClassBase):
                        cpus: AbsNumsType,
                        mname: MechanismNameType,
                        mnames: Sequence[MechanismNameType]):
-        """Refer to '_PropsClassBase._set_prop_cpus()'."""
+        """Refer to 'PropsClassBase._set_prop_cpus()'."""
 
         _LOG.debug("Setting property '%s' to value '%s' using mechanism '%s', cpus: %s",
                    pname, val, mname, self._cpuinfo.cpus_to_str(cpus))

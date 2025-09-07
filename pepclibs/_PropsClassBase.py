@@ -39,6 +39,7 @@ import copy
 import typing
 from typing import cast, get_args
 
+from pepclibs import CPUInfo
 from pepclibs.helperlibs import Logging, Trivial, Human, ClassHelpers, EmulProcessManager
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 
@@ -46,9 +47,8 @@ from pepclibs.CPUInfoTypes import ScopeNameType
 
 if typing.TYPE_CHECKING:
     from typing import Any, Sequence, Literal, Generator, Final
-    from pepclibs.msr import MSR
     from pepclibs import _SysfsIO
-    from pepclibs.CPUInfo import CPUInfo
+    from pepclibs.msr import MSR
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepclibs.PropsTypes import PVInfoTypedDict, PropertyValueType, PropertyTypedDict
     from pepclibs.PropsTypes import MechanismTypedDict, MechanismNameType
@@ -158,23 +158,11 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
     def __init__(self,
                  pman: ProcessManagerType | None = None,
-                 cpuinfo: CPUInfo | None = None,
+                 cpuinfo: CPUInfo.CPUInfo | None = None,
                  msr: MSR.MSR | None = None,
                  sysfs_io: _SysfsIO.SysfsIO | None = None,
                  enable_cache: bool = True):
-        """
-        Initialize a class instance.
-
-        Args:
-            pman: The process manager object for the target system. If not provided, a local process
-                  manager is created.
-            cpuinfo: The CPU information object ('CPUInfo.CPUInfo()'). If not provided, one is
-                     created.
-            msr: The MSR access object ('MSR.MSR()'). If not provided, one is created.
-            sysfs_io: The sysfs access object ('_SysfsIO.SysfsIO()'). If not provided, one is
-                      created.
-            enable_cache: Enable property caching if True.
-        """
+        """Refer to 'PropsClassBase.__init__()'."""
 
         self._msr = msr
         self._sysfs_io = sysfs_io
@@ -216,7 +204,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         if cpuinfo:
             self._cpuinfo = cpuinfo
         else:
-            self._cpuinfo = CPUInfo(pman=self._pman)
+            self._cpuinfo = CPUInfo.CPUInfo(pman=self._pman)
 
     def close(self):
         """Uninitialize the class object."""
@@ -2173,7 +2161,13 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         return self.set_prop_packages(pname, val, (package,), mnames=mnames)
 
     def _init_props_dict(self, props: dict[str, PropertyTypedDict]):
-        """Initialize the 'props' and 'mechanisms' dictionaries."""
+        """
+        Initialize the 'props' and 'mechanisms' dictionaries.
+
+        Args:
+            props: The initial properties dictionary to initialize the 'props' and 'mechanisms'
+                   from.
+        """
 
         if typing.TYPE_CHECKING:
             self.props = cast(dict[str, PropertyTypedDict], copy.deepcopy(props))
