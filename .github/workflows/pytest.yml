@@ -54,7 +54,7 @@ jobs:
 
       - name: "Run pytest to execute tests and collect coverage data"
         run: |
-            pytest -v
+            coverage run --module pytest -v
         env:
           SHELL: /bin/sh
 
