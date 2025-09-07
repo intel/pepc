@@ -52,7 +52,7 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         - get_min_oper_freq(cpus): Yield (cpu, value) pairs for the minimum operating frequency.
         - get_max_turbo_freq(cpus): Yield (cpu, value) pairs for the maximum turbo frequency.
         - get_hwp(cpus): Yield (cpu, value) pairs indicating HWP on/off status.
-        - setup_perf2freq(perf2freq): Set the performance-to-frequency scaling factors.
+        - set_perf2freq(perf2freq): Set the performance-to-frequency scaling factors.
 
     Notes:
         Methods do not validate the 'cpus' argument. Ensure that provided CPU numbers are valid and
@@ -627,6 +627,8 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
             for cpu, freq in self._get_hwpcap_freq("base_perf", cpus):
                 yielded = True
                 yield cpu, freq
+        except ErrorNeedPerf2Freq:
+            raise
         except ErrorNotSupported:
             if yielded:
                 raise
@@ -721,6 +723,8 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
             for cpu, freq in self._get_hwpcap_freq("max_perf", cpus):
                 yielded = True
                 yield cpu, freq
+        except ErrorNeedPerf2Freq:
+            raise
         except ErrorNotSupported:
             if yielded:
                 raise
@@ -785,12 +789,17 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
             for cpu in cpus:
                 self._perf2freq[cpu] = factors[htype]
 
-    def setup_perf2freq(self, perf2freq: dict[int, int]):
+    def set_perf2freq(self, perf2freq: dict[int, int]):
         """
         Set the performance-to-frequency scaling factors.
 
         Args:
             perf2freq: A dictionary mapping CPU numbers to performance-to-frequency scaling factors.
         """
+
+        if _LOG.getEffectiveLevel() <= Logging.DEBUG:
+            import pprint # pylint: disable=import-outside-toplevel
+            _LOG.debug("Setting performance-to-frequency scaling factors:\n%s",
+                       pprint.pformat(perf2freq))
 
         self._perf2freq = perf2freq

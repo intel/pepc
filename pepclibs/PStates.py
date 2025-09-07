@@ -266,9 +266,28 @@ class PStates(_PropsClassBase.PropsClassBase):
         else:
             raise Error(f"BUG: Unexpected property {pname}")
 
-    def _get_freq_msr(self,
-                      pname: str,
-                      cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
+    def _build_perf2freq(self):
+        """
+        Build the performance-to-frequency scaling factors.
+        """
+
+        cpus = self._cpuinfo.get_cpus()
+        cpufreq_obj = self._get_cpufreq_cppc_obj()
+
+        iter_base_freq = cpufreq_obj.get_base_freq(cpus)
+        iter_base_perf = cpufreq_obj.get_base_perf(cpus)
+
+        for (cpu, base_freq), (_, base_perf) in zip(iter_base_freq, iter_base_perf):
+            if base_perf == 0:
+                raise ErrorVerifyFailed(f"Base performance for CPU {cpu} is zero, cannot build "
+                                        "performance-to-frequency mapping")
+
+            perf2freq = base_freq / base_perf
+            self._perf2freq[cpu] = int(perf2freq)
+
+    def _get_freq_msr_noerr(self,
+                            pname: str,
+                            cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield CPU frequency values for the specified CPUs using the MSR mechanism.
 
@@ -295,9 +314,61 @@ class PStates(_PropsClassBase.PropsClassBase):
         else:
             raise Error(f"BUG: Unexpected CPU frequency property {pname}")
 
+    def _get_freq_msr(self,
+                      pname: str,
+                      cpus: AbsNumsType,
+                      mnames: Sequence[MechanismNameType]) -> Generator[tuple[int, int],
+                                                                        None, None]:
+        """
+        Retrieve and yield CPU frequency values for the specified CPUs using the 'msr' mechanism.
+        Handle the 'ErrorNeedPerf2Freq' exception by building performance-to-frequency scaling
+        factors.
+
+        Args:
+            pname: The property to retrieve.
+            cpus: CPU numbers to retrieve frequency values for.
+            mnames: All mechanism names that were requested for the operation.
+
+        Yields:
+            Tuples of (cpu, val), where 'cpu' is the CPU number and 'val' is its frequency in Hz.
+        """
+
+        # pylint: disable-next=import-outside-toplevel
+        from pepclibs._CPUFreqMSR import ErrorNeedPerf2Freq
+
+        yielded = False
+        try:
+            for cpu, freq in self._get_freq_msr_noerr(pname, cpus):
+                yield cpu, freq
+                yielded = True
+        except ErrorNeedPerf2Freq as err:
+            if self._perf2freq:
+                # The performance-to-frequency scaling factors were already set.
+                errmsg = Error(str(err)).indent(2)
+                raise Error(f"BUG: Unexpected double 'ErrorNeedPerf2Freq' exception:\n"
+                            f"{errmsg}") from err
+            if yielded:
+                errmsg = Error(str(err)).indent(2)
+                raise Error(f"BUG: Unexpected 'ErrorNeedPerf2Freq' exception after yielding some "
+                            f"results:\n{errmsg}") from err
+
+            if "cppc" not in mnames:
+                raise ErrorTryAnotherMechanism("Allow for both 'msr' and 'cppc' "
+                                               "mechanisms") from err
+
+            # Build performance-to-frequency scaling factors.
+            self._build_perf2freq()
+            cpufreq_obj = self._get_cpufreq_msr_obj()
+            cpufreq_obj.set_perf2freq(self._perf2freq)
+
+            for cpu, freq in self._get_freq_msr_noerr(pname, cpus):
+                yield cpu, freq
+
     def _get_min_oper_freq(self,
                            cpus: AbsNumsType,
-                           mname: MechanismNameType) -> Generator[tuple[int, int], None, None]:
+                           mname: MechanismNameType,
+                           mnames: Sequence[MechanismNameType]) -> Generator[tuple[int, int],
+                                                                             None, None]:
         """
         Retrieve and yield the minimum operating frequency for the specified CPUs using the given
         mechanism.
@@ -305,6 +376,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         Args:
             cpus: CPU numbers to retrieve minimum operating frequency for.
             mname: Name of the mechanism to use ('msr' or 'cppc').
+            mnames: All mechanism names that were requested for the operation.
 
         Yields:
             Tuple of (cpu, val), where 'cpu' is the CPU number and 'val' is its minimum operating
@@ -312,7 +384,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         """
 
         if mname == "msr":
-            yield from self._get_freq_msr("min_oper_freq", cpus)
+            yield from self._get_freq_msr("min_oper_freq", cpus, mnames)
         elif mname == "cppc":
             yield from self._get_cppc_freq("min_oper_freq", cpus)
         else:
@@ -320,7 +392,9 @@ class PStates(_PropsClassBase.PropsClassBase):
 
     def _get_max_turbo_freq(self,
                             cpus: AbsNumsType,
-                            mname: MechanismNameType) -> Generator[tuple[int, int], None, None]:
+                            mname: MechanismNameType,
+                            mnames: Sequence[MechanismNameType]) -> Generator[tuple[int, int],
+                                                                              None, None]:
         """
         Retrieve and yield the maximum turbo frequency for the specified CPUs using the given
         mechanism.
@@ -335,7 +409,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         """
 
         if mname == "msr":
-            yield from self._get_freq_msr("max_turbo_freq", cpus)
+            yield from self._get_freq_msr("max_turbo_freq", cpus, mnames)
         elif mname == "cppc":
             yield from self._get_cppc_freq("max_turbo_freq", cpus)
         else:
@@ -376,7 +450,9 @@ class PStates(_PropsClassBase.PropsClassBase):
 
     def _get_base_freq(self,
                        cpus: AbsNumsType,
-                       mname: MechanismNameType) -> Generator[tuple[int, int], None, None]:
+                       mname: MechanismNameType,
+                       mnames: Sequence[MechanismNameType]) -> Generator[tuple[int, int],
+                                                                         None, None]:
         """
         Retrieve and yield the base frequency for the specified CPUs using the given mechanism.
 
@@ -384,6 +460,7 @@ class PStates(_PropsClassBase.PropsClassBase):
             cpus: CPU numbers to retrieve base frequency for.
             mname: Name of the mechanism to use for retrieving the base frequency: are 'sysfs',
                    'msr', and 'cppc'.
+            mnames: All mechanism names that were requested for the operation.
 
         Yields:
             Tuple of (cpu, val), where 'cpu' is the CPU number and 'val' is its base frequency.
@@ -392,7 +469,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         if mname == "sysfs":
             yield from self._get_freq_sysfs("base_freq", cpus)
         elif mname == "msr":
-            yield from self._get_freq_msr("base_freq", cpus)
+            yield from self._get_freq_msr("base_freq", cpus, mnames)
         elif mname == "cppc":
             yield from self._get_cppc_freq("base_freq", cpus)
         else:
@@ -401,7 +478,9 @@ class PStates(_PropsClassBase.PropsClassBase):
     def _get_min_max_freq(self,
                           pname: str,
                           cpus: AbsNumsType,
-                          mname: MechanismNameType) -> Generator[tuple[int, int], None, None]:
+                          mname: MechanismNameType,
+                          mnames: Sequence[MechanismNameType]) -> Generator[tuple[int, int],
+                                                                            None, None]:
         """
         Retrieve and yield the minimum or maximum CPU frequency for the specified CPUs using the
         specified mechanism.
@@ -410,6 +489,7 @@ class PStates(_PropsClassBase.PropsClassBase):
             pname: Name of the property to retrieve. Supported values are "min_freq", "max_freq".
             cpus: CPU numbers to retrieve frequency values for.
             mname: Name of the mechanism to use for retrieving the frequency (e.g., "sysfs").
+            mnames: All mechanism names that were requested for the operation.
 
         Yields:
             Tuples of (cpu, val), where 'cpu' is the CPU number and 'val' is its frequency in Hz.
@@ -418,7 +498,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         if mname == "sysfs":
             yield from self._get_freq_sysfs(pname, cpus)
         elif mname == "msr":
-            yield from self._get_freq_msr(pname, cpus)
+            yield from self._get_freq_msr(pname, cpus, mnames)
         else:
             raise Error(f"BUG: Unexpected mechanism '{mname}'")
 
@@ -742,13 +822,13 @@ class PStates(_PropsClassBase.PropsClassBase):
         elif pname == "hwp":
             yield from self._get_hwp(cpus, mname)
         elif pname == "min_oper_freq":
-            yield from self._get_min_oper_freq(cpus, mname)
+            yield from self._get_min_oper_freq(cpus, mname, mnames)
         elif pname == "max_turbo_freq":
-            yield from self._get_max_turbo_freq(cpus, mname)
+            yield from self._get_max_turbo_freq(cpus, mname, mnames)
         elif pname == "base_freq":
-            yield from self._get_base_freq(cpus, mname)
+            yield from self._get_base_freq(cpus, mname, mnames)
         elif pname in {"min_freq", "max_freq"}:
-            yield from self._get_min_max_freq(pname, cpus, mname)
+            yield from self._get_min_max_freq(pname, cpus, mname, mnames)
         elif pname in {"min_freq_limit", "max_freq_limit"}:
             yield from self._get_min_max_freq_limit(pname, cpus, mname)
         elif pname == "frequencies":
@@ -823,7 +903,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         cpufreq_obj.set_governor(governor, cpus=cpus)
         return "sysfs"
 
-    def _set_freq_prop_cpus_msr(self, pname: str, freq: int, cpus: AbsNumsType):
+    def _set_freq_prop_cpus_msr_noerr(self, pname: str, freq: int, cpus: AbsNumsType):
         """
         Set the 'min_freq' or 'max_freq' CPU frequency property to the specified value for the given
         CPUs.
@@ -842,6 +922,46 @@ class PStates(_PropsClassBase.PropsClassBase):
             cpufreq_obj.set_max_freq(freq, cpus)
         else:
             raise Error(f"BUG: Unexpected CPU frequency property {pname}")
+
+    def _set_freq_prop_cpus_msr(self,
+                                pname: str,
+                                freq: int,
+                                cpus: AbsNumsType,
+                                mnames: Sequence[MechanismNameType]):
+        """
+        Set the 'min_freq' or 'max_freq' CPU frequency property to the specified value for the given
+        CPUs using the 'msr' mechanism. Handle the 'ErrorNeedPerf2Freq' exception by building
+        performance-to-frequency scaling factors.
+
+        Args:
+            pname: Name of the property to set ('min_freq' or 'max_freq').
+            freq: Frequency value to set, in Hz.
+            cpus: CPU numbers to apply the frequency setting to.
+            mnames: All mechanism names that were requested for the operation.
+        """
+
+        # pylint: disable-next=import-outside-toplevel
+        from pepclibs._CPUFreqMSR import ErrorNeedPerf2Freq
+
+        try:
+            self._set_freq_prop_cpus_msr_noerr(pname, freq, cpus)
+        except ErrorNeedPerf2Freq as err:
+            if self._perf2freq:
+                # The performance-to-frequency scaling factors were already set.
+                errmsg = Error(str(err)).indent(2)
+                raise Error(f"BUG: Unexpected double 'ErrorNeedPerf2Freq' exception:\n"
+                            f"{errmsg}") from err
+
+            if "cppc" not in mnames:
+                raise ErrorTryAnotherMechanism("Allow for both 'msr' and 'cppc' "
+                                               "mechanisms") from err
+
+            # Build performance-to-frequency scaling factors.
+            self._build_perf2freq()
+            cpufreq_obj = self._get_cpufreq_msr_obj()
+            cpufreq_obj.set_perf2freq(self._perf2freq)
+
+            self._set_freq_prop_cpus_msr_noerr(pname, freq, cpus)
 
     def _handle_write_and_read_freq_mismatch(self, err: ErrorVerifyFailed) -> NoReturn:
         """
@@ -896,7 +1016,12 @@ class PStates(_PropsClassBase.PropsClassBase):
         err.msg = msg
         raise err
 
-    def _set_freq_prop_cpus_sysfs(self, pname: str, freq: int, cpus: AbsNumsType):
+    def _set_freq_prop_cpus_sysfs(self,
+                                  pname: str,
+                                  freq: int,
+                                  cpus: AbsNumsType,
+                                  mnames: Sequence[MechanismNameType]):
+                                  # pylint: disable=unused-argument
         """
         Set the minimum or maximum CPU frequency property for the specified CPUs.
 
@@ -904,6 +1029,7 @@ class PStates(_PropsClassBase.PropsClassBase):
             pname: Name of the property to set ('min_freq' or 'max_freq').
             freq: Frequency value to set, in Hz.
             cpus: CPU numbers to apply the frequency setting to.
+            mnames: All mechanism names that were requested for the operation (not used).
         """
 
         cpufreq_obj = self._get_cpufreq_sysfs_obj()
@@ -971,7 +1097,8 @@ class PStates(_PropsClassBase.PropsClassBase):
                       pname: str,
                       val: str | int,
                       cpus: AbsNumsType,
-                      mname: MechanismNameType):
+                      mname: MechanismNameType,
+                      mnames: Sequence[MechanismNameType]):
         """
         Set a CPU frequency property for specified CPUs using the given mechanism.
 
@@ -981,6 +1108,7 @@ class PStates(_PropsClassBase.PropsClassBase):
                  (e.g., "max", "min", "base").
             cpus: CPU numbers to apply the frequency setting to.
             mname: Mechanism to use for setting the frequency (e.g., "sysfs" or "msr").
+            mnames: All mechanism names that were requested for the operation.
         """
 
         if mname == "sysfs":
@@ -998,7 +1126,7 @@ class PStates(_PropsClassBase.PropsClassBase):
             freq2cpus[new_freq].append(cpu)
 
         for new_freq, freq_cpus in freq2cpus.items():
-            set_freq_method(pname, new_freq, freq_cpus)
+            set_freq_method(pname, new_freq, freq_cpus, mnames)
 
     def _handle_epp_set_exception(self,
                                   val: str,
@@ -1076,7 +1204,7 @@ class PStates(_PropsClassBase.PropsClassBase):
                 _val = cast(Union[str, int], val)
             else:
                 _val = val
-            self._set_cpu_freq(pname, _val, cpus, mname)
+            self._set_cpu_freq(pname, _val, cpus, mname, mnames)
         else:
             raise Error(f"BUG: Unsupported property '{pname}'")
 
