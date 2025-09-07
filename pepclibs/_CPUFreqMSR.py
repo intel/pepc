@@ -104,7 +104,6 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         self._bclks: dict[int, int] = {}
         # Per-core performance scaling factors.
         self._perf2freq: dict[int, int] = {}
-        self._init_perf2freq()
 
     def close(self):
         """Uninitialize the class instance."""
@@ -112,6 +111,18 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         close_attrs = ("_trl", "_platinfo", "_fsbfreq", "_pmenable", "_hwpreq", "_hwpreq_pkg",
                        "_hwpcap", "_cpuinfo", "_pman")
         ClassHelpers.close(self, close_attrs=close_attrs)
+
+    def _get_perf2freq(self) -> dict[int, int]:
+        """
+        get the performance-to-frequency scaling factors dictionary.
+
+        Returns:
+            A dictionary mapping CPU numbers to performance-to-frequency scaling factors.
+        """
+
+        if not self._perf2freq:
+            self._init_perf2freq()
+        return self._perf2freq
 
     def _get_msr(self) -> MSR.MSR:
         """
@@ -243,7 +254,9 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
             CPU frequency in Hz.
         """
 
-        freq = perf * self._perf2freq[cpu]
+        perf2freq = self._get_perf2freq()
+
+        freq = perf * perf2freq[cpu]
         # Round the frequency down to bus clock (following the Linux kernel behavior).
         return freq - (freq % self._bclks[cpu])
 
@@ -259,8 +272,10 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
             The corresponding performance level value.
         """
 
+        perf2freq = self._get_perf2freq()
+
         # Round up the performance level value up (following the Linux kernel behavior).
-        return int((freq + self._perf2freq[cpu] - 1) / self._perf2freq[cpu])
+        return int((freq + perf2freq[cpu] - 1) / perf2freq[cpu])
 
     def _get_freq_msr(self,
                       ftype: _SysfsFileType,
@@ -296,8 +311,8 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
             yielded_cpus.add(cpu)
 
             freq = self._perf_to_freq(cpu, perf)
-            _LOG.debug("Read CPU %d frequency from %s (%#x): %d Hz. Perf = %d, factor = %d",
-                       cpu, hwpreq.regname, hwpreq.regaddr, freq, perf, self._perf2freq[cpu])
+            _LOG.debug("Read CPU %d frequency from %s (%#x): %d Hz. Perf = %d",
+                       cpu, hwpreq.regname, hwpreq.regaddr, freq, perf)
             yield cpu, freq
 
         if not run_again:
@@ -324,9 +339,8 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
                 val = perf
 
             freq = self._perf_to_freq(cpu, val)
-            _LOG.debug("Read CPU %d frequency from %s (%#x): %d Hz. Perf = %d, factor = %d",
-                       cpu, hwpreq_pkg.regname, hwpreq_pkg.regaddr, freq, perf,
-                       self._perf2freq[cpu])
+            _LOG.debug("Read CPU %d frequency from %s (%#x): %d Hz. Perf = %d",
+                       cpu, hwpreq_pkg.regname, hwpreq_pkg.regaddr, freq, perf)
             yield cpu, freq
 
     def get_min_freq(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
