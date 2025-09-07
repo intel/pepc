@@ -25,7 +25,7 @@ from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs._PropsClassBase import ErrorTryAnotherMechanism, ErrorUsePerCPU
 
 if typing.TYPE_CHECKING:
-    from typing import Any, Generator, Union
+    from typing import Any, Generator, Union, Sequence
     from pepclibs import _SysfsIO, _UncoreFreqSysfs, _UncoreFreqTpmi
     from pepclibs.CPUInfo import CPUInfo
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
@@ -217,8 +217,9 @@ class Uncore(_PropsClassBase.PropsClassBase):
     def _get_prop_cpus(self,
                        pname: str,
                        cpus: AbsNumsType,
-                       mname: MechanismNameType) -> Generator[tuple[int, PropertyValueType],
-                                                                    None, None]:
+                       mname: MechanismNameType,
+                       mnames: Sequence[MechanismNameType]) -> \
+                                            Generator[tuple[int, PropertyValueType], None, None]:
         """Refer to '_PropsClassBase._get_prop_cpus()'."""
 
         _LOG.debug("Getting property '%s' using mechanism '%s', cpus: %s",
@@ -314,8 +315,9 @@ class Uncore(_PropsClassBase.PropsClassBase):
     def _get_prop_dies(self,
                        pname: str,
                        dies: RelNumsType,
-                       mname: MechanismNameType) -> Generator[tuple[int, int, PropertyValueType],
-                                                              None, None]:
+                       mname: MechanismNameType,
+                       mnames: Sequence[MechanismNameType]) -> \
+                                    Generator[tuple[int, int, PropertyValueType], None, None]:
         """Refer to '_PropsClassBase._get_prop_dies()'."""
 
         _LOG.debug("Getting property '%s' using mechanism '%s', packages/dies: %s",
@@ -335,7 +337,8 @@ class Uncore(_PropsClassBase.PropsClassBase):
                        pname: str,
                        val: PropertyValueType,
                        cpus: AbsNumsType,
-                       mname: MechanismNameType):
+                       mname: MechanismNameType,
+                       mnames: Sequence[MechanismNameType]):
         """Refer to '_PropsClassBase._set_prop_cpus()'."""
 
         # TODO: implement by translating CPU numbers to die num
@@ -493,7 +496,8 @@ class Uncore(_PropsClassBase.PropsClassBase):
                        pname: str,
                        val: PropertyValueType,
                        dies: RelNumsType,
-                       mname: MechanismNameType):
+                       mname: MechanismNameType,
+                       mnames: Sequence[MechanismNameType]):
         """Refer to '_PropsClassBase._set_prop_dies()'."""
 
         _LOG.debug("Setting property '%s' to value '%s' using mechanism '%s', packages/dies: %s",

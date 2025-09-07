@@ -168,7 +168,7 @@ class CStates(_PropsClassBase.PropsClassBase):
         for cpu in cpus:
             yield (cpu, val)
 
-    def _get_prop_cpus(self, pname, cpus, mname):
+    def _get_prop_cpus(self, pname, cpus, mname, mnames):
         """
         For every CPU in 'cpus', yield a '(cpu, val)' tuple, 'val' is property 'pname' value for CPU
         'cpu'. Use mechanism 'mname'.
@@ -183,7 +183,7 @@ class CStates(_PropsClassBase.PropsClassBase):
         else:
             raise Error(f"BUG: unsupported property '{pname}'")
 
-    def _set_prop_cpus(self, pname, val, cpus, mname):
+    def _set_prop_cpus(self, pname, val, cpus, mname, mnames):
         """Set property 'pname' to value 'val' for CPUs in 'cpus'. Use mechanism 'mname'."""
 
         if mname == "msr":

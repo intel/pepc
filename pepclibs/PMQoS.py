@@ -35,7 +35,7 @@ class PMQoS(_PropsClassBase.PropsClassBase):
                                                            enable_cache=self._enable_cache)
         return self._linux_pmqos_obj
 
-    def _get_prop_cpus(self, pname, cpus, _):
+    def _get_prop_cpus(self, pname, cpus, mname, mnames):
         """
         For every CPU in 'cpus', yield a '(cpu, val)' tuple, 'val' is property 'pname' value for CPU
         'cpu'. Use mechanism 'mname'.
@@ -52,7 +52,7 @@ class PMQoS(_PropsClassBase.PropsClassBase):
         else:
             raise Error(f"BUG: unknown property '{pname}'")
 
-    def _set_prop_cpus(self, pname, val, cpus, _):
+    def _set_prop_cpus(self, pname, val, cpus, mname, mnames):
         """Set property 'pname' to value 'val' for CPUs in 'cpus'. Use mechanism 'mname'."""
 
         linux_pmqos_obj = self._get_linux_pmqos_obj()

@@ -798,8 +798,9 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
     def _get_prop_cpus(self,
                        pname: str,
                        cpus: AbsNumsType,
-                       mname: MechanismNameType) -> Generator[tuple[int, PropertyValueType],
-                                                              None, None]:
+                       mname: MechanismNameType,
+                       mnames: Sequence[MechanismNameType]) -> \
+                                            Generator[tuple[int, PropertyValueType], None, None]:
         """
         Retrieve and yield property values for the specified CPUs using the specified mechanism.
 
@@ -812,6 +813,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             pname: Name of the property to retrieve.
             cpus: CPU numbers to retrieve the property for.
             mname: Name of the mechanism to use.
+            mnames: All mechanism names that were requested for the operation.
 
         Yields:
             (cpu, value) tuples for each CPU in 'cpus'. Yield (cpu, None) if the property is not
@@ -828,6 +830,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                               pname: str,
                               cpus: AbsNumsType,
                               mnames: Sequence[MechanismNameType],
+                              all_mnames: Sequence[MechanismNameType] = (),
                               raise_not_supported: bool = True) -> Generator[PVInfoTypedDict,
                                                                              None, None]:
         """
@@ -843,6 +846,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             pname: Name of the property to retrieve.
             cpus: CPU numbers to retrieve the property for.
             mnames: Mechanism names to use for property retrieval.
+            all_mnames: All mechanism names that were requested for the operation. Assumed to be the
+                        same as 'mnames' if not provided.
             raise_not_supported: Whether to raise an exception if the property is not supported.
 
         Yields:
@@ -856,16 +861,15 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         _LOG.debug("Request to get property '%s' CPUs for %s via mechanisms '%s'",
                    pname, ", ".join([str(cpu) for cpu in cpus]), ", ".join(mnames))
 
-        prop = self._props[pname]
-        if not mnames:
-            mnames = prop["mnames"]
+        if not all_mnames:
+            all_mnames = mnames
 
         exceptions = []
 
         for mname in mnames:
             cpu = None
             try:
-                for cpu, val in self._get_prop_cpus(pname, cpus, mname):
+                for cpu, val in self._get_prop_cpus(pname, cpus, mname, all_mnames):
                     _LOG.debug("'%s' is '%s' for CPU %d using mechanism '%s'%s",
                                pname, val, cpu, mname, self._pman.hostmsg)
                     pvinfo = self._construct_cpu_pvinfo(pname, cpu, mname, val)
@@ -896,7 +900,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
     def _get_prop_cpus_mnames(self,
                               pname: str,
                               cpus: AbsNumsType,
-                              mnames: Sequence[MechanismNameType]) -> \
+                              mnames: Sequence[MechanismNameType],
+                              all_mnames: Sequence[MechanismNameType] = ()) -> \
                                             Generator[tuple[int, PropertyValueType], None, None]:
         """
         Yield (cpu, value) tuples for the specified property and CPUs, using specified mechanisms.
@@ -908,6 +913,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             pname: Name of the property to retrieve.
             cpus: CPU numbers to retrieve the property for.
             mnames: Mechanism names to use for property retrieval.
+            all_mnames: All mechanism names that were requested for the operation. Assumed to be the
+                        same as 'mnames' if not provided.
 
         Yields:
             Tuple of (cpu, value) for each CPU in 'cpus'. If the property is not supported for a
@@ -917,13 +924,14 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             ErrorNotSupported: If none of the CPUs and mechanisms support the property.
         """
 
-        for pvinfo in self._get_prop_pvinfo_cpus(pname, cpus, mnames):
+        for pvinfo in self._get_prop_pvinfo_cpus(pname, cpus, mnames, all_mnames=all_mnames):
             yield (pvinfo["cpu"], pvinfo["val"])
 
     def _get_cpu_prop_mnames(self,
                              pname: str,
                              cpu: int,
-                             mnames: Sequence[MechanismNameType]) -> PropertyValueType:
+                             mnames: Sequence[MechanismNameType],
+                             all_mnames: Sequence[MechanismNameType] = ()) -> PropertyValueType:
         """
         Retrieve the value of a CPU property using specified mechanisms.
 
@@ -931,6 +939,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             pname: Name of the property to retrieve.
             cpu: CPU number for which to retrieve the property.
             mnames: Mechanism names to use for property retrieval.
+            all_mnames: All mechanism names that were requested for the operation. Assumed to be the
+                        same as 'mnames' if not provided.
 
         Returns:
             The value of the requested property for the specified CPU.
@@ -939,8 +949,10 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             ErrorNotSupported: If none of the mechanisms support the property.
         """
 
-        pvinfo = next(self._get_prop_pvinfo_cpus(pname, (cpu,), mnames))
-        return pvinfo["val"]
+        for pvinfo in self._get_prop_pvinfo_cpus(pname, (cpu,), mnames, all_mnames=all_mnames):
+            return pvinfo["val"]
+
+        raise Error(f"BUG: Failed to get property '{pname}' for CPU {cpu}")
 
     def get_prop_cpus(self,
                       pname: str,
@@ -1034,8 +1046,9 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
     def _get_prop_dies(self,
                        pname: str,
                        dies: RelNumsType,
-                       mname: MechanismNameType) -> Generator[tuple[int, int, PropertyValueType],
-                                                              None, None]:
+                       mname: MechanismNameType,
+                       mnames: Sequence[MechanismNameType]) -> \
+                                    Generator[tuple[int, int, PropertyValueType], None, None]:
         """
         Retrieve and yield property values for the specified dies using the specified mechanism.
 
@@ -1046,6 +1059,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             pname: Name of the property to retrieve.
             dies: Dictionary mapping package numbers to collections of die numbers.
             mname: Mechanism name to use.
+            mnames: All mechanism names that were requested for the operation.
 
         Yields:
             Tuples of (package, die, value), where 'value' is the property value or None.
@@ -1061,13 +1075,14 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                 if not cpus:
                     raise Error(f"Cannot get property '{pname}': no CPUs in package {package}, "
                                 f"die {die}")
-                val = self._get_cpu_prop_mnames(pname, cpus[0], (mname,))
+                val = self._get_cpu_prop_mnames(pname, cpus[0], (mname,), all_mnames=mnames)
                 yield package, die, val
 
     def _get_prop_pvinfo_dies(self,
                               pname: str,
                               dies: RelNumsType,
                               mnames: Sequence[MechanismNameType],
+                              all_mnames: Sequence[MechanismNameType] = (),
                               raise_not_supported: bool = True) -> Generator[PVInfoTypedDict,
                                                                              None, None]:
         """
@@ -1083,6 +1098,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             pname: Name of the property to retrieve.
             dies: Dictionary mapping package numbers to collections of die numbers.
             mnames: Mechanism names to use for property retrieval.
+            all_mnames: All mechanism names that were requested for the operation. Assumed to be the
+                        same as 'mnames' if not provided.
             raise_not_supported: Whether to raise an exception if the property is not supported.
 
         Yields:
@@ -1096,16 +1113,15 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         _LOG.debug("Request to get property '%s' for %s via mechanisms '%s'",
                    pname, self._cpuinfo.dies_to_str(dies), ", ".join(mnames))
 
-        prop = self._props[pname]
-        if not mnames:
-            mnames = prop["mnames"]
+        if not all_mnames:
+            all_mnames = mnames
 
         exceptions = []
 
         for mname in mnames:
             pvinfo = None
             try:
-                for package, die, val in self._get_prop_dies(pname, dies, mname):
+                for package, die, val in self._get_prop_dies(pname, dies, mname, all_mnames):
                     _LOG.debug("'%s' is '%s' for package %d, die %d, using mechanism '%s'%s",
                                pname, val, package, die, mname, self._pman.hostmsg)
                     pvinfo = self._construct_die_pvinfo(pname, package, die, mname, val)
@@ -1139,7 +1155,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
     def _get_prop_dies_mnames(self,
                               pname: str,
                               dies: RelNumsType,
-                              mnames: Sequence[MechanismNameType]) -> \
+                              mnames: Sequence[MechanismNameType],
+                              all_mnames: Sequence[MechanismNameType] = ()) -> \
                                           Generator[tuple[int, int, PropertyValueType], None, None]:
         """
         Retrieve and yield property values for the specified dies using the specified mechanisms.
@@ -1152,6 +1169,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             pname: Name of the property to retrieve.
             dies: Dictionary mapping package numbers to collections of die numbers.
             mnames: Mechanism names to use for property retrieval.
+            all_mnames: All mechanism names that were requested for the operation. Assumed to be the
+                        same as 'mnames' if not provided.
 
         Yields:
             Tuples of (package, die, value) for each die.
@@ -1160,14 +1179,15 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             ErrorNotSupported: If none of the dies and mechanisms support the property.
         """
 
-        for pvinfo in self._get_prop_pvinfo_dies(pname, dies, mnames):
+        for pvinfo in self._get_prop_pvinfo_dies(pname, dies, mnames, all_mnames=all_mnames):
             yield (pvinfo["package"], pvinfo["die"], pvinfo["val"])
 
     def _get_die_prop_mnames(self,
                              pname: str,
                              package: int,
                              die: int,
-                             mnames: Sequence[MechanismNameType]) -> PropertyValueType:
+                             mnames: Sequence[MechanismNameType],
+                             all_mnames: Sequence[MechanismNameType] = ()) -> PropertyValueType:
         """
         Retrieve the value of a property for a specific die using specified mechanisms.
 
@@ -1176,6 +1196,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             package: Package number.
             die: Die number within the package.
             mnames: Mechanism names to use for property retrieval.
+            all_mnames: All mechanism names that were requested for the operation. Assumed to be the
+                        same as 'mnames' if not provided.
 
         Returns:
             The value of the requested property for the specified die.
@@ -1184,8 +1206,11 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             ErrorNotSupported: If none of the mechanisms support the property.
         """
 
-        pvinfo = next(self._get_prop_pvinfo_dies(pname, {package: [die]}, mnames))
-        return pvinfo["val"]
+        for pvinfo in self._get_prop_pvinfo_dies(pname, {package: [die]}, mnames,
+                                                 all_mnames=all_mnames):
+            return pvinfo["val"]
+
+        raise Error(f"BUG: Failed to get property '{pname}' for package {package}, die {die}")
 
     def get_prop_dies(self,
                       pname: str,
@@ -1251,8 +1276,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                 cpus = self._cpuinfo.dies_to_cpus(dies=(die,), packages=(package,))
                 self._validate_prop_vs_ioscope(pname, cpus, mnames, package=package, die=die)
 
-        yield from self._get_prop_pvinfo_dies(pname, diez, mnames=mnames,
-                                              raise_not_supported=False)
+        yield from self._get_prop_pvinfo_dies(pname, diez, mnames, raise_not_supported=False)
 
     def get_die_prop(self,
                      pname: str,
@@ -1302,8 +1326,9 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
     def _get_prop_packages(self,
                            pname: str,
                            packages: AbsNumsType,
-                           mname: MechanismNameType) -> Generator[tuple[int, PropertyValueType],
-                                                                  None, None]:
+                           mname: MechanismNameType,
+                           mnames: Sequence[MechanismNameType] = ()) -> \
+                                            Generator[tuple[int, PropertyValueType], None, None]:
         """
         Retrieve and yield property values for the specified packages using the specified mechanism.
 
@@ -1314,6 +1339,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             pname: Name of the property to retrieve.
             packages: Package numbers.
             mname: Mechanism name to use for property retrieval.
+            mnames: All mechanism names that were requested for the operation.
 
         Yields:
             Tuple of (package, value), where value is the property value or None.
@@ -1324,13 +1350,14 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         for package in packages:
             cpus = self._cpuinfo.package_to_cpus(package)
-            val = self._get_cpu_prop_mnames(pname, cpus[0], (mname,))
+            val = self._get_cpu_prop_mnames(pname, cpus[0], (mname,), all_mnames=mnames)
             yield package, val
 
     def _get_prop_pvinfo_packages(self,
                                   pname: str,
                                   packages: AbsNumsType,
                                   mnames: Sequence[MechanismNameType],
+                                  all_mnames: Sequence[MechanismNameType] = (),
                                   raise_not_supported: bool = True) -> Generator[PVInfoTypedDict,
                                                                                  None, None]:
         """
@@ -1346,6 +1373,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             pname: Name of the property to retrieve.
             packages: Package numbers to retrieve the property for.
             mnames: Mechanism names to use for property retrieval.
+            all_mnames: All mechanism names that were requested for the operation. Assumed to be the
+                        same as 'mnames' if not provided.
             raise_not_supported: Whether to raise an exception if the property is not supported.
 
         Yields:
@@ -1356,16 +1385,15 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                                'raise_not_supported' is True.
         """
 
-        prop = self._props[pname]
-        if not mnames:
-            mnames = prop["mnames"]
+        if not all_mnames:
+            all_mnames = mnames
 
         exceptions = []
 
         for mname in mnames:
             package = None
             try:
-                for package, val in self._get_prop_packages(pname, packages, mname):
+                for package, val in self._get_prop_packages(pname, packages, mname, all_mnames):
                     _LOG.debug("'%s' is '%s' for package %d using mechanism '%s'%s",
                                pname, val, package, mname, self._pman.hostmsg)
                     pvinfo = self._construct_package_pvinfo(pname, package, mname, val)
@@ -1396,7 +1424,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
     def _get_prop_packages_mnames(self,
                                   pname: str,
                                   packages: AbsNumsType,
-                                  mnames: Sequence[MechanismNameType]) -> \
+                                  mnames: Sequence[MechanismNameType],
+                                  all_mnames: Sequence[MechanismNameType] = ()) -> \
                                             Generator[tuple[int, PropertyValueType], None, None]:
         """
         Yield (package, value) tuples for the specified property and packages, using specified
@@ -1409,6 +1438,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             pname: Name of the property to retrieve.
             packages: package numbers to retrieve the property for.
             mnames: Mechanism names to use for property retrieval.
+            all_mnames: All mechanism names that were requested for the operation. Assumed to be the
+                        same as 'mnames' if not provided.
 
         Yields:
             Tuple of (package, value) for each package in 'packages'. If the property is not
@@ -1418,13 +1449,15 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             ErrorNotSupported: If none of the packages and mechanisms support the property.
         """
 
-        for pvinfo in self._get_prop_pvinfo_packages(pname, packages, mnames):
+        for pvinfo in self._get_prop_pvinfo_packages(pname, packages, mnames,
+                                                     all_mnames=all_mnames):
             yield (pvinfo["package"], pvinfo["val"])
 
     def _get_package_prop_mnames(self,
                                  pname: str,
                                  package: int,
-                                 mnames: Sequence[MechanismNameType]) -> PropertyValueType:
+                                 mnames: Sequence[MechanismNameType],
+                                 all_mnames: Sequence[MechanismNameType] = ()) -> PropertyValueType:
         """
         Retrieve the value of a property for a specific package using specified mechanisms.
 
@@ -1433,6 +1466,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             package: Package number.
             package: Die number within the package.
             mnames: Mechanism names to use for property retrieval.
+            all_mnames: All mechanism names that were requested for the operation. Assumed to be the
+                        same as 'mnames' if not provided.
 
         Returns:
             The value of the requested property for the specified package.
@@ -1441,8 +1476,11 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             ErrorNotSupported: If none of the mechanisms support the property.
         """
 
-        pvinfo = next(self._get_prop_pvinfo_packages(pname, (package,), mnames))
-        return pvinfo["val"]
+        for pvinfo in self._get_prop_pvinfo_packages(pname, (package,), mnames,
+                                                     all_mnames=all_mnames):
+            return pvinfo["val"]
+
+        raise Error(f"BUG: Failed to get property '{pname}' for package {package}")
 
     def get_prop_packages(self,
                           pname: str,
@@ -1631,7 +1669,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                        pname: str,
                        val: PropertyValueType,
                        cpus: AbsNumsType,
-                       mname: MechanismNameType):
+                       mname: MechanismNameType,
+                       mnames: Sequence[MechanismNameType]):
         """
         Set a property to a specified value for specified CPUs using a specified mechanism.
 
@@ -1642,6 +1681,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             val: Value to set the property to.
             cpus: CPU numbers to set the property for.
             mname: Name of the mechanism to use for setting the property.
+            mnames: All mechanism names that were requested for the operation.
 
         Raises:
             ErrorNotSupported: If the property is not supported for the specified CPUs and
@@ -1657,7 +1697,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                               pname: str,
                               val: PropertyValueType,
                               cpus: AbsNumsType,
-                              mnames: Sequence[MechanismNameType]) -> MechanismNameType:
+                              mnames: Sequence[MechanismNameType],
+                              all_mnames: Sequence[MechanismNameType] = ()) -> MechanismNameType:
         """
         Set a property for specified CPUs using specified mechanisms.
 
@@ -1687,7 +1728,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         for mname in mnames:
             try:
-                self._set_prop_cpus(pname, val, cpus, mname)
+                self._set_prop_cpus(pname, val, cpus, mname, all_mnames)
             except (ErrorNotSupported, ErrorTryAnotherMechanism) as err:
                 exceptions.append(err)
                 continue
@@ -1807,7 +1848,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                        pname: str,
                        val: PropertyValueType,
                        dies: RelNumsType,
-                       mname: MechanismNameType):
+                       mname: MechanismNameType,
+                       mnames: Sequence[MechanismNameType]):
         """
         Set a property to a specified value for specified dies using a specified mechanism.
 
@@ -1818,6 +1860,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             val: Value to set the property to.
             die: Die numbers to set the property for.
             mname: Name of the mechanism to use for setting the property.
+            mnames: All mechanism names that were requested for the operation.
 
         Raises:
             ErrorNotSupported: If the property is not supported for the specified dies and
@@ -1840,13 +1883,14 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             raise Error(f"BUG: I/O scope was not set for property '{pname}'")
 
         cpus = self._reduce_cpus_ioscope(cpus, iosname)
-        self._set_prop_cpus_mnames(pname, val, cpus, (mname,))
+        self._set_prop_cpus_mnames(pname, val, cpus, (mname,), all_mnames=mnames)
 
     def _set_prop_dies_mnames(self,
                               pname: str,
                               val: PropertyValueType,
                               dies: RelNumsType,
-                              mnames: Sequence[MechanismNameType]) -> str:
+                              mnames: Sequence[MechanismNameType],
+                              all_mnames: Sequence[MechanismNameType] = ()) -> str:
         """
         Set a property for specified CPUs using specified mechanisms.
 
@@ -1858,6 +1902,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             val: Value to set the property to.
             cpus: CPU numbers to set the property for.
             mnames: Mechanism names to use for setting the property.
+            all_mnames: All mechanism names that were requested for the operation. Assumed to be the
+                        same as 'mnames' if not provided.
 
         Returns:
             Name of the mechanism used to set the property.
@@ -1871,12 +1917,14 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         """
 
         exceptions = []
+        if not all_mnames:
+            all_mnames = mnames
 
         _LOG.debug("Setting property '%s' to '%s' for %s via mechanisms '%s'",
                    pname, str(val), self._cpuinfo.dies_to_str(dies), ", ".join(mnames))
         for mname in mnames:
             try:
-                self._set_prop_dies(pname, val, dies, mname)
+                self._set_prop_dies(pname, val, dies, mname, all_mnames)
             except (ErrorNotSupported, ErrorTryAnotherMechanism) as err:
                 exceptions.append(err)
                 continue
@@ -1973,7 +2021,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                            pname: str,
                            val: PropertyValueType,
                            packages: AbsNumsType,
-                           mname: MechanismNameType):
+                           mname: MechanismNameType,
+                           mnames: Sequence[MechanismNameType]):
         """
         Set a property to a specified value for a specified package using a specified mechanism.
 
@@ -1984,6 +2033,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             val: Value to set the property to.
             package: Package numbers to set the property for.
             mname: Name of the mechanism to use for setting the property.
+            mnames: All mechanism names that were requested for the operation.
 
         Returns:
             Name of the mechanism used to set the property.
@@ -2005,13 +2055,14 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             raise Error(f"BUG: I/O scope was not set for property '{pname}'")
 
         cpus = self._reduce_cpus_ioscope(cpus, iosname)
-        return self._set_prop_cpus_mnames(pname, val, cpus, (mname,))
+        return self._set_prop_cpus_mnames(pname, val, cpus, (mname,), all_mnames=mnames)
 
     def _set_prop_packages_mnames(self,
                                   pname: str,
                                   val: PropertyValueType,
                                   packages: AbsNumsType,
-                                  mnames: Sequence[MechanismNameType]) -> str:
+                                  mnames: Sequence[MechanismNameType],
+                                  all_mnames: Sequence[MechanismNameType] = ()) -> str:
         """
         Set a property for specified packages using specified mechanisms.
 
@@ -2023,6 +2074,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             val: Value to set the property to.
             packages: package numbers to set the property for.
             mnames: Mechanism names to use for setting the property.
+            all_mnames: All mechanism names that were requested for the operation. Assumed to be the
+                        same as 'mnames' if not provided.
 
         Returns:
             Name of the mechanism used to set the property.
@@ -2039,7 +2092,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         for mname in mnames:
             try:
-                self._set_prop_packages(pname, val, packages, mname)
+                self._set_prop_packages(pname, val, packages, mname, all_mnames)
             except (ErrorNotSupported, ErrorTryAnotherMechanism) as err:
                 exceptions.append(err)
                 continue

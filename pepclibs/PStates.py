@@ -26,7 +26,7 @@ from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorVerify
 from pepclibs._PropsClassBase import ErrorTryAnotherMechanism, ErrorUsePerCPU
 
 if typing.TYPE_CHECKING:
-    from typing import NoReturn, Generator, Union
+    from typing import NoReturn, Generator, Union, Sequence
     from pepclibs.PropsTypes import PropertyValueType
     from pepclibs.msr import MSR, FSBFreq
     from pepclibs import _CPUFreqSysfs, _CPUFreqCPPC, _CPUFreqMSR
@@ -753,8 +753,9 @@ class PStates(_PropsClassBase.PropsClassBase):
     def _get_prop_cpus(self,
                        pname: str,
                        cpus: AbsNumsType,
-                       mname: MechanismNameType) -> Generator[tuple[int, PropertyValueType],
-                                                              None, None]:
+                       mname: MechanismNameType,
+                       mnames: Sequence[MechanismNameType]) -> \
+                                            Generator[tuple[int, PropertyValueType], None, None]:
         """Refer to '_PropsClassBase._get_prop_cpus()'."""
 
         _LOG.debug("Getting property '%s' using mechanism '%s', cpus: %s",
@@ -1073,7 +1074,8 @@ class PStates(_PropsClassBase.PropsClassBase):
                        pname: str,
                        val: PropertyValueType,
                        cpus: AbsNumsType,
-                       mname: MechanismNameType):
+                       mname: MechanismNameType,
+                       mnames: Sequence[MechanismNameType]):
         """Refer to '_PropsClassBase._set_prop_cpus()'."""
 
         _LOG.debug("Setting property '%s' to value '%s' using mechanism '%s', cpus: %s",
