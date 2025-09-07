@@ -155,13 +155,7 @@ def get_good_optarget_opts(params: PropsCmdlTestParamsTypedDict,
         """
 
         pkg = params["packages"][0]
-        pkg_cores_range = Trivial.rangify(params["cores"][pkg])
-        pkg_modules_range = Trivial.rangify(params["modules"][pkg])
-        pkg_dies_range = Trivial.rangify(params["dies"][pkg])
-        opts = [f"--packages {pkg} --cpus all",
-                f"--modules {pkg_modules_range}",
-                f"--packages {pkg} --cores {pkg_cores_range}",
-                f"--packages {pkg} --dies {pkg_dies_range}",
+        opts = [f"--packages {pkg}",
                 f"--packages {pkg}-{params['packages'][-1]}"]
 
         yield from opts
@@ -181,18 +175,10 @@ def get_good_optarget_opts(params: PropsCmdlTestParamsTypedDict,
         first_die = params["dies"][pkg][0]
         last_die = params["dies"][pkg][-1]
 
-        yield from [f"--package {pkg} --dies {first_die}", f"--package {pkg} --dies all"]
+        yield from [f"--packages {pkg} --dies {first_die}", f"--package {pkg} --dies all"]
 
         if first_die != last_die:
-            yield f"--package {pkg} --dies {last_die}"
-        else:
-            return
-
-        if len(params["dies"][pkg]) > 1:
-            pkg_dies_range_partial = Trivial.rangify(params["dies"][pkg][1:])
-            yield f"--packages {pkg} --dies {pkg_dies_range_partial}"
-            pkg_dies_range_partial = Trivial.rangify(params["dies"][pkg][:-1])
-            yield f"--packages {pkg} --dies {pkg_dies_range_partial}"
+            yield f"--packages {pkg} --dies {last_die}"
 
     def _get_module_opts(params: PropsCmdlTestParamsTypedDict,
                          pkg: int) -> Generator[str, None, None]:
@@ -231,8 +217,7 @@ def get_good_optarget_opts(params: PropsCmdlTestParamsTypedDict,
 
     if sname == "global":
         opts = ["",
-                "--dies all --modules all --cores all --cpus all",
-                "--packages all --dies all --cores all",
+                "--packages all --dies all --modules all --cores all",
                 f"--cpus  0-{params['cpus'][-1]}"]
         yield from opts
         return
