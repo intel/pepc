@@ -574,6 +574,11 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
         for cpu in cpus:
             path = self._sysfs_base / f"cpu{cpu}/cpufreq/bios_limit"
             freq = self._sysfs_io.read_int(path, what=f"base frequency for CPU {cpu}")
+            # On Intel systems that support turbo, the 'bios_limit' file includes the turbo
+            # activation frequency, which is base frequency + 1MHz. So we need to subtract 1MHz from
+            # the value read from the 'bios_limit' file to get the actual base frequency.
+            if freq % 10000:
+                freq -= 1000
             # The frequency value is in kHz in sysfs.
             yield cpu, freq * 1000
 
