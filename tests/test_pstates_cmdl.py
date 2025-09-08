@@ -84,7 +84,12 @@ def _get_good_info_opts(sname: ScopeNameType = "package") -> Generator[str, None
         assert False, f"BUG: Bad scope name {sname}"
 
 def test_pstates_info(params: PropsCmdlTestParamsTypedDict):
-    """Test the 'pepc pstates info' command."""
+    """
+    Test the 'pepc pstates info' command.
+
+    Args:
+        params: The test parameters dictionary.
+    """
 
     pman = params["pman"]
 
@@ -139,7 +144,12 @@ def _get_good_config_freq_opts(params: PropsCmdlTestParamsTypedDict,
         assert False, f"BUG: Bad scope name {sname}"
 
 def test_pstates_config_freq_good(params: PropsCmdlTestParamsTypedDict):
-    """Test the 'pepc pstates config' command with good frequency options."""
+    """
+    Test the 'pepc pstates config' command with good frequency options.
+
+    Args:
+        params: The test parameters dictionary.
+    """
 
     pman = params["pman"]
 
@@ -166,7 +176,12 @@ def _get_bad_config_freq_opts() -> Generator[str, None, None]:
                 "--min-freq max --max-freq min"]
 
 def test_pstates_config_freq_bad(params: PropsCmdlTestParamsTypedDict):
-    """Test the 'pepc pstates config' command with bad frequency options."""
+    """
+    Test the 'pepc pstates config' command with bad frequency options.
+
+    Args:
+        params: The test parameters dictionary.
+    """
 
     pman = params["pman"]
 
@@ -352,6 +367,9 @@ def test_pstates_frequency_set_order(params: PropsCmdlTestParamsTypedDict):
     Test setting minimum and maximum frequency values in different orders. Since the system's
     minimum and maximum frequencies may be configured in various ways, care must be taken when
     updating both values simultaneously.
+
+    Args:
+        params: The test parameters dictionary.
     """
 
     cpu = 0
