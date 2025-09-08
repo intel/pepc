@@ -12,6 +12,7 @@ Provide an API for MSR 0x0x54 (MSR_PM_LOGICAL_ID), a model-specific register pre
 platforms.
 """
 
+import copy
 from pepclibs import CPUModels, CPUInfo
 from pepclibs.msr import _FeaturedMSR, MSR
 from pepclibs.msr ._FeaturedMSR import PartialFeatureTypedDict
@@ -87,6 +88,6 @@ class PMLogicalId(_FeaturedMSR.FeaturedMSR):
             ErrorNotSupported: If CPU vendor is not supported or if the CPU does not the MSR.
         """
 
-        self._partial_features = FEATURES
+        self._partial_features = copy.deepcopy(FEATURES)
 
         super().__init__(cpuinfo, pman=pman, msr=msr)

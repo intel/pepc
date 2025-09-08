@@ -14,6 +14,7 @@ present on many Intel platforms.
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
+import copy
 import typing
 from pepclibs import CPUModels
 from pepclibs.helperlibs import Logging
@@ -257,7 +258,7 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
             ErrorNotSupported: If CPU vendor is not supported or if the CPU does not the MSR.
         """
 
-        self._partial_features = FEATURES
+        self._partial_features = copy.deepcopy(FEATURES)
 
         model = cpuinfo.info["vfm"]
 

@@ -13,6 +13,7 @@ platforms.
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
+import copy
 import typing
 from pepclibs import CPUModels
 from pepclibs.msr import _FeaturedMSR
@@ -123,7 +124,7 @@ class TurboRatioLimit(_FeaturedMSR.FeaturedMSR):
             ErrorNotSupported: If CPU vendor is not supported or if the CPU does not the MSR.
         """
 
-        self._partial_features = FEATURES
+        self._partial_features = copy.deepcopy(FEATURES)
 
         sname = _FeaturedMSR.get_clx_ap_adjusted_msr_scope(cpuinfo)
         for finfo in self._partial_features.values():

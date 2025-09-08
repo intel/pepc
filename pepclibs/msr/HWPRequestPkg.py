@@ -14,7 +14,9 @@ platforms.
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
+import copy
 import typing
+from typing import cast
 from pepclibs import CPUInfo
 from pepclibs.msr import _FeaturedMSR, PMEnable, MSR
 
@@ -86,7 +88,7 @@ class HWPRequestPkg(_FeaturedMSR.FeaturedMSR):
             ErrorNotSupported: If CPU vendor is not supported or if the CPU does not the MSR.
         """
 
-        self._partial_features = FEATURES
+        self._partial_features = copy.deepcopy(FEATURES)
 
         sname = _FeaturedMSR.get_clx_ap_adjusted_msr_scope(cpuinfo)
 
@@ -103,7 +105,8 @@ class HWPRequestPkg(_FeaturedMSR.FeaturedMSR):
             cpuflags = self._cpuinfo.info["flags"][cpus[0]]
             if "hwp" in cpuflags:
                 if self._msr.read_cpu_bits(PMEnable.MSR_PM_ENABLE,
-                                           PMEnable.FEATURES["hwp"]["bits"], cpus[0]):
+                                           cast(tuple[int, int], PMEnable.FEATURES["hwp"]["bits"]),
+                                           cpus[0]):
                     continue
 
             # If HWP is not supported or not enabled for any CPU in the package, all the other CPUs

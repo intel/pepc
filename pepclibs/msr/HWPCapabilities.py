@@ -13,6 +13,7 @@ many Intel platforms.
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
+import copy
 import typing
 from typing import cast
 from pepclibs.msr import _FeaturedMSR, PMEnable
@@ -94,7 +95,7 @@ class HWPCapabilities(_FeaturedMSR.FeaturedMSR):
             ErrorNotSupported: If CPU vendor is not supported or if the CPU does not the MSR.
         """
 
-        self._partial_features = FEATURES
+        self._partial_features = copy.deepcopy(FEATURES)
 
         super().__init__(cpuinfo, pman=pman, msr=msr)
 

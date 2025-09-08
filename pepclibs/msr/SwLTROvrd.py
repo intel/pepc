@@ -14,6 +14,7 @@ PCIe LTR, from the operating system to the CPU's power management unit.
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
+import copy
 import typing
 from pepclibs.msr import _FeaturedMSR, PowerCtl
 from pepclibs.msr ._FeaturedMSR import PartialFeatureTypedDict
@@ -108,6 +109,6 @@ class SwLTROvrd(_FeaturedMSR.FeaturedMSR):
             ErrorNotSupported: If CPU vendor is not supported or if the CPU does not the MSR.
         """
 
-        self._partial_features = FEATURES
+        self._partial_features = copy.deepcopy(FEATURES)
 
         super().__init__(cpuinfo, pman=pman, msr=msr)
