@@ -21,10 +21,10 @@ from pepclibs.helperlibs import Logging
 from pepclibs.msr import _FeaturedMSR
 
 if typing.TYPE_CHECKING:
-    from typing import TypedDict
+    from typing import TypedDict, Final
     from pepclibs import CPUInfo
     from pepclibs.msr import MSR
-    from pepclibs.msr ._FeaturedMSR import PartialFeatureTypedDict
+    from pepclibs.msr._FeaturedMSR import PartialFeatureTypedDict
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepclibs.CPUInfoTypes import ScopeNameType
 
@@ -44,7 +44,7 @@ if typing.TYPE_CHECKING:
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
 # Package C-state configuration control Model Specific Register.
-MSR_PKG_CST_CONFIG_CONTROL = 0xE2
+MSR_PKG_CST_CONFIG_CONTROL: Final = 0xE2
 
 #
 # Package C-state limits are documented in Intel SDM, but it describes all the possible package
@@ -56,32 +56,32 @@ MSR_PKG_CST_CONFIG_CONTROL = 0xE2
 # Xeons.
 #
 # Ice Lake, Granite Rapids, Sierra Forest, Clear Water Forest Xeons.
-_ICX_PKG_CST_LIMITS: _LimitsTypedDict = {
+_ICX_PKG_CST_LIMITS: Final[_LimitsTypedDict] = {
     "codes": {"PC0": 0, "PC2": 1, "PC6": 2, "unlimited": 7},
     "bits": (2, 0)
 }
 
 # Emerald Rapids, Sapphire Rapids, Cooper Lake, Cascade Lake, Sky Lake Xeons. Knights Mill and
 # Knights Landing Xeon Phis.
-_SKX_PKG_CST_LIMITS: _LimitsTypedDict = {
+_SKX_PKG_CST_LIMITS: Final[_LimitsTypedDict] = {
     "codes": {"PC0": 0, "PC2": 1, "PC6": 2, "PC6R": 3, "unlimited": 7},
     "bits": (2, 0)
 }
 
 # Broadwell-D Xeon.
-_BDWD_PKG_CST_LIMITS: _LimitsTypedDict = {
+_BDWD_PKG_CST_LIMITS: Final[_LimitsTypedDict] = {
     "codes": {"PC0": 0, "PC2": 1, "PC3": 2, "PC6": 3},
     "bits": (3, 0)
 }
 
 # Broadwell and Haswell Xeons.
-_HSX_PKG_CST_LIMITS: _LimitsTypedDict = {
+_HSX_PKG_CST_LIMITS: Final[_LimitsTypedDict] = {
     "codes": {"PC0": 0, "PC2": 1, "PC3": 2, "PC6": 3, "unlimited": 7},
     "bits": (2, 0)
 }
 
 # Ivy Bridge Xeon (Ivy Town).
-_IVT_PKG_CST_LIMITS: _LimitsTypedDict = {
+_IVT_PKG_CST_LIMITS: Final[_LimitsTypedDict] = {
     "codes": {"PC0": 0, "PC2": 1, "PC6": 2, "PC6R": 3, "unlimited": 7},
     "bits": (2, 0)
 }
@@ -91,7 +91,7 @@ _IVT_PKG_CST_LIMITS: _LimitsTypedDict = {
 #
 # Denverton SoC (Goldmont). Note, successor of Denverton is Snow Ridge, and its successor is Grand
 # Ridge. They do not support package C-states.
-_DNV_PKG_CST_LIMITS: _LimitsTypedDict = {
+_DNV_PKG_CST_LIMITS: Final[_LimitsTypedDict] = {
     "codes": {"PC2": 2, "PC6": 3, "unlimited": 0},
     "bits": (3, 0)
 }
@@ -99,24 +99,24 @@ _DNV_PKG_CST_LIMITS: _LimitsTypedDict = {
 #
 # Clients.
 #
-_CLIENT_LNL_CST_LIMITS: _LimitsTypedDict = {
+_CLIENT_LNL_CST_LIMITS: Final[_LimitsTypedDict] = {
     "codes": {"PC0": 0, "PC2": 1, "PC6": 3, "PC10": 8},
     "bits": (3, 0)
 }
 
-_CLIENT_PC8_CST_LIMITS: _LimitsTypedDict = {
+_CLIENT_PC8_CST_LIMITS: Final[_LimitsTypedDict] = {
     "codes": {"PC0": 0, "PC2": 1, "PC3": 2, "PC6": 3, "PC7": 4, "PC7S": 5, "PC8": 6, "PC9": 7,
               "PC10": 8},
     "bits": (3, 0)
 }
 
-_CLIENT_PC7S_CST_LIMITS: _LimitsTypedDict = {
+_CLIENT_PC7S_CST_LIMITS: Final[_LimitsTypedDict] = {
     "codes": {"PC0": 0, "PC2": 1, "PC3": 2, "PC6": 3, "PC7": 4, "PC7S": 5},
     "bits": (3, 0)
 }
 
 # CPU model -> Package C-state limit map.
-_PKG_CST_LIMITS: dict[int, _LimitsTypedDict] = {
+_PKG_CST_LIMITS: Final[dict[int, _LimitsTypedDict]] = {
     # Xeons.
     CPUModels.MODELS["ATOM_DARKMONT_X"]["vfm"]:  _ICX_PKG_CST_LIMITS,
     CPUModels.MODELS["ATOM_CRESTMONT_X"]["vfm"]: _ICX_PKG_CST_LIMITS,
@@ -171,16 +171,16 @@ _PKG_CST_LIMITS: dict[int, _LimitsTypedDict] = {
 }
 
 # MSR_PKG_CST_CONFIG_CONTROL features have core scope, except for the following CPUs.
-_MODULE_IO_SCOPE_VFMS = CPUModels.CPU_GROUPS["SILVERMONT"] + CPUModels.CPU_GROUPS["AIRMONT"]
-_PACKAGE_IO_SCOPE_VFMS = CPUModels.CPU_GROUPS["PHI"]
+_MODULE_IO_SCOPE_VFMS: Final = CPUModels.CPU_GROUPS["SILVERMONT"] + CPUModels.CPU_GROUPS["AIRMONT"]
+_PACKAGE_IO_SCOPE_VFMS: Final = CPUModels.CPU_GROUPS["PHI"]
 
 # Platforms that where C1 demotion/undemotion I/O scope is "core".
-_CORE_C1D_SCOPE_VFMS = CPUModels.CPU_GROUPS["EMR"] + \
-                       CPUModels.CPU_GROUPS["SPR"] + \
-                       CPUModels.CPU_GROUPS["ICX"]
+_CORE_C1D_SCOPE_VFMS: Final = CPUModels.CPU_GROUPS["EMR"] + \
+                              CPUModels.CPU_GROUPS["SPR"] + \
+                              CPUModels.CPU_GROUPS["ICX"]
 
 # Map of features available on various CPUs.
-FEATURES: dict[str, PartialFeatureTypedDict] = {
+FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
     "pkg_cstate_limit": {
         "name": "Package C-state limit",
         "sname": None,

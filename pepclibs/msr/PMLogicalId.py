@@ -12,22 +12,29 @@ Provide an API for MSR 0x0x54 (MSR_PM_LOGICAL_ID), a model-specific register pre
 platforms.
 """
 
+from __future__ import annotations # Remove when switching to Python 3.10+.
+
 import copy
+import typing
 from pepclibs import CPUModels, CPUInfo
-from pepclibs.msr import _FeaturedMSR, MSR
-from pepclibs.msr ._FeaturedMSR import PartialFeatureTypedDict
-from pepclibs.helperlibs.ProcessManager import ProcessManagerType
+from pepclibs.msr import _FeaturedMSR
+
+if typing.TYPE_CHECKING:
+    from typing import Final
+    from pepclibs.msr import MSR
+    from pepclibs.msr._FeaturedMSR import PartialFeatureTypedDict
+    from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
 # The PM Logical ID Model Specific Register.
-MSR_PM_LOGICAL_ID = 0x54
+MSR_PM_LOGICAL_ID: Final = 0x54
 
 # CPUs supporting the "PM Logical ID" MSR.
-_PLI_VFMS = CPUModels.CPU_GROUPS["GNR"] + \
-            CPUModels.CPU_GROUPS["DARKMONT"] + \
-            CPUModels.CPU_GROUPS["CRESTMONT"]
+_PLI_VFMS: Final = CPUModels.CPU_GROUPS["GNR"] + \
+                   CPUModels.CPU_GROUPS["DARKMONT"] + \
+                   CPUModels.CPU_GROUPS["CRESTMONT"]
 
 # Description of CPU features controlled by the PM Logical ID.
-FEATURES: dict[str, PartialFeatureTypedDict] = {
+FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
     "domain_id": {
         "name": "Domain ID",
         "sname": "CPU",

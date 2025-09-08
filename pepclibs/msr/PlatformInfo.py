@@ -19,69 +19,70 @@ from pepclibs import CPUModels
 from pepclibs.msr import _FeaturedMSR
 
 if typing.TYPE_CHECKING:
+    from typing import Final
     from pepclibs import CPUInfo
     from pepclibs.msr import MSR
-    from pepclibs.msr ._FeaturedMSR import PartialFeatureTypedDict
+    from pepclibs.msr._FeaturedMSR import PartialFeatureTypedDict
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
 # The Power Control Model Specific Register.
-MSR_PLATFORM_INFO = 0xCE
+MSR_PLATFORM_INFO: Final = 0xCE
 
 # CPUs supporting the "minimum operating ratio" feature.
-_MIN_OPER_RATIO_VFMS = CPUModels.CPU_GROUPS["GNR"] +              \
-                       CPUModels.CPU_GROUPS["EMR"] +              \
-                       CPUModels.CPU_GROUPS["ARROWLAKE"] +        \
-                       CPUModels.CPU_GROUPS["METEORLAKE"] +       \
-                       CPUModels.CPU_GROUPS["SPR"] +              \
-                       CPUModels.CPU_GROUPS["RAPTORLAKE"] +       \
-                       CPUModels.CPU_GROUPS["ALDERLAKE"] +        \
-                       CPUModels.CPU_GROUPS["ROCKETLAKE"] +       \
-                       CPUModels.CPU_GROUPS["TIGERLAKE"] +        \
-                       CPUModels.CPU_GROUPS["ICELAKE"] +          \
-                       CPUModels.CPU_GROUPS["COMETLAKE"] +        \
-                       CPUModels.CPU_GROUPS["KABYLAKE"] +         \
-                       CPUModels.CPU_GROUPS["CANNONLAKE"] +       \
-                       CPUModels.CPU_GROUPS["SKYLAKE"] +          \
-                       CPUModels.CPU_GROUPS["BROADWELL"] +        \
-                       CPUModels.CPU_GROUPS["HASWELL"] +          \
-                       (CPUModels.MODELS["IVYBRIDGE"]["vfm"],) +  \
-                       CPUModels.CPU_GROUPS["DARKMONT"] +         \
-                       CPUModels.CPU_GROUPS["CRESTMONT"] +        \
-                       CPUModels.CPU_GROUPS["TREMONT"] +          \
-                       CPUModels.CPU_GROUPS["GOLDMONT"] +         \
-                       CPUModels.CPU_GROUPS["PHI"]
+_MIN_OPER_RATIO_VFMS: Final = CPUModels.CPU_GROUPS["GNR"] +              \
+                              CPUModels.CPU_GROUPS["EMR"] +              \
+                              CPUModels.CPU_GROUPS["ARROWLAKE"] +        \
+                              CPUModels.CPU_GROUPS["METEORLAKE"] +       \
+                              CPUModels.CPU_GROUPS["SPR"] +              \
+                              CPUModels.CPU_GROUPS["RAPTORLAKE"] +       \
+                              CPUModels.CPU_GROUPS["ALDERLAKE"] +        \
+                              CPUModels.CPU_GROUPS["ROCKETLAKE"] +       \
+                              CPUModels.CPU_GROUPS["TIGERLAKE"] +        \
+                              CPUModels.CPU_GROUPS["ICELAKE"] +          \
+                              CPUModels.CPU_GROUPS["COMETLAKE"] +        \
+                              CPUModels.CPU_GROUPS["KABYLAKE"] +         \
+                              CPUModels.CPU_GROUPS["CANNONLAKE"] +       \
+                              CPUModels.CPU_GROUPS["SKYLAKE"] +          \
+                              CPUModels.CPU_GROUPS["BROADWELL"] +        \
+                              CPUModels.CPU_GROUPS["HASWELL"] +          \
+                              (CPUModels.MODELS["IVYBRIDGE"]["vfm"],) +  \
+                              CPUModels.CPU_GROUPS["DARKMONT"] +         \
+                              CPUModels.CPU_GROUPS["CRESTMONT"] +        \
+                              CPUModels.CPU_GROUPS["TREMONT"] +          \
+                              CPUModels.CPU_GROUPS["GOLDMONT"] +         \
+                              CPUModels.CPU_GROUPS["PHI"]
 
 # CPUs supporting the "maximum efficiency ratio" feature.
-_BASEFREQ_VFMS = CPUModels.CPU_GROUPS["GNR"] +         \
-              CPUModels.CPU_GROUPS["EMR"] +         \
-              CPUModels.CPU_GROUPS["ARROWLAKE"] +   \
-              CPUModels.CPU_GROUPS["METEORLAKE"] +  \
-              CPUModels.CPU_GROUPS["SPR"] +         \
-              CPUModels.CPU_GROUPS["RAPTORLAKE"] +  \
-              CPUModels.CPU_GROUPS["ALDERLAKE"] +   \
-              CPUModels.CPU_GROUPS["ROCKETLAKE"] +  \
-              CPUModels.CPU_GROUPS["TIGERLAKE"] +   \
-              CPUModels.CPU_GROUPS["ICELAKE"] +     \
-              CPUModels.CPU_GROUPS["COMETLAKE"] +   \
-              CPUModels.CPU_GROUPS["KABYLAKE"] +    \
-              CPUModels.CPU_GROUPS["CANNONLAKE"] +  \
-              CPUModels.CPU_GROUPS["SKYLAKE"] +     \
-              CPUModels.CPU_GROUPS["BROADWELL"] +   \
-              CPUModels.CPU_GROUPS["HASWELL"] +     \
-              CPUModels.CPU_GROUPS["IVYBRIDGE"] +   \
-              CPUModels.CPU_GROUPS["SANDYBRIDGE"] + \
-              CPUModels.CPU_GROUPS["WESTMERE"] +    \
-              CPUModels.CPU_GROUPS["NEHALEM"] +     \
-              CPUModels.CPU_GROUPS["DARKMONT"] +    \
-              CPUModels.CPU_GROUPS["CRESTMONT"] +   \
-              CPUModels.CPU_GROUPS["TREMONT"] +     \
-              CPUModels.CPU_GROUPS["GOLDMONT"] +    \
-              CPUModels.CPU_GROUPS["AIRMONT"] +     \
-              CPUModels.CPU_GROUPS["SILVERMONT"] +  \
-              CPUModels.CPU_GROUPS["PHI"]
+_BASEFREQ_VFMS: Final = CPUModels.CPU_GROUPS["GNR"] +         \
+                        CPUModels.CPU_GROUPS["EMR"] +         \
+                        CPUModels.CPU_GROUPS["ARROWLAKE"] +   \
+                        CPUModels.CPU_GROUPS["METEORLAKE"] +  \
+                        CPUModels.CPU_GROUPS["SPR"] +         \
+                        CPUModels.CPU_GROUPS["RAPTORLAKE"] +  \
+                        CPUModels.CPU_GROUPS["ALDERLAKE"] +   \
+                        CPUModels.CPU_GROUPS["ROCKETLAKE"] +  \
+                        CPUModels.CPU_GROUPS["TIGERLAKE"] +   \
+                        CPUModels.CPU_GROUPS["ICELAKE"] +     \
+                        CPUModels.CPU_GROUPS["COMETLAKE"] +   \
+                        CPUModels.CPU_GROUPS["KABYLAKE"] +    \
+                        CPUModels.CPU_GROUPS["CANNONLAKE"] +  \
+                        CPUModels.CPU_GROUPS["SKYLAKE"] +     \
+                        CPUModels.CPU_GROUPS["BROADWELL"] +   \
+                        CPUModels.CPU_GROUPS["HASWELL"] +     \
+                        CPUModels.CPU_GROUPS["IVYBRIDGE"] +   \
+                        CPUModels.CPU_GROUPS["SANDYBRIDGE"] + \
+                        CPUModels.CPU_GROUPS["WESTMERE"] +    \
+                        CPUModels.CPU_GROUPS["NEHALEM"] +     \
+                        CPUModels.CPU_GROUPS["DARKMONT"] +    \
+                        CPUModels.CPU_GROUPS["CRESTMONT"] +   \
+                        CPUModels.CPU_GROUPS["TREMONT"] +     \
+                        CPUModels.CPU_GROUPS["GOLDMONT"] +    \
+                        CPUModels.CPU_GROUPS["AIRMONT"] +     \
+                        CPUModels.CPU_GROUPS["SILVERMONT"] +  \
+                        CPUModels.CPU_GROUPS["PHI"]
 
 # Description of CPU features controlled by the the Platform Information MSR.
-FEATURES: dict[str, PartialFeatureTypedDict] = {
+FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
     "max_non_turbo_ratio": {
         "name": "Max. Non-Turbo Ratio",
         "sname": None,

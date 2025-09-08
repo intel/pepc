@@ -19,21 +19,22 @@ from pepclibs import CPUModels
 from pepclibs.msr import _FeaturedMSR
 
 if typing.TYPE_CHECKING:
+    from typing import Final
     from pepclibs import CPUInfo
     from pepclibs.msr import MSR
-    from pepclibs.msr ._FeaturedMSR import PartialFeatureTypedDict
+    from pepclibs.msr._FeaturedMSR import PartialFeatureTypedDict
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepclibs.CPUInfoTypes import ScopeNameType
 
 # The Energy Performance Bias Model Specific Register.
-MSR_ENERGY_PERF_BIAS = 0x1B0
+MSR_ENERGY_PERF_BIAS: Final = 0x1B0
 
 # MSR_ENERGY_PERF_BIAS features have CPU scope, except for the following CPUs.
-_CORE_SCOPE_VFMS = CPUModels.CPU_GROUPS["SILVERMONT"]
-_PACKAGE_SCOPE_VFMS = CPUModels.CPU_GROUPS["WESTMERE"] + CPUModels.CPU_GROUPS["SANDYBRIDGE"]
+_CORE_SCOPE_VFMS: Final = CPUModels.CPU_GROUPS["SILVERMONT"]
+_PACKAGE_SCOPE_VFMS: Final = CPUModels.CPU_GROUPS["WESTMERE"] + CPUModels.CPU_GROUPS["SANDYBRIDGE"]
 
 # Description of CPU features controlled by the the Power Control MSR.
-FEATURES: dict[str, PartialFeatureTypedDict] = {
+FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
     "epb": {
         "name": "Energy Performance Bias",
         "sname": None,

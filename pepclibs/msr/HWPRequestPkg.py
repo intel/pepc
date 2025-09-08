@@ -18,17 +18,19 @@ import copy
 import typing
 from typing import cast
 from pepclibs import CPUInfo
-from pepclibs.msr import _FeaturedMSR, PMEnable, MSR
+from pepclibs.msr import _FeaturedMSR, PMEnable
 
 if typing.TYPE_CHECKING:
-    from pepclibs.msr ._FeaturedMSR import PartialFeatureTypedDict
+    from typing import Final
+    from pepclibs.msr import MSR
+    from pepclibs.msr._FeaturedMSR import PartialFeatureTypedDict
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
 # The Hardware Power Management Request Package Model Specific Register.
-MSR_HWP_REQUEST_PKG = 0x772
+MSR_HWP_REQUEST_PKG: Final = 0x772
 
 # Description of CPU features controlled by the the Power Control MSR.
-FEATURES: dict[str, PartialFeatureTypedDict] = {
+FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
     "min_perf": {
         "name": "Min. CPU performance",
         "sname": None,

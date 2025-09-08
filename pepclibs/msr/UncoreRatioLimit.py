@@ -20,9 +20,10 @@ from pepclibs import CPUModels
 from pepclibs.msr import _FeaturedMSR
 
 if typing.TYPE_CHECKING:
+    from typing import Final
     from pepclibs import CPUInfo
     from pepclibs.msr import MSR
-    from pepclibs.msr ._FeaturedMSR import PartialFeatureTypedDict
+    from pepclibs.msr._FeaturedMSR import PartialFeatureTypedDict
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
 # The Uncore Ratio Limit Model Specific Register.
@@ -31,20 +32,20 @@ MSR_UNCORE_RATIO_LIMIT = 0x620
 #
 # CPUs that support the uncore ratio limit MSR.
 #
-_VMFS = CPUModels.CPU_GROUPS["EMR"] + \
-        CPUModels.CPU_GROUPS["METEORLAKE"] + \
-        CPUModels.CPU_GROUPS["SPR"] + \
-        CPUModels.CPU_GROUPS["RAPTORLAKE"] + \
+_VMFS = CPUModels.CPU_GROUPS["EMR"] +               \
+        CPUModels.CPU_GROUPS["METEORLAKE"] +        \
+        CPUModels.CPU_GROUPS["SPR"] +               \
+        CPUModels.CPU_GROUPS["RAPTORLAKE"] +        \
         (CPUModels.MODELS["ALDERLAKE"]["vfm"],
-         CPUModels.MODELS["ALDERLAKE_L"]["vfm"]) + \
-        CPUModels.CPU_GROUPS["ICX"] + \
-        CPUModels.CPU_GROUPS["SKX"] + \
+         CPUModels.MODELS["ALDERLAKE_L"]["vfm"]) +  \
+        CPUModels.CPU_GROUPS["ICX"] +               \
+        CPUModels.CPU_GROUPS["SKX"] +               \
         (CPUModels.MODELS["BROADWELL_G"]["vfm"],
          CPUModels.MODELS["BROADWELL_D"]["vfm"],
          CPUModels.MODELS["BROADWELL_X"]["vfm"])
 
 # Description of CPU features controlled by the the Turbo Ratio Limit MSR.
-FEATURES: dict[str, PartialFeatureTypedDict] = {
+FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
     "max_ratio": {
         "name": "Maximum uncore ratio",
         "sname": None,

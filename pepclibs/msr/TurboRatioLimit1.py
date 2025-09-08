@@ -19,9 +19,10 @@ import typing
 from pepclibs.msr import _FeaturedMSR, TurboRatioLimit
 
 if typing.TYPE_CHECKING:
+    from typing import Final
     from pepclibs import CPUInfo
     from pepclibs.msr import MSR
-    from pepclibs.msr ._FeaturedMSR import PartialFeatureTypedDict
+    from pepclibs.msr._FeaturedMSR import PartialFeatureTypedDict
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
 # The Turbo Ratio Limit 1 Model Specific Register.
@@ -30,7 +31,7 @@ MSR_TURBO_GROUP_CORECNT = 0x1AE
 MSR_TURBO_RATIO_LIMIT_CORES = 0x1AE
 
 # Description of CPU features controlled by the the Turbo Ratio Limit MSR.
-FEATURES: dict[str, PartialFeatureTypedDict] = {
+FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
     "g0_cpu_cnt": {
         "name": "Group 0 cores count",
         "sname": None,

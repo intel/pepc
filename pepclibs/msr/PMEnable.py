@@ -18,16 +18,17 @@ import typing
 from pepclibs.msr import _FeaturedMSR
 
 if typing.TYPE_CHECKING:
+    from typing import Final
     from pepclibs import CPUInfo
     from pepclibs.msr import MSR
-    from pepclibs.msr ._FeaturedMSR import PartialFeatureTypedDict
+    from pepclibs.msr._FeaturedMSR import PartialFeatureTypedDict
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
 # The Power Management Enable Model Specific Register.
-MSR_PM_ENABLE = 0x770
+MSR_PM_ENABLE: Final = 0x770
 
 # Description of CPU features controlled by the the Power Control MSR.
-FEATURES: dict[str, PartialFeatureTypedDict] = {
+FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
     "hwp": {
         "name": "Hardware Power Management enabled",
         "sname": None,

@@ -17,24 +17,25 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 import copy
 import typing
 from pepclibs.msr import _FeaturedMSR, PowerCtl
-from pepclibs.msr ._FeaturedMSR import PartialFeatureTypedDict
 
 if typing.TYPE_CHECKING:
+    from typing import Final
     from pepclibs import CPUInfo
     from pepclibs.msr import MSR
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
+    from pepclibs.msr._FeaturedMSR import PartialFeatureTypedDict
 
 # The Software LTR Override Model Specific Register.
-MSR_SW_LTR_OVRD = 0xA02
+MSR_SW_LTR_OVRD: Final = 0xA02
 
 # CPU models supporting the LTR feature.
-_LTR_CPUS = PowerCtl.LTR_VFMS
+_LTR_CPUS: Final = PowerCtl.LTR_VFMS
 
 # Description of CPU features controlled by the MSR.
 #
 # Note: only snoop latency bits and fields are supported. There are non-snoop latency bits and
 # fields, but the do not seem to be useful.
-FEATURES: dict[str, PartialFeatureTypedDict] = {
+FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
     "sxl": {
         "name": "Snoop latency software LTR",
         "sname": "package",

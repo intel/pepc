@@ -20,11 +20,11 @@ from pepclibs import CPUModels
 from pepclibs.msr import _FeaturedMSR
 
 if typing.TYPE_CHECKING:
-    from typing import TypedDict
+    from typing import TypedDict, Final
     from pepclibs import CPUInfo
     from pepclibs.msr import MSR
     from pepclibs.CPUInfoTypes import ScopeNameType
-    from pepclibs.msr ._FeaturedMSR import PartialFeatureTypedDict
+    from pepclibs.msr._FeaturedMSR import PartialFeatureTypedDict
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
     class _FSBCodesTypedDict(TypedDict, total=False):
@@ -41,10 +41,10 @@ if typing.TYPE_CHECKING:
         bits: tuple[int, int]
 
 # The Scalable Bus Speed Model Specific Register.
-MSR_FSB_FREQ = 0xCD
+MSR_FSB_FREQ: Final = 0xCD
 
 # Core 2 clients.
-_CORE2_FSB_CODES: _FSBCodesTypedDict = {
+_CORE2_FSB_CODES: Final[_FSBCodesTypedDict] = {
     "codes": {100.00: 0b101,
               133.33: 0b001,
               166.67: 0b011,
@@ -56,7 +56,7 @@ _CORE2_FSB_CODES: _FSBCodesTypedDict = {
 }
 
 # Pre-Silvermont Atoms.
-_OLD_ATOM_FSB_CODES: _FSBCodesTypedDict = {
+_OLD_ATOM_FSB_CODES: Final[_FSBCodesTypedDict] = {
     "codes": {083.00: 0b111,
               100.00: 0b101,
               133.33: 0b001,
@@ -65,7 +65,7 @@ _OLD_ATOM_FSB_CODES: _FSBCodesTypedDict = {
 }
 
 # Silvermont Atoms.
-_SILVERMONT_FSB_CODES: _FSBCodesTypedDict = {
+_SILVERMONT_FSB_CODES: Final[_FSBCodesTypedDict] = {
     "codes": {080.0: 0b100,
               083.3: 0b000,
               100.0: 0b001,
@@ -75,7 +75,7 @@ _SILVERMONT_FSB_CODES: _FSBCodesTypedDict = {
 }
 
 # Airmont Atoms.
-_AIRMONT_FSB_CODES: _FSBCodesTypedDict = {
+_AIRMONT_FSB_CODES: Final[_FSBCodesTypedDict] = {
     "codes": {083.3: 0b0000,
               100.0: 0b0001,
               133.3: 0b0010,
@@ -89,7 +89,7 @@ _AIRMONT_FSB_CODES: _FSBCodesTypedDict = {
 }
 
 # CPU ID -> FSB codes map.
-_FSB_CODES: dict[int, _FSBCodesTypedDict] = {
+_FSB_CODES: Final[dict[int, _FSBCodesTypedDict]] = {
     CPUModels.MODELS["CORE2_MEROM"]["vfm"]:          _CORE2_FSB_CODES,
     CPUModels.MODELS["ATOM_BONNELL_MID"]["vfm"]:     _OLD_ATOM_FSB_CODES,
     CPUModels.MODELS["ATOM_BONNELL"]["vfm"]:         _OLD_ATOM_FSB_CODES,
@@ -103,10 +103,10 @@ _FSB_CODES: dict[int, _FSBCodesTypedDict] = {
 }
 
 # MSR_FSB_FREQ features have core scope, except for the following CPUs.
-_MODULE_SCOPE_VFMS = CPUModels.CPU_GROUPS["SILVERMONT"] + CPUModels.CPU_GROUPS["AIRMONT"]
+_MODULE_SCOPE_VFMS: Final = CPUModels.CPU_GROUPS["SILVERMONT"] + CPUModels.CPU_GROUPS["AIRMONT"]
 
 # Description of CPU features controlled by the the Power Control MSR.
-FEATURES: dict[str, PartialFeatureTypedDict] = {
+FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
     "fsb" : {
         "name": "Bus clock speed (megahertz)",
         "sname": None,

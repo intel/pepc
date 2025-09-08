@@ -36,38 +36,39 @@ from pepclibs import CPUModels
 from pepclibs.msr import _FeaturedMSR
 
 if typing.TYPE_CHECKING:
+    from typing import Final
     from pepclibs import CPUInfo
     from pepclibs.msr import MSR
-    from pepclibs.msr ._FeaturedMSR import PartialFeatureTypedDict
+    from pepclibs.msr._FeaturedMSR import PartialFeatureTypedDict
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
 # The Power Control Model Specific Register.
-MSR_POWER_CTL = 0x1FC
+MSR_POWER_CTL: Final = 0x1FC
 
 # CPUs supporting the C-state pre-wake feature.
-_CSTATE_PREWAKE_VFMS = (CPUModels.MODELS["GRANITERAPIDS_X"]["vfm"],
-                        CPUModels.MODELS["GRANITERAPIDS_D"]["vfm"],
-                        CPUModels.MODELS["EMERALDRAPIDS_X"]["vfm"],
-                        CPUModels.MODELS["SAPPHIRERAPIDS_X"]["vfm"],
-                        CPUModels.MODELS["ICELAKE_X"]["vfm"],
-                        CPUModels.MODELS["ICELAKE_D"]["vfm"],
-                        CPUModels.MODELS["SKYLAKE_X"]["vfm"],
-                        CPUModels.MODELS["BROADWELL_X"]["vfm"],
-                        CPUModels.MODELS["HASWELL_X"]["vfm"],
-                        CPUModels.MODELS["IVYBRIDGE_X"]["vfm"],)
+_CSTATE_PREWAKE_VFMS: Final = (CPUModels.MODELS["GRANITERAPIDS_X"]["vfm"],
+                               CPUModels.MODELS["GRANITERAPIDS_D"]["vfm"],
+                               CPUModels.MODELS["EMERALDRAPIDS_X"]["vfm"],
+                               CPUModels.MODELS["SAPPHIRERAPIDS_X"]["vfm"],
+                               CPUModels.MODELS["ICELAKE_X"]["vfm"],
+                               CPUModels.MODELS["ICELAKE_D"]["vfm"],
+                               CPUModels.MODELS["SKYLAKE_X"]["vfm"],
+                               CPUModels.MODELS["BROADWELL_X"]["vfm"],
+                               CPUModels.MODELS["HASWELL_X"]["vfm"],
+                               CPUModels.MODELS["IVYBRIDGE_X"]["vfm"],)
 
 # CPU supporting the LTR feature.
-LTR_VFMS = (CPUModels.MODELS["GRANITERAPIDS_X"]["vfm"],
-            CPUModels.MODELS["EMERALDRAPIDS_X"]["vfm"],
-            CPUModels.MODELS["SAPPHIRERAPIDS_X"]["vfm"],
-            CPUModels.MODELS["ICELAKE_X"]["vfm"],)
+LTR_VFMS: Final = (CPUModels.MODELS["GRANITERAPIDS_X"]["vfm"],
+                   CPUModels.MODELS["EMERALDRAPIDS_X"]["vfm"],
+                   CPUModels.MODELS["SAPPHIRERAPIDS_X"]["vfm"],
+                   CPUModels.MODELS["ICELAKE_X"]["vfm"],)
 
 # Description of CPU features controlled by the Power Control MSR.
 #
 # Note: while the "C-state prewake" feature available on many CPUs, in practice it works only on
 #       some platforms, like Ice Lake Xeon. Therefore we mark it as "supported" only for those
 #       platforms where we know it works.
-FEATURES: dict[str, PartialFeatureTypedDict] = {
+FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
     "c1e_autopromote": {
         "name": "C1E autopromote",
         "sname": None,
