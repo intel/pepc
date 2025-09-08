@@ -95,8 +95,7 @@ FEATURES: dict[str, PartialFeatureTypedDict] = {
         "name": "Min. Operating Ratio",
         "sname": None,
         "iosname": None,
-        "help": """The minimum operating CPU ratio. This ratio multiplied by bus clock speed gives
-                   the minimum operating CPU frequency (Pm).""",
+        "help": """The minimum CPU operating ratio.""",
         "vfms": set(_MIN_OPER_RATIO_VFMS),
         "type": "int",
         "writable": False,
@@ -139,3 +138,16 @@ class PlatformInfo(_FeaturedMSR.FeaturedMSR):
             finfo["sname"] = finfo["iosname"] = sname
 
         super().__init__(cpuinfo, pman=pman, msr=msr)
+
+    def _init_features_dict(self):
+        """
+        Initialize the 'features' dictionary with platform-specific information. The sub-classes
+        can re-define this method and call individual '_init_features_dict_*()' methods.
+        """
+
+        if self._cpuinfo.info["hybrid"]:
+            # On hybrid platforms the MSR shows the performance, not the ratio.
+            for finfo in self._partial_features.values():
+                finfo["help"] = finfo["help"].replace("ratio", "performance")
+
+        super()._init_features_dict()
