@@ -26,33 +26,6 @@ if typing.TYPE_CHECKING:
 # The Power Control Model Specific Register.
 MSR_PLATFORM_INFO = 0xCE
 
-# CPUs supporting the "maximum efficiency ratio" feature.
-_EFREQ_VFMS = CPUModels.CPU_GROUPS["GNR"] +         \
-              CPUModels.CPU_GROUPS["EMR"] +         \
-              CPUModels.CPU_GROUPS["ARROWLAKE"] +   \
-              CPUModels.CPU_GROUPS["METEORLAKE"] +  \
-              CPUModels.CPU_GROUPS["SPR"] +         \
-              CPUModels.CPU_GROUPS["RAPTORLAKE"] +  \
-              CPUModels.CPU_GROUPS["ALDERLAKE"] +   \
-              CPUModels.CPU_GROUPS["ROCKETLAKE"] +  \
-              CPUModels.CPU_GROUPS["TIGERLAKE"] +   \
-              CPUModels.CPU_GROUPS["ICELAKE"] +     \
-              CPUModels.CPU_GROUPS["COMETLAKE"] +   \
-              CPUModels.CPU_GROUPS["KABYLAKE"] +    \
-              CPUModels.CPU_GROUPS["CANNONLAKE"] +  \
-              CPUModels.CPU_GROUPS["SKYLAKE"] +     \
-              CPUModels.CPU_GROUPS["BROADWELL"] +   \
-              CPUModels.CPU_GROUPS["HASWELL"] +     \
-              CPUModels.CPU_GROUPS["IVYBRIDGE"] +   \
-              CPUModels.CPU_GROUPS["SANDYBRIDGE"] + \
-              CPUModels.CPU_GROUPS["WESTMERE"] +    \
-              CPUModels.CPU_GROUPS["NEHALEM"] +     \
-              CPUModels.CPU_GROUPS["DARKMONT"] +    \
-              CPUModels.CPU_GROUPS["CRESTMONT"] +   \
-              CPUModels.CPU_GROUPS["TREMONT"] +     \
-              CPUModels.CPU_GROUPS["GOLDMONT"] +    \
-              CPUModels.CPU_GROUPS["PHI"]
-
 # CPUs supporting the "minimum operating ratio" feature.
 _MIN_OPER_RATIO_VFMS = CPUModels.CPU_GROUPS["GNR"] +              \
                        CPUModels.CPU_GROUPS["EMR"] +              \
@@ -77,9 +50,34 @@ _MIN_OPER_RATIO_VFMS = CPUModels.CPU_GROUPS["GNR"] +              \
                        CPUModels.CPU_GROUPS["GOLDMONT"] +         \
                        CPUModels.CPU_GROUPS["PHI"]
 
-# CPUs supporting the "maximum non-turbo ratio" feature.
-_BASEFREQ_VFMS = _EFREQ_VFMS + CPUModels.CPU_GROUPS["SILVERMONT"] + \
-                 CPUModels.CPU_GROUPS["AIRMONT"]
+# CPUs supporting the "maximum efficiency ratio" feature.
+_BASEFREQ_VFMS = CPUModels.CPU_GROUPS["GNR"] +         \
+              CPUModels.CPU_GROUPS["EMR"] +         \
+              CPUModels.CPU_GROUPS["ARROWLAKE"] +   \
+              CPUModels.CPU_GROUPS["METEORLAKE"] +  \
+              CPUModels.CPU_GROUPS["SPR"] +         \
+              CPUModels.CPU_GROUPS["RAPTORLAKE"] +  \
+              CPUModels.CPU_GROUPS["ALDERLAKE"] +   \
+              CPUModels.CPU_GROUPS["ROCKETLAKE"] +  \
+              CPUModels.CPU_GROUPS["TIGERLAKE"] +   \
+              CPUModels.CPU_GROUPS["ICELAKE"] +     \
+              CPUModels.CPU_GROUPS["COMETLAKE"] +   \
+              CPUModels.CPU_GROUPS["KABYLAKE"] +    \
+              CPUModels.CPU_GROUPS["CANNONLAKE"] +  \
+              CPUModels.CPU_GROUPS["SKYLAKE"] +     \
+              CPUModels.CPU_GROUPS["BROADWELL"] +   \
+              CPUModels.CPU_GROUPS["HASWELL"] +     \
+              CPUModels.CPU_GROUPS["IVYBRIDGE"] +   \
+              CPUModels.CPU_GROUPS["SANDYBRIDGE"] + \
+              CPUModels.CPU_GROUPS["WESTMERE"] +    \
+              CPUModels.CPU_GROUPS["NEHALEM"] +     \
+              CPUModels.CPU_GROUPS["DARKMONT"] +    \
+              CPUModels.CPU_GROUPS["CRESTMONT"] +   \
+              CPUModels.CPU_GROUPS["TREMONT"] +     \
+              CPUModels.CPU_GROUPS["GOLDMONT"] +    \
+              CPUModels.CPU_GROUPS["AIRMONT"] +     \
+              CPUModels.CPU_GROUPS["SILVERMONT"] +  \
+              CPUModels.CPU_GROUPS["PHI"]
 
 # Description of CPU features controlled by the the Platform Information MSR.
 FEATURES: dict[str, PartialFeatureTypedDict] = {
@@ -87,23 +85,11 @@ FEATURES: dict[str, PartialFeatureTypedDict] = {
         "name": "Max. Non-Turbo Ratio",
         "sname": None,
         "iosname": None,
-        "help": """The ratio of the maximum non-turbo frequency. This ratio multiplied by bus
-                   clock speed gives the base frequency.""",
+        "help": "The maximum non-turbo ratio.",
         "vfms": set(_BASEFREQ_VFMS),
         "type": "int",
         "writable": False,
         "bits": (15, 8),
-    },
-    "max_eff_ratio": {
-        "name": "Max. Efficiency Ratio",
-        "sname": None,
-        "iosname": None,
-        "help": """The maximum efficiency CPU ratio. This ratio multiplied by bus clock speed gives
-                   the efficiency CPU frequency (Pn).""",
-        "vfms": set(_EFREQ_VFMS),
-        "type": "int",
-        "writable": False,
-        "bits": (47, 40),
     },
     "min_oper_ratio": {
         "name": "Min. Operating Ratio",
