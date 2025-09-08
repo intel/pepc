@@ -778,6 +778,10 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
                                         f"{self._pman.hostmsg}: unsupported CPU frequency driver "
                                         f"'{driver}'")
 
+            # The driver and turbo status are global, so it is enough to read only once.
+            break
+
+        for cpu in cpus:
             yield cpu, val
 
     def set_turbo(self, enable: bool, cpus: AbsNumsType):
@@ -823,6 +827,9 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
                 raise ErrorNotSupported(f"Failed to switch turbo {status} for CPU {cpu}"
                                         f"{self._pman.hostmsg}: Unsupported CPU frequency driver "
                                         f"'{driver}'")
+
+            # The driver and turbo status are global, so it is enough to write only once.
+            break
 
     def get_governor(self, cpus: AbsNumsType) -> Generator[tuple[int, str], None, None]:
         """
