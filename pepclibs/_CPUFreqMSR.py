@@ -265,7 +265,11 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
 
         freq = perf * perf2freq[cpu]
         # Round the frequency down to bus clock (following the Linux kernel behavior).
-        return freq - (freq % self._bclks[cpu])
+        freq -= (freq % self._bclks[cpu])
+
+        _LOG.debug("Converted CPU %d performance level %d to frequency: %d Hz", cpu, perf, freq)
+
+        return freq
 
     def _freq_to_perf(self, cpu: int, freq: int) -> int:
         """
@@ -282,7 +286,11 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         perf2freq = self._get_perf2freq()
 
         # Round up the performance level value up (following the Linux kernel behavior).
-        return int((freq + perf2freq[cpu] - 1) / perf2freq[cpu])
+        perf = int((freq + perf2freq[cpu] - 1) / perf2freq[cpu])
+
+        _LOG.debug("Converted CPU %d frequency %d Hz to performance level: %d", cpu, freq, perf)
+
+        return perf
 
     def _get_freq_msr(self,
                       ftype: _SysfsFileType,
