@@ -127,14 +127,10 @@ def _get_good_config_freq_opts(params: PropsCmdlTestParamsTypedDict,
                         "--max-freq",
                         "--min-freq --max-freq",
                         "--min-freq min",
-                        "--max-freq min"]
-
-            if pobj.prop_is_supported_cpu("min_freq", cpu) and \
-               pobj.prop_is_supported_cpu("max_freq", cpu):
-                yield from ["--max-freq max",
-                            "--min-freq min --max-freq max",
-                            "--max-freq max --min-freq min"]
-
+                        "--max-freq min",
+                        "--max-freq max",
+                        "--min-freq min --max-freq max",
+                        "--max-freq max --min-freq min"]
             if pobj.prop_is_supported_cpu("base_freq", cpu):
                 yield from ["--max-freq base",
                             "--max-freq hfm",
