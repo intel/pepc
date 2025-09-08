@@ -86,6 +86,11 @@ _IVT_PKG_CST_LIMITS: Final[_LimitsTypedDict] = {
     "bits": (2, 0)
 }
 
+_UNKNOWN_PKG_CST_LIMITS: Final[_LimitsTypedDict] = {
+    "codes": {"PC0": 0},
+    "bits": (2, 0)
+}
+
 #
 # Atom-based micro servers.
 #
@@ -290,13 +295,14 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
         platform-specific information.
         """
 
-        vfm = self._cpuinfo.info["vfm"]
+        info = self._cpuinfo.info
+        vfm = info["vfm"]
         if vfm in _PKG_CST_LIMITS:
             limits = _PKG_CST_LIMITS[vfm]
         else:
-            # Populate with something, do not leave them as None to comply with the type
-            # definition. Just randomly picked '_ICX_PKG_CST_LIMITS'.
-            limits = _ICX_PKG_CST_LIMITS
+            _LOG.warning("Unknown Package C-state limits for CPU model %s (VFM %d), assuming only "
+                         "PC0 is supported", info['modelname'], info['vfm'])
+            limits = _UNKNOWN_PKG_CST_LIMITS
 
         finfo = self._features["pkg_cstate_limit"]
         finfo["bits"] = limits["bits"]
