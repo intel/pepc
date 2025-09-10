@@ -178,13 +178,13 @@ def _load_sdict(specpath):
         while True:
             event = loader.peek_event()
             if not event:
-                raise Error("bad spec file '{specpath}': 'feature-id' key was not found")
+                raise Error("bad spec file '{specpath}': 'feature_id' key was not found")
             if isinstance(event, yaml.ScalarEvent):
                 break
             loader.get_event()
 
-        # The first 3 keys must be: name, desc, and feature-id.
-        valid_keys = {"name", "desc", "feature-id"}
+        # The first 3 keys must be: name, desc, and feature_id.
+        valid_keys = {"name", "desc", "feature_id"}
         left_keys = set(valid_keys)
         sdict = {}
         while len(sdict) < len(valid_keys):
@@ -194,9 +194,13 @@ def _load_sdict(specpath):
                 raise Error(f"bad spec file '{specpath}': missing keys '{keys}'")
 
             key = str(event.value)
+            if key == "feature-id":
+                # pepc versions prior to 1.6.2 used "feature-id" instead of "feature_id".
+                key = "feature_id"
+
             if key not in valid_keys:
                 raise Error(f"bad spec file '{specpath}' format: the first 3 keys must be "
-                            f"'name', 'desc', and 'feature-id', got key '{key}' instead")
+                            f"'name', 'desc', and 'feature_id', got key '{key}' instead")
             if key in sdict:
                 raise Error("bad spec file '{specpath}': repeating key '{key}'")
 
@@ -204,8 +208,8 @@ def _load_sdict(specpath):
             if not event:
                 raise Error("bad spec file '{specpath}': no value for key '{key}'")
 
-            if key == "feature-id":
-                value = Trivial.str_to_int(event.value, what="'feature-id' key value")
+            if key == "feature_id":
+                value = Trivial.str_to_int(event.value, what="'feature_id' key value")
             else:
                 value = str(event.value)
             sdict[key] = value
@@ -270,7 +274,7 @@ class Tpmi():
             _raise_exc("the 'registers' top-level key was not found")
 
         # The allowed and the mandatory top-level key names.
-        keys = {"name", "desc", "feature-id", "registers"}
+        keys = {"name", "desc", "feature_id", "registers"}
         where = "at the top level of the spec file"
         _check_keys(spec, keys, keys, where)
 
@@ -438,7 +442,7 @@ class Tpmi():
 
         self._sdicts = sdicts
         for fname, sdict in sdicts.items():
-            self._fid2fname[sdict["feature-id"]] = fname
+            self._fid2fname[sdict["feature_id"]] = fname
 
     def _build_fmaps(self):
         """Build fmaps for all TPMI features and save them in the 'self._fmaps' dictionary."""
@@ -517,7 +521,7 @@ class Tpmi():
         """
 
         path = self._debugfs_mnt / f"tpmi-{addr}"
-        fid = self._get_sdict(fname)["feature-id"]
+        fid = self._get_sdict(fname)["feature_id"]
         path = path / f"tpmi-id-{fid:02x}"
 
         return path
@@ -851,7 +855,7 @@ class Tpmi():
         following keys.
           * name - feature name.
           * desc - feature description.
-          * feature-id - an integer feature ID.
+          * feature_id - an integer feature ID.
           * path - path to the spec file of the feature.
 
         Note: the sdict objects in the returned list must be considered read-only and should not be
@@ -899,6 +903,7 @@ class Tpmi():
                         by default).
         """
 
+        self._validate_fname(fname)
         self._validate_addrs(fname, addrs, packages=packages)
 
         fmap = self._fmaps[fname]

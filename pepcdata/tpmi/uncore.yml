@@ -1,7 +1,7 @@
 name: "uncore"
 desc: >-
     Processor uncore (fabric) monitoring and control
-feature-id: 0x2
+feature_id: 0x2
 
 registers:
     UFS_ADV_CONTROL_1:

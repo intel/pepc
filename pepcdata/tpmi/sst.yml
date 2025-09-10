@@ -1,7 +1,7 @@
 name: "sst"
 desc: >-
     Intel Speed Select Technology (SST) control
-feature-id: 0x5
+feature_id: 0x5
 
 registers:
     L1_SST_BF_HEADER:

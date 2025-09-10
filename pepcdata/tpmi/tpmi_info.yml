@@ -1,7 +1,7 @@
 name: "tpmi_info"
 desc: >-
     Topology Aware Register and PM Capsule Interface (TPMI) information
-feature-id: 0x81
+feature_id: 0x81
 
 registers:
     TPMI_BUS_INFO:
