@@ -1,3 +1,10 @@
+pepc (1.6.1) unstable; urgency=low
+
+  * Fix Arrow Lake frequency reading with the 'msr' method.
+  * Fix base frequency reading on some systems using 'acpi-cpufreq'.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Wed, 10 Sep 2025 00:00:00 +0200
+
 pepc (1.6.0) unstable; urgency=low
 
   * Fix crashes with python 3.9.

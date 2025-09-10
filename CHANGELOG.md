@@ -5,11 +5,14 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
- - Fix Arrow Lake frequency reading with the 'msr' method.
- - Fix base frequency reading on some systems using 'acpi-cpufreq'.
 ### Added
 ### Removed
 ### Changed
+
+## [1.6.1] - 2025-09-10
+### Fixed
+ - Fix Arrow Lake frequency reading with the 'msr' method.
+ - Fix base frequency reading on some systems using 'acpi-cpufreq'.
 
 ## [1.6.0] - 2025-09-05
 ### Fixed

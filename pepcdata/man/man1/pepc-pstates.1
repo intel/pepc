@@ -243,8 +243,9 @@ The \[aq]msr\[aq] mechanism: \[aq]msr\[aq], reads MSR_PLATFORM_INFO
 .PP
 The \[aq]cppc\[aq] mechanism reads
 \[aq]/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/lowest_freq\[aq].
-If unavailable, the frequency is calculated as \[dq]base_freq *
-lowest_perf / nominal_perf\[dq] using values from: base_freq:
+If unavailable, on non\-Intel platforms the frequency is calculated as
+\[dq]base_freq * lowest_perf / nominal_perf\[dq] using values from:
+base_freq:
 \[aq]/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/nominal_freq\[aq],
 lowest_perf:
 \[aq]/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/lowest_perf\[aq],
@@ -274,8 +275,9 @@ MSR_TURBO_RATIO_LIMIT (0x1AD), bits 7:0.
 .PP
 The \[aq]cppc\[aq] mechanism reads
 \[aq]/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/highest_freq\[aq].
-If unavailable, the frequency is calculated as \[dq]base_freq *
-highest_perf / nominal_perf\[dq] using values from: base_freq:
+If unavailable, on non\-Intel platforms the frequency is calculated as
+\[dq]base_freq * highest_perf / nominal_perf\[dq] using values from:
+base_freq:
 \[aq]/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/nominal_freq\[aq],
 highest_perf:
 \[aq]/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/highest_perf\[aq],
