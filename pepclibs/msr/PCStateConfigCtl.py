@@ -55,7 +55,7 @@ MSR_PKG_CST_CONFIG_CONTROL: Final = 0xE2
 #
 # Xeons.
 #
-# Ice Lake, Granite Rapids, Sierra Forest, Clear Water Forest Xeons.
+# Ice Lake, Granite Rapids, Sierra Forest, Clear Water Forest, Diamond Rapids Xeons.
 _ICX_PKG_CST_LIMITS: Final[_LimitsTypedDict] = {
     "codes": {"PC0": 0, "PC2": 1, "PC6": 2, "unlimited": 7},
     "bits": (2, 0)
@@ -123,6 +123,7 @@ _CLIENT_PC7S_CST_LIMITS: Final[_LimitsTypedDict] = {
 # CPU model -> Package C-state limit map.
 _PKG_CST_LIMITS: Final[dict[int, _LimitsTypedDict]] = {
     # Xeons.
+    CPUModels.MODELS["DIAMONDRAPIDS_X"]["vfm"]:  _ICX_PKG_CST_LIMITS,
     CPUModels.MODELS["ATOM_DARKMONT_X"]["vfm"]:  _ICX_PKG_CST_LIMITS,
     CPUModels.MODELS["ATOM_CRESTMONT_X"]["vfm"]: _ICX_PKG_CST_LIMITS,
     CPUModels.MODELS["GRANITERAPIDS_X"]["vfm"]:  _ICX_PKG_CST_LIMITS,

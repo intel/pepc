@@ -46,7 +46,8 @@ if typing.TYPE_CHECKING:
 MSR_POWER_CTL: Final = 0x1FC
 
 # CPUs supporting the C-state pre-wake feature.
-_CSTATE_PREWAKE_VFMS: Final = (CPUModels.MODELS["GRANITERAPIDS_X"]["vfm"],
+_CSTATE_PREWAKE_VFMS: Final = (CPUModels.MODELS["DIAMONDRAPIDS_X"]["vfm"],
+                               CPUModels.MODELS["GRANITERAPIDS_X"]["vfm"],
                                CPUModels.MODELS["GRANITERAPIDS_D"]["vfm"],
                                CPUModels.MODELS["EMERALDRAPIDS_X"]["vfm"],
                                CPUModels.MODELS["SAPPHIRERAPIDS_X"]["vfm"],
@@ -58,7 +59,8 @@ _CSTATE_PREWAKE_VFMS: Final = (CPUModels.MODELS["GRANITERAPIDS_X"]["vfm"],
                                CPUModels.MODELS["IVYBRIDGE_X"]["vfm"],)
 
 # CPU supporting the LTR feature.
-LTR_VFMS: Final = (CPUModels.MODELS["GRANITERAPIDS_X"]["vfm"],
+LTR_VFMS: Final = (CPUModels.MODELS["DIAMONDRAPIDS_X"]["vfm"],
+                   CPUModels.MODELS["GRANITERAPIDS_X"]["vfm"],
                    CPUModels.MODELS["EMERALDRAPIDS_X"]["vfm"],
                    CPUModels.MODELS["SAPPHIRERAPIDS_X"]["vfm"],
                    CPUModels.MODELS["ICELAKE_X"]["vfm"],)

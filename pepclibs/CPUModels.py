@@ -83,6 +83,13 @@ def make_intel_vfm(family: int, model: int) -> int:
 
 MODELS: Final[dict[str, CPUModelTypedDict]] = {
     # Xeons.
+    "DIAMONDRAPIDS_X": {
+        "vendor": X86_VENDOR_INTEL,
+        "family": 19,
+        "model": 0x1,
+        "vfm": make_intel_vfm(19, 0x1),
+        "codename": "Diamond Rapids Xeon",
+    },
     "ATOM_DARKMONT_X": {
         "vendor": X86_VENDOR_INTEL,
         "family": 6,
@@ -610,6 +617,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
 # Various handy CPU groups.
 #
 CPU_GROUPS: Final[dict[str, tuple[int, ...]]] = {
+    "DMR": (MODELS["DIAMONDRAPIDS_X"]["vfm"],),
     "LUNARLAKE": (MODELS["LUNARLAKE_M"]["vfm"],),
     "GNR": (MODELS["GRANITERAPIDS_X"]["vfm"],
             MODELS["GRANITERAPIDS_D"]["vfm"]),

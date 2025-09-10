@@ -337,6 +337,10 @@ class Tpmi(ClassHelpers.SimpleCloseContext):
         if vendor != "GenuineIntel":
             raise ErrorNotSupported(f"Unsupported CPU vendor '{vendor}'{self._pman.hostmsg}\nOnly"
                                     f"Intel CPUs support TPMI")
+        if cpu_info["vfm"] in CPUModels.CPU_GROUPS["DMR"]:
+            _LOG.debug("Using read-only TPMI access for %s%s",
+                       cpu_info["modelname"], self._pman.hostmsg)
+            self._readonly = True
 
         # The features dictionary, maps feature name to the fdict (feature dictionary).
         self._fdicts: dict[str, dict[str, RegDictTypedDict]] = {}

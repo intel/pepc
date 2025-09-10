@@ -58,7 +58,8 @@ _CT_VFMS: Final = CPUModels.CPU_GROUPS["ARROWLAKE"] +                \
 # MSR is named 'MSR_TURBO_GROUP_CORECNT' for Atom CPUs and 'MSR_TURBO_RATIO_LIMIT_CORES' for "big
 # core" CPUs. The same MSR is called 'MSR_TURBO_RATIO_LIMIT1' for CPUs that do not have groups in
 # 'MSR_TURBO_RATIO_LIMIT'.
-_GT_VFMS: Final = CPUModels.CPU_GROUPS["DARKMONT"] +                \
+_GT_VFMS: Final = CPUModels.CPU_GROUPS["DMR"] +                     \
+                  CPUModels.CPU_GROUPS["DARKMONT"] +                \
                   CPUModels.CPU_GROUPS["GNR"] +                     \
                   CPUModels.CPU_GROUPS["CRESTMONT"] +               \
                   CPUModels.CPU_GROUPS["EMR"] +                     \

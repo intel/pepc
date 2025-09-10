@@ -29,7 +29,8 @@ if typing.TYPE_CHECKING:
 MSR_PLATFORM_INFO: Final = 0xCE
 
 # CPUs supporting the "minimum operating ratio" feature.
-_MIN_OPER_RATIO_VFMS: Final = CPUModels.CPU_GROUPS["GNR"] +              \
+_MIN_OPER_RATIO_VFMS: Final = CPUModels.CPU_GROUPS["DMR"] +              \
+                              CPUModels.CPU_GROUPS["GNR"] +              \
                               CPUModels.CPU_GROUPS["EMR"] +              \
                               CPUModels.CPU_GROUPS["ARROWLAKE"] +        \
                               CPUModels.CPU_GROUPS["METEORLAKE"] +       \

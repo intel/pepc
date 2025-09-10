@@ -29,7 +29,8 @@ if typing.TYPE_CHECKING:
 MSR_PM_LOGICAL_ID: Final = 0x54
 
 # CPUs supporting the "PM Logical ID" MSR.
-_PLI_VFMS: Final = CPUModels.CPU_GROUPS["GNR"] + \
+_PLI_VFMS: Final = CPUModels.CPU_GROUPS["DMR"] + \
+                   CPUModels.CPU_GROUPS["GNR"] + \
                    CPUModels.CPU_GROUPS["DARKMONT"] + \
                    CPUModels.CPU_GROUPS["CRESTMONT"]
 
