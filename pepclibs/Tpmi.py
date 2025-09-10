@@ -4,131 +4,180 @@
 # Copyright (C) 2024 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
-# Author: Tero Kristo <tero.kristo@linux.intel.com>
+# Authors: Tero Kristo <tero.kristo@linux.intel.com>
+#          Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
-Provide capability for reading and writing TPMI registers on Intel CPUs. TPMI stands for "Topology
-Aware Register and PM Capsule Interface" and it is a  memory mapped interface for accessing power
-management features on Intel CPUs, in addition to the existing MSRs.
+Enable reading and writing of TPMI registers on Intel CPUs. TPMI stands for "Topology Aware Register
+and PM Capsule Interface" - a memory-mapped interface for accessing power management features on
+Intel CPUs, supplementing the existing MSRs.
 
-Terminology.
-  * feature - a group of TPMI registers exposed by the processor via PCIe VSEC (Vendor-Specific
-              Extended Capabilities) as a single capability. Typically TPMI feature corresponds to
-              a real processor feature. For example, "uncore" TPMI feature includes processor
-              registers related to uncore frequency scaling. The "rapl" TPMI feature includes
-              processor registers related to processor's Running Average Power Limit (RAPL) feature.
-              The "sst" feature includes processor registers related to Intel Speed Select
-              Technology (SST) feature.
-
-  * supported feature - a TPMI feature supported by the processor.
-
-  * known feature - a supported feature for which the spec file was found, so that the feature can
-                    be decoded and used.
-
-  * unknown feature - a supported feature for which the spec file was not found.
-
-  * feature ID - a unique integer number assigned to a feature.
-
-  * fdict - feature dictionary, a dictionary describing a TPMI feature registers, bit fields and
-            other details. Fdict contents is corresponds to the feature spec file contents under the
-            "registers" key. Fdict keys are register names, and values are regdister dictionaries
-            (regdicts). The parts of the spec file outside of the 'registers' key are stored in the
-            sdict.
-
-  * regdict - register dictionary, a sub-dictionary of fdict describing a single register.
-
-  * bfdict - bit field dictionary, a sub-dictionary of regdict describing a single bit field of the
-             register.
-
-  * spec file - a YAML file describing the registers and bit fields for a TPMI feature. Each
-                supported feature has a spec file, and each spec file corresponds to a feature. A
-                spec file is also required to decode the TPMI feature's PCIe VSEC table.
-
-  * spec directory - a directory containing one or multiple spec files. There may be multiple spec
-                     directories.
-
-  * sdict - spec file dictionary, a dictionary including basic TPMI spec file information - name,
-            ID, and description of the feature it describes, path to the spec file. Spec
-            dictionaries are built by partially reading the spec file during the initial scanning of
-            spec directories.
-
-  * instance - TPMI features often consist of logical "areas" or "components", which are feature-
-               specific. For example, the "rapl" TPMI feature includes package, power, memory, and
-               other RAPL domains. These logical components are represented by TPMI instances, which
-               are just integer numbers. In order to read/write a TPMI register, one has to specify
-               the instance for the read/write operation.
-
-  * offset - in this module word "offset" is used to refer to TPMI register offsets, which are
-             defined in spec files.
+Terminology:
+    * feature - A group of TPMI registers exposed by the processor via PCIe VSEC (Vendor-Specific
+                Extended Capabilities) as a single capability. Typically, a TPMI feature corresponds
+                to a processor capability. For example, the "uncore" TPMI feature includes registers
+                for uncore frequency scaling, "rapl" covers Running Average Power Limit (RAPL), and
+                "sst" covers Intel Speed Select Technology (SST).
+    * supported feature - A TPMI feature available on the processor.
+    * known feature - A supported feature with a corresponding spec file, allowing decoding and
+                      usage.
+    * unknown feature - A supported feature without a spec file.
+    * feature ID - A unique integer identifier for a feature.
+    * fdict - A dictionary describing TPMI registers associated with a feature. The fdict structure
+              matches the "registers" section of the feature spec file. Keys are register names.
+              Values are register dictionaries (regdicts). Information outside "registers" is stored
+              in the sdict.
+    * regdict - Register dictionary describing a single register within fdict.
+    * bfdict - Bit field dictionary describing a single bit field within regdict.
+    * spec file - YAML file describing the registers and bit fields for a TPMI feature. Each
+                  supported feature has a spec file, which is also required to decode the feature's
+                  PCIe VSEC table.
+    * spec directory - Directory containing one or more spec files. Multiple spec directories may
+                       exist.
+    * sdict - Spec file dictionary containing basic TPMI spec file information: feature name, ID,
+              description, and spec file path. Build sdicts by partially reading spec files during
+              initial scanning.
+    * instance - Logical "areas" or "components" within TPMI features, represented by integer
+                 instance numbers. Specify the instance when reading or writing TPMI registers.
+    * offset - TPMI register offset, as defined in spec files.
 """
 
-# Internal terms (not exposed to the user of this module).
+# Internal terms (not exposed to users of this module).
 #
-# Naming conventions/logic:
-#   * something dict - a dictionary describing something, and it contains information from the spec
-#                      file.
-#   * something map - a dictionary describing something, and it contains information from the
-#                     debugfs files and directories.
+# Naming conventions:
+#   * something dict - Dictionary describing an object, populated from the spec file.
+#   * something map - Dictionary describing an object, populated from debugfs files and directories.
 #
-# Terminology.
-#   * fmap - feature map, a dictionary providing information about every TPMI device corresponding
-#            to the feature. The fmap dictionary keys are the PCI addresses. Here is an fmap
-#            example, where the feature includes 2 TPMI devices, one device per package.
-#            fmap format:
-#                {"0000:00:03.1" {"package": 0, "mdmap": mdmap},
-#                 "0000:80:03.1" {"package": 1, "mdmap": mdmap}}
-#
-#   * mem_dump - a Linux TPMI debugfs file named "mem_dump" (example path:
-#                /sys/kernel/debug/tpmi-0000:00:03.1/tpmi-id-00/mem_dump). The 'mem_dump' files
-#                provide TPMI memory dump a in text format. The 'mem_dump' file includes TPMI memory
-#                dump for all instances. TPMI register read operations are performed by reading from
-#                the 'mem_dump' file. This requires finding the 'mem_dump' file position to read
-#                from, which, in turn, requires parsing the 'mem_dump' file.
-#
-#   * mdmap - mem_dump map, a dictionary representing a 'mem_dump' file. The role of mdmap is to
-#             avoid parsing 'mem_dump' on every TPMI register read. Mdmap is a 2-level dictionary.
-#             The first level is indexed by the instance number, the second level is indexed with
-#             TPMI memory offset, with values being 'mem_dump' file position. In other words, for a
-#             given instance number and TPMI register offset, mdmap gives 'mem_dump' file position.
-#             Reading from this position results in reading from the TPMI register.
-#
-#   * position - in this module word "position" is used to refer to a file position relative to the
-#                beginning of the file (e.g., a 'mem_dump' file position). See the standard Unix
-#                'fsetpos()' method for more information about a file position.
+# Terminology:
+#   * fmap - Feature map. Maps PCI addresses to TPMI device information for a feature.
+#            Example fmap structure:
+#                {
+#                  "0000:00:03.1": {"package": 0, "mdmap": mdmap},
+#                  "0000:80:03.1": {"package": 1, "mdmap": mdmap}
+#                }
+#   * mem_dump - Linux TPMI debugfs file named "mem_dump" (e.g.,
+#                /sys/kernel/debug/tpmi-0000:00:03.1/tpmi-id-00/mem_dump). Contains TPMI memory
+#                dumps for all instances in text format. To read a TPMI register, parse 'mem_dump'
+#                to determine the correct file position.
+#   * mdmap - mem_dump map. Cache file positions for TPMI register reads to avoid reparsing
+#             'mem_dump'. mdmap is a two-level dictionary: first indexed by instance number, then by
+#             TPMI memory offset. The value is the file position in 'mem_dump'. Use mdmap to quickly
+#             locate the file position for a given instance and register offset.
+#   * position - Refers to a file position relative to the start of the file (e.g., in 'mem_dump').
+#                See the standard Unix 'fsetpos()' for details.
+
+from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import os
 import re
 import stat
+import typing
+from typing import Literal, cast, get_args
 import contextlib
 from pathlib import Path
 import yaml
 from pepclibs.helperlibs import Logging, YAML, ClassHelpers, FSHelpers, ProjectFiles, Trivial, Human
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 
+if typing.TYPE_CHECKING:
+    from typing import Final, TypedDict, Sequence, Iterable, NoReturn, Any
+    from pepclibs.helperlibs.ProcessManager import ProcessManagerType
+
+    class BFDictTypedDict(TypedDict, total=False):
+        """
+        A typed dictionary describing a register field in a TPMI specification file.
+
+        Attributes:
+            desc: A short description of the register field.
+            bits: The bit positions that define the field within the register (MSB, LSB).
+            bitshift: The number of bits to right-shift the register value to align the field to
+                      the least significant bit (LSB).
+            bitmask: The bitmask to isolate the field value.
+        """
+
+        desc: str
+        bits: tuple[int, int]
+        bitshift: int
+        bitmask: int
+
+    class RegDictTypedDict(TypedDict, total=False):
+        """
+        The typed dictionary for the register dictionary (regdict) describing a single register
+        within fdict.
+
+        Attributes:
+            offset: Offset of the register within the specification.
+            width: Width of the register in bits.
+            fields: The bit field dictionaries (bfdicts), describing the bit-fields within the
+                    register.
+        """
+
+        fields: dict[str, BFDictTypedDict]
+        offset: int
+        width: int
+
+    class SDictTypedDict(TypedDict, total=False):
+        """
+        A typed dictionary describing the "header" of a TPMI specification file. Built by partially
+        reading the spec file.
+
+        Attributes:
+            name: Name of the TPMI specification.
+            desc: Description of the TPMI specification.
+            feature_id: Unique identifier for the TPMI feature.
+        """
+
+        name: str
+        desc: str
+        feature_id: int
+
+    # Type for the mdmap dictionary: first indexed by instance number, then by TPMI memory offset.
+    # The value is the file position in 'mem_dump'.
+    _MDMapType = dict[int, dict[int, int]]
+
+    class _AddrMDMapTypedDict(TypedDict, total=False):
+        """
+        A typed dictionary for used in fmap, mapping a PCI address to TPMI device information.
+
+        Attributes:
+            package: The package number associated with the TPMI device.
+            mdmap: The memory domain map associated with the package.
+        """
+
+        package: int
+        mdmap: _MDMapType
+
+_SDictKeysType = Literal["name", "desc", "feature_id"]
+
 # Users can define this environment variable to extend the default spec files.
-_SPECS_PATH_ENVVAR = "PEPC_TPMI_DATA_PATH"
+_SPECS_PATH_ENVVAR: Final[str] = "PEPC_TPMI_DATA_PATH"
 
 # Maximum count of spec files per directory.
-_MAX_SPEC_FILES = 256
+_MAX_SPEC_FILES: Final[int] = 256
 # Maximum count of non-YAML files (extention is other than '.yml' or '.yaml') per directory.
-_MAX_NON_YAML = 32
+_MAX_NON_YAML: Final[int] = 32
 # Maximum count of spec file loading/parsing errors during scanning per spec directory.
-_MAX_SCAN_LOAD_ERRORS = 4
+_MAX_SCAN_LOAD_ERRORS: Final[int] = 4
 # Maximum spec file size in bytes.
-_MAX_SPEC_FILE_BYTES = 4 * 1024 * 1024 * 1024
+_MAX_SPEC_FILE_BYTES: Final[int] = 4 * 1024 * 1024 * 1024
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
-def _find_spec_dirs():
-    """Find paths to TPMI spec directories and return them as a list."""
+def _find_spec_dirs() -> list[Path]:
+    """
+    Find and return a list of paths to TPMI spec directories.
 
-    specdirs = []
+    Returns:
+        list[Path]: A list of Path objects pointing to TPMI spec directories.
+    """
+
+    specdirs: list[Path] = []
 
     # Add the user-defined spec directory. This directory is optional and can be used for extending
     # the standard spec files.
-    path = os.getenv(_SPECS_PATH_ENVVAR)
-    if path:
-        path = Path(path)
+    val = os.getenv(_SPECS_PATH_ENVVAR)
+    if val:
+        path = Path(val)
         if not path.is_dir():
             _LOG.warning("TPMI spec files path '%s' specified in the '%s' environment "
                          "variable does not exist or it is not a directory, ignoring it",
@@ -138,10 +187,9 @@ def _find_spec_dirs():
 
     # Find the standard spec-files.
     specdirs.append(ProjectFiles.find_project_data("pepc", "tpmi", what="TPMI spec files"))
-
     return specdirs
 
-def _load_sdict(specpath):
+def _load_sdict(specpath: Path) -> SDictTypedDict:
     """
     Partially load spec file at 'specpath', just enough to get feature name, description, and ID.
     Create and return the spec dictionary for the spec file.
@@ -157,11 +205,11 @@ def _load_sdict(specpath):
         st = specpath.stat()
     except OSError as err:
         msg = Error(str(err)).indent(2)
-        raise Error(f"failed to open spec file '{specpath}:\n{msg}") from err
+        raise Error(f"Failed to access spec file '{specpath}:\n{msg}") from err
 
     if st.st_size > _MAX_SPEC_FILE_BYTES:
         maxsize = Human.bytesize(_MAX_SPEC_FILE_BYTES)
-        raise Error(f"too large spec file '{specpath}', maximum allow size is {maxsize}")
+        raise Error(f"Too large spec file '{specpath}', maximum allow size is {maxsize}")
 
     if not stat.S_ISREG(st.st_mode):
         raise Error(f"'{specpath}' is not a regular file")
@@ -171,107 +219,451 @@ def _load_sdict(specpath):
             fobj = open(specpath, "r", encoding="utf-8") # pylint: disable=consider-using-with
         except OSError as err:
             msg = Error(str(err)).indent(2)
-            raise Error(f"failed to open spec file '{specpath}:\n{msg}") from err
+            raise Error(f"Failed to open spec file '{specpath}:\n{msg}") from err
 
         loader = yaml.SafeLoader(fobj)
         event = None
         while True:
             event = loader.peek_event()
             if not event:
-                raise Error("bad spec file '{specpath}': 'feature_id' key was not found")
+                raise Error(f"Bad spec file '{specpath}': 'feature_id' key was not found")
             if isinstance(event, yaml.ScalarEvent):
                 break
             loader.get_event()
 
         # The first 3 keys must be: name, desc, and feature_id.
-        valid_keys = {"name", "desc", "feature_id"}
-        left_keys = set(valid_keys)
-        sdict = {}
-        while len(sdict) < len(valid_keys):
+        sdict_keys = get_args(_SDictKeysType)
+        left_keys = list(sdict_keys)
+        sdict: SDictTypedDict = {}
+        while len(sdict) < len(sdict_keys):
             event = loader.get_event()
             if not event:
                 keys = ", ".join(left_keys)
-                raise Error(f"bad spec file '{specpath}': missing keys '{keys}'")
+                raise Error(f"Bad spec file '{specpath}': missing keys '{keys}'")
 
             key = str(event.value)
             if key == "feature-id":
                 # pepc versions prior to 1.6.2 used "feature-id" instead of "feature_id".
                 key = "feature_id"
 
-            if key not in valid_keys:
-                raise Error(f"bad spec file '{specpath}' format: the first 3 keys must be "
+            if key not in sdict_keys:
+                raise Error(f"Bad spec file '{specpath}' format: the first 3 keys must be "
                             f"'name', 'desc', and 'feature_id', got key '{key}' instead")
             if key in sdict:
-                raise Error("bad spec file '{specpath}': repeating key '{key}'")
+                raise Error(f"Bad spec file '{specpath}': repeating key '{key}'")
 
+            vkey: _SDictKeysType = cast(_SDictKeysType, key)
             event = loader.get_event()
             if not event:
-                raise Error("bad spec file '{specpath}': no value for key '{key}'")
+                raise Error(f"Bad spec file '{specpath}': no value for key '{key}'")
 
-            if key == "feature_id":
-                value = Trivial.str_to_int(event.value, what="'feature_id' key value")
+            if vkey == "feature_id":
+                sdict["feature_id"] = Trivial.str_to_int(event.value, what="'feature_id' key value")
             else:
-                value = str(event.value)
-            sdict[key] = value
+                sdict[vkey] = str(event.value)
+
             left_keys.remove(key)
     finally:
         if fobj:
             fobj.close()
 
-    sdict["path"] = specpath
     return sdict
 
 class Tpmi():
     """
-    Provide API for reading and writing TPMI registers on Intel CPUs.
+    Provides methods to read and write TPMI registers, query available features, and extract
+    bitfield values.
 
-    Public methods overview.
-      * 'get_known_features()' - known features information.
-      * 'get_unknown_features()' - unknown features information.
-      * 'get_fdict()' - get fdict for a TPMI feature (a dictionary describing the TPMI registers of
-                        the feature).
-      * 'iter_feature()' - get feature details.
-      * 'read_register()' - read a TPMI register.
-      * 'write_register()' - write to a TPMI register.
-      * 'get_bitfield()' - extract a bitfield value from a register value.
+    Public Methods:
+        get_known_features():
+            Return information about all known TPMI features supported by the system.
+
+        get_unknown_features():
+            Return a list of TPMI feature IDs that are present but lack a specification file.
+
+        get_fdict(fname):
+            Return the feature dictionary (fdict) for the specified TPMI feature.
+
+        iter_feature(fname, addrs=None, packages=None, instances=None):
+            Iterate over TPMI devices and instances for a given feature.
+
+        read_register(fname, addr, instance, regname, bfname=None):
+            Read the value of a TPMI register or a specific bitfield.
+
+        write_register(value, fname, addr, instance, regname, bfname=None):
+            Write a value to a TPMI register or a specific bitfield.
+
+        get_bitfield(regval, fname, regname, bfname):
+            Extract the value of a bitfield from a register value.
     """
 
-    def _format_fdict(self, fname, specpath, spec):
+    def __init__(self, pman: ProcessManagerType | None = None, specdirs: Sequence[Path] = ()):
         """
-        Vaildate a the 'spec' dictionary correspoonding to a spec file of feature 'fname', build and
-        return the corresponding fdict.
+        Initialize a class instance.
 
-        Note, this method modifies the 'spec' dictionary in-place, in order to avoid a costly
-        'spec["registers"]' copy operation.
-
-        Mangle the fdict by adding "bitshift" and "bitmask" keys.
+        Args:
+            pman: The Process manager object that defines the host to access TPMI registers on. If
+                  not provided, a local process manager will be used.
+            specdirs: Spec directory paths on the local host to search for spec files. If not
+                      provided, directories are auto-detected.
         """
 
-        def _raise_exc(msg):
-            """Raise an exception with message 'msg'."""
+        self._specdirs = specdirs
 
-            pfx = f"bad '{fname}' spec file '{specpath}'"
+        self._close_pman = pman is None
+
+        # The features dictionary, maps feature name to the fdict (feature dictionary).
+        self._fdicts: dict[str, dict[str, RegDictTypedDict]] = {}
+
+        if not self._specdirs:
+            self._specdirs = _find_spec_dirs()
+
+        # Keep absolute paths to spec directories - in case of an error a directory path like 'tpmi'
+        # may look confusing comparint to a path like '/my/path/tpmi'.
+        specdirs = self._specdirs
+        self._specdirs = []
+        for specdir in specdirs:
+            self._specdirs.append(Path(specdir).resolve().absolute())
+
+        if pman:
+            self._pman = pman
+        else:
+            # pylint: disable-next=import-outside-toplevel
+            from pepclibs.helperlibs import LocalProcessManager
+
+            self._pman = LocalProcessManager.LocalProcessManager()
+
+        # The debugfs mount point.
+        self._debugfs_mnt: Path
+        # Whether debugfs should be unmounted on 'close()'.
+        self._unmount_debugfs: bool = False
+        self._debugfs_mnt, self._unmount_debugfs = FSHelpers.mount_debugfs(pman=self._pman)
+
+        # TPMI-related sub-directories in 'self._debugfs_mnt' (one per TPMI PCI device).
+        self._tpmi_pci_paths: list[Path] = []
+        self._tpmi_pci_paths = self._get_debugfs_tpmi_dirs()
+
+        # Map feature name to the sdict, which is a partially loaded spec file dictionary.
+        self._sdicts: dict[str, SDictTypedDict] = {}
+
+        # Scan the spec directories and build sdicts - partially loaded spec file dictionaries.
+        self._build_sdicts()
+
+        # The feature ID -> feature name dictionary (supported features only).
+        self._fid2fname: dict[int, str] = {}
+        for fname, sdict in self._sdicts.items():
+            self._fid2fname[sdict["feature_id"]] = fname
+
+        # Feature maps.
+        self._fmaps: dict[str, dict[str, _AddrMDMapTypedDict]] = {}
+        # Package number -> set of PCI addresses.
+        self._pkg2addrs: dict[int, set[str]] = {}
+        # Unknown feature IDs (no spec file).
+        self._unknown_fids: list[int] = []
+
+
+        self._build_fmaps()
+
+    def close(self):
+        """Uninitialize the class object."""
+
+        if self._unmount_debugfs:
+            with contextlib.suppress(Error):
+                self._pman.run(f"unmount {self._debugfs_mnt}")
+
+        ClassHelpers.close(self, close_attrs=("_pman",))
+
+    def _get_debugfs_tpmi_dirs(self) -> list[Path]:
+        """
+        Scan the debugfs root directory for TPMI-related sub-directories.
+
+        Returns:
+            list[Path]: The found TPMI-related sub-directories.
+
+        Raises:
+            ErrorNotSupported: If no TPMI-related sub-directories are found, indicating TPMI is not
+                               supported on the system.
+        """
+
+        debugfs_tpmi_dirs: list[Path] = []
+        for entry in self._pman.lsdir(self._debugfs_mnt):
+            if entry["name"].startswith("tpmi-"):
+                debugfs_tpmi_dirs.append(entry["path"])
+
+        if debugfs_tpmi_dirs:
+            return debugfs_tpmi_dirs
+
+        raise ErrorNotSupported(f"No TPMI-related sub-directories found in '{self._debugfs_mnt}'"
+                                f"{self._pman.hostmsg}.\nTPMI does not appear to be supported"
+                                f"{self._pman.hostmsg}. Here are the possible reasons:\n"
+                                f"   1. Hardware does not support TPMI.\n"
+                                f"   2. The kernel is old and doesn't have the TPMI driver. TPMI "
+                                f" support was added in kernel version 6.6.\n"
+                                f"   3. The TPMI driver is not enabled. Try to compile the kernel "
+                                f"with 'CONFIG_INTEL_TPMI' enabled.")
+
+    def _get_debugfs_feature_path(self, addr, fname) -> Path:
+        """
+        Get the path to the Linux debugfs directory for a specific TPMI feature.
+
+        Args:
+            addr: PCI address of the TPMI device.
+            fname: Name of the TPMI feature.
+
+        Returns:
+            Path: The path to the debugfs directory representing the specified feature.
+        """
+
+        path = self._debugfs_mnt / f"tpmi-{addr}"
+        fid = self._get_sdict(fname)["feature_id"]
+        path = path / f"tpmi-id-{fid:02x}"
+
+        return path
+
+    def _build_mdmap(self, addr, fname) -> _MDMapType:
+        """
+        Build and return the memory dump map (mdmap) for a TPMI feature at a given PCI device
+        address.
+
+        Args:
+            addr: PCI address of the TPMI device.
+            fname: Name of the TPMI feature.
+
+        Returns:
+            A two-level dictionary mapping instance numbers to register offsets, and register
+            offsets to file positions in the 'mem_dump' debugfs file.
+
+        Example:
+            For a TPMI feature with two instances (0 and 1) and four register offsets (0, 4, 8, 12),
+            the returned mdmap may look like:
+
+            {
+                0: {0: 48, 4: 57, 8: 66, 12: 75},
+                1: {0: 77, 4: 86, 8: 95, 12: 104}
+            }
+
+            To read the register at offset 8 for instance 1, seek to position 95 in the
+            corresponding 'mem_dump' debugfs file.
+        """
+
+        path = self._get_debugfs_feature_path(addr, fname)
+        path = path / "mem_dump"
+
+        _LOG.debug("reading 'mem_dump' file at '%s'", path)
+
+        mdmap: _MDMapType = {}
+        pos = 0
+
+        with self._pman.open(path, "r") as fobj:
+            for line in fobj:
+                line = line.rstrip()
+                line_pos = 0
+
+                # Sample line to match: "TPMI Instance:1 offset:0x40005000".
+                match = re.match(r"TPMI Instance:(\d+) offset:(0x[0-9a-f]+)", line)
+                if match:
+                    instance = Trivial.str_to_int(match.group(1), what="instance number")
+                    mdmap[instance] = {}
+                else:
+                    # Matches two different line formats:
+                    #   " 00000020: 013afd40 00004000 2244aacc deadbeef" and
+                    #   "[00000020] 013afd40 00004000 2244aacc deadbeef".
+                    # Some older kernels have the second format in place.
+                    match = re.match(r"^( |\[)([0-9a-f]+)(:|\]) (.*)$", line)
+                    if match:
+                        offs = Trivial.str_to_int(match.group(2), base=16, what="TPMI offset")
+                        regvals = Trivial.split_csv_line(match.group(4), sep=" ")
+                        line_pos += 3 + len(match.group(2))
+                        for regval in regvals:
+                            # Sanity-check register values and drop them.
+                            Trivial.str_to_int(regval, base=16, what="TPMI value")
+                            mdmap[instance][offs] = pos + line_pos
+                            line_pos += 9
+                            offs += 4
+                    else:
+                        raise Error(f"Unexpected line in TPMI file '{path}:\n{line}")
+
+                pos += len(line) + 1
+
+        return mdmap
+
+    def _build_fmaps(self):
+        """Build fmap for all TPMI features and save them in 'self._fmap'."""
+
+        # A dictionary mapping feature names to the list of TPMI device addresses that provide this
+        # feature.
+        fname2addrs: dict[str, list[str]] = {}
+        # List of unknown feature IDs.
+        unknown_fids: list[int] = []
+
+        for pci_path in self._tpmi_pci_paths:
+            for entry in self._pman.lsdir(pci_path):
+                match = re.match(r"^tpmi-id-([0-9a-f]+)$", entry["name"])
+                if not match:
+                    continue
+
+                fid = int(match.group(1), 16)
+                fname = self._fid2fname.get(fid)
+                if not fname:
+                    # Unknown feature, no spec file for it.
+                    unknown_fids.append(fid)
+                    continue
+
+                if fname not in fname2addrs:
+                    fname2addrs[fname] = []
+
+                addr = pci_path.name[len("tpmi-"):]
+                fname2addrs[fname].append(addr)
+
+        if not fname2addrs:
+            paths = "\n * ".join([str(path) for path in self._tpmi_pci_paths])
+            raise ErrorNotSupported(f"No TPMI features found{self._pman.hostmsg}, checked the "
+                                    f"following paths:\n * {paths}")
+
+        if "tpmi_info" not in fname2addrs:
+            dirs = "\n * ".join([str(path) for path in self._specdirs])
+            raise Error(f"Spec file for the 'tpmi_info' TPMI feature was not found, checked in the "
+                        f"following directories:\n * {dirs}")
+
+        fmaps: dict[str, dict[str, _AddrMDMapTypedDict]] = {"tpmi_info": {}}
+
+        for fname, addrs in fname2addrs.items():
+            if fname not in fmaps:
+                fmaps[fname] = {}
+
+            for addr in addrs:
+                if addr in fmaps[fname]:
+                    continue
+
+                # The 'tpmi_info' feature is present in every TPMI device. Use it to read the
+                # package number associated with 'addr'.
+                if addr not in fmaps["tpmi_info"]:
+                    mdmap = self._build_mdmap(addr, "tpmi_info")
+                    package = self._read_register("tpmi_info", addr, 0, "TPMI_BUS_INFO",
+                                                  bfname="PACKAGE_ID", mdmap=mdmap)
+                    fmaps["tpmi_info"][addr] = {"package": package, "mdmap": mdmap}
+
+                    if package not in self._pkg2addrs:
+                        self._pkg2addrs[package] = set()
+
+                    self._pkg2addrs[package].add(addr)
+
+                if fname == "tpmi_info":
+                    continue
+
+                package = fmaps["tpmi_info"][addr]["package"]
+                fmaps[fname][addr] = {"package": package, "mdmap": {}}
+
+        self._fmaps = fmaps
+        self._unknown_fids = unknown_fids
+
+    def _build_sdicts(self):
+        """
+        Scan the spec directories, partially load spec files and build the spec dictionaries. The
+        goal is to get basic information about all known TPMI features supported by the system.
+        """
+
+        sdicts: dict[str, SDictTypedDict] = {}
+        for specdir in self._specdirs:
+            spec_files_cnt = 0
+            non_yaml_cnt = 0
+            load_errors_cnt = 0
+
+            try:
+                _lsdir = os.listdir(specdir)
+            except OSError as err:
+                _LOG.warning("Failed to access TPMI spec files directory '%s':\n%s", specdir,
+                             Error(str(err)).indent(2))
+                continue
+
+            for specname in _lsdir:
+                if not specname.endswith(".yml") and not specname.endswith(".yaml"):
+                    non_yaml_cnt += 1
+                    if non_yaml_cnt > _MAX_NON_YAML:
+                        raise Error(f"Too many non-YAML files in '{specdir}', maximum allowed "
+                                    f"count is {_MAX_NON_YAML}")
+                    continue
+
+                try:
+                    specpath = specdir / specname
+                    sdict = _load_sdict(specpath)
+                except Error as err:
+                    load_errors_cnt += 1
+                    if load_errors_cnt > _MAX_SCAN_LOAD_ERRORS:
+                        raise Error(f"Failed to load spec file '{specpath}':\n{err.indent(2)}\n"
+                                    f"Reached the maximum spec file load errors count of "
+                                    f"{_MAX_SCAN_LOAD_ERRORS}") from err
+                    continue
+
+                spec_files_cnt += 1
+                if spec_files_cnt > _MAX_SPEC_FILES:
+                    raise Error(f"Too many spec files in '{specdir}, maximum allowed spec files "
+                                f"count is {_MAX_SPEC_FILES}")
+
+                sdicts[sdict["name"]] = sdict
+
+        if not sdicts:
+            paths = "\n * ".join([str(path) for path in self._specdirs])
+            raise ErrorNotSupported(f"No TPMI spec files found, checked the following paths:\n"
+                                    f" * {paths}")
+
+        self._sdicts = sdicts
+
+    def _load_and_format_fdict(self, fname: str, specpath: Path) -> dict[str, RegDictTypedDict]:
+        """
+        Load and validate a TPMI spec file, then an return the fdict.
+
+        Args:
+            fname: Name of the TPMI feature whose spec file is being loaded.
+            specpath: Path to the spec file to load.
+
+        Returns:
+            The fdict corresponding to the spec file. The fdict maps register names to their
+            definitions, including bit field information with added "bitshift" and "bitmask" keys.
+        """
+
+        def _raise_exc(msg: str) -> NoReturn:
+            """
+            Raise an 'Error' exception with a formatted message.
+
+            Args:
+                msg: The error message to include in the exception.
+            """
+
+            pfx = f"Bad '{fname}' spec file '{specpath}'"
             raise Error(f"{pfx}:\n{Error(msg).indent(2)}")
 
-        def _check_keys(check_dict, allowed_keys, mandatory_keys, where):
+        def _check_keys(check_keys: Iterable[str],
+                        allowed_keys: set[str],
+                        mandatory_keys: set[str],
+                        where: str):
             """
-            Check keys of dictionary 'check_dict', verify the following.
-            * The dictionary keys are in 'allowed_keys'.
-            * The dictionary has 'mandatory_keys' keys.
+            Validate given keys against allowed and mandatory keys.
+
+            Args:
+                check_keys: The keys to validate.
+                allowed_keys: Keys that are permitted in the dictionary.
+                mandatory_keys: Keys that must be present in the dictionary.
+                where: Contextual information for error messages.
             """
 
-            for key in check_dict:
+            for key in check_keys:
                 if key not in allowed_keys:
-                    allowed_keys = ", ".join(allowed_keys)
-                    _raise_exc(f"unexpected key '{key}' {where}, allowed keys are: {allowed_keys}")
+                    keys_str = ", ".join(allowed_keys)
+                    _raise_exc(f"unexpected key '{key}' {where}, allowed keys are: {keys_str}")
 
             for key in mandatory_keys:
-                if key not in check_dict:
-                    mandatory_keys = ", ".join(mandatory_keys)
-                    _raise_exc(f"missing key '{key}' {where}, mandatory keys are: {mandatory_keys}")
+                if key not in check_keys:
+                    keys_str = ", ".join(mandatory_keys)
+                    _raise_exc(f"missing key '{key}' {where}, mandatory keys are: {keys_str}")
 
+        spec: dict[str, dict[str, dict[str, dict[str, dict[str, str]]]]] = YAML.load(specpath)
         if "registers" not in spec:
             _raise_exc("the 'registers' top-level key was not found")
+
+        if "feature-id" in spec:
+            # pepc versions prior to 1.6.2 used "feature-id" instead of "feature_id".
+            spec["feature_id"] = spec.pop("feature-id")
 
         # The allowed and the mandatory top-level key names.
         keys = {"name", "desc", "feature_id", "registers"}
@@ -343,12 +735,24 @@ class Tpmi():
                 bfdict["bitshift"] = lowbit
                 bfdict["bitmask"] = bitmask
 
-        return fdict
+        if typing.TYPE_CHECKING:
+            return cast(dict[str, RegDictTypedDict], fdict)
+        else:
+            return fdict
 
-    def _get_fdict(self, fname):
+    def _get_fdict(self, fname: str) -> dict[str, RegDictTypedDict]:
         """
-        Return fdict for feature 'fname'. If the fdict is not available in the cache, loaded it from
-        the spec file.
+        Retrieve and cache the feature dictionary (fdict) for a given feature name.
+
+        Args:
+            fname: Name of the feature to retrieve the fdict for.
+
+        Returns:
+            The feature dictionary corresponding to 'fname' (maps register names to regdicts).
+
+        Raises:
+            ErrorNotSupported: If the feature is not supported or no spec files for the feature are
+                               found.
         """
 
         if fname in self._fdicts:
@@ -356,259 +760,101 @@ class Tpmi():
 
         for specdir in self._specdirs:
             specpath = specdir / (fname + ".yml")
-            if specpath.exists():
-                spec = YAML.load(specpath)
-                self._fdicts[fname] = self._format_fdict(fname, specpath, spec)
-                break
+            self._fdicts[fname] = self._load_and_format_fdict(fname, specpath)
+            break
 
         if fname not in self._fdicts:
             raise ErrorNotSupported(f"TPMI feature '{fname}' is not supported")
 
         return self._fdicts[fname]
 
-    def _get_sdict(self, fname):
-        """Return sdict for feature 'fname'."""
+    def _get_sdict(self, fname: str) -> SDictTypedDict:
+        """
+        Retrieve the sdict for a specified feature name.
 
-        sdict = self._sdicts.get(fname)
-        if sdict is None:
+        Args:
+            fname: The name of the feature to retrieve the sdict for.
+
+        Returns:
+            _SDictTypedDict: The sdict associated with the given feature name.
+        """
+
+        if fname not in self._sdicts:
             known = ", ".join(self._sdicts)
-            raise Error(f"unknown feature '{fname}'{self._pman.hostname}, known features are: "
+            raise Error(f"Unknown feature '{fname}'{self._pman.hostname}, known features are: "
                         f"{known}")
 
-        return sdict
+        return self._sdicts[fname]
 
-    def _get_debugfs_tpmi_dirs(self):
+    def _get_regdict(self, fname: str, regname: str) -> RegDictTypedDict:
         """
-        Scan the debugfs root directory for TPMI-related sub-directories and return their paths in
-        the form of a list.
+        Retrieve the regdict for a specified TPMI register and feature.
+
+        Args:
+            fname: Name of the feature containing the register.
+            regname: Name of the register to retrieve.
+
+        Returns:
+            _RegDictTypedDict: Dictionary containing register information.
         """
-
-        debugfs_tpmi_dirs = []
-        for entry in self._pman.lsdir(self._debugfs_mnt):
-            if entry["name"].startswith("tpmi-"):
-                debugfs_tpmi_dirs.append(entry["path"])
-
-        if debugfs_tpmi_dirs:
-            return debugfs_tpmi_dirs
-
-        raise ErrorNotSupported(f"no TPMI-related sub-directories found in '{self._debugfs_mnt}'"
-                                f"{self._pman.hostmsg}.\nTPMI does not appear to be supported "
-                                f"'{self._pman.hostmsg}. Here are the possible reasons:\n"
-                                f" 1. Hardware does not support TPMI.\n"
-                                f" 2. The kernel is old and doesn't have the TPMI driver. TPMI "
-                                f" support was added in kernel version 6.6.\n"
-                                f" 3. The TPMI driver is not enabled. Try to compile the kernel "
-                                f"with 'CONFIG_INTEL_TPMI' enabled.\n")
-
-    def _build_sdicts(self):
-        """Scan the spec directories and build the spec dictionaries."""
-
-        sdicts = {}
-        for specdir in self._specdirs:
-            spec_files_cnt = 0
-            non_yaml_cnt = 0
-            load_errors_cnt = 0
-
-            for specname in os.listdir(specdir):
-                if not specname.endswith(".yml") and not specname.endswith(".yaml"):
-                    non_yaml_cnt += 1
-                    if non_yaml_cnt > _MAX_NON_YAML:
-                        raise Error(f"too many non-YAML files in '{specdir}', maximum allowed "
-                                    f"count is {_MAX_NON_YAML}")
-                    continue
-
-                try:
-                    specpath = specdir / specname
-                    sdict = _load_sdict(specpath)
-                except Error as err:
-                    load_errors_cnt += 1
-                    if load_errors_cnt > _MAX_SCAN_LOAD_ERRORS:
-                        raise Error(f"failed to load spec file '{specpath}':\n{err.indent(2)}\n"
-                                    f"Reached the maximum spec file load errors count of "
-                                    f"{_MAX_SCAN_LOAD_ERRORS}") from err
-                    continue
-
-                spec_files_cnt += 1
-                if spec_files_cnt > _MAX_SPEC_FILES:
-                    raise Error(f"too many spec files in '{specdir}, maximum allowed spec files "
-                                f"count is {_MAX_SPEC_FILES}")
-
-                sdicts[sdict["name"]] = sdict
-
-        if not sdicts:
-            paths = "\n * ".join([str(path) for path in self._specdirs])
-            raise ErrorNotSupported(f"no TPMI spec files found, checked the following paths:\n"
-                                    f" * {paths}")
-
-        self._sdicts = sdicts
-        for fname, sdict in sdicts.items():
-            self._fid2fname[sdict["feature_id"]] = fname
-
-    def _build_fmaps(self):
-        """Build fmaps for all TPMI features and save them in the 'self._fmaps' dictionary."""
-
-        # A dictionary mapping feature names to the list of TPMI device addresses that provide this
-        # feature.
-        fname2addrs = {}
-        # List of unknown feature IDs.
-        unknown_fids = []
-
-        for pci_path in self._tpmi_pci_paths:
-            for entry in self._pman.lsdir(pci_path):
-                match = re.match(r"^tpmi-id-([0-9a-f]+)$", entry["name"])
-                if not match:
-                    continue
-
-                fid = int(match.group(1), 16)
-                fname = self._fid2fname.get(fid)
-                if not fname:
-                    # Unknown feature, no spec file for it.
-                    unknown_fids.append(fid)
-                    continue
-
-                if fname not in fname2addrs:
-                    fname2addrs[fname] = []
-
-                addr = pci_path.name[len("tpmi-"):]
-                fname2addrs[fname].append(addr)
-
-        if not fname2addrs:
-            paths = "\n * ".join([str(path) for path in self._tpmi_pci_paths])
-            raise ErrorNotSupported(f"no TPMI features found{self._pman.hostmsg}, checked the "
-                                    f"following paths:\n * {paths}")
-
-        if "tpmi_info" not in fname2addrs:
-            dirs = "\n * ".join([str(path) for path in self._specdirs])
-            raise Error(f"spec file for the 'tpmi_info' TPMI feature was not found, checked in the "
-                        f"following directories:\n * {dirs}")
-
-        fmaps = {"tpmi_info": {}}
-
-        for fname, addrs in fname2addrs.items():
-            if fname not in fmaps:
-                fmaps[fname] = {}
-
-            for addr in addrs:
-                if addr in fmaps[fname]:
-                    continue
-
-                # The 'tpmi_info' feature is present in every TPMI device. Use it to read the
-                # package number associated with 'addr'.
-                if addr not in fmaps["tpmi_info"]:
-                    mdmap = self._build_mdmap(addr, "tpmi_info")
-                    package = self._read_register("tpmi_info", addr, 0, "TPMI_BUS_INFO",
-                                                  bfname="PACKAGE_ID", mdmap=mdmap)
-                    fmaps["tpmi_info"][addr] = {"package": package, "mdmap": mdmap}
-
-                    if package not in self._pkg2addrs:
-                        self._pkg2addrs[package] = set()
-
-                    self._pkg2addrs[package].add(addr)
-
-                if fname == "tpmi_info":
-                    continue
-
-                package = fmaps["tpmi_info"][addr]["package"]
-                fmaps[fname][addr] = {"package": package, "mdmap": None}
-
-        self._fmaps = fmaps
-        self._unknown_fids = unknown_fids
-
-    def _get_debugfs_feature_path(self, addr, fname):
-        """
-        Return path to the Linux debugfs directory represinting feature 'fname' of a TPMI device at
-        address 'addr'.
-        """
-
-        path = self._debugfs_mnt / f"tpmi-{addr}"
-        fid = self._get_sdict(fname)["feature_id"]
-        path = path / f"tpmi-id-{fid:02x}"
-
-        return path
-
-    def _build_mdmap(self, addr, fname):
-        """
-        Build and return mdmap for feature 'fname' of TPMI device at address 'addr'. The arguments
-        are as follows.
-          * addr - TPMI device PCI address to build the mdmap for.
-          * fname - TPMI feature name.
-
-        Here is an example of mdmap for a TPMI feature with two instances (0 and 1) and 4 TPMI
-        register offsets in each instance.
-          {0: {0: 48, 4: 57, 8: 66, 12: 75},
-           1: {0: 77, 4: 86, 8: 95, 12: 104}}.
-        In this example, in order to read from register with offset 8 in instance 1, one has to read
-        from position 95 of the corresponding 'mem_dump' Linux debugfs file.
-        """
-
-        path = self._get_debugfs_feature_path(addr, fname)
-        path = path / "mem_dump"
-
-        _LOG.debug("reading 'mem_dump' file at '%s'", path)
-
-        mdmap = {}
-        pos = 0
-
-        with self._pman.open(path, "r") as fobj:
-            for line in fobj:
-                line = line.rstrip()
-                line_pos = 0
-
-                # Sample line to match: "TPMI Instance:1 offset:0x40005000".
-                match = re.match(r"TPMI Instance:(\d+) offset:(0x[0-9a-f]+)", line)
-                if match:
-                    instance = Trivial.str_to_int(match.group(1), what="instance number")
-                    mdmap[instance] = {}
-                else:
-                    # Matches two different line formats:
-                    #   " 00000020: 013afd40 00004000 2244aacc deadbeef" and
-                    #   "[00000020] 013afd40 00004000 2244aacc deadbeef".
-                    # Some older kernels have the second format in place.
-                    match = re.match(r"^( |\[)([0-9a-f]+)(:|\]) (.*)$", line)
-                    if match:
-                        offs = Trivial.str_to_int(match.group(2), base=16, what="TPMI offset")
-                        regvals = Trivial.split_csv_line(match.group(4), sep=" ")
-                        line_pos += 3 + len(match.group(2))
-                        for regval in regvals:
-                            # Sanity-check register values and drop them.
-                            Trivial.str_to_int(regval, base=16, what="TPMI value")
-                            mdmap[instance][offs] = pos + line_pos
-                            line_pos += 9
-                            offs += 4
-                    else:
-                        raise Error(f"Unexpected line in TPMI file '{path}:\n{line}")
-
-                pos += len(line) + 1
-
-        return mdmap
-
-    def _get_regdict(self, fname, regname):
-        """Get regdict for TPMI register 'regname' of feature 'fname'."""
 
         fdict = self._get_fdict(fname)
-
-        regdict = fdict.get(regname)
-        if regdict is None:
-            raise Error(f"BUG: bad register '{regname}' for feature {fname}")
+        if regname not in fdict:
+            raise Error(f"BUG: Bad register '{regname}' for feature {fname}")
 
         return fdict[regname]
 
-    def _validate_instance_offset(self, fname, addr, instance, regname, offset, mdmap):
-        """Validated an instance number 'instance' and a register offset 'offset'."""
+    def _validate_instance_offset(self,
+                                  fname: str,
+                                  addr: str,
+                                  instance: int,
+                                  regname: str,
+                                  offset: int,
+                                  mdmap: _MDMapType):
+        """
+        Validate the instance number and register offset for a TPMI feature.
+
+        Args:
+            fname: Name of the TPMI feature.
+            addr: TPMI device PCI address.
+            instance: Instance number to validate.
+            regname: Register name.
+            offset: Register offset to validate.
+            mdmap: Metadata map containing valid instances and offsets.
+        """
 
         if instance not in mdmap:
             available = Trivial.rangify(mdmap)
-            raise Error(f"bad instance number '{instance}' for TPMI feature '{fname}' and "
+            raise Error(f"Bad instance number '{instance}' for TPMI feature '{fname}' and "
                         f"device '{addr}', available instances: {available}")
 
         if offset < 0 or offset % 4 != 0 or offset not in mdmap[instance]:
             max_offset = max(mdmap[instance])
-            raise Error(f"bad offset '{offset:#x}' for register '{regname}' of TPMI feature "
+            raise Error(f"Bad offset '{offset:#x}' for register '{regname}' of TPMI feature "
                         f"'{fname}': should be a positive integer aligned to 4 and not "
                         f"exceeding '{max_offset}'")
 
-    def _read(self, addr, fname, instance, regname, offset, mdmap):
-        """Read a TPMI register from the 'mem_dump' file."""
+    def _read(self,
+              fname: str,
+              addr: str,
+              instance: int,
+              regname: str,
+              offset: int,
+              mdmap: _MDMapType) -> int:
+        """
+        Read a TPMI register value from the TPMI debugfs 'mem_dump' file.
+
+        Args:
+            fname: Name of the TPMI feature.
+            addr: TPMI device PCI address.
+            instance: The instance number of the TPMI feature.
+            regname: The name of the register to read.
+            offset: The offset of the register within the feature.
+            mdmap: A mapping of instance and offset to file position.
+
+        Returns:
+            The integer value of the TPMI register.
+        """
 
         self._validate_instance_offset(fname, addr, instance, regname, offset, mdmap)
 
@@ -619,68 +865,91 @@ class Tpmi():
             fobj.seek(mdmap[instance][offset])
             val = fobj.read(8)
 
-        what = f"value of register '{regname}' (offset '{offset:#x}') of TPMI feature '{fname}'"
-        _LOG.debug("read TPMI register '%s' (offset '%#x'), value is %s, file: %s, file offset %d",
+        _LOG.debug("Read TPMI register '%s' (offset '%#x'), value is %s, file: %s, file offset %d",
                    regname, offset, val, path, mdmap[instance][offset])
+
+        what = f"value of register '{regname}' (offset '{offset:#x}') of TPMI feature '{fname}'"
         return Trivial.str_to_int(val, base=16, what=what)
 
-    def _get_bfdict(self, fname, regname, bfname):
+    def _get_bfdict(self, fname: str, regname: str, bfname: str) -> BFDictTypedDict:
         """
-        Return the bit field definition for a register. The arguments are as follows.
-          * fname - name of the TPMI feature.
-          * regname - name of the TPMI register.
-          * bfname - name of the TPMI register bit field.
+        Retrieve the bit field definition for a specified TPMI register.
+
+        Args:
+            fname: Name of the TPMI feature.
+            regname: Name of the TPMI register.
+            bfname: Name of the TPMI register bit field.
+
+        Returns:
+            The bit field definition dictionary for the specified register and bit field.
         """
 
         regdict = self._get_regdict(fname, regname)
-        fieldsdict = regdict["fields"]
+        bfdict = regdict["fields"]
 
-        if bfname not in fieldsdict:
-            available = ", ".join(fieldsdict)
-            raise Error(f"bit field '{bfname}' not found for TPMI register '{regname}', feature "
+        if bfname not in bfdict:
+            available = ", ".join(bfdict)
+            raise Error(f"Bit field '{bfname}' not found for TPMI register '{regname}', feature "
                         f"'{fname}', available bit fields: {available}")
 
-        return fieldsdict[bfname]
+        return bfdict[bfname]
 
-    def _get_bitfield(self, regval, fname, regname, bfname):
+    def _get_bitfield(self, regval: int, fname: str, regname: str, bfname: str) -> int:
         """
-        Extract and return the value of a bit field from a register value. The arguments are as
-        follows.
-          * regval - value of the register.
-          * fname - name of the TPMI feature.
-          * regname - name of the TPMI register.
-          * bfname - name of the TPMI register bit field to extract.
+        Extract the value of a specific bit field from a register value.
+
+        Args:
+            regval: The value of the register to extract the bit field from.
+            fname: The name of the TPMI feature.
+            regname: The name of the TPMI register.
+            bfname: The name of the TPMI register bit field to extract.
+
+        Returns:
+            The integer value of the extracted bit field.
         """
 
         bfdict = self._get_bfdict(fname, regname, bfname)
-
         return (regval & bfdict["bitmask"]) >> bfdict["bitshift"]
 
-    def _set_bitfield(self, regval, bitval, fname, regname, bfname):
+    def _set_bitfield(self, regval: int, bitval: int, fname: str, regname: str, bfname: str) -> int:
         """
-        Set a register bit field to value 'value' and return the new register value. The arguments
-        are as follows.
-          * regval - value of the entire register.
-          * bitval - the bit field value to set in 'regval'.
-          * fname - name of the TPMI feature.
-          * regname - name of the TPMI register to set.
-          * bfname - name of the bit field to set.
+        Set a TPMI register bit field to the specified value and return the updated register value.
+
+        Args:
+            regval: The current value of the register.
+            bitval: The value to set in the bit field.
+            fname: The name of the TPMI feature.
+            regname: The name of the TPMI register.
+            bfname: The name of the bit field.
+
+        Returns:
+            The new register value with the specified bit field updated.
         """
 
         bfdict = self._get_bfdict(fname, regname, bfname)
-
         regval ^= regval & bfdict["bitmask"]
         return regval | (bitval << bfdict["bitshift"])
 
-    def _read_register(self, fname, addr, instance, regname, bfname=None, mdmap=None):
+    def _read_register(self,
+                       fname: str,
+                       addr: str,
+                       instance: int,
+                       regname: str,
+                       bfname: str = "",
+                       mdmap: _MDMapType | None = None) -> int:
         """
-        Read a TPMI register. The arguments are as follows.
-          * fname - name of the TPMI feature the register belongs to.
-          * addr - the TPMI device address.
-          * instance - the TPMI instance to read the register from.
-          * regname - name of the TPMI register to read.
-          * bfname - bit field name to read (read whole register by default).
-          * mdmap - the mdmap to use (optional).
+        Read a TPMI register and optionally extract a specific bit field.
+
+        Args:
+            fname: Name of the TPMI feature the register belongs to.
+            addr: TPMI device address.
+            instance: TPMI instance to read the register from.
+            regname: Name of the TPMI register to read.
+            bfname: Bit field name to extract (read the whole register by default).
+            mdmap: Optional mdmap to use for register access.
+
+        Returns:
+            Integer value of the register or the specified bit field.
         """
 
         regdict = self._get_regdict(fname, regname)
@@ -689,27 +958,37 @@ class Tpmi():
         width = regdict["width"]
 
         if not mdmap:
-            mdmap = self._get_mdmap(fname, addr)
+            _mdmap = self._get_mdmap(fname, addr)
+        else:
+            _mdmap = mdmap
 
-        val = self._read(addr, fname, instance, regname, offset, mdmap)
+        val = self._read(fname, addr, instance, regname, offset, _mdmap)
         if width > 32:
-            val = val + (self._read(addr, fname, instance, regname, offset + 4, mdmap) << 32)
+            val = val + (self._read(fname, addr, instance, regname, offset + 4, _mdmap) << 32)
 
         if bfname:
             val = self._get_bitfield(val, fname, regname, bfname)
 
         return val
 
-    def _write_register(self, value, fname, addr, instance, regname, bfname=None):
+    def _write_register(self,
+                        value: int,
+                        fname: str,
+                        addr: str,
+                        instance: int,
+                        regname: str,
+                        bfname: str = ""):
         """
-        Write to a TPMI register. The arguments are as follows.
-          * value - the value to write to the register or its bit field.
-          * fname - name of the TPMI feature the register belongs to.
-          * addr - the TPMI device address.
-          * instance - the TPMI instance to write the register to.
-          * regname - name of the TPMI register to write to.
-          * bfname - name of the register bit field to write to (write to the entire register by
-                     default).
+        Write a value to a TPMI register or its bit field.
+
+        Args:
+            value: Value to write to the register or bit field.
+            fname: Name of the TPMI feature the register belongs to.
+            addr: TPMI device address.
+            instance: TPMI instance to write the register to.
+            regname: Name of the TPMI register to write to.
+            bfname: Name of the register bit field to write to. If not specified, writes to the
+                    entire register.
         """
 
         regdict = self._get_regdict(fname, regname)
@@ -719,11 +998,11 @@ class Tpmi():
 
         # Validate the value.
         if value < 0:
-            raise Error(f"bad value '{value}' for register '{regname}': should be a positive "
+            raise Error(f"Bad value '{value}' for register '{regname}': should be a positive "
                         f"{width}-bit integer")
         max_value = (1 << width) - 1
         if value > max_value:
-            raise Error(f"too large value '{value}' for a {width}-bit register '{regname}")
+            raise Error(f"Too large value '{value}' for a {width}-bit register '{regname}")
 
         mdmap = self._get_mdmap(fname, addr)
 
@@ -732,7 +1011,7 @@ class Tpmi():
         path = self._get_debugfs_feature_path(addr, fname)
         path = path / "mem_write"
 
-        _LOG.debug("writing 0x%x to '%s' register '%s', instance '%d' at offset 0x%x of TPMI "
+        _LOG.debug("Writing 0x%x to '%s' register '%s', instance '%d' at offset 0x%x of TPMI "
                    "device '%s'", value, fname, regname, instance, offset, addr)
 
         if bfname:
@@ -743,7 +1022,7 @@ class Tpmi():
             while width > 0:
                 writeval = value & 0xffffffff
                 data = f"{instance},{offset},{writeval:#x}"
-                _LOG.debug("writing '%s' to '%s'", data, path)
+                _LOG.debug("Writing '%s' to '%s'", data, path)
 
                 fobj.write(data)
                 fobj.seek(0)
@@ -752,17 +1031,33 @@ class Tpmi():
                 offset += 4
                 value >>= 32
 
-    def _get_mdmap(self, fname, addr):
-        """Get mdmap for a TPMI feature."""
+    def _get_mdmap(self, fname: str, addr: str) -> _MDMapType:
+        """
+        Retrieve or build the 'mem_dump' file map (mdmap) for a TPMI feature.
+
+        Args:
+            fname: Name of the TPMI feature.
+            addr: PCI address of the TPMI device.
+
+        Returns:
+            The mdmap corresponding to the given feature and address.
+        """
 
         fmap = self._fmaps[fname]
         if not fmap[addr]["mdmap"]:
             fmap[addr]["mdmap"] = self._build_mdmap(addr, fname)
-
         return fmap[addr]["mdmap"]
 
-    def _format_addrs(self, addrs):
-        """Format a list of TPMI device PCI addresses in form of a string."""
+    def _format_addrs(self, addrs: Sequence[str]) -> str:
+        """
+        Format a list of TPMI device PCI addresses as a string.
+
+        Args:
+            addrs: List of TPMI device PCI addresses.
+
+        Returns:
+            A formatted string with a bulleted list of PCI addresses.
+        """
 
         max_addrs = 8
         if len(addrs) > max_addrs:
@@ -771,29 +1066,36 @@ class Tpmi():
             addrs.append("... and more ...")
         return "\n * ".join(addrs)
 
-    def _validate_fname(self, fname):
-        """Validate feature name 'fname'."""
+    def _validate_fname(self, fname: str):
+        """
+        Validate that the provided feature name.
+
+        Args:
+            fname: The feature name to validate.
+        """
 
         if fname not in self._fmaps:
             known = ", ".join(self._fmaps)
-            raise Error(f"unknown feature '{fname}'{self._pman.hostmsg}, known features "
+            raise Error(f"Unknown feature '{fname}'{self._pman.hostmsg}, known features "
                         f"are:\n  {known}")
 
-    def _validate_addr(self, fname, addr, package=None):
+    def _validate_addr(self, fname: str, addr: str = "", package: int | None = None):
         """
-        Validate TPMI device PCI addres 'addr'.
-           * fname - name of the feature 'addr' is supposed to belong to.
-           * addr - the TPMI device PCI address to validate.
-           * package - optional package number 'addr' is supposed to belong to.
+        Validate the PCI address of a TPMI device for a given feature.
+
+        Args:
+            fname: Name of the feature the address belongs to.
+            addr: PCI address of the TPMI device to validate.
+            package: Optional package number the address belongs to.
         """
 
-        if addr is None and package is None:
-            return
+        if not addr and package is None:
+            raise Error("BUG: either 'addr' or 'package' must be specified")
 
-        if addr is None:
+        if not addr:
             if package not in self._pkg2addrs:
                 packages = Trivial.rangify(self._pkg2addrs)
-                raise Error(f"invalid package number '{package}'{self._pman.hostmsg}, valid"
+                raise Error(f"Invalid package number '{package}'{self._pman.hostmsg}, valid"
                             f"package numbers are: {packages}")
         else:
             if addr not in self._fmaps[fname]:
@@ -804,62 +1106,82 @@ class Tpmi():
             if package is not None:
                 correct_pkg = self._fmaps[fname][addr]["package"]
                 if package != correct_pkg:
-                    raise Error(f"invalid package number '{package}' for TPMI device '{addr}', "
+                    raise Error(f"Invalid package number '{package}' for TPMI device '{addr}', "
                                 f"correct package numbers is '{correct_pkg}'")
 
-    def _validate_addrs(self, fname, addrs, packages=None):
+    def _validate_addrs(self, fname: str, addrs: Iterable[str], packages: Iterable[int] = ()):
         """
-        Validate input TPMI device PCI addresses in 'addrs'.
-           * fname - name of the feature 'addrs' are supposed to belong to.
-           * addrs - an iterable collection of TPMI device PCI address to validate.
-           * package - optional package numbers 'addrs' are supposed to belong to.
+        Validate a collection of TPMI device PCI addresses.
+
+        Args:
+            fname: Name of the feature that the addresses are associated with.
+            addrs: Iterable of TPMI device PCI addresses to validate.
+            packages: Optional iterable of package numbers corresponding to the addresses.
         """
 
-        if packages is None:
-            packages = (None,)
-        if addrs is None:
-            addrs = (None,)
+        _packages: Iterable[int | None] = packages
+        _addrs: Iterable[str] = addrs
 
-        for addr in addrs:
-            for package in packages:
-                self._validate_addr(fname, addr, package=package)
+        if not packages:
+            _packages = (None,)
+        if not addrs:
+            _addrs = ("",)
 
-    def _validate_regname(self, fname, regname, bfname=None):
-        """Validate register name and optionally a bit field name."""
+        for addr in _addrs:
+            for package in _packages:
+                if addr or package:
+                    self._validate_addr(fname, addr, package=package)
+
+    def _validate_regname(self, fname: str, regname: str, bfname: str = ""):
+        """
+        Validate the existence of a register name and, optionally, a bit field name within a
+        feature.
+
+        Args:
+            fname: Name of the feature to check.
+            regname: Name of the register to validate.
+            bfname: Name of the bit field to validate within the register.
+        """
 
         fdict = self._get_fdict(fname)
+        if regname not in fdict:
+            raise Error(f"Register '{regname}' does not exist for feature '{fname}'")
 
-        regdict = fdict.get(regname)
-        if regdict is None:
-            raise Error(f"register '{regname}' does not exist for feature '{fname}'")
-
-        if bfname is not None and bfname not in regdict["fields"]:
-            raise Error(f"bit field '{bfname}' does not exist in register '{regname}' of feature "
+        regdict = fdict[regname]
+        if bfname and bfname not in regdict["fields"]:
+            raise Error(f"Bit field '{bfname}' does not exist in register '{regname}' of feature "
                         f"'{fname}'")
 
-    def _validate_instance(self, fname, addr, instance):
-        """Verify that instance 'instance' is valid for 'fname' and 'addr'."""
+    def _validate_instance(self, fname: str, addr: str, instance: int):
+        """
+        Verify that the specified instance is valid for the given TPMI device.
+
+        Args:
+            fname: The name of the TPMI device.
+            addr: The address of the TPMI device.
+            instance: The instance number to validate.
+        """
 
         mdmap = self._get_mdmap(fname, addr)
         if instance in mdmap:
             return
 
         instances = Trivial.rangify(list(mdmap))
-        raise Error(f"instance {instance} not available for the '{fname}' TPMI device '{addr}'"
+        raise Error(f"Instance {instance} not available for the '{fname}' TPMI device '{addr}'"
                     f"{self._pman.hostmsg}, available instances are: {instances}")
 
-    def get_known_features(self):
+    def get_known_features(self) -> list[SDictTypedDict]:
         """
-        Return a list of spec dictionaries for all known features (features that are supported by
-        the target host and there is a spec file available). The spec dictionary includes the
-        following keys.
-          * name - feature name.
-          * desc - feature description.
-          * feature_id - an integer feature ID.
-          * path - path to the spec file of the feature.
+        Retrieve a list of specification dictionaries for all known features.
 
-        Note: the sdict objects in the returned list must be considered read-only and should not be
-        modified.
+        Return a list of sdicts - dictionaries representing a feature that is supported by the
+        target host and has an available specification file.
+
+        Note:
+            The returned dictionaries should be treated as read-only and must not be modified.
+
+        Returns:
+            List of sdicts for all known features.
         """
 
         sdicts = []
@@ -869,38 +1191,57 @@ class Tpmi():
             sdicts.append(self._sdicts[fname])
         return sdicts
 
-    def get_unknown_features(self):
+    def get_unknown_features(self) -> list[int]:
         """
-        Return a list of feature IDs for all unknown features (features that are supported by the
-        target host and there is no spec file available).
+        Retrieve the list of feature IDs for unknown features. Unknown features are those supported
+        by the target host for which no specification file is available.
+
+        Returns:
+            Feature IDs corresponding to unknown features.
         """
 
         return list(self._unknown_fids)
 
-    def get_fdict(self, fname):
+    def get_fdict(self, fname: str) -> dict[str, RegDictTypedDict]:
         """
-        Return a feature dictionary. The arguments are as follows.
-          * fname - name of the TPMI feature to return the fdict for.
+        Retrieve the feature dictionary for a specified TPMI feature.
 
-        Note: the returned dictionary must be considered read-only and should not be modified.
+        Args:
+            fname: Name of the TPMI feature to retrieve the dictionary for.
+
+        Returns:
+            A read-only dictionary mapping feature names to their corresponding register
+            dictionaries.
+
+        Note:
+            The returned dictionary should be treated as read-only and must not be modified. For
+            performance reasons, a deep copy is not returned.
         """
 
         # It would be safer to return deep copy of the dictionary, but for optimization purposes,
         # avoid the copying.
         return self._get_fdict(fname)
 
-    def iter_feature(self, fname, addrs=None, packages=None, instances=None):
+    def iter_feature(self,
+                     fname: str,
+                     addrs: Iterable[str] = (),
+                     packages: Iterable[int] = (),
+                     instances: Iterable[int] = ()):
         """
-        Iterate over a feature, yielding tuples of '(addr, package, instance)'. Optional 'addr' and
-        'package' arguments can be used to limit the yielded tuples to a particular TPMI device PCI
-        addres and/or package. The arguments are as follows.
-          * fname - name of the TPMI feature to iterate.
-          * addrs - an iterable collection of TPMI device PCI addresses to iterate (all addresses by
-                    default).
-          * packages - an iterable collection of integer package numbers to iterate (all packages by
-                       default).
-          * instances - an iterable collection of integer instance numbers to iterate (all instances
-                        by default).
+        Iterate over a TPMI feature and yield tuples of '(addr, package, instance)'.
+
+        This generator yields all combinations of TPMI device PCI address, package numbers, and
+        instance numbers for the specified TPMI feature. It is possible to restrict the iteration to
+        specific addresses, packages, or instances by providing the corresponding arguments.
+
+        Args:
+            fname: Name of the TPMI feature to iterate.
+            addrs: TPMI device PCI addresses to include.
+            packages: Package numbers to include.
+            instances: Instance numbers to include.
+
+        Yields:
+            Tuples of '(addr, package, instance)' for each matching feature element.
         """
 
         self._validate_fname(fname)
@@ -908,9 +1249,9 @@ class Tpmi():
 
         fmap = self._fmaps[fname]
 
-        if addrs is None:
+        if not addrs:
             addrs = fmap
-        if packages is None:
+        if not packages:
             packages = self._pkg2addrs
 
         for addr in addrs:
@@ -920,7 +1261,7 @@ class Tpmi():
                 if fmap[addr]["package"] != package:
                     continue
 
-                if instances is not None:
+                if instances:
                     for instance in instances:
                         self._validate_instance(fname, addr, instance)
                 else:
@@ -930,15 +1271,24 @@ class Tpmi():
                 for instance in instances:
                     yield (addr, package, instance)
 
-    def read_register(self, fname, addr, instance, regname, bfname=None):
+    def read_register(self,
+                      fname: str,
+                      addr: str,
+                      instance: int,
+                      regname: str,
+                      bfname: str = "") -> int:
         """
-        Read a TPMI register or a bit field of a TPMI register and return the result. The arguments
-        are as follows.
-          * fname - name of the TPMI feature to read.
-          * addr - optional TPM device PCI address.
-          * instance - the TPMI instance number to read.
-          * regname - name of the TPMI register to read.
-          * bfname - optional name of the bit field to read (read the entire register by default).
+        Read a TPMI register or a bit field and return its value.
+
+        Args:
+            fname: Name of the TPMI feature to read.
+            addr: Optional TPM device PCI address.
+            instance: TPMI instance number to read.
+            regname: Name of the TPMI register to read.
+            bfname: Name of the bit field to read. Read the entire register by default.
+
+        Returns:
+            The value of the TPMI register or bit field.
         """
 
         self._validate_fname(fname)
@@ -948,29 +1298,41 @@ class Tpmi():
 
         return self._read_register(fname, addr, instance, regname, bfname=bfname)
 
-    def get_bitfield(self, regval, fname, regname, bfname):
+    def get_bitfield(self, regval: int, fname: str, regname: str, bfname: str) -> int:
         """
-        Extract and return the value of a bit field from a register value. The arguments are as
-        follows.
-          * regval - value of the register.
-          * fname - name of the TPMI feature.
-          * regname - name of the TPMI register.
-          * bfname - name of the TPMI register bit field to extract.
+        Validate the TPMI feature name and return the value of the specified bit field
+        from the given register value.
+
+        Args:
+            regval: The value of the TPMI register.
+            fname: The name of the TPMI feature.
+            regname: The name of the TPMI register.
+            bfname: The name of the bit field to extract from the register.
+
+        Returns:
+            The value of the specified bit field.
         """
 
         self._validate_fname(fname)
         return self._get_bitfield(regval, fname, regname, bfname)
 
-    def write_register(self, value, fname, addr, instance, regname, bfname=None):
+    def write_register(self,
+                       value: int,
+                       fname: str,
+                       addr: str,
+                       instance: int,
+                       regname: str,
+                       bfname: str = ""):
         """
-        Write to a TPMI register. The arguments are as follows.
-          * value - the value to write to the register or its bit field.
-          * fname - name of the TPMI feature the register belongs to.
-          * addr - the TPMI device address.
-          * instance - the TPMI instance to write the register to.
-          * regname - name of the TPMI register to write to.
-          * bfname - optional name of the bit field to write to (write the entire register by
-                     default.)
+        Write a value to a TPMI register or its bit field.
+
+        Args:
+            value: Value to write to the register or bit field.
+            fname: Name of the TPMI feature the register belongs to.
+            addr: TPMI device address.
+            instance: TPMI instance to write the register to.
+            regname: Name of the TPMI register to write to.
+            bfname: Name of the bit field to write to. If not provided, write the entire register.
         """
 
         self._validate_fname(fname)
@@ -978,59 +1340,4 @@ class Tpmi():
         self._validate_regname(fname, regname, bfname=bfname)
         self._validate_instance(fname, addr, instance)
 
-        return self._write_register(value, fname, addr, instance, regname, bfname=bfname)
-
-    def __init__(self, pman, specdirs=None):
-        """
-        The class constructor. The arguments are as follows.
-          * pman - the process manager object that defines the target host.
-          * specdirs - a collection of spec directory paths on the target host to look for spec
-                       files in (auto-detect by default).
-        """
-
-        self._specdirs = specdirs
-        self._pman = pman
-
-        # Feature dictionaries.
-        self._fdicts = {}
-        # The debugfs mount point.
-        self._debugfs_mnt = None
-        # Whether debugfs should be unmounted on 'close()'.
-        self._unmount_debugfs = None
-        # TPMI-related sub-directories in 'self._debugfs_mnt' (one per TPMI PCI device).
-        self._tpmi_pci_paths = None
-        # Spec files "sdict" dictionaries for every supported feature.
-        self._sdicts = None
-        # The feature ID -> feature name dictionary (supported features only).
-        self._fid2fname = {}
-        # Feature maps.
-        self._fmaps = None
-        # Package number -> set of PCI addresses.
-        self._pkg2addrs = {}
-        # Unknown feature IDs (no spec file).
-        self._unknown_fids = None
-
-        if not self._specdirs:
-            self._specdirs = _find_spec_dirs()
-
-        # Keep absolute paths to spec directories - in case of an error a directory path like 'tpmi'
-        # may look confusing comparint to a path like '/my/path/tpmi'.
-        specdirs = self._specdirs
-        self._specdirs = []
-        for specdir in specdirs:
-            self._specdirs.append(Path(specdir).resolve().absolute())
-
-        self._debugfs_mnt, self._unmount_debugfs = FSHelpers.mount_debugfs(pman=self._pman)
-        self._tpmi_pci_paths = self._get_debugfs_tpmi_dirs()
-
-        self._build_sdicts()
-        self._build_fmaps()
-
-    def close(self):
-        """Uninitialize the class object."""
-
-        if self._unmount_debugfs:
-            with contextlib.suppress(Error):
-                self._pman.run(f"unmount {self._debugfs_mnt}")
-
-        ClassHelpers.close(self, unref_attrs=("_pman",))
+        self._write_register(value, fname, addr, instance, regname, bfname=bfname)
