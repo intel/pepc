@@ -76,8 +76,9 @@ from typing import Literal, cast, get_args
 import contextlib
 from pathlib import Path
 import yaml
+from pepclibs import CPUModels
 from pepclibs.helperlibs import Logging, YAML, ClassHelpers, FSHelpers, ProjectFiles, Trivial, Human
-from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorPermissionDenied
 
 if typing.TYPE_CHECKING:
     from typing import Final, TypedDict, Sequence, Iterable, NoReturn, Any
@@ -320,6 +321,9 @@ class Tpmi(ClassHelpers.SimpleCloseContext):
         self._specdirs = specdirs
 
         self._close_pman = pman is None
+
+        # Whether the TPMI interface is read-only.
+        self._readonly = False
 
         if pman:
             self._pman = pman
@@ -1003,6 +1007,9 @@ class Tpmi(ClassHelpers.SimpleCloseContext):
             bfname: Name of the register bit field to write to. If not specified, writes to the
                     entire register.
         """
+
+        if self._readonly:
+            raise ErrorPermissionDenied(f"TPMI is read-only{self._pman.hostmsg}")
 
         regdict = self._get_regdict(fname, regname)
 
