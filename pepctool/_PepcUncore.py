@@ -13,7 +13,6 @@ Implement the 'pepc uncore' command.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import contextlib
-import argparse
 import typing
 from typing import NamedTuple
 from pepclibs.msr import MSR
@@ -23,6 +22,7 @@ from pepclibs import Uncore, CPUInfo, _SysfsIO
 from pepctool import _PepcCommon, _OpTarget, _PepcPrinter, _PepcSetter
 
 if typing.TYPE_CHECKING:
+    import argparse
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepctool._PepcSetter  import PropSetInfoTypedDict
     from pepctool._PepcPrinter import PrintFormatType
