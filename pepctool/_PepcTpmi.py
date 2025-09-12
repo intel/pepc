@@ -14,9 +14,10 @@ Implement the 'pepc tpmi' command.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import sys
+import contextlib
 import typing
 from typing import NamedTuple
-from pepclibs import Tpmi
+from pepclibs import Tpmi, CPUInfo
 from pepclibs.helperlibs import Logging, Trivial, YAML
 from pepclibs.helperlibs.Exceptions import Error
 
@@ -264,24 +265,30 @@ def tpmi_ls_command(args: argparse.Namespace, pman: ProcessManagerType):
 
     cmdl = _get_ls_cmdline_args(args)
 
-    tpmi = Tpmi.Tpmi(pman)
+    with contextlib.ExitStack() as stack:
+        cpuinfo = CPUInfo.CPUInfo(pman)
+        stack.enter_context(cpuinfo)
 
-    sdicts = tpmi.get_known_features()
-    if not sdicts:
-        _LOG.info("Not supported TPMI features found")
-    else:
-        _LOG.info("Supported TPMI features")
-        for sdict in sdicts:
-            _LOG.info(" - %s: %s", sdict["name"], sdict["desc"].strip())
-            if cmdl.long:
-                _ls_long(sdict["name"], tpmi, prefix="   ")
+        tpmi = Tpmi.Tpmi(cpuinfo.info, pman=pman)
+        stack.enter_context(tpmi)
 
-    if cmdl.all:
-        fnames = tpmi.get_unknown_features()
-        if fnames and cmdl.all:
-            _LOG.info("Unknown TPMI features (available%s, but no spec file found)", pman.hostmsg)
-            txt = ", ".join(hex(fid) for fid in fnames)
-            _LOG.info(" - %s", txt)
+        sdicts = tpmi.get_known_features()
+        if not sdicts:
+            _LOG.info("Not supported TPMI features found")
+        else:
+            _LOG.info("Supported TPMI features")
+            for sdict in sdicts:
+                _LOG.info(" - %s: %s", sdict["name"], sdict["desc"].strip())
+                if cmdl.long:
+                    _ls_long(sdict["name"], tpmi, prefix="   ")
+
+        if cmdl.all:
+            fnames = tpmi.get_unknown_features()
+            if fnames and cmdl.all:
+                _LOG.info("Unknown TPMI features (available%s, but no spec file found)",
+                          pman.hostmsg)
+                txt = ", ".join(hex(fid) for fid in fnames)
+                _LOG.info(" - %s", txt)
 
 def _tpmi_read_command_print(tpmi: Tpmi.Tpmi, info: _ReadInfoType):
     """
@@ -336,69 +343,74 @@ def tpmi_read_command(args: argparse.Namespace, pman: ProcessManagerType):
 
     cmdl = _get_read_cmdline_args(args)
 
-    tpmi = Tpmi.Tpmi(pman=pman)
+    with contextlib.ExitStack() as stack:
+        cpuinfo = CPUInfo.CPUInfo(pman)
+        stack.enter_context(cpuinfo)
 
-    fnames = cmdl.fnames
-    if not cmdl.fnames:
-        fnames = [sdict["name"] for sdict in tpmi.get_known_features()]
+        tpmi = Tpmi.Tpmi(cpuinfo.info, pman=pman)
+        stack.enter_context(tpmi)
 
-    # Prepare all the information to print in the 'info' dictionary.
-    #  * first level key - feature name.
-    #  * second level key - PCI address.
-    #  * third level key - "package" or "instances".
-    info: _ReadInfoType = {}
-    for fname in fnames:
-        info[fname] = {}
+        fnames = cmdl.fnames
+        if not cmdl.fnames:
+            fnames = [sdict["name"] for sdict in tpmi.get_known_features()]
 
-        fdict = tpmi.get_fdict(fname)
+        # Prepare all the information to print in the 'info' dictionary.
+        #  * first level key - feature name.
+        #  * second level key - PCI address.
+        #  * third level key - "package" or "instances".
+        info: _ReadInfoType = {}
+        for fname in fnames:
+            info[fname] = {}
 
-        if cmdl.regnames:
-            regnames = cmdl.regnames
+            fdict = tpmi.get_fdict(fname)
+
+            if cmdl.regnames:
+                regnames = cmdl.regnames
+            else:
+                # Read all registers except for the reserved ones.
+                regnames = [regname for regname in fdict if not regname.startswith("RESERVED")]
+
+            for addr, package, instance in tpmi.iter_feature(fname, addrs=cmdl.addrs,
+                                                             packages=cmdl.packages,
+                                                             instances=cmdl.instances):
+                if addr not in info[fname]:
+                    info[fname][addr] = {"package": package, "instances": {}}
+
+                assert instance not in info[fname][addr]["instances"]
+                info[fname][addr]["instances"][instance] = {}
+
+                for regname in regnames:
+                    regval = tpmi.read_register(fname, addr, instance, regname)
+
+                    assert regname not in info[fname][addr]["instances"][instance]
+                    bfinfo: dict[str, int] = {}
+                    reginfo: _RegInfoTypedDict = {"value": regval, "fields": bfinfo}
+                    info[fname][addr]["instances"][instance][regname] = reginfo
+
+                    if cmdl.bfnames:
+                        bfnames = cmdl.bfnames
+                    else:
+                        bfnames = list(fdict[regname]["fields"])
+
+                    for bfname in bfnames:
+                        if bfname.startswith("RESERVED"):
+                            continue
+
+                        bfval = tpmi.get_bitfield(regval, fname, regname, bfname)
+                        bfinfo[bfname] = bfval
+
+                    if not bfinfo:
+                        # No bit fields information, probably all of them are reserved. Delete the
+                        # entire "fields" key so that it does not show up in the output.
+                        del reginfo["fields"]
+
+        if not info:
+            raise Error("BUG: No matches")
+
+        if cmdl.yaml:
+            YAML.dump(info, sys.stdout)
         else:
-            # Read all registers except for the reserved ones.
-            regnames = [regname for regname in fdict if not regname.startswith("RESERVED")]
-
-        for addr, package, instance in tpmi.iter_feature(fname, addrs=cmdl.addrs,
-                                                         packages=cmdl.packages,
-                                                         instances=cmdl.instances):
-            if addr not in info[fname]:
-                info[fname][addr] = {"package": package, "instances": {}}
-
-            assert instance not in info[fname][addr]["instances"]
-            info[fname][addr]["instances"][instance] = {}
-
-            for regname in regnames:
-                regval = tpmi.read_register(fname, addr, instance, regname)
-
-                assert regname not in info[fname][addr]["instances"][instance]
-                bfinfo: dict[str, int] = {}
-                reginfo: _RegInfoTypedDict = {"value": regval, "fields": bfinfo}
-                info[fname][addr]["instances"][instance][regname] = reginfo
-
-                if cmdl.bfnames:
-                    bfnames = cmdl.bfnames
-                else:
-                    bfnames = list(fdict[regname]["fields"])
-
-                for bfname in bfnames:
-                    if bfname.startswith("RESERVED"):
-                        continue
-
-                    bfval = tpmi.get_bitfield(regval, fname, regname, bfname)
-                    bfinfo[bfname] = bfval
-
-                if not bfinfo:
-                    # No bit fields information, probably all of them are reserved. Delete the
-                    # entire "fields" key so that it does not show up in the output.
-                    del reginfo["fields"]
-
-    if not info:
-        raise Error("BUG: No matches")
-
-    if cmdl.yaml:
-        YAML.dump(info, sys.stdout)
-    else:
-        _tpmi_read_command_print(tpmi, info)
+            _tpmi_read_command_print(tpmi, info)
 
 def tpmi_write_command(args, pman):
     """
@@ -411,21 +423,26 @@ def tpmi_write_command(args, pman):
 
     cmdl = _get_write_cmdline_args(args)
 
-    tpmi = Tpmi.Tpmi(pman=pman)
+    with contextlib.ExitStack() as stack:
+        cpuinfo = CPUInfo.CPUInfo(pman)
+        stack.enter_context(cpuinfo)
 
-    if cmdl.bfname:
-        bfname_str = f", bit field '{cmdl.bfname}'"
-        val_str = f"{cmdl.value}"
-    else:
-        bfname_str = ""
-        val_str = f"{cmdl.value:#x}"
+        tpmi = Tpmi.Tpmi(cpuinfo.info, pman=pman)
+        stack.enter_context(tpmi)
 
-    for addr, package, instance in tpmi.iter_feature(cmdl.fname, addrs=cmdl.addrs,
-                                                     packages=cmdl.packages,
-                                                     instances=cmdl.instances):
-        tpmi.write_register(cmdl.value, cmdl.fname, addr, instance, cmdl.regname,
-                            bfname=cmdl.bfname)
+        if cmdl.bfname:
+            bfname_str = f", bit field '{cmdl.bfname}'"
+            val_str = f"{cmdl.value}"
+        else:
+            bfname_str = ""
+            val_str = f"{cmdl.value:#x}"
 
-        _LOG.info("Wrote '%s' to TPMI register '%s'%s (feature '%s', device '%s', package %d, "
-                  "instance %d)",
-                  val_str, cmdl.regname, bfname_str, cmdl.fname, addr, package, instance)
+        for addr, package, instance in tpmi.iter_feature(cmdl.fname, addrs=cmdl.addrs,
+                                                         packages=cmdl.packages,
+                                                         instances=cmdl.instances):
+            tpmi.write_register(cmdl.value, cmdl.fname, addr, instance, cmdl.regname,
+                                bfname=cmdl.bfname)
+
+            _LOG.info("Wrote '%s' to TPMI register '%s'%s (feature '%s', device '%s', package %d, "
+                      "instance %d)",
+                      val_str, cmdl.regname, bfname_str, cmdl.fname, addr, package, instance)

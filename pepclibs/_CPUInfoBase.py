@@ -130,7 +130,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
             from pepclibs import Tpmi
 
             try:
-                self._tpmi = Tpmi.Tpmi(pman=self._pman)
+                self._tpmi = Tpmi.Tpmi(self.info, pman=self._pman)
             except ErrorNotSupported as err:
                 _LOG.debug("TPMI not supported%s:\n%s", self._pman.hostmsg, err.indent(2))
                 self._tpmi_supported = False

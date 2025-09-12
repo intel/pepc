@@ -81,6 +81,7 @@ from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 
 if typing.TYPE_CHECKING:
     from typing import Final, TypedDict, Sequence, Iterable, NoReturn, Any
+    from pepclibs.CPUInfoTypes import CPUInfoTypedDict
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
     class BFDictTypedDict(TypedDict, total=False):
@@ -269,7 +270,7 @@ def _load_sdict(specpath: Path) -> SDictTypedDict:
 
     return sdict
 
-class Tpmi():
+class Tpmi(ClassHelpers.SimpleCloseContext):
     """
     Provides methods to read and write TPMI registers, query available features, and extract
     bitfield values.
@@ -297,20 +298,41 @@ class Tpmi():
             Extract the value of a bitfield from a register value.
     """
 
-    def __init__(self, pman: ProcessManagerType | None = None, specdirs: Sequence[Path] = ()):
+    def __init__(self,
+                 cpu_info: CPUInfoTypedDict,
+                 pman: ProcessManagerType | None = None,
+                 specdirs: Sequence[Path] = ()):
         """
         Initialize a class instance.
 
         Args:
+            cpu_info: The CPU information dictionary.
             pman: The Process manager object that defines the host to access TPMI registers on. If
                   not provided, a local process manager will be used.
             specdirs: Spec directory paths on the local host to search for spec files. If not
                       provided, directories are auto-detected.
+
+        Notes:
+            - The reason for taking 'cpu_info' instead of a 'CPUInfo' object is to avoid a circular
+              dependency between the 'Tpmi' and 'CPUInfo' modules.
         """
 
         self._specdirs = specdirs
 
         self._close_pman = pman is None
+
+        if pman:
+            self._pman = pman
+        else:
+            # pylint: disable-next=import-outside-toplevel
+            from pepclibs.helperlibs import LocalProcessManager
+
+            self._pman = LocalProcessManager.LocalProcessManager()
+
+        vendor = cpu_info["vendor"]
+        if vendor != "GenuineIntel":
+            raise ErrorNotSupported(f"Unsupported CPU vendor '{vendor}'{self._pman.hostmsg}\nOnly"
+                                    f"Intel CPUs support TPMI")
 
         # The features dictionary, maps feature name to the fdict (feature dictionary).
         self._fdicts: dict[str, dict[str, RegDictTypedDict]] = {}
@@ -324,14 +346,6 @@ class Tpmi():
         self._specdirs = []
         for specdir in specdirs:
             self._specdirs.append(Path(specdir).resolve().absolute())
-
-        if pman:
-            self._pman = pman
-        else:
-            # pylint: disable-next=import-outside-toplevel
-            from pepclibs.helperlibs import LocalProcessManager
-
-            self._pman = LocalProcessManager.LocalProcessManager()
 
         # The debugfs mount point.
         self._debugfs_mnt: Path
@@ -360,7 +374,6 @@ class Tpmi():
         self._pkg2addrs: dict[int, set[str]] = {}
         # Unknown feature IDs (no spec file).
         self._unknown_fids: list[int] = []
-
 
         self._build_fmaps()
 
