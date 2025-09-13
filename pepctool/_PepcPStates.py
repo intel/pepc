@@ -14,7 +14,6 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import contextlib
 import typing
-from typing import NamedTuple
 from pepclibs.msr import MSR
 from pepclibs.helperlibs import Logging
 from pepclibs.helperlibs.Exceptions import Error
@@ -23,44 +22,46 @@ from pepctool import _PepcCommon, _OpTarget, _PepcPrinter, _PepcSetter
 
 if typing.TYPE_CHECKING:
     import argparse
+    from typing import TypedDict
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepctool._PepcSetter  import PropSetInfoTypedDict
     from pepctool._PepcPrinter import PrintFormatType
 
-class _CmdlineArgsType(NamedTuple):
-    """
-    A type for command-line arguments of the 'pepc pstates info' and 'pepc pstates config' commands.
+    class _CmdlineArgsTypedDict(TypedDict, total=False):
+        """
+        A typed dictionary for command-line arguments of the 'pepc pstates info' and
+        'pepc pstates config' commands.
 
-    Attributes:
-        yaml: Whether to output results in YAML format.
-        override_cpu_model: Override the CPU model with a custom value.
-        mechanisms: List of mechanisms to use for accessing P-state properties.
-        cpus: List of CPU numbers to operate on.
-        cores: List of core numbers to operate on.
-        modules: List of module numbers to operate on.
-        dies: List of die numbers to operate on.
-        packages: List of package numbers to operate on.
-        core_siblings: List of core sibling numbers to operate on.
-        module_siblings: List of module sibling numbers to operate on.
-        oargs: Dictionary of command line argument names and values matching the order of appearance
-               in the command line.
-    """
+        Attributes:
+            yaml: Whether to output results in YAML format.
+            override_cpu_model: Override the CPU model with a custom value.
+            mechanisms: List of mechanisms to use for accessing P-state properties.
+            cpus: List of CPU numbers to operate on.
+            cores: List of core numbers to operate on.
+            modules: List of module numbers to operate on.
+            dies: List of die numbers to operate on.
+            packages: List of package numbers to operate on.
+            core_siblings: List of core sibling numbers to operate on.
+            module_siblings: List of module sibling numbers to operate on.
+            oargs: Dictionary of command line argument names and values matching the order of
+            appearance in the command line.
+        """
 
-    yaml: bool
-    override_cpu_model: str
-    mechanisms: list[str]
-    cpus: list[int]
-    cores: list[int]
-    modules: list[int]
-    dies: list[int]
-    packages: list[int]
-    core_siblings: list[int]
-    module_siblings: list[int]
-    oargs: dict[str, str]
+        yaml: bool
+        override_cpu_model: str
+        mechanisms: list[str]
+        cpus: list[int]
+        cores: list[int]
+        modules: list[int]
+        dies: list[int]
+        packages: list[int]
+        core_siblings: list[int]
+        module_siblings: list[int]
+        oargs: dict[str, str]
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
-def _get_cmdline_args(args: argparse.Namespace) -> _CmdlineArgsType:
+def _get_cmdline_args(args: argparse.Namespace) -> _CmdlineArgsTypedDict:
     """
     Format command-line arguments into a typed dictionary.
 
@@ -71,21 +72,24 @@ def _get_cmdline_args(args: argparse.Namespace) -> _CmdlineArgsType:
         A dictionary containing the parsed command-line arguments.
     """
 
-    return _CmdlineArgsType(yaml=getattr(args, "yaml", False),
-                            override_cpu_model=args.override_cpu_model,
-                            mechanisms=args.mechanisms,
-                            cpus=args.cpus,
-                            cores=args.cores,
-                            modules=args.modules,
-                            dies=args.dies,
-                            packages=args.packages,
-                            core_siblings=args.core_siblings,
-                            module_siblings=args.module_siblings,
-                            oargs=getattr(args, "oargs", {}))
+    cmdl: _CmdlineArgsTypedDict = {}
+    cmdl["yaml"] = getattr(args, "yaml", False)
+    cmdl["override_cpu_model"] = args.override_cpu_model
+    cmdl["mechanisms"] = args.mechanisms
+    cmdl["cpus"] = args.cpus
+    cmdl["cores"] = args.cores
+    cmdl["modules"] = args.modules
+    cmdl["dies"] = args.dies
+    cmdl["packages"] = args.packages
+    cmdl["core_siblings"] = args.core_siblings
+    cmdl["module_siblings"] = args.module_siblings
+    cmdl["oargs"] = getattr(args, "oargs", {})
+
+    return cmdl
 
 def pstates_info_command(args: argparse.Namespace, pman: ProcessManagerType):
     """
-    Implement the 'pstates info' command to display P-states properties for the target host.
+    Implement the 'pstates info' command to display P-state properties for the target host.
 
     Args:
         args: Parsed command-line arguments.
@@ -95,14 +99,14 @@ def pstates_info_command(args: argparse.Namespace, pman: ProcessManagerType):
     cmdl = _get_cmdline_args(args)
 
     # The output format to use.
-    fmt: PrintFormatType = "yaml" if cmdl.yaml else "human"
+    fmt: PrintFormatType = "yaml" if cmdl["yaml"] else "human"
 
     with contextlib.ExitStack() as stack:
         cpuinfo = CPUInfo.CPUInfo(pman=pman)
         stack.enter_context(cpuinfo)
 
-        if cmdl.override_cpu_model:
-            _PepcCommon.override_cpu_model(cpuinfo, cmdl.override_cpu_model)
+        if cmdl["override_cpu_model"]:
+            _PepcCommon.override_cpu_model(cpuinfo, cmdl["override_cpu_model"])
 
         pobj = PStates.PStates(pman=pman, cpuinfo=cpuinfo)
         stack.enter_context(pobj)
@@ -111,21 +115,21 @@ def pstates_info_command(args: argparse.Namespace, pman: ProcessManagerType):
         stack.enter_context(pprinter)
 
         mnames = []
-        if cmdl.mechanisms:
-            mnames = _PepcCommon.parse_mechanisms(cmdl.mechanisms, pobj)
+        if cmdl["mechanisms"]:
+            mnames = _PepcCommon.parse_mechanisms(cmdl["mechanisms"], pobj)
 
-        optar = _OpTarget.OpTarget(pman=pman, cpuinfo=cpuinfo, cpus=cmdl.cpus, cores=cmdl.cores,
-                                   modules=cmdl.modules, dies=cmdl.dies, packages=cmdl.packages,
-                                   core_siblings=cmdl.core_siblings,
-                                   module_siblings=cmdl.module_siblings)
+        optar = _OpTarget.OpTarget(pman=pman, cpuinfo=cpuinfo, cpus=cmdl["cpus"],
+                                   cores=cmdl["cores"], modules=cmdl["modules"], dies=cmdl["dies"],
+                                   packages=cmdl["packages"], core_siblings=cmdl["core_siblings"],
+                                   module_siblings=cmdl["module_siblings"])
         stack.enter_context(optar)
 
-        if not cmdl.oargs:
+        if not cmdl["oargs"]:
             # No options, print everything.
             printed = pprinter.print_props("all", optar, mnames=mnames, skip_unsupported=True,
                                            group=True)
         else:
-            pnames = cmdl.oargs
+            pnames = cmdl["oargs"]
             pnames = _PepcCommon.expand_subprops(pnames, pobj.props)
             printed = pprinter.print_props(pnames, optar, mnames=mnames, skip_unsupported=False)
 
@@ -134,7 +138,7 @@ def pstates_info_command(args: argparse.Namespace, pman: ProcessManagerType):
 
 def pstates_config_command(args: argparse.Namespace, pman: ProcessManagerType):
     """
-    Implement the 'pstates config' command to set or display P-states properties for the target
+    Implement the 'pstates config' command to set or display P-state properties for the target
     host.
 
     Args:
@@ -144,7 +148,7 @@ def pstates_config_command(args: argparse.Namespace, pman: ProcessManagerType):
 
     cmdl = _get_cmdline_args(args)
 
-    if not cmdl.oargs:
+    if not cmdl["oargs"]:
         raise Error("Please, provide a configuration option")
 
     # Options to set.
@@ -152,7 +156,7 @@ def pstates_config_command(args: argparse.Namespace, pman: ProcessManagerType):
     # Options to print.
     print_opts: list[str] = []
 
-    for optname, optval in cmdl.oargs.items():
+    for optname, optval in cmdl["oargs"].items():
         if optval is None:
             print_opts.append(optname)
         else:
@@ -162,8 +166,8 @@ def pstates_config_command(args: argparse.Namespace, pman: ProcessManagerType):
         cpuinfo = CPUInfo.CPUInfo(pman=pman)
         stack.enter_context(cpuinfo)
 
-        if cmdl.override_cpu_model:
-            _PepcCommon.override_cpu_model(cpuinfo, cmdl.override_cpu_model)
+        if cmdl["override_cpu_model"]:
+            _PepcCommon.override_cpu_model(cpuinfo, cmdl["override_cpu_model"])
 
         msr = MSR.MSR(cpuinfo, pman=pman)
         stack.enter_context(msr)
@@ -175,16 +179,16 @@ def pstates_config_command(args: argparse.Namespace, pman: ProcessManagerType):
         stack.enter_context(pobj)
 
         mnames = []
-        if cmdl.mechanisms:
-            mnames = _PepcCommon.parse_mechanisms(cmdl.mechanisms, pobj)
+        if cmdl["mechanisms"]:
+            mnames = _PepcCommon.parse_mechanisms(cmdl["mechanisms"], pobj)
 
         printer = _PepcPrinter.PStatesPrinter(pobj, cpuinfo)
         stack.enter_context(printer)
 
-        optar = _OpTarget.OpTarget(pman=pman, cpuinfo=cpuinfo, cpus=cmdl.cpus, cores=cmdl.cores,
-                                   modules=cmdl.modules, dies=cmdl.dies, packages=cmdl.packages,
-                                   core_siblings=cmdl.core_siblings,
-                                   module_siblings=cmdl.module_siblings)
+        optar = _OpTarget.OpTarget(pman=pman, cpuinfo=cpuinfo, cpus=cmdl["cpus"],
+                                   cores=cmdl["cores"], modules=cmdl["modules"], dies=cmdl["dies"],
+                                   packages=cmdl["packages"], core_siblings=cmdl["core_siblings"],
+                                   module_siblings=cmdl["module_siblings"])
         stack.enter_context(optar)
 
         if print_opts:
