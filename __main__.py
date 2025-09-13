@@ -8,6 +8,10 @@
 #
 # Author: Antti Laakso <antti.laakso@intel.com>
 
+"""
+The main entry point for the 'pepc' tool.
+"""
+
 import os
 import sys
 import zipfile
@@ -23,7 +27,7 @@ if __name__ == "__main__":
     if not basepath.is_file():
         sys.exit(main())
 
-    # This is a zipapp archive. It includeds the python code and the data. In order for the data to
+    # This is a zipapp archive. It includes the python code and the data. In order for the data to
     # be found by the tool, it should be extracted somewhere and made accessible to the tool via the
     # data path environment variable.
 
