@@ -1,22 +1,22 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2023 Intel Corporation
+# Copyright (C) 2020-2025 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
-# Authors: Antti Laakso <antti.laakso@linux.intel.com>
-#          Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
+# Authors: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
+#          Antti Laakso <antti.laakso@linux.intel.com>
 #          Niklas Neronin <niklas.neronin@intel.com>
 
 """
-This class provides API for Linux "cpuidle" subsystem sysfs knobs.
+Provide API for Linux "cpuidle" subsystem sysfs knobs.
 """
 
-# TODO: finish annotating and modernizing this module.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import re
 import typing
+from typing import cast
 import contextlib
 from pathlib import Path
 from pepclibs.helperlibs import Logging, LocalProcessManager, Trivial, ClassHelpers
@@ -24,12 +24,13 @@ from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorNotFou
 from pepclibs import CPUInfo, _PerCPUCache
 
 if typing.TYPE_CHECKING:
-    from typing import Literal, TypedDict, Union
+    from typing import Literal, TypedDict, Union, Generator, Iterable, Final
+    from pepclibs.helperlibs.ProcessManager import ProcessManagerType
+    from pepclibs.CPUInfoTypes import AbsNumsType
 
     class ReqCStateInfoTypedDict(TypedDict, total=False):
         """
-        Type for the Requestable C-state information dictionary returned by 'get_cstates_info()' and
-        similar methods.
+        Typed dictionary for the requestable C-state information.
 
         Attributes:
             index: C-state index.
@@ -55,50 +56,128 @@ if typing.TYPE_CHECKING:
     ReqCStateInfoValuesType = Union[int, str, bool]
 
     # The type of the keys in the Requestable C-state information dictionary.
-    ReqCStateInfoKeysType = Literal["index", "name", "desc", "disable",
-                                    "latency", "residency", "time", "usage"]
+    ReqCStateInfoKeysType = Literal["index", "name", "desc", "disable", "latency", "residency",
+                                    "time", "usage"]
+
+    # Type for the return value of 'enable_cstates()' and 'disable_cstates()' methods.
+    ReqCStateToggleResultType = dict[int, dict[Literal["csnames"], list[str]]]
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
-# The C-state sysfs file names which are read by 'get_cstates_info()'. The C-state
-# information dictionary returned by 'get_cstates_info()' uses these file names as keys as well.
-CST_SYSFS_FNAMES = ["name", "desc", "disable", "latency", "residency", "time", "usage"]
+# The C-state sysfs file names which are read by 'get_cstates_info()'.
+_CST_SYSFS_FNAMES: Final[set[str]] = {"name", "desc", "disable", "latency", "residency", "time",
+                                      "usage"}
 
 class CPUIdle(ClassHelpers.SimpleCloseContext):
     """
-    This class provides API for Linux "cpuidle" subsystem sysfs knobs.
+    Provide an API for interacting with the Linux "cpuidle" subsystem via sysfs. Refer to Linux
+    kernel documentation for details about C-state attributes.
 
-    Public methods overview.
+    Methods Overview:
+        enable_cstates(csnames="all", cpus="all")
+            Enable specified C-states on specified CPUs.
 
-    1. Enable/disable multiple C-states for multiple CPUs via Linux sysfs interfaces:
-       'enable_cstates()', 'disable_cstates()'.
-    2. Get C-state(s) information.
-       * For multiple CPUs and multiple C-states: get_cstates_info().
-       * For a single CPU and multiple C-states: 'get_cpu_cstates_info()'.
-       * For a single CPU and a single C-state:  'get_cpu_cstate_info()'.
+        disable_cstates(csnames="all", cpus="all")
+            Disable specified C-states on specified CPUs.
+
+        get_cstates_info(csnames="all", cpus="all")
+            Yield information about specified C-states for specified CPUs.
+
+        get_cpu_cstates_info(cpu, csnames="all")
+            Get information about specified C-states for a single CPU.
+
+        get_cpu_cstate_info(cpu, csname)
+            Get information about a single C-state for a single CPU.
+
+        get_idle_driver()
+            Return the name of the current idle driver.
+
+        get_current_governor()
+            Return the name of the current idle driver governor.
+
+        get_available_governors()
+            Return a list of available idle driver governors.
+
+        set_current_governor(governor)
+            Set the current idle driver governor.
+
+        close()
+            Uninitialize the class object and release resources.
     """
 
-    def _get_cmdline(self):
-        """Get kernel boot parameters."""
+    def __init__(self, pman: ProcessManagerType | None = None,
+                 cpuinfo: CPUInfo.CPUInfo | None = None,
+                 enable_cache=True):
+        """
+        Initialize a class instance.
+
+        Args:
+            pman: A process manager object for the target host. If not provided, a local process
+                  manager will be used.
+            cpuinfo: A 'CPUinfo.CPUInfo' object for the target. If not provided, a new instance is
+                     created.
+            enable_cache: Enable or disable caching of cpuidle subsystem information.
+        """
+
+        self._pman: ProcessManagerType
+        if not pman:
+            self._pman = LocalProcessManager.LocalProcessManager()
+        else:
+            self._pman = pman
+
+        if not cpuinfo:
+            self._cpuinfo = CPUInfo.CPUInfo(pman=self._pman)
+        else:
+            self._cpuinfo = cpuinfo
+
+        self._enable_cache = enable_cache
+
+        self._close_pman = pman is None
+        self._close_cpuinfo = cpuinfo is None
+
+        self._sysfs_base = Path("/sys/devices/system/cpu")
+
+        # Write-through "cpuidle" subsystem information cache.
+        self._cache = _PerCPUCache.PerCPUCache(self._cpuinfo, enable_cache=self._enable_cache)
+
+    def close(self):
+        """Uninitialize the class object."""
+
+        ClassHelpers.close(self, close_attrs=("_cache", "_cpuinfo", "_pman"))
+
+    def _get_kernel_cmdline(self) -> str:
+        """
+        Retrieve the kernel boot parameters from '/proc/cmdline'.
+
+        Returns:
+            The kernel boot parameters as a string.
+        """
 
         try:
             with self._pman.open("/proc/cmdline", "r") as fobj:
                 return fobj.read().strip()
         except Error as err:
-            raise Error(f"failed to read kernel boot parameters{self._pman.hostmsg}\n"
+            raise Error(f"Failed to read kernel boot parameters{self._pman.hostmsg}\n"
                         f"{err.indent(2)}") from err
 
-    def _read_fpaths_and_values(self, cpus):
+    def _read_fpaths_and_values(self, cpus: AbsNumsType) -> tuple[list[str], list[str]]:
         """
-        This is a helper for '_read_cstates_info()' which extracts all the required sysfs data from
-        the target system for CPUs in 'cpus'. Returns a the following tuple: ('fpaths', 'values').
-          * fpaths - sorted list of sysfs file paths for every necessary attribute of all C-states
-                      of CPUs in 'cpus'. The paths are not stripped.
-          * values - values for every file in 'fpaths' (not stripped either).
+        Extract sysfs file paths and their values for all C-states and the specified CPUs.
+
+        Args:
+            cpus: CPU numbers to collect C-state information for.
+
+        Returns:
+            A tuple containing:
+                - fpaths: Sorted list of sysfs file paths for each required C-state attribute.
+                - values: List of values read from each file in 'fpaths', in the same order.
+
+        Raises:
+            ErrorNotFound: If no C-state files are found for the specified CPUs.
         """
 
-        # We will use shell commands to read C-states information from sysfs files, because it is a
-        # lot faster on systems with large amounts of CPUs in case of a remote host.
+        # Use shell commands to read C-states information from sysfs files, because it is a lot
+        # faster on systems with large amounts of CPUs in case of a remote host.
         #
         # Start with forming the file paths to read by running the 'find' program.
         indexes_regex = "[[:digit:]]+"
@@ -107,8 +186,8 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
               fr"-regex '.*cpu({cpus_regex})/cpuidle/state({indexes_regex})/[^/]+'"
         files, _ = self._pman.run_verify(cmd, join=False)
         if not files:
-            msg = f"failed to find C-state files in '{self._sysfs_base}'{self._pman.hostmsg}."
-            for opt in self._get_cmdline().split():
+            msg = f"Failed to find C-state files in '{self._sysfs_base}'{self._pman.hostmsg}."
+            for opt in self._get_kernel_cmdline().split():
                 if opt == "cpuidle.off=1" or opt.startswith("idle="):
                     msg += f"\nThe '/proc/cmdline' file{self._pman.hostmsg} indicates that the " \
                            f"'{opt}' kernel boot parameter is set.\nThis may be the reason why " \
@@ -116,7 +195,7 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
                     break
             raise ErrorNotFound(msg)
 
-        # At this point 'files' contains the list of files we'll have to read. Something like this:
+        # At this point 'files' contains the list of files to read. Something like this:
         # [
         #   '/sys/devices/system/cpu/cpu0/cpuidle/state0/disable\n',
         #   '/sys/devices/system/cpu/cpu0/cpuidle/state0/name\n',
@@ -133,11 +212,10 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
         # Sorting will make sure everything is ordered by CPU number and C-state index number.
         files = sorted(files)
 
-        # We are only interested in some of the files.
-        keep_fnames = set(CST_SYSFS_FNAMES)
+        # Drop unnecessary files.
         fpaths = []
         for fpath in files:
-            if fpath.split("/")[-1].strip() in keep_fnames:
+            if fpath.split("/")[-1].strip() in _CST_SYSFS_FNAMES:
                 fpaths.append(fpath)
 
         # Write the names to a temporary file and then read them all in an efficient way.
@@ -155,35 +233,51 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
         finally:
             self._pman.rmtree(tmpdir)
 
-        # At this point 'values' will contain the value for every file in 'fpaths'.
-
         if len(fpaths) != len(values):
-            raise Error("BUG: mismatch between sysfs C-state paths and values")
+            raise Error("BUG: Mismatch between sysfs C-state paths and values")
 
-        return fpaths, values
+        return fpaths, cast(list[str], values)
 
-    def _read_cstates_info(self, cpus):
+    def _read_cstates_info(self,
+                           cpus: AbsNumsType) -> \
+                               Generator[tuple[int, dict[str, ReqCStateInfoTypedDict]], None, None]:
         """
-        Yield information about all C-states of CPUs in 'cpus' and yield a C-state information
-        dictionary for every CPU in 'cpus'.
+        Retrieve and yield information about all requestable C-states for the specified CPUs.
+
+        Args:
+            cpus: CPU numbers to yield C-state information for.
+
+        Yields:
+            Tuples of (CPU number, C-state information dictionary).
         """
 
-        def _add_cstate(csinfo, cstate):
-            """Add C-state dictionary 'cstate' to the CPU C-states dictionary 'cstates'."""
+        def _add_cstate(csinfo: dict[str, ReqCStateInfoTypedDict], cstate: ReqCStateInfoTypedDict):
+            """
+            Add a C-state dictionary to the CPU C-states dictionary.
+
+            Args:
+                csinfo: The C-states information dictionary to insert into.
+                cstate: The C-state information dictionary to insert to 'csinfo'.
+            """
 
             if "name" not in cstate:
                 cstate_info = ""
                 for key, val in cstate.items():
                     cstate_info += f"\n{key} - {val}"
-                raise Error(f"unexpected Linux sysfs C-states file structure: the 'name' file "
+                raise Error(f"Unexpected Linux sysfs C-states file structure: the 'name' file "
                             f"is missing.\nHere is all the collected information about the\n"
                             f"C-state:{cstate_info}")
 
             csname = self._normalize_csname(cstate["name"])
+
             # Ensure the desired keys order.
             csinfo[csname] = {}
             csinfo[csname]["index"] = cstate["index"]
-            for key in CST_SYSFS_FNAMES:
+            for _key in _CST_SYSFS_FNAMES:
+                if typing.TYPE_CHECKING:
+                    key = cast(ReqCStateInfoKeysType, _key)
+                else:
+                    key = _key
                 csinfo[csname][key] = cstate[key]
 
         try:
@@ -196,11 +290,11 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
 
         # This is the dictionary that we'll yield out. It'll contain information for every C-state
         # of a CPU.
-        csinfo = {}
+        csinfo: dict[str, ReqCStateInfoTypedDict] = {}
         # This is a temporary dictionary where we'll collect all data for a single C-state.
-        cstate = {}
+        cstate: ReqCStateInfoTypedDict = {}
 
-        index = prev_index = cpu = prev_cpu = None
+        prev_index = prev_cpu = -1
         fpath_regex = re.compile(r".+/cpu([0-9]+)/cpuidle/state([0-9]+)/(.+)")
 
         # Build the C-states information dictionary out of sysfs file names and and values.
@@ -210,25 +304,38 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
 
             matchobj = re.match(fpath_regex, fpath)
             if not matchobj:
-                raise Error(f"failed to parse the following file name from '{self._sysfs_base}'"
-                            f"{self._pman.hostmsg}:\n{fpath}")
+                raise Error(f"Failed to parse the following file name from '{self._sysfs_base}'"
+                            f"{self._pman.hostmsg}:\n  {fpath}")
 
-            cpu = int(matchobj.group(1))
-            index = int(matchobj.group(2))
-            key = matchobj.group(3)
+            _cpu = matchobj.group(1)
+            if not Trivial.is_int(_cpu):
+                raise Error(f"Failed to parse CPU number from the following file name "
+                            f"{self._pman.hostmsg}:\n  {fpath}")
+            cpu = int(_cpu)
+            if cpu < 0:
+                raise Error(f"Invalid CPU number parsed from the following file name "
+                            f"{self._pman.hostmsg}:\n  {fpath}")
 
-            if Trivial.is_int(val):
-                val = int(val)
+            _index = matchobj.group(2)
+            if not Trivial.is_int(_index):
+                raise Error(f"Failed to parse C-state index from the following file name "
+                            f"{self._pman.hostmsg}:\n  {fpath}")
+            index = int(_index)
+            if index < 0:
+                raise Error(f"Invalid C-state index parsed from the following file name "
+                            f"{self._pman.hostmsg}:\n  {fpath}")
 
-            if key == "disable":
-                val = bool(val)
+            if typing.TYPE_CHECKING:
+                fname = cast(ReqCStateInfoKeysType, matchobj.group(3))
+            else:
+                fname = matchobj.group(3)
 
-            if prev_index is not None and index != prev_index:
+            if prev_index >= 0 and index != prev_index:
                 # A C-state has been processed. Add it to 'csinfo'.
                 _add_cstate(csinfo, cstate)
                 cstate = {}
 
-            if prev_cpu is not None and cpu != prev_cpu:
+            if prev_cpu >= 0 and cpu != prev_cpu:
                 yield prev_cpu, csinfo
                 csinfo = {}
 
@@ -236,70 +343,34 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
             prev_index = index
 
             cstate["index"] = index
-            cstate[key] = val
+
+            if Trivial.is_int(val):
+                if fname == "disable":
+                    cstate[fname] = bool(val)
+                else:
+                    cstate[fname] = int(val)
+            else:
+                cstate[fname] = val
 
         _add_cstate(csinfo, cstate)
         yield cpu, csinfo
 
-    @staticmethod
-    def _normalize_csname(csname):
-        """Normalize C-state name 'csname'."""
-        return csname.upper()
-
-    def _normalize_csnames(self, csnames):
+    def _get_cstates_info(self,
+                          csnames: Iterable[str] | Literal["all"],
+                          cpus: AbsNumsType) -> \
+                            Generator[tuple[int, dict[str, ReqCStateInfoTypedDict]], None, None]:
         """
-        Normalize the the C-states list in 'csnames'. The arguments are as follows.
-          * csnames - same as in 'get_cstates_info()'.
+        Retrieve and yield information about requestable C-states for given CPUs.
 
-        Returns a list of normalized C-state names or "all". The names will be upper-cased,
-        duplicate names will be removed. The names are not validated.
+        Args:
+            csnames: Requestable C-state names to get information about.
+            cpus: CPU numbers to get requestable C-states information for.
+
+        Yields:
+            Tuples of (CPU number, C-state information dictionary).
         """
 
-        if csnames == "all":
-            return csnames
-
-        # TODO: do not accept CSV.
-        if isinstance(csnames, str):
-            csnames = Trivial.split_csv_line(csnames)
-
-        if not Trivial.is_iterable(csnames):
-            raise Error("bad C-states list. Should either be a string or an iterable collection")
-
-        csnames = Trivial.list_dedup(csnames)
-        return [self._normalize_csname(csname) for csname in csnames]
-
-    def _toggle_cstate(self, cpu, index, enable):
-        """Enable or disable the 'index' C-state for CPU 'cpu'."""
-
-        path = self._sysfs_base / f"cpu{cpu}" / "cpuidle" / f"state{index}" / "disable"
-        if enable:
-            val = "0"
-            action = "enable"
-        else:
-            val = "1"
-            action = "disable"
-
-        msg = f"{action} C-state with index '{index}' for CPU {cpu}"
-        _LOG.debug(msg)
-
-        try:
-            with self._pman.open(path, "r+") as fobj:
-                fobj.write(val + "\n")
-        except Error as err:
-            raise Error(f"failed to {msg}:\n{err.indent(2)}") from err
-
-        try:
-            with self._pman.open(path, "r") as fobj:
-                read_val = fobj.read().strip()
-        except Error as err:
-            raise Error(f"failed to {msg}:\n{err.indent(2)}") from err
-
-        if val != read_val:
-            raise Error(f"failed to {msg}:\nfile '{path}' contains '{read_val}', but should "
-                        f"contain '{val}'")
-
-    def _get_cstates_info(self, csnames, cpus):
-        """Implements 'get_cstates_info()'. Yields ('cpu', 'csinfo') tuples."""
+        csinfo: dict[str, ReqCStateInfoTypedDict]
 
         # Form list of CPUs that do not have their C-states information cached. The
         # '_read_cstates_info()' method is more efficient reading information for multiple CPUs in
@@ -322,35 +393,69 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
                     result_csinfo[csname] = csinfo[csname].copy()
                 except KeyError:
                     csnames = ", ".join(csname for csname in csinfo)
-                    raise Error(f"bad C-state name '{csname}' for CPU {cpu}\n"
-                                f"Valid names are: {csnames}") from None
+                    raise Error(f"Bad C-state name '{csname}' for CPU {cpu}, valid names are: "
+                                f"{csnames}") from None
 
             yield cpu, result_csinfo
 
-    def get_cstates_info(self, cpus="all", csnames="all"):
+    @staticmethod
+    def _normalize_csname(csname: str) -> str:
         """
-        Yield information about C-states specified in 'csnames' for CPUs specified in 'cpus'.
-          * cpus - collection of integer CPU numbers. Special value 'all' means "all CPUs".
-          * csnames - list of C-states names to get information about. It can be both a list of
-                      names or a string containing a comma-separated list of names. Value 'all' mean
-                      "all C-states" (default).
+        Normalize a C-state name.
 
-        This method yields a dictionary for every CPU in 'cpus'. The yielded dictionaries describe
-        all C-states in 'csnames' for the CPU. Here is the format of the yielded dictionaries.
+        Args:
+            csname: The C-state name to normalize.
 
-        { csname1: { "index":     C-state index,
-                     "name":      C-state name,
-                     "desc":      C-state description,
-                     "disable":   'True' if the C-state is disabled,
-                     "latency":   C-state latency in microseconds,
-                     "residency": C-state target residency in microseconds,
-                     "time":      time spent in the C-state in microseconds,
-                     "usage":     how many times the C-state was requested },
-          csname2: { ... etc ... },
-           ... and so on for all C-states ... }
+        Returns:
+            The normalized C-state name in uppercase.
+        """
 
-        The C-state keys come from Linux sysfs. Please, refer to Linux kernel documentation for more
-        details.
+        return csname.upper()
+
+    def _normalize_csnames(self, csnames: Iterable[str] | Literal["all"]) -> \
+                                                                Iterable[str] | Literal["all"]:
+        """
+        Normalize a collection of C-state names.
+
+        Convert all C-state names in 'csnames' to uppercase, remove duplicates, and return the
+        normalized list. If 'csnames' is "all", return it unchanged. Do not validate the names.
+
+        Args:
+            csnames: C-state names to normalize, or the string "all".
+
+        Returns:
+            List of normalized, deduplicated C-state names, or "all".
+        """
+
+        if csnames == "all":
+            return csnames
+
+        if not Trivial.is_iterable(csnames):
+            raise Error("Bad collection of C-state names: must be an iterable")
+
+        csnames = Trivial.list_dedup(csnames)
+        return [self._normalize_csname(csname) for csname in csnames]
+
+    def get_cstates_info(self,
+                         csnames: Iterable[str] | Literal["all"] = "all",
+                         cpus: AbsNumsType | Literal["all"] = "all") -> \
+                            Generator[tuple[int, dict[str, ReqCStateInfoTypedDict]], None, None]:
+        """
+        Retrieve and yield information about requestable C-states for given CPUs.
+
+        Requestable C-state information is read from Linux sysfs. Refer to the Linux kernel
+        documentation for details on C-state attributes.
+
+        Args:
+            csnames: Requestable C-state names to get information about, or 'all' for all available
+                     C-states.
+            cpus: CPU numbers to get requestable C-states information for, or 'all' for all CPUs.
+
+        Yields:
+            Tuples of (CPU number, C-states information dictionary).
+
+        Raises:
+            ErrorNotSupported: If there are no requestable C-states available.
         """
 
         cpus = self._cpuinfo.normalize_cpus(cpus)
@@ -360,38 +465,39 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
         csnames = self._normalize_csnames(csnames)
         yield from self._get_cstates_info(csnames, cpus)
 
-    def get_cpu_cstates_info(self, cpu, csnames="all"):
+    def get_cpu_cstates_info(self,
+                             cpu: int,
+                             csnames: Iterable[str] | Literal["all"] = "all") -> \
+                                                            dict[str, ReqCStateInfoTypedDict]:
         """
-        Get information about C-states specified in 'csnames' for CPU 'cpu'.
-          * cpu - integer CPU number to get C-states information about.
-          * csnames - same as in 'get_cstates_info()'.
+        Retrieve information about specified C-states for a given CPU.
 
-        Return a dictionary similar to the dictionaries yielded by 'get_cstates_info()'.
+        Args:
+            cpu: CPU number to retrieve C-states information for.
+            csnames: Requestable C-state names to retrieve information for, or "all" to include all
+                     available C-states.
+
+        Returns:
+            C-states information dictionary.
+
+        Raises:
+            ErrorNotSupported: If there are no requestable C-states available.
         """
 
-        csinfo = None
-        for _, csinfo in self.get_cstates_info(cpus=(cpu,), csnames=csnames):
-            pass
+        csinfo: dict[str, ReqCStateInfoTypedDict] = {}
+        for _, csinfo in self.get_cstates_info(csnames=csnames, cpus=(cpu,)):
+            break
         return csinfo
 
-    def get_cpu_cstate_info(self, cpu, csname):
+    def get_idle_driver(self) -> str:
         """
-        Get information about C-states 'csname' for CPU 'cpu'.
-          * cpu - integer CPU number to get C-state information about.
-          * csname - name of the C-state to get information about.
+        Retrieve the name of the currently used Linux CPU idle driver.
 
-        Return a dictionary similar to the dictionaries yielded by 'get_cstates_info()'.
-        """
+        Returns:
+            The name of the current Linux CPU idle driver.
 
-        csinfo = None
-        for _, csinfo in self.get_cstates_info(cpus=(cpu,), csnames=(csname,)):
-            pass
-        return csinfo
-
-    def get_idle_driver(self):
-        """
-        Return name of Linux idle driver currently used by the kernel. Raise 'ErrorNotSupported' if
-        there is no idle driver.
+        Raises:
+            ErrorNotSupported: If no idle driver is found.
         """
 
         with contextlib.suppress(ErrorNotFound):
@@ -401,27 +507,32 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
         try:
             idle_driver = self._pman.read_file(path).strip()
         except ErrorNotFound as err:
-            msg = f"failed to detect current Linux idle driver name:\n{err.indent(2)}"
-            for opt in self._get_cmdline().split():
+            msg = f"Failed to detect current Linux idle driver name:\n{err.indent(2)}"
+            for opt in self._get_kernel_cmdline().split():
                 if opt == "cpuidle.off=1" or opt.startswith("idle="):
                     msg += f"\nThe '/proc/cmdline' file{self._pman.hostmsg} indicates that the " \
-                           f"'{opt}' kernel boot parameter is set, may be the reason"
+                           f"'{opt}' kernel boot parameter is set, this may be the reason"
             raise ErrorNotSupported(msg) from err
 
         self._cache.add("current_driver", 0, idle_driver)
         return idle_driver
 
-    def get_current_governor(self):
+    def get_current_governor(self) -> str:
         """
-        Return name of the current Linux idle driver governor. Raise 'ErrorNotSUpported' if there is
-        no idle driver, and therefore, not idle governor.
+        Retrieve the name of the current Linux CPU idle governor.
+
+        Returns:
+            The name of the current CPU idle governor.
+
+        Raises:
+            ErrorNotSupported: If no idle driver is present.
         """
 
         # Verify there is an idle driver.
         try:
             self.get_idle_driver()
         except ErrorNotSupported as err:
-            raise ErrorNotSupported(f"failed to detect idle governor because there is no idle "
+            raise ErrorNotSupported(f"Failed to detect idle governor because there is no idle "
                                     f"driver:\n{err.indent(2)}") from err
 
         with contextlib.suppress(ErrorNotFound):
@@ -431,18 +542,26 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
         try:
             governor = self._pman.read_file(path).strip()
         except ErrorNotFound as err:
-            raise ErrorNotSupported(f"failed to detect idle governor:\n{err.indent(2)}") from err
+            raise ErrorNotSupported(f"Failed to detect idle governor:\n{err.indent(2)}") from err
 
         return self._cache.add("current_governor", 0, governor)
 
-    def get_available_governors(self):
-        """Get list of available idle driver governors."""
+    def get_available_governors(self) -> list[str]:
+        """
+        Retrieve the list of available CPU idle governors.
+
+        Returns:
+            List of available idle governors.
+
+        Raises:
+            ErrorNotSupported: If no idle driver is detected.
+        """
 
         # Verify there is an idle driver.
         try:
             self.get_idle_driver()
         except ErrorNotSupported as err:
-            raise ErrorNotSupported(f"failed to detect idle governors because there is no idle "
+            raise ErrorNotSupported(f"Failed to detect idle governors because there is no idle "
                                     f"driver:\n{err.indent(2)}") from err
 
         with contextlib.suppress(ErrorNotFound):
@@ -452,17 +571,66 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
         try:
             avail_governors = self._pman.read_file(path).strip().split()
         except ErrorNotFound as err:
-            raise ErrorNotSupported(f"failed to detect idle governors:\n{err.indent(2)}") from err
+            raise ErrorNotSupported(f"Failed to detect idle governors:\n{err.indent(2)}") from err
 
         return self._cache.add("available_governors", 0, avail_governors)
 
-    def _toggle_cstates(self, csnames="all", cpus="all", enable=True):
+    def _toggle_cstate(self, cpu: int, index: int, enable: bool):
         """
-        Enable or disable C-states 'csnames' on CPUs 'cpus'. The arguments are as follows.
-          * csnames - same as in 'get_cstates_info()'.
-          * cpus - same as in 'get_cstates_info()'.
-          * enabled - if 'True', the specified C-states should be enabled on the specified CPUs,
-                      otherwise disabled.
+        Enable or disable a C-state for a given CPU.
+
+        Args:
+            cpu: The CPU number to enable or disable the C-state for.
+            index: The index of the C-state to enable or disable.
+            enable: If True, enable the C-state, otherwise disable it.
+        """
+
+        path = self._sysfs_base / f"cpu{cpu}" / "cpuidle" / f"state{index}" / "disable"
+        if enable:
+            val = "0"
+            action = "enable"
+        else:
+            val = "1"
+            action = "disable"
+
+        msg = f"{action} C-state with index '{index}' for CPU {cpu}"
+        _LOG.debug(msg)
+
+        try:
+            with self._pman.open(path, "r+") as fobj:
+                fobj.write(val + "\n")
+        except Error as err:
+            raise Error(f"Failed to {msg}:\n{err.indent(2)}") from err
+
+        try:
+            with self._pman.open(path, "r") as fobj:
+                read_val = fobj.read().strip()
+        except Error as err:
+            raise Error(f"Failed to {msg}:\n{err.indent(2)}") from err
+
+        if val != read_val:
+            raise Error(f"Failed to {msg}:\n   File '{path}' contains '{read_val}', but should "
+                        f"contain '{val}'")
+
+    def _toggle_cstates(self,
+                        csnames: Iterable[str] | Literal["all"] = "all",
+                        cpus: AbsNumsType | Literal["all"] = "all",
+                        enable: bool = True) -> ReqCStateToggleResultType:
+        """
+        Enable or disable specified CPU C-states on selected CPUs.
+
+        Args:
+            csnames: Requestable C-state names to enable or disable, or 'all' to select all
+                     available C-states.
+            cpus: CPU numbers to apply the changes to, or 'all' for all CPUs.
+            enable: If True, enable the specified C-states, otherwise disable them.
+
+        Returns:
+            A dictionary mapping each affected CPU to a dictionary containing the list of toggled
+            C-state names.
+
+        Raises:
+            ErrorNotSupported: If no idle driver is in use on the target host.
         """
 
         if not self.get_idle_driver():
@@ -471,7 +639,8 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
         cpus = self._cpuinfo.normalize_cpus(cpus)
         csnames = self._normalize_csnames(csnames)
 
-        toggled = {}
+        toggled: ReqCStateToggleResultType = {}
+
         for cpu, csinfo in self._get_cstates_info(csnames, cpus):
             for csname, cstate in csinfo.items():
                 self._toggle_cstate(cpu, cstate["index"], enable)
@@ -487,85 +656,73 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
 
         return toggled
 
-    def enable_cstates(self, csnames="all", cpus="all"):
+    def enable_cstates(self,
+                       csnames: Iterable[str] | Literal["all"] = "all",
+                       cpus: AbsNumsType | Literal["all"] = "all") -> ReqCStateToggleResultType:
         """
-        Enable C-states 'csnames' on CPUs 'cpus'. The arguments are as follows.
-          * cpus - collection of integer CPU numbers to enable. Special value 'all' means "all
-                   CPUs".
-          * csnames - list of C-states names to enable. It can be both a list of names or a string
-                      containing a comma-separated list of names. Value 'all' mean "all C-states".
+        Enable specified CPU C-states on selected CPUs.
 
-        Returns a dictionary of the following structure:
-          { cpu: { "csnames" : [ cstate1, cstate2, ...]}}
-            * cpu - integer CPU number.
-            * [cstate1, cstate2, ...] - list of C-states names enabled for CPU 'cpu'.
+        Args:
+            csnames: Requestable C-state names to enable, or 'all' to select all available C-states.
+            cpus: CPU numbers to apply the changes to, or 'all' for all CPUs.
+
+        Returns:
+            A dictionary mapping each affected CPU to a dictionary containing the list of enabled
+            C-state names.
+
+        Raises:
+            ErrorNotSupported: If no idle driver is in use on the target host.
         """
 
         return self._toggle_cstates(csnames, cpus, True)
 
-    def disable_cstates(self, csnames="all", cpus="all"):
+    def disable_cstates(self,
+                       csnames: Iterable[str] | Literal["all"] = "all",
+                       cpus: AbsNumsType | Literal["all"] = "all") -> ReqCStateToggleResultType:
         """
-        Disable C-states 'csnames' on CPUs 'cpus'. The arguments are as follows.
-          * cpus - collection of integer CPU numbers to disable. Special value 'all' means "all
-                   CPUs".
-          * csnames - list of C-states names to enable. It can be both a list of names or a string
-                      containing a comma-separated list of names. Value 'all' mean "all C-states".
+        Enable specified CPU C-states on selected CPUs.
 
-        Return a dictionary similar to the dictionary returned by 'enable_cstates()'.
+        Args:
+            csnames: Requestable C-state names to disable, or 'all' to select all available
+                     C-states.
+            cpus: CPU numbers to apply the changes to, or 'all' for all CPUs.
+
+        Returns:
+            A dictionary mapping each affected CPU to a dictionary containing the list of disabled
+            C-state names.
+
+        Raises:
+            ErrorNotSupported: If no idle driver is in use on the target host.
         """
 
         return self._toggle_cstates(csnames, cpus, False)
 
-    def set_current_governor(self, governor):
+    def set_current_governor(self, governor: str):
         """
-        Set current idle driver governor. The arguments are as follows.
-          * governor - name of the governor to set.
+        Set the current CPU idle governor.
+
+        Args:
+            governor: Name of the governor to set.
+
+        Raises:
+            ErrorNotSupported: If idle governors are not supported on the system.
         """
 
         self._cache.remove("current_governor", 0)
 
         governors = self.get_available_governors()
         if not governors:
-            raise ErrorNotSupported(f"idle governors are not supported{self._pman.hostmsg}")
+            raise ErrorNotSupported(f"Idle governors are not supported{self._pman.hostmsg}")
         if governor not in governors:
-            governors = ", ".join(governors)
-            raise Error(f"bad governor name '{governor}', use one of: {governors}")
+            governors_str = ", ".join(governors)
+            raise Error(f"Bad governor name '{governor}', use one of: {governors_str}")
 
         path = self._sysfs_base / "cpuidle" / "current_governor"
         try:
             with self._pman.open(path, "r+") as fobj:
                 fobj.write(governor)
         except Error as err:
-            raise type(err)(f"failed to set 'governor'{self._pman.hostmsg}:\n{err.indent(2)}") \
+            raise type(err)(f"Failed to set 'governor'{self._pman.hostmsg}:\n{err.indent(2)}") \
                             from err
 
         self._cache.add("current_governor", 0, governor)
-
-    def __init__(self, pman=None, cpuinfo=None, enable_cache=True):
-        """
-        The class constructor. The arguments are as follows.
-          * pman - the process manager object that defines the host to run the measurements on.
-          * cpuinfo - CPU information object generated by 'CPUInfo.CPUInfo()'.
-          * enable_cache - this argument can be used to disable caching.
-        """
-
-        self._pman = pman
-        self._cpuinfo = cpuinfo
-        self._enable_cache = enable_cache
-
-        self._close_pman = pman is None
-        self._close_cpuinfo = cpuinfo is None
-
-        self._sysfs_base = Path("/sys/devices/system/cpu")
-
-        if not self._pman:
-            self._pman = LocalProcessManager.LocalProcessManager()
-        if not self._cpuinfo:
-            self._cpuinfo = CPUInfo.CPUInfo(pman=self._pman)
-
-        # Write-through "cpuidle" subsystem information cache.
-        self._cache = _PerCPUCache.PerCPUCache(self._cpuinfo, enable_cache=self._enable_cache)
-
-    def close(self):
-        """Uninitialize the class object."""
-        ClassHelpers.close(self, close_attrs=("_cache", "_cpuinfo", "_pman"))

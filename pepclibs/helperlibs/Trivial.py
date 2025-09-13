@@ -356,7 +356,7 @@ def validate_range(minval: int | float, maxval: int | float, min_limit: int | fl
         if maxval > max_limit:
             raise Error(f"{pfx}: Should be within '[{min_limit},{max_limit}]'")
 
-def is_iterable(value: str | list | tuple | set | dict) -> bool:
+def is_iterable(value: str | Iterable) -> bool:
     """
     Check if 'value' is an iterable collection. The 'str' type is not considered to be an iterable
     collection.

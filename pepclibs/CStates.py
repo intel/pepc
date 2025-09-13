@@ -32,7 +32,7 @@ if typing.TYPE_CHECKING:
     from pepclibs.msr._FeaturedMSR import FeatureValueType
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepclibs.CPUIdle import ReqCStateInfoTypedDict, ReqCStateInfoValuesType
-    from pepclibs.CPUIdle import ReqCStateInfoKeysType
+    from pepclibs.CPUIdle import ReqCStateInfoKeysType, ReqCStateToggleResultType
     from pepclibs.PropsTypes import PropertyValueType, MechanismNameType
     from pepclibs.CPUInfoTypes import AbsNumsType
 
@@ -48,7 +48,6 @@ class CStates(_PropsClassBase.PropsClassBase):
     3. Get C-state(s) information.
        * For multiple CPUs and multiple C-states: get_cstates_info().
        * For single CPU and multiple C-states: 'get_cpu_cstates_info()'.
-       * For single CPU and a single C-state:  'get_cpu_cstate_info()'.
     """
 
     def __init__(self,
@@ -119,12 +118,12 @@ class CStates(_PropsClassBase.PropsClassBase):
         return self._pcstatectl
 
     def get_cstates_info(self,
-                         cpus: AbsNumsType | Literal["all"] = "all",
-                         csnames: Iterable[str] | Literal["all"] = "all") -> \
+                         csnames: Iterable[str] | Literal["all"] = "all",
+                         cpus: AbsNumsType | Literal["all"] = "all") -> \
                             Generator[tuple[int, dict[str, ReqCStateInfoTypedDict]], None, None]:
         """Refer to 'CPUIdle.get_cstates_info()'."""
 
-        yield from self._get_cpuidle().get_cstates_info(cpus=cpus, csnames=csnames)
+        yield from self._get_cpuidle().get_cstates_info(csnames=csnames, cpus=cpus)
 
     def get_cpu_cstates_info(self,
                              cpu: int,
@@ -134,16 +133,10 @@ class CStates(_PropsClassBase.PropsClassBase):
 
         return self._get_cpuidle().get_cpu_cstates_info(cpu, csnames=csnames)
 
-    def get_cpu_cstate_info(self, cpu: int, csname: str) -> ReqCStateInfoTypedDict:
-        """Refer to 'CPUIdle.get_cpu_cstate_info()'."""
-
-        return self._get_cpuidle().get_cpu_cstate_info(cpu, csname)
-
-    # TODO: Fix return type annotation when 'CPUIdle' gets annotated.
     def enable_cstates(self,
                        csnames: Iterable[str] | Literal["all"] = "all",
                        cpus: AbsNumsType | Literal["all"] = "all",
-                       mnames: Sequence[MechanismNameType] = ()) -> dict:
+                       mnames: Sequence[MechanismNameType] = ()) -> ReqCStateToggleResultType:
         """
         Enable specified C-states on selected CPUs using the specified mechanisms.
 
@@ -159,22 +152,13 @@ class CStates(_PropsClassBase.PropsClassBase):
         Raises:
             ErrorTryAnotherMechanism: If none of the provided mechanisms support enabling C-states.
             ErrorNotSupported: If one or more of the specified C-states are not supported.
-
-        Notes:
-            - Only mechanisms supporting write operations (e.g., "sysfs") are allowed.
-            - Use the "sysfs" mechanism for enabling/disabling C-states.
-            - Mechanism names are normalized internally.
         """
 
         mnames = self._normalize_mnames(mnames, allow_readonly=False)
         if "sysfs" not in mnames:
             raise ErrorTryAnotherMechanism("Use the 'sysfs' mechanism to enable C-states")
 
-        try:
-            return self._get_cpuidle().enable_cstates(csnames=csnames, cpus=cpus)
-        except ErrorNotFound as err:
-            # TODO: change 'CPUIdle' to raise 'ErrorNotSupported' instead of 'ErrorNotFound'.
-            raise ErrorNotSupported(str(err)) from err
+        return self._get_cpuidle().enable_cstates(csnames=csnames, cpus=cpus)
 
     def disable_cstates(self,
                         csnames: Iterable[str] | Literal["all"] = "all",
@@ -259,6 +243,7 @@ class CStates(_PropsClassBase.PropsClassBase):
             Tuples of (cpu, value), where 'cpu' is the CPU number and 'value' is the property value.
         """
 
+        val: PropertyValueType
         if pname == "idle_driver":
             val = self._get_cpuidle().get_idle_driver()
         elif pname == "governor":
@@ -310,7 +295,7 @@ class CStates(_PropsClassBase.PropsClassBase):
 
         if mname == "sysfs":
             if pname == "governor":
-                self._get_cpuidle().set_current_governor(val)
+                self._get_cpuidle().set_current_governor(cast(str, val))
                 return
 
         raise Error(f"BUG: Unsupported property '{pname}'")
