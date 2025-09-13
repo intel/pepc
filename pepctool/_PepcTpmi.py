@@ -14,9 +14,8 @@ Implement the 'pepc tpmi' command.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import sys
-import contextlib
 import typing
-from typing import NamedTuple
+import contextlib
 from pepclibs import Tpmi, CPUInfo
 from pepclibs.helperlibs import Logging, Trivial, YAML
 from pepclibs.helperlibs.Exceptions import Error
@@ -56,65 +55,65 @@ if typing.TYPE_CHECKING:
     # A type for the 'pepc tpmi read' command output dictionary.
     _ReadInfoType = dict[str, dict[str, _PkgInstnacesTypedDict]]
 
-class _LsCmdlineArgsType(NamedTuple):
-    """
-    A type for command-line arguments of the 'pepc tpmi ls' command.
+    class _LsCmdlineArgsTypedDict(TypedDict, total=False):
+        """
+        A typed dictionary for command-line arguments of the 'pepc tpmi ls' command.
 
-    Attributes:
-        long: Whether to output extra information about each feature.
-        all: Whether to list all features, including the unknown ones.
-    """
+        Attributes:
+            long: Whether to output extra information about each feature.
+            all: Whether to list all features, including the unknown ones.
+        """
 
-    long: bool
-    all: bool
+        long: bool
+        all: bool
 
-class _ReadCmdlineArgsType(NamedTuple):
-    """
-    A type for command-line arguments of the 'pepc tpmi read' command.
+    class _ReadCmdlineArgsTypedDict(TypedDict, total=False):
+        """
+        A typed dictionary for command-line arguments of the 'pepc tpmi read' command.
 
-    Attributes:
-        fnames: List of TPMI feature names to read.
-        addrs: List of TPMI device PCI addresses to read from.
-        packages: List of package numbers to operate on.
-        instances: List of TPMI instance numbers to read from.
-        regnames: List of register names to read.
-        bfnames: List of bit field names to read.
-        yaml: Whether to output results in YAML format.
-    """
+        Attributes:
+            fnames: List of TPMI feature names to read.
+            addrs: List of TPMI device PCI addresses to read from.
+            packages: List of package numbers to operate on.
+            instances: List of TPMI instance numbers to read from.
+            regnames: List of register names to read.
+            bfnames: List of bit field names to read.
+            yaml: Whether to output results in YAML format.
+        """
 
-    fnames: list[str]
-    addrs: list[str]
-    packages: list[int]
-    instances: list[int]
-    regnames: list[str]
-    bfnames: list[str]
-    yaml: bool
+        fnames: list[str]
+        addrs: list[str]
+        packages: list[int]
+        instances: list[int]
+        regnames: list[str]
+        bfnames: list[str]
+        yaml: bool
 
-class _WriteCmdlineArgsType(NamedTuple):
-    """
-    A type for command-line arguments of the 'pepc tpmi write' command.
+    class _WriteCmdlineArgsTypedDict(TypedDict, total=False):
+        """
+        A typed dictionary for command-line arguments of the 'pepc tpmi write' command.
 
-    Attributes:
-        fname: TPMI feature name to write.
-        addrs: List of TPMI device PCI addresses to write to.
-        packages: List of package numbers to operate on.
-        instances: List of TPMI instance numbers to write to.
-        regname: Name of the register to write to.
-        bfname: Name of the bit field to write to (if any).
-        value: Value to write.
-    """
+        Attributes:
+            fname: TPMI feature name to write.
+            addrs: List of TPMI device PCI addresses to write to.
+            packages: List of package numbers to operate on.
+            instances: List of TPMI instance numbers to write to.
+            regname: Name of the register to write to.
+            bfname: Name of the bit field to write to (if any).
+            value: Value to write.
+        """
 
-    fname: str
-    addrs: list[str]
-    packages: list[int]
-    instances: list[int]
-    regname: str
-    bfname: str
-    value: int
+        fname: str
+        addrs: list[str]
+        packages: list[int]
+        instances: list[int]
+        regname: str
+        bfname: str
+        value: int
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
-def _get_ls_cmdline_args(args: argparse.Namespace) -> _LsCmdlineArgsType:
+def _get_ls_cmdline_args(args: argparse.Namespace) -> _LsCmdlineArgsTypedDict:
     """
     Format 'pepc tpmi ls' command-line arguments into a typed dictionary.
 
@@ -125,9 +124,13 @@ def _get_ls_cmdline_args(args: argparse.Namespace) -> _LsCmdlineArgsType:
         A dictionary containing the parsed command-line arguments.
     """
 
-    return _LsCmdlineArgsType(long=args.long, all=args.all)
+    cmdl: _LsCmdlineArgsTypedDict = {}
+    cmdl["long"] = args.long
+    cmdl["all"] = args.all
 
-def _get_read_cmdline_args(args: argparse.Namespace) -> _ReadCmdlineArgsType:
+    return cmdl
+
+def _get_read_cmdline_args(args: argparse.Namespace) -> _ReadCmdlineArgsTypedDict:
     """
     Format 'pepc tpmi read' command-line arguments into a typed dictionary.
 
@@ -172,15 +175,18 @@ def _get_read_cmdline_args(args: argparse.Namespace) -> _ReadCmdlineArgsType:
     if bfnames and not regnames:
         raise Error("'--bfname' requires '--registers' to be specified")
 
-    return _ReadCmdlineArgsType(fnames=fnames,
-                                addrs=addrs,
-                                packages=packages,
-                                instances=instances,
-                                regnames=regnames,
-                                bfnames=bfnames,
-                                yaml=getattr(args, "yaml", False))
+    cmdl: _ReadCmdlineArgsTypedDict = {}
+    cmdl["fnames"] = fnames
+    cmdl["addrs"] = addrs
+    cmdl["packages"] = packages
+    cmdl["instances"] = instances
+    cmdl["regnames"] = regnames
+    cmdl["bfnames"] = bfnames
+    cmdl["yaml"] = getattr(args, "yaml", False)
 
-def _get_write_cmdline_args(args: argparse.Namespace) -> _WriteCmdlineArgsType:
+    return cmdl
+
+def _get_write_cmdline_args(args: argparse.Namespace) -> _WriteCmdlineArgsTypedDict:
     """
     Format 'pepc tpmi write' command-line arguments into a typed dictionary.
 
@@ -209,13 +215,16 @@ def _get_write_cmdline_args(args: argparse.Namespace) -> _WriteCmdlineArgsType:
 
     value = Trivial.str_to_int(args.value, what="value to write")
 
-    return _WriteCmdlineArgsType(fname=args.fname,
-                                 addrs=addrs,
-                                 packages=packages,
-                                 instances=instances,
-                                 regname=args.regname,
-                                 bfname=args.bfname,
-                                 value=value)
+    cmdl: _WriteCmdlineArgsTypedDict = {}
+    cmdl["fname"] = args.fname
+    cmdl["addrs"] = addrs
+    cmdl["packages"] = packages
+    cmdl["instances"] = instances
+    cmdl["regname"] = args.regname
+    cmdl["bfname"] = args.bfname
+    cmdl["value"] = value
+
+    return cmdl
 
 def _ls_long(fname: str, tpmi: Tpmi.Tpmi, prefix: str = ""):
     """
@@ -279,12 +288,12 @@ def tpmi_ls_command(args: argparse.Namespace, pman: ProcessManagerType):
             _LOG.info("Supported TPMI features")
             for sdict in sdicts:
                 _LOG.info(" - %s: %s", sdict["name"], sdict["desc"].strip())
-                if cmdl.long:
+                if cmdl["long"]:
                     _ls_long(sdict["name"], tpmi, prefix="   ")
 
-        if cmdl.all:
+        if cmdl["all"]:
             fnames = tpmi.get_unknown_features()
-            if fnames and cmdl.all:
+            if fnames and cmdl["all"]:
                 _LOG.info("Unknown TPMI features (available%s, but no spec file found)",
                           pman.hostmsg)
                 txt = ", ".join(hex(fid) for fid in fnames)
@@ -350,8 +359,8 @@ def tpmi_read_command(args: argparse.Namespace, pman: ProcessManagerType):
         tpmi = Tpmi.Tpmi(cpuinfo.info, pman=pman)
         stack.enter_context(tpmi)
 
-        fnames = cmdl.fnames
-        if not cmdl.fnames:
+        fnames = cmdl["fnames"]
+        if not cmdl["fnames"]:
             fnames = [sdict["name"] for sdict in tpmi.get_known_features()]
 
         # Prepare all the information to print in the 'info' dictionary.
@@ -364,15 +373,15 @@ def tpmi_read_command(args: argparse.Namespace, pman: ProcessManagerType):
 
             fdict = tpmi.get_fdict(fname)
 
-            if cmdl.regnames:
-                regnames = cmdl.regnames
+            if cmdl["regnames"]:
+                regnames = cmdl["regnames"]
             else:
                 # Read all registers except for the reserved ones.
                 regnames = [regname for regname in fdict if not regname.startswith("RESERVED")]
 
-            for addr, package, instance in tpmi.iter_feature(fname, addrs=cmdl.addrs,
-                                                             packages=cmdl.packages,
-                                                             instances=cmdl.instances):
+            for addr, package, instance in tpmi.iter_feature(fname, addrs=cmdl["addrs"],
+                                                             packages=cmdl["packages"],
+                                                             instances=cmdl["instances"]):
                 if addr not in info[fname]:
                     info[fname][addr] = {"package": package, "instances": {}}
 
@@ -387,8 +396,8 @@ def tpmi_read_command(args: argparse.Namespace, pman: ProcessManagerType):
                     reginfo: _RegInfoTypedDict = {"value": regval, "fields": bfinfo}
                     info[fname][addr]["instances"][instance][regname] = reginfo
 
-                    if cmdl.bfnames:
-                        bfnames = cmdl.bfnames
+                    if cmdl["bfnames"]:
+                        bfnames = cmdl["bfnames"]
                     else:
                         bfnames = list(fdict[regname]["fields"])
 
@@ -407,7 +416,7 @@ def tpmi_read_command(args: argparse.Namespace, pman: ProcessManagerType):
         if not info:
             raise Error("BUG: No matches")
 
-        if cmdl.yaml:
+        if cmdl["yaml"]:
             YAML.dump(info, sys.stdout)
         else:
             _tpmi_read_command_print(tpmi, info)
@@ -430,19 +439,19 @@ def tpmi_write_command(args, pman):
         tpmi = Tpmi.Tpmi(cpuinfo.info, pman=pman)
         stack.enter_context(tpmi)
 
-        if cmdl.bfname:
-            bfname_str = f", bit field '{cmdl.bfname}'"
-            val_str = f"{cmdl.value}"
+        if cmdl["bfname"]:
+            bfname_str = f", bit field '{cmdl["bfname"]}'"
+            val_str = f"{cmdl["value"]}"
         else:
             bfname_str = ""
-            val_str = f"{cmdl.value:#x}"
+            val_str = f"{cmdl["value"]:#x}"
 
-        for addr, package, instance in tpmi.iter_feature(cmdl.fname, addrs=cmdl.addrs,
-                                                         packages=cmdl.packages,
-                                                         instances=cmdl.instances):
-            tpmi.write_register(cmdl.value, cmdl.fname, addr, instance, cmdl.regname,
-                                bfname=cmdl.bfname)
+        for addr, package, instance in tpmi.iter_feature(cmdl["fname"], addrs=cmdl["addrs"],
+                                                         packages=cmdl["packages"],
+                                                         instances=cmdl["instances"]):
+            tpmi.write_register(cmdl["value"], cmdl["fname"], addr, instance, cmdl["regname"],
+                                bfname=cmdl["bfname"])
 
             _LOG.info("Wrote '%s' to TPMI register '%s'%s (feature '%s', device '%s', package %d, "
                       "instance %d)",
-                      val_str, cmdl.regname, bfname_str, cmdl.fname, addr, package, instance)
+                      val_str, cmdl["regname"], bfname_str, cmdl["fname"], addr, package, instance)
