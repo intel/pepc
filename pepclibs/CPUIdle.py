@@ -258,6 +258,7 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
         if csnames == "all":
             return csnames
 
+        # TODO: do not accept CSV.
         if isinstance(csnames, str):
             csnames = Trivial.split_csv_line(csnames)
 

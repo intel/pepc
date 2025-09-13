@@ -1252,7 +1252,7 @@ class CStatesPrinter(_PropsPrinter):
             The number of requestable C-states printed.
         """
 
-        if mnames is None:
+        if not mnames:
             mnames = ["sysfs"]
 
         if "sysfs" not in mnames:
