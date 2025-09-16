@@ -1,3 +1,9 @@
+pepc (1.6.2) unstable; urgency=low
+
+  * Improve 'importlib_resources' failure message in case of python 3.9.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Tue, 16 Sep 2025 00:00:00 +0200
+
 pepc (1.6.1) unstable; urgency=low
 
   * Fix Arrow Lake frequency reading with the 'msr' method.

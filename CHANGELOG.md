@@ -5,10 +5,13 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
- - Improve 'importlib_resources' failure message in case of python 3.9.
 ### Added
 ### Removed
 ### Changed
+
+## [1.6.2] - 2025-09-16
+### Fixed
+ - Improve 'importlib_resources' failure message in case of python 3.9.
 
 ## [1.6.1] - 2025-09-10
 ### Fixed
