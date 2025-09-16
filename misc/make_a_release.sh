@@ -13,6 +13,7 @@ BASEDIR="$(readlink -ev -- ${0%/*}/..)"
 
 # Regular expression matching pepc version.
 VERSION_REGEX='\([0-9]\+\)\.\([0-9]\+\)\.\([0-9]\+\)'
+_VERSION_VAR_REGEX="^_VERSION\([^=]*\)= \"$VERSION_REGEX\"$"
 
 # File paths containing the version number that we'll have to adjust.
 PEPC_FILE="$BASEDIR/pepctool/_Pepc.py"
@@ -78,9 +79,8 @@ if [ $# -eq 1 ]; then
            fatal "please, provide new version in X.Y.Z format"
 elif [ $# -eq 0 ]; then
     # The new version was not provided, increment the current version umber.
-    sed_regex="^_VERSION[^=]*= \"$VERSION_REGEX\"$"
-    ver_start="$(sed -n -e "s/$sed_regex/\1.\2./p" "$PEPC_FILE")"
-    ver_end="$(sed -n -e "s/$sed_regex/\3/p" "$PEPC_FILE")"
+    ver_start="$(sed -n -e "s/$_VERSION_VAR_REGEX/\2.\3./p" "$PEPC_FILE")"
+    ver_end="$(sed -n -e "s/$_VERSION_VAR_REGEX/\4/p" "$PEPC_FILE")"
     ver_end="$(($ver_end+1))"
     new_ver="$ver_start$ver_end"
 else
@@ -110,7 +110,7 @@ ask_question "Did you update 'CHANGELOG.md'"
                           -e "artem.bityutskiy@intel.com" "$CHANGELOG_FILE"
 
 # Update the tool version.
-sed -i -e "s/^_VERSION = \"$VERSION_REGEX\"$/_VERSION = \"$new_ver\"/" "$PEPC_FILE"
+sed -i -e "s/$_VERSION_VAR_REGEX/_VERSION\1= \"$new_ver\"/" "$PEPC_FILE"
 sed -i -e "s/^version = \"$VERSION_REGEX\"$/version = \"$new_ver\"/" "$PYPROJECT_TOML"
 # Update RPM package version.
 sed -i -e "s/^Version:\(\s\+\)$VERSION_REGEX$/Version:\1$new_ver/" "$SPEC_FILE"
