@@ -574,11 +574,14 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             if mode & (stat.S_IROTH | stat.S_IWOTH | stat.S_IXOTH):
                 raise Error(f"Private SSH key at '{self.privkeypath}' permissions are too wide: "
                             f"Make sure 'others' cannot read/write/execute it")
+            look_for_keys = False
+        else:
+            look_for_keys = True
 
         _LOG.debug("Establishing SSH connection to %s, port %d, username '%s', timeout '%s', "
-                   "password '%s', priv. key '%s', SSH pman object ID: %s",
+                   "password '%s', priv. key '%s', look_for_keys '%s', SSH pman object ID: %s",
                    self._vhostname, port, self.username, self.connection_timeout, self.password,
-                   self.privkeypath, id(self))
+                   self.privkeypath, look_for_keys, id(self))
 
         try:
             self.ssh = paramiko.SSHClient()
@@ -586,7 +589,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             # We expect to be authenticated either with the key or an empty password.
             self.ssh.connect(username=self.username, hostname=connhost, port=port,
                              key_filename=self.privkeypath, timeout=self.connection_timeout,
-                             password=self.password, allow_agent=True, look_for_keys=True)
+                             password=self.password, allow_agent=True, look_for_keys=look_for_keys)
         except paramiko.AuthenticationException as err:
             msg = Error(str(err)).indent(2)
             raise ErrorConnect(f"SSH authentication failed when connecting to {self._vhostname} as "
