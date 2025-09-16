@@ -30,7 +30,7 @@ if typing.TYPE_CHECKING:
 _IGNORE = object()
 
 @pytest.fixture(name="params", scope="module")
-def get_params(hostspec: str) -> Generator[CommonTestParamsTypedDict, None, None]:
+def get_params(hostspec: str, username: str) -> Generator[CommonTestParamsTypedDict, None, None]:
     """
     Yield a dictionary containing parameters required 'CPUInfo' tests.
 

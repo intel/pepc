@@ -35,7 +35,7 @@ _IGNORE: Final[dict[ExceptionType, str]] = {ErrorNotSupported: "--mechanism",
                                             ErrorTryAnotherMechanism: "--mechanism"}
 
 @pytest.fixture(name="params", scope="module")
-def get_params(hostspec: str) -> Generator[PropsCmdlTestParamsTypedDict, None, None]:
+def get_params(hostspec: str, username: str) -> Generator[PropsCmdlTestParamsTypedDict, None, None]:
     """
     Yield a dictionary containing parameters required for running the test.
 

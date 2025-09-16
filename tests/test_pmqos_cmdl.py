@@ -17,7 +17,7 @@ from pepclibs.helperlibs.Exceptions import Error
 from pepclibs import CPUInfo, PMQoS
 
 @pytest.fixture(name="params", scope="module")
-def get_params(hostspec, tmp_path_factory):
+def get_params(hostspec, username, tmp_path_factory):
     """Yield a dictionary with information we need for testing."""
 
     with common.get_pman(hostspec) as pman, \

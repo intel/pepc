@@ -26,6 +26,7 @@ if typing.TYPE_CHECKING:
 
 @pytest.fixture(name="params", scope="module", params=props_common.get_enable_cache_param())
 def get_params(hostspec: str,
+               username: str,
                request: pytest.FixtureRequest) -> Generator[PropsTestParamsTypedDict, None, None]:
     """
     Yield a dictionary containing parameters required 'CPUInfo' tests.

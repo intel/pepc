@@ -20,7 +20,7 @@ from pepclibs.helperlibs.Exceptions import Error
 from pepclibs import CPUInfo, CPUOnline
 
 @pytest.fixture(name="params", scope="module")
-def get_params(hostspec):
+def get_params(hostspec, username):
     """
     Build and yield the testing parameters dictionary. The arguments are as follows.
       * hostspec - the specification of the host to run the tests on.

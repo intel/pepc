@@ -43,7 +43,7 @@ if typing.TYPE_CHECKING:
         cache_enabled: bool
 
 @pytest.fixture(name="params", scope="module")
-def get_params(hostspec: str) -> Generator[_TestParamsTypedDict, None, None]:
+def get_params(hostspec: str, username: str) -> Generator[_TestParamsTypedDict, None, None]:
     """
     Yield a dictionary containing parameters required for running the test.
 

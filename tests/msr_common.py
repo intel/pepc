@@ -50,7 +50,7 @@ def get_msr_objs(params):
             yield msr
 
 @pytest.fixture(name="params", scope="module")
-def get_params(hostspec):
+def get_params(hostspec, username):
     """Yield a dictionary with information we need for testing."""
 
     with common.get_pman(hostspec) as pman, CPUInfo.CPUInfo(pman=pman) as cpuinfo:
