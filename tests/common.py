@@ -20,7 +20,6 @@ from pepclibs.helperlibs import ProcessManager, EmulProcessManager
 if typing.TYPE_CHECKING:
     from typing import TypedDict, cast
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
-    from pepclibs.helperlibs.Exceptions import ExceptionType
 
     class CommonTestParamsTypedDict(TypedDict):
         """
