@@ -42,7 +42,7 @@ def get_params(hostspec: str, username: str) -> Generator[CommonTestParamsTypedD
         A dictionary with test parameters.
     """
 
-    with common.get_pman(hostspec) as pman:
+    with common.get_pman(hostspec, username=username) as pman:
         params = common.build_params(pman)
         yield params
 

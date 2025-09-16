@@ -26,7 +26,7 @@ def get_params(hostspec, username):
       * hostspec - the specification of the host to run the tests on.
     """
 
-    with common.get_pman(hostspec) as pman, \
+    with common.get_pman(hostspec, username=username) as pman, \
          CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
          CPUOnline.CPUOnline(pman=pman, cpuinfo=cpuinfo) as cpuonline:
         params = common.build_params(pman)

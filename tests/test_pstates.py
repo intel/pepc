@@ -43,7 +43,7 @@ def get_params(hostspec: str,
 
     enable_cache = request.param
 
-    with common.get_pman(hostspec) as pman, \
+    with common.get_pman(hostspec, username=username) as pman, \
          CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
          PStates.PStates(pman=pman, cpuinfo=cpuinfo, enable_cache=enable_cache) as pobj:
         params = common.build_params(pman)

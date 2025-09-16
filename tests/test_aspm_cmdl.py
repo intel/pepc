@@ -23,7 +23,7 @@ if typing.TYPE_CHECKING:
 def get_params(hostspec, username):
     """Yield a dictionary with information we need for testing."""
 
-    with common.get_pman(hostspec) as pman:
+    with common.get_pman(hostspec, username=username) as pman:
         params = common.build_params(pman)
         yield params
 

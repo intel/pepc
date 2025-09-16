@@ -44,7 +44,7 @@ def get_params(hostspec: str, username: str) -> Generator[PropsCmdlTestParamsTyp
         A dictionary with test parameters.
     """
 
-    with common.get_pman(hostspec) as pman, \
+    with common.get_pman(hostspec, username=username) as pman, \
          CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
          Uncore.Uncore(pman=pman, cpuinfo=cpuinfo) as pobj:
         params = common.build_params(pman)

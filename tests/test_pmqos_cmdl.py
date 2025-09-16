@@ -20,7 +20,7 @@ from pepclibs import CPUInfo, PMQoS
 def get_params(hostspec, username, tmp_path_factory):
     """Yield a dictionary with information we need for testing."""
 
-    with common.get_pman(hostspec) as pman, \
+    with common.get_pman(hostspec, username=username) as pman, \
          CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
          PMQoS.PMQoS(pman=pman, cpuinfo=cpuinfo) as pobj:
         params = common.build_params(pman)

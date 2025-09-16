@@ -19,7 +19,8 @@ from pepclibs import CPUInfo, PStates, CStates, _PropsCache
 def get_params(hostspec, username):
     """Yield a dictionary with information we need for testing."""
 
-    with common.get_pman(hostspec) as pman, CPUInfo.CPUInfo(pman=pman) as cpuinfo:
+    with common.get_pman(hostspec, username=username) as pman, \
+         CPUInfo.CPUInfo(pman=pman) as cpuinfo:
         params = common.build_params(pman)
 
         params["cpuinfo"] = cpuinfo

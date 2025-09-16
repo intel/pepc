@@ -55,7 +55,7 @@ def get_params(hostspec: str, username: str) -> Generator[_TestParamsTypedDict, 
         A dictionary with test parameters.
     """
 
-    with common.get_pman(hostspec) as pman, CPUInfo.CPUInfo(pman=pman) as cpuinfo:
+    with common.get_pman(hostspec, username=username) as pman, CPUInfo.CPUInfo(pman=pman) as cpuinfo:
         params = common.build_params(pman)
 
         if typing.TYPE_CHECKING:
