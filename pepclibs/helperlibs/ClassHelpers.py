@@ -175,9 +175,7 @@ class WrapExceptions:
     def __enter__(self):
         """Enter the run-time context."""
 
-        name = "__enter__"
-        method = getattr(self._obj, name)
-        return self._get_wapper(name, method)()
+        return self
 
     def __exit__(self, *args: Any):
         """Exit from the runtime context."""
