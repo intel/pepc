@@ -15,22 +15,21 @@ import sys
 import typing
 import contextlib
 from pathlib import Path
-
-# TODO: remove the 'importlib_resources' import and use 'importlib.resources' instead when
-#       switching to Python 3.10+. This hack is needed only to support Python 3.9.
-try:
-    import importlib_resources
-    _importlib_resources_files = importlib_resources.files
-except ImportError:
-    import importlib.resources
-    _importlib_resources_files = importlib.resources.files
-
 from pepclibs.helperlibs import ProcessManager, Logging
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound
 
 if typing.TYPE_CHECKING:
     from typing import Generator, Sequence
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
+
+# TODO: remove the 'importlib_resources' import and use 'importlib.resources' instead when
+#       switching to Python 3.10+. This hack is needed only to support Python 3.9.
+if sys.version_info < (3, 10):
+    import importlib_resources
+    _importlib_resources_files = importlib_resources.files
+else:
+    import importlib.resources
+    _importlib_resources_files = importlib.resources.files
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
