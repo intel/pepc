@@ -81,9 +81,9 @@ def pytest_generate_tests(metafunc: pytest.Metafunc):
         raise pytest.UsageError("The '--username' option can only be used with real hosts")
 
     if hostname != "emulation":
+        metafunc.parametrize("hostspec", [hostname], scope="module")
         if not username:
             username = "root"
-        metafunc.parametrize("hostspec", [hostname], scope="module")
         metafunc.parametrize("username", [username], scope="module")
     elif metafunc.module.__name__ in _NOEMULATION_MODULES:
         # This is the emulation case, but the test is supposed to run with the local process
@@ -99,6 +99,7 @@ def pytest_generate_tests(metafunc: pytest.Metafunc):
             params = [f"emulation:{dataset}"]
 
         metafunc.parametrize("hostspec", params, scope="module")
+        metafunc.parametrize("username", [username], scope="module")
 
 def pytest_configure(config: pytest.Config):
     """
