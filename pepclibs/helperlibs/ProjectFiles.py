@@ -93,7 +93,7 @@ def get_python_data_package_path(prjname: str) -> Path | None:
     return None
 
 def search_project_data(subpath: str,
-                        tpath: str,
+                        tpath: str | Path,
                         pman: ProcessManagerType | None = None,
                         what: str | None = None,
                         envars: Sequence[str] | None = None) -> Generator[Path, None, None]:
@@ -240,7 +240,7 @@ def search_project_data(subpath: str,
                             f"locations:\n{dirs}.{envar_msg}")
 
 def find_project_data(prjname: str,
-                      tpath: str,
+                      tpath: str | Path,
                       pman: ProcessManagerType | None = None,
                       what: str | None = None) -> Path:
     """
@@ -280,7 +280,7 @@ def find_project_data(prjname: str,
     return next(search_project_data(prjname, tpath, pman=pman, what=what,
                                     envars=(get_project_data_envar(prjname),)))
 
-def get_project_data_search_descr(prjname: str, tpath: str) -> str:
+def get_project_data_search_descr(prjname: str, tpath: str | Path) -> str:
     """
     Generate a human-readable description of the search locations for project data.
 
