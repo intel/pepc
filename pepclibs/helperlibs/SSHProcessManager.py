@@ -31,7 +31,7 @@ import threading
 import contextlib
 from pathlib import Path
 from operator import itemgetter
-from typing import IO, cast
+from typing import cast
 from collections.abc import Callable
 try:
     import paramiko
@@ -43,7 +43,7 @@ from pepclibs.helperlibs.Exceptions import Error, ErrorPermissionDenied, ErrorTi
 from pepclibs.helperlibs.Exceptions import ErrorNotFound, ErrorExists
 
 if typing.TYPE_CHECKING:
-    from typing import Generator
+    from typing import Generator, IO
     from pepclibs.helperlibs._ProcessManagerBase import LsdirTypedDict
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
@@ -1229,9 +1229,10 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         # Make sure methods of 'fobj' always raise the 'Error' exception.
         wfobj = ClassHelpers.WrapExceptions(fobj, get_err_prefix=get_err_prefix)
-        if "b" in mode:
-            return cast(IO[bytes], wfobj)
-        return cast(IO[str], wfobj)
+        if typing.TYPE_CHECKING:
+            return cast(IO[str], wfobj)
+        else:
+            return wfobj
 
     def time_time(self) -> float:
         """Refer to 'ProcessManagerBase.time_time()'."""
