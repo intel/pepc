@@ -32,7 +32,7 @@ if typing.TYPE_CHECKING:
         The test parameters dictionary.
 
         Attributes:
-        cpuonline: A 'CPUOnline.CPUOnline' object.
+            cpuonline: A 'CPUOnline.CPUOnline' object.
             cpuinfo: A 'CPUInfo.CPUInfo' object.
         """
 

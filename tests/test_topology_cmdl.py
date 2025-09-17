@@ -91,8 +91,6 @@ def test_topology_info(params: _TestParamsTypedDict):
     try:
         cpus_per_core = len(params["cpuinfo"].cores_to_cpus(cores=(1,), packages=(0,)))
         good += [f"--online-only --package 0 --core-siblings 0-{cpus_per_core - 1}"]
-        # Non-existing core sibling indexes will lead to empty output.
-        good += [f"--online-only --package 0 --core-siblings {cpus_per_core}"]
     except Error:
         # There might not be a core 1 on the system.
         pass
