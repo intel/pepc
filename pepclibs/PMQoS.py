@@ -102,5 +102,5 @@ class PMQoS(_PropsClassBase.PropsClassBase):
 
         if pname == "latency_limit":
             linux_pmqos_obj.set_latency_limit(val, cpus)
-
-        raise Error(f"BUG: Unknown property '{pname}'")
+        else:
+            raise Error(f"BUG: Unknown property '{pname}'")
