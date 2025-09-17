@@ -1231,8 +1231,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         wfobj = ClassHelpers.WrapExceptions(fobj, get_err_prefix=get_err_prefix)
         if typing.TYPE_CHECKING:
             return cast(IO[str], wfobj)
-        else:
-            return wfobj
+        return wfobj
 
     def time_time(self) -> float:
         """Refer to 'ProcessManagerBase.time_time()'."""

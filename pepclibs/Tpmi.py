@@ -758,8 +758,7 @@ class Tpmi(ClassHelpers.SimpleCloseContext):
 
         if typing.TYPE_CHECKING:
             return cast(dict[str, RegDictTypedDict], fdict)
-        else:
-            return fdict
+        return fdict
 
     def _get_fdict(self, fname: str) -> dict[str, RegDictTypedDict]:
         """
