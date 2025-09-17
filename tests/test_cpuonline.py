@@ -3,26 +3,55 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2022-2023 Intel Corporation
+# Copyright (C) 2022-2025 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Authors: Antti Laakso <antti.laakso@linux.intel.com>
 #          Niklas Neronin <niklas.neronin@intel.com>
 #          Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
-"""Test public methods of the 'CPUOnline' module."""
+"""
+Test for the 'CPUOnline' module.
+"""
 
+from  __future__ import annotations # Remove when switching to Python 3.10+.
+
+import typing
 import contextlib
 import pytest
 import common
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs import CPUInfo, CPUOnline
 
+if typing.TYPE_CHECKING:
+    from typing import Generator, cast
+    from common import CommonTestParamsTypedDict
+
+    class _TestParamsTypedDict(CommonTestParamsTypedDict, total=False):
+        """
+        The test parameters dictionary.
+
+        Attributes:
+        cpuonline: A 'CPUOnline.CPUOnline' object.
+            cpuinfo: A 'CPUInfo.CPUInfo' object.
+        """
+
+        cpuonline: CPUOnline.CPUOnline
+        cpuinfo: CPUInfo.CPUInfo
+
 @pytest.fixture(name="params", scope="module")
-def get_params(hostspec, username):
+def get_params(hostspec: str,
+               username: str) -> Generator[_TestParamsTypedDict, None, None]:
     """
-    Build and yield the testing parameters dictionary. The arguments are as follows.
-      * hostspec - the specification of the host to run the tests on.
+    Yield a dictionary containing parameters required 'CPUInfo' tests.
+
+    Args:
+        hostspec: The host specification/name to create a process manager for. If the hostspec
+                  starts with "emulation:", it indicates an emulated environment.
+        username: The username to use when connecting to a remote host.
+
+    Yields:
+        A dictionary with test parameters.
     """
 
     with common.get_pman(hostspec, username=username) as pman, \
@@ -30,15 +59,20 @@ def get_params(hostspec, username):
          CPUOnline.CPUOnline(pman=pman, cpuinfo=cpuinfo) as cpuonline:
         params = common.build_params(pman)
 
+        if typing.TYPE_CHECKING:
+            params = cast(_TestParamsTypedDict, params)
+
         params["cpuonline"] = cpuonline
         params["cpuinfo"] = cpuinfo
 
         yield params
 
-def test_cpuonline_good(params):
+def test_cpuonline_good(params: _TestParamsTypedDict):
     """
-    Test public methods of the 'CPUOnline' class with good input. The arguments are as follows.
-      * params - the testing parameters.
+    Test the 'CPUOnline' class methods with valid input parameters.
+
+    Args:
+        params: The test parameters.
     """
 
     onl = params["cpuonline"]
@@ -75,10 +109,12 @@ def test_cpuonline_good(params):
             for cpu in cpus:
                 onl.online(cpus=(cpu,))
 
-def test_cpuonline_bad(params):
+def test_cpuonline_bad(params: _TestParamsTypedDict):
     """
-    Test public methods of the 'CPUOnline' class with bad input. The arguments are as follows.
-      * params - the testing parameters.
+    Test the 'CPUOnline' class methods with invalid input values.
+
+    Args:
+        params: The test parameters.
     """
 
     onl = params["cpuonline"]
@@ -86,15 +122,15 @@ def test_cpuonline_bad(params):
 
     for cpu in bad_cpus:
         with pytest.raises(Error):
-            onl.online(cpus=[cpu])
+            onl.online(cpus=[cpu]) # type: ignore
 
     with pytest.raises(Error):
         onl.offline(cpus=[0], skip_unsupported=False)
 
     for cpu in bad_cpus:
         with pytest.raises(Error):
-            onl.offline(cpus=[cpu])
+            onl.offline(cpus=[cpu]) # type: ignore
 
     for cpu in bad_cpus:
         with pytest.raises(Error):
-            onl.is_online(cpu)
+            onl.is_online(cpu) # type: ignore

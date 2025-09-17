@@ -34,14 +34,17 @@ _IGNORE: Final[dict[ExceptionType, str]] = {ErrorNotSupported: "",
 @pytest.fixture(name="params", scope="module")
 def get_params(hostspec: str, username: str) -> Generator[PropsCmdlTestParamsTypedDict, None, None]:
     """
-    Yield a dictionary containing parameters required for running the test.
+    Generate a dictionary with testing parameters.
+
+    Establish a connection to the host described by 'hostspec' and build a dictionary of parameters
+    required for testing.
 
     Args:
-        hostspec: The host specification/name to create a process manager for. If the hostspec
-                  starts with "emulation:", it indicates an emulated environment.
+        hostspec: Host specification used to establish the connection.
+        username: The username to use when connecting to a remote host.
 
     Yields:
-        A dictionary with test parameters.
+        A dictionary containing test parameters.
     """
 
     with common.get_pman(hostspec, username=username) as pman, \

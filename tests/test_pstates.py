@@ -31,11 +31,13 @@ def get_params(hostspec: str,
                username: str,
                request: pytest.FixtureRequest) -> Generator[PropsTestParamsTypedDict, None, None]:
     """
-    Yield a dictionary containing parameters required 'CPUInfo' tests.
+    Yield a dictionary containing parameters required for the tests.
 
     Args:
         hostspec: The host specification/name to create a process manager for. If the hostspec
                   starts with "emulation:", it indicates an emulated environment.
+        username: The username to use when connecting to a remote host.
+        request: The pytest fixture request object.
 
     Yields:
         A dictionary with test parameters.

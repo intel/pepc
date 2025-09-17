@@ -12,7 +12,6 @@
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
-from math import e
 import typing
 from typing import cast
 import random
@@ -32,11 +31,12 @@ _IGNORE = object()
 @pytest.fixture(name="params", scope="module")
 def get_params(hostspec: str, username: str) -> Generator[CommonTestParamsTypedDict, None, None]:
     """
-    Yield a dictionary containing parameters required 'CPUInfo' tests.
+    Yield a dictionary containing parameters required for the tests.
 
     Args:
         hostspec: The host specification/name to create a process manager for. If the hostspec
                   starts with "emulation:", it indicates an emulated environment.
+        username: The username to use when connecting to a remote host.
 
     Yields:
         A dictionary with test parameters.

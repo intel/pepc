@@ -45,11 +45,12 @@ _IGNORE: Final[dict[ExceptionType, str]] = {ErrorNotSupported: "--mechanism",
 @pytest.fixture(name="params", scope="module")
 def get_params(hostspec: str, username: str) -> Generator[PropsCmdlTestParamsTypedDict, None, None]:
     """
-    Yield a dictionary containing parameters required for running the test.
+    Yield a dictionary containing parameters required for the tests.
 
     Args:
         hostspec: The host specification/name to create a process manager for. If the hostspec
                   starts with "emulation:", it indicates an emulated environment.
+        username: The username to use when connecting to a remote host.
 
     Yields:
         A dictionary with test parameters.

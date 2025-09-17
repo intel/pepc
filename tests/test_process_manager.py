@@ -36,9 +36,10 @@ def get_params(hostspec: str, username: str) -> Generator[CommonTestParamsTypedD
 
     Args:
         hostspec: Host specification used to establish the connection.
+        username: The username to use when connecting to a remote host.
 
     Yields:
-        A dictionary containing testing parameters.
+        A dictionary containing test parameters.
     """
 
     with common.get_pman(hostspec, username=username) as pman:
