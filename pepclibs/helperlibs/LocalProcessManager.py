@@ -580,11 +580,11 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         return os.environ.get(envar)
 
-    def which(self, program: str | Path, must_find: bool = True):
+    def which(self, program: str | Path, must_find: bool = True) -> Path | None:
         """Refer to 'ProcessManagerBase.which()'."""
 
         if os.access(program, os.F_OK | os.X_OK) and Path(program).is_file():
-            return program
+            return Path(program)
 
         envpaths = os.environ["PATH"]
         for path in envpaths.split(os.pathsep):
