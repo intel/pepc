@@ -990,6 +990,7 @@ class Tpmi(ClassHelpers.SimpleCloseContext):
         if bfname:
             val = self._get_bitfield(val, fname, regname, bfname)
 
+        _LOG.debug("Value of TPMI register '%s', bit-field '%s' is 0x%x", regname, bfname, val)
         return val
 
     def _write_register(self,
