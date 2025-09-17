@@ -11,6 +11,8 @@ Provide functionality for reading and modifying uncore frequency and other prope
 via TPMI.
 """
 
+# TODO: check TPMI version before using ELC, see the kernel driver.
+#       Check AUTONOMOUS_UFS_DISABLED before using ELC
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import math
