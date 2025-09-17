@@ -374,6 +374,7 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
         """
 
         csinfo: dict[str, ReqCStateInfoTypedDict]
+        read_csinfos: dict[int, dict[str, ReqCStateInfoTypedDict]] = {}
 
         # Form list of CPUs that do not have their C-states information cached. The
         # '_read_cstates_info()' method is more efficient reading information for multiple CPUs in
@@ -383,10 +384,15 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
             # Load their information into the cache.
             for cpu, csinfo in self._read_cstates_info(read_cpus):
                 self._cache.add("csinfo", cpu, csinfo)
+                read_csinfos[cpu] = csinfo
 
         # Yield the requested C-states information.
         for cpu in cpus:
-            csinfo = self._cache.get("csinfo", cpu)
+            if self._enable_cache:
+                csinfo = self._cache.get("csinfo", cpu)
+            else:
+                csinfo = read_csinfos[cpu]
+
             if csnames == "all":
                 csnames = csinfo.keys()
 
@@ -654,9 +660,10 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
                 toggled[cpu]["csnames"].append(csname)
 
                 # Update the cached data.
-                csinfo = self._cache.get("csinfo", cpu)
-                csinfo[csname]["disable"] = not enable
-                self._cache.add("csinfo", cpu, csinfo)
+                if self._enable_cache:
+                    csinfo = self._cache.get("csinfo", cpu)
+                    csinfo[csname]["disable"] = not enable
+                    self._cache.add("csinfo", cpu, csinfo)
 
         return toggled
 
