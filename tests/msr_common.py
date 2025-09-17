@@ -137,8 +137,7 @@ def get_bad_cpu_nums(params: _TestParamsTypedDict) -> Generator[int | str, None,
         Invalid CPU identifiers such as out-of-range numbers, negative numbers, and strings.
     """
 
-    for cpu in (params["cpus"][-1] + 1, -1, "ALL", "a"):
-        yield cpu
+    yield from (params["cpus"][-1] + 1, -1, "ALL", "a")
 
 def is_safe_to_set(name: str, hostname: str) -> bool:
     """

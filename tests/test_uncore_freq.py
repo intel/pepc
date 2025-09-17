@@ -96,7 +96,7 @@ def _iter_uncore_freq_objects(params: _TestParamsTypedDict) -> Generator[_Uncore
                                             cpuinfo=params["cpuinfo"]) as uncfreq_obj:
             yield uncfreq_obj
     except ErrorNotSupported:
-        return
+        pass
 
 def _test_freq_methods_dies_good(uncfreq_obj: _UncoreFreqObjType, all_dies: RelNumsType):
     """
