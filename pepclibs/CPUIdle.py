@@ -598,6 +598,7 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
 
         try:
             with self._pman.open(path, "r+") as fobj:
+                _LOG.debug("Writing '%s' to '%s'", val, path)
                 fobj.write(val + "\n")
         except Error as err:
             raise Error(f"Failed to {msg}:\n{err.indent(2)}") from err
