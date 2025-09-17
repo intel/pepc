@@ -213,7 +213,7 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
         files = sorted(files)
 
         # Drop unnecessary files.
-        fpaths = []
+        fpaths: list[str] = []
         for fpath in files:
             if fpath.split("/")[-1].strip() in _CST_SYSFS_FNAMES:
                 fpaths.append(fpath)
@@ -221,6 +221,7 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
         # Write the names to a temporary file and then read them all in an efficient way.
         tmpdir = self._pman.mkdtemp(prefix="_linuxcstates_")
         tmpfile = tmpdir / "fpaths.txt"
+        values: list[str]
 
         try:
             with self._pman.open(tmpfile, "w") as fobj:
@@ -229,17 +230,19 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
             # The 'xargs' tool will make sure 'cat' is invoked once on all the files. It may be
             # invoked few times, but only if the list of files is too long.
             cmd = f"xargs -a '{tmpfile}' cat"
-            values, _ = self._pman.run_verify(cmd, join=False)
+            values, _ = self._pman.run_verify_nojoin(cmd)
         finally:
             self._pman.rmtree(tmpdir)
 
         if len(fpaths) != len(values):
             raise Error("BUG: Mismatch between sysfs C-state paths and values")
 
-        return fpaths, cast(list[str], values)
+        _LOG.debug("Read the following C-state values from sysfs files:\n%s",
+                   "".join(f"{fpath.strip()} = {value.strip()}\n"
+                           for fpath, value in zip(fpaths, values)))
+        return fpaths, values
 
-    def _read_cstates_info(self,
-                           cpus: AbsNumsType) -> \
+    def _read_cstates_info(self, cpus: AbsNumsType) -> \
                                Generator[tuple[int, dict[str, ReqCStateInfoTypedDict]], None, None]:
         """
         Retrieve and yield information about all requestable C-states for the specified CPUs.
@@ -346,7 +349,7 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
 
             if Trivial.is_int(val):
                 if fname == "disable":
-                    cstate[fname] = bool(val)
+                    cstate[fname] = bool(int(val))
                 else:
                     cstate[fname] = int(val)
             else:
