@@ -831,6 +831,10 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             # The driver and turbo status are global, so it is enough to write only once.
             break
 
+        # Flush any pending sysfs writes to ensure that the turbo setting takes effect. This is
+        # important because the turbo setting may affect the max. frequency limit.
+        self._sysfs_io.flush_transaction()
+
         for cpu in cpus:
             # The max. frequency limit may change when turbo is enabled or disabled. Clear the
             # frequency paths cache to force re-reading the sysfs paths.
