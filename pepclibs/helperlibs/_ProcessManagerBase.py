@@ -834,6 +834,50 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         raise NotImplementedError("ProcessManagerBase.run_verify()")
 
+    def run_verify_join(self,
+                        cmd: str | Path,
+                        timeout: int | float | None = None,
+                        capture_output: bool = True,
+                        mix_output: bool = False,
+                        output_fobjs: tuple[IO[str] | None, IO[str] | None] = (None, None),
+                        cwd: str | Path | None = None,
+                        intsh: bool = True,
+                        env: dict[str, str] | None = None,
+                        newgrp: bool = False) -> tuple[str, str]:
+        """
+        Same as 'run_verify(join=True)', provided for convenience and more deterministic return
+        type.
+        """
+
+        ret = self.run_verify(cmd, timeout=timeout, capture_output=capture_output,
+                              mix_output=mix_output, join=True, output_fobjs=output_fobjs,
+                              cwd=cwd, intsh=intsh, env=env, newgrp=newgrp)
+        if typing.TYPE_CHECKING:
+            return cast(tuple[str, str], ret)
+        return ret
+
+    def run_verify_nojoin(self,
+                          cmd: str | Path,
+                          timeout: int | float | None = None,
+                          capture_output: bool = True,
+                          mix_output: bool = False,
+                          output_fobjs: tuple[IO[str] | None, IO[str] | None] = (None, None),
+                          cwd: str | Path | None = None,
+                          intsh: bool = True,
+                          env: dict[str, str] | None = None,
+                          newgrp: bool = False) -> tuple[list[str], list[str]]:
+        """
+        Same as 'run_verify(join=False)', provided for convenience and more deterministic return
+        type.
+        """
+
+        ret = self.run_verify(cmd, timeout=timeout, capture_output=capture_output,
+                              mix_output=mix_output, join=False, output_fobjs=output_fobjs,
+                              cwd=cwd, intsh=intsh, env=env, newgrp=newgrp)
+        if typing.TYPE_CHECKING:
+            return cast(tuple[list[str], list[str]], ret)
+        return ret
+
     @staticmethod
     def _rsync_add_debug_opts(opts: str) -> str:
         """
