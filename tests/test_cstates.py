@@ -3,17 +3,20 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2022 Intel Corporation
+# Copyright (C) 2020-2025 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
-# Author: Niklas Neronin <niklas.neronin@intel.com>
+# Authors: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
+#          Niklas Neronin <niklas.neronin@intel.com>
 
-"""Tests for the public methods of the 'CStates' module."""
+"""
+Test for the 'CStates' module.
+"""
 
-# TODO: Finish annotating types
 from  __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
+from typing import cast
 import pytest
 import common
 import props_common
@@ -48,8 +51,18 @@ def get_params(hostspec: str,
         params = common.build_params(pman)
         yield props_common.extend_params(params, pobj, cpuinfo)
 
-def _get_set_and_verify_data(params, cpu):
-    """Yield ('pname', 'value') tuples for the 'test_cstates_set_and_verify()' test-case."""
+def _get_set_and_verify_data(params: PropsTestParamsTypedDict,
+                             cpu: int) -> Generator[tuple[str, str | int], None, None]:
+    """
+    Yield property name and value pairs running various tests for the property and the value.
+
+    Args:
+        params: The test parameters.
+        cpu: CPU to test property with.
+
+    Yields:
+        tuple: A pair containing the property name and the value to run a test with.
+    """
 
     pobj = params["pobj"]
 
@@ -63,16 +76,22 @@ def _get_set_and_verify_data(params, cpu):
 
     pvinfo = pobj.get_cpu_prop("governors", cpu)
     if pvinfo["val"] is not None:
-        yield "governor", pvinfo["val"][0]
-        yield "governor", pvinfo["val"][-1]
+        governors = cast(list[str], pvinfo["val"])
+        yield "governor", governors[0]
+        yield "governor", governors[-1]
 
-def test_cstates_set_and_verify(params):
-    """Verify that 'get_prop_cpus()' returns same values set by 'set_prop_cpus()'."""
+def test_cstates_set_and_verify(params: PropsTestParamsTypedDict):
+    """
+    Test setting and C-state properties.
+
+    Args:
+        params: The test parameters.
+    """
 
     props_vals = _get_set_and_verify_data(params, 0)
     props_common.set_and_verify(params, props_vals, 0)
 
-def test_cstates_get_all_props(params):
+def test_cstates_get_all_props(params: PropsTestParamsTypedDict):
     """
     Verify 'get_cpu_prop()' works for all available properties.
 
@@ -82,9 +101,12 @@ def test_cstates_get_all_props(params):
 
     props_common.verify_get_all_props(params, 0)
 
-def test_cstates_set_props_mechanisms_bool(params):
+def test_cstates_set_props_mechanisms_bool(params: PropsTestParamsTypedDict):
     """
-    Verify that the 'mname' arguments of 'get_prop_cpus()' works correctly for boolean properties.
+    Verify that 'set_prop_cpus()' works correctly for boolean.
+
+    Args:
+        params: The test parameters.
     """
 
     props_common.verify_set_bool_props(params, 0)

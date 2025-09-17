@@ -57,7 +57,7 @@ def _get_set_and_verify_data(params: PropsTestParamsTypedDict,
     Yield property name and value pairs running various tests for the property and the value.
 
     Args:
-        params: Dictionary containing test parameters and objects required for property retrieval.
+        params: The test parameters.
         cpu: CPU to test property with.
 
     Yields:
