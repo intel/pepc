@@ -392,6 +392,8 @@ def verify_set_bool_props(params: PropsTestParamsTypedDict, cpu: int):
                 else:
                     val = "on"
 
+                saved_val = pvinfo["val"]
+
                 if sname != "die":
                     used_mname = pobj.set_prop_cpus(pname, val, cpus, mnames=(mname,))
                 else:
@@ -415,6 +417,6 @@ def verify_set_bool_props(params: PropsTestParamsTypedDict, cpu: int):
                                           f"{what}, but read back value '{pvinfo['val']}'."
 
             if sname != "die":
-                pobj.set_prop_cpus(pname, pvinfo["val"], cpus, mnames=(mname,))
+                pobj.set_prop_cpus(pname, saved_val, cpus, mnames=(mname,))
             else:
-                pobj.set_prop_dies(pname, pvinfo["val"], dies, mnames=(mname,))
+                pobj.set_prop_dies(pname, saved_val, dies, mnames=(mname,))
