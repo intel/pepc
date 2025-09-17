@@ -110,3 +110,41 @@ def test_cstates_set_props_mechanisms_bool(params: PropsTestParamsTypedDict):
     """
 
     props_common.verify_set_bool_props(params, 0)
+
+def test_req_cstates(params: PropsTestParamsTypedDict):
+    """
+    Test requestable C-states API.
+
+    Args:
+        params: The test parameters.
+    """
+
+    if typing.TYPE_CHECKING:
+        pobj = cast(CStates.CStates, params["pobj"])
+    else:
+        pobj = params["pobj"]
+
+    cpu = params["cpuinfo"].get_cpus()[-1]
+
+    driver = pobj.get_cpu_prop("idle_driver", cpu)["val"]
+    if driver is None:
+        return
+
+    csinfo = pobj.get_cpu_cstates_info(cpu)
+    if driver == "intel_idle":
+        assert "POLL" in csinfo, "'POLL' C-state is missing for the 'intel_idle' driver"
+        assert csinfo["POLL"]["index"] == 0, "'POLL' C-state index is not 0"
+
+    # Enable all C-states.
+    pobj.enable_cstates(csnames="all", cpus="all")
+
+    # Verify all C-states are enabled.
+    for _, csinfo in pobj.get_cstates_info():
+        for csname, info in csinfo.items():
+            assert not info["disable"], f"C-state '{csname}' is not enabled"
+
+    # Disable 'POLL' on one CPU.
+    pobj.disable_cstates(csnames=("POLL",), cpus=[cpu])
+    csinfo = pobj.get_cpu_cstates_info(cpu, csnames=("POLL",))
+    assert csinfo["POLL"]["disable"], "'POLL' C-state is not disabled"
+    assert len(csinfo) == 1, "More C-states returned than requested"
