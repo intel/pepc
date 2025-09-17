@@ -3,60 +3,96 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2022 Intel Corporation
+# Copyright (C) 2022-2025 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Author: Niklas Neronin <niklas.neronin@intel.com>
 
 """Test 'pepc topology' command-line options."""
 
+from  __future__ import annotations # Remove when switching to Python 3.10+.
+
+import typing
 import pytest
 import common
 import props_cmdl_common
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs import CPUInfo
 
-@pytest.fixture(name="params", scope="module")
-def get_params(hostspec, username):
-    """Yield a dictionary with information we need for testing."""
+if typing.TYPE_CHECKING:
+    from typing import Generator, cast
+    from common import CommonTestParamsTypedDict
 
-    with common.get_pman(hostspec, username=username) as pman, CPUInfo.CPUInfo(pman=pman) as cpuinfo:
+    class _TestParamsTypedDict(CommonTestParamsTypedDict, total=False):
+        """
+        The test parameters dictionary.
+
+        Attributes:
+            cpuinfo: A 'CPUInfo.CPUInfo' object.
+            cpus: All CPU numbers in the system.
+        """
+
+        cpuinfo: CPUInfo.CPUInfo
+        cpus: list[int]
+
+@pytest.fixture(name="params", scope="module")
+def get_params(hostspec: str, username: str) -> Generator[_TestParamsTypedDict, None, None]:
+    """
+    Generate a dictionary with testing parameters.
+
+    Establish a connection to the host described by 'hostspec' and build a dictionary of parameters
+    required for testing.
+
+    Args:
+        hostspec: Host specification used to establish the connection.
+        username: The username to use when connecting to a remote host.
+
+    Yields:
+        A dictionary containing test parameters.
+    """
+
+    with common.get_pman(hostspec, username=username) as pman, \
+         CPUInfo.CPUInfo(pman=pman) as cpuinfo:
         params = common.build_params(pman)
+
+        if typing.TYPE_CHECKING:
+            params = cast(_TestParamsTypedDict, params)
 
         params["cpuinfo"] = cpuinfo
         params["cpus"] = cpuinfo.normalize_cpus("all", offline_ok=True)
 
         yield params
 
-def test_topology_info(params):
-    """Test 'pepc topology info' command."""
+def test_topology_info(params: _TestParamsTypedDict):
+    """
+    Test the 'pepc topology info' command with various valid and invalid options.
 
-    good = [
-        "",
-        "--online-only",
-        f"--cpus 0-{params['cpus'][-1]} --cores all --packages all",
-        "--order cpu --columns CPU",
-        "--order core --columns core",
-        "--order node --columns node",
-        "--order die --columns die",
-        "--order PaCkAgE"
-    ]
+    Args:
+        params: The test parameters.
+    """
 
-    bad = [
-        "--order cpu,node",
-        "--order Packages",
-        "--order HELLO_WORLD",
-        "--columns Alfredo"
-    ]
+    good = ["",
+            "--online-only",
+            f"--cpus 0-{params['cpus'][-1]} --cores all --packages all",
+            "--order cpu --columns CPU",
+            "--order core --columns core",
+            "--order node --columns node",
+            "--order die --columns die",
+            "--order PaCkAgE"]
+
+    bad = ["--order cpu,node",
+           "--order Packages",
+           "--order HELLO_WORLD",
+           "--columns Alfredo"]
 
     if common.is_emulated(params["pman"]):
         good += ["--cpus all --core-siblings 0 --online-only"]
 
     try:
-        cores = len(params["cpuinfo"].cores_to_cpus(cores="1", packages="0"))
-        good += [f"--online-only --package 0 --core-siblings 0-{cores - 1}"]
+        cpus_per_core = len(params["cpuinfo"].cores_to_cpus(cores=(1,), packages=(0,)))
+        good += [f"--online-only --package 0 --core-siblings 0-{cpus_per_core - 1}"]
         # Non-existing core sibling indexes will lead to empty output.
-        good += [f"--online-only --package 0 --core-siblings {cores}"]
+        good += [f"--online-only --package 0 --core-siblings {cpus_per_core}"]
     except Error:
         # There might not be a core 1 on the system.
         pass
