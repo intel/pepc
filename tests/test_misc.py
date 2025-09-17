@@ -3,34 +3,68 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2022 Intel Corporation
+# Copyright (C) 2020-2025 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Author: Niklas Neronin <niklas.neronin@intel.com>
 
 """Misc tests for pepc."""
 
+from  __future__ import annotations # Remove when switching to Python 3.10+.
+
+import typing
 import random
 import pytest
 import common
 from pepclibs import CPUInfo, PStates, CStates, _PropsCache
 
+if typing.TYPE_CHECKING:
+    from typing import Generator, cast
+    from common import CommonTestParamsTypedDict
+
+    class _TestParamsTypedDict(CommonTestParamsTypedDict, total=False):
+        """
+        The test parameters dictionary.
+
+        Attributes:
+            cpuinfo: A 'CPUInfo.CPUInfo' object.
+        """
+
+        cpuinfo: CPUInfo.CPUInfo
+
 @pytest.fixture(name="params", scope="module")
-def get_params(hostspec, username):
-    """Yield a dictionary with information we need for testing."""
+def get_params(hostspec: str, username: str) -> Generator[_TestParamsTypedDict, None, None]:
+    """
+    Generate a dictionary with testing parameters.
+
+    Establish a connection to the host described by 'hostspec' and build a dictionary of parameters
+    required for testing.
+
+    Args:
+        hostspec: Host specification used to establish the connection.
+        username: The username to use when connecting to a remote host.
+
+    Yields:
+        A dictionary containing test parameters.
+    """
 
     with common.get_pman(hostspec, username=username) as pman, \
          CPUInfo.CPUInfo(pman=pman) as cpuinfo:
         params = common.build_params(pman)
 
+        if typing.TYPE_CHECKING:
+            params = cast(_TestParamsTypedDict, params)
+
         params["cpuinfo"] = cpuinfo
 
         yield params
 
-def test_unknown_cpu_model(params):
+def test_unknown_cpu_model(params: _TestParamsTypedDict):
     """
-    Test that property objects (such as 'PStates' and 'CStates') don't fail when getting a property
-    on an unknown CPU model.
+    Test behavior of property objects when querying properties on an unknown CPU model.
+
+    Args:
+        params: The test parameters.
     """
 
     pman = params["pman"]
@@ -46,8 +80,13 @@ def test_unknown_cpu_model(params):
             pname = next(iter(pobj.props))
             pobj.get_cpu_prop(pname, 0)
 
-def test_propscache_scope(params):
-    """This function tests that the 'PropsCache' class caches a value to the correct CPUs."""
+def test_propscache_scope(params: _TestParamsTypedDict):
+    """
+    Test that the 'PropsCache' class correctly caches values according to CPU scope.
+
+    Args:
+        params: The test parameters.
+    """
 
     siblings = {}
     pman = params["pman"]
