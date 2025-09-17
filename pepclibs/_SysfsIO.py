@@ -87,7 +87,7 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
         if not self._enable_cache:
             return
 
-        with contextlib.suppress(KeyError):
+        if path in self._cache:
             del self._cache[path]
 
     def _add_for_transaction(self, path, val, what, verify=True, retries=0, sleep=0):

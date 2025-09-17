@@ -828,13 +828,14 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
                                         f"{self._pman.hostmsg}: Unsupported CPU frequency driver "
                                         f"'{driver}'")
 
+            # The driver and turbo status are global, so it is enough to write only once.
+            break
+
+        for cpu in cpus:
             # The max. frequency limit may change when turbo is enabled or disabled. Clear the
             # frequency paths cache to force re-reading the sysfs paths.
             path = self._get_cpu_freq_sysfs_path("max", cpu, limit=True)
             self._sysfs_io.cache_remove(path)
-
-            # The driver and turbo status are global, so it is enough to write only once.
-            break
 
     def get_governor(self, cpus: AbsNumsType) -> Generator[tuple[int, str], None, None]:
         """

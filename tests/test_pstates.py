@@ -72,9 +72,9 @@ def _get_set_and_verify_data(params: PropsTestParamsTypedDict,
         yield "intel_pstate_mode", "active"
         yield "intel_pstate_mode", "passive"
 
-    yield "turbo", "off"
     yield "turbo", "on"
     yield "turbo", "off"
+    yield "turbo", "on"
 
     yield "epp", "1"
     yield "epp", "254"
@@ -170,17 +170,37 @@ def test_freq_msr_vs_sysfs(params: PropsTestParamsTypedDict):
             continue
 
         max_freq_sysfs = pobj.get_cpu_prop("max_freq_limit", cpu, mnames=("sysfs",))["val"]
-        max_freq_msr = pobj.get_cpu_prop("max_turbo_freq", cpu, mnames=("msr",))["val"]
-
-        if max_freq_sysfs is None or max_freq_msr is None:
+        if not max_freq_sysfs:
             continue
 
-        min_freq_sysfs = cast(int, min_freq_sysfs)
-        min_freq_msr = cast(int, min_freq_msr)
+        max_freq_sysfs = cast(int, max_freq_sysfs)
 
-        assert max_freq_sysfs == max_freq_msr, \
-               f"'max_freq_limit' ({max_freq_sysfs}) and 'max_turbo_freq' ({max_freq_msr})' " \
-               f"mismatch on CPU {cpu}: "
+        turbo = pobj.get_cpu_prop("turbo", cpu)["val"]
+        if turbo is None:
+            continue
+
+        if turbo == "on":
+            max_freq_msr = pobj.get_cpu_prop("max_turbo_freq", cpu, mnames=("msr",))["val"]
+            if max_freq_msr is None:
+                continue
+
+            min_freq_msr = cast(int, min_freq_msr)
+
+            assert max_freq_sysfs == max_freq_msr, \
+                f"'max_freq_limit' ({max_freq_sysfs}) and 'max_turbo_freq' ({max_freq_msr})' " \
+                f"mismatch on CPU {cpu}: "
+        else:
+            assert turbo == "off", f"Unexpected turbo value: {turbo}"
+
+            base_freq = pobj.get_cpu_prop("base_freq", cpu)["val"]
+            if base_freq is None:
+                continue
+
+            base_freq = cast(int, base_freq)
+
+            assert max_freq_sysfs == base_freq, \
+                f"'max_freq_limit' ({max_freq_sysfs}) and 'base_freq' ({base_freq})' " \
+                f"mismatch on CPU {cpu}"
 
     # Verify the base frequency.
     for cpu in cpuinfo.get_cpus():
@@ -195,4 +215,4 @@ def test_freq_msr_vs_sysfs(params: PropsTestParamsTypedDict):
 
         assert base_freq_sysfs == base_freq_msr, \
                f"'base_freq' ({base_freq_sysfs}) and 'base_freq' ({base_freq_msr})' mismatch " \
-               f"on CPU {cpu}: "
+               f"on CPU {cpu}"
