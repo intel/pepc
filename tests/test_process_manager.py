@@ -153,11 +153,11 @@ def test_run_verify_output_fobjs(params: CommonTestParamsTypedDict, tmp_path: Pa
         stderr_fobj.seek(0)
         stderr_fobj.truncate(0)
 
-        stdout, stderr = pman.run_verify_nojoin(cmd, mix_output=True,
-                                                output_fobjs=(stdout_fobj, stderr_fobj))
-        assert sorted(stdout) == ["1: hello\n", "1: hello-x\n",
-                                  "2: world\n", "2: world-x\n"]
-        assert stderr == []
+        _stdout, _stderr = pman.run_verify_nojoin(cmd, mix_output=True,
+                                                  output_fobjs=(stdout_fobj, stderr_fobj))
+        assert sorted(_stdout) == ["1: hello\n", "1: hello-x\n",
+                                   "2: world\n", "2: world-x\n"]
+        assert _stderr == []
 
         stdout_fobj.seek(0)
         stdout = stdout_fobj.read()
