@@ -397,14 +397,14 @@ def main():
     try:
         args = parse_arguments()
 
-        args.timeout = Trivial.str_to_num(args.timeout, what="--timeout option value")
+        timeout: int | float | None = getattr(args, "timeout", None)
 
         # pylint: disable=no-member
         if args.hostname == "localhost":
             args.username = args.privkey = None
 
         with ProcessManager.get_pman(args.hostname, username=args.username,
-                                     privkeypath=args.privkey, timeout=args.timeout) as pman:
+                                     privkeypath=args.privkey, timeout=timeout) as pman:
             outdir = args.outdir
             if not outdir:
                 outdir = Path(pman.hostname)
