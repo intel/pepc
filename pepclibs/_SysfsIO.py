@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2023 Intel Corporation
+# Copyright (C) 2023-2025 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Authors: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
@@ -9,23 +9,46 @@
 #          Niklas Neronin <niklas.neronin@intel.com>
 
 """
-Provide a capability of reading and writing sysfs files. Implement caching.
+Provide API for reading and writing sysfs files. Implement caching.
 """
 
-# TODO: finish annotating this module.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import time
+import typing
 import contextlib
+from pathlib import Path
 from pepclibs.helperlibs import Logging, LocalProcessManager, ClassHelpers, Trivial
 from pepclibs.helperlibs.Exceptions import ErrorNotSupported, ErrorBadFormat
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorVerifyFailed
+
+if typing.TYPE_CHECKING:
+    from typing import TypedDict
+    from pepclibs.helperlibs.ProcessManager import ProcessManagerType
+
+    class _TransactionItemTypedDict(TypedDict, total=False):
+        """
+        A typed dictionary for a single item in the transaction buffer.
+
+        Attributes:
+            val: The value to write.
+            what: A description of the write operation.
+            verify: Whether to verify the write operation after execution.
+            retries: Number of verification retries.
+            sleep: Sleep duration between retries.
+        """
+
+        val: str
+        what: str
+        verify: bool
+        retries: int
+        sleep: int | float
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
 class SysfsIO(ClassHelpers.SimpleCloseContext):
     """
-    Provide a capability of reading and writing sysfs files. Implement caching.
+    Provide API for reading and writing sysfs files. Implement caching.
 
     Public methods overview.
 
@@ -47,29 +70,71 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
     it for caching to work efficiently (the cache is indexed by file path).
     """
 
-    def cache_get(self, path):
+    def __init__(self, pman: ProcessManagerType | None = None, enable_cache: bool = True):
         """
-        Get cached value a sysfs file 'path'. The argument are as follows.
-          * path - path to the sysfs file to get the cached value for.
+        Initialize a class instance.
 
-        Raise 'ErrorNotFound' if there is no cached value for path 'path'.
+        Args:
+            pman: The process manager object that defines the target host. Use a local process
+                  manager if not provided.
+            enable_cache: Enable caching if True, disable if False.
+        """
+
+        self._enable_cache = enable_cache
+        self._close_pman = pman is None
+
+        self._pman: ProcessManagerType
+        if not pman:
+            self._pman = LocalProcessManager.LocalProcessManager()
+        else:
+            self._pman = pman
+
+        # The write-through data cache, indexed by the file path.
+        self._cache: dict[Path, str] = {}
+        # Stores new MSR values to be written when 'commit_transaction()' is called.
+        self._transaction_buffer: dict[Path, _TransactionItemTypedDict] = {}
+        # Whether there is an ongoing transaction.
+        self._in_transaction = False
+
+    def close(self):
+        """Uninitialize the class object."""
+
+        close_attrs = ("_pman",)
+        ClassHelpers.close(self, close_attrs=close_attrs)
+
+    def cache_get(self, path: Path) -> str:
+        """
+        Retrieve the cached value for a given sysfs file path.
+
+        Args:
+            path: Path to the sysfs file whose cached value should be retrieved.
+
+        Returns:
+            The cached value as a string.
+
+        Raises:
+            ErrorNotFound: If caching is disabled or if there is no cached value for the specified
+                           path.
         """
 
         if not self._enable_cache:
-            raise ErrorNotFound("caching is disabled")
+            raise ErrorNotFound("Caching is disabled")
 
         try:
             return self._cache[path]
         except KeyError:
             raise ErrorNotFound(f"sysfs file '{path}' is not cached") from None
 
-    def cache_add(self, path, val):
+    def cache_add(self, path: Path, val: str) -> str:
         """
-        Add value 'val' for path 'path' to the cache. The argument are as follows.
-          * path - path of the sysfs file to cache.
-          * val - the value to cache.
+        Add a value to the cache for a given sysfs file path.
 
-        Return 'val'.
+        Args:
+            path: Path of the sysfs file to cache.
+            val: Value to cache.
+
+        Returns:
+            The cached value.
         """
 
         if not self._enable_cache:
@@ -78,10 +143,13 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
         self._cache[path] = val
         return val
 
-    def cache_remove(self, path):
+    def cache_remove(self, path: Path):
         """
-        Remove possibly cached value for 'path'. The argument are as follows.
-          * path - path of the sysfs file to remove the cached value for.
+        Remove the cached value for the specified sysfs file path. Do nothing if caching is disabled
+        or if there is no cached value for the specified path.
+
+        Args:
+            path: Path of the sysfs file whose cached value should be removed.
         """
 
         if not self._enable_cache:
@@ -90,28 +158,43 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
         if path in self._cache:
             del self._cache[path]
 
-    def _add_for_transaction(self, path, val, what, verify=True, retries=0, sleep=0):
-        """Add a write operation to the transaction buffer."""
+    def _add_for_transaction(self,
+                             path: Path,
+                             val: str,
+                             what: str,
+                             verify: bool = True,
+                             retries: int = 0,
+                             sleep: int | float = 0):
+        """
+        Add a write operation to the transaction buffer for later execution.
+
+        Args:
+            path: The file path to write to.
+            val: The value to write.
+            what: A description of the write operation.
+            verify: Whether to verify the write operation after execution.
+            retries: Number of verification retries.
+            sleep: Sleep duration between retries.
+        """
 
         if not self._enable_cache:
-            raise Error("transactions support requires caching to be enabled, see 'enable_cache' "
-                        "argument of the constructor")
+            raise Error("Transactions support requires caching to be enabled")
 
         if path not in self._transaction_buffer:
             self._transaction_buffer[path] = {}
 
         tinfo = self._transaction_buffer[path]
         if "what" in tinfo and tinfo["what"] != what:
-            raise Error(f"BUG: inconsistent description for file '{path}':\n"
+            raise Error(f"BUG: Inconsistent description for file '{path}':\n"
                         f"  old: {tinfo['what']}, new: {what}.")
         if "verify" in tinfo and tinfo["verify"] != verify:
-            raise Error(f"BUG: inconsistent verification flag value for file '{path}':\n"
+            raise Error(f"BUG: Inconsistent verification flag value for file '{path}':\n"
                         f"  old: {tinfo['verify']}, new: {verify}.")
         if "retries" in tinfo and tinfo["retries"] != retries:
-            raise Error(f"BUG: inconsistent verification re-tries count for file '{path}':\n"
+            raise Error(f"BUG: Inconsistent verification re-tries count for file '{path}':\n"
                         f"  old: {tinfo['retries']}, new: {retries}.")
         if "sleep" in tinfo and tinfo["sleep"] != sleep:
-            raise Error(f"BUG: inconsistent verification sleep value for file '{path}':\n"
+            raise Error(f"BUG: Inconsistent verification sleep value for file '{path}':\n"
                         f"  old: {tinfo['sleep']}, new: {sleep}.")
 
         tinfo["val"] = val
@@ -122,29 +205,41 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
 
     def start_transaction(self):
         """
-        Start transaction. All writes to sysfs files will be cached, and will only be written to the
-        actual file-system on 'commit_transaction()' or 'flush_transaction()'.
+        Begin a new transaction for sysfs file writes.
 
-        The purpose of a transaction is to reduce the amount of I/O. There is no atomicity and
-        roll-back functionality, it is only about buffering the I/O and merging multiple writes to
-        the same files into a single write operation.
+        When a transaction is active, all writes to sysfs files are cached and only written to the
+        filesystem upon calling 'commit_transaction()' or 'flush_transaction()'. This reduces I/O
+        operations by buffering writes and merging multiple writes to the same file into a single
+        operation.
         """
 
         if not self._enable_cache:
-            _LOG.debug("transactions support requires caching to be enabled")
+            _LOG.debug("Transactions support requires caching to be enabled")
             return
 
         if self._in_transaction:
-            raise Error("cannot start a transaction, it has already started")
+            raise Error("Cannot start a transaction, it has already started")
 
         self._in_transaction = True
 
-    def _write(self, path, val, what):
-        """Write value 'val' to file at path 'path'."""
+    def _write(self, path: Path, val: str, what: str):
+        """
+        Write a value to a sysfs file at the specified path.
+
+        Args:
+            path: Path to the sysfs file to write to.
+            val: Value to write to the file.
+            what: Optional description of what is being written, used for logging and error
+                  messages.
+
+        Raises:
+            ErrorNotSupported: If the file is not found.
+        """
 
         if _LOG.getEffectiveLevel() == Logging.DEBUG:
-            what = "" if what is None else f" {what}"
-            _LOG.debug("writing value '%s' to%s sysfs file '%s'%s",
+            if what:
+                what = f" {what}"
+            _LOG.debug("Writing value '%s' to%s sysfs file '%s'%s",
                        val, what, path, self._pman.hostmsg)
 
         try:
@@ -156,18 +251,43 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
                     val = str(val)
                     if len(val) > 24:
                         val = f"{val[:23]}...snip..."
-                    raise Error(f"failed to write value '{val}' to{what} sysfs file '{path}'"
+                    raise Error(f"Failed to write value '{val}' to{what} sysfs file '{path}'"
                                 f"{self._pman.hostmsg}:\n{err.indent(2)}") from err
         except ErrorNotFound as err:
-            what = "" if what is None else f" {what}"
+            if what:
+                what = f" {what}"
             val = str(val)
             if len(val) > 24:
                 val = f"{val[:23]}...snip..."
-            raise ErrorNotSupported(f"failed to write value '{val}' to{what} sysfs file '{path}'"
+            # TODO: Why ErrorNotSupported here, not ErrorNotFound?
+            raise ErrorNotSupported(f"Failed to write value '{val}' to{what} sysfs file '{path}'"
                                     f"{self._pman.hostmsg}:\n{err.indent(2)}") from err
 
-    def _verify(self, path, val, what=None, retries=0, sleep=0):
-        """Verify that file 'path' has value 'what'."""
+    def _verify(self,
+                path: Path,
+                val: str,
+                what: str = "",
+                retries: int = 0,
+                sleep: int | float = 0):
+        """
+        Verify that the specified sysfs file contains the expected value.
+
+        If the value does not match, retry the verification up to 'retries' times, sleeping for
+        'sleep' seconds between attempts. Remove any cached value before each read.
+
+        Args:
+            path: Path to the sysfs file to verify.
+            val: Expected value to verify in the file.
+            what: Optional description of what is being verified (used in error messages).
+            retries: Number of times to retry verification if the value does not match.
+            sleep: Number of seconds to sleep between retries.
+
+        Returns:
+            The value read from the sysfs file if verification succeeds.
+
+        Raises:
+            ErrorVerifyFailed: If the value in the file does not match 'val' after all retries.
+        """
 
         while True:
             # Read CPU frequency back and verify that it was set correctly.
@@ -182,29 +302,27 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
 
             time.sleep(sleep)
 
-        what = "" if what is None else f" {what}"
+        if what:
+            what = f" {what}"
         val_str = str(val)
         if len(val_str) > 24:
             val_str = f"{val[:23]}...snip..."
-        raise ErrorVerifyFailed(f"failed to write value '{val_str}' to{what} sysfs file '{path}'"
+        raise ErrorVerifyFailed(f"Failed to write value '{val_str}' to{what} sysfs file '{path}'"
                                 f"{self._pman.hostmsg}:\n  wrote '{val}', but read '{new_val}' "
                                 "back", expected=val, actual=new_val, path=path)
 
     def flush_transaction(self):
         """
-        Flush the transaction buffer. Write all the buffered data to the sysfs files. If there
-        multiple writes to the same file, they will be merged into a single write operation.
-        The transaction does not stop after flushing.
+        Flush the transaction buffer and write all buffered data to sysfs files.
         """
 
         if not self._enable_cache:
             return
-
         if not self._in_transaction:
-            raise Error("cannot commit a transaction, it did not start")
+            return
 
         if self._transaction_buffer:
-            _LOG.debug("flushing SysfsIO transaction buffer")
+            _LOG.debug("Flushing SysfsIO transaction buffer")
 
         for path, val_info in self._transaction_buffer.items():
             val = val_info["val"]
@@ -225,24 +343,32 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
 
     def commit_transaction(self):
         """
-        Commit the transaction. Write all the buffered data to the sysfs files and close the
-        transaction. Note, there is no atomicity guarantee, this is not like a database transaction,
-        this is just an optimization to reduce the amount of sysfs I/O.
+        Commit the current transaction by writing all buffered data to the sysfs files.
+
+        This operation does not provide atomicity. It is intended as an optimization to reduce the
+        number of sysfs I/O operations.
         """
+
+        if not self._in_transaction:
+            raise Error("Cannot commit a transaction, it did not start")
 
         self.flush_transaction()
         self._in_transaction = False
-        _LOG.debug("transaction in SysfsIO has been committed")
+        _LOG.debug("Transaction in SysfsIO has been committed")
 
-    def read(self, path, what=None) -> str:
+    def read(self, path: Path, what: str = "") -> str:
         """
-        Read a sysfs file at 'path'. The arguments are as follows.
-          * path - path of the sysfs file to read.
-          * what - short description of the file at 'path', will be included to the exception
-                   message in case of a failure.
+        Read the contents of a sysfs file at the specified path.
 
-        Return the contents of the file at 'path'. Raise 'ErrorNotSupported' if the file does not
-        exist.
+        Args:
+            path: Path to the sysfs file to read.
+            what: Optional short description of what is being read, included in exception messages.
+
+        Returns:
+            The contents of the file as a string.
+
+        Raises:
+            ErrorNotSupported: If the file does not exist.
         """
 
         with contextlib.suppress(ErrorNotFound):
@@ -253,27 +379,33 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
                 try:
                     val = fobj.read().strip()
                 except Error as err:
-                    what = "" if what is None else f" {what}"
-                    raise Error(f"failed to read{what} from '{path}'{self._pman.hostmsg}\n"
+                    if what:
+                        what = f" {what}"
+                    raise Error(f"Failed to read{what} from '{path}'{self._pman.hostmsg}\n"
                                 f"{err.indent(2)}") from err
         except ErrorNotFound as err:
-            what = "" if what is None else f" {what}"
-            raise ErrorNotSupported(f"failed to read{what} from '{path}'{self._pman.hostmsg}\n"
+            if what:
+                what = f" {what}"
+            # TODO: Why ErrorNotSupported here, not ErrorNotFound?
+            raise ErrorNotSupported(f"Failed to read{what} from '{path}'{self._pman.hostmsg}\n"
                                     f"{err.indent(2)}") from err
 
         return self.cache_add(path, val)
 
-    def read_int(self, path, what=None):
+    def read_int(self, path: Path, what: str = "") -> int:
         """
-        Read a sysfs file 'path' and return its contents as an interger value. The arguments are as
-        follows.
-          * path - path of the sysfs file to read.
-          * what - short description of the file at 'path', will be included to the exception
-                   message in case of a failure.
+        Read a sysfs file and return its contents as an integer.
 
-        Validate the contents of the 'path', raise 'Error' if the contents is not an integer value.
-        Otherwise, return the the value as an integer ('int' type). Return 'None' if the file does
-        not exist.
+        Args:
+            path: Path to the sysfs file to read.
+            what: Optional short description of what is being read, included in exception messages.
+
+        Returns:
+            The integer value read from the file.
+
+        Raises:
+            ErrorNotSupported: If the file does not exist.
+            ErrorBadFormat: If the file contents cannot be parsed as an integer.
         """
 
         val = self.read(path, what=what)
@@ -281,17 +413,26 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
         try:
             return Trivial.str_to_int(val, what=what)
         except Error as err:
-            what = "" if what is None else f" {what}"
+            if what:
+                what = f" {what}"
             raise ErrorBadFormat(f"Bad contents of{what} sysfs file '{path}'{self._pman.hostmsg}\n"
-                        f"{err.indent(2)}") from err
+                                 f"{err.indent(2)}") from err
 
-    def write(self, path, val, what=None):
+    def write(self, path: Path, val: str, what: str = ""):
         """
-        Write value 'val' to a sysfs file at 'path'. The arguments are as follows.
-          * path - path of the sysfs file to write to.
-          * val - the value to write.
-          * what - short description of the file at 'path', will be included to the exception
-                   message in case of a failure.
+        Write a value to a sysfs file and update the cache.
+
+        If a transaction is in progress, the write operation is queued for the transaction,
+        otherwise, the value is written immediately. The cache is updated after the write operation.
+
+        Args:
+            path: Path to the sysfs file to write to.
+            val: Value to write to the file.
+            what: Optional short description of what is being written, included in exception
+                  messages.
+
+        Raises:
+            ErrorNotSupported: If the file does not exist.
         """
 
         self.cache_remove(path)
@@ -301,30 +442,46 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
             self._write(path, val, what=what)
         self.cache_add(path, val)
 
-    def write_int(self, path, val, what=None):
+    def write_int(self, path: Path, val: str | int, what: str = ""):
         """
-        Write an integer value 'val' to a sysfs file at 'path'. The arguments are as follows.
-          * path - path of the sysfs file to write to.
-          * val - the value to write.
-          * what - short description of the file at 'path', will be included to the exception
-                   message in case of a failure.
+        Write an integer value to a sysfs file.
+
+        Args:
+            path: Path to the sysfs file to write to.
+            val: Value to write to the file.
+            what: Optional short description of what is being written, included in exception
+                  messages.
+
+        Raises:
+            ErrorNotSupported: If the file does not exist.
         """
 
-        val = Trivial.str_to_int(val, what=what)
-        self.write(path, str(val), what=what)
+        int_val = Trivial.str_to_int(val, what=what)
+        self.write(path, str(int_val), what=what)
 
-    def write_verify(self, path, val, what=None, retries=0, sleep=0):
+    def write_verify(self,
+                     path: Path,
+                     val: str,
+                     what: str = "",
+                     retries: int = 0,
+                     sleep: int | float = 0):
         """
-        Write value 'val' to a sysfs file at 'path' and verify that it was "accepted" by the kernel
-        by reading it back and comparing to the written value. The arguments are as follows.
-          * path - path of the sysfs file to write to.
-          * val - the value to write.
-          * what - short description of the file at 'path', will be included to the exception
-                   message in case of a failure.
-          * retries - how many times to re-try the verification.
-          * sleep - sleep for 'sleep' amount of seconds before repeating the verification.
+        Write a value to a sysfs file and verify that the kernel accepted it.
 
-        Raise 'ErrorVerifyFailed' if the value read was not the same as value written.
+        Write the specified value to the sysfs file, then read the it back to ensure it matches what
+        was written.If the verification fails, it retry the operation.
+
+        Args:
+            path: Path to the sysfs file to write to.
+            val: Value to write to the file.
+            what: Optional short description of what is being written, included in exception
+                  messages.
+            retries: Number of times to retry verification if it fails.
+            sleep: Number of seconds to sleep between verification retries.
+
+        Raises:
+            ErrorNotSupported: If the file does not exist.
+            ErrorVerifyFailed: If the value read from the file does not match the value written.
         """
 
         self.cache_remove(path)
@@ -339,17 +496,13 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
 
         self.cache_add(path, val)
 
-    def write_verify_int(self, path, val, what=None, retries: int = 0, sleep: float = 0.0):
-        """
-        Same as 'write_verify()', but write an integer value 'val'. The arguments are as follows.
-          * path - path of the sysfs file to write to.
-          * val - the integer value to write.
-          * what - short description of the file at 'path.
-          * retries - how many times to re-try the verification.
-          * sleep - sleep for 'sleep' amount of seconds before repeating the verification.
-
-        Raise 'ErrorVerifyFailed' if the value read was not the same as value written.
-        """
+    def write_verify_int(self,
+                         path: Path,
+                         val: str | int,
+                         what: str = "",
+                         retries: int = 0,
+                         sleep: int | float = 0):
+        """Same as 'write_verify()', but write an integer value 'val'."""
 
         intval = Trivial.str_to_int(val, what=what)
         val = str(intval)
@@ -367,36 +520,8 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
             except ErrorVerifyFailed as err:
                 # Make sure the expected and actual values are of an integer time.
                 setattr(err, "expected", intval)
-                if hasattr(err, "actual") and Trivial.is_int(err.actual):
-                    err.actual = int(err.actual)
+                if hasattr(err, "actual") and Trivial.is_int(str(err.actual)):
+                    err.actual = int(str(err.actual))
                 raise err
 
         self.cache_add(path, val)
-
-    def __init__(self, pman=None, enable_cache=True):
-        """
-        The class constructor. The argument are as follows.
-          * pman - the process manager object that defines the host to read/write sysfs files on.
-          * enable_cache - enable caching if 'True', otherwise disable it.
-        """
-
-        self._pman = pman
-        self._enable_cache = enable_cache
-
-        self._close_pman = pman is None
-
-        # The write-through data cache, indexed by the file path.
-        self._cache = {}
-        # Stores new MSR values to be written when 'commit_transaction()' is called.
-        self._transaction_buffer = {}
-        # Whether there is an ongoing transaction.
-        self._in_transaction = False
-
-        if not self._pman:
-            self._pman = LocalProcessManager.LocalProcessManager()
-
-    def close(self):
-        """Uninitialize the class object."""
-
-        close_attrs = ("_pman",)
-        ClassHelpers.close(self, close_attrs=close_attrs)
