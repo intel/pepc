@@ -40,7 +40,7 @@ class Systemctl(ClassHelpers.SimpleCloseContext):
             # The error path: unit state did not change.
             status = None
             try:
-                status, _ = self._pman.run_verify(f"{self._systemctl_path} status -- '{unit}'")
+                status, _ = self._pman.run_verify_join(f"{self._systemctl_path} status -- '{unit}'")
             except Error:
                 pass
 
@@ -140,7 +140,10 @@ class Systemctl(ClassHelpers.SimpleCloseContext):
         """
 
         cmd = f"{self._systemctl_path} list-timers"
-        timers = [part for part in self._pman.run_verify(cmd)[0].split() if part.endswith(".timer")]
+        timers = []
+        for part in self._pman.run_verify_nojoin(cmd)[0].split():
+            if part.endswith(".timer"):
+                timers.append(part)
         if timers:
             self.stop(timers)
 

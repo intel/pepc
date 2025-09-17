@@ -135,8 +135,8 @@ def test_run_verify_output_fobjs(params: CommonTestParamsTypedDict, tmp_path: Pa
     stderr_path = tmp_path / "stderr.txt"
     with open(stdout_path, "w+", encoding="utf-8") as stdout_fobj, \
          open(stderr_path, "w+", encoding="utf-8") as stderr_fobj:
-        stdout, stderr = pman.run_verify(cmd, join=True, mix_output=False,
-                                         output_fobjs=(stdout_fobj, stderr_fobj))
+        stdout, stderr = pman.run_verify_join(cmd, mix_output=False,
+                                              output_fobjs=(stdout_fobj, stderr_fobj))
         assert stdout == "1: hello\n2: world\n"
         assert stderr == "1: hello-x\n2: world-x\n"
 
@@ -153,8 +153,8 @@ def test_run_verify_output_fobjs(params: CommonTestParamsTypedDict, tmp_path: Pa
         stderr_fobj.seek(0)
         stderr_fobj.truncate(0)
 
-        stdout, stderr = pman.run_verify(cmd, mix_output=True, join=False,
-                                         output_fobjs=(stdout_fobj, stderr_fobj))
+        stdout, stderr = pman.run_verify_nojoin(cmd, mix_output=True,
+                                                output_fobjs=(stdout_fobj, stderr_fobj))
         assert sorted(stdout) == ["1: hello\n", "1: hello-x\n",
                                   "2: world\n", "2: world-x\n"]
         assert stderr == []

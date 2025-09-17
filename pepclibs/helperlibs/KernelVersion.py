@@ -96,7 +96,7 @@ def get_kver(split=False, pman=None):
     """
 
     with ProcessManager.pman_or_local(pman) as wpman:
-        kver = wpman.run_verify("uname -r")[0].strip()
+        kver = wpman.run_verify_join("uname -r")[0].strip()
         if split:
             return split_kver(kver)
         return kver
@@ -120,7 +120,7 @@ def get_kver_ktree(ktree, split=False, pman=None, makecmd=None):
         cmd = makecmd + " --quiet -- kernelrelease"
 
         try:
-            kver = wpman.run_verify(cmd)[0].strip()
+            kver = wpman.run_verify_join(cmd)[0].strip()
         except Error as err:
             raise Error(f"cannot detect kernel version in '{ktree}':\n{err}\nMake sure kernel "
                         f"sources are configured.") from err
@@ -138,7 +138,7 @@ def get_kver_bin(path, split=False, pman=None):
     cmd = f"file -- {path}"
 
     with ProcessManager.pman_or_local(pman) as wpman:
-        stdout = wpman.run_verify(cmd)[0].strip()
+        stdout = wpman.run_verify_nojoin(cmd)[0].strip()
 
         msg = f"ran this command: {cmd}, got output:\n{stdout}"
 

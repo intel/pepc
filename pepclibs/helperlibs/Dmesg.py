@@ -32,7 +32,7 @@ class Dmesg(ClassHelpers.SimpleCloseContext):
                       diffs (see 'get_new_messages()').
         """
 
-        output = self._pman.run_verify("dmesg", join=False)[0]
+        output, _ = self._pman.run_verify_nojoin("dmesg")
 
         if capture:
             self.captured = output

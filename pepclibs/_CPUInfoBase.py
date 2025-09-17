@@ -540,7 +540,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
         cpuinfo: CPUInfoTypedDict = {}
 
-        lscpu, _ = self._pman.run_verify("lscpu", join=False)
+        lscpu, _ = self._pman.run_verify_nojoin("lscpu")
 
         # Parse misc. information about the CPU.
         patterns: tuple[tuple[str, CPUInfoKeyType], ...] = \

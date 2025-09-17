@@ -187,7 +187,7 @@ for cpu in cpus:
         print("%d,%d" % (cpu, regval))
 '"""
 
-        stdout, _ = self._pman.run_verify(cmd, join=False)
+        stdout, _ = self._pman.run_verify_nojoin(cmd)
 
         for line in stdout:
             split = Trivial.split_csv_line(line.strip())

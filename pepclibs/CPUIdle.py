@@ -184,7 +184,7 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
         cpus_regex = "|".join([str(cpu) for cpu in cpus])
         cmd = fr"find '{self._sysfs_base}' -type f -regextype posix-extended " \
               fr"-regex '.*cpu({cpus_regex})/cpuidle/state({indexes_regex})/[^/]+'"
-        files, _ = self._pman.run_verify(cmd, join=False)
+        files, _ = self._pman.run_verify_nojoin(cmd)
         if not files:
             msg = f"Failed to find C-state files in '{self._sysfs_base}'{self._pman.hostmsg}."
             for opt in self._get_kernel_cmdline().split():

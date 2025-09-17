@@ -308,7 +308,7 @@ def collect_msrs(msrinfo, pman, outdir):
       * outdir - the directory to save the command output to.
     """
 
-    lines, _ = pman.run_verify("lscpu -p=cpu", join=False)
+    lines, _ = pman.run_verify_nojoin("lscpu -p=cpu")
 
     cpus = []
     for line in lines:
