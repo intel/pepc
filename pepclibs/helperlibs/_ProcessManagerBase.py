@@ -44,9 +44,45 @@ if typing.TYPE_CHECKING:
         mode: int
         ctime: float
 
+    class ProcWaitResultJoinTypedDict(TypedDict):
+        """
+        A typed dictionary for the result of the 'wait()' method for a process with joined output
+        lines.
+
+        Attributes:
+            stdout: The standard output of the process as a single string. The tailing newline is
+                    not stripped.
+            stderr: The standard error of the process as a single string. The tailing newline is
+                    not stripped.
+            exitcode: The exit code of the process. Can be 'None' if the process is still running.
+        """
+
+        stdout: str
+        stderr: str
+        exitcode: int | None
+
+    class ProcWaitResultNoJoinTypedDict(TypedDict):
+        """
+        A typed dictionary for the result of the 'wait()' method for a process with non-joined
+        output lines.
+
+        Attributes:
+            stdout: The standard output of the process as a list of strings lines. The tailing
+                    newline is not stripped.
+            stderr: The standard error of the process as a list of strings lines. The tailing
+                    newline is not stripped.
+            exitcode: The exit code of the process. Can be 'None' if the process is still running.
+        """
+
+        stdout: list[str]
+        stderr: list[str]
+        exitcode: int | None
+
 class ProcWaitResultType(NamedTuple):
     """
     The result of the 'wait()' method for a process.
+
+    TODO: Turn this into a TypedDict.
 
     Attributes:
         stdout: The standard output of the process. Can be a single string or a list of strings
@@ -792,6 +828,54 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         raise NotImplementedError("ProcessManagerBase.run()")
 
+    def run_join(self,
+                 cmd: str | Path,
+                 timeout: int | float | None = None,
+                 capture_output: bool = True,
+                 mix_output: bool = False,
+                 output_fobjs: tuple[IO[str] | None, IO[str] | None] = (None, None),
+                 cwd: str | Path | None = None,
+                 intsh: bool = True,
+                 env: dict[str, str] | None = None,
+                 newgrp: bool = False) -> ProcWaitResultJoinTypedDict:
+        """
+        Same as 'run(join=True)', provided for convenience and more deterministic return type.
+        """
+
+        res = self.run(cmd, timeout=timeout, capture_output=capture_output,
+                       mix_output=mix_output, join=True, output_fobjs=output_fobjs, cwd=cwd,
+                       intsh=intsh, env=env, newgrp=newgrp)
+
+        if typing.TYPE_CHECKING:
+            return ProcWaitResultJoinTypedDict(stdout=cast(str, res.stdout),
+                                               stderr=cast(str, res.stderr),
+                                               exitcode=res.exitcode)
+        return {"stdout": res.stdout, "stderr": res.stderr, "exitcode": res.exitcode}
+
+    def run_nojoin(self,
+                   cmd: str | Path,
+                   timeout: int | float | None = None,
+                   capture_output: bool = True,
+                   mix_output: bool = False,
+                   output_fobjs: tuple[IO[str] | None, IO[str] | None] = (None, None),
+                   cwd: str | Path | None = None,
+                   intsh: bool = True,
+                   env: dict[str, str] | None = None,
+                   newgrp: bool = False) -> ProcWaitResultNoJoinTypedDict:
+        """
+        Same as 'run(join=False)', provided for convenience and more deterministic return type.
+        """
+
+        res = self.run(cmd, timeout=timeout, capture_output=capture_output,
+                       mix_output=mix_output, join=False, output_fobjs=output_fobjs, cwd=cwd,
+                       intsh=intsh, env=env, newgrp=newgrp)
+
+        if typing.TYPE_CHECKING:
+            return ProcWaitResultNoJoinTypedDict(stdout=cast(list[str], res.stdout),
+                                                 stderr=cast(list[str], res.stderr),
+                                                 exitcode=res.exitcode)
+        return {"stdout": res.stdout, "stderr": res.stderr, "exitcode": res.exitcode}
+
     def run_verify(self,
                    cmd: str | Path,
                    timeout: int | float | None = None,
@@ -849,12 +933,12 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         type.
         """
 
-        ret = self.run_verify(cmd, timeout=timeout, capture_output=capture_output,
+        res = self.run_verify(cmd, timeout=timeout, capture_output=capture_output,
                               mix_output=mix_output, join=True, output_fobjs=output_fobjs,
                               cwd=cwd, intsh=intsh, env=env, newgrp=newgrp)
         if typing.TYPE_CHECKING:
-            return cast(tuple[str, str], ret)
-        return ret
+            return cast(tuple[str, str], res)
+        return res
 
     def run_verify_nojoin(self,
                           cmd: str | Path,
@@ -871,12 +955,12 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         type.
         """
 
-        ret = self.run_verify(cmd, timeout=timeout, capture_output=capture_output,
+        res = self.run_verify(cmd, timeout=timeout, capture_output=capture_output,
                               mix_output=mix_output, join=False, output_fobjs=output_fobjs,
                               cwd=cwd, intsh=intsh, env=env, newgrp=newgrp)
         if typing.TYPE_CHECKING:
-            return cast(tuple[list[str], list[str]], ret)
-        return ret
+            return cast(tuple[list[str], list[str]], res)
+        return res
 
     @staticmethod
     def _rsync_add_debug_opts(opts: str) -> str:
