@@ -107,8 +107,15 @@ def _test_freq_methods_dies_good(uncfreq_obj: _UncoreFreqObjType, all_dies: RelN
         all_dies: The dictionary mapping all available packages to their dies.
     """
 
-    min_freq_iter = uncfreq_obj.get_min_freq_limit_dies(all_dies)
-    max_freq_iter = uncfreq_obj.get_max_freq_limit_dies(all_dies)
+    try:
+        for _, _, _ in uncfreq_obj.get_min_freq_limit_dies(all_dies):
+            pass
+        min_freq_iter = uncfreq_obj.get_min_freq_limit_dies(all_dies)
+        max_freq_iter = uncfreq_obj.get_max_freq_limit_dies(all_dies)
+    except ErrorNotSupported:
+        # The frequency limits are not supported, use the actual frequencies instead.
+        min_freq_iter = uncfreq_obj.get_min_freq_dies(all_dies)
+        max_freq_iter = uncfreq_obj.get_max_freq_dies(all_dies)
 
     errmsg_suffix = f"Mechanism: {uncfreq_obj.mname}, cache enabled: {uncfreq_obj.cache_enabled}"
 
@@ -179,12 +186,17 @@ def _test_freq_methods_dies_bad(uncfreq_obj: _UncoreFreqObjType, all_dies: RelNu
         all_dies: The dictionary mapping all available packages to their dies.
     """
 
-    unc_freq_obj_sysfs: _UncoreFreqSysfs.UncoreFreqSysfs | None = None
-    if uncfreq_obj.mname == "sysfs":
-        unc_freq_obj_sysfs = cast(_UncoreFreqSysfs.UncoreFreqSysfs, uncfreq_obj)
-
-    min_freq_iter = uncfreq_obj.get_min_freq_limit_dies(all_dies)
-    max_freq_iter = uncfreq_obj.get_max_freq_limit_dies(all_dies)
+    try:
+        for _, _, _ in uncfreq_obj.get_min_freq_limit_dies(all_dies):
+            pass
+        min_freq_iter = uncfreq_obj.get_min_freq_limit_dies(all_dies)
+        max_freq_iter = uncfreq_obj.get_max_freq_limit_dies(all_dies)
+        limits_supported = True
+    except ErrorNotSupported:
+        # The frequency limits are not supported, use the actual frequencies instead.
+        min_freq_iter = uncfreq_obj.get_min_freq_dies(all_dies)
+        max_freq_iter = uncfreq_obj.get_max_freq_dies(all_dies)
+        limits_supported = False
 
     errmsg_suffix = f"Mechanism: {uncfreq_obj.mname}, cache enabled: {uncfreq_obj.cache_enabled}"
 
@@ -257,9 +269,9 @@ def _test_freq_methods_dies_bad(uncfreq_obj: _UncoreFreqObjType, all_dies: RelNu
 
         # Try to set min uncore frequency to a value lower than the minimum allowed and higher than
         # the maximum allowed. This should fail.
-        if unc_freq_obj_sysfs:
-            *_, min_freq_limit = next(unc_freq_obj_sysfs.get_min_freq_limit_dies({package: [die]}))
-            *_, max_freq_limit = next(unc_freq_obj_sysfs.get_max_freq_limit_dies({package: [die]}))
+        if limits_supported:
+            *_, min_freq_limit = next(uncfreq_obj.get_min_freq_limit_dies({package: [die]}))
+            *_, max_freq_limit = next(uncfreq_obj.get_max_freq_limit_dies({package: [die]}))
         else:
             min_freq_limit = _UncoreFreqTpmi.MIN_FREQ_LIMIT
             max_freq_limit = _UncoreFreqTpmi.MAX_FREQ_LIMIT

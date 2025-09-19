@@ -1083,9 +1083,9 @@ def _list_mechanisms(args: argparse.Namespace):
 
     _LOG.info("* %s", "\n* ".join(info))
 
-def main() -> int:
+def _main() -> int:
     """
-    The entry point of the tool.
+    Implement the tool.
 
     Returns:
         int: The program exit code.
@@ -1121,13 +1121,23 @@ def main() -> int:
 
     return 0
 
-if __name__ == "__main__":
-    _exitcode = -1
+def main() -> int:
+    """
+    The entry point of the tool.
+
+    Returns:
+        int: The program exit code.
+    """
+
+    exitcode = -1
     try:
-        _exitcode = main()
+        return _main()
     except KeyboardInterrupt:
         _LOG.info("\nInterrupted, exiting")
-    except Error as _err:
-        _LOG.error_out(_err)
+    except Error as err:
+        _LOG.error_out(err)
 
-    raise SystemExit(_exitcode)
+    raise SystemExit(exitcode)
+
+if __name__ == "__main__":
+    raise SystemExit(main())

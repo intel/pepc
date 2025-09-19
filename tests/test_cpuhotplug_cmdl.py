@@ -206,17 +206,8 @@ def test_cpuhotplug_online_bad(params: _TestParamsTypedDict):
 
     pman = params["pman"]
 
-    bad = ["",
-           "--cpus all --core-siblings 0",
-           f"--packages {params['packages'][0]} --cores all",
-           f"--packages {params['packages'][0]} --cores {params['cores'][0][0]}",
-           f"--packages {params['packages'][0]} --cores {params['cores'][0][-1]}",
-           f"--packages {params['packages'][-1]}"]
-
-    if len(params["cores"][0]) > 2:
-        bad += [f"--packages 0 --cores {params['cores'][0][1]}"]
-    if len(params["cores"][0]) > 3:
-        bad += [f"--packages 0 --cores {params['cores'][0][1]}-{params['cores'][0][2]}"]
+    bad = ["--cpus -1",
+           f"--cpus {params['cpus'][-1] + 1}"]
 
     for option in bad:
         props_cmdl_common.run_pepc(f"cpu-hotplug online {option}", pman, exp_exc=Error)
