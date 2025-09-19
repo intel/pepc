@@ -177,7 +177,7 @@ Run the following command, which should print "Good" if the version is compatibl
 
 ```
 /usr/bin/python3 -c 'import sys; ver=sys.version_info; \
-print("Good") if ver.major > 2 and ver.minor > 8 else print("Bad")'
+print("Good") if ver.major > 2 and ver.minor >= 9 else print("Bad")'
 ```
 
 Create the standalone version of pepc.
@@ -189,7 +189,16 @@ echo '#!/usr/bin/python3' > pepc.standalone
 git archive --format zip HEAD >> pepc.standalone
 chmod ug+x pepc.standalone
 ```
+
 This creates the 'pepc.standalone' file, which you can rename and copy anywhere for standalone use.
+
+But there is one caveat: the standalone version does not include python dependencies, which are
+normally installed by 'pip' or 'uv'. The dependencies are:
+- 'pyyaml' - required, for parsing YAML configuration files
+- 'importlib-resources' - required only in case of python 3.9, otherwise optional
+- 'paramiko' - required only for remote host support, otherwise optional
+- 'argcomplete' - optional, for tab completions
+- 'colorama' - optional, for colored text output
 
 ## Tab completions
 
