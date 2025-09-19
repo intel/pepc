@@ -1149,7 +1149,7 @@ if __name__ == "__main__":
         _exitcode = main()
     except KeyboardInterrupt:
         _LOG.info("\nInterrupted, exiting")
-    except Error as err:
-        _LOG.error_out(err)
+    except Error as _err:
+        _LOG.error_out(_err)
 
     raise SystemExit(_exitcode)
