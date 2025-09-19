@@ -388,6 +388,8 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
             for die in pkg_dies:
                 path = self._construct_freq_path_die(ftype, package, die, limit=limit)
                 freq = self._sysfs_io.read_int(path, what=what)
+                _LOG.debug("Package %d die %d %s is %d Hz, read file '%s'",
+                            package, die, what, freq * 1000, path)
                 # The frequency value is in kHz in sysfs.
                 yield package, die, freq * 1000
 
@@ -455,6 +457,8 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
             for die in pkg_dies:
                 path = self._construct_elc_zone_freq_path_die(ztype, ftype, package, die)
                 freq = self._sysfs_io.read_int(path, what=what)
+                _LOG.debug("Package %d die %d %s is %d Hz, read file '%s'",
+                           package, die, what, freq * 1000, path)
                 # The frequency value is in kHz in sysfs.
                 yield package, die, freq * 1000
 
@@ -582,6 +586,8 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
                 self._validate_freq(freq, package, die, ftype)
                 path = self._construct_freq_path_die(ftype, package, die)
                 self._sysfs_io.write_int(path, freq // 1000, what=what)
+                _LOG.debug("Set package %d die %d %s to %d Hz, wrote file '%s'",
+                           package, die, what, freq, path)
 
     def _set_elc_zone_freq_dies(self,
                                 freq: int,
@@ -600,6 +606,8 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
                 self._validate_freq(freq, package, die, ftype, ztype=ztype)
                 path = self._construct_elc_zone_freq_path_die(ztype, ftype, package, die)
                 self._sysfs_io.write_int(path, freq // 1000, what=what)
+                _LOG.debug("Set package %d die %d %s to %d Hz, wrote file '%s'",
+                           package, die, what, freq, path)
 
     def _probe_driver(self):
         """
