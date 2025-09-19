@@ -21,7 +21,7 @@ from pepclibs.helperlibs import Logging
 from pepclibs.helperlibs.Exceptions import Error
 
 if typing.TYPE_CHECKING:
-    from typing import Any, IO, cast, TypedDict
+    from typing import Any, IO, cast, TypedDict, Mapping
 
 
     class RenderTypedDict(TypedDict):
@@ -50,7 +50,7 @@ if typing.TYPE_CHECKING:
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
-def _drop_none(data: dict[str, Any]) -> dict[str, Any]:
+def _drop_none(data: Mapping[str, Any]) -> Mapping[str, Any]:
     """
     Create a copy of the input dictionary, excluding keys with 'None' values.
 
@@ -100,7 +100,7 @@ def _represent_posixpath(dumper: yaml.Dumper, value: PosixPath) -> yaml.ScalarNo
 
     return dumper.represent_scalar("tag:yaml.org,2002:str", str(value))
 
-def dump(data: dict[str, Any],
+def dump(data: Mapping[str, Any],
          path: Path | IO[str],
          float_format: str | None = None,
          skip_none: bool = False):
