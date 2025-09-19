@@ -74,7 +74,7 @@ jobs:
 
           # Format the mypy output for GitHub annotations
           sed < .tmp/mypy.results -r -n \
-            -e 's#^(.*\.py):([0-9]+): ([^:]+): (.*)#::\3 file=\1,line=\2,col=1::[mypy] \1:\2:\4#' \
+            -e 's#^(.*):([0-9]+): ([^:]+): (.*)#::\3 file=\1,line=\2,col=1::[mypy] \1:\2:\4#' \
             -e 's#::note #::notice #' \
             -e '/^::/p'
 
