@@ -107,8 +107,8 @@ def _test_freq_methods_dies_good(uncfreq_obj: _UncoreFreqObjType, all_dies: RelN
         all_dies: The dictionary mapping all available packages to their dies.
     """
 
-    min_freq_iter = uncfreq_obj.get_min_freq_dies(all_dies)
-    max_freq_iter = uncfreq_obj.get_max_freq_dies(all_dies)
+    min_freq_iter = uncfreq_obj.get_min_freq_limit_dies(all_dies)
+    max_freq_iter = uncfreq_obj.get_max_freq_limit_dies(all_dies)
 
     errmsg_suffix = f"Mechanism: {uncfreq_obj.mname}, cache enabled: {uncfreq_obj.cache_enabled}"
 
@@ -118,6 +118,14 @@ def _test_freq_methods_dies_good(uncfreq_obj: _UncoreFreqObjType, all_dies: RelN
         # Round it up to 100MHz.
         round_hz = 100_000_000
         mid_freq = (mid_freq + round_hz - 1) // round_hz * round_hz
+
+        # Sometimes min and max limits are equal. In this case, skip the test for this die.
+        if min_freq == max_freq:
+            continue
+
+        # Set min and max frequencies to known values.
+        uncfreq_obj.set_min_freq_dies(min_freq, {package: [die]})
+        uncfreq_obj.set_max_freq_dies(max_freq, {package: [die]})
 
         # Set the min uncore frequency to the middle value and check it.
         uncfreq_obj.set_min_freq_dies(mid_freq, {package: [die]})
@@ -175,8 +183,8 @@ def _test_freq_methods_dies_bad(uncfreq_obj: _UncoreFreqObjType, all_dies: RelNu
     if uncfreq_obj.mname == "sysfs":
         unc_freq_obj_sysfs = cast(_UncoreFreqSysfs.UncoreFreqSysfs, uncfreq_obj)
 
-    min_freq_iter = uncfreq_obj.get_min_freq_dies(all_dies)
-    max_freq_iter = uncfreq_obj.get_max_freq_dies(all_dies)
+    min_freq_iter = uncfreq_obj.get_min_freq_limit_dies(all_dies)
+    max_freq_iter = uncfreq_obj.get_max_freq_limit_dies(all_dies)
 
     errmsg_suffix = f"Mechanism: {uncfreq_obj.mname}, cache enabled: {uncfreq_obj.cache_enabled}"
 
@@ -186,6 +194,15 @@ def _test_freq_methods_dies_bad(uncfreq_obj: _UncoreFreqObjType, all_dies: RelNu
         # Round it up to 100MHz.
         round_hz = 100_000_000
         mid_freq = (mid_freq + round_hz - 1) // round_hz * round_hz
+
+        # Sometimes min and max limits are equal. In this case, skip the test for this die.
+        if min_freq == max_freq:
+            continue
+
+        # Set min and max frequencies to known values.
+        uncfreq_obj.set_min_freq_dies(min_freq, {package: [die]})
+        uncfreq_obj.set_max_freq_dies(max_freq, {package: [die]})
+        print(f"Testing package {package}, die {die}: min_freq={min_freq}, max_freq={max_freq}")
 
         # Set the min uncore frequency to the middle value and check it.
         uncfreq_obj.set_min_freq_dies(mid_freq, {package: [die]})
