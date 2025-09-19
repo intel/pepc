@@ -5,11 +5,14 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
- - Fix 1.6.1 regression: C-states were always reported as disabled.
- - Fix 'pepc pmqos config --latency-limit', which always crashed.
 ### Added
 ### Removed
 ### Changed
+
+## [1.6.3] - 2025-09-19
+### Fixed
+ - Fix 1.6.1 regression: C-states were always reported as disabled.
+ - Fix 'pepc pmqos config --latency-limit', which always crashed.
 
 ## [1.6.2] - 2025-09-16
 ### Fixed

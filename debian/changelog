@@ -1,3 +1,10 @@
+pepc (1.6.3) unstable; urgency=low
+
+  * Fix 1.6.1 regression: C-states were always reported as disabled.
+  * Fix 'pepc pmqos config --latency-limit', which always crashed.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Fri, 19 Sep 2025 00:00:00 +0200
+
 pepc (1.6.2) unstable; urgency=low
 
   * Improve 'importlib_resources' failure message in case of python 3.9.
