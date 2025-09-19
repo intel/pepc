@@ -14,7 +14,6 @@ pepc - Power, Energy, and Performance Configuration tool for Linux.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import os
-import sys
 import argparse
 from pathlib import Path
 
@@ -1096,60 +1095,61 @@ def main() -> int:
         int: The program exit code.
     """
 
-    try:
-        args = parse_arguments()
+    args = parse_arguments()
 
-        if not getattr(args, "func", None):
-            _LOG.error("Please, run '%s -h' for help", TOOLNAME)
-            return -1
-
-        if getattr(args, "list_mechanisms", None):
-            _list_mechanisms(args)
-            return 0
-
-        hostname: str = getattr(args, "hostname", "localhost")
-        username: str = getattr(args, "username", "")
-        privkey: str | None = getattr(args, "privkey", None)
-        timeout: int | float | None = getattr(args, "timeout", None)
-        dataset: str | None = getattr(args, "dataset", None)
-
-        if hostname != "localhost" and dataset:
-            raise Error("The '--dataset' option cannot be used with '--host'")
-
-        if hostname == "localhost" or dataset:
-            if username:
-                raise Error("The '--username' option requires the '--host' option")
-            if privkey:
-                raise Error("The '--priv-key' option requires the '--host' option")
-            if timeout:
-                raise Error("The '--timeout' option requires the '--host' option")
-        else:
-            if not username:
-                username = "root"
-            if timeout:
-                timeout = Trivial.str_to_num(getattr(args, "timeout"),
-                                                     what="--timeout option value")
-            else:
-                timeout = 8
-
-        if dataset:
-            for dspath in _get_next_dataset(dataset):
-                with _get_emul_pman(dspath) as pman:
-                    args.func(args, pman)
-        else:
-            # pylint: disable-next=import-outside-toplevel
-            from pepclibs.helperlibs import ProcessManager
-
-            with ProcessManager.get_pman(hostname, username=username, privkeypath=privkey,
-                                         timeout=timeout) as pman:
-                args.func(args, pman)
-    except KeyboardInterrupt:
-        _LOG.info("\nInterrupted, exiting")
+    if not getattr(args, "func", None):
+        _LOG.error("Please, run '%s -h' for help", TOOLNAME)
         return -1
-    except Error as err:
-        _LOG.error_out(err)
+
+    if getattr(args, "list_mechanisms", None):
+        _list_mechanisms(args)
+        return 0
+
+    hostname: str = getattr(args, "hostname", "localhost")
+    username: str = getattr(args, "username", "")
+    privkey: str | None = getattr(args, "privkey", None)
+    timeout: int | float | None = getattr(args, "timeout", None)
+    dataset: str | None = getattr(args, "dataset", None)
+
+    if hostname != "localhost" and dataset:
+        raise Error("The '--dataset' option cannot be used with '--host'")
+
+    if hostname == "localhost" or dataset:
+        if username:
+            raise Error("The '--username' option requires the '--host' option")
+        if privkey:
+            raise Error("The '--priv-key' option requires the '--host' option")
+        if timeout:
+            raise Error("The '--timeout' option requires the '--host' option")
+    else:
+        if not username:
+            username = "root"
+        if timeout:
+            timeout = Trivial.str_to_num(getattr(args, "timeout"), what="--timeout option value")
+        else:
+            timeout = 8
+
+    if dataset:
+        for dspath in _get_next_dataset(dataset):
+            with _get_emul_pman(dspath) as pman:
+                args.func(args, pman)
+    else:
+        # pylint: disable-next=import-outside-toplevel
+        from pepclibs.helperlibs import ProcessManager
+
+        with ProcessManager.get_pman(hostname, username=username, privkeypath=privkey,
+                                     timeout=timeout) as pman:
+            args.func(args, pman)
 
     return 0
 
 if __name__ == "__main__":
-    sys.exit(main())
+    _exitcode = -1
+    try:
+        _exitcode = main()
+    except KeyboardInterrupt:
+        _LOG.info("\nInterrupted, exiting")
+    except Error as err:
+        _LOG.error_out(err)
+
+    raise SystemExit(_exitcode)
