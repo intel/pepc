@@ -5,10 +5,13 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
- - Add a crash in 'KernelVersion.py' introduced in v1.6.3.
 ### Added
 ### Removed
 ### Changed
+
+## [1.6.4] - 2025-09-19
+### Fixed
+ - Add a crash in 'KernelVersion.py' introduced in v1.6.3.
 
 ## [1.6.3] - 2025-09-19
 ### Fixed

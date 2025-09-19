@@ -1,3 +1,9 @@
+pepc (1.6.4) unstable; urgency=low
+
+  * Add a crash in 'KernelVersion.py' introduced in v1.6.3.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Fri, 19 Sep 2025 00:00:00 +0200
+
 pepc (1.6.3) unstable; urgency=low
 
   * Fix 1.6.1 regression: C-states were always reported as disabled.
