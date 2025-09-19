@@ -138,7 +138,7 @@ def get_kver_bin(path, split=False, pman=None):
     cmd = f"file -- {path}"
 
     with ProcessManager.pman_or_local(pman) as wpman:
-        stdout = wpman.run_verify_nojoin(cmd)[0].strip()
+        stdout = wpman.run_verify_join(cmd)[0].strip()
 
         msg = f"ran this command: {cmd}, got output:\n{stdout}"
 
