@@ -264,10 +264,6 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
 
     ArgParse.add_options(parser, ArgParse.SSH_OPTIONS + [_DATASET_OPTION])
 
-    text = """Force colorized output even if the output stream is not a terminal (adds ANSI escape
-              codes)."""
-    parser.add_argument("--force-color", action="store_true", help=text)
-
     text = f"""Print path to {TOOLNAME} manual pages directory and exit. This path can be added to
                the 'MANPATH' environment variable to make the manual pages available to the 'man'
                tool."""
@@ -1106,7 +1102,7 @@ def main() -> int:
         return 0
 
     dataset: str | None = getattr(args, "dataset", None)
-    cmdl = ArgParse.handle_ssh_args(args)
+    cmdl = ArgParse.format_ssh_args(args)
 
     if cmdl["hostname"] != "localhost" and dataset:
         raise Error("The '--dataset' option cannot be used with '--host'")

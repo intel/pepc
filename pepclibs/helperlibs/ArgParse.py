@@ -28,7 +28,7 @@ from pepclibs.helperlibs import DamerauLevenshtein, Trivial, Logging
 from pepclibs.helperlibs.Exceptions import Error
 
 if typing.TYPE_CHECKING:
-    from typing import TypedDict, Iterable, Any, Sequence, cast, NamedTuple
+    from typing import TypedDict, Iterable, Any, Sequence
 
     # The class type returned by the 'add_subparsers()' method of the arguments classes. Even though
     # the class is private, it is documented and will unlikely to change.
@@ -73,20 +73,24 @@ if typing.TYPE_CHECKING:
         argcomplete: str | None
         kwargs: ArgKwargsTypedDict
 
-    class CommonArgsTypedDict(NamedTuple):
+    class CommonArgsTypedDict(TypedDict, total=False):
         """
         The common command-line arguments.
 
         Attributes:
-            quiet: Suppress non-essential output (-q option).
-            debug: Enable debugging output (-d option).
-            debug_modules: Comma-separated list modules for which to enable debugging output, or
-                           None to enable debugging for all modules (--debug-modules option).
+            quiet: Suppress non-essential output (-q option). False by default.
+            force_color: Force colorized output even if the output stream is not a terminal
+                        (--force-color option). False by default.
+            debug: Enable debugging output (-d option). False by default.
+            debug_modules: Comma-separated list modules for which to enable debugging output
+                           (--debug-modules option). None by default (enable debugging for all
+                           modules).
         """
 
         quiet: bool
+        force_color: bool
         debug: bool
-        debug_modules: str | None
+        debug_modules: list[str] | None
 
     class SSHArgsTypedDict(TypedDict, total=False):
         """
@@ -183,9 +187,47 @@ def add_ssh_options(parser: argparse.ArgumentParser | ArgsParser):
 
     add_options(parser, SSH_OPTIONS)
 
-def handle_ssh_args(args: argparse.Namespace) -> SSHArgsTypedDict:
+def format_common_args(args: argparse.Namespace) -> CommonArgsTypedDict:
     """
-    Handle SSH-related command-line arguments and return them as a dictionary.
+    Verify common command-line arguments and return them as a dictionary.
+
+    Args:
+        args: Parsed command-line arguments.
+
+    Returns:
+        A dictionary containing the common options.
+    """
+
+    cmdl: CommonArgsTypedDict = {}
+
+    cmdl["quiet"] = getattr(args, "quiet", False)
+    cmdl["debug"] = getattr(args, "debug", False)
+    if cmdl["quiet"] and cmdl["debug"]:
+        raise Error("The '-q' and '-d' options cannot be used together")
+
+    debug_modules: str | None = getattr(args, "debug_modules", None)
+    if debug_modules:
+        if cmdl["quiet"]:
+            raise Error("The '-q' and '--debug-modules' options cannot be used together")
+        if not cmdl["debug"]:
+            raise Error("The '--debug-modules' option requires the '-d' option to be used")
+        cmdl["debug_modules"] = Trivial.split_csv_line(debug_modules)
+    else:
+        cmdl["debug_modules"] = None
+
+    cmdl["force_color"] = getattr(args, "force_color", False)
+    if cmdl["force_color"]:
+        try:
+            # pylint: disable-next=unused-import,import-outside-toplevel
+            import colorama
+        except ImportError as err:
+            raise Error("The '--force-color' option requires the 'colorama' python package to be "
+                        "installed") from err
+    return cmdl
+
+def format_ssh_args(args: argparse.Namespace) -> SSHArgsTypedDict:
+    """
+    Verify SSH-related command-line arguments and return them as a dictionary.
 
     Args:
         args: Parsed command-line arguments.
@@ -214,11 +256,11 @@ def handle_ssh_args(args: argparse.Namespace) -> SSHArgsTypedDict:
         else:
             timeout = 8
 
-    opts: SSHArgsTypedDict = {"hostname": hostname,
+    cmdl: SSHArgsTypedDict = {"hostname": hostname,
                               "username": username,
                               "privkey": privkey,
                               "timeout": timeout}
-    return opts
+    return cmdl
 
 class OrderedArg(argparse.Action):
     """
@@ -310,13 +352,17 @@ class ArgsParser(argparse.ArgumentParser):
         super().__init__(*args, **kwargs)
 
         text = "Show this help message and exit."
-        self.add_argument("-h", dest="help", action="help", help=text)
+        self.add_argument("-h", "--help", dest="help", action="help", help=text)
 
         text = "Be quiet (print only improtant messages like warnings)."
-        self.add_argument("-q", dest="quiet", action="store_true", help=text)
+        self.add_argument("-q", "--quiet", dest="quiet", action="store_true", help=text)
+
+        text = """Force colorized output even if the output stream is not a terminal (adds ANSI
+                  escape codes)."""
+        self.add_argument("--force-color", action="store_true", help=text)
 
         text = "Print debugging information."
-        self.add_argument("-d", dest="debug", action="store_true", help=text)
+        self.add_argument("-d", "--debug", dest="debug", action="store_true", help=text)
 
         text = "Print debugging information only from the specified modules."
         self.add_argument("--debug-modules", action="store", metavar="MODNAME[,MODNAME1,...]",
@@ -326,52 +372,22 @@ class ArgsParser(argparse.ArgumentParser):
             text = "Print the version number and exit."
             self.add_argument("--version", action="version", help=text, version=version)
 
-    def _check_arguments(self, args: CommonArgsTypedDict):
-        """
-        Validate the common command-line arguments.
-
-        Args:
-            args: The parsed command-line arguments.
-
-        Raises:
-            Error: If an invalid argument combination is detected.
-        """
-
-        if args.quiet and args.debug:
-            raise Error("-q and -d cannot be used together")
-
-        if args.quiet and args.debug_modules:
-            raise Error("-q and --debug_modules cannot be used together")
-
-        if args.debug_modules and not args.debug:
-            raise Error("--debug-modules requires -d to be used")
-
-    def _configure_debug_logging(self, args: CommonArgsTypedDict):
-        """
-        Parse the '--debug-modules' argument and enable debug logging for the specified modules.
-
-        Args:
-            args: The parsed command-line arguments.
-        """
-
-        if args.debug_modules:
-            modnames = Trivial.split_csv_line(args.debug_modules)
-            Logging.DEBUG_MODULE_NAMES = set(modnames)
-
     def parse_args(self, *args: Any, **kwargs: Any) -> argparse.Namespace: # type: ignore[override]
-        """Verify that '-d' and '-q' are not used at the same time."""
+        """
+        Parse command line arguments and configure debug logging.
 
-        arguments = super().parse_args(*args, **kwargs)
+        Args:
+            *args: Positional arguments for 'ArgumentParser.parse_args()'.
+            **kwargs: Keyword arguments for 'ArgumentParser.parse_args()'.
+        """
 
-        if typing.TYPE_CHECKING:
-            args_dc = cast(CommonArgsTypedDict, arguments)
-        else:
-            args_dc = arguments
+        _args = super().parse_args(*args, **kwargs)
 
-        self._check_arguments(args_dc)
-        self._configure_debug_logging(args_dc)
+        cmdl = format_common_args(_args)
+        if cmdl["debug_modules"] is not None:
+            Logging.DEBUG_MODULE_NAMES = set(cmdl["debug_modules"])
 
-        return arguments
+        return _args
 
     def add_subparsers(self, *args: Any, **kwargs: Any) -> SubParsersType:
         """
