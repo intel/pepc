@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2022 Intel Corporation
+# Copyright (C) 2020-2025 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
-This module contains helper functions related to logging.
+Logging support.
 """
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
@@ -26,7 +26,7 @@ except ImportError:
 from pepclibs.helperlibs.Exceptions import Error
 
 if typing.TYPE_CHECKING:
-    from typing import NoReturn, Any, IO, cast, Sequence
+    from typing import NoReturn, Any, IO, cast, Sequence, Final
 
 # Names of the modules to accept debug log messages from. Can be set by the user. All modules are
 # accepted by default.
@@ -37,19 +37,19 @@ DEBUG_MODULE_NAMES: set[str] = set()
 #   * NOTICE: An INFO message, but with a prefix.
 #   * DEBUG, WARNING, ERROR, CRITICAL: Also have the prefix.
 #   * ERRINFO: An ERROR message, but without a prefix.
-INFO = logging.INFO
-NOTICE = logging.INFO + 1
-DEBUG = logging.DEBUG
-WARNING = logging.WARNING
-ERROR = logging.ERROR
-ERRINFO = logging.ERROR + 1
-CRITICAL = logging.CRITICAL
+INFO: Final[int] = logging.INFO
+NOTICE: Final[int] = logging.INFO + 1
+DEBUG: Final[int] = logging.DEBUG
+WARNING: Final[int] = logging.WARNING
+ERROR: Final[int] = logging.ERROR
+ERRINFO: Final[int] = logging.ERROR + 1
+CRITICAL: Final[int] = logging.CRITICAL
 
 # Name of the main logger instance. Other project loggers are supposed to be children of this one.
-MAIN_LOGGER_NAME = "main"
+MAIN_LOGGER_NAME: Final[str] = "main"
 
 # The default prefix for debug messages.
-_DEFAULT_DBG_PREFIX = "[%(created)f] [%(asctime)s] [%(module)s,%(lineno)d]"
+_DEFAULT_DBG_PREFIX: Final[str] = "[%(created)f] [%(asctime)s] [%(module)s,%(lineno)d]"
 
 class _MyFormatter(logging.Formatter):
     """
