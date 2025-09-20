@@ -73,7 +73,7 @@ if typing.TYPE_CHECKING:
         argcomplete: str | None
         kwargs: ArgKwargsTypedDict
 
-    class _CommonArgumentsType(NamedTuple):
+    class CommonArgsTypedDict(NamedTuple):
         """
         The common command-line arguments.
 
@@ -88,7 +88,7 @@ if typing.TYPE_CHECKING:
         debug: bool
         debug_modules: str | None
 
-    class SSHOptsTypedDict(TypedDict, total=False):
+    class SSHArgsTypedDict(TypedDict, total=False):
         """
         The SSH-related command-line arguments after they have been processed and validated.
 
@@ -183,7 +183,7 @@ def add_ssh_options(parser: argparse.ArgumentParser | ArgsParser):
 
     add_options(parser, SSH_OPTIONS)
 
-def handle_ssh_args(args: argparse.Namespace) -> SSHOptsTypedDict:
+def handle_ssh_args(args: argparse.Namespace) -> SSHArgsTypedDict:
     """
     Handle SSH-related command-line arguments and return them as a dictionary.
 
@@ -214,7 +214,7 @@ def handle_ssh_args(args: argparse.Namespace) -> SSHOptsTypedDict:
         else:
             timeout = 8
 
-    opts: SSHOptsTypedDict = {"hostname": hostname,
+    opts: SSHArgsTypedDict = {"hostname": hostname,
                               "username": username,
                               "privkey": privkey,
                               "timeout": timeout}
@@ -326,7 +326,7 @@ class ArgsParser(argparse.ArgumentParser):
             text = "Print the version number and exit."
             self.add_argument("--version", action="version", help=text, version=version)
 
-    def _check_arguments(self, args: _CommonArgumentsType):
+    def _check_arguments(self, args: CommonArgsTypedDict):
         """
         Validate the common command-line arguments.
 
@@ -346,7 +346,7 @@ class ArgsParser(argparse.ArgumentParser):
         if args.debug_modules and not args.debug:
             raise Error("--debug-modules requires -d to be used")
 
-    def _configure_debug_logging(self, args: _CommonArgumentsType):
+    def _configure_debug_logging(self, args: CommonArgsTypedDict):
         """
         Parse the '--debug-modules' argument and enable debug logging for the specified modules.
 
@@ -364,7 +364,7 @@ class ArgsParser(argparse.ArgumentParser):
         arguments = super().parse_args(*args, **kwargs)
 
         if typing.TYPE_CHECKING:
-            args_dc = cast(_CommonArgumentsType, arguments)
+            args_dc = cast(CommonArgsTypedDict, arguments)
         else:
             args_dc = arguments
 
