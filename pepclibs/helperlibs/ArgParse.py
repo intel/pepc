@@ -15,6 +15,7 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 import types
 import typing
 import argparse
+from pathlib import Path
 
 try:
     import argcomplete
@@ -86,6 +87,24 @@ if typing.TYPE_CHECKING:
         quiet: bool
         debug: bool
         debug_modules: str | None
+
+    class SSHOptsTypedDict(TypedDict, total=False):
+        """
+        The SSH-related command-line arguments after they have been processed and validated.
+
+        Attributes:
+            hostname: The remote host name or IP address (-H option). Default is "localhost".
+            username: The user name for logging into the remote host (-U option). Default is "root"
+                      in case of a remote host and "" (empty string) for the local host.
+            privkey: The path to the private SSH key (-K option). Default is None.
+            timeout: The timeout for establishing an SSH connection in seconds (-T option). Default
+                     is 8 seconds for remote hosts and None for the local host.
+        """
+
+        hostname: str
+        username: str
+        privkey: Path | None
+        timeout: int | float | None
 
 SSH_OPTIONS: list[ArgTypedDict] = [
     {
@@ -163,6 +182,43 @@ def add_ssh_options(parser: argparse.ArgumentParser | ArgsParser):
     """
 
     add_options(parser, SSH_OPTIONS)
+
+def handle_ssh_args(args: argparse.Namespace) -> SSHOptsTypedDict:
+    """
+    Handle SSH-related command-line arguments and return them as a dictionary.
+
+    Args:
+        args: Parsed command-line arguments.
+
+    Returns:
+        A dictionary containing the SSH-related options.
+    """
+
+    hostname: str = getattr(args, "hostname", "localhost")
+    username: str = getattr(args, "username", "")
+    privkey: Path | None = getattr(args, "privkey", None)
+    timeout: int | float | None = getattr(args, "timeout", None)
+
+    if hostname == "localhost":
+        if username:
+            raise Error("The '--username' option requires the '--host' option")
+        if privkey:
+            raise Error("The '--priv-key' option requires the '--host' option")
+        if timeout:
+            raise Error("The '--timeout' option requires the '--host' option")
+    else:
+        if not username:
+            username = "root"
+        if timeout:
+            timeout = Trivial.str_to_num(getattr(args, "timeout"), what="--timeout option value")
+        else:
+            timeout = 8
+
+    opts: SSHOptsTypedDict = {"hostname": hostname,
+                              "username": username,
+                              "privkey": privkey,
+                              "timeout": timeout}
+    return opts
 
 class OrderedArg(argparse.Action):
     """

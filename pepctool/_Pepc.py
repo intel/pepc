@@ -27,7 +27,7 @@ except ImportError:
 import typing
 from typing import cast
 from pepclibs import PMQoSVars, CStatesVars, PStatesVars, UncoreVars, CPUInfoVars
-from pepclibs.helperlibs import ArgParse, Human, Logging, ProjectFiles, Trivial
+from pepclibs.helperlibs import ArgParse, Human, Logging, ProjectFiles
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs._PropsClassBase import MECHANISMS
 
@@ -259,7 +259,7 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
         An initialized command-line arguments parser object.
     """
 
-    text = "pepc - Power, Energy, and Performance Configuration tool for Linux."
+    text = f"{TOOLNAME} - Power, Energy, and Performance Configuration tool for Linux."
     parser = ArgParse.ArgsParser(description=text, prog=TOOLNAME, ver=_VERSION)
 
     ArgParse.add_options(parser, ArgParse.SSH_OPTIONS + [_DATASET_OPTION])
@@ -1105,29 +1105,11 @@ def main() -> int:
         _list_mechanisms(args)
         return 0
 
-    hostname: str = getattr(args, "hostname", "localhost")
-    username: str = getattr(args, "username", "")
-    privkey: str | None = getattr(args, "privkey", None)
-    timeout: int | float | None = getattr(args, "timeout", None)
     dataset: str | None = getattr(args, "dataset", None)
+    cmdl = ArgParse.handle_ssh_args(args)
 
-    if hostname != "localhost" and dataset:
+    if cmdl["hostname"] != "localhost" and dataset:
         raise Error("The '--dataset' option cannot be used with '--host'")
-
-    if hostname == "localhost" or dataset:
-        if username:
-            raise Error("The '--username' option requires the '--host' option")
-        if privkey:
-            raise Error("The '--priv-key' option requires the '--host' option")
-        if timeout:
-            raise Error("The '--timeout' option requires the '--host' option")
-    else:
-        if not username:
-            username = "root"
-        if timeout:
-            timeout = Trivial.str_to_num(getattr(args, "timeout"), what="--timeout option value")
-        else:
-            timeout = 8
 
     if dataset:
         for dspath in _get_next_dataset(dataset):
@@ -1137,8 +1119,8 @@ def main() -> int:
         # pylint: disable-next=import-outside-toplevel
         from pepclibs.helperlibs import ProcessManager
 
-        with ProcessManager.get_pman(hostname, username=username, privkeypath=privkey,
-                                     timeout=timeout) as pman:
+        with ProcessManager.get_pman(cmdl["hostname"], username=cmdl["username"],
+                                     privkeypath=cmdl["privkey"], timeout=cmdl["timeout"]) as pman:
             args.func(args, pman)
 
     return 0
