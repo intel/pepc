@@ -5,6 +5,7 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
+ - Fix minor regression since v1.6.3: junk traceback on errors.
 ### Added
 ### Removed
 ### Changed
