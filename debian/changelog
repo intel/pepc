@@ -1,3 +1,9 @@
+pepc (1.6.5) unstable; urgency=low
+
+  * Fix minor regression since v1.6.3: junk traceback on errors.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Sun, 21 Sep 2025 00:00:00 +0200
+
 pepc (1.6.4) unstable; urgency=low
 
   * Add a crash in 'KernelVersion.py' introduced in v1.6.3.
