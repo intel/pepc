@@ -1258,7 +1258,8 @@ class CStatesPrinter(_PropsPrinter):
         if "sysfs" not in mnames:
             if csnames == "all":
                 return 0
-            raise Error("The 'sysfs' mechanism is required for printing C-states information")
+            raise ErrorTryAnotherMechanism("The 'sysfs' mechanism is required for printing "
+                                           "C-states information")
 
         keys: set[ReqCStateInfoKeysType]
 
