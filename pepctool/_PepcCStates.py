@@ -270,8 +270,13 @@ def cstates_config_command(args: argparse.Namespace, pman: ProcessManagerType):
 
         if enable_opts:
             for optname, optval in enable_opts.items():
+                csnames: list[str] | Literal["all"]
+                if optval == "all":
+                    csnames = "all"
+                else:
+                    csnames = Trivial.split_csv_line(optval)
                 enable = optname == "enable"
-                setter.set_cstates(csnames=optval, cpus=optar.get_cpus(), enable=enable,
+                setter.set_cstates(csnames, cpus=optar.get_cpus(), enable=enable,
                                    mnames=mnames)
 
         if set_opts:
