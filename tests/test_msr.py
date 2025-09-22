@@ -29,7 +29,7 @@ def _get_msr_test_params(params, include_ro=True, include_rw=True):
       * sname - scope name (e.g. "package", "core").
     """
 
-    for addr, features in params["msrs"].items():
+    for addr, features in params["fmsrs"].items():
         for finfo in features.values():
             if finfo.get("writable"):
                 if not include_rw:

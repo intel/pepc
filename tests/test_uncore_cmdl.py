@@ -74,7 +74,12 @@ def _get_good_info_opts() -> Generator[str, None, None]:
                 "--elc-low-threshold --elc-high-threshold"]
 
 def test_uncore_info(params: PropsCmdlTestParamsTypedDict):
-    """Test the 'pepc uncore info' command."""
+    """
+    Test 'pepc uncore info'.
+
+    Args:
+        params: The test parameters dictionary.
+    """
 
     pman = params["pman"]
 

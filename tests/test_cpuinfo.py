@@ -3,10 +3,11 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2022 Intel Corporation
+# Copyright (C) 2022-2025 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
-# Author: Antti Laakso <antti.laakso@linux.intel.com>
+# Authors: Antti Laakso <antti.laakso@linux.intel.com>
+#          Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """Test the public methods of the 'CPUInfo' module."""
 

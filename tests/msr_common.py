@@ -29,7 +29,7 @@ if typing.TYPE_CHECKING:
     from pepclibs.msr._FeaturedMSR import FeatureTypedDict
     from common import CommonTestParamsTypedDict
 
-    class _TestParamsTypedDict(CommonTestParamsTypedDict, total=False):
+    class FeaturedMSRTestParamsTypedDict(CommonTestParamsTypedDict, total=False):
         """
         The test parameters dictionary.
 
@@ -37,7 +37,7 @@ if typing.TYPE_CHECKING:
             cpuinfo: A 'CPUInfo.CPUInfo' object.
             cpus: All CPU numbers in the system.
             testcpus: A few CPU numbers to use for testing.
-            msrs: A dictionary where keys are MSR addresses and values are dictionaries of MSR
+            fmsrs: A dictionary where keys are MSR addresses and values are dictionaries of MSR
                   features.
             feature_classes: A list of MSR feature classes to test.
         """
@@ -45,7 +45,7 @@ if typing.TYPE_CHECKING:
         cpuinfo: CPUInfo.CPUInfo
         cpus: list[int]
         testcpus: list[int]
-        msrs: dict[int,  dict[str, FeatureTypedDict]]
+        fmsrs: dict[int,  dict[str, FeatureTypedDict]]
         feature_classes: list[type[_FeaturedMSR.FeaturedMSR]]
 
 _MSR_MODULES: Final[tuple[str, ...]] = ("PMEnable", "HWPRequest", "EnergyPerfBias", "FSBFreq",
@@ -63,7 +63,8 @@ _SAFE_TO_SET_FEATURES: Final[tuple[str, ...]] = ("epb", "epp", "pkg_control", "c
                                                  "limit1_clamp", "limit2_clamp")
 
 @pytest.fixture(name="params", scope="module")
-def get_params(hostspec: str, username: str) -> Generator[_TestParamsTypedDict, None, None]:
+def get_params(hostspec: str,
+               username: str) -> Generator[FeaturedMSRTestParamsTypedDict, None, None]:
     """
     Generate a dictionary with testing parameters.
 
@@ -83,7 +84,7 @@ def get_params(hostspec: str, username: str) -> Generator[_TestParamsTypedDict, 
         params = common.build_params(pman)
 
         if typing.TYPE_CHECKING:
-            params = cast(_TestParamsTypedDict, params)
+            params = cast(FeaturedMSRTestParamsTypedDict, params)
 
         params["cpuinfo"] = cpuinfo
 
@@ -93,40 +94,38 @@ def get_params(hostspec: str, username: str) -> Generator[_TestParamsTypedDict, 
         params["testcpus"] = [allcpus[0], allcpus[medidx], allcpus[-1]]
 
         # The MSR addresses that will be tested.
-        params["msrs"] = {}
+        params["fmsrs"] = {}
         params["feature_classes"] = []
         for modname in _MSR_MODULES:
-            msr_feature_class = getattr(import_module(f"pepclibs.msr.{modname}"), modname)
+            fmsr_class = getattr(import_module(f"pepclibs.msr.{modname}"), modname)
             if typing.TYPE_CHECKING:
-                msr_feature_class = cast(type[_FeaturedMSR.FeaturedMSR], msr_feature_class)
+                fmsr_class = cast(type[_FeaturedMSR.FeaturedMSR], fmsr_class)
 
-            if msr_feature_class.vendor != cpuinfo.info["vendor"]:
+            if fmsr_class.vendor != cpuinfo.info["vendor"]:
                 continue
 
             try:
-                with msr_feature_class(pman=pman, cpuinfo=cpuinfo) as msr:
-                    if typing.TYPE_CHECKING:
-                        msr = cast(_FeaturedMSR.FeaturedMSR, msr)
-                    for name, finfo in msr._features.items(): # pylint: disable=protected-access
-                        if not msr.is_feature_supported(name):
+                with fmsr_class(pman=pman, cpuinfo=cpuinfo) as fmsr:
+                    for name, finfo in fmsr._features.items(): # pylint: disable=protected-access
+                        if not fmsr.is_feature_supported(name):
                             continue
                         if not is_safe_to_set(name, params["hostname"]):
                             continue
-                        if msr.regaddr not in params["msrs"]:
-                            params["msrs"][msr.regaddr] = {}
-                        params["msrs"][msr.regaddr]["name"] = finfo
+                        if fmsr.regaddr not in params["fmsrs"]:
+                            params["fmsrs"][fmsr.regaddr] = {}
+                        params["fmsrs"][fmsr.regaddr]["name"] = finfo
             except ErrorNotSupported:
                 continue
 
-            if params["msrs"]:
-                params["feature_classes"].append(msr_feature_class)
+            if params["fmsrs"]:
+                params["feature_classes"].append(fmsr_class)
 
         if not params["feature_classes"]:
             pytest.skip("No supported MSRs to use for testing", allow_module_level=True)
 
         yield params
 
-def get_bad_cpu_nums(params: _TestParamsTypedDict) -> Generator[int | str, None, None]:
+def get_bad_cpu_nums(params: FeaturedMSRTestParamsTypedDict) -> Generator[int | str, None, None]:
     """
     Yield invalid CPU identifiers for testing purposes.
 
@@ -153,7 +152,7 @@ def is_safe_to_set(name: str, hostname: str) -> bool:
 
     return hostname == "emulation" or name in _SAFE_TO_SET_FEATURES
 
-def get_msr_objs(params: _TestParamsTypedDict) -> Generator[MSR.MSR, None, None]:
+def get_msr_objs(params: FeaturedMSRTestParamsTypedDict) -> Generator[MSR.MSR, None, None]:
     """
     Yield initialized MSR objects for testing with different cache settings.
 
