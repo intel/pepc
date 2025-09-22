@@ -109,7 +109,6 @@ def _get_good_config_opts(params, sname="package"):
         return opts
 
     if sname == "package":
-
         if pobj.prop_is_supported_cpu("c1e_autopromote", cpu):
             opts += ["--c1e-autopromote",
                     "--c1e-autopromote on",
@@ -142,7 +141,9 @@ def _get_good_config_opts(params, sname="package"):
     if sname == "CPU":
         if pobj.prop_is_supported_cpu("idle_driver", cpu):
             opts += ["--enable all",
-                    "--disable all"]
+                    "--enable all --disable POLL",
+                    "--disable all",
+                    "--disable all --enable POLL"]
         return opts
 
     assert False, f"BUG: bad scope name {sname}"
@@ -167,7 +168,6 @@ def test_cstates_config_good(params):
             for mopt in props_cmdl_common.get_mechanism_opts(params, allow_readonly=False):
                 cmd = f"cstates config {opt} {cpu_opt} {mopt}"
                 props_cmdl_common.run_pepc(cmd, pman, ignore=_IGNORE)
-        break
 
     for cpu_opt in props_cmdl_common.get_good_optarget_opts(params, sname="global"):
         for opt in _get_good_config_opts(params, sname="package"):
