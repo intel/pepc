@@ -3,17 +3,18 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2022 Intel Corporation
+# Copyright (C) 2020-2025 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
-# Author: Antti Laakso <antti.laakso@linux.intel.com>
+# Authors: Antti Laakso <antti.laakso@linux.intel.com>
+#          Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """Test 'pepc cstates' command-line options."""
 
-# TODO: finnish annotating.
 from  __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
+from typing import cast
 import pytest
 import common
 import props_cmdl_common
@@ -22,9 +23,10 @@ from pepclibs import CPUInfo, CStates
 from pepclibs.CStates import ErrorTryAnotherMechanism
 
 if typing.TYPE_CHECKING:
-    from typing import Final, Generator, cast
+    from typing import Final, Generator
     from props_cmdl_common import PropsCmdlTestParamsTypedDict
     from pepclibs.helperlibs.Exceptions import ExceptionType
+    from pepclibs.CPUInfoTypes import ScopeNameType
 
     class TestParamsTypedDict(PropsCmdlTestParamsTypedDict, total=False):
         """
@@ -77,8 +79,13 @@ def get_params(hostspec: str, username: str) -> Generator[PropsCmdlTestParamsTyp
 
         yield params
 
-def test_cstates_info(params):
-    """Test 'pepc cstates info' command."""
+def test_cstates_info(params: TestParamsTypedDict):
+    """
+    Test the 'pepc cstates info' command.
+
+    Args:
+        params: The test parameters dictionary.
+    """
 
     pman = params["pman"]
 
@@ -94,72 +101,85 @@ def test_cstates_info(params):
     # Cover '--list-mechanisms'.
     props_cmdl_common.run_pepc("cstates info --list-mechanisms", pman)
 
-def _get_good_config_opts(params, sname="package"):
-    """Return good options for testing 'pepc cstates config'."""
+def _get_good_config_opts(params: TestParamsTypedDict,
+                          sname: ScopeNameType = "package") -> Generator[str, None, None]:
+    """
+    Yield valid configuration options for testing the 'pepc cstates config' command.
+
+    Args:
+        params: The test parameters dictionary.
+        sname: Scope name indicating the topology level for which to generate options.
+
+    Yields:
+        Command-line option string suitable for testing 'pepc cstates config'.
+    """
 
     cpu = 0
-    opts = []
     pobj = params["pobj"]
 
     if sname == "global":
         if pobj.prop_is_supported_cpu("governor", cpu):
-            opts += ["--governor"]
-            for governor in pobj.get_cpu_prop("governors", cpu)["val"]:
-                opts += [f"--governor {governor}"]
-        return opts
-
-    if sname == "package":
+            yield "--governor"
+            governors = pobj.get_cpu_prop("governors", cpu)["val"]
+            for governor in cast(list[str], governors):
+                yield f"--governor {governor}"
+    elif sname == "package":
         if pobj.prop_is_supported_cpu("c1e_autopromote", cpu):
-            opts += ["--c1e-autopromote",
-                    "--c1e-autopromote on",
-                    "--c1e-autopromote OFF"]
+            yield from ["--c1e-autopromote",
+                        "--c1e-autopromote on",
+                        "--c1e-autopromote OFF"]
 
         if pobj.prop_is_supported_cpu("cstate_prewake", cpu):
-            opts += ["--cstate-prewake",
-                    "--cstate-prewake on",
-                    "--cstate-prewake OFF"]
+            yield from ["--cstate-prewake",
+                        "--cstate-prewake on",
+                        "--cstate-prewake OFF"]
 
         if pobj.prop_is_supported_cpu("c1_demotion", cpu):
-            opts += ["--c1-demotion",
-                    "--c1-demotion on",
-                    "--c1-demotion OFF"]
+            yield from ["--c1-demotion",
+                        "--c1-demotion on",
+                        "--c1-demotion OFF"]
 
         if pobj.prop_is_supported_cpu("c1_undemotion", cpu):
-            opts += ["--c1-undemotion",
-                    "--c1-undemotion on",
-                    "--c1-undemotion OFF"]
+            yield from ["--c1-undemotion",
+                        "--c1-undemotion on",
+                        "--c1-undemotion OFF"]
 
         if pobj.prop_is_supported_cpu("pkg_cstate_limit", cpu):
-            opts += ["--pkg-cstate-limit"]
+            yield "--pkg-cstate-limit"
             lock = pobj.get_cpu_prop("pkg_cstate_limit_lock", cpu)["val"]
             if lock == "off":
-                limit = pobj.get_cpu_prop("pkg_cstate_limit", cpu)["val"]
-                opts += [f"--pkg-cstate-limit {limit.upper()}",
-                        f"--pkg-cstate-limit {limit.lower()}"]
-        return opts
-
-    if sname == "CPU":
+                limit = cast(str, pobj.get_cpu_prop("pkg_cstate_limit", cpu)["val"])
+                yield from [f"--pkg-cstate-limit {limit.upper()}",
+                            f"--pkg-cstate-limit {limit.lower()}"]
+    elif sname == "CPU":
         if pobj.prop_is_supported_cpu("idle_driver", cpu):
-            opts += ["--enable all",
-                    "--enable all --disable POLL",
-                    "--disable all",
-                    "--disable all --enable POLL"]
-        return opts
-
-    assert False, f"BUG: bad scope name {sname}"
+            yield from ["--enable all",
+                        "--enable all --disable POLL",
+                        "--disable all",
+                        "--disable all --enable POLL"]
+    else:
+        assert False, f"BUG: Bad scope name {sname}"
 
 def _get_bad_config_opts():
-    """Return bad options for testing 'pepc cstates config'."""
+    """
+    Generate invalid configuration options for 'pepc cstates config' command.
 
-    opts = ["--enable CC0",
-            "--disable CC0",
-            "--cstate-prewake meh",
-            "--governor reardenmetal"]
+    Yields:
+        Invalid command-line option for 'pepc cstates config'.
+    """
 
-    return opts
+    yield from ["--enable CC0",
+                "--disable CC0",
+                "--cstate-prewake meh",
+                "--governor reardenmetal"]
 
-def test_cstates_config_good(params):
-    """Test 'pepc cstates config' command with bad options."""
+def test_ctates_config_good(params: TestParamsTypedDict):
+    """
+    Test valid 'pepc cstates config' command options.
+
+    Args:
+        params: The test parameters dictionary.
+    """
 
     pman = params["pman"]
 
@@ -183,8 +203,13 @@ def test_cstates_config_good(params):
                 props_cmdl_common.run_pepc(cmd , pman, ignore=_IGNORE)
         break
 
-def test_cstates_config_bad(params):
-    """Test 'pepc cstates config' command with bad options."""
+def test_cstates_config_bad(params: TestParamsTypedDict):
+    """
+    Test invalid 'pepc cstates config' command options.
+
+    Args:
+        params: The test parameters dictionary.
+    """
 
     pman = params["pman"]
 
