@@ -1,3 +1,9 @@
+pepc (1.6.6) unstable; urgency=low
+
+  * Fix 1.6.1 regression: Failure to enable/disable C-states.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Mon, 22 Sep 2025 00:00:00 +0200
+
 pepc (1.6.5) unstable; urgency=low
 
   * Fix minor regression since v1.6.3: junk traceback on errors.

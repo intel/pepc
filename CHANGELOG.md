@@ -5,10 +5,13 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
- - Fix 1.6.1 regression: Failure to enable/disable C-states.
 ### Added
 ### Removed
 ### Changed
+
+## [1.6.6] - 2025-09-22
+### Fixed
+ - Fix 1.6.1 regression: Failure to enable/disable C-states.
 
 ## [1.6.5] - 2025-09-21
 ### Fixed
