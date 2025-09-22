@@ -305,7 +305,6 @@ def test_run_async_wait(params: CommonTestParamsTypedDict):
         assert res.stdout == "1: hello\n"
         assert res.stderr == "1: hello-x\n"
         assert res.exitcode is None
-        assert proc.poll() is None
 
         res = proc.wait(lines=(1, 1))
         assert res.stdout == "2: world\n"
@@ -315,6 +314,7 @@ def test_run_async_wait(params: CommonTestParamsTypedDict):
         assert res.stdout == ""
         assert res.stderr == ""
         assert res.exitcode == 0
+        assert proc.poll() == 0
 
         proc = pman.run_async(cmd, intsh=intsh)
 
