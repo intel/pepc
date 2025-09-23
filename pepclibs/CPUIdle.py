@@ -271,6 +271,13 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
                             f"is missing.\nHere is all the collected information about the\n"
                             f"C-state:{cstate_info}")
 
+            _LOG.debug("Adding C-state: name: '%s', index: %s, desc: '%s', disable: %s, "
+                       "latency: %s, residency: %s, time: %s, usage: %s",
+                       cstate["name"], cstate["index"], cstate.get("desc", "<unknown>"),
+                       cstate.get("disable", "<unknown>"), cstate.get("latency", "<unknown>"),
+                       cstate.get("residency", "<unknown>"), cstate.get("time", "<unknown>"),
+                       cstate.get("usage", "<unknown>"))
+
             csname = self._normalize_csname(cstate["name"])
 
             # Ensure the desired keys order.
@@ -333,12 +340,19 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
             else:
                 fname = matchobj.group(3)
 
-            if prev_index >= 0 and index != prev_index:
-                # A C-state has been processed. Add it to 'csinfo'.
+            if prev_cpu == -1:
+                prev_cpu = cpu
+            if prev_index == -1:
+                prev_index = index
+
+            if cpu != prev_cpu or index != prev_index:
+                # The CPU or the C-state index changed, 'cstate' contains all information about the
+                # previous C-state, add it to 'csinfo'.
                 _add_cstate(csinfo, cstate)
                 cstate = {}
 
-            if prev_cpu >= 0 and cpu != prev_cpu:
+            if cpu != prev_cpu:
+                # The CPU changed, yield the collected C-states information for the previous CPU.
                 yield prev_cpu, csinfo
                 csinfo = {}
 
