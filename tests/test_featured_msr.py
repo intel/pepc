@@ -19,18 +19,18 @@ import pytest
 import common
 import msr_common
 from msr_common import get_params # pylint: disable=unused-import
-from pepclibs import CPUInfo
+
 from pepclibs.msr import MSR
 from pepclibs.helperlibs.Exceptions import Error, ErrorVerifyFailed
 
 if typing.TYPE_CHECKING:
-    from typing import Generator
+    from typing import Generator, Literal
     from pepclibs.msr import _FeaturedMSR
     from pepclibs.msr._FeaturedMSR import FeatureTypedDict, FeatureValueType
     from msr_common import FeaturedMSRTestParamsTypedDict
 
-def _get_msr_feature_objs(params: FeaturedMSRTestParamsTypedDict) -> \
-                                                    Generator[_FeaturedMSR.FeaturedMSR, None, None]:
+def _get_fmsr(params: FeaturedMSRTestParamsTypedDict) -> \
+                                            Generator[_FeaturedMSR.FeaturedMSR, None, None]:
     """
     Yield initialized FeaturedMSR sub-class objects for testing (e.g., 'PCStateConfigCtl').
 
@@ -41,12 +41,12 @@ def _get_msr_feature_objs(params: FeaturedMSRTestParamsTypedDict) -> \
         Featured MSR objects initialized with different parameters for testing.
     """
 
+    cpuinfo = params["cpuinfo"]
     for fmsr_class in params["feature_classes"]:
         for enable_cache in (True, False):
-            with CPUInfo.CPUInfo(pman=params["pman"]) as cpuinfo, \
-                 MSR.MSR(cpuinfo, pman=params["pman"], enable_cache=enable_cache) as msr, \
-                 fmsr_class(pman=params["pman"], cpuinfo=cpuinfo, msr=msr) as feature_msr:
-                yield feature_msr
+            with MSR.MSR(cpuinfo, pman=params["pman"], enable_cache=enable_cache) as msr, \
+                 fmsr_class(pman=params["pman"], cpuinfo=cpuinfo, msr=msr) as fmsr:
+                yield fmsr
 
 def _get_msr_feature_test_params(fmsr: _FeaturedMSR.FeaturedMSR,
                                  params: FeaturedMSRTestParamsTypedDict,
@@ -98,7 +98,7 @@ def _get_bad_feature_names() -> Generator[str, None, None]:
 
     yield from ("C1_demotion", " c1_demotion", "c1_demotion ", "", "all", "0")
 
-def _get_bad_feature_values(finfo: FeatureTypedDict) -> Generator[str | int, None, None]:
+def _get_bad_feature_values(finfo: FeatureTypedDict) -> Generator[bool | str | int, None, None]:
     """
     Yield invalid values for a feature based on its type information.
 
@@ -171,15 +171,15 @@ def test_msr_read_feature_good(params: FeaturedMSRTestParamsTypedDict):
         params: The test parameters dictionary.
     """
 
-    for msr in _get_msr_feature_objs(params):
-        for name, _ in _get_msr_feature_test_params(msr, params):
-            for cpu, val in msr.read_feature(name, cpus=params["testcpus"]):
-                _check_feature_val_and_type(val, name, msr)
+    for fmsr in _get_fmsr(params):
+        for name, _ in _get_msr_feature_test_params(fmsr, params):
+            for cpu, val in fmsr.read_feature(name, cpus=params["testcpus"]):
+                _check_feature_val_and_type(val, name, fmsr)
                 assert cpu in params["testcpus"]
 
             allcpus = []
-            for cpu, val in msr.read_feature(name):
-                _check_feature_val_and_type(val, name, msr)
+            for cpu, val in fmsr.read_feature(name):
+                _check_feature_val_and_type(val, name, fmsr)
                 allcpus.append(cpu)
             assert allcpus == params["cpus"]
 
@@ -191,16 +191,16 @@ def test_msr_read_feature_bad(params: FeaturedMSRTestParamsTypedDict):
         params: The test parameters dictionary.
     """
 
-    for msr in _get_msr_feature_objs(params):
+    for fmsr in _get_fmsr(params):
         for name in _get_bad_feature_names():
             with pytest.raises(Error):
-                for cpu, val in msr.read_feature(name, cpus=params["testcpus"]):
-                    _check_feature_val_and_type(val, name, msr)
+                for cpu, val in fmsr.read_feature(name, cpus=params["testcpus"]):
+                    _check_feature_val_and_type(val, name, fmsr)
                     assert cpu in params["testcpus"]
             with pytest.raises(Error):
-                for bad_cpu in msr_common.get_bad_cpu_nums(params):
-                    for cpu, val in msr.read_feature(name, cpus=[bad_cpu]):
-                        _check_feature_val_and_type(val, name, msr)
+                for bad_cpus in msr_common.get_bad_cpus_nums(params):
+                    for cpu, val in fmsr.read_feature(name, cpus=bad_cpus):
+                        _check_feature_val_and_type(val, name, fmsr)
                         assert cpu in params["testcpus"]
 
 def _is_verify_error_ok(params: FeaturedMSRTestParamsTypedDict, err: ErrorVerifyFailed) -> bool:
@@ -254,18 +254,18 @@ def test_msr_write_feature_good(params: FeaturedMSRTestParamsTypedDict):
         params: The test parameters dictionary.
     """
 
-    for msr in _get_msr_feature_objs(params):
+    for fmsr in _get_fmsr(params):
         try:
-            for name, finfo in _get_msr_feature_test_params(msr, params, include_ro=False):
+            for name, finfo in _get_msr_feature_test_params(fmsr, params, include_ro=False):
                 if "vals" in finfo:
                     for val in finfo["vals"]:
-                        msr.write_feature(name, val, cpus=params["testcpus"])
+                        fmsr.write_feature(name, val, cpus=params["testcpus"])
                 else:
-                    val = msr.read_cpu_feature(name, params["testcpus"][0])
+                    val = fmsr.read_cpu_feature(name, params["testcpus"][0])
                     assert finfo["type"] == "int", \
                            f"Unexpected type for '{name}' feature: {finfo['type']}"
                     newval = _flip_bits(cast(int, val), finfo["bits"])
-                    msr.write_feature(name, newval, cpus=params["testcpus"])
+                    fmsr.write_feature(name, newval, cpus=params["testcpus"])
         except ErrorVerifyFailed as err:
             if not _is_verify_error_ok(params, err):
                 raise
@@ -278,30 +278,30 @@ def test_msr_write_feature_bad(params: FeaturedMSRTestParamsTypedDict):
         params: The test parameters dictionary.
     """
 
-    for msr in _get_msr_feature_objs(params):
+    for fmsr in _get_fmsr(params):
         try:
             for name in _get_bad_feature_names():
                 with pytest.raises(Error):
-                    msr.write_feature(name, 0, cpus=params["testcpus"])
+                    fmsr.write_feature(name, 0, cpus=params["testcpus"])
 
-            for name, _ in _get_msr_feature_test_params(msr, params, include_rw=False):
-                val = msr.read_cpu_feature(name, params["testcpus"][0])
+            for name, _ in _get_msr_feature_test_params(fmsr, params, include_rw=False):
+                val = fmsr.read_cpu_feature(name, params["testcpus"][0])
                 with pytest.raises(Error):
-                    msr.write_feature(name, val, cpus=params["testcpus"])
+                    fmsr.write_feature(name, val, cpus=params["testcpus"])
 
-            for name, finfo in _get_msr_feature_test_params(msr, params, include_ro=False):
-                val = msr.read_cpu_feature(name, params["testcpus"][0])
+            for name, finfo in _get_msr_feature_test_params(fmsr, params, include_ro=False):
+                val = fmsr.read_cpu_feature(name, params["testcpus"][0])
                 if "vals" in finfo:
                     for bad_val in _get_bad_feature_values(finfo):
                         with pytest.raises(Exception):
-                            msr.write_feature(name, bad_val, cpus=params["testcpus"])
+                            fmsr.write_feature(name, bad_val, cpus=params["testcpus"])
                 else:
                     bad_bits = (finfo["bits"][0] + 1, finfo["bits"][1])
                     assert finfo["type"] == "int", \
                            f"Unexpected type for '{name}' feature: {finfo['type']}"
                     bad_val = _flip_bits(cast(int, val), bad_bits)
                     with pytest.raises(Error):
-                        msr.write_feature(name, bad_val, cpus=params["testcpus"])
+                        fmsr.write_feature(name, bad_val, cpus=params["testcpus"])
         except ErrorVerifyFailed as err:
             if not _is_verify_error_ok(params, err):
                 raise
@@ -314,15 +314,15 @@ def test_msr_enable_feature_good(params: FeaturedMSRTestParamsTypedDict):
         params: The test parameters dictionary.
     """
 
-    for msr in _get_msr_feature_objs(params):
+    for fmsr in _get_fmsr(params):
         try:
-            for name, finfo in _get_msr_feature_test_params(msr, params, include_ro=False):
+            for name, finfo in _get_msr_feature_test_params(fmsr, params, include_ro=False):
                 if finfo.get("type") != "bool":
                     continue
 
                 for enable in _get_good_feature_values(finfo):
-                    msr.enable_feature(name, enable, cpus=params["testcpus"])
-                    msr.enable_feature(name, enable)
+                    fmsr.enable_feature(name, enable, cpus=params["testcpus"])
+                    fmsr.enable_feature(name, enable)
         except ErrorVerifyFailed as err:
             if not _is_verify_error_ok(params, err):
                 raise
@@ -335,22 +335,24 @@ def test_msr_enable_feature_bad(params: FeaturedMSRTestParamsTypedDict):
         params: The test parameters dictionary.
     """
 
-    for msr in _get_msr_feature_objs(params):
+    for fmsr in _get_fmsr(params):
         try:
-            for name, finfo in _get_msr_feature_test_params(msr, params, include_ro=False):
+            for name, finfo in _get_msr_feature_test_params(fmsr, params, include_ro=False):
                 if finfo.get("type") != "bool":
                     finfo["type"] = "bool"
-                    enable = next(_get_good_feature_values(finfo))
+                    valid = next(_get_good_feature_values(finfo))
                     with pytest.raises(Error):
-                        msr.enable_feature(name, enable, cpus=params["testcpus"])
+                        fmsr.enable_feature(name, valid, cpus=params["testcpus"])
                     with pytest.raises(Error):
-                        msr.enable_feature(name, enable)
+                        fmsr.enable_feature(name, valid)
 
-                for enable in _get_bad_feature_values(finfo):
+                for invalid in _get_bad_feature_values(finfo):
+                    if typing.TYPE_CHECKING:
+                        invalid = cast(bool | str, invalid)
                     with pytest.raises(Error):
-                        msr.enable_feature(name, enable, cpus=params["testcpus"])
+                        fmsr.enable_feature(name, invalid, cpus=params["testcpus"])
                     with pytest.raises(Error):
-                        msr.enable_feature(name, enable)
+                        fmsr.enable_feature(name, invalid)
         except ErrorVerifyFailed as err:
             if not _is_verify_error_ok(params, err):
                 raise
@@ -363,21 +365,21 @@ def test_msr_is_feature_enabled_good(params: FeaturedMSRTestParamsTypedDict):
         params: The test parameters dictionary.
     """
 
-    for msr in _get_msr_feature_objs(params):
+    for fmsr in _get_fmsr(params):
         try:
-            for name, finfo in _get_msr_feature_test_params(msr, params, include_ro=False):
+            for name, finfo in _get_msr_feature_test_params(fmsr, params, include_ro=False):
                 if finfo.get("type") != "bool":
                     continue
 
                 for enable in (True, False):
-                    msr.enable_feature(name, enable, cpus=params["testcpus"])
-                    for cpu, enabled in msr.is_feature_enabled(name, cpus=params["testcpus"]):
+                    fmsr.enable_feature(name, enable, cpus=params["testcpus"])
+                    for cpu, enabled in fmsr.is_feature_enabled(name, cpus=params["testcpus"]):
                         assert enable == enabled
                         assert cpu in params["testcpus"]
 
-                    msr.enable_feature(name, enable)
+                    fmsr.enable_feature(name, enable)
                     allcpus = []
-                    for cpu, enabled in msr.is_feature_enabled(name):
+                    for cpu, enabled in fmsr.is_feature_enabled(name):
                         assert enable == enabled
                         allcpus.append(cpu)
                     assert allcpus == params["cpus"]
@@ -393,19 +395,19 @@ def test_msr_is_feature_enabled_bad(params: FeaturedMSRTestParamsTypedDict):
         params: The test parameters dictionary.
     """
 
-    for msr in _get_msr_feature_objs(params):
-        for name, finfo in _get_msr_feature_test_params(msr, params, include_ro=False):
+    for fmsr in _get_fmsr(params):
+        for name, finfo in _get_msr_feature_test_params(fmsr, params, include_ro=False):
             if finfo.get("type") != "bool":
                 with pytest.raises(Error):
-                    for cpu, _ in msr.is_feature_enabled(name, cpus=params["testcpus"]):
+                    for cpu, _ in fmsr.is_feature_enabled(name, cpus=params["testcpus"]):
                         assert cpu in params["testcpus"]
                 with pytest.raises(Error):
-                    for cpu, _ in msr.is_feature_enabled(name):
+                    for cpu, _ in fmsr.is_feature_enabled(name):
                         assert cpu in params["cpus"]
 
         for name in _get_bad_feature_names():
             with pytest.raises(Error):
-                for cpu, _ in msr.is_feature_enabled(name):
+                for cpu, _ in fmsr.is_feature_enabled(name):
                     assert cpu in params["cpus"]
 
 def test_msr_is_feature_supported_good(params: FeaturedMSRTestParamsTypedDict):
@@ -416,15 +418,15 @@ def test_msr_is_feature_supported_good(params: FeaturedMSRTestParamsTypedDict):
         params: The test parameters dictionary.
     """
 
-    for msr in _get_msr_feature_objs(params):
+    for fmsr in _get_fmsr(params):
         supported = []
-        for name, _ in _get_msr_feature_test_params(msr, params):
-            assert msr.is_feature_supported(name)
+        for name, _ in _get_msr_feature_test_params(fmsr, params):
+            assert fmsr.is_feature_supported(name)
             supported.append(name)
-        for name, _ in _get_msr_feature_test_params(msr, params, supported_only=False):
+        for name, _ in _get_msr_feature_test_params(fmsr, params, supported_only=False):
             if name in supported:
                 continue
-            assert not msr.is_feature_supported(name)
+            assert not fmsr.is_feature_supported(name)
 
 def test_msr_is_feature_supported_bad(params: FeaturedMSRTestParamsTypedDict):
     """
@@ -434,10 +436,10 @@ def test_msr_is_feature_supported_bad(params: FeaturedMSRTestParamsTypedDict):
         params: The test parameters dictionary.
     """
 
-    for msr in _get_msr_feature_objs(params):
+    for fmsr in _get_fmsr(params):
         for name in _get_bad_feature_names():
             with pytest.raises(Error):
-                msr.is_feature_supported(name)
+                fmsr.is_feature_supported(name)
 
 def test_msr_validate_feature_supported_good(params: FeaturedMSRTestParamsTypedDict):
     """
@@ -447,16 +449,16 @@ def test_msr_validate_feature_supported_good(params: FeaturedMSRTestParamsTypedD
         params: The test parameters dictionary.
     """
 
-    for msr in _get_msr_feature_objs(params):
+    for fmsr in _get_fmsr(params):
         supported = []
-        for name, _ in _get_msr_feature_test_params(msr, params):
-            msr.validate_feature_supported(name)
+        for name, _ in _get_msr_feature_test_params(fmsr, params):
+            fmsr.validate_feature_supported(name)
             supported.append(name)
-        for name, _ in _get_msr_feature_test_params(msr, params, supported_only=False):
+        for name, _ in _get_msr_feature_test_params(fmsr, params, supported_only=False):
             if name in supported:
                 continue
             with pytest.raises(Error):
-                msr.validate_feature_supported(name)
+                fmsr.validate_feature_supported(name)
 
 def test_msr_validate_feature_supported_bad(params: FeaturedMSRTestParamsTypedDict):
     """
@@ -466,7 +468,7 @@ def test_msr_validate_feature_supported_bad(params: FeaturedMSRTestParamsTypedDi
         params: The test parameters dictionary.
     """
 
-    for msr in _get_msr_feature_objs(params):
+    for fmsr in _get_fmsr(params):
         for name in _get_bad_feature_names():
             with pytest.raises(Error):
-                msr.is_feature_supported(name)
+                fmsr.is_feature_supported(name)

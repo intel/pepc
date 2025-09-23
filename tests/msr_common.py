@@ -37,15 +37,15 @@ if typing.TYPE_CHECKING:
             cpuinfo: A 'CPUInfo.CPUInfo' object.
             cpus: All CPU numbers in the system.
             testcpus: A few CPU numbers to use for testing.
-            fmsrs: A dictionary where keys are MSR addresses and values are dictionaries of MSR
-                  features.
+            finfo: A dictionary where keys are MSR addresses and values are dictionaries of MSR
+                   features.
             feature_classes: A list of MSR feature classes to test.
         """
 
         cpuinfo: CPUInfo.CPUInfo
         cpus: list[int]
         testcpus: list[int]
-        fmsrs: dict[int,  dict[str, FeatureTypedDict]]
+        finfo: dict[int,  dict[str, FeatureTypedDict]]
         feature_classes: list[type[_FeaturedMSR.FeaturedMSR]]
 
 _MSR_MODULES: Final[tuple[str, ...]] = ("PMEnable", "HWPRequest", "EnergyPerfBias", "FSBFreq",
@@ -90,11 +90,17 @@ def get_params(hostspec: str,
 
         allcpus = cpuinfo.get_cpus()
         params["cpus"] = allcpus
+
+        params["testcpus"] = [allcpus[0]]
+        if len(allcpus) > 1:
+            params["testcpus"].append(allcpus[-1])
+        if len(allcpus) > 3:
+            params["testcpus"].append(allcpus[len(allcpus) // 2])
         medidx = int(len(allcpus)/2)
         params["testcpus"] = [allcpus[0], allcpus[medidx], allcpus[-1]]
 
         # The MSR addresses that will be tested.
-        params["fmsrs"] = {}
+        params["finfo"] = {}
         params["feature_classes"] = []
         for modname in _MSR_MODULES:
             fmsr_class = getattr(import_module(f"pepclibs.msr.{modname}"), modname)
@@ -111,13 +117,13 @@ def get_params(hostspec: str,
                             continue
                         if not is_safe_to_set(name, params["hostname"]):
                             continue
-                        if fmsr.regaddr not in params["fmsrs"]:
-                            params["fmsrs"][fmsr.regaddr] = {}
-                        params["fmsrs"][fmsr.regaddr]["name"] = finfo
+                        if fmsr.regaddr not in params["finfo"]:
+                            params["finfo"][fmsr.regaddr] = {}
+                        params["finfo"][fmsr.regaddr]["name"] = finfo
             except ErrorNotSupported:
                 continue
 
-            if params["fmsrs"]:
+            if params["finfo"]:
                 params["feature_classes"].append(fmsr_class)
 
         if not params["feature_classes"]:
@@ -125,7 +131,7 @@ def get_params(hostspec: str,
 
         yield params
 
-def get_bad_cpu_nums(params: FeaturedMSRTestParamsTypedDict) -> Generator[int | str, None, None]:
+def get_bad_cpu_nums(params: FeaturedMSRTestParamsTypedDict) -> Generator[int, None, None]:
     """
     Yield invalid CPU identifiers for testing purposes.
 
@@ -136,7 +142,28 @@ def get_bad_cpu_nums(params: FeaturedMSRTestParamsTypedDict) -> Generator[int | 
         Invalid CPU identifiers such as out-of-range numbers, negative numbers, and strings.
     """
 
-    yield from (params["cpus"][-1] + 1, -1, "ALL", "a")
+    for cpu in (params["cpus"][-1] + 1, -1, "ALL", "all "):
+        if typing.TYPE_CHECKING:
+            cpu = typing.cast(int, cpu)
+        yield cpu
+
+def get_bad_cpus_nums(params: FeaturedMSRTestParamsTypedDict) -> \
+                                                Generator[list[int] | Literal["all"], None, None]:
+    """
+    Yield invalid CPU identifiers for testing purposes.
+
+    Args:
+        params: The test parameters.
+
+    Yields:
+        Invalid CPU identifiers such as out-of-range numbers, negative numbers, and strings.
+    """
+
+    for cpu in get_bad_cpu_nums(params):
+        if isinstance(cpu, int):
+            yield [cpu]
+        else:
+            yield cpu
 
 def is_safe_to_set(name: str, hostname: str) -> bool:
     """

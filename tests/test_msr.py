@@ -3,33 +3,61 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2022 Intel Corporation
+# Copyright (C) 2022-2025 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
-# Author: Antti Laakso <antti.laakso@linux.intel.com>
+# Authors: Antti Laakso <antti.laakso@linux.intel.com>
+#          Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
-"""Unittests for the public methods of the 'MSR' module."""
+"""Test public methods of the 'MSR' module."""
 
+from  __future__ import annotations # Remove when switching to Python 3.10+.
+
+import typing
 import pytest
 import common
 import msr_common
 from msr_common import get_params # pylint: disable=unused-import
+
 from pepclibs.msr.TurboRatioLimit import MSR_TURBO_RATIO_LIMIT
 from pepclibs.msr.TurboRatioLimit1 import MSR_TURBO_RATIO_LIMIT1
 from pepclibs.helperlibs.Exceptions import Error
 
-def _get_msr_test_params(params, include_ro=True, include_rw=True):
+if typing.TYPE_CHECKING:
+    from typing import TypedDict, Generator
+    from pepclibs.CPUInfoTypes import ScopeNameType
+    from msr_common import FeaturedMSRTestParamsTypedDict
+
+    class _MSRTestParamsTypedDict(TypedDict, total=False):
+        """
+        The test parameters dictionary.
+
+        Attributes:
+            addr: MSR register address.
+            bits: Bit range in the register to test (MSB, LSB).
+            sname: Scope name (e.g., "package", "core").
+        """
+
+        addr: int
+        bits: tuple[int, int]
+        sname: ScopeNameType
+
+def _get_msr_test_params(params: FeaturedMSRTestParamsTypedDict,
+                         include_ro: bool = True,
+                         include_rw: bool = True) -> Generator[_MSRTestParamsTypedDict, None, None]:
     """
-    Yields the dictionary with information that should be used for testing MSR module methods. The
-    dictionary has following keys:
-      * addr - the MSR register address.
-      * bits - list of bit ranges in 'addr' to test. This is a list of tuples. If 'include_ro' is
-               'False', then read-only MSR bit ranges are not included. If 'include_rw' is False,
-               then readable and writable MSR bit ranges are not included.
-      * sname - scope name (e.g. "package", "core").
+    Yield MSR module test parameters.
+
+    Args:
+        params: The common test parameters dictionary.
+        include_ro: If True, include read-only MSR bit ranges.
+        include_rw: If True, include readable and writable MSR bit ranges.
+
+    Yields:
+        A dictionary with MSR test parameters.
     """
 
-    for addr, features in params["fmsrs"].items():
+    for addr, features in params["finfo"].items():
         for finfo in features.values():
             if finfo.get("writable"):
                 if not include_rw:
@@ -45,10 +73,15 @@ def _get_msr_test_params(params, include_ro=True, include_rw=True):
 
             yield {"addr": addr, "bits": finfo["bits"], "sname": finfo["sname"]}
 
-def _bits_to_mask(bits):
+def _bits_to_mask(bits: tuple[int, int]) -> int:
     """
-    Convert list of tuples to bit mask. You can refer to '_get_msr_test_params()' for the details on
-    the list of tuples.
+    Generate a bitmask for a given bit range.
+
+    Args:
+        bits: The bit range (MSB, LSB) to create the bitmask for.
+
+    Returns:
+        The bitmask for the specified bit range.
     """
 
     mask = 0
@@ -57,16 +90,13 @@ def _bits_to_mask(bits):
     mask |= max_val << bits[1]
     return mask
 
-def _get_good_msr_cpu_nums(params):
-    """Yield good CPU numbers."""
+def test_msr_read_good(params: FeaturedMSRTestParamsTypedDict):
+    """
+    Test the 'read()' method with valid values.
 
-    allcpus = params["cpus"]
-    medidx = int(len(allcpus) / 2)
-    for cpu in (allcpus[0], allcpus[medidx], allcpus[-1]):
-        yield cpu
-
-def _test_msr_read_good(params):
-    """Test 'read()' method for good option values."""
+    Args:
+        params: The test parameters dictionary.
+    """
 
     for msr in msr_common.get_msr_objs(params):
         for tp in _get_msr_test_params(params):
@@ -78,25 +108,29 @@ def _test_msr_read_good(params):
                 read_cpus.append(cpu)
             assert read_cpus == params["cpus"]
 
-def _test_msr_read_bad(params):
-    """Test 'read()' method for bad option values."""
+def test_msr_read_bad(params: FeaturedMSRTestParamsTypedDict):
+    """
+    Test the 'read()' method with invalid values.
+
+    Args:
+        params: The test parameters dictionary.
+    """
 
     for tp in _get_msr_test_params(params):
         for msr in msr_common.get_msr_objs(params):
-            for bad_cpu in msr_common.get_bad_cpu_nums(params):
+            for bad_cpus in msr_common.get_bad_cpus_nums(params):
                 with pytest.raises(Error):
-                    for cpu, _ in msr.read(tp["addr"], cpus=[bad_cpu], iosname=tp["sname"]):
-                        assert cpu == bad_cpu
+                    for _ in msr.read(tp["addr"], cpus=bad_cpus, iosname=tp["sname"]):
+                        pass
         break
 
-def test_msr_read(params):
-    """Test the 'read()' method of the 'MSR' class."""
+def test_msr_write_good(params: FeaturedMSRTestParamsTypedDict):
+    """
+    Test the 'write()' method with valid values.
 
-    _test_msr_read_good(params)
-    _test_msr_read_bad(params)
-
-def _test_msr_write_good(params):
-    """Test 'write()' method for good option values."""
+    Args:
+        params: The test parameters dictionary.
+    """
 
     for msr in msr_common.get_msr_objs(params):
         for tp in _get_msr_test_params(params, include_ro=False):
@@ -114,15 +148,20 @@ def _test_msr_write_good(params):
                 assert cpu in params["cpus"]
                 assert val == newval
 
-def _test_msr_write_bad(params):
-    """Test 'write()' method for bad option values."""
+def test_msr_write_bad(params: FeaturedMSRTestParamsTypedDict):
+    """
+    Test the 'write()' method with invalid values.
+
+    Args:
+        params: The test parameters dictionary.
+    """
 
     for tp in _get_msr_test_params(params):
         for msr in msr_common.get_msr_objs(params):
             val = msr.read_cpu(tp["addr"], params["testcpus"][0], iosname=tp["sname"])
-            for bad_cpu in msr_common.get_bad_cpu_nums(params):
+            for bad_cpus in msr_common.get_bad_cpus_nums(params):
                 with pytest.raises(Error):
-                    msr.write(tp["addr"], val, cpus=[bad_cpu], iosname=tp["sname"])
+                    msr.write(tp["addr"], val, cpus=bad_cpus, iosname=tp["sname"])
         break
 
     # Following test will expect failure when writing to readonly MSR. On emulated host, such writes
@@ -141,22 +180,26 @@ def _test_msr_write_bad(params):
             with pytest.raises(Error):
                 msr.write(tp["addr"], mask ^ val, cpus=params["testcpus"], iosname=tp["sname"])
 
-def test_msr_write(params):
-    """Test the 'write()' method of the 'MSR' class."""
+def test_msr_read_cpu_good(params: FeaturedMSRTestParamsTypedDict):
+    """
+    Test the 'read_cpu()' method with valid values.
 
-    _test_msr_write_good(params)
-    _test_msr_write_bad(params)
-
-def _test_msr_read_cpu_good(params):
-    """Test the 'read_cpu()' method for good option values."""
+    Args:
+        params: The test parameters dictionary.
+    """
 
     for msr in msr_common.get_msr_objs(params):
         for tp in _get_msr_test_params(params):
-            for cpu in _get_good_msr_cpu_nums(params):
+            for cpu in params["testcpus"]:
                 msr.read_cpu(tp["addr"], cpu=cpu, iosname=tp["sname"])
 
-def _test_msr_read_cpu_bad(params):
-    """Test the 'read_cpu()' method for bad option values."""
+def test_msr_read_cpu_bad(params: FeaturedMSRTestParamsTypedDict):
+    """
+    Test the 'read_cpu()' method with invalid values.
+
+    Args:
+        params: The test parameters dictionary.
+    """
 
     for tp in _get_msr_test_params(params):
         for msr in msr_common.get_msr_objs(params):
@@ -165,26 +208,30 @@ def _test_msr_read_cpu_bad(params):
                     msr.read_cpu(tp["addr"], cpu=bad_cpu, iosname=tp["sname"])
         break
 
-def test_msr_read_cpu(params):
-    """Test the 'read_cpu()' method."""
+def test_msr_write_cpu_good(params: FeaturedMSRTestParamsTypedDict):
+    """
+    Test the 'write_cpu()' method with valid values.
 
-    _test_msr_read_cpu_good(params)
-    _test_msr_read_cpu_bad(params)
-
-def _test_msr_write_cpu_good(params):
-    """Test the 'write_cpu()' method for good option values."""
+    Args:
+        params: The test parameters dictionary.
+    """
 
     for msr in msr_common.get_msr_objs(params):
         for tp in _get_msr_test_params(params, include_ro=False):
             mask = _bits_to_mask(tp["bits"])
-            for cpu in _get_good_msr_cpu_nums(params):
+            for cpu in params["testcpus"]:
                 val = msr.read_cpu(tp["addr"], cpu, iosname=tp["sname"])
                 newval = mask ^ val
                 msr.write_cpu(tp["addr"], newval, cpu, iosname=tp["sname"])
                 assert newval == msr.read_cpu(tp["addr"], cpu, iosname=tp["sname"])
 
-def _test_msr_write_cpu_bad(params):
-    """Test the 'write_cpu()' method for bad option values."""
+def test_msr_write_cpu_bad(params: FeaturedMSRTestParamsTypedDict):
+    """
+    Test the 'write_cpu()' method with invalid values.
+
+    Args:
+        params: The test parameters dictionary.
+    """
 
     for tp in _get_msr_test_params(params):
         for msr in msr_common.get_msr_objs(params):
@@ -194,14 +241,13 @@ def _test_msr_write_cpu_bad(params):
                     msr.write_cpu(tp["addr"], val, bad_cpu, iosname=tp["sname"])
         break
 
-def test_msr_write_cpu(params):
-    """Test the 'write_cpu()' method."""
+def test_msr_read_bits_good(params: FeaturedMSRTestParamsTypedDict):
+    """
+    Test the 'read_bits()' method with valid values.
 
-    _test_msr_write_cpu_good(params)
-    _test_msr_write_cpu_bad(params)
-
-def _test_msr_read_bits_good(params):
-    """Test 'read_bits()' method for good option values."""
+    Args:
+        params: The test parameters dictionary.
+    """
 
     for msr in msr_common.get_msr_objs(params):
         for tp in _get_msr_test_params(params, include_ro=False):
@@ -218,8 +264,13 @@ def _test_msr_read_bits_good(params):
             # No need to test 'read_bits()' with default 'cpus' argument multiple times.
             break
 
-def _test_msr_read_bits_bad(params):
-    """Test 'read_bits()' method for bad option values."""
+def test_msr_read_bits_bad(params: FeaturedMSRTestParamsTypedDict):
+    """
+    Test the 'read_bits()' method with invalid values.
+
+    Args:
+        params: The test parameters dictionary.
+    """
 
     cpu = params["testcpus"][0]
 
@@ -237,14 +288,13 @@ def _test_msr_read_bits_bad(params):
                     assert cpu == cpu1
         break
 
-def test_msr_read_bits(params):
-    """Test the 'read_bits()' method."""
+def test_msr_write_bits_good(params: FeaturedMSRTestParamsTypedDict):
+    """
+    Test the 'write_bits()' method with valid values.
 
-    _test_msr_read_bits_good(params)
-    _test_msr_read_bits_bad(params)
-
-def _test_msr_write_bits_good(params):
-    """Test the 'write_bits()' method with good option values."""
+    Args:
+        params: The test parameters dictionary.
+    """
 
     for msr in msr_common.get_msr_objs(params):
         for tp in _get_msr_test_params(params, include_ro=False):
@@ -264,14 +314,22 @@ def _test_msr_write_bits_good(params):
             for _, val in msr.read_bits(tp["addr"], tp["bits"], iosname=tp["sname"]):
                 assert val == newval
 
-def _test_msr_write_bits_bad(params):
-    """Test the 'write_bits()' method with bad option values."""
+def test_msr_write_bits_bad(params: FeaturedMSRTestParamsTypedDict):
+    """
+    Test the 'write_bits()' method with invalid values.
+
+    Args:
+        params: The test parameters dictionary.
+    """
 
     cpu = params["testcpus"][0]
 
     for tp in _get_msr_test_params(params):
         for msr in msr_common.get_msr_objs(params):
-            val = msr.read(tp["addr"], cpus=cpu, iosname=tp["sname"])
+            for cpu, val in msr.read(tp["addr"], cpus=[cpu], iosname=tp["sname"]):
+                break
+            else:
+                continue
 
             for bad_cpu in msr_common.get_bad_cpu_nums(params):
                 with pytest.raises(Error):
@@ -290,22 +348,26 @@ def _test_msr_write_bits_bad(params):
             break
         break
 
-def test_msr_write_bits(params):
-    """Test the 'write_bits()' method."""
+def test_msr_read_cpu_bits_good(params: FeaturedMSRTestParamsTypedDict):
+    """
+    Test the 'read_cpu_bits()' method with valid values.
 
-    _test_msr_write_bits_good(params)
-    _test_msr_write_bits_bad(params)
-
-def _test_msr_read_cpu_bits_good(params):
-    """Test 'read_cpu_bits()' method for good option values."""
+    Args:
+        params: The test parameters dictionary.
+    """
 
     for msr in msr_common.get_msr_objs(params):
         for tp in _get_msr_test_params(params):
-            for cpu in _get_good_msr_cpu_nums(params):
+            for cpu in params["testcpus"]:
                 msr.read_cpu_bits(tp["addr"], tp["bits"], cpu, iosname=tp["sname"])
 
-def _test_msr_read_cpu_bits_bad(params):
-    """Test 'read_cpu_bits()' method for bad option values."""
+def test_msr_read_cpu_bits_bad(params: FeaturedMSRTestParamsTypedDict):
+    """
+    Test the 'read_cpu_bits()' method with invalid values.
+
+    Args:
+        params: The test parameters dictionary.
+    """
 
     cpu = params["testcpus"][0]
 
@@ -323,19 +385,18 @@ def _test_msr_read_cpu_bits_bad(params):
             break
         break
 
-def test_msr_read_cpu_bits(params):
-    """Test the 'read_cpu_bits()' method."""
+def test_msr_write_cpu_bits_good(params: FeaturedMSRTestParamsTypedDict):
+    """
+    Test the 'write_cpu_bits()' method with valid values.
 
-    _test_msr_read_cpu_bits_good(params)
-    _test_msr_read_cpu_bits_bad(params)
-
-def _test_msr_write_cpu_bits_good(params):
-    """Test the 'write_cpu_bits()' method with good option values."""
+    Args:
+        params: The test parameters dictionary.
+    """
 
     for msr in msr_common.get_msr_objs(params):
         for tp in _get_msr_test_params(params, include_ro=False):
             mask = _bits_to_mask(tp["bits"])
-            for cpu in _get_good_msr_cpu_nums(params):
+            for cpu in params["testcpus"]:
                 val = msr.read_cpu(tp["addr"], cpu, iosname=tp["sname"])
                 newval = msr.get_bits(val ^ mask, tp["bits"])
                 msr.write_cpu_bits(tp["addr"], tp["bits"], newval, cpu, iosname=tp["sname"])
@@ -343,8 +404,13 @@ def _test_msr_write_cpu_bits_good(params):
                 val = msr.read_cpu_bits(tp["addr"], tp["bits"], cpu, iosname=tp["sname"])
                 assert val == newval
 
-def _test_msr_write_cpu_bits_bad(params):
-    """Test the 'write_cpu_bits()' method with bad option values."""
+def test_msr_write_cpu_bits_bad(params: FeaturedMSRTestParamsTypedDict):
+    """
+    Test the 'write_cpu_bits()' method with invalid values.
+
+    Args:
+        params: The test parameters dictionary.
+    """
 
     cpu = params["testcpus"][0]
 
@@ -367,9 +433,3 @@ def _test_msr_write_cpu_bits_bad(params):
             # Repeating this negative test for every CPU is an overkill.
             break
         break
-
-def test_msr_write_cpu_bits(params):
-    """Test the 'write_cpu_bits()' method."""
-
-    _test_msr_write_cpu_bits_good(params)
-    _test_msr_write_cpu_bits_bad(params)
