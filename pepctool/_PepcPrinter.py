@@ -1116,7 +1116,7 @@ class CStatesPrinter(_PropsPrinter):
 
         if not aggr_rcsinfo:
             self._print("This system does not support C-states")
-            return 0
+            return 1
 
         if not group:
             prefix = None
