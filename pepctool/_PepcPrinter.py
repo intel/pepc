@@ -756,7 +756,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
 
         aggr_pinfo: _AggrPinfoType = {}
         _LOG.debug("Build aggregate properties information dictionary for: %s",
-                   ", ".join([pname for pname in pnames]))
+                   ", ".join(pnames))
 
         for pname in pnames:
             prop = self._pobj.props[pname]
