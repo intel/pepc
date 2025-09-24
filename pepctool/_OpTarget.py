@@ -293,29 +293,23 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
                             _pkg_dies.append(die)
                         self.dies[pkg] = _pkg_dies
 
-        _cpus: list[int] = []
-        siblings: AbsNumsType
-
         if core_siblings:
-            siblings = Trivial.parse_int_list(core_siblings, dedup=True,
-                                              what="core sibling numbers")
-            _cpus = self._get_cpus()
-            self.core_sib_cpus = self._cpuinfo.select_core_siblings(_cpus, siblings)
+            self.core_siblings = Trivial.parse_int_list(core_siblings, dedup=True,
+                                                        what="core sibling numbers")
+            self.core_sib_cpus = self._cpuinfo.select_core_siblings(self._get_cpus(),
+                                                                    self.core_siblings)
 
         if module_siblings:
-            siblings = Trivial.parse_int_list(module_siblings, dedup=True,
-                                              what="module sibling numbers")
-            _cpus = self._get_cpus()
-            self.module_sib_cpus = self._cpuinfo.select_module_siblings(_cpus, siblings)
+            self.module_siblings = Trivial.parse_int_list(module_siblings, dedup=True,
+                                                          what="module sibling numbers")
+            self.module_sib_cpus = self._cpuinfo.select_module_siblings(self._get_cpus(),
+                                                                        self.module_siblings)
 
             if core_siblings:
                 # Re-calculate core sibling CPUs taking into account the just initialized module
                 # sibling CPUs.
-                _cpus = self._get_cpus()
-                self.core_sib_cpus = self._cpuinfo.select_core_siblings(_cpus, self.core_siblings)
-
-        if _cpus:
-            self._cache["cpus"] = _cpus
+                self.core_sib_cpus = self._cpuinfo.select_core_siblings(self._get_cpus(),
+                                                                        self.core_siblings)
 
         if _LOG.getEffectiveLevel() == Logging.DEBUG:
             if self.cpus:
