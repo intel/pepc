@@ -158,7 +158,7 @@ def get_gid(groupname: str = ""):
         errmsg = Error(str(err)).indent(2)
         raise Error(f"Failed to get GID for group '{groupname}':\n{errmsg}") from None
 
-def str_to_int(snum: str | int, base: int = 0, what: str | None = None) -> int:
+def str_to_int(snum: str | int, base: int = 0, what: str = "") -> int:
     """
     Convert a string to an integer value.
 
@@ -177,7 +177,7 @@ def str_to_int(snum: str | int, base: int = 0, what: str | None = None) -> int:
     try:
         num = int(str(snum), base)
     except (ValueError, TypeError):
-        if what is None:
+        if not what:
             what = "value"
         try:
             str_to_int(base)
@@ -198,7 +198,7 @@ def str_to_int(snum: str | int, base: int = 0, what: str | None = None) -> int:
 
     return num
 
-def str_to_float(snum: str | float, what: str | None = None) -> float:
+def str_to_float(snum: str | float, what: str = "") -> float:
     """
     Convert a string to a floating point number.
 
@@ -216,12 +216,12 @@ def str_to_float(snum: str | float, what: str | None = None) -> float:
     try:
         return float(str(snum))
     except (ValueError, TypeError):
-        if what is None:
+        if not what:
             what = "value"
         pfx = f"Bad {what} '{snum}'"
         raise ErrorBadFormat(f"{pfx}: should be a floating point number") from None
 
-def str_to_num(snum: str | int, what: str | None = None) -> int | float:
+def str_to_num(snum: str | int, what: str = "") -> int | float:
     """
     Convert a string to a numeric value, either 'int' or 'float'.
 
@@ -242,7 +242,7 @@ def str_to_num(snum: str | int, what: str | None = None) -> int | float:
         try:
             return float(str(snum))
         except (ValueError, TypeError):
-            if what is None:
+            if not what:
                 what = "value"
             pfx = f"Bad {what} '{snum}'"
             raise ErrorBadFormat(f"{pfx}: should be an integer or floating point number") from None
@@ -307,7 +307,7 @@ def is_num(value: str | int | float) -> bool:
     return True
 
 def validate_value_in_range(value: int | float, minval: int | float,
-                            maxval: int | float, what: str | None = None):
+                            maxval: int | float, what: str = ""):
     """
     Validate that 'value' is in the ['minval', 'maxval'] range.
 
@@ -319,13 +319,13 @@ def validate_value_in_range(value: int | float, minval: int | float,
     """
 
     if value < minval or value > maxval:
-        if what is None:
+        if not what:
             what = "value"
         raise Error(f"{what.capitalize()} '{value}' is out of range, should be within "
                     f"[{minval},{maxval}]")
 
 def validate_range(minval: int | float, maxval: int | float, min_limit: int | float | None = None,
-                   max_limit: int | float | None = None, what: str | None = None):
+                   max_limit: int | float | None = None, what: str = ""):
     """
     Validate correctness of range ['minval', 'maxval'].
 
@@ -338,7 +338,7 @@ def validate_range(minval: int | float, maxval: int | float, min_limit: int | fl
               messages.
     """
 
-    if what is None:
+    if not what:
         what = "range"
     pfx = f"Bad {what} '[{minval},{maxval}]'"
 
@@ -416,7 +416,7 @@ def split_csv_line(csv_line: str, sep: str = ",", dedup: bool = False,
     return result
 
 def split_csv_line_int(csv_line: str, sep: str = ",", dedup: bool = False, base: int = 0,
-                       what: str | None = None) -> list[int]:
+                       what: str = "") -> list[int]:
     """
     Split a comma-separated values line consisting of integers return the list of integer values.
 
@@ -439,7 +439,7 @@ def split_csv_line_int(csv_line: str, sep: str = ",", dedup: bool = False, base:
     """
 
     vals = split_csv_line(csv_line=csv_line, sep=sep, dedup=dedup)
-    if what is None:
+    if not what:
         what = "value"
 
     result = []
@@ -462,8 +462,8 @@ def split_csv_line_int(csv_line: str, sep: str = ",", dedup: bool = False, base:
 
     return result
 
-def parse_int_list(nums: str | int | list[str | int] | tuple[str | int], sep: str = ",",
-                   dedup: bool = False, base: int = 0, what: str | None = None) -> list[int]:
+def parse_int_list(nums: str | int | Iterable[str | int], sep: str = ",",
+                   dedup: bool = False, base: int = 0, what: str = "") -> list[int]:
     """
     Same as 'split_csv_line_int()', but also accepts non-strings on input.
 
