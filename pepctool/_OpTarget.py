@@ -387,9 +387,12 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
 
         pkg2nums = {}
 
-        package_to_nums = getattr(self._cpuinfo, f"package_to_{sname}s")
-        for package in self._cpuinfo.get_packages():
-            pkg2nums[package] = package_to_nums(package)
+        if sname == "core":
+            for package in self._cpuinfo.get_packages():
+                pkg2nums[package] = self._cpuinfo.package_to_cores(package)
+        else:
+            for package in self._cpuinfo.get_packages():
+                pkg2nums[package] = self._cpuinfo.get_package_dies(package=package, io_dies=True)
 
         all_nums = set()
         for package, package_nums in pkg2nums.items():
