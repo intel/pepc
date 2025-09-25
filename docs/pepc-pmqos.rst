@@ -93,17 +93,19 @@ options.
    Specify individual package numbers or ranges (e.g., '0,2-4'). Use 'all' for all packages.
 
 **--core-siblings** *CORE_SIBLINGS*
-   Specify core sibling indices (CPUs sharing the same core) as individual indices or ranges. For
-   example, if a core includes CPUs 2 and 3, index '0' refers to CPU 2, and index '1' refers to CPU 3.
-   Applies only to online CPUs, as Linux lacks topology details for offline CPUs. If CPU 2 is offline,
-   index '0' refers to CPU 3. On Intel processors with hyper-threading, this is often used to offline
-   hyperthreads.
+   Core siblings are CPUs sharing the same core. The list can include individual core sibling
+   indices or index ranges. For example, if a core includes CPUs 3 and 4, sibling index 0 refers to
+   CPU 3 and index 1 refers to CPU 4. This option can only be used to reference online CPUs, because
+   Linux does not provide topology information for offline CPUs. In the example with CPUs 3 and 4,
+   if CPU 3 was offline, then index 0 would refer to CPU 4 and index 1 would be invalid.
 
 **--module-siblings** *MODULE_SIBLINGS*
-   Specify module sibling indices (CPUs sharing the same module) as individual indices or ranges.
-   For example, if a module includes CPUs 4, 5, 6, and 7, index '0' refers to CPU 4, index '1' to CPU 5,
-   and index '3' to CPU 7. Applies only to online CPUs, as Linux lacks topology details for offline
-   CPUs. If CPU 5 is offline, index '1' refers to CPU 6.
+   Module siblings are CPUs sharing the same module. The list can include individual module sibling
+   indices or index ranges. For example, if a module includes CPUs 3, 4, 5, and 6, index 0 refers to
+   CPU 3, index 1 refers to CPU 4, and index 2 refers to CPU 5, and index 3 refers to CPU 6. This
+   option can only be used to reference online CPUs, because Linux does not provide topology
+   information for offline CPUs. In the example with CPUs 3, 4, 5 and 6, if CPU 4 was offline, then
+   index 1 would refer to CPU 5, index 2 would refer to CPU 6, and index 3 would be invalid.
 
 Subcommand *'info'*
 ===================

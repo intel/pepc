@@ -137,15 +137,16 @@ def _add_target_cpus_arguments(subpars: ArgParse.ArgsParser, fmt: str, exclude: 
     if "--core-siblings" not in exclude:
         text = fmt % "core sibling indices"
         text += """ Specify core sibling indices or ranges (e.g., '0-1'). Core siblings are CPUs
-                    sharing the same core. For example, if a core includes CPUs 2 and 3, '0' refers
-                    to CPU 2 and '1' to CPU 3."""
+                    sharing the same core. For example, if a core includes CPUs 2 and 3, sibling
+                    index 0 refers to CPU 2 and index 1 refers to CPU 3."""
         subpars.add_argument("--core-siblings", help=text)
 
     if "--module-siblings" not in exclude:
         text = fmt % "module sibling indices"
-        text += """ Specify module sibling indices or ranges (e.g., '0-1'). Core siblings are CPUs
-                    sharing the same module. For example, if a module includes CPUs 4, 5, 6, and 7,
-                    index '0' refers to CPU 4, index '1' to CPU 5, and index '4' to CPU 7."""
+        text += """ Specify module sibling indices or ranges (e.g., '0-1'). Module siblings are CPUs
+                   sharing the same module. For example, if a module includes CPUs 4, 5, 6, and 7,
+                   sibling index 0 refers to CPU 4, index 1 to CPU 5, and index 2 to CPU 6, and
+                   index 3 to CPU 7."""
         subpars.add_argument("--module-siblings", help=text)
 
 def _get_info_subcommand_prop_help_text(prop: PropertyTypedDict) -> str:
