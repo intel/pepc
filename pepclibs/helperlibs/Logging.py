@@ -471,7 +471,7 @@ class Logger(logging.Logger):
         caller_frame = inspect.stack()[1][0]
         if caller_frame:
             caller_info = inspect.getframeinfo(caller_frame)
-            msg_hash = f"{caller_info.filename}:{caller_info.lineno}"
+            msg_hash = f"{caller_info.filename}:{caller_info.lineno}:{fmt}"
         else:
             raise Error("python interpretor does not support 'inspect.stack()'")
 
@@ -497,5 +497,5 @@ def getLogger(name: str | None = None) -> Logger:
     logger = logging.getLogger(name=name)
     if typing.TYPE_CHECKING:
         return cast(Logger, logger)
-    else:
-        return logger
+
+    return logger
