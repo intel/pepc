@@ -41,8 +41,8 @@ if typing.TYPE_CHECKING:
             modules: List of module numbers to operate on.
             dies: List of die numbers to operate on.
             packages: List of package numbers to operate on.
-            core_siblings: List of core sibling numbers to operate on.
-            module_siblings: List of module sibling numbers to operate on.
+            core_siblings: List of core sibling indices to operate on.
+            module_siblings: List of module sibling indices to operate on.
             oargs: Dictionary of command line argument names and values matching the order of
             appearance in the command line.
         """

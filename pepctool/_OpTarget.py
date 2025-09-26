@@ -85,7 +85,7 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
         relative numbering, as well as the special "all" value to target all available elements. If
         no topology arguments are provided, all CPUs, dies, and packages are selected by default.
 
-        If no cpu, core, module, die, package, core and module sibling numbers were specified,
+        If no cpu, core, module, die, package, core and module sibling indices were specified,
         assume everything is targeted, i.e. the following is assumed:
         - cpus: "all"
         - packages: "all"
@@ -111,12 +111,25 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
                   supported.
             packages: Target package numbers. Accept a sequence of integers, a comma-separated
                       string of package numbers, or "all" to target all packages.
-            core_siblings: Core sibling numbers to further filter CPUs. Accept a sequence of
-                           integers or a comma-separated string of core sibling numbers.
-            module_siblings: Module sibling numbers to further filter CPUs. Accept a sequence of
-                             integers or a comma-separated string of module sibling numbers.
-            offline_ok: If True, offline CPUs in the selection are acceptable; if False, an
-                        exception is raised for offline CPUs.
+            core_siblings: Core sibling indices to further filter CPUs. Accept a sequence of
+                           integers or a comma-separated string of core sibling indices.
+            module_siblings: Module sibling indices to further filter CPUs. Accept a sequence of
+                             integers or a comma-separated string of module sibling indices.
+            offline_ok: If True, offline CPUs in the selection are acceptable, if False, an
+                        exception is raised for offline CPUs. This option is only relevant when
+                        targeting specific CPU numbers via the 'cpus' argument. If 'cpus' is not
+                        specified, this option is ignored and only online CPUs will be selected.
+
+        Attributes:
+            cpus: Input CPU numbers.
+            cores: Input core numbers, indexed by package numbers.
+            modules: Input module numbers.
+            dies: Input die numbers, indexed by package numbers.
+            packages: Input package numbers.
+            core_siblings: Input core sibling indices.
+            core_sib_cpus: CPUs selected by core sibling indices.
+            module_siblings: Input module sibling indices.
+            module_sib_cpus: CPUs selected by module sibling indices.
 
         Notes:
           - Terminology:
@@ -187,7 +200,7 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
         self._close_pman = pman is None
         self._close_cpuinfo = cpuinfo is None
 
-        # Target CPU, core, module, die, and package numbers.
+        # The input CPU, core, module, die, and package numbers.
         self.cpus: AbsNumsType = []
         self.cores: RelNumsType = {}
         self.modules: AbsNumsType = []
@@ -293,23 +306,16 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
                             _pkg_dies.append(die)
                         self.dies[pkg] = _pkg_dies
 
+        _cpus = self._get_cpus()
         if core_siblings:
             self.core_siblings = Trivial.parse_int_list(core_siblings, dedup=True,
-                                                        what="core sibling numbers")
-            self.core_sib_cpus = self._cpuinfo.select_core_siblings(self._get_cpus(),
-                                                                    self.core_siblings)
+                                                        what="core sibling indices")
+            self.core_sib_cpus = self._cpuinfo.select_core_siblings(_cpus, self.core_siblings)
 
         if module_siblings:
             self.module_siblings = Trivial.parse_int_list(module_siblings, dedup=True,
-                                                          what="module sibling numbers")
-            self.module_sib_cpus = self._cpuinfo.select_module_siblings(self._get_cpus(),
-                                                                        self.module_siblings)
-
-            if core_siblings:
-                # Re-calculate core sibling CPUs taking into account the just initialized module
-                # sibling CPUs.
-                self.core_sib_cpus = self._cpuinfo.select_core_siblings(self._get_cpus(),
-                                                                        self.core_siblings)
+                                                          what="module sibling indices")
+            self.module_sib_cpus = self._cpuinfo.select_module_siblings(_cpus, self.module_siblings)
 
         if _LOG.getEffectiveLevel() == Logging.DEBUG:
             if self.cpus:
