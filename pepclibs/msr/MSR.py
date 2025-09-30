@@ -240,21 +240,19 @@ class MSR(_SimpleMSR.SimpleMSR):
                         regval_bytes = regval.to_bytes(self.regbytes, byteorder=_CPU_BYTEORDER)
                         fobj.write(regval_bytes)
                         fobj.flush()
-                        _LOG.debug("CPU%d: commit MSR 0x%x: wrote 0x%x%s",
+                        _LOG.debug("CPU%d: Commit MSR 0x%x: Wrote 0x%x%s",
                                    cpu, regaddr, regval, self._pman.hostmsg)
                     except Error as err:
                         raise Error(f"Failed to write '{regval:#x}' to MSR '{regaddr:#x}' of CPU "
                                     f"{cpu}{self._pman.hostmsg} (file '{path}'):\n"
                                     f"{err.indent(2)}") from err
 
-    def _transaction_write_remote_optimized(self):
+    def _transaction_write_remote(self):
         """
-        Write MSR transactions on a remote host using an optimized approach.
+        Write MSR transactions on a remote host.
 
-        Provide an optimized implementation of the '_transaction_write()' function for remote hosts.
-        Instead of opening and writing to multiple remote '/dev/msr/{cpu}' files from the local
-        system, which is slow, generate a small Python script that performs the MSR writes and
-        execute it on the remote host.
+        Generate a small Python script that performs the MSR writes and executes it on the remote
+        host.
         """
 
         python_path = self._pman.get_python_path()
@@ -303,8 +301,8 @@ for cpu, cpus_info in transaction_buffer.items():
 
         _LOG.debug("Flushing the MSR transaction buffer")
 
-        if self._pman.is_remote and len(self._transaction_buffer) > 1:
-            self._transaction_write_remote_optimized()
+        if self._pman.is_remote:
+            self._transaction_write_remote()
         else:
             self._transaction_write()
 
@@ -352,16 +350,15 @@ for cpu, cpus_info in transaction_buffer.items():
         else:
             _LOG.debug("MSR transaction has been committed, but it was empty")
 
-    def _read_remote_optimized(self,
-                               regaddr: int,
-                               cpus: Sequence[int],
-                               iosname: ScopeNameType) -> Generator[tuple[int, int], None, None]:
+    def _read_remote(self,
+                     regaddr: int,
+                     cpus: Sequence[int],
+                     iosname: ScopeNameType) -> Generator[tuple[int, int], None, None]:
         """
-        Optimized method for reading MSR values from a remote host.
+        Read an MSR from a remote host.
 
-        Improve performance by generating and executing a small Python script on the remote host to
-        read the specified MSR for a set of CPUs. This approach is faster than opening and reading
-        multiple remote '/dev/msr/{cpu}' files from the local system.
+        Generate and execute a small Python script on the remote host to read the specified MSR for
+        a set of CPUs.
 
         Args:
             regaddr: The address of the MSR to read.
@@ -438,8 +435,8 @@ for cpu, cpus_info in transaction_buffer.items():
                 regval: Value read from the MSR.
         """
 
-        if self._pman.is_remote and len(cpus) > 1:
-            yield from self._read_remote_optimized(regaddr, cpus, iosname)
+        if self._pman.is_remote:
+            yield from self._read_remote(regaddr, cpus, iosname)
             return
 
         for cpu in cpus:
@@ -518,6 +515,9 @@ for cpu, cpus_info in transaction_buffer.items():
         """
 
         for cpu, regval in self.read(regaddr, cpus, iosname=iosname):
+            _LOG.debug("CPU%d: MSR 0x%x: Bits %s: Read 0x%x%s", cpu, regaddr,
+                       ":".join([str(bit) for bit in bits]), self.get_bits(regval, bits),
+                       self._pman.hostmsg)
             yield (cpu, self.get_bits(regval, bits))
 
     def read_cpu_bits(self,
@@ -568,7 +568,6 @@ for cpu, cpus_info in transaction_buffer.items():
         """
 
         cpus = self._cpuinfo.normalize_cpus(cpus)
-        regval_bytes = None
 
         for cpu in cpus:
             self._cache.remove(regaddr, cpu, sname=iosname)
@@ -581,9 +580,7 @@ for cpu, cpus_info in transaction_buffer.items():
                 continue
 
             if not self._in_transaction:
-                if regval_bytes is None:
-                    regval_bytes = regval.to_bytes(self.regbytes, byteorder=_CPU_BYTEORDER)
-                super().cpu_write(regaddr, regval, cpu, regval_bytes=regval_bytes)
+                super().cpu_write(regaddr, regval, cpu)
             else:
                 self._add_for_transation(regaddr, regval, cpu, verify, iosname)
 
@@ -652,7 +649,11 @@ for cpu, cpus_info in transaction_buffer.items():
 
         for cpu, regval in self.read(regaddr, cpus, iosname=iosname):
             new_regval = self.set_bits(regval, bits, val)
+            _LOG.debug("CPU %d: MSR 0x%x: Set bits %s to 0x%x: Current MSR value: 0x%x%s, "
+                       "new value: 0x%x",
+                       cpu, regaddr, bits, val, regval, self._pman.hostmsg, new_regval)
             if regval == new_regval:
+                _LOG.debug("CPU %d: MSR 0x%x: No change, skipping writing", cpu, regaddr)
                 continue
 
             if new_regval not in regvals:

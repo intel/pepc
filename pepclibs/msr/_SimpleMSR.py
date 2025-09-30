@@ -159,11 +159,10 @@ class SimpleMSR(ClassHelpers.SimpleCloseContext):
                           regaddr: int,
                           cpus: Sequence[int]) -> Generator[tuple[int, int], None, None]:
         """
-        Optimized method for reading MSR values from a remote host.
+        Read an MSR from a remote host.
 
-        Improve performance by generating and executing a small Python script on the remote host to
-        read the specified MSR for a set of CPUs. This approach is faster than opening and reading
-        multiple remote '/dev/msr/{cpu}' files from the local system.
+        Generate and execute a small Python script on the remote host to read the specified MSR for
+        a set of CPUs.
 
         Args:
             regaddr: The address of the MSR to read.
@@ -197,6 +196,7 @@ for cpu in cpus:
             cpu = Trivial.str_to_int(split[0], what="CPU number")
             regval = Trivial.str_to_int(split[1], what=f"MSR {regaddr:#x} value on CPU {cpu}")
 
+            _LOG.debug("CPU%d: MSR 0x%x: Read 0x%x%s", cpu, regaddr, regval, self._pman.hostmsg)
             yield cpu, regval
 
     def cpus_read(self,
@@ -225,7 +225,7 @@ for cpu in cpus:
 
     def cpu_read(self, regaddr: int, cpu: int) -> int:
         """
-        Read an MSR at the specified address for a given CPU
+        Read an MSR at the specified address for a given CPU.
 
         Args:
             regaddr: The address of the MSR to read.
@@ -246,7 +246,7 @@ for cpu in cpus:
                         f"{self._pman.hostmsg}:\n{err.indent(2)}") from err
 
         regval = int.from_bytes(regval, byteorder=_CPU_BYTEORDER)
-        _LOG.debug("CPU%d: MSR 0x%x: read 0x%x%s", cpu, regaddr, regval, self._pman.hostmsg)
+        _LOG.debug("CPU%d: MSR 0x%x: Read 0x%x%s", cpu, regaddr, regval, self._pman.hostmsg)
 
         return regval
 
@@ -276,7 +276,7 @@ for cpu in cpus:
         set_mask = val << bits[1]
         return (regval & ~clear_mask) | set_mask
 
-    def cpu_write(self, regaddr: int, regval: int, cpu: int, regval_bytes: bytes | None = None):
+    def cpu_write_remote(self, regaddr: int, regval: int, cpu: int):
         """
         Write a value to an MSR for a specific CPU.
 
@@ -284,14 +284,19 @@ for cpu in cpus:
             regaddr: The address of the MSR to write to.
             regval: The value to write to the MSR.
             cpu: CPU number to write the MSR on.
-            regval_bytes: The value to write as a bytes object. If not provided, regval is converted
-                          to bytes. If provided, regval is ignored and regval_bytes is written to
-                          the MSR. In other words, this is an optimization saving the "to_bytes()"
-                          conversion step.
         """
 
-        if regval_bytes is None:
-            regval_bytes = regval.to_bytes(self.regbytes, byteorder=_CPU_BYTEORDER)
+    def cpu_write(self, regaddr: int, regval: int, cpu: int):
+        """
+        Write a value to an MSR for a specific CPU.
+
+        Args:
+            regaddr: The address of the MSR to write to.
+            regval: The value to write to the MSR.
+            cpu: CPU number to write the MSR on.
+        """
+
+        regval_bytes = regval.to_bytes(self.regbytes, byteorder=_CPU_BYTEORDER)
 
         path = Path(f"/dev/cpu/{cpu}/msr")
         with self._pman.open(path, "r+b") as fobj:
@@ -299,7 +304,7 @@ for cpu in cpus:
                 fobj.seek(regaddr)
                 fobj.write(regval_bytes)
                 fobj.flush()
-                _LOG.debug("CPU%d: MSR 0x%x: wrote 0x%x", cpu, regaddr, regval)
+                _LOG.debug("CPU%d: MSR 0x%x: Wrote 0x%x", cpu, regaddr, regval)
             except Error as err:
                 raise Error(f"Failed to write '{regval:#x}' to MSR '{regaddr:#x}' of CPU "
                             f"{cpu}{self._pman.hostmsg} (file '{path}'):\n{err.indent(2)}") from err
