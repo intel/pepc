@@ -3,372 +3,568 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2023 Intel Corporation
+# Copyright (C) 2023-2025 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
-# Author: Niklas Neronin <niklas.neronin@intel.com>
+# Authors: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
+#          Niklas Neronin <niklas.neronin@intel.com>
 
 """
-A tool for finding out the I/O scope of writable MSRs. I/O scope is defined by the observability MSR
-value changes, not by the functional impact of the MSR.
+Detect I/O scope of a writable Model-Specific Register (MSR). Refer to 'docs/misc-msr-scope.md' for
+more information about MSR I/O scope.
 """
 
-import sys
+from __future__ import annotations # Remove when switching to Python 3.10+.
+
+import typing
 import contextlib
+import pkgutil
+import importlib
 
 try:
     import argcomplete
+    _ARGCOMPLETE_AVAILABLE = True
 except ImportError:
     # We can live without argcomplete, we only lose tab completions.
-    argcomplete = None
+    _ARGCOMPLETE_AVAILABLE = False
 
 from pepctool._Pepc import ArgParse
 from pepclibs.helperlibs import Logging, ProcessManager, Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
-from pepclibs.msr import MSR
+from pepclibs.msr import MSR, _FeaturedMSR
 from pepclibs import CPUInfo
 
-TOOLNAME = "msrscope"
-VERSION = "0.2"
-_LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
-Logging.setup_logger(prefix=TOOLNAME)
+if typing.TYPE_CHECKING:
+    from typing import TypedDict, Generator
+    from types import ModuleType
+    import argparse
+    from pepclibs.helperlibs.ProcessManager import ProcessManagerType
+    from pepclibs.CPUInfoTypes import ScopeNameType
 
-def _get_possible_ioscopes(cpuinfo, cpu, siblings):
-    """Find all scopes shared by all the sibling CPUs."""
+    class _FeatureInfoTypedDict(TypedDict, total=False):
+        """
+        A typed dictionary for an MSR feature an I/O scope detection test was run for.
 
-    ioscopes = []
-    if len(siblings) == 1:
-        ioscopes.append("CPU")
+        Attributes:
+            bits_str: The bits range of the feature in the "msb:lsb" format.
+            addr: The address of the MSR the feature belongs to.
+            sname: The detected I/O scope name of the feature.
+            expected_sname: The expected I/O scope name of the feature.
+        """
 
-    topology = cpuinfo.get_topology()
+        bits_str: str
+        addr: int
+        sname: ScopeNameType
+        expected_sname: ScopeNameType
+
+    class _CmdlineArgsTypedDict(TypedDict, total=False):
+        """
+        A typed dictionary for command-line arguments of the 'msr-ioscope' tool.
+
+        Attributes:
+            hostname: The hostname of the target system.
+            username: The username to use for SSH connections.
+            privkey: The private key file to use for SSH authentication.
+            timeout: The timeout value for SSH connections.
+            addr: The MSR address to run I/O scope detection on.
+            all_msrs: If True, run the I/O scope detection procedure for all writable MSRs supported
+                      by the 'pepc' project and the target host.
+            bits: The bits range to use for detecting MSR I/O scope.
+            values: Two unique values to use for detecting MSR I/O scope.
+            cpu: The CPU number to write to the MSR on.
+        """
+
+        hostname: str
+        username: str
+        privkey: str | None
+        timeout: int | float
+        addr: int
+        all_msrs: bool
+        bits: list[int]
+        values: list[int]
+        cpu: int
+
+_TOOLNAME = "msr-ioscope"
+_VERSION = "0.2"
+
+# Note, logger name is the project name, not the tool name.
+_LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc").configure(prefix=_TOOLNAME)
+
+def _get_existing_snames(cpuinfo: CPUInfo.CPUInfo) -> list[ScopeNameType]:
+    """
+    Get scope names that exist on the target system.
+
+    Args:
+        cpuinfo: The target system CPU information object.
+
+    Returns:
+        A list of scope names that exist on the target system, sorted from the largest to the
+        smallest scope.
+    """
+
+    snames: list[ScopeNameType] = []
+
+    # Ensure that the scopes are in the order from the largest to the smallest.
+    for sname in reversed(CPUInfo.SCOPE_NAMES):
+        if sname == "node":
+            # MSRs cannot have the "global" and "node" scopes.
+            continue
+        if sname == "module":
+            if cpuinfo.get_modules_count() == cpuinfo.get_cores_count():
+                # There is one core per module, which means that modules do not exist on the target
+                # system.
+                continue
+        if sname == "die":
+            if cpuinfo.get_dies_count() == cpuinfo.get_packages_count():
+                # There is one die per package, which means that dies do not exist on the target
+                # system.
+                continue
+        if sname == "CPU":
+            if cpuinfo.get_cpus_count() == cpuinfo.get_cores_count():
+                # There is one CPU per core, so CPU and core scopes are indistinguishable. Assume
+                # core scope as a more common case for MSRs on Intel platforms.
+                continue
+        snames.append(sname)
+
+    if not snames:
+        raise Error("Could not find any scope on the target system")
+    return snames
+
+def _check_ioscope(cpuinfo: CPUInfo.CPUInfo,
+                   sname: ScopeNameType,
+                   vals: dict[int, int],
+                   cpu: int,
+                   val: int) -> bool:
+    """
+    Check if the given scope name is the I/O scope of an MSR bits range.
+
+    Args:
+        cpuinfo: The target system CPU information object.
+        sname: The scope name to check.
+        vals: A dictionary mapping CPU numbers to their MSR bits range values.
+        cpu: Value 'val' was written to on this CPU.
+        val: The value that was written to one of the CPUs.
+
+    Returns:
+        True if the given scope name is the I/O scope of the MSR bits range, False otherwise.
+    """
+
     tline = cpuinfo.get_tline_by_cpu(cpu)
-    for ioscope in ("core", "module", "die", "package"):
-        for tline in topology:
-            if tline["CPU"] in siblings:
-                if tline[ioscope] != tline[ioscope]:
-                    break
-            elif tline[ioscope] == tline[ioscope]:
-                # The 'core' and 'die' numbers may be relative to the package on some systems.
-                if ioscope in {"core", "die"} and tline["package"] != tline["package"]:
-                    continue
+    for _tline in cpuinfo.get_topology():
+        if _tline[sname] == tline[sname]:
+            if vals[_tline["CPU"]] != val:
+                return False
+        else:
+            if vals[_tline["CPU"]] == val:
+                return False
+    return True
+
+def _detect_msr_bits_range_ioscope(cpuinfo: CPUInfo.CPUInfo,
+                                   msr: MSR.MSR,
+                                   addr: int,
+                                   bits: list[int],
+                                   values: list[int],
+                                   cpu: int) -> ScopeNameType:
+    """
+    Detect I/O scope of a bits range of an MSR.
+
+    Args:
+        cpuinfo: The target system CPU information object.
+        msr: The target system MSR object.
+        cmdl: Command-line arguments.
+    """
+
+    # Save the initial MSR values.
+    initial_vals: dict[int, int] = {}
+    for _cpu, val in msr.read_bits(addr, bits):
+        initial_vals[_cpu] = val
+
+    snames = _get_existing_snames(cpuinfo)
+
+    # The I/O scope detection setup: set the MSR bits range to 'values[0]' on all CPUs and to
+    # 'values[1]' on one of the CPUs.
+    msr.write_bits(addr, bits, values[0], cpus="all", verify=True)
+    msr.write_bits(addr, bits, values[1], cpus=(cpu, 0), verify=True)
+
+    # MSR values on all CPUs after the I/O scope detection setup.
+    vals: dict[int, int] = {}
+    for _cpu, val in msr.read_bits(addr, bits):
+        vals[_cpu] = val
+
+    bits_str = ":".join([str(bit) for bit in bits])
+
+    try:
+        for sname in snames:
+            if _check_ioscope(cpuinfo, sname, vals, cpu, values[1]):
                 break
         else:
-            ioscopes.append(ioscope)
+            _LOG.debug_print_stacktrace()
+            raise Error(f"Failed to detect I/O scope of MSR {addr:#x} bits {bits_str}")
+    finally:
+        # Restore the MSR to the initial value.
+        for _cpu, val in initial_vals.items():
+            msr.write_bits(addr, bits, val, cpus=(_cpu,), verify=True)
 
-    return ioscopes
+    return sname
 
-def _find_msr_ioscope(pman, cpuinfo, msr, regaddr, bits, values, cpu):
+def _print_msr_bits_range_ioscope(cpuinfo: CPUInfo.CPUInfo,
+                                  msr: MSR.MSR,
+                                  cmdl: _CmdlineArgsTypedDict):
     """
-    Find out MSR I/O scope. The arguments are as follows.
-      * pman - the process manager object that defines the host to run the tests on.
-      * cpuinfo - CPU information object generated by 'CPUInfo.CPUInfo()'.
-      * msr - the 'MSR.MSR()' object to use for writing to the MSR register.
-      * regaddr - address of the MSR to read/write the bits.
-      * bits - the MSR bits range. A list of 2 decimals: (msb, lsb), where 'msb' is the more
-               significant bit, and 'lsb' is a less significant bit.
-      * cpu - the CPU which MSR is modified.
+    Detect and print I/O scope of a bits range of an MSR.
+
+    Args:
+        cpuinfo: The target system CPU information object.
+        msr: The target system MSR object.
+        cmdl: Command-line arguments.
     """
 
-    info = {}
-    # Collect initial values for all online CPUs.
-    for _cpu, val in msr.read_bits(regaddr, bits):
-        info[_cpu] = val
+    addr = cmdl["addr"]
+    bits = cmdl["bits"]
+    values = cmdl["values"]
+    cpu = cmdl["cpu"]
 
-    cpus = set()
-    # Set CPU 'args.cpu' MSR to a different value and record all CPUs which values have changed.
-    for value in values:
-        value = int(value)
-        if value == info[cpu]:
+    sname = _detect_msr_bits_range_ioscope(cpuinfo, msr, addr, bits, values, cpu)
+
+    bits_str = ":".join([str(bit) for bit in bits])
+    _LOG.info("I/O scope of MSR %#x bits %s is detected to be '%s'", addr, bits_str, sname)
+
+def _get_featured_msr_modules() -> Generator[tuple[str, ModuleType], None, None]:
+    """
+    Yield all featured MSR modules supported by the 'pepc' project.
+
+    Yields:
+        A tuple of the module name and the module object.
+    """
+
+    modname = ""
+    try:
+        for modinfo in pkgutil.iter_modules(path=["pepclibs/msr"]):
+            if modinfo.ispkg:
+                continue
+
+            modname = modinfo.name
+            if modname.startswith("_"):
+                continue
+
+            _LOG.debug("Importing featured MSR module '%s'", modname)
+            module = importlib.import_module(f"pepclibs.msr.{modname}")
+
+            yield modname, module
+    except Exception as err:
+        errmsg = Error(str(err)).indent(2)
+        if not modname:
+            raise Error(f"Failed to iterate featured MSR modules:\n{errmsg}") from err
+        raise Error(f"Failed to import featured MSR module {modname}:\n{errmsg}") from err
+
+def _check_feature_ok_to_test(fmsr: _FeaturedMSR.FeaturedMSR, fname: str) -> bool:
+    """
+    Check if a featured MSR feature is OK to test for I/O scope.
+
+    Args:
+        fmsr: The featured MSR object.
+        fname: The name of the feature to check.
+    """
+
+    if fmsr.regname == "MSR_PKG_CST_CONFIG_CONTROL" and fname == "pkg_cstate_limit":
+        # Check that the package C-state limit is unlocked.
+        for _, val in fmsr.read_feature("pkg_cstate_limit_lock", cpus="all"):
+            if val != "off":
+                finfo = fmsr.features[fname]
+                bits_str = ":".join([str(bit) for bit in finfo["bits"]])
+                _LOG.info("Skipping feature '%s' (bits %s) in MSR '%s' (%#x): The package C-state "
+                          "limit is locked", fname, bits_str, fmsr.regname, fmsr.regaddr)
+                return False
+
+    return True
+
+def _get_featured_msrs(pman: ProcessManagerType,
+                       cpuinfo: CPUInfo.CPUInfo,
+                       msr: MSR.MSR) -> Generator[tuple[_FeaturedMSR.FeaturedMSR, str], None, None]:
+    """
+    Yield featured MSR objects for every MSR supported by the 'pepc' project and the target host,
+    which have at least one writable and harmless feature. Harmless features are those that are not
+    expected to affect system stability when modified.
+
+    Yields:
+        A tuple of the featured MSR object and feature name.
+    """
+
+    for modname, module in _get_featured_msr_modules():
+        fmsr_cls = getattr(module, modname, None)
+        if not fmsr_cls:
+            raise Error(f"BUG: Module '{modname}' does not have the '{modname}' class")
+
+        if not issubclass(fmsr_cls, _FeaturedMSR.FeaturedMSR):
             continue
 
-        msr.write_bits(regaddr, bits, value, cpus=(cpu, ))
-        if value != msr.read_cpu_bits(regaddr, bits, cpu):
-            raise Error(f"failed to write value '{value}' to MSR 0x{regaddr:x} bits "
-                        f"{':'.join(bits)}")
-
-        for _cpu, val in msr.read_bits(regaddr, bits):
-            if info[_cpu] != val:
-                cpus.add(_cpu)
-        break
-
-    scopes = _get_possible_ioscopes(cpuinfo, cpu, cpus)
-
-    # Restore the MSR to the initial value. It is enough to restore only from 'args.cpu', because
-    # other CPUs share the same I/O scope.
-    msr.write_bits(regaddr, bits, info[cpu], cpus=(cpu, ))
-    val = msr.read_cpu_bits(regaddr, bits, cpu)
-    _LOG.debug("initial value was '%d' and value after test is '%d'", info[cpu], val)
-
-    if len(scopes) == 1:
-        _LOG.info("I/O scope of MSR %#x bits %s is \"%s\".", regaddr, ":".join(bits), scopes[0])
-    elif scopes:
-        _LOG.info("Possible I/O scopes of MSR %#x bits %s are: %s.\nThese scopes are identical%s.",
-                  regaddr, ":".join(bits), ", ".join(scopes), pman.hostmsg)
-    else:
-        _LOG.info("Could not determine I/O scope of MSR %#x bits %s. Modified the following "
-                  "CPUs:\n%s", regaddr, ":".join(bits), Trivial.rangify(cpus))
-
-def _test_specific_msr(pman, cpuinfo, msr, args):
-    """Test a specific MSR register."""
-
-    # Argument 'regaddr' can either be an decimal or hex.
-    try:
-        args.regaddr = int(args.regaddr)
-    except (ValueError, TypeError):
         try:
-            args.regaddr = int(args.regaddr, 16)
-        except (ValueError, TypeError):
-            raise Error("please supply register addres in decimal or hex") from None
-
-    args.bits = args.bits.split(":")
-    if len(args.bits) != 2:
-        raise Error("please supply bits in the following format \"h:l\"")
-
-    if args.values[0] == args.values[1]:
-        raise Error("please supply 2 unique values")
-
-    cpuinfo.normalize_cpu(args.cpu)
-    _find_msr_ioscope(pman, cpuinfo, msr, args.regaddr, args.bits, args.values, args.cpu)
-
-def _find_feature_ioscope(cpuinfo, fmsr, fname, values, cpu):
-    """
-    Find I/O scope of an MSR feature. The arguments are as follows.
-      * cpuinfo - CPU information object generated by 'CPUInfo.CPUInfo()'.
-      * fmsr - the featured MSR object, e.g, 'PowerCtl', 'PCStateConfigCtl', 'HWPRequest'
-      * fname - the feature name, e.g, 'epp', 'c1e_autopromote'
-      * values - tuple of values to set the MSR to.
-      * cpu - the CPU which is modified.
-    """
-
-    if not fmsr.is_feature_supported(fname, cpus=(cpu, )):
-        return
-
-    regaddr = fmsr.regaddr
-    bits = fmsr.features[fname]["bits"]
-    iosname = fmsr.features[fname]["iosname"]
-
-    info = {}
-    for _cpu, val in fmsr.read_feature(fname):
-        info[_cpu] = val
-
-    cpus = set()
-    # Set CPU 'args.cpu' feature to a different value and record all CPUs which values have changed.
-    for value in values:
-        if value == info[cpu]:
+            fmsr = fmsr_cls(pman=pman, cpuinfo=cpuinfo, msr=msr)
+        except ErrorNotSupported as err:
+            _LOG.debug(err)
+            _LOG.info("Skipping unsupported MSR '%s' (%#x)", fmsr_cls.regname, fmsr_cls.regaddr)
             continue
 
-        fmsr.write_feature(fname, value, cpus=(cpu, ))
-        rval = fmsr.read_cpu_feature(fname, cpu)
-        if rval != value and (fname != "pkg_cstate_limit" or value != rval["pkg_cstate_limit"]):
-            _LOG.warning("failed to write '%s' value '%s' to MSR %#x %d:%d", fname, str(value),
-                         fmsr.regaddr, fmsr.features[fname]["bits"][0],
-                         fmsr.features[fname]["bits"][1])
-            return
+        for fname, finfo in fmsr.features.items():
+            bits_str = ":".join([str(bit) for bit in finfo["bits"]])
+            if not finfo["writable"]:
+                _LOG.debug("Skipping read-only feature '%s' (bits %s) in MSR '%s' (%#x) ",
+                          fname, bits_str, fmsr_cls.regname, fmsr_cls.regaddr)
+                continue
 
-        for _cpu, val in fmsr.read_feature(fname):
-            if info[_cpu] != val:
-                cpus.add(_cpu)
-        break
+            if not fmsr.is_feature_supported(fname, cpus="all"):
+                _LOG.info("Skipping unsupported feature '%s' (bits %s) in MSR '%s' (%#x) ",
+                          fname, bits_str, fmsr_cls.regname, fmsr_cls.regaddr)
+                continue
 
-    scopes = _get_possible_ioscopes(cpuinfo, cpu, cpus)
+            # Handle special cases.
+            if not _check_feature_ok_to_test(fmsr, fname):
+                continue
 
-    # Restore the MSR feature to the initial value. It is enough to restore only from 'args.cpu',
-    # because other CPUs share the same I/O scope.
-    if fname == "pkg_cstate_limit":
-        fmsr.write_feature(fname, info[cpu]["pkg_cstate_limit"], cpus=(cpu, ))
-        val = fmsr.read_cpu_feature(fname, cpu)["pkg_cstate_limit"]
-    else:
-        fmsr.write_feature(fname, info[cpu], cpus=(cpu, ))
-        val = fmsr.read_cpu_feature(fname, cpu)
-    _LOG.debug("initial value was '%d' and value after test is '%d'", info[cpu], val)
+            yield fmsr, fname
 
-    if not scopes:
-        _LOG.info("'%s' (%#x %d:%d) I/O scope couldn't be determined. Modified the following "
-                  "CPUs:\n%s", fname, regaddr, bits[0], bits[1], Trivial.rangify(cpus))
-    elif iosname in scopes:
-        _LOG.info("'%s' (%#x %d:%d) %s I/O scope is correct.",
-                  fname, regaddr, bits[0], bits[1], iosname)
-    else:
-        _LOG.info("'%s' (%#x %d:%d) %s I/O scope is incorrect, correct I/O scopes are: %s.",
-                  fname, regaddr, bits[0], bits[1], iosname, ", ".join(scopes))
+def _print_ioscope_all(pman: ProcessManagerType,
+                        cpuinfo: CPUInfo.CPUInfo,
+                        msr: MSR.MSR,
+                        cmdl: _CmdlineArgsTypedDict):
+    """
+    Detect I/O scope of all "featured MSRs" supported by the 'pepc' project and the target host.
+    Only the writable and harmless MSR bits ranges are tested.
 
-def _test_all_msrs(pman, cpuinfo, msr, args):
-    """Test MSRs which are used by the 'pepc' tool."""
+    Args:
+        pman: The process manager object for the target system.
+        cpuinfo: The target system CPU information object.
+        msr: The target system MSR object.
+        cmdl: Command-line arguments.
+    """
 
-    # pylint: disable=import-outside-toplevel
-    from pepclibs.msr import EnergyPerfBias, HWPRequest, HWPRequestPkg, PowerCtl, PCStateConfigCtl
-    from pepclibs.msr import PMEnable, UncoreRatioLimit
-    from pepclibs.msr import SwLTROvrd
+    cpu = cmdl["cpu"]
 
-    cpu = cpuinfo.normalize_cpu(args.cpu)
+    info: dict[str, dict[str, _FeatureInfoTypedDict]] = {}
 
-    try:
-        fmsr = EnergyPerfBias.EnergyPerfBias(pman=pman, cpuinfo=cpuinfo, msr=msr)
-    except ErrorNotSupported as err:
-        _LOG.notice(err)
-    else:
-        _find_feature_ioscope(cpuinfo, fmsr, "epb", (4, 8), cpu)
-    finally:
-        fmsr.close()
+    for fmsr, fname in _get_featured_msrs(pman, cpuinfo, msr):
+        finfo = fmsr.features[fname]
+        addr = fmsr.regaddr
+        bits = list(finfo["bits"])
+        bits_str = ":".join([str(bit) for bit in bits])
 
-    try:
-        fmsr = HWPRequest.HWPRequest(pman=pman, cpuinfo=cpuinfo, msr=msr)
-    except ErrorNotSupported as err:
-        _LOG.notice(err)
-    else:
-        _find_feature_ioscope(cpuinfo, fmsr, "epp", (64, 128), cpu)
+        if "vals" in finfo:
+            values = list(finfo["vals"].values())
+            if len(values) < 2:
+                raise Error(f"BUG: Feature '{fname}' (bits {bits_str}) in MSR '{fmsr.regname}' "
+                            f"({addr:#x}) has less than 2 unique values")
+            values = values[:2]
+        else:
+            expected_types = ("bool", "int")
+            if finfo["type"] not in expected_types:
+                expected_str = ", ".join(expected_types)
+                raise Error(f"BUG: Writable feature '{fname}' (bits {bits_str}) in MSR "
+                            f"'{fmsr.regname}' ({fmsr.regaddr:#x}) has unexpected type "
+                            f"'{finfo['type']}'. Expected one of: {expected_str}.")
 
-        with contextlib.suppress(ErrorNotSupported):
-            perf = fmsr.read_cpu_feature("min_perf", cpu)
-            perf1, perf2 = (perf - 1, perf) if perf > 0 else (perf, perf + 1)
-            _find_feature_ioscope(cpuinfo, fmsr, "min_perf", (perf1, perf2), cpu)
+            max_val = (1 << (bits[0] - bits[1] + 1)) - 1
+            values = [max_val // 2, max_val // 2 + 1]
 
-        with contextlib.suppress(ErrorNotSupported):
-            perf = fmsr.read_cpu_feature("max_perf", cpu)
-            perf1, perf2 = (perf - 1, perf) if perf > 254 else (perf, perf + 1)
-            _find_feature_ioscope(cpuinfo, fmsr, "max_perf", (perf1, perf2), cpu)
-    finally:
-        fmsr.close()
+        try:
+            sname = _detect_msr_bits_range_ioscope(cpuinfo, msr, addr, bits, values, cpu)
+            if fmsr.regname not in info:
+                info[fmsr.regname] = {}
+            if fname in info[fmsr.regname]:
+                raise Error(f"BUG: Feature '{fname}' (bits {bits_str}) in MSR '{fmsr.regname}' "
+                            f"({addr:#x}) was met twice")
 
-    try:
-        fmsr = HWPRequestPkg.HWPRequestPkg(pman=pman, cpuinfo=cpuinfo, msr=msr)
-    except ErrorNotSupported as err:
-        _LOG.notice(err)
-    else:
-        _find_feature_ioscope(cpuinfo, fmsr, "epp", (64, 128), cpu)
+            info[fmsr.regname][fname] = {"bits_str": bits_str,
+                                         "addr": addr,
+                                         "sname": sname,
+                                         "expected_sname": finfo["sname"]}
+        except Error as err:
+            errmsg = err.indent(2)
+            _LOG.error("Failed to detect I/O scope of feature '%s' (bits %s) in MSR '%s' "
+                       "(%#x):\n%s", fname, bits_str, fmsr.regname, addr, errmsg)
+            continue
 
-        with contextlib.suppress(ErrorNotSupported):
-            perf = fmsr.read_cpu_feature("min_perf", cpu)
-            perf1, perf2 = (perf - 1, perf) if perf > 0 else (perf, perf + 1)
-            _find_feature_ioscope(cpuinfo, fmsr, "min_perf", (perf1, perf2), cpu)
+    _LOG.info("I/O scope detection results:")
+    for regname in sorted(info.keys()):
+        for idx, (fname, _finfo) in enumerate(info[regname].items()):
+            if idx == 0:
+                _LOG.info(" - MSR '%s' (%#x):", regname, _finfo["addr"])
+            _LOG.info("     Feature '%s' (bits %s): detected I/O scope is '%s'",
+                      fname, _finfo["bits_str"], _finfo["sname"])
+            if _finfo["sname"] != _finfo["expected_sname"]:
+                _LOG.warning("       Expected I/O scope is '%s', but detected '%s'",
+                             _finfo["expected_sname"], _finfo["sname"])
 
-        with contextlib.suppress(ErrorNotSupported):
-            perf = fmsr.read_cpu_feature("max_perf", cpu)
-            perf1, perf2 = (perf - 1, perf) if perf > 254 else (perf, perf + 1)
-            _find_feature_ioscope(cpuinfo, fmsr, "max_perf", (perf1, perf2), cpu)
-    finally:
-        fmsr.close()
+def _build_arguments_parser() -> ArgParse.ArgsParser:
+    """
+    Build and return the command-line arguments parser.
 
-    try:
-        fmsr = PowerCtl.PowerCtl(pman=pman, cpuinfo=cpuinfo, msr=msr)
-    except ErrorNotSupported as err:
-        _LOG.notice(err)
-    else:
-        _find_feature_ioscope(cpuinfo, fmsr, "c1e_autopromote", ("off", "on"), cpu)
-        _find_feature_ioscope(cpuinfo, fmsr, "cstate_prewake", ("off", "on"), cpu)
-        _find_feature_ioscope(cpuinfo, fmsr, "ltr", ("off", "on"), cpu)
-    finally:
-        fmsr.close()
+    Returns:
+        An initialized command-line arguments parser object.
+    """
 
-    try:
-        fmsr = PCStateConfigCtl.PCStateConfigCtl(pman=pman, cpuinfo=cpuinfo, msr=msr)
-    except ErrorNotSupported as err:
-        _LOG.notice(err)
-    else:
-        _find_feature_ioscope(cpuinfo, fmsr, "c1_demotion", ("off", "on"), cpu)
-        _find_feature_ioscope(cpuinfo, fmsr, "c1_undemotion", ("off", "on"), cpu)
-
-        if fmsr.read_cpu_feature("pkg_cstate_limit_lock", cpu) == "off":
-            limits = fmsr.read_cpu_feature("pkg_cstate_limit", cpu)["pkg_cstate_limits"]
-            _find_feature_ioscope(cpuinfo, fmsr, "pkg_cstate_limit", limits[:2], cpu)
-    finally:
-        fmsr.close()
-
-    try:
-        fmsr = PMEnable.PMEnable(pman=pman, cpuinfo=cpuinfo, msr=msr)
-    except ErrorNotSupported as err:
-        _LOG.notice(err)
-    else:
-        with contextlib.suppress(Error):
-            _find_feature_ioscope(cpuinfo, fmsr, "hwp", ("off", "on"), cpu)
-    finally:
-        fmsr.close()
-
-    try:
-        fmsr = UncoreRatioLimit.UncoreRatioLimit(pman=pman, cpuinfo=cpuinfo, msr=msr)
-    except ErrorNotSupported as err:
-        _LOG.notice(err)
-    else:
-        with contextlib.suppress(ErrorNotSupported):
-            ratio = fmsr.read_cpu_feature("min_ratio", cpu)
-            ratio1, ratio2 = ratio, ratio + 1
-            _find_feature_ioscope(cpuinfo, fmsr, "min_ratio", (ratio1, ratio2), cpu)
-
-        with contextlib.suppress(ErrorNotSupported):
-            ratio = fmsr.read_cpu_feature("max_ratio", cpu)
-            ratio1, ratio2 = ratio, ratio + 1
-            _find_feature_ioscope(cpuinfo, fmsr, "max_ratio", (ratio1, ratio2), cpu)
-    finally:
-        fmsr.close()
-
-    try:
-        fmsr = SwLTROvrd.SwLTROvrd(pman=pman, cpuinfo=cpuinfo, msr=msr)
-    except ErrorNotSupported as err:
-        _LOG.notice(err)
-    else:
-        _find_feature_ioscope(cpuinfo, fmsr, "sxl", (0, 1), cpu)
-        _find_feature_ioscope(cpuinfo, fmsr, "sxlm", (0, 1), cpu)
-        _find_feature_ioscope(cpuinfo, fmsr, "force_sxl", ("on", "off"), cpu)
-        _find_feature_ioscope(cpuinfo, fmsr, "sxl_v", ("on", "off"), cpu)
-    finally:
-        fmsr.close()
-
-def _build_arguments_parser():
-    """A helper function which parses the input arguments."""
-
-    text = f"""{TOOLNAME} - find out the I/O scope of writable MSRs. I/O scope is defined by the
-               observability MSR value changes, not by the functional impact of the MSR."""
-    parser = ArgParse.ArgsParser(description=text, prog=TOOLNAME, ver=VERSION)
+    text = f"""{_TOOLNAME} - detect I/O scope of a writable Model-Specific Register (MSR). Refer
+               to 'docs/misc-msr-scope.md' for more information about MSR I/O scope."""
+    parser = ArgParse.ArgsParser(description=text, prog=_TOOLNAME, ver=_VERSION)
     ArgParse.add_ssh_options(parser)
 
-    text = """MSR address or "all" to run tests for all writable MSRs supported by the 'pepc'
-              project."""
-    parser.add_argument("regaddr", help=text)
+    text = """MSR address to run the I/O scope detection procedure for. Default is to run the
+              I/O scope detection procedure for all writable MSRs supported by the 'pepc' project
+              and the target host."""
+    parser.add_argument("--addr", default="all", help=text)
 
-    text = """MSR bits to use for finding out the I/O scope, by default \"0:0\"."""
-    parser.add_argument("--bits", help=text, default="0:0")
-    text = """Two unique values to set the MSR bits specified with '--bits'."""
-    parser.add_argument("--values", nargs=2, help=text, default=[0, 1])
-    text = """CPU number to write to the MSR bits from, by default CPU 0."""
-    parser.add_argument("--cpu", type=int, help=text, default=0)
+    text = """Bits range to use for detecting MSR I/O scope in the "msb:lsb" format, e.g.
+              "26:26" for bit 26 only, "15:0" for bits 15 to 0."""
+    parser.add_argument("--bits", help=text)
 
-    if argcomplete:
+    text = """Two comma-separated unique values to use for detecting MSR I/O scope."""
+    parser.add_argument("--values", help=text)
+
+    text = """CPU number to write to the MSR on, default is CPU 0."""
+    parser.add_argument("--cpu", help=text, default="0")
+
+    if _ARGCOMPLETE_AVAILABLE:
         argcomplete.autocomplete(parser)
 
     return parser
 
-def _parse_arguments():
-    """Parse input arguments."""
+def _parse_arguments() -> argparse.Namespace:
+    """
+    Parse the command-line arguments.
+
+    Returns:
+        argparse.Namespace: The parsed arguments.
+    """
 
     parser = _build_arguments_parser()
     args = parser.parse_args()
 
     return args
 
-def main():
-    """Script entry point."""
+def _get_cmdline_args(args: argparse.Namespace) -> _CmdlineArgsTypedDict:
+    """
+    Format command-line arguments into a typed dictionary.
+
+    Args:
+        args: Command-line arguments namespace.
+
+    Returns:
+        A dictionary containing the parsed command-line arguments.
+    """
+
+    hostname: str = getattr(args, "hostname", "localhost")
+    username: str = getattr(args, "username", "")
+    privkey: str | None = getattr(args, "privkey", None)
+    _timeout: str = getattr(args, "timeout", "")
+    timeout: int | float = 8
+
+    if hostname == "localhost":
+        if username:
+            raise Error("The '--username' option requires the '--host' option")
+        if privkey:
+            raise Error("The '--priv-key' option requires the '--host' option")
+        if _timeout:
+            raise Error("The '--timeout' option requires the '--host' option")
+    else:
+        if not username:
+            username = "root"
+        if _timeout:
+            timeout = Trivial.str_to_num(_timeout, what="--timeout option value")
+
+    if args.addr == "all":
+        all_msrs = True
+        addr = 0
+        if args.bits:
+            raise Error("The '--bits' option can only be used for a specific MSR address "
+                        "(use the '--addr' option)")
+        if args.values:
+            raise Error("The '--values' option can only be used for a specific MSR address "
+                        "(use the '--addr' option)")
+    else:
+        all_msrs = False
+        addr = Trivial.str_to_int(args.addr, what="MSR address")
+        if addr < 0 or addr > 0xffff:
+            raise Error("Bad MSR address, should be in the [0:0xffff] range")
+        if not args.bits:
+            raise Error("The '--bits' option is required when the '--addr' option is used")
+        if not args.values:
+            raise Error("The '--values' option is required when the '--addr' option is used")
+
+    if not all_msrs:
+        bits = Trivial.split_csv_line_int(args.bits, sep=":", what="'--bits' option value")
+        if len(bits) != 2:
+            raise Error("Bad '--bits' option value, should be in the \"msb:lsb\" format")
+        if bits[0] < bits[1]:
+            raise Error("Bad '--bits' option value, msb should be >= lsb")
+        if bits[0] > 63 or bits[1] < 0:
+            raise Error("Bad '--bits' option value, bit numbers should be in the [0:63] range")
+    else:
+        # A dummy value, won't be used.
+        bits = []
+
+    if not all_msrs:
+        values = Trivial.split_csv_line_int(args.values, what="'--values' option value")
+        if len(values) != 2:
+            raise Error("Bad '--values' option value, should contain exactly 2 unique values")
+        if values[0] == values[1]:
+            raise Error("Bad '--values' option value, please provide 2 unique values")
+        max_val = (1 << (bits[0] - bits[1] + 1)) - 1
+        for value in values:
+            if value < 0 or value > max_val:
+                raise Error(f"Bad '--values' option value '{value}' for bits range {args.bits}, "
+                            f"should be in the [0:{max_val}] range")
+    else:
+        # A dummy value, won't be used.
+        values = []
+
+    cpu = Trivial.str_to_int(args.cpu, what="'--cpu' option value")
+    if cpu < 0:
+        raise Error("Bad '--cpu' option value, should be a non-negative integer")
+
+    cmdl: _CmdlineArgsTypedDict = {}
+    cmdl["hostname"] = hostname
+    cmdl["username"] = username
+    cmdl["privkey"] = privkey
+    cmdl["timeout"] = timeout
+    cmdl["addr"] = addr
+    cmdl["all_msrs"] = all_msrs
+    cmdl["bits"] = bits
+    cmdl["values"] = values
+    cmdl["cpu"] = cpu
+
+    return cmdl
+
+def _main():
+    """
+    The entry point of the tool.
+
+    Returns:
+        int: The program exit code.
+    """
 
     try:
         args = _parse_arguments()
+        cmdl = _get_cmdline_args(args)
 
-        args.timeout = Trivial.str_to_num(args.timeout, what="--timeout option value")
+        with contextlib.ExitStack() as stack:
+            pman = ProcessManager.get_pman(cmdl["hostname"], username=cmdl["username"],
+                                           privkeypath=cmdl["privkey"], timeout=cmdl["timeout"])
+            stack.enter_context(pman)
 
-        # pylint: disable=no-member
-        if args.hostname == "localhost":
-            args.username = args.privkey = None
+            cpuinfo= CPUInfo.CPUInfo(pman=pman)
+            stack.enter_context(cpuinfo)
 
-        with ProcessManager.get_pman(args.hostname, username=args.username,
-                                     privkeypath=args.privkey, timeout=args.timeout) as pman, \
-             CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
-             MSR.MSR(cpuinfo, pman=pman, enable_cache=False) as msr:
+            msr = MSR.MSR(cpuinfo, pman=pman, enable_cache=False)
+            stack.enter_context(msr)
 
             if cpuinfo.get_offline_cpus_count():
-                raise Error("please online all CPUs")
+                raise Error("Please online all CPUs")
 
-            if args.regaddr == "all":
-                _test_all_msrs(pman, cpuinfo, msr, args)
+            cmdl["cpu"] = cpuinfo.normalize_cpu(cmdl["cpu"])
+
+            if cmdl["all_msrs"]:
+                _print_ioscope_all(pman, cpuinfo, msr, cmdl)
             else:
-                _test_specific_msr(pman, cpuinfo, msr, args)
+                _print_msr_bits_range_ioscope(cpuinfo, msr, cmdl)
 
     except KeyboardInterrupt:
         _LOG.info("\nInterrupted, exiting")
@@ -379,4 +575,4 @@ def main():
     return 0
 
 if __name__ == "__main__":
-    sys.exit(main())
+    raise SystemExit(_main())
