@@ -98,14 +98,14 @@ def _get_existing_snames(cpuinfo: CPUInfo.CPUInfo) -> list[ScopeNameType]:
         cpuinfo: The target system CPU information object.
 
     Returns:
-        A list of scope names that exist on the target system, sorted from the largest to the
-        smallest scope.
+        A list of scope names that exist on the target system, sorted from the smallest to the
+        largest scope.
     """
 
     snames: list[ScopeNameType] = []
 
     # Ensure that the scopes are in the order from the largest to the smallest.
-    for sname in reversed(CPUInfo.SCOPE_NAMES):
+    for sname in CPUInfo.SCOPE_NAMES:
         if sname == "node":
             # MSRs cannot have the "global" and "node" scopes.
             continue
@@ -130,7 +130,29 @@ def _get_existing_snames(cpuinfo: CPUInfo.CPUInfo) -> list[ScopeNameType]:
         raise Error("Could not find any scope on the target system")
     return snames
 
+def _is_sibling(snames: list[ScopeNameType],
+                sname: ScopeNameType,
+                tline1: dict[ScopeNameType, int],
+                tline2: dict[ScopeNameType, int]) -> bool:
+    """
+    Check if two topology lines are siblings at the given scope.
+
+    Args:
+        snames: All MSR scope names on the target system, sorted from the smallest to the largest.
+        sname: The scope name to check the siblingness for.
+        tline1: The first topology line.
+        tline2: The second topology line.
+    """
+
+    # The scopes to check are the 'sname' and all the higher scopes.
+    idx = snames.index(sname)
+    for _sname in snames[idx:]:
+        if tline1[_sname] != tline2[_sname]:
+            return False
+    return True
+
 def _check_ioscope(cpuinfo: CPUInfo.CPUInfo,
+                   snames: list[ScopeNameType],
                    sname: ScopeNameType,
                    vals: dict[int, int],
                    cpu: int,
@@ -140,6 +162,8 @@ def _check_ioscope(cpuinfo: CPUInfo.CPUInfo,
 
     Args:
         cpuinfo: The target system CPU information object.
+        snames: All MSR scope names on the target system, sorted from the smallest to the largest.
+                Scope names irrelevant to MSRs (e.g., "node") must not be included.
         sname: The scope name to check.
         vals: A dictionary mapping CPU numbers to their MSR bits range values.
         cpu: Value 'val' was written to on this CPU.
@@ -150,13 +174,15 @@ def _check_ioscope(cpuinfo: CPUInfo.CPUInfo,
     """
 
     tline = cpuinfo.get_tline_by_cpu(cpu)
+
     for _tline in cpuinfo.get_topology():
-        if _tline[sname] == tline[sname]:
+        if _is_sibling(snames, sname, tline, _tline):
             if vals[_tline["CPU"]] != val:
                 return False
         else:
             if vals[_tline["CPU"]] == val:
                 return False
+
     return True
 
 def _detect_msr_bits_range_ioscope(cpuinfo: CPUInfo.CPUInfo,
@@ -194,11 +220,14 @@ def _detect_msr_bits_range_ioscope(cpuinfo: CPUInfo.CPUInfo,
     bits_str = ":".join([str(bit) for bit in bits])
 
     try:
-        for sname in snames:
-            if _check_ioscope(cpuinfo, sname, vals, cpu, values[1]):
+        # Iterate scopes from the largest to the smallest.
+        for sname in reversed(snames):
+            _LOG.debug("Checking scope '%s' for MSR %#x bits %s", sname, addr, bits_str)
+            if _check_ioscope(cpuinfo, snames, sname, vals, cpu, values[1]):
+                _LOG.debug("  Matched")
                 break
+            _LOG.debug("  Not matched")
         else:
-            _LOG.debug_print_stacktrace()
             raise Error(f"Failed to detect I/O scope of MSR {addr:#x} bits {bits_str}")
     finally:
         # Restore the MSR to the initial value.
@@ -276,6 +305,13 @@ def _check_feature_ok_to_test(fmsr: _FeaturedMSR.FeaturedMSR, fname: str) -> boo
                           "limit is locked", fname, bits_str, fmsr.regname, fmsr.regaddr)
                 return False
 
+    if fmsr.regname == "MSR_HWP_REQUEST" and fname in ("min_perf_valid", "max_perf_valid",
+                                                       "epp_valid"):
+        # The 'min_perf_valid', 'max_perf_valid' and 'epp_valid' features in 'MSR_HWP_REQUEST' are
+        # not necessarily writable. For example, on some platforms they cannot be enabled. Skip
+        # them.
+        return False
+
     return True
 
 def _get_featured_msrs(pman: ProcessManagerType,
@@ -296,6 +332,7 @@ def _get_featured_msrs(pman: ProcessManagerType,
             raise Error(f"BUG: Module '{modname}' does not have the '{modname}' class")
 
         if not issubclass(fmsr_cls, _FeaturedMSR.FeaturedMSR):
+            _LOG.debug("Skipping module '%s', not a subclass of FeaturedMSR", modname)
             continue
 
         try:
@@ -383,6 +420,10 @@ def _print_ioscope_all(pman: ProcessManagerType,
                        "(%#x):\n%s", fname, bits_str, fmsr.regname, addr, errmsg)
             continue
 
+    if not info:
+        _LOG.info("No successful I/O scope detection results")
+        return
+
     _LOG.info("I/O scope detection results:")
     for regname in sorted(info.keys()):
         for idx, (fname, _finfo) in enumerate(info[regname].items()):
@@ -391,7 +432,7 @@ def _print_ioscope_all(pman: ProcessManagerType,
             _LOG.info("     Feature '%s' (bits %s): detected I/O scope is '%s'",
                       fname, _finfo["bits_str"], _finfo["sname"])
             if _finfo["sname"] != _finfo["expected_sname"]:
-                _LOG.warning("       Expected I/O scope is '%s', but detected '%s'",
+                _LOG.warning("Expected I/O scope is '%s', but detected '%s'",
                              _finfo["expected_sname"], _finfo["sname"])
 
 def _build_arguments_parser() -> ArgParse.ArgsParser:
