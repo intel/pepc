@@ -180,7 +180,7 @@ cpus = [{cpus_str}]
 for cpu in cpus:
     path = "/dev/cpu/%d/msr" % cpu
     with open(path, "rb") as fobj:
-        fobj.seek({regaddr})
+        fobj.seek({regaddr:#x})
         regval = fobj.read({self.regbytes})
         regval = int.from_bytes(regval, byteorder="{_CPU_BYTEORDER}")
         print("%d,%d" % (cpu, regval))
@@ -285,6 +285,57 @@ for cpu in cpus:
             regval: The value to write to the MSR.
             cpu: CPU number to write the MSR on.
         """
+
+    def _cpus_write_remote(self,
+                           regaddr: int,
+                           regval: int,
+                           cpus: Sequence[int]):
+        """
+        Write a value to an MSR for a specific CPU on a remote host.
+
+        Generate and execute a small Python script on the remote host to write the specified MSR for
+        a set of CPUs.
+
+        Args:
+            regaddr: The address of the MSR to write to.
+            regval: The value to write to the MSR.
+            cpus: CPU numbers to write the MSR on. The numbers have to be validated and normalized
+                  by the caller.
+        """
+
+        python_path = self._pman.get_python_path()
+        cpus_str = ",".join([str(cpu) for cpu in cpus])
+
+        cmd = f"""{python_path} -c '
+cpus = [{cpus_str}]
+regval = {regval:#x}
+for cpu in cpus:
+    path = "/dev/cpu/%d/msr" % cpu
+    with open(path, "r+b") as fobj:
+        fobj.seek({regaddr:#x})
+        regval_bytes = regval.to_bytes({self.regbytes}, byteorder="{_CPU_BYTEORDER}")
+        fobj.write(regval_bytes)
+        fobj.flush()
+'"""
+
+        self._pman.run_verify(cmd)
+
+    def cpus_write(self, regaddr: int, regval: int, cpus: Sequence[int]):
+        """
+        Write a value to an MSR for a specific CPU.
+
+        Args:
+            regaddr: The address of the MSR to write to.
+            regval: The value to write to the MSR.
+            cpus: CPU numbers to write the MSR on. The numbers have to be validated and normalized
+                  by the caller.
+        """
+
+        if self._pman.is_remote:
+            self._cpus_write_remote(regaddr, regval, cpus)
+        else:
+            for cpu in cpus:
+                self.cpu_write(regaddr, regval, cpu)
 
     def cpu_write(self, regaddr: int, regval: int, cpu: int):
         """

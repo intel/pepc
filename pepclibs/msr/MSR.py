@@ -528,6 +528,77 @@ for cpu, cpus_info in transaction_buffer.items():
         regval = self.read_cpu(regaddr, cpu, iosname=iosname)
         return self.get_bits(regval, bits)
 
+    def _write_remote(self,
+                      regaddr: int,
+                      regval: int,
+                      cpus: list[int],
+                      iosname: ScopeNameType = "CPU",
+                      verify: bool = False):
+        """
+        Write a value to an MSR on specified CPUs on a remote host.
+
+        Generate and execute a small Python script on the remote host to write the specified MSR for
+        a set of CPUs.
+
+        Args:
+            regaddr: The address of the MSR to write to.
+            regval: The value to write to the MSR.
+            cpus: CPU numbers to write the MSR on.
+            iosname: I/O scope name for the MSR address (e.g., "package", "core"). Used for
+                     optimizing the write operation by avoiding writing to sibling CPUs.
+            verify: If True, read back and verify the written value.
+
+        Raises:
+            ErrorVerifyFailed: If verification is enabled and the read-back value does not match the
+                               written value. The 'cpu' attribute of the exception will contain the
+                               CPU number where the verification failed, and 'expected' and 'actual'
+                               attributes will contain the expected and actual values, respectively.
+        """
+
+        if not self._enable_cache:
+            super()._cpus_write_remote(regaddr, regval, cpus)
+            return
+
+        # CPU numbers to write the MSR on (subset of 'cpus').
+        do_write = []
+        # CPU numbers to skip writing the MSR on.
+        dont_write = set()
+
+        for cpu in cpus:
+            if cpu in dont_write:
+                continue
+
+            if self._cache.is_cached(regaddr, cpu):
+                _regval = self._cache.get(regaddr, cpu)
+                if _regval == regval:
+                    dont_write.add(cpu)
+                    continue
+
+            if not self._enable_scope:
+                do_write.append(cpu)
+                continue
+
+            # Write the MSR only on 'iosname' sibling CPU, because MSR value should be the same
+            # for the siblings.
+            for sibling in self._cpuinfo.get_cpu_siblings(cpu, iosname):
+                if sibling == cpu:
+                    do_write.append(sibling)
+                else:
+                    dont_write.add(sibling)
+
+        if not do_write:
+            return
+
+        super()._cpus_write_remote(regaddr, regval, do_write)
+
+        for cpu in do_write:
+            self._cache.add(regaddr, cpu, regval, sname=iosname)
+
+        # In case of an ongoing transaction, skip the verification, it'll be done at the end of the
+        # transaction.
+        if verify and not self._in_transaction:
+            self._verify(regaddr, regval, cpus, iosname)
+
     def _write(self,
                regaddr: int,
                regval: int,
@@ -538,6 +609,10 @@ for cpu, cpus_info in transaction_buffer.items():
         Write a value to an MSR on specified CPUs. Same as 'write()', but does not
         validate/normalize the 'cpus' argument.
         """
+
+        if self._pman.is_remote and not self._in_transaction:
+            self._write_remote(regaddr, regval, cpus, iosname=iosname, verify=verify)
+            return
 
         for cpu in cpus:
             self._cache.remove(regaddr, cpu, sname=iosname)
