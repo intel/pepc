@@ -5,6 +5,8 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
+ - Fix C-states detection on systems with only 1 C-state.
+ - Bugfixes in --core-siblings option handling.
 ### Added
 ### Removed
 ### Changed
