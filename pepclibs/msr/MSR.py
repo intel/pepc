@@ -20,7 +20,7 @@ from pathlib import Path
 from pepclibs import _PerCPUCache
 from pepclibs.helperlibs import EmulProcessManager, Logging
 from pepclibs.helperlibs import ClassHelpers
-from pepclibs.helperlibs.Exceptions import Error, ErrorVerifyFailed, ErrorNotFound
+from pepclibs.helperlibs.Exceptions import Error, ErrorVerifyFailed
 from pepclibs.msr import _SimpleMSR
 from pepclibs.msr._SimpleMSR import _CPU_BYTEORDER
 
@@ -419,20 +419,8 @@ for cpu, cpus_info in transaction_buffer.items():
               cpus: list[int],
               iosname: ScopeNameType) -> Generator[tuple[int, int], None, None]:
         """
-        Read the specified MSR from specified CPUs and yield the result.
-
-        Same as 'read()', but does not validate/normalize the 'cpus' argument.
-
-        Args:
-            regaddr: Address of the MSR to read.
-            cpus: CPU numbers to read the MSR from. Special value 'all' means "all CPUs".
-            iosname: Scope name for the MSR (e.g. "package", "core"). This is used for
-                     optimizing the read operation by skipping unnecessary reads of sibling CPUs.
-
-        Yields:
-            Tuple of (cpu, regval):
-                cpu: CPU number from which the MSR was read.
-                regval: Value read from the MSR.
+        Read the specified MSR from specified CPUs and yield the result. Same as 'read()', but does
+        not validate/normalize the 'cpus' argument.
         """
 
         if self._pman.is_remote:
@@ -440,14 +428,11 @@ for cpu, cpus_info in transaction_buffer.items():
             return
 
         for cpu in cpus:
-            # Return the cached value if possible.
-            try:
+            if self._cache.is_cached(regaddr, cpu):
                 regval = self._cache.get(regaddr, cpu)
-            except ErrorNotFound:
-                # Not in the cache, read from the HW.
+            else:
                 regval = super().cpu_read(regaddr, cpu)
                 self._cache.add(regaddr, cpu, regval, sname=iosname)
-
             yield cpu, regval
 
     def read(self,
@@ -543,31 +528,16 @@ for cpu, cpus_info in transaction_buffer.items():
         regval = self.read_cpu(regaddr, cpu, iosname=iosname)
         return self.get_bits(regval, bits)
 
-    def write(self,
-              regaddr: int,
-              regval: int,
-              cpus: Sequence[int] | Literal["all"] = "all",
-              iosname: ScopeNameType = "CPU",
-              verify: bool = False):
+    def _write(self,
+               regaddr: int,
+               regval: int,
+               cpus: list[int],
+               iosname: ScopeNameType = "CPU",
+               verify: bool = False):
         """
-        Write a value to an MSR on specified CPUs.
-
-        Args:
-            regaddr: The address of the MSR to write to.
-            regval: The value to write to the MSR.
-            cpus: CPU numbers to write the MSR on. Special value 'all' means "all CPUs".
-            iosname: I/O scope name for the MSR address (e.g., "package", "core"). Used for
-                     optimizing the write operation by avoiding writing to sibling CPUs.
-            verify: If True, read back and verify the written value.
-
-        Raises:
-            ErrorVerifyFailed: If verification is enabled and the read-back value does not match the
-                               written value. The 'cpu' attribute of the exception will contain the
-                               CPU number where the verification failed, and 'expected' and 'actual'
-                               attributes will contain the expected and actual values, respectively.
+        Write a value to an MSR on specified CPUs. Same as 'write()', but does not
+        validate/normalize the 'cpus' argument.
         """
-
-        cpus = self._cpuinfo.normalize_cpus(cpus)
 
         for cpu in cpus:
             self._cache.remove(regaddr, cpu, sname=iosname)
@@ -594,6 +564,33 @@ for cpu, cpus_info in transaction_buffer.items():
         # transaction.
         if verify and not self._in_transaction:
             self._verify(regaddr, regval, cpus, iosname)
+
+    def write(self,
+              regaddr: int,
+              regval: int,
+              cpus: Sequence[int] | Literal["all"] = "all",
+              iosname: ScopeNameType = "CPU",
+              verify: bool = False):
+        """
+        Write a value to an MSR on specified CPUs.
+
+        Args:
+            regaddr: The address of the MSR to write to.
+            regval: The value to write to the MSR.
+            cpus: CPU numbers to write the MSR on. Special value 'all' means "all CPUs".
+            iosname: I/O scope name for the MSR address (e.g., "package", "core"). Used for
+                     optimizing the write operation by avoiding writing to sibling CPUs.
+            verify: If True, read back and verify the written value.
+
+        Raises:
+            ErrorVerifyFailed: If verification is enabled and the read-back value does not match the
+                               written value. The 'cpu' attribute of the exception will contain the
+                               CPU number where the verification failed, and 'expected' and 'actual'
+                               attributes will contain the expected and actual values, respectively.
+        """
+
+        cpus = self._cpuinfo.normalize_cpus(cpus)
+        self._write(regaddr, regval, cpus, iosname=iosname, verify=verify)
 
     def write_cpu(self,
                   regaddr: int,
@@ -661,7 +658,7 @@ for cpu, cpus_info in transaction_buffer.items():
             regvals[new_regval].append(cpu)
 
         for regval, regval_cpus in regvals.items():
-            self.write(regaddr, regval, regval_cpus, iosname=iosname, verify=verify)
+            self._write(regaddr, regval, regval_cpus, iosname=iosname, verify=verify)
 
     def write_cpu_bits(self,
                        regaddr: int,
