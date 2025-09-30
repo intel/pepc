@@ -194,11 +194,13 @@ This creates the 'pepc.standalone' file, which you can rename and copy anywhere 
 
 But there is one caveat: the standalone version does not include python dependencies, which are
 normally installed by 'pip' or 'uv'. The dependencies are:
-- 'pyyaml' - required, for parsing YAML configuration files
-- 'importlib-resources' - required only in case of python 3.9, otherwise optional
-- 'paramiko' - required only for remote host support, otherwise optional
-- 'argcomplete' - optional, for tab completions
-- 'colorama' - optional, for colored text output
+- Required:
+  - 'importlib-resources' - required only in case of python 3.9, otherwise not needed
+  - 'pyyaml' - required for parsing YAML configuration files
+  - 'paramiko' - required only for remote host support, otherwise not needed
+- Optional:
+  - 'argcomplete' - for tab completions
+  - 'colorama' - for colored text output
 
 ## Tab completions
 
