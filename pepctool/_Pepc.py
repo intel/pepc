@@ -732,7 +732,7 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
 
     return parser
 
-def _parse_arguments() -> argparse.Namespace:
+def parse_arguments() -> argparse.Namespace:
     """
     Parse the command-line arguments.
 
@@ -1092,7 +1092,7 @@ def _main() -> int:
         int: The program exit code.
     """
 
-    args = _parse_arguments()
+    args = parse_arguments()
 
     if not getattr(args, "func", None):
         _LOG.error("Please, run '%s -h' for help", TOOLNAME)
