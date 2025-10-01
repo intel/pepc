@@ -733,7 +733,15 @@ for cpu, cpus_info in transaction_buffer.items():
             regvals[new_regval].append(cpu)
 
         for regval, regval_cpus in regvals.items():
-            self._write(regaddr, regval, regval_cpus, iosname=iosname, verify=verify)
+            try:
+                self._write(regaddr, regval, regval_cpus, iosname=iosname, verify=verify)
+            except Error as err:
+                errmsg = err.indent(2)
+                cpus_str = ",".join([str(cpu) for cpu in regval_cpus])
+                bits_str = ":".join([str(bit) for bit in bits])
+                raise type(err)(f"Failed to set bits {bits_str} of MSR 0x{regaddr:x} to value "
+                                f"0x{val:x} on CPUs {cpus_str}{self._pman.hostmsg}:\n"
+                                f"{errmsg}") from err
 
     def write_cpu_bits(self,
                        regaddr: int,
