@@ -722,8 +722,8 @@ for cpu, cpus_info in transaction_buffer.items():
         for cpu, regval in self.read(regaddr, cpus, iosname=iosname):
             new_regval = self.set_bits(regval, bits, val)
             _LOG.debug("CPU %d: MSR 0x%x: Set bits %s to 0x%x: Current MSR value: 0x%x%s, "
-                       "new value: 0x%x",
-                       cpu, regaddr, bits, val, regval, self._pman.hostmsg, new_regval)
+                       "new value: 0x%x", cpu, regaddr, ":".join([str(bit) for bit in bits]),
+                       val, regval, self._pman.hostmsg, new_regval)
             if regval == new_regval:
                 _LOG.debug("CPU %d: MSR 0x%x: No change, skipping writing", cpu, regaddr)
                 continue
