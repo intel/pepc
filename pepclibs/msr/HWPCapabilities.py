@@ -38,6 +38,7 @@ FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
         "cpuflags": {"hwp"},
         "type": "int",
         "bits": (7, 0),
+        "writable": False,
     },
     "base_perf": {
         "name": "Base CPU performance",
@@ -47,6 +48,7 @@ FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
         "cpuflags": {"hwp"},
         "type": "int",
         "bits": (15, 8),
+        "writable": False,
     },
     "eff_perf": {
         "name": "Max. efficiency CPU performance",
@@ -56,6 +58,7 @@ FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
         "cpuflags": {"hwp"},
         "type": "int",
         "bits": (23, 16),
+        "writable": False,
     },
     "min_perf": {
         "name": "Min. CPU performance",
@@ -65,6 +68,7 @@ FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
         "cpuflags": {"hwp"},
         "type": "int",
         "bits": (31, 24),
+        "writable": False,
     },
 }
 

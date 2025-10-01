@@ -46,6 +46,7 @@ FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
         "vfms": set(_LTR_CPUS),
         "type": "int",
         "bits": (25, 16),
+        "writable": True,
     },
     "sxlm": {
         "name": "Snoop latency LTR multiplier",
@@ -55,6 +56,7 @@ FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
         "vfms": set(_LTR_CPUS),
         "type": "int",
         "bits": (28, 26),
+        "writable": True,
     },
     "force_sxl": {
         "name": "Force snoop latency software LTR",
@@ -66,6 +68,7 @@ FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
         "type": "bool",
         "vals": {"on": 1, "off": 0},
         "bits": (30, 30),
+        "writable": True,
     },
     "sxl_v": {
         "name": "Enable snoop latency software LTR",
@@ -77,6 +80,7 @@ FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
         "type": "bool",
         "vals": {"on": 1, "off": 0},
         "bits": (31, 31),
+        "writable": True,
     },
 }
 

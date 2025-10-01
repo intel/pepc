@@ -39,6 +39,7 @@ FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
         "cpuflags": {"hwp", "hwp_pkg_req"},
         "type": "int",
         "bits": (7, 0),
+        "writable": True,
     },
     "max_perf": {
         "name": "Max. CPU performance",
@@ -48,6 +49,7 @@ FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
         "cpuflags": {"hwp", "hwp_pkg_req"},
         "type": "int",
         "bits": (15, 8),
+        "writable": True,
     },
     "epp": {
         "name": "Energy Performance Preference",
@@ -59,6 +61,7 @@ FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
         "cpuflags": {"hwp", "hwp_epp", "hwp_pkg_req"},
         "type": "int",
         "bits": (31, 24),
+        "writable": True,
     },
 }
 

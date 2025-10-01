@@ -41,8 +41,8 @@ FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
                    frequency.""",
         "vfms": TurboRatioLimit.FEATURES["max_g0_turbo_ratio"]["vfms"],
         "type": "int",
-        "writable": False,
         "bits": (7, 0),
+        "writable": False,
     },
 }
 

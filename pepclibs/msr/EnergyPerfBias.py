@@ -45,6 +45,7 @@ FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
         "cpuflags": {"epb",},
         "type": "int",
         "bits": (3, 0),
+        "writable": True,
     },
 }
 

@@ -200,6 +200,7 @@ FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
         "type": "str",
         "vals": None,
         "bits": None,
+        "writable": True,
     },
     "pkg_cstate_limit_lock":  {
         "name": "MSR lock",
@@ -223,6 +224,7 @@ FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
         "type": "bool",
         "vals": {"on": 1, "off": 0},
         "bits": (26, 26),
+        "writable": True,
     },
     "c1_undemotion": {
         "name": "C1 undemotion",
@@ -233,6 +235,7 @@ FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
         "type": "bool",
         "vals": {"on": 1, "off": 0},
         "bits": (28, 28),
+        "writable": True,
     },
 }
 

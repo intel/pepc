@@ -39,6 +39,7 @@ FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
         "type": "bool",
         "vals": {"on": 1, "off": 0},
         "bits": (0, 0),
+        "writable": False,
     },
 }
 

@@ -41,6 +41,7 @@ FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
         "cpuflags": {"hwp"},
         "type": "int",
         "bits": (7, 0),
+        "writable": True,
     },
     "max_perf": {
         "name": "Max. CPU performance",
@@ -50,6 +51,7 @@ FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
         "cpuflags": {"hwp"},
         "type": "int",
         "bits": (15, 8),
+        "writable": True,
     },
     "epp": {
         "name": "Energy Performance Preference",
@@ -61,6 +63,7 @@ FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
         "cpuflags": {"hwp", "hwp_epp"},
         "type": "int",
         "bits": (31, 24),
+        "writable": True,
     },
     "pkg_control": {
         "name": "HWP is controlled by MSR_HWP_REQUEST_PKG",
@@ -73,6 +76,7 @@ FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
         "type": "bool",
         "vals": {"on": 1, "off": 0},
         "bits": (42, 42),
+        "writable": True,
     },
     "epp_valid": {
         "name": "EPP is controlled by MSR_HWP_REQUEST",
@@ -84,6 +88,7 @@ FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
         "type": "bool",
         "vals": {"on": 1, "off": 0},
         "bits": (60, 60),
+        "writable": True,
     },
     "max_perf_valid": {
         "name": "Max. performance is controlled by MSR_HWP_REQUEST",
@@ -95,6 +100,7 @@ FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
         "type": "bool",
         "vals": {"on": 1, "off": 0},
         "bits": (62, 62),
+        "writable": True,
     },
     "min_perf_valid": {
         "name": "Min. performance is controlled by MSR_HWP_REQUEST",
@@ -106,6 +112,7 @@ FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
         "type": "bool",
         "vals": {"on": 1, "off": 0},
         "bits": (63, 63),
+        "writable": True,
     },
 }
 

@@ -91,8 +91,8 @@ FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
         "help": "The maximum non-turbo ratio.",
         "vfms": set(_BASEFREQ_VFMS),
         "type": "int",
-        "writable": False,
         "bits": (15, 8),
+        "writable": False,
     },
     "min_oper_ratio": {
         "name": "Min. Operating Ratio",
@@ -101,8 +101,8 @@ FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
         "help": """The minimum CPU operating ratio.""",
         "vfms": set(_MIN_OPER_RATIO_VFMS),
         "type": "int",
-        "writable": False,
         "bits": (55, 48),
+        "writable": False,
     },
 }
 

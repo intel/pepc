@@ -81,8 +81,8 @@ FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
                    multiplied by bus clock speed gives the maximum 1 core turbo frequency.""",
         "vfms": set(_CT_VFMS),
         "type": "int",
-        "writable": False,
         "bits": (7, 0),
+        "writable": False,
     },
     "max_g0_turbo_ratio": {
         "name": "Max. Group 0 cores Turbo Ratio",
@@ -93,8 +93,8 @@ FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
                    cores in group 0 is provided by MSR 0x1AE.""",
         "vfms": set(_GT_VFMS),
         "type": "int",
-        "writable": False,
         "bits": (7, 0),
+        "writable": False,
     },
 }
 

@@ -79,6 +79,7 @@ FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
         "type": "bool",
         "vals": {"on": 1, "off": 0},
         "bits": (1, 1),
+        "writable": True,
     },
     "cstate_prewake": {
         "name": "C-state prewake",
@@ -90,6 +91,7 @@ FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
         "type": "bool",
         "vals": {"on": 0, "off": 1},
         "bits": (30, 30),
+        "writable": True,
     },
     "ltr": {
         "name": "LTR (Latency Tolerance Reporting)",
@@ -101,6 +103,7 @@ FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
         "type": "bool",
         "vals": {"on": 0, "off": 1},
         "bits": (35, 35),
+        "writable": True,
     },
 }
 

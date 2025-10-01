@@ -51,7 +51,7 @@ if typing.TYPE_CHECKING:
             - iosname: The I/O scope name for the feature.
             - help: A short description of the feature.
             - type: The feature type (e.g., "int", "str", etc.).
-            - writable: Whether the feature can be modified (default is 'True').
+            - writable: Whether the feature can be modified.
             - cpuflags: A set of CPU flags that must be present for the feature to be supported.
             - vfms: A list of valid VFM values for the feature.
             - vals: A dictionary mapping user-friendly names to MSR values.
@@ -276,9 +276,6 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
         """
 
         for finfo in self._features.values():
-            if "writable" not in finfo:
-                finfo["writable"] = True
-
             for cpu in self._cpuinfo.get_cpus():
                 if finfo["supported"][cpu]:
                     # The 'feature' is supported by at least one CPU, continue initializing it.
