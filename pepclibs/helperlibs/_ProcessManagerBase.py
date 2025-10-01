@@ -1150,7 +1150,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
             startmsg += f"The following command {exitcode_msg}:"
 
         cmd = str(cmd)
-        result = f"{startmsg}\n  {cmd}"
+        result = f"{startmsg}\n {cmd}"
         if msg:
             result += f"\n\n{msg.strip()}"
 

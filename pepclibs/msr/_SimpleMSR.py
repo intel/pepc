@@ -186,7 +186,12 @@ for cpu in cpus:
         print("%d,%d" % (cpu, regval))
 '"""
 
-        stdout, _ = self._pman.run_verify_nojoin(cmd)
+        try:
+            stdout, _ = self._pman.run_verify_nojoin(cmd)
+        except Error as err:
+            errmsg = err.indent(2)
+            raise type(err)(f"Failed to read MSR '{regaddr:#x}' on CPUs {cpus_str}"
+                            f"{self._pman.hostmsg}:\n{errmsg}") from err
 
         for line in stdout:
             split = Trivial.split_csv_line(line.strip())
@@ -318,7 +323,12 @@ for cpu in cpus:
         fobj.flush()
 '"""
 
-        self._pman.run_verify(cmd)
+        try:
+            self._pman.run_verify(cmd)
+        except Error as err:
+            errmsg = err.indent(2)
+            raise type(err)(f"Failed to write '{regval:#x}' to MSR '{regaddr:#x}' on CPUs "
+                            f"{cpus_str}{self._pman.hostmsg}:\n{errmsg}") from err
 
     def cpus_write(self, regaddr: int, regval: int, cpus: Sequence[int]):
         """
