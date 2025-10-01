@@ -155,7 +155,6 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         Returns:
             The topology table.
 
-
         Examples:
             Consider the following hypothetical system:
                 - 2 packages, numbers 0, 1.
