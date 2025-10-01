@@ -1149,8 +1149,8 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         else:
             startmsg += f"The following command {exitcode_msg}:"
 
-        cmd = str(cmd)
-        result = f"{startmsg}\n {cmd}"
+        cmd_str = Error(str(cmd)).indent(2)
+        result = f"{startmsg}\n{cmd_str}"
         if msg:
             result += f"\n\n{msg.strip()}"
 
