@@ -285,10 +285,13 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
         sname = _FeaturedMSR.get_clx_ap_adjusted_msr_scope(cpuinfo)
 
         for fname, finfo in self._partial_features.items():
-            if fname.startswith("pkg_") or model in _CORE_C1D_SCOPE_VFMS:
+            if fname.startswith("pkg_"):
                 finfo["sname"] = sname
             else:
-                finfo["sname"] = iosname
+                if model in _CORE_C1D_SCOPE_VFMS:
+                    finfo["sname"] = "core"
+                else:
+                    finfo["sname"] = iosname
             finfo["iosname"] = iosname
 
         super().__init__(cpuinfo, pman=pman, msr=msr)
