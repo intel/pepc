@@ -276,15 +276,15 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
         """
 
         for finfo in self._features.values():
+            if "writable" not in finfo:
+                finfo["writable"] = True
+
             for cpu in self._cpuinfo.get_cpus():
                 if finfo["supported"][cpu]:
                     # The 'feature' is supported by at least one CPU, continue initializing it.
                     break
             else:
                 continue
-
-            if "writable" not in finfo:
-                finfo["writable"] = True
 
             if "vals" in finfo:
                 # Build the reverse dictionary for 'vals'.
