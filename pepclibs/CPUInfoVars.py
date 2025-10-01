@@ -18,6 +18,7 @@ import typing
 if typing.TYPE_CHECKING:
     from pepclibs.CPUInfoTypes import ScopeNameType, HybridCPUKeyType, HybridCPUKeyInfoType
 
+# Must be in the order from the smallest to the largest scope.
 SCOPE_NAMES: tuple[ScopeNameType, ...] = ("CPU", "core", "module", "die", "node", "package")
 
 # 'NA' is used as the CPU/core/module number for I/O dies, which lack CPUs, cores, or modules.
