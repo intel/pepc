@@ -119,11 +119,7 @@ def _test_freq_methods_dies_good(uncfreq_obj: _UncoreFreqObjType, all_dies: RelN
     errmsg_suffix = f"Mechanism: {uncfreq_obj.mname}, cache enabled: {uncfreq_obj.cache_enabled}"
 
     for (package, die, min_freq), (_, _, max_freq) in zip(min_freq_iter, max_freq_iter):
-        # Calculate the middle uncore frequency value.
-        mid_freq = (min_freq + max_freq) // 2
-        # Round it up to 100MHz.
-        round_hz = 100_000_000
-        mid_freq = (mid_freq + round_hz - 1) // round_hz * round_hz
+        mid_freq = _get_mid_freq(min_freq, max_freq)
 
         # Sometimes min and max limits are equal. In this case, skip the test for this die.
         if min_freq == max_freq:
@@ -200,11 +196,7 @@ def _test_freq_methods_dies_bad(uncfreq_obj: _UncoreFreqObjType, all_dies: RelNu
     errmsg_suffix = f"Mechanism: {uncfreq_obj.mname}, cache enabled: {uncfreq_obj.cache_enabled}"
 
     for (package, die, min_freq), (_, _, max_freq) in zip(min_freq_iter, max_freq_iter):
-        # Calculate the middle uncore frequency value.
-        mid_freq = (min_freq + max_freq) // 2
-        # Round it up to 100MHz.
-        round_hz = 100_000_000
-        mid_freq = (mid_freq + round_hz - 1) // round_hz * round_hz
+        mid_freq = _get_mid_freq(min_freq, max_freq)
 
         # Sometimes min and max limits are equal. In this case, skip the test for this die.
         if min_freq == max_freq:
@@ -344,6 +336,24 @@ def test_freq_methods_dies_bad(params: _TestParamsTypedDict):
     for uncfreq_obj in _iter_uncore_freq_objects(params):
         _test_freq_methods_dies_bad(uncfreq_obj, all_dies)
 
+def _get_mid_freq(min_freq: int, max_freq: int) -> int:
+    """
+    Calculate the middle frequency value between 'min_freq' and 'max_freq', rounded up to 100MHz.
+
+    Args:
+        min_freq: The minimum frequency.
+        max_freq: The maximum frequency.
+
+    Returns:
+        The middle frequency value rounded up to 100MHz.
+    """
+
+    mid_freq = (min_freq + max_freq) // 2
+    # Round it up to 100MHz.
+    round_hz = 100_000_000
+    mid_freq = (mid_freq + round_hz - 1) // round_hz * round_hz
+    return mid_freq
+
 def _test_freq_methods_cpu_good(uncfreq_obj: _UncoreFreqObjType, cpu: int):
     """
     Test the per-CPU uncore frequency get/set methods. Use good input.
@@ -358,8 +368,7 @@ def _test_freq_methods_cpu_good(uncfreq_obj: _UncoreFreqObjType, cpu: int):
 
     errmsg_suffix = f"Mechanism: {uncfreq_obj.mname}, cache enabled: {uncfreq_obj.cache_enabled}"
 
-    # Calculate the middle uncore frequency value.
-    mid_freq = (min_freq + max_freq) // 2
+    mid_freq = _get_mid_freq(min_freq, max_freq)
 
     # Set the min uncore frequency to the middle value and check it.
     uncfreq_obj.set_min_freq_cpus(mid_freq, (cpu,))
