@@ -309,7 +309,7 @@ class Uncore(_PropsClassBase.PropsClassBase):
         """Refer to 'PropsClassBase._get_prop_dies()'."""
 
         _LOG.debug("Getting property '%s' using mechanism '%s', packages/dies: %s",
-                   pname, mname, dies)
+                   pname, mname, self._cpuinfo.dies_to_str(dies))
 
         # In case of uncore properties, there may be I/O dies, which have no CPUs, so implement
         # per-die access.
@@ -489,7 +489,7 @@ class Uncore(_PropsClassBase.PropsClassBase):
         """Refer to 'PropsClassBase._set_prop_dies()'."""
 
         _LOG.debug("Setting property '%s' to value '%s' using mechanism '%s', packages/dies: %s",
-                   pname, val, mname, dies)
+                   pname, val, mname, self._cpuinfo.dies_to_str(dies))
 
         if pname in {"min_freq", "max_freq", "elc_low_zone_min_freq", "elc_mid_zone_min_freq"}:
             if typing.TYPE_CHECKING:
