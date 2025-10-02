@@ -65,12 +65,15 @@ jobs:
             cut -f2- | xargs -r file -Ni -- | \
             sed -n -e 's#: text/x-script.python;.*##p' > .tmp/modified-files;
 
-          echo "Files to check:"
+      - name: "Print modified files"
+        run: |
           cat .tmp/modified-files
 
       - name: "Run mypy for type checking on modified files"
         run: |
           xargs -a .tmp/modified-files -r mypy --follow-imports=silent -- > .tmp/mypy.results || retcode=1
+
+          echo "$retcode" > .tmp/mypy.retcode
 
           # Format the mypy output for GitHub annotations
           sed < .tmp/mypy.results -r -n \
@@ -78,4 +81,9 @@ jobs:
             -e 's#::note #::notice #' \
             -e '/^::/p'
 
+      - name: "Display raw mypy results"
+        run: |
+          cat .tmp/mypy.results
+
+          retcode=$(< .tmp/mypy.retcode)
           exit ${retcode:-0}
