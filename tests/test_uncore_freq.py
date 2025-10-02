@@ -348,6 +348,9 @@ def _get_mid_freq(min_freq: int, max_freq: int) -> int:
         The middle frequency value rounded up to 100MHz.
     """
 
+    if min_freq == max_freq:
+        return min_freq
+
     mid_freq = (min_freq + max_freq) // 2
     # Round it up to 100MHz.
     round_hz = 100_000_000

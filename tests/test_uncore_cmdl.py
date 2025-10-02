@@ -16,7 +16,7 @@ import typing
 from typing import cast
 import pytest
 from tests import common, props_cmdl_common
-from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorOutOfRange
+from pepclibs.helperlibs.Exceptions import Error, ErrorBadOrder, ErrorNotSupported, ErrorOutOfRange
 
 from pepclibs import CPUInfo, Uncore, _UncoreFreqTpmi
 from pepclibs.Uncore import ErrorTryAnotherMechanism
@@ -159,7 +159,6 @@ def _get_bad_config_freq_opts() -> Generator[str, None, None]:
                 "--max-freq 3",
                 "--max-freq hfm --mechanism kuku",
                 "--min-freq maximum",
-                "--min-freq max --max-freq min",
                 "--elc-low-zone-min-freq 4",
                 "--elc-low-threshold 101",
                 "--elc-high-threshold -10",
@@ -167,9 +166,26 @@ def _get_bad_config_freq_opts() -> Generator[str, None, None]:
                 "--elc-high-threshold-status b1"]
 
 def test_uncore_config_freq_bad(params: PropsCmdlTestParamsTypedDict):
-    """Test the 'pepc uncore config' command with bad frequency options."""
+    """
+    Test the 'pepc uncore config' command with bad frequency options.
 
+    Args:
+        params: The test parameters dictionary.
+    """
+
+    cpu = 0
     pman = params["pman"]
+    pobj = params["pobj"]
+
+    min_limit = pobj.get_cpu_prop("min_freq_limit", cpu)["val"]
+    max_limit = pobj.get_cpu_prop("max_freq_limit", cpu)["val"]
+
+    if not min_limit or not max_limit:
+        return
+
+    if min_limit != max_limit:
+        props_cmdl_common.run_pepc("uncore config --min-freq max --max-freq min",
+                                   pman, exp_exc=ErrorBadOrder)
 
     for opt in _get_bad_config_freq_opts():
         props_cmdl_common.run_pepc(f"uncore config {opt}", pman, exp_exc=Error)
@@ -193,20 +209,22 @@ def test_uncore_set_range(params: PropsCmdlTestParamsTypedDict):
     min_limit = pobj.get_cpu_prop("min_freq_limit", cpu)["val"]
     max_limit = pobj.get_cpu_prop("max_freq_limit", cpu)["val"]
 
-    if min_limit and max_limit:
-        min_limit = cast(int, min_limit)
-        max_limit = cast(int, max_limit)
+    if not min_limit or not max_limit:
+        return
 
-        bad_min_freq = min_limit - _UncoreFreqTpmi.RATIO_MULTIPLIER
-        bad_max_freq = max_limit + _UncoreFreqTpmi.RATIO_MULTIPLIER
+    min_limit = cast(int, min_limit)
+    max_limit = cast(int, max_limit)
 
-        # Only the "sysfs" mechanism validates against the min. and max. supported uncore frequency.
-        cmd = f"uncore config --mechanisms sysfs --min-freq {bad_min_freq}"
-        props_cmdl_common.run_pepc(cmd, pman, exp_exc=ErrorOutOfRange, ignore=_IGNORE)
-        cmd = f"uncore config --mechanisms sysfs --max-freq {bad_max_freq}"
-        props_cmdl_common.run_pepc(cmd, pman, exp_exc=ErrorOutOfRange, ignore=_IGNORE)
-        cmd = f"uncore config --mechanisms sysfs --elc-low-zone-min-freq {bad_min_freq}"
-        props_cmdl_common.run_pepc(cmd, pman, exp_exc=ErrorOutOfRange, ignore=_IGNORE)
+    bad_min_freq = min_limit - _UncoreFreqTpmi.RATIO_MULTIPLIER
+    bad_max_freq = max_limit + _UncoreFreqTpmi.RATIO_MULTIPLIER
+
+    # Only the "sysfs" mechanism validates against the min. and max. supported uncore frequency.
+    cmd = f"uncore config --mechanisms sysfs --min-freq {bad_min_freq}"
+    props_cmdl_common.run_pepc(cmd, pman, exp_exc=ErrorOutOfRange, ignore=_IGNORE)
+    cmd = f"uncore config --mechanisms sysfs --max-freq {bad_max_freq}"
+    props_cmdl_common.run_pepc(cmd, pman, exp_exc=ErrorOutOfRange, ignore=_IGNORE)
+    cmd = f"uncore config --mechanisms sysfs --elc-low-zone-min-freq {bad_min_freq}"
+    props_cmdl_common.run_pepc(cmd, pman, exp_exc=ErrorOutOfRange, ignore=_IGNORE)
 
 def _set_freq_pairs(params: PropsCmdlTestParamsTypedDict,
                     min_pname: str,
