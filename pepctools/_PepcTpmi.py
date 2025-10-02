@@ -440,11 +440,11 @@ def tpmi_write_command(args, pman):
         stack.enter_context(tpmi)
 
         if cmdl["bfname"]:
-            bfname_str = f", bit field '{cmdl["bfname"]}'"
-            val_str = f"{cmdl["value"]}"
+            bfname_str = f", bit field '{cmdl['bfname']}'"
+            val_str = f"{cmdl['value']}"
         else:
             bfname_str = ""
-            val_str = f"{cmdl["value"]:#x}"
+            val_str = f"{cmdl['value']:#x}"
 
         for addr, package, instance in tpmi.iter_feature(cmdl["fname"], addrs=cmdl["addrs"],
                                                          packages=cmdl["packages"],
