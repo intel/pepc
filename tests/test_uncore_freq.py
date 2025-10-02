@@ -213,7 +213,6 @@ def _test_freq_methods_dies_bad(uncfreq_obj: _UncoreFreqObjType, all_dies: RelNu
         # Set min and max frequencies to known values.
         uncfreq_obj.set_min_freq_dies(min_freq, {package: [die]})
         uncfreq_obj.set_max_freq_dies(max_freq, {package: [die]})
-        print(f"Testing package {package}, die {die}: min_freq={min_freq}, max_freq={max_freq}")
 
         # Set the min uncore frequency to the middle value and check it.
         uncfreq_obj.set_min_freq_dies(mid_freq, {package: [die]})
@@ -319,9 +318,9 @@ def _test_freq_methods_dies_bad(uncfreq_obj: _UncoreFreqObjType, all_dies: RelNu
         _, _, read_freq = next(uncfreq_obj.get_max_freq_dies({package: [die]}))
         assert read_freq == max_freq, f"Expected {max_freq}, but got {read_freq}\n{errmsg_suffix}"
 
-def test_freq_methods_dies(params: _TestParamsTypedDict):
+def test_freq_methods_dies_good(params: _TestParamsTypedDict):
     """
-    Test the per-die uncore frequency methods.
+    Test the per-die uncore frequency get/set methods. Use good input.
 
     Args:
         params: The test parameters.
@@ -331,6 +330,18 @@ def test_freq_methods_dies(params: _TestParamsTypedDict):
 
     for uncfreq_obj in _iter_uncore_freq_objects(params):
         _test_freq_methods_dies_good(uncfreq_obj, all_dies)
+
+def test_freq_methods_dies_bad(params: _TestParamsTypedDict):
+    """
+    Test the per-die uncore frequency get/set methods. Use bad input.
+
+    Args:
+        params: The test parameters.
+    """
+
+    all_dies = params["cpuinfo"].get_dies()
+
+    for uncfreq_obj in _iter_uncore_freq_objects(params):
         _test_freq_methods_dies_bad(uncfreq_obj, all_dies)
 
 def _test_freq_methods_cpu_good(uncfreq_obj: _UncoreFreqObjType, cpu: int):
@@ -387,7 +398,7 @@ def _test_freq_methods_cpu_good(uncfreq_obj: _UncoreFreqObjType, cpu: int):
     except ErrorNotSupported:
         pass
 
-def test_freq_methods_cpus(params: _TestParamsTypedDict):
+def test_freq_methods_cpu_good(params: _TestParamsTypedDict):
     """
     Test the per-CPU uncore frequency get/set methods.
 
@@ -571,7 +582,7 @@ def _test_elc_threshold_methods_cpu(uncfreq_obj: _UncoreFreqObjType, cpu: int):
     uncfreq_obj.set_elc_high_threshold_cpus(saved_hi_thresh, (cpu,))
     uncfreq_obj.set_elc_low_threshold_cpus(saved_lo_thresh, (cpu,))
 
-def test_elc_threshold_methods_cpus(params: _TestParamsTypedDict):
+def test_elc_threshold_methods_cpu(params: _TestParamsTypedDict):
     """
     Test the per-CPU ELC threshold get/set methods for uncore frequency objects of different
     mechanisms and configurations. The tested methods are:
