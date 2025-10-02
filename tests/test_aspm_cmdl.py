@@ -15,14 +15,13 @@ from  __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
 import pytest
-import common
-import props_cmdl_common
+from tests import common, props_cmdl_common
 from pepclibs.helperlibs.Exceptions import Error, ErrorPermissionDenied
 
 if typing.TYPE_CHECKING:
     from typing import Generator
     from pepclibs.helperlibs.Exceptions import ExceptionType
-    from common import CommonTestParamsTypedDict
+    from tests.common import CommonTestParamsTypedDict
 
 @pytest.fixture(name="params", scope="module")
 def get_params(hostspec: str, username: str) -> Generator[CommonTestParamsTypedDict, None, None]:

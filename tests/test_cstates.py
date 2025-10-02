@@ -16,15 +16,13 @@ Test for the 'CStates' module.
 from  __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
-from typing import cast
 import pytest
-import common
-import props_common
+from tests import common, props_common
 from pepclibs import CPUInfo, CStates
 
 if typing.TYPE_CHECKING:
-    from typing import Generator
-    from props_common import PropsTestParamsTypedDict
+    from typing import Generator, cast
+    from tests.props_common import PropsTestParamsTypedDict
 
 @pytest.fixture(name="params", scope="module", params=props_common.get_enable_cache_param())
 def get_params(hostspec: str,
@@ -76,7 +74,10 @@ def _get_set_and_verify_data(params: PropsTestParamsTypedDict,
 
     pvinfo = pobj.get_cpu_prop("governors", cpu)
     if pvinfo["val"] is not None:
-        governors = cast(list[str], pvinfo["val"])
+        if typing.TYPE_CHECKING:
+            governors = cast(list[str], pvinfo["val"])
+        else:
+            governors = pvinfo["val"]
         yield "governor", governors[0]
         yield "governor", governors[-1]
 

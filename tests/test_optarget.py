@@ -17,14 +17,14 @@ from  __future__ import annotations # Remove when switching to Python 3.10+.
 import typing
 import contextlib
 import pytest
-import common
+from tests import common
 from pepclibs import CPUInfo, CPUOnline
 from pepctools import _OpTarget
 from pepctools._OpTarget import ErrorNoTarget, Error
 
 if typing.TYPE_CHECKING:
     from typing import Generator, cast, Sequence
-    from common import CommonTestParamsTypedDict
+    from tests.common import CommonTestParamsTypedDict
 
     class _TestParamsTypedDict(CommonTestParamsTypedDict, total=False):
         """

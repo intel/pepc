@@ -18,7 +18,7 @@ from  __future__ import annotations # Remove when switching to Python 3.10+.
 import typing
 from importlib import import_module
 import pytest
-import common
+from tests import common
 from pepclibs.helperlibs.Exceptions import ErrorNotSupported
 from pepclibs.msr import MSR
 from pepclibs import CPUInfo
@@ -27,7 +27,7 @@ if typing.TYPE_CHECKING:
     from typing import Final, Generator, cast, Literal
     from pepclibs.msr import _FeaturedMSR
     from pepclibs.msr._FeaturedMSR import FeatureTypedDict
-    from common import CommonTestParamsTypedDict
+    from tests.common import CommonTestParamsTypedDict
 
     class FeaturedMSRTestParamsTypedDict(CommonTestParamsTypedDict, total=False):
         """

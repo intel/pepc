@@ -16,13 +16,12 @@ from  __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
 import pytest
-import common
-import props_common
+from tests import common, props_common
 from pepclibs import CPUInfo, Uncore
 
 if typing.TYPE_CHECKING:
     from typing import Generator
-    from props_common import PropsTestParamsTypedDict
+    from tests.props_common import PropsTestParamsTypedDict
 
 @pytest.fixture(name="params", scope="module", params=props_common.get_enable_cache_param())
 def get_params(hostspec: str,

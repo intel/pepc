@@ -14,20 +14,18 @@
 from  __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
-from typing import cast
 import pytest
-import common
-import msr_common
-from msr_common import get_params # pylint: disable=unused-import
+from tests import common, msr_common
+from tests.msr_common import get_params # pylint: disable=unused-import
 
 from pepclibs.msr import MSR
 from pepclibs.helperlibs.Exceptions import Error, ErrorVerifyFailed
 
 if typing.TYPE_CHECKING:
-    from typing import Generator, Literal
+    from typing import Generator, cast
     from pepclibs.msr import _FeaturedMSR
     from pepclibs.msr._FeaturedMSR import FeatureTypedDict, FeatureValueType
-    from msr_common import FeaturedMSRTestParamsTypedDict
+    from tests.msr_common import FeaturedMSRTestParamsTypedDict
 
 def _get_fmsr(params: FeaturedMSRTestParamsTypedDict) -> \
                                             Generator[_FeaturedMSR.FeaturedMSR, None, None]:
@@ -264,7 +262,9 @@ def test_msr_write_feature_good(params: FeaturedMSRTestParamsTypedDict):
                     val = fmsr.read_cpu_feature(name, params["testcpus"][0])
                     assert finfo["type"] == "int", \
                            f"Unexpected type for '{name}' feature: {finfo['type']}"
-                    newval = _flip_bits(cast(int, val), finfo["bits"])
+                    if typing.TYPE_CHECKING:
+                        val = cast(int, val)
+                    newval = _flip_bits(val, finfo["bits"])
                     fmsr.write_feature(name, newval, cpus=params["testcpus"])
         except ErrorVerifyFailed as err:
             if not _is_verify_error_ok(params, err):
@@ -299,7 +299,9 @@ def test_msr_write_feature_bad(params: FeaturedMSRTestParamsTypedDict):
                     bad_bits = (finfo["bits"][0] + 1, finfo["bits"][1])
                     assert finfo["type"] == "int", \
                            f"Unexpected type for '{name}' feature: {finfo['type']}"
-                    bad_val = _flip_bits(cast(int, val), bad_bits)
+                    if typing.TYPE_CHECKING:
+                        val = cast(int, val)
+                    bad_val = _flip_bits(val, bad_bits)
                     with pytest.raises(Error):
                         fmsr.write_feature(name, bad_val, cpus=params["testcpus"])
         except ErrorVerifyFailed as err:

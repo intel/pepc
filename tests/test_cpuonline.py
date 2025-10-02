@@ -19,13 +19,13 @@ from  __future__ import annotations # Remove when switching to Python 3.10+.
 import typing
 import contextlib
 import pytest
-import common
+from tests import common
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs import CPUInfo, CPUOnline
 
 if typing.TYPE_CHECKING:
     from typing import Generator, cast
-    from common import CommonTestParamsTypedDict
+    from tests.common import CommonTestParamsTypedDict
 
     class _TestParamsTypedDict(CommonTestParamsTypedDict, total=False):
         """

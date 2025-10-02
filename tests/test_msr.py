@@ -15,9 +15,8 @@ from  __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
 import pytest
-import common
-import msr_common
-from msr_common import get_params # pylint: disable=unused-import
+from tests import common, msr_common
+from tests.msr_common import get_params # pylint: disable=unused-import
 
 from pepclibs.msr.TurboRatioLimit import MSR_TURBO_RATIO_LIMIT
 from pepclibs.msr.TurboRatioLimit1 import MSR_TURBO_RATIO_LIMIT1
@@ -26,7 +25,7 @@ from pepclibs.helperlibs.Exceptions import Error
 if typing.TYPE_CHECKING:
     from typing import TypedDict, Generator
     from pepclibs.CPUInfoTypes import ScopeNameType
-    from msr_common import FeaturedMSRTestParamsTypedDict
+    from tests.msr_common import FeaturedMSRTestParamsTypedDict
 
     class _MSRTestParamsTypedDict(TypedDict, total=False):
         """

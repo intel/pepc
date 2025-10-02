@@ -20,7 +20,7 @@ from pepclibs.helperlibs.Exceptions import ErrorNotSupported
 
 if typing.TYPE_CHECKING:
     from typing import Generator, cast, Iterable
-    from common import CommonTestParamsTypedDict
+    from tests.common import CommonTestParamsTypedDict
     from pepclibs.CPUInfoTypes import ScopeNameType, AbsNumsType, RelNumsType
     from pepclibs.PropsTypes import PropertyTypeType, PropertyValueType, MechanismNameType
     from pepclibs import CPUInfo, CStates, PStates, Uncore

@@ -14,17 +14,15 @@
 from  __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
-from typing import cast
 import pytest
-import common
-import props_cmdl_common
+from tests import common, props_cmdl_common
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs import CPUInfo, CStates
 from pepclibs.CStates import ErrorTryAnotherMechanism
 
 if typing.TYPE_CHECKING:
-    from typing import Final, Generator
-    from props_cmdl_common import PropsCmdlTestParamsTypedDict
+    from typing import Final, Generator, cast
+    from tests.props_cmdl_common import PropsCmdlTestParamsTypedDict
     from pepclibs.helperlibs.Exceptions import ExceptionType
     from pepclibs.CPUInfoTypes import ScopeNameType
 
@@ -62,10 +60,12 @@ def get_params(hostspec: str, username: str) -> Generator[PropsCmdlTestParamsTyp
          CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
          CStates.CStates(pman=pman, cpuinfo=cpuinfo) as pobj:
         params = common.build_params(pman)
-        params = props_cmdl_common.extend_params(params, pobj, cpuinfo)
+        _params = props_cmdl_common.extend_params(params, pobj, cpuinfo)
 
         if typing.TYPE_CHECKING:
-            params = cast(TestParamsTypedDict, params)
+            params = cast(TestParamsTypedDict, _params)
+        else:
+            params = _params
 
         allcpus = params["cpus"]
         medidx = int(len(allcpus)/2)
@@ -121,7 +121,9 @@ def _get_good_config_opts(params: TestParamsTypedDict,
         if pobj.prop_is_supported_cpu("governor", cpu):
             yield "--governor"
             governors = pobj.get_cpu_prop("governors", cpu)["val"]
-            for governor in cast(list[str], governors):
+            if typing.TYPE_CHECKING:
+                governors = cast(list[str], governors)
+            for governor in governors:
                 yield f"--governor {governor}"
     elif sname == "package":
         if pobj.prop_is_supported_cpu("c1e_autopromote", cpu):
@@ -148,7 +150,9 @@ def _get_good_config_opts(params: TestParamsTypedDict,
             yield "--pkg-cstate-limit"
             lock = pobj.get_cpu_prop("pkg_cstate_limit_lock", cpu)["val"]
             if lock == "off":
-                limit = cast(str, pobj.get_cpu_prop("pkg_cstate_limit", cpu)["val"])
+                limit = pobj.get_cpu_prop("pkg_cstate_limit", cpu)["val"]
+                if typing.TYPE_CHECKING:
+                    limit = cast(str, limit)
                 yield from [f"--pkg-cstate-limit {limit.upper()}",
                             f"--pkg-cstate-limit {limit.lower()}"]
     elif sname == "CPU":

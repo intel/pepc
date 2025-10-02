@@ -15,8 +15,7 @@ from  __future__ import annotations # Remove when switching to Python 3.10+.
 import typing
 from typing import cast
 import pytest
-import common
-import props_cmdl_common
+from tests import common, props_cmdl_common
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorOutOfRange
 
 from pepclibs import CPUInfo, Uncore, _UncoreFreqTpmi
@@ -24,7 +23,7 @@ from pepclibs.Uncore import ErrorTryAnotherMechanism
 
 if typing.TYPE_CHECKING:
     from typing import Final, Generator
-    from props_cmdl_common import PropsCmdlTestParamsTypedDict
+    from tests.props_cmdl_common import PropsCmdlTestParamsTypedDict
     from pepclibs.helperlibs.Exceptions import ExceptionType
     from pepclibs.CPUInfoTypes import ScopeNameType
 

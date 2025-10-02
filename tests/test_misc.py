@@ -18,12 +18,12 @@ from  __future__ import annotations # Remove when switching to Python 3.10+.
 import typing
 import random
 import pytest
-import common
+from tests import common
 from pepclibs import CPUInfo, PStates, CStates, _PropsCache
 
 if typing.TYPE_CHECKING:
     from typing import Generator, cast
-    from common import CommonTestParamsTypedDict
+    from tests.common import CommonTestParamsTypedDict
 
     class _TestParamsTypedDict(CommonTestParamsTypedDict, total=False):
         """

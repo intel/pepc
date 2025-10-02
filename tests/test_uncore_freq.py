@@ -13,15 +13,14 @@ Test the for the '_UncoreFreqSysfs' and '_UncoreFreqTpmi' modules.
 from  __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
-from typing import cast
 import pytest
-import common
+from tests import common
 from pepclibs import CPUInfo, _UncoreFreqSysfs, _UncoreFreqTpmi
 from pepclibs.helperlibs.Exceptions import Error, ErrorBadOrder, ErrorNotSupported, ErrorOutOfRange
 
 if typing.TYPE_CHECKING:
-    from typing import Literal, Union, Generator
-    from common import CommonTestParamsTypedDict
+    from typing import Literal, Union, Generator, cast
+    from tests.common import CommonTestParamsTypedDict
     from pepclibs.CPUInfoTypes import RelNumsType
 
     _UncoreFreqObjType = Union[_UncoreFreqSysfs.UncoreFreqSysfs, _UncoreFreqTpmi.UncoreFreqTpmi]

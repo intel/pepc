@@ -15,15 +15,14 @@ from  __future__ import annotations # Remove when switching to Python 3.10+.
 import stat
 from pathlib import Path
 import typing
-from typing import cast
 import pytest
-import common
+from tests import common
 from pepclibs.helperlibs import Trivial, LocalProcessManager
 from pepclibs.helperlibs.Exceptions import Error, ErrorExists, ErrorNotFound
 
 if typing.TYPE_CHECKING:
     from typing import Generator
-    from common import CommonTestParamsTypedDict
+    from tests.common import CommonTestParamsTypedDict
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
 @pytest.fixture(name="params", scope="module")
@@ -231,14 +230,14 @@ def test_run_verify_newgrp(params: CommonTestParamsTypedDict):
     # process will always be different from the PGID of the local process.
 
     for intsh in (True, False):
-        stdout, stderr = pman.run_verify("ps -o pgid= -p $$", newgrp=False, intsh=intsh)
+        stdout, stderr = pman.run_verify_join("ps -o pgid= -p $$", newgrp=False, intsh=intsh)
         if not pman.is_remote:
-            assert cast(str, stdout).strip() == str(pgid)
+            assert stdout.strip() == str(pgid)
             assert stderr == ""
 
-        stdout, _ = pman.run_verify("ps -o pgid= -p $$", newgrp=True, intsh=intsh)
+        stdout, _ = pman.run_verify_join("ps -o pgid= -p $$", newgrp=True, intsh=intsh)
         if not pman.is_remote:
-            assert cast(str, stdout).strip() != str(pgid)
+            assert stdout.strip() != str(pgid)
 
 def test_run_verify_fail(params: CommonTestParamsTypedDict):
     """Test the 'run_verify()' method with a failing command."""

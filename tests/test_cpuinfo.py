@@ -14,15 +14,14 @@
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
-from typing import cast
 import random
 import pytest
-import common
+from tests import common
 from pepclibs import CPUModels, CPUInfo, CPUOnline
 
 if typing.TYPE_CHECKING:
-    from typing import Generator
-    from common import CommonTestParamsTypedDict
+    from typing import Generator, cast
+    from tests.common import CommonTestParamsTypedDict
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepclibs.CPUInfoTypes import AbsNumsType, RelNumsType, ScopeNameType
 
