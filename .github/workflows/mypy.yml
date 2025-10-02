@@ -71,6 +71,7 @@ jobs:
 
       - name: "Run mypy for type checking on modified files"
         run: |
+          # TODO: add --strict flag and remove --follow-imports=silent once the code is fully typed.
           xargs -a .tmp/modified-files -r mypy --follow-imports=silent -- > .tmp/mypy.results || retcode=1
 
           echo "$retcode" > .tmp/mypy.retcode
