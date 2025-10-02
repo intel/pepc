@@ -22,9 +22,11 @@ if typing.TYPE_CHECKING:
     from typing import Generator, Final
 
 # The test modules that are host-agnostic.
-_NOHOST_MODULES: Final[set[str]] = {"test_human", "test_wrap_exceptions", "test_yaml"}
+_NOHOST_MODULES: Final[set[str]] = {"tests.test_human",
+                                    "tests.test_wrap_exceptions",
+                                    "tests.test_yaml"}
 # The test modules that work only on the local host or a remote host, but not emulation.
-_NOEMULATION_MODULES: Final[set[str]] = {"test_process_manager"}
+_NOEMULATION_MODULES: Final[set[str]] = {"tests.test_process_manager"}
 
 def pytest_addoption(parser: pytest.Parser):
     """Add custom command-line options for pytest."""
