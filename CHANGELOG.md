@@ -5,10 +5,13 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
- - Fix --c1-demotion/undemotion for ICX, SPR, and EMR.
 ### Added
 ### Removed
 ### Changed
+
+## [1.6.8] - 2025-10-02
+### Fixed
+ - Fix --c1-demotion/undemotion for ICX, SPR, and EMR.
 
 ## [1.6.7] - 2025-09-30
 ### Fixed

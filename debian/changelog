@@ -1,3 +1,9 @@
+pepc (1.6.8) unstable; urgency=low
+
+  * Fix --c1-demotion/undemotion for ICX, SPR, and EMR.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Thu, 02 Oct 2025 00:00:00 +0200
+
 pepc (1.6.7) unstable; urgency=low
 
   * Fix C-states detection on systems with only 1 C-state.
