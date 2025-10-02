@@ -75,14 +75,19 @@ if typing.TYPE_CHECKING:
         """
 
         def __call__(self, cpus: Sequence[int] | Literal["all"] = "all") -> \
-                                        Generator[tuple[int, FeatureValueType], None, None]: ...
-
+                                        Generator[tuple[int, FeatureValueType], None, None]:
+            """
+            Read the feature value for the specified CPUs and yield the results.
+            """
     class _WriteFeatureMethodType(Protocol):
         """
         The type for a feature set method.
         """
 
-        def __call__(self, val: FeatureValueType, cpus: Sequence[int] | Literal["all"] = "all"): ...
+        def __call__(self, val: FeatureValueType, cpus: Sequence[int] | Literal["all"] = "all"):
+            """
+            Write the feature value for the specified CPUs.
+            """
 
     class PartialFeatureTypedDict(TypedDict, total=False):
         """
