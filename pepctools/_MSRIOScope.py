@@ -574,7 +574,7 @@ def _get_cmdline_args(args: argparse.Namespace) -> _CmdlineArgsTypedDict:
 
     return cmdl
 
-def _main():
+def main():
     """
     The entry point of the tool.
 
@@ -614,6 +614,3 @@ def _main():
         _LOG.error_out(err)
 
     return 0
-
-if __name__ == "__main__":
-    raise SystemExit(_main())
