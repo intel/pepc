@@ -14,7 +14,7 @@ Implement the 'pepc cpu-hotplug' command.
 from pepclibs.helperlibs import Logging, Trivial
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs import CPUInfo, CPUOnline
-from pepctool import _PepcCommon, _OpTarget
+from pepctools import _PepcCommon, _OpTarget
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 

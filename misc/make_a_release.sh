@@ -16,7 +16,7 @@ VERSION_REGEX='\([0-9]\+\)\.\([0-9]\+\)\.\([0-9]\+\)'
 VERSION_VAR_REGEX="^_VERSION\([^=]*\)= \"$VERSION_REGEX\"$"
 
 # File paths containing the version number that we'll have to adjust.
-PEPC_FILE="$BASEDIR/pepctool/_Pepc.py"
+PEPC_FILE="$BASEDIR/pepctools/_Pepc.py"
 SPEC_FILE="$BASEDIR/rpm/pepc.spec"
 
 # The python packaging file.

@@ -17,7 +17,7 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 import sys
 import typing
 from typing import Literal, get_args, cast
-from pepctool import _PepcCommon
+from pepctools import _PepcCommon
 from pepclibs import CPUInfo
 from pepclibs.helperlibs import Logging, ClassHelpers, Human, YAML, Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
@@ -27,7 +27,7 @@ PrintFormatType = Literal["human", "yaml"]
 
 if typing.TYPE_CHECKING:
     from typing import TypedDict, Iterable, Sequence, IO, Iterator, Union
-    from pepctool import _OpTarget
+    from pepctools import _OpTarget
     from pepclibs import CStates, PStates, Uncore, PMQoS
     from pepclibs.CPUIdle import ReqCStateInfoTypedDict, ReqCStateInfoValuesType
     from pepclibs.CPUIdle import ReqCStateInfoKeysType

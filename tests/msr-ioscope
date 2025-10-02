@@ -28,7 +28,7 @@ except ImportError:
     # We can live without argcomplete, we only lose tab completions.
     _ARGCOMPLETE_AVAILABLE = False
 
-from pepctool._Pepc import ArgParse
+from pepctools._Pepc import ArgParse
 from pepclibs.helperlibs import Logging, ProcessManager, Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs.msr import MSR, _FeaturedMSR

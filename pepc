@@ -13,7 +13,7 @@ pepc - Power, Energy, and Performance Configuration tool for Linux.
 """
 
 import sys
-from pepctool._Pepc import main
+from pepctools._Pepc import main
 
 if __name__ == "__main__":
     sys.exit(main())

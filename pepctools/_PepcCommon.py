@@ -16,7 +16,7 @@ from  __future__ import annotations # Remove when switching to Python 3.10+.
 from pepclibs import CPUInfo, CPUModels
 from pepclibs.helperlibs import Logging, Systemctl, Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported, ErrorBadFormat
-from pepctool._OpTarget import ErrorNoTarget, ErrorNoCPUTarget
+from pepctools._OpTarget import ErrorNoTarget, ErrorNoCPUTarget
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 

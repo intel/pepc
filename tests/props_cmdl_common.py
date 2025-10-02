@@ -16,7 +16,7 @@ from  __future__ import annotations # Remove when switching to Python 3.10+.
 import typing
 from typing import cast
 from pepclibs.helperlibs import Trivial, TestRunner
-from pepctool import _Pepc
+from pepctools import _Pepc
 
 if typing.TYPE_CHECKING:
     from typing import Generator, Mapping

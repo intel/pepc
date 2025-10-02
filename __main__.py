@@ -18,7 +18,7 @@ import zipfile
 import tempfile
 from pathlib import Path
 from pepclibs.helperlibs import ProjectFiles
-from pepctool._Pepc import main
+from pepctools._Pepc import main
 
 if __name__ == "__main__":
     basepath = Path(__file__).parent

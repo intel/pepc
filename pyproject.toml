@@ -34,7 +34,7 @@ exclude = ["tests*", "misc*"]
 pepcdata = ["tpmi/*.yml", "man/man1/*.1"]
 
 [project.scripts]
-pepc = "pepctool._Pepc:main"
+pepc = "pepctools._Pepc:main"
 
 [project.urls]
 Documentation = "https://github.com/intel/pepc/blob/main/README.md"

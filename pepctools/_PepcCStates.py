@@ -18,15 +18,15 @@ from pepclibs.msr import MSR
 from pepclibs.helperlibs import Logging, Trivial
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs import CStates, CPUInfo
-from pepctool import _PepcCommon, _OpTarget, _PepcPrinter, _PepcSetter
+from pepctools import _PepcCommon, _OpTarget, _PepcPrinter, _PepcSetter
 
 if typing.TYPE_CHECKING:
     import argparse
     from typing import Sequence, TypedDict, Literal, cast
     from pepclibs.PropsTypes import MechanismNameType
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
-    from pepctool._PepcSetter  import PropSetInfoTypedDict
-    from pepctool._PepcPrinter import PrintFormatType
+    from pepctools._PepcSetter  import PropSetInfoTypedDict
+    from pepctools._PepcPrinter import PrintFormatType
 
     class _ConfigCmdlineArgsTypedDict(TypedDict, total=False):
         """

@@ -767,7 +767,7 @@ def _topology_info_command(args: argparse.Namespace, pman: ProcessManagerType):
     """
 
     # pylint: disable-next=import-outside-toplevel
-    from pepctool import _PepcTopology
+    from pepctools import _PepcTopology
 
     _PepcTopology.topology_info_command(args, pman)
 
@@ -781,7 +781,7 @@ def _tpmi_ls_command(args: argparse.Namespace, pman: ProcessManagerType):
     """
 
     # pylint: disable-next=import-outside-toplevel
-    from pepctool import _PepcTpmi
+    from pepctools import _PepcTpmi
 
     _PepcTpmi.tpmi_ls_command(args, pman)
 
@@ -789,7 +789,7 @@ def _tpmi_read_command(args: argparse.Namespace, pman: ProcessManagerType):
     """Implements the 'tpmi read' command."""
 
     # pylint: disable-next=import-outside-toplevel
-    from pepctool import _PepcTpmi
+    from pepctools import _PepcTpmi
 
     _PepcTpmi.tpmi_read_command(args, pman)
 
@@ -797,7 +797,7 @@ def _tpmi_write_command(args: argparse.Namespace, pman: ProcessManagerType):
     """Implements the 'tpmi write' command."""
 
     # pylint: disable-next=import-outside-toplevel
-    from pepctool import _PepcTpmi
+    from pepctools import _PepcTpmi
 
     _PepcTpmi.tpmi_write_command(args, pman)
 
@@ -811,7 +811,7 @@ def _cpu_hotplug_info_command(args: argparse.Namespace, pman: ProcessManagerType
     """
 
     # pylint: disable-next=import-outside-toplevel
-    from pepctool import _PepcCPUHotplug
+    from pepctools import _PepcCPUHotplug
 
     _PepcCPUHotplug.cpu_hotplug_info_command(args, pman)
 
@@ -825,7 +825,7 @@ def _cpu_hotplug_online_command(args: argparse.Namespace, pman: ProcessManagerTy
     """
 
     # pylint: disable-next=import-outside-toplevel
-    from pepctool import _PepcCPUHotplug
+    from pepctools import _PepcCPUHotplug
 
     _PepcCPUHotplug.cpu_hotplug_online_command(args, pman)
 
@@ -839,7 +839,7 @@ def _cpu_hotplug_offline_command(args: argparse.Namespace, pman: ProcessManagerT
     """
 
     # pylint: disable-next=import-outside-toplevel
-    from pepctool import _PepcCPUHotplug
+    from pepctools import _PepcCPUHotplug
 
     _PepcCPUHotplug.cpu_hotplug_offline_command(args, pman)
 
@@ -853,7 +853,7 @@ def _cstates_info_command(args: argparse.Namespace, pman: ProcessManagerType):
     """
 
     # pylint: disable-next=import-outside-toplevel
-    from pepctool import _PepcCStates
+    from pepctools import _PepcCStates
 
     _PepcCStates.cstates_info_command(args, pman)
 
@@ -867,7 +867,7 @@ def _cstates_config_command(args: argparse.Namespace, pman: ProcessManagerType):
     """
 
     # pylint: disable-next=import-outside-toplevel
-    from pepctool import _PepcCStates
+    from pepctools import _PepcCStates
 
     _PepcCStates.cstates_config_command(args, pman)
 
@@ -881,7 +881,7 @@ def _pstates_info_command(args: argparse.Namespace, pman: ProcessManagerType):
     """
 
     # pylint: disable-next=import-outside-toplevel
-    from pepctool import _PepcPStates
+    from pepctools import _PepcPStates
 
     _PepcPStates.pstates_info_command(args, pman)
 
@@ -895,7 +895,7 @@ def _pstates_config_command(args: argparse.Namespace, pman: ProcessManagerType):
     """
 
     # pylint: disable-next=import-outside-toplevel
-    from pepctool import _PepcPStates
+    from pepctools import _PepcPStates
 
     _PepcPStates.pstates_config_command(args, pman)
 
@@ -909,7 +909,7 @@ def _uncore_info_command(args: argparse.Namespace, pman: ProcessManagerType):
     """
 
     # pylint: disable-next=import-outside-toplevel
-    from pepctool import _PepcUncore
+    from pepctools import _PepcUncore
 
     _PepcUncore.uncore_info_command(args, pman)
 
@@ -923,7 +923,7 @@ def _uncore_config_command(args: argparse.Namespace, pman: ProcessManagerType):
     """
 
     # pylint: disable-next=import-outside-toplevel
-    from pepctool import _PepcUncore
+    from pepctools import _PepcUncore
 
     _PepcUncore.uncore_config_command(args, pman)
 
@@ -937,7 +937,7 @@ def _pmqos_info_command(args: argparse.Namespace, pman: ProcessManagerType):
     """
 
     # pylint: disable-next=import-outside-toplevel
-    from pepctool import _PepcPMQoS
+    from pepctools import _PepcPMQoS
 
     _PepcPMQoS.pmqos_info_command(args, pman)
 
@@ -951,7 +951,7 @@ def _pmqos_config_command(args: argparse.Namespace, pman: ProcessManagerType):
     """
 
     # pylint: disable-next=import-outside-toplevel
-    from pepctool import _PepcPMQoS
+    from pepctools import _PepcPMQoS
 
     _PepcPMQoS.pmqos_config_command(args, pman)
 
@@ -965,7 +965,7 @@ def _aspm_info_command(args: argparse.Namespace, pman: ProcessManagerType):
     """
 
     # pylint: disable-next=import-outside-toplevel
-    from pepctool import _PepcASPM
+    from pepctools import _PepcASPM
 
     _PepcASPM.aspm_info_command(args, pman)
 
@@ -979,7 +979,7 @@ def _aspm_config_command(args: argparse.Namespace, pman: ProcessManagerType):
     """
 
     # pylint: disable-next=import-outside-toplevel
-    from pepctool import _PepcASPM
+    from pepctools import _PepcASPM
 
     _PepcASPM.aspm_config_command(args, pman)
 

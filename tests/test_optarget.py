@@ -19,8 +19,8 @@ import contextlib
 import pytest
 import common
 from pepclibs import CPUInfo, CPUOnline
-from pepctool import _OpTarget
-from pepctool._OpTarget import ErrorNoTarget, Error
+from pepctools import _OpTarget
+from pepctools._OpTarget import ErrorNoTarget, Error
 
 if typing.TYPE_CHECKING:
     from typing import Generator, cast, Sequence

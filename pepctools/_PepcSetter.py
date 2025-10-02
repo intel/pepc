@@ -15,14 +15,14 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
 from typing import cast
-from pepctool import _PepcCommon
+from pepctools import _PepcCommon
 from pepclibs.helperlibs import ClassHelpers, Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorBadOrder
 from pepclibs.msr import MSR
 
 if typing.TYPE_CHECKING:
     from typing import TypedDict, Sequence, Iterable, Literal, Union
-    from pepctool import _OpTarget, _PepcPrinter
+    from pepctools import _OpTarget, _PepcPrinter
     from pepclibs import CPUInfo, _SysfsIO, PStates, CStates, Uncore, PMQoS
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepclibs.PropsTypes import MechanismNameType, PropertyValueType

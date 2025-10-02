@@ -55,7 +55,7 @@ install -pDm644 docs/man1/*.1 %{buildroot}/%{_mandir}/man1/pepc
 
 %files -n python3-%{name}
 %{python3_sitelib}/pepclibs
-%{python3_sitelib}/pepctool
+%{python3_sitelib}/pepctools
 %{python3_sitelib}/pepc-*.egg-info/
 
 # Date format: date "+%a %b %d %Y"

@@ -7,30 +7,31 @@
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
-Implement the 'pepc pstates' command.
+Implement the 'pepc uncore' command.
 """
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
-import contextlib
 import typing
+import contextlib
+
 from pepclibs.msr import MSR
 from pepclibs.helperlibs import Logging
 from pepclibs.helperlibs.Exceptions import Error
-from pepclibs import PStates, CPUInfo, _SysfsIO
-from pepctool import _PepcCommon, _OpTarget, _PepcPrinter, _PepcSetter
+from pepclibs import Uncore, CPUInfo, _SysfsIO
+from pepctools import _PepcCommon, _OpTarget, _PepcPrinter, _PepcSetter
 
 if typing.TYPE_CHECKING:
     import argparse
     from typing import TypedDict
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
-    from pepctool._PepcSetter  import PropSetInfoTypedDict
-    from pepctool._PepcPrinter import PrintFormatType
+    from pepctools._PepcSetter  import PropSetInfoTypedDict
+    from pepctools._PepcPrinter import PrintFormatType
 
     class _CmdlineArgsTypedDict(TypedDict, total=False):
         """
-        A typed dictionary for command-line arguments of the 'pepc pstates info' and
-        'pepc pstates config' commands.
+        A type for command-line arguments of the 'pepc uncore info' and
+        'pepc uncore config' commands.
 
         Attributes:
             yaml: Whether to output results in YAML format.
@@ -44,7 +45,7 @@ if typing.TYPE_CHECKING:
             core_siblings: List of core sibling indices to operate on.
             module_siblings: List of module sibling indices to operate on.
             oargs: Dictionary of command line argument names and values matching the order of
-            appearance in the command line.
+                   appearance in the command line.
         """
 
         yaml: bool
@@ -87,9 +88,9 @@ def _get_cmdline_args(args: argparse.Namespace) -> _CmdlineArgsTypedDict:
 
     return cmdl
 
-def pstates_info_command(args: argparse.Namespace, pman: ProcessManagerType):
+def uncore_info_command(args: argparse.Namespace, pman: ProcessManagerType):
     """
-    Implement the 'pstates info' command to display P-state properties for the target host.
+    Implement the 'uncore info' command to display P-states properties for the target host.
 
     Args:
         args: Parsed command-line arguments.
@@ -108,10 +109,10 @@ def pstates_info_command(args: argparse.Namespace, pman: ProcessManagerType):
         if cmdl["override_cpu_model"]:
             _PepcCommon.override_cpu_model(cpuinfo, cmdl["override_cpu_model"])
 
-        pobj = PStates.PStates(pman=pman, cpuinfo=cpuinfo)
+        pobj = Uncore.Uncore(pman=pman, cpuinfo=cpuinfo)
         stack.enter_context(pobj)
 
-        pprinter = _PepcPrinter.PStatesPrinter(pobj, cpuinfo, fmt=fmt)
+        pprinter = _PepcPrinter.UncorePrinter(pobj, cpuinfo, fmt=fmt)
         stack.enter_context(pprinter)
 
         mnames = []
@@ -119,8 +120,9 @@ def pstates_info_command(args: argparse.Namespace, pman: ProcessManagerType):
             mnames = _PepcCommon.parse_mechanisms(cmdl["mechanisms"], pobj)
 
         optar = _OpTarget.OpTarget(pman=pman, cpuinfo=cpuinfo, cpus=cmdl["cpus"],
-                                   cores=cmdl["cores"], modules=cmdl["modules"], dies=cmdl["dies"],
-                                   packages=cmdl["packages"], core_siblings=cmdl["core_siblings"],
+                                   cores=cmdl["cores"], modules=cmdl["modules"],
+                                   dies=cmdl["dies"], packages=cmdl["packages"],
+                                   core_siblings=cmdl["core_siblings"],
                                    module_siblings=cmdl["module_siblings"])
         stack.enter_context(optar)
 
@@ -136,9 +138,9 @@ def pstates_info_command(args: argparse.Namespace, pman: ProcessManagerType):
         if not printed:
             _LOG.info("No P-states properties supported%s.", pman.hostmsg)
 
-def pstates_config_command(args: argparse.Namespace, pman: ProcessManagerType):
+def uncore_config_command(args: argparse.Namespace, pman: ProcessManagerType):
     """
-    Implement the 'pstates config' command to set or display P-state properties for the target
+    Implement the 'uncore config' command to set or display P-states properties for the target
     host.
 
     Args:
@@ -175,14 +177,14 @@ def pstates_config_command(args: argparse.Namespace, pman: ProcessManagerType):
         sysfs_io = _SysfsIO.SysfsIO(pman=pman)
         stack.enter_context(sysfs_io)
 
-        pobj = PStates.PStates(pman=pman, msr=msr, sysfs_io=sysfs_io, cpuinfo=cpuinfo)
+        pobj = Uncore.Uncore(pman=pman, msr=msr, sysfs_io=sysfs_io, cpuinfo=cpuinfo)
         stack.enter_context(pobj)
 
         mnames = []
         if cmdl["mechanisms"]:
             mnames = _PepcCommon.parse_mechanisms(cmdl["mechanisms"], pobj)
 
-        printer = _PepcPrinter.PStatesPrinter(pobj, cpuinfo)
+        printer = _PepcPrinter.UncorePrinter(pobj, cpuinfo)
         stack.enter_context(printer)
 
         optar = _OpTarget.OpTarget(pman=pman, cpuinfo=cpuinfo, cpus=cmdl["cpus"],
@@ -195,8 +197,8 @@ def pstates_config_command(args: argparse.Namespace, pman: ProcessManagerType):
             printer.print_props(print_opts, optar, mnames=mnames, skip_unsupported=False)
 
         if set_opts:
-            setter = _PepcSetter.PStatesSetter(pman, pobj, cpuinfo, printer, msr=msr,
-                                               sysfs_io=sysfs_io)
+            setter = _PepcSetter.UncoreSetter(pman, pobj, cpuinfo, printer, msr=msr,
+                                              sysfs_io=sysfs_io)
             stack.enter_context(setter)
             setter.set_props(set_opts, optar, mnames=mnames)
 
