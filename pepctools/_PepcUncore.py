@@ -90,7 +90,7 @@ def _get_cmdline_args(args: argparse.Namespace) -> _CmdlineArgsTypedDict:
 
 def uncore_info_command(args: argparse.Namespace, pman: ProcessManagerType):
     """
-    Implement the 'uncore info' command to display P-states properties for the target host.
+    Implement the 'uncore info' command which displays uncore properties of the target host.
 
     Args:
         args: Parsed command-line arguments.
@@ -140,7 +140,7 @@ def uncore_info_command(args: argparse.Namespace, pman: ProcessManagerType):
 
 def uncore_config_command(args: argparse.Namespace, pman: ProcessManagerType):
     """
-    Implement the 'uncore config' command to set or display P-states properties for the target
+    Implement the 'uncore config' command which sets or displays uncore properties of the target
     host.
 
     Args:

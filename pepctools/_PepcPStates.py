@@ -89,7 +89,7 @@ def _get_cmdline_args(args: argparse.Namespace) -> _CmdlineArgsTypedDict:
 
 def pstates_info_command(args: argparse.Namespace, pman: ProcessManagerType):
     """
-    Implement the 'pstates info' command to display P-state properties for the target host.
+    Implement the 'pstates info' command which displays P-state properties of the target host.
 
     Args:
         args: Parsed command-line arguments.
@@ -138,7 +138,7 @@ def pstates_info_command(args: argparse.Namespace, pman: ProcessManagerType):
 
 def pstates_config_command(args: argparse.Namespace, pman: ProcessManagerType):
     """
-    Implement the 'pstates config' command to set or display P-state properties for the target
+    Implement the 'pstates config' command which sets or displays P-state properties of the target
     host.
 
     Args:
