@@ -20,6 +20,7 @@ Terminology:
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
+from tkinter import E
 import typing
 import copy
 from typing import cast
@@ -544,11 +545,10 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
             The value of the requested feature for the specified CPU.
         """
 
-        val = None
         for _, val in self.read_feature(fname, cpus=(cpu,)):
-            pass
+            return val
 
-        return val
+        raise Error(f"Failed to read feature '{fname}' from CPU {cpu}")
 
     def is_feature_enabled(self, fname: str, cpus: Sequence[int] | Literal["all"] = "all") -> \
                                                             Generator[tuple[int, bool], None, None]:
