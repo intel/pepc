@@ -144,6 +144,7 @@ _PKG_CST_LIMITS: Final[dict[int, _LimitsTypedDict]] = {
     # Atom microservers.
     CPUModels.MODELS["ATOM_GOLDMONT_D"]["vfm"]:  _DNV_PKG_CST_LIMITS,
     # Clients.
+    CPUModels.MODELS["PANTHERLAKE_L"]["vfm"]:    _CLIENT_LNL_CST_LIMITS,
     CPUModels.MODELS["LUNARLAKE_M"]["vfm"]:      _CLIENT_LNL_CST_LIMITS,
     CPUModels.MODELS["ARROWLAKE"]["vfm"]:        _CLIENT_PC8_CST_LIMITS,
     CPUModels.MODELS["ARROWLAKE_H"]["vfm"]:      _CLIENT_PC8_CST_LIMITS,

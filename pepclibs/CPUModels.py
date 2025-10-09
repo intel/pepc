@@ -231,6 +231,13 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Nehalem 4S Xeon",
     },
     # Clients.
+    "PANTHERLAKE_L": {
+        "vendor": X86_VENDOR_INTEL,
+        "family": 6,
+        "model": 0xCC,
+        "vfm": make_intel_vfm(6, 0xCC),
+        "codename": "Panther Lake mobile",
+    },
     "LUNARLAKE_M": {
         "vendor": X86_VENDOR_INTEL,
         "family": 6,
@@ -618,6 +625,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
 #
 CPU_GROUPS: Final[dict[str, tuple[int, ...]]] = {
     "DMR": (MODELS["DIAMONDRAPIDS_X"]["vfm"],),
+    "PANTHERLAKE": (MODELS["PANTHERLAKE_L"]["vfm"],),
     "LUNARLAKE": (MODELS["LUNARLAKE_M"]["vfm"],),
     "GNR": (MODELS["GRANITERAPIDS_X"]["vfm"],
             MODELS["GRANITERAPIDS_D"]["vfm"]),
