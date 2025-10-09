@@ -20,7 +20,6 @@ Terminology:
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
-from tkinter import E
 import typing
 import copy
 from typing import cast
