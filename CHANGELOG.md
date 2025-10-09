@@ -6,9 +6,12 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
 ### Added
- - Add package C-states limit support for Panther Lake.
 ### Removed
 ### Changed
+
+## [1.6.9] - 2025-10-09
+### Added
+ - Add package C-states limit support for Panther Lake.
 
 ## [1.6.8] - 2025-10-02
 ### Fixed

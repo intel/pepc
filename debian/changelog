@@ -1,3 +1,9 @@
+pepc (1.6.9) unstable; urgency=low
+
+  * Add package C-states limit support for Panther Lake.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Thu, 09 Oct 2025 00:00:00 +0200
+
 pepc (1.6.8) unstable; urgency=low
 
   * Fix --c1-demotion/undemotion for ICX, SPR, and EMR.
