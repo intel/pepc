@@ -136,7 +136,7 @@ def uncore_info_command(args: argparse.Namespace, pman: ProcessManagerType):
             printed = pprinter.print_props(pnames, optar, mnames=mnames, skip_unsupported=False)
 
         if not printed:
-            _LOG.info("No P-states properties supported%s.", pman.hostmsg)
+            _LOG.info("No uncore properties supported%s.", pman.hostmsg)
 
 def uncore_config_command(args: argparse.Namespace, pman: ProcessManagerType):
     """
