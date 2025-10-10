@@ -43,7 +43,7 @@ class Error(Exception):
         else:
             self.msg = msg
 
-    def indent(self, indent: int | str, capitalize: bool = True) -> str:
+    def indent(self, indent: int | str, capitalize: bool = False) -> str:
         """
         Indent/prefix each line in the error message.
 
