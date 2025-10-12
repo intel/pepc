@@ -135,7 +135,8 @@ If you installed pepc as root and plan to use pepc as root, no additional steps 
 
 ### sudo complication
 
-Similar to the "using uv" case, create an alias and add it to your `$HOME/.bashrc` file as shown below:
+Similar to the "using uv" case, create an alias and add it to your `$HOME/.bashrc` file as shown
+below:
 
 ```
 alias pepc="sudo VIRTUAL_ENV=$HOME/.pmtools $HOME/.pmtools/bin/pepc"
@@ -143,31 +144,13 @@ alias pepc="sudo VIRTUAL_ENV=$HOME/.pmtools $HOME/.pmtools/bin/pepc"
 
 ## Fedora
 
-Pepc is available in Fedora starting from version 38. However, Fedora packages may not provide the
-latest version. To install the latest release, use the "uv" or "pip" methods.
-
-To install pepc, run:
-
-```
-sudo dnf install pepc
-```
-
-Fedora packages are maintained by Ali Erdinç Köroğlu <ali.erdinc.koroglu@intel.com>.
+An old version of pepc is available in Fedora starting from version 38. But it is currently
+unmaintained, please do not use it.
 
 ## CentOS 9 Stream
 
-Pepc is available for CentOS 8 Stream via the EPEL repository. Note that EPEL packages may not
-always provide the latest version. To get the latest release, consider using the "uv" or "pip"
-installation methods.
-
-To add EPEL and install Pepc, follow these steps:
-
-```
-sudo dnf install epel-release
-sudo dnf install pepc
-```
-
-Epel packages are maintained by Ali Erdinç Köroğlu <ali.erdinc.koroglu@intel.com>.
+An old version of pepc is available in CentOS 9 Stream. But it is currently unmaintained, please do
+not use it.
 
 ## Tab completions
 
