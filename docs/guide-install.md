@@ -11,16 +11,16 @@ Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 Document author: Artem Bityutskiy <dedekind1@gmail.com>
 
 - [Introduction](#introduction)
-  - [Dependencies](#dependencies)
-    - [Fedora](#fedora-1)
-    - [Ubuntu](#ubuntu)
-  - [Using uv](#using-uv)
-  - [Using pip](#using-pip)
+- [Dependencies](#dependencies)
   - [Fedora](#fedora)
-  - [CentOS 9 Stream](#centos-9-stream)
-  - [Tab completions](#tab-completions)
-  - [Man pages](#man-pages)
-  - [Example of .bashrc](#example-of-bashrc)
+  - [Ubuntu](#ubuntu)
+- [Using uv](#using-uv)
+- [Using pip](#using-pip)
+- [Fedora](#fedora-1)
+- [CentOS 9 Stream](#centos-9-stream)
+- [Tab completions](#tab-completions)
+- [Man pages](#man-pages)
+- [Example of .bashrc](#example-of-bashrc)
 
 # Introduction
 
@@ -29,24 +29,23 @@ This document provides a guide for installing the `pepc` tool.
 **IMPORTANT**: This tool is intended for debugging and research purposes only. It requires root
 permissions and should only be used in a lab environment, not in production.
 
-
-## Dependencies
+# Dependencies
 
 Pepc requires certain system tools and libraries. Below are the installation instructions.
 
-### Fedora
+## Fedora
 
 ```
 sudo dnf install -y rsync util-linux procps-ng git
 ```
 
-### Ubuntu
+## Ubuntu
 
 ```
 sudo apt install -y rsync util-linux procps git
 ```
 
-## Using uv
+# Using uv
 
 Uv is a modern Python project and package management tool. Install it on your system. Many Linux
 distributions provide a package for it. For example, in Fedora, run:
@@ -70,7 +69,7 @@ $ which pepc
 
 If you installed pepc as root and plan to use pepc as root, no additional steps are required.
 
-### sudo complication
+## sudo complication
 
 Unfortunately, running pepc with sudo works only when you provide the full path to the executable.
 
@@ -102,7 +101,7 @@ Source: Linux sysfs file-system
 ... snip ...
 ```
 
-## Using pip
+# Using pip
 
 Install pip and python virtualenv on your system. Most modern Linux distributions include a package
 for this. For example, in Fedora, run
@@ -133,7 +132,7 @@ $ which pepc
 
 If you installed pepc as root and plan to use pepc as root, no additional steps are required.
 
-### sudo complication
+## sudo complication
 
 Similar to the "using uv" case, create an alias and add it to your `$HOME/.bashrc` file as shown
 below:
@@ -142,17 +141,17 @@ below:
 alias pepc="sudo VIRTUAL_ENV=$HOME/.pmtools $HOME/.pmtools/bin/pepc"
 ```
 
-## Fedora
+# Fedora
 
 An old version of pepc is available in Fedora starting from version 38. But it is currently
 unmaintained, please do not use it.
 
-## CentOS 9 Stream
+# CentOS 9 Stream
 
 An old version of pepc is available in CentOS 9 Stream. But it is currently unmaintained, please do
 not use it.
 
-## Tab completions
+# Tab completions
 
 Pepc supports tab completions, but it requires specific environment variables to be set. Make sure
 'pepc' is in your '$PATH', and  use the following:
@@ -164,7 +163,7 @@ eval "$($HOME/.pmtools/bin/register-python-argcomplete pepc)"
 
 Add this line to '$HOME/.bashrc' file to enable tab completion by default.
 
-## Man pages
+# Man pages
 
 Pepc provides man pages. If you install pepc using 'pip' or 'uv', the man pages are placed in
 Python's "site-packages" directory, which is not searched by the "man" tool by default. To make
@@ -192,7 +191,7 @@ man pepc-cstates
 
 Note: Pepc provides man pages for each subcommand.
 
-## Example of .bashrc
+# Example of .bashrc
 
 Here is an example of a `$HOME/.bashrc` file that includes the necessary settings for using pepc:
 
