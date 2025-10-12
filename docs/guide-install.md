@@ -18,7 +18,6 @@ Document author: Artem Bityutskiy <dedekind1@gmail.com>
   - [Using pip](#using-pip)
   - [Fedora](#fedora)
   - [CentOS 9 Stream](#centos-9-stream)
-  - [Standalone version](#standalone-version)
   - [Tab completions](#tab-completions)
   - [Man pages](#man-pages)
   - [Example of .bashrc](#example-of-bashrc)
@@ -169,38 +168,6 @@ sudo dnf install pepc
 ```
 
 Epel packages are maintained by Ali Erdinç Köroğlu <ali.erdinc.koroglu@intel.com>.
-
-## Standalone version
-
-To create a standalone version of pepc, ensure your Python version is greater than 3.8.
-Run the following command, which should print "Good" if the version is compatible:
-
-```
-/usr/bin/python3 -c 'import sys; ver=sys.version_info; \
-print("Good") if ver.major > 2 and ver.minor >= 9 else print("Bad")'
-```
-
-Create the standalone version of pepc.
-
-```
-git clone https://github.com/intel/pepc.git --branch release pepc
-cd pepc
-echo '#!/usr/bin/python3' > pepc.standalone
-git archive --format zip HEAD >> pepc.standalone
-chmod ug+x pepc.standalone
-```
-
-This creates the 'pepc.standalone' file, which you can rename and copy anywhere for standalone use.
-
-But there is one caveat: the standalone version does not include python dependencies, which are
-normally installed by 'pip' or 'uv'. The dependencies are:
-- Required:
-  - 'importlib-resources' - required only in case of python 3.9, otherwise not needed
-  - 'pyyaml' - required for parsing YAML configuration files
-  - 'paramiko' - required only for remote host support, otherwise not needed
-- Optional:
-  - 'argcomplete' - for tab completions
-  - 'colorama' - for colored text output
 
 ## Tab completions
 
