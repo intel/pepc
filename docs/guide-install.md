@@ -38,22 +38,22 @@ Pepc requires certain system tools and libraries. Below are the installation ins
 ### Fedora
 
 ```
-sudo dnf install -y rsync util-linux procps-ng
+sudo dnf install -y rsync util-linux procps-ng git
 ```
 
 ### Ubuntu
 
 ```
-sudo apt install -y rsync util-linux procps
+sudo apt install -y rsync util-linux procps git
 ```
 
 ## Using uv
 
 Uv is a modern Python project and package management tool. Install it on your system. Many Linux
-distributions provide a package for it. Also install git. For example, in Fedora, run:
+distributions provide a package for it. For example, in Fedora, run:
 
 ```
-sudo dnf install uv git
+sudo dnf install uv
 ```
 
 Install pepc by running the following command.
@@ -106,16 +106,16 @@ Source: Linux sysfs file-system
 ## Using pip
 
 Install pip and python virtualenv on your system. Most modern Linux distributions include a package
-for this. Also install git. For example, in Fedora, run
+for this. For example, in Fedora, run
 
 ```
-dnf install python-pip git
+dnf install python-pip
 ```
 
 In Ubuntu, run
 
 ```
-apt install python3-venv git
+apt install python3-venv
 ```
 
 Install pepc into a python virtual environment using the following commands.
