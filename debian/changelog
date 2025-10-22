@@ -1,3 +1,9 @@
+pepc (1.6.10) unstable; urgency=low
+
+  * Fix remote mode (-H) crash on some Ubuntu systems.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Wed, 22 Oct 2025 00:00:00 +0200
+
 pepc (1.6.9) unstable; urgency=low
 
   * Add package C-states limit support for Panther Lake.

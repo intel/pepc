@@ -5,10 +5,13 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
- - Fix remote mode (-H) crash on some Ubuntu systems.
 ### Added
 ### Removed
 ### Changed
+
+## [1.6.10] - 2025-10-22
+### Fixed
+ - Fix remote mode (-H) crash on some Ubuntu systems.
 
 ## [1.6.9] - 2025-10-09
 ### Added
