@@ -35,6 +35,10 @@ from typing import cast
 from collections.abc import Callable
 try:
     import paramiko
+    # Import 'DummyParamiko' in any case because some users of this module rely on getting the list
+    # of dependencies by inspecting imports.
+    # pylint: disable=unused-import
+    from pepclibs.helperlibs import DummyParamiko
 except (ModuleNotFoundError, ImportError):
     from pepclibs.helperlibs import DummyParamiko as paramiko  # type: ignore[no-redef]
 from pepclibs.helperlibs import Logging, _ProcessManagerBase, ClassHelpers, Trivial
