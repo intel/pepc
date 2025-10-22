@@ -52,7 +52,7 @@ if typing.TYPE_CHECKING:
 
         hostname: str
         username: str
-        privkey: str | None
+        privkey: str
         timeout: int | float
         outdir: Path
 
@@ -427,7 +427,7 @@ def _get_cmdline_args(args: argparse.Namespace) -> _CmdlineArgsTypedDict:
 
     hostname: str = getattr(args, "hostname", "localhost")
     username: str = getattr(args, "username", "")
-    privkey: str | None = getattr(args, "privkey", None)
+    privkey: str = getattr(args, "privkey", "")
     _timeout: str = getattr(args, "timeout", "")
     timeout: int | float = 8
 

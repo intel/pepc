@@ -36,7 +36,7 @@ if typing.TYPE_CHECKING:
 
 def get_pman(hostname: str,
              username: str = "",
-             privkeypath: str | Path | None = None,
+             privkeypath: str | Path = "",
              timeout: int | float | None = None) -> ProcessManagerType:
     """
     Create and return a process manager object for the specified host.

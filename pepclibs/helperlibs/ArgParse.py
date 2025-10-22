@@ -100,14 +100,15 @@ if typing.TYPE_CHECKING:
             hostname: The remote host name or IP address (-H option). Default is "localhost".
             username: The user name for logging into the remote host (-U option). Default is "root"
                       in case of a remote host and "" (empty string) for the local host.
-            privkey: The path to the private SSH key (-K option). Default is None.
+            privkey: The path to the private SSH key (-K option). Default is an empty string (no
+                     private SSH key).
             timeout: The timeout for establishing an SSH connection in seconds (-T option). Default
                      is 8 seconds for remote hosts and None for the local host.
         """
 
         hostname: str
         username: str
-        privkey: Path | None
+        privkey: str | Path
         timeout: int | float | None
 
 SSH_OPTIONS: list[ArgTypedDict] = [
@@ -238,7 +239,7 @@ def format_ssh_args(args: argparse.Namespace) -> SSHArgsTypedDict:
 
     hostname: str = getattr(args, "hostname", "localhost")
     username: str = getattr(args, "username", "")
-    privkey: Path | None = getattr(args, "privkey", None)
+    privkey: str | Path = getattr(args, "privkey", "")
     timeout: int | float | None = getattr(args, "timeout", None)
 
     if hostname == "localhost":

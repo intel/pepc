@@ -43,7 +43,7 @@ from pepclibs.helperlibs.Exceptions import Error, ErrorPermissionDenied, ErrorTi
 from pepclibs.helperlibs.Exceptions import ErrorNotFound, ErrorExists
 
 if typing.TYPE_CHECKING:
-    from typing import Generator, IO
+    from typing import Generator, IO, Sequence
     from pepclibs.helperlibs._ProcessManagerBase import LsdirTypedDict
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
@@ -478,7 +478,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
                  port: int | None = None,
                  username: str = "",
                  password: str = "",
-                 privkeypath: str | Path | None = None,
+                 privkeypath: str | Path = "",
                  timeout: int | float | None = None):
         """
         Initialize a class instance and establish SSH connection to a remote host.
@@ -618,7 +618,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
                     optname: str,
                     hostname: str,
                     username: str,
-                    cfgfiles: list[str] | None = None) -> str | list[str] | None:
+                    cfgfiles: Sequence[str] = ()) -> str | list[str]:
         """
         Search for an SSH configuration option for a given host and user in SSH config files.
 
@@ -627,12 +627,14 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             hostname: The hostname for which the configuration option is being queried.
             username: The username to for possible SSH tokens expansion (%u in SSH options is
                       expanded with the user name)
-            cfgfiles: A list of SSH configuration file paths to search. Use standard paths by
-                      default.
+            cfgfiles: The SSH configuration file paths to search in. Use standard paths by default.
 
         Returns:
-            The value of the SSH configuration option if found, otherwise None.
+            The value of the SSH configuration option if found, otherwise an empty list.
         """
+
+        _LOG.debug("Looking up SSH config option '%s' for host '%s' and user '%s' in files: %s",
+                   optname, hostname, username, cfgfiles)
 
         old_username = None
         try:
@@ -672,20 +674,19 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
                 # Remove the USER environment variable if it was not set before.
                 os.environ.pop("USER", None)
 
-        return None
+        return []
 
     def _lookup_privkey(self,
                         hostname: str,
                         username: str,
-                        cfgfiles: list[str] | None = None) -> str | None:
+                        cfgfiles: Sequence[str] = ()) -> str | None:
         """
         Look up the private SSH authentication key for a given host and user.
 
         Args:
             hostname: The hostname of the target SSH server.
             username: The username for the SSH connection.
-            cfgfiles: List of configuration files to search for the key. Use standard files by
-                      default.
+            cfgfiles: The SSH configuration files to search in. Use standard files by default.
 
         Returns:
             The path to the private key if found, or None if no key is found.
