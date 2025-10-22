@@ -642,8 +642,15 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             os.environ["USER"] = username
 
             if not cfgfiles:
+
+                try_cfgfiles = ["/etc/ssh/ssh_config"]
+                # If running under 'sudo', check the original user's SSH config file first.
+                if os.environ.get("SUDO_USER"):
+                    try_cfgfiles.append(f"/home/{os.environ['SUDO_USER']}/.ssh/config")
+                try_cfgfiles.append(os.path.expanduser("~/.ssh/config"))
+
                 cfgfiles = []
-                for cfgfile in ["/etc/ssh/ssh_config", os.path.expanduser("~/.ssh/config")]:
+                for cfgfile in try_cfgfiles:
                     if os.path.exists(cfgfile):
                         cfgfiles.append(cfgfile)
 
