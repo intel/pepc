@@ -457,6 +457,28 @@ class Logger(logging.Logger):
 
         self.log(NOTICE, fmt, *args)
 
+    def notice_once(self, fmt: str, *args: Any):
+        """
+        Logs a notice message, ensuring that the same message is not logged more than once.
+
+        Args:
+            fmt: The format string for the warning message.
+            *args: The arguments to format the warning message.
+        """
+
+        import inspect # pylint: disable=import-outside-toplevel
+
+        caller_frame = inspect.stack()[1][0]
+        if caller_frame:
+            caller_info = inspect.getframeinfo(caller_frame)
+            msg_hash = f"{caller_info.filename}:{caller_info.lineno}:{fmt}"
+        else:
+            raise Error("Python interpretor does not support 'inspect.stack()'")
+
+        if msg_hash not in self._seen_msgs:
+            self._seen_msgs.add(msg_hash)
+            self.log(NOTICE, fmt, *args)
+
     def warn_once(self, fmt: str, *args: Any):
         """
         Logs a warning message, ensuring that the same message is not logged more than once.
@@ -473,7 +495,7 @@ class Logger(logging.Logger):
             caller_info = inspect.getframeinfo(caller_frame)
             msg_hash = f"{caller_info.filename}:{caller_info.lineno}:{fmt}"
         else:
-            raise Error("python interpretor does not support 'inspect.stack()'")
+            raise Error("Python interpretor does not support 'inspect.stack()'")
 
         if msg_hash not in self._seen_msgs:
             self._seen_msgs.add(msg_hash)
