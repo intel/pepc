@@ -265,13 +265,13 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
 
     ArgParse.add_options(parser, ArgParse.SSH_OPTIONS + [_DATASET_OPTION])
 
+    subparsers = parser.add_subparsers(title="commands", dest="a command")
+    subparsers.required = True
+
     text = f"""Print path to {TOOLNAME} manual pages directory and exit. This path can be added to
                the 'MANPATH' environment variable to make the manual pages available to the 'man'
                tool."""
     parser.add_argument("--print-man-path", action=_PrintManPathAction, nargs=0, help=text)
-
-    subparsers = parser.add_subparsers(title="commands", dest="a command")
-    subparsers.required = True
 
     ssh_options = ArgParse.SSH_OPTIONS + [_DATASET_OPTION]
     ssh_mechanisms_options = ssh_options + _MECHANISMS_OPTIONS
