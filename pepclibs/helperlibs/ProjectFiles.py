@@ -74,7 +74,7 @@ def get_python_data_package_path(prjname: str) -> Path | None:
         Path to the package directory.
     """
 
-    pkgname = prjname + "data"
+    pkgname = prjname.replace("-", "") + "data"
     pkgpath: Path | None = None
     try:
         with contextlib.suppress(ModuleNotFoundError):
