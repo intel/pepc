@@ -183,6 +183,8 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
         if path not in self._transaction_buffer:
             self._transaction_buffer[path] = {}
 
+        _LOG.debug("Adding for transaction: path='%s', val='%s', what='%s', verify='%s', "
+                   "retries='%d', sleep='%s'", path, str(val), what, verify, retries, sleep)
         tinfo = self._transaction_buffer[path]
         if "what" in tinfo and tinfo["what"] != what:
             raise Error(f"BUG: Inconsistent description for file '{path}':\n"
@@ -293,6 +295,8 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
             # Read CPU frequency back and verify that it was set correctly.
             self.cache_remove(path)
             new_val = self.read(path, what=what)
+            _LOG.debug("Verifying %s value '%s' in sysfs file '%s'%s: read back '%s'",
+                       what, val, path, self._pman.hostmsg, new_val)
             if val == new_val:
                 return new_val
 
@@ -309,7 +313,7 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
             val_str = f"{val[:23]}...snip..."
         raise ErrorVerifyFailed(f"Failed to write value '{val_str}' to{what} sysfs file '{path}'"
                                 f"{self._pman.hostmsg}:\n  wrote '{val}', but read '{new_val}' "
-                                "back", expected=val, actual=new_val, path=path)
+                                f"back", expected=val, actual=new_val, path=path)
 
     def flush_transaction(self):
         """
