@@ -1711,7 +1711,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         """
 
         _LOG.debug("Setting property '%s' to '%s' for CPUs %s via mechanisms '%s'",
-                   pname,  ", ".join([str(cpu) for cpu in cpus]), ", ".join(mnames))
+                   pname, str(val), ", ".join([str(cpu) for cpu in cpus]), ", ".join(mnames))
         exceptions = []
 
         for mname in mnames:
