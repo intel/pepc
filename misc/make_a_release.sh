@@ -26,13 +26,13 @@ PYPROJECT_TOML="$BASEDIR/pyproject.toml"
 CHANGELOG_FILE="$BASEDIR/CHANGELOG.md"
 
 # Documentation directory and files.
-PEPC_MAN_DIR="$BASEDIR/pepcdata/man/man1"
-PEPC_RST_FILES="$BASEDIR/docs/pepc-pstates.rst
-                $BASEDIR/docs/pepc-cstates.rst
-                $BASEDIR/docs/pepc-aspm.rst
-                $BASEDIR/docs/pepc-tpmi.rst
-                $BASEDIR/docs/pepc-topology.rst
-                $BASEDIR/docs/pepc-cpu-hotplug.rst"
+MAN_DIR="$BASEDIR/pepcdata/man/man1"
+RST_FILES="$BASEDIR/docs/pepc-pstates.rst
+           $BASEDIR/docs/pepc-cstates.rst
+           $BASEDIR/docs/pepc-aspm.rst
+           $BASEDIR/docs/pepc-tpmi.rst
+           $BASEDIR/docs/pepc-topology.rst
+           $BASEDIR/docs/pepc-cpu-hotplug.rst"
 
 # Path to the script converting CHANGELOG.md into debian changelog.
 CHANGELOG_MD_TO_DEBIAN="$BASEDIR/misc/changelog_md_to_debian"
@@ -76,7 +76,7 @@ if [ $# -eq 1 ]; then
     new_ver="$1"; shift
     # Validate the new version.
     printf "%s" "$new_ver" | grep -q -x "$VERSION_REGEX" ||
-           fatal "please, provide new version in X.Y.Z format"
+           fatal "Provide new version in X.Y.Z format"
 elif [ $# -eq 0 ]; then
     # The new version was not provided, increment the current version umber.
     ver_start="$(sed -n -e "s/$VERSION_VAR_REGEX/\2.\3./p" "$PEPC_FILE")"
@@ -91,12 +91,12 @@ echo "New pepc version: $new_ver"
 
 # Validate the new version.
 printf "%s" "$new_ver" | grep -q -x "$VERSION_REGEX" ||
-         fatal "please, provide new version in X.Y.Z format"
+         fatal "Provide new version in X.Y.Z format"
 
 # Make sure that the current branch is 'main' or 'release'.
 current_branch="$(git -C "$BASEDIR" branch | sed -n -e '/^*/ s/^* //p')"
 if [ "$current_branch" != "main" -a "$current_branch" != "release" ]; then
-	fatal "current branch is '$current_branch' but must be 'main' or 'release'"
+	fatal "Current branch is '$current_branch' but must be 'main' or 'release'"
 fi
 
 # Remind the maintainer about various important things.
@@ -116,8 +116,8 @@ sed -i -e "s/^version = \"$VERSION_REGEX\"$/version = \"$new_ver\"/" "$PYPROJECT
 sed -i -e "s/^Version:\(\s\+\)$VERSION_REGEX$/Version:\1$new_ver/" "$SPEC_FILE"
 
 # Update the man pages.
-for file in $PEPC_RST_FILES; do
-    manfile="${PEPC_MAN_DIR}/$(basename "$file" ".rst").1"
+for file in $RST_FILES; do
+    manfile="${MAN_DIR}/$(basename "$file" ".rst").1"
     pandoc -f rst -s "$file" -t man -o "$manfile"
     git add "$manfile"
 done
