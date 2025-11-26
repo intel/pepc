@@ -435,19 +435,11 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
         self._warn_no_ecores_bug()
 
         what = f"{ftype} CPU frequency"
-        retries = 0
-        sleep = 0.0
+        retries = 2
+        sleep = 0.1
 
         for cpu in cpus:
             self._validate_freq(freq, ftype, cpu)
-
-            if self._verify:
-                cpu_info = self._cpuinfo.info
-                if cpu_info["vendor"] == "GenuineIntel" and "hwp" in cpu_info["flags"][cpu]:
-                    # On some Intel platforms with HWP enabled the change does not happen
-                    # immediately. Retry few times.
-                    retries = 2
-                    sleep = 0.1
 
             path = self._get_cpu_freq_sysfs_path(ftype, cpu)
 
