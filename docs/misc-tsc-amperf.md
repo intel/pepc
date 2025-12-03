@@ -1,7 +1,7 @@
 # TSC, APERF, and MPERF Counters
 
 **Author**: Artem Bityutskiy<br>
-**Version**: 0.1 (draft)<br>
+**Version**: 1.0<br>
 **Date**: 2025-11-28<br>
 
 ## Table of Contents
