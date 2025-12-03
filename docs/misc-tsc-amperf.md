@@ -142,8 +142,8 @@ frequency behavior.
 
 A helpful mnemonic for remembering their roles:
 - **APERF**: Actual Performance: Scales with actual CPU frequency.
-- **MPERF**: Marketing Performance: Increments at a constant CPU frequency, usually the same as the
-  "marketing" CPU frequency.
+- **MPERF**: Marketing Performance: Increments at a constant frequency, usually the same as the
+  "marketing" (base) CPU frequency.
 
 The "Marketing Performance" mnemonic for MPERF is informal but useful. It was coined by Len Brown,
 to easily distinguish between the two counters.
