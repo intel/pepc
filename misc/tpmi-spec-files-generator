@@ -1,0 +1,154 @@
+#!/usr/bin/python3
+#
+# -*- coding: utf-8 -*-
+# vim: ts=4 sw=4 tw=100 et ai si
+#
+# Copyright (C) 2025 Intel Corporation
+# SPDX-License-Identifier: BSD-3-Clause
+#
+# Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
+
+"""
+Gererate pepc TPMI spec files from Intel proprietary TPMI XML files.
+"""
+
+from __future__ import annotations # Remove when switching to Python 3.10+.
+
+import typing
+import argparse
+import contextlib
+from pathlib import Path
+from misc import TPMIXMLConvert
+from pepclibs.helperlibs import ArgParse, Logging, Trivial
+from pepclibs.helperlibs.Exceptions import Error
+
+try:
+    import argcomplete
+    _ARGCOMPLETE_AVAILABLE = True
+except ImportError:
+    # We can live without argcomplete, we only lose tab completions.
+    _ARGCOMPLETE_AVAILABLE = False
+
+if typing.TYPE_CHECKING:
+    from typing import Final, TypedDict, cast, Sequence
+
+    class _CmdLineArgsTypedDict(TypedDict, total=False):
+        """
+        Typed dictionary for command-line arguments dictionary.
+
+        Attributes:
+            input_dir: Path to the input directory with TPMI XML files.
+            output_dir: Path to the output directory for the generated spec files.
+            feature_names: TPMI features to include. If empty, include all features.
+            include_intelrsvd: Whether to include TPMI registers marked as "IntelRsvd".
+            include_nonos: Whether to include TPMI features that are not supposed to be used by the
+                           OS.
+        """
+
+        input_dir: Path
+        output_dir: Path
+        feature_names: Sequence[str]
+        include_intelrsvd: bool
+        include_nonos: bool
+
+_VERSION: Final[str] = "1.0"
+_TOOLNAME: Final[str] = "tpmi-spec-files-generator"
+
+_LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc").configure(prefix=_TOOLNAME)
+
+def _build_arguments_parser() -> ArgParse.ArgsParser:
+    """
+    Build and return the command-line arguments parser.
+
+    Returns:
+        An initialized command-line arguments parser object.
+    """
+
+    text = f"{_TOOLNAME} - Generate pepc TPMI spec files from Intel proprietary TPMI XML files"
+    parser = ArgParse.ArgsParser(description=text, prog=_TOOLNAME, ver=_VERSION)
+
+    text = "Path to the input directory with TPMI XML files."
+    arg = parser.add_argument("-i", "--input-dir", type=Path, help=text)
+    setattr(arg, "completer", getattr(argcomplete.completers, "DirectoriesCompleter"))
+
+    text = "Path to the output directory for the generated pepc TPMI spec files."
+    arg = parser.add_argument("-o", "--output-dir", type=Path, help=text)
+    setattr(arg, "completer", getattr(argcomplete.completers, "DirectoriesCompleter"))
+
+    text = "Comma-separated list of TPMI features to include (all features by default)."
+    parser.add_argument("--include-features", type=str, help=text, default="")
+
+    text = """Include TPMI registers marked as "IntelRsvd" (excluded by default)."""
+    parser.add_argument("--include-intelrsvd", action="store_true", help=text)
+
+    text = "Include TPMI features that are not supposed to be used by the OS (excluded by default)."
+    parser.add_argument("--include-nonos", action="store_true", help=text)
+
+    if _ARGCOMPLETE_AVAILABLE:
+        argcomplete.autocomplete(parser)
+
+    return parser
+
+def _get_cmdline_args(args: argparse.Namespace) -> _CmdLineArgsTypedDict:
+    """
+    """
+
+    cmdl: _CmdLineArgsTypedDict = {}
+
+    input_dir = getattr(args, "input_dir")
+    if not input_dir:
+        raise Error("Please, specify the input XML directory path using '--input-dir'")
+    output_dir = getattr(args, "output_dir")
+    if not output_dir:
+        raise Error("Please, specify the output directory path using '--output-dir'")
+
+    if typing.TYPE_CHECKING:
+        input_dir = cast(Path, input_dir)
+        output_dir = cast(Path, output_dir)
+
+    if not input_dir.is_dir():
+        raise Error(f"Input XML directory '{input_dir}' does not exist or is not a directory")
+    if not output_dir.is_dir():
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+    cmdl["input_dir"] = input_dir
+    cmdl["output_dir"] = output_dir
+
+    feature_names = Trivial.split_csv_line(getattr(args, "include_features", ""))
+    cmdl["feature_names"] = feature_names
+
+    cmdl["include_intelrsvd"] = getattr(args, "include_intelrsvd")
+    cmdl["include_nonos"] = getattr(args, "include_nonos")
+
+    return cmdl
+
+def _main() -> int:
+    """
+    The script entry point.
+
+    Returns: 0 on success, non-zero on failure.
+    """
+
+    try:
+        args = _build_arguments_parser().parse_args()
+        cmdl = _get_cmdline_args(args)
+
+        with contextlib.ExitStack() as stack:
+            conv = TPMIXMLConvert.TPMIXMLConvert(cmdl["input_dir"])
+            stack.enter_context(conv)
+
+            conv.convert(feature_names=cmdl["feature_names"],
+                         include_intelrsvd=cmdl["include_intelrsvd"],
+                         include_nonos=cmdl["include_nonos"])
+            conv.generate_spec_files(cmdl["output_dir"])
+    except KeyboardInterrupt:
+        _LOG.info("\nInterrupted, exiting")
+        return -1
+    except Error as err:
+        _LOG.error(err)
+        return -1
+
+    return 0
+
+if __name__ == "__main__":
+    raise SystemExit(_main())

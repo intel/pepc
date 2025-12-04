@@ -766,7 +766,7 @@ class Tpmi(ClassHelpers.SimpleCloseContext):
                                f"should include only upper case characters")
 
                 # The allowed and the mandatory bit field dictionary key names.
-                keys = {"bits", "desc"}
+                keys = {"bits", "readonly", "desc"}
                 where = f"in bit field '{bfname}' of the '{regname}' TPMI register definition"
                 _check_keys(bfdict, keys, keys, where)
 
