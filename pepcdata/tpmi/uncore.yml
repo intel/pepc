@@ -4,47 +4,81 @@ desc: >-
 feature_id: 0x2
 
 registers:
-    UFS_ADV_CONTROL_1:
+    UFS_HEADER:
         fields:
-            SLOPE_1:
+            INTERFACE_VERSION:
                 bits: "7:0"
-                desc: >-
-                    Slope that controls how fast the mesh frequency is brought down with
-                    core frequency when the socket is power limited (in 1/16 ratio bins,
-                    S4.3 format)
-            BASE_1:
+                desc: "Version number for this interface"
+            LOCAL_FABRIC_CLUSTER_ID_MASK:
                 bits: "15:8"
+                desc: "ID assigned for each fabric V/F domain"
+            FLAGS:
+                bits: "31:16"
                 desc: >-
-                    Core frequency below which mesh frequency is brought down when socket
-                    is power limited (S7.0 format)
+                     Bit mask of the supported domain register, can be used for discovering
+                     which register is valid in the UFS register bank
+            AUTONOMOUS_UFS_DISABLED:
+                bits: "32:32"
+                desc: "0 - autonomous UFS algorithm is supported, 1 - not supported"
+            FUSION:
+                bits: "33:33"
+                desc: "1 - mesh boot algorithm is supported, 0 - not supported"
+            RATIO_UNIT:
+                bits: "35:34"
+                desc: "Frequency ratio unit: 00 - 100MHz, all others - reserved"
             RESERVED:
-                bits: "63:16"
+                bits: "63:36"
                 desc: "Reserved"
-        offset: 32
+        offset: 0
         width: 64
-    UFS_ADV_CONTROL_2:
+    UFS_FABRIC_CLUSTER_OFFSET:
         fields:
-            SLOPE_2:
-                bits: "7:0"
+            OFFSET:
+                bits: "63:0"
                 desc: >-
-                    Slope that controls how fast the mesh frequency is brought down with
-                    core frequency when the socket is power limited (in 1/16 ratio bins,
-                    S4.3 format)
-            BASE_2:
-                bits: "15:8"
+                    Offset (Qword, 8 bytes) for status and control registers belonging to local
+                    cluster ID X. Each cluster has 8 bits offset starting with bit 0-7 for cluster
+                    ID 0, bit8-15 for cluster ID 1, etc.
+        offset: 8
+        width: 64
+    UFS_STATUS:
+        fields:
+            CURRENT_RATIO:
+                bits: "6:0"
+                desc: "Instantaneous fabric frequency ratio"
+            CURRENT_VOLTAGE:
+                bits: "22:7"
+                desc: "Current Fabric voltage in U3.13 format"
+            AGENT_TYPE_CORE:
+                bits: "23:23"
                 desc: >-
-                    Core frequency below which mesh frequency is brought down when socket
-                    is power limited (S7.0 format)
-            UTILIZATION_THRESHOLD:
-                bits: "23:16"
-                desc: "Mesh utilization threshold (255 - 100% utilization, 0 - 0% utilization)"
-            HBM_BW_THRESHOLD:
-                bits: "31:24"
-                desc: "HBM bandwidth threshold"
+                    1 - at least one core agent exists on the fabric cluster, 0 - no core
+                    agent is present on the fabric cluster
+            AGENT_TYPE_CACHE:
+                bits: "24:24"
+                desc: >-
+                    1 - at least one cache agent exists on the fabric cluster, 0 - no cache
+                    agent is present on the fabric cluster
+            AGENT_TYPE_MEMORY:
+                bits: "25:25"
+                desc: >-
+                    1 - at least one memory agent exists on the fabric cluster, 0 - no memory
+                    agent is present on the fabric cluster
+            AGENT_TYPE_IO:
+                bits: "26:26"
+                desc: >-
+                    1 - at least one I/O agent exists on the fabric cluster, 0 - no I/O
+                    agent is present on the fabric cluster
             RESERVED:
-                bits: "63:32"
+                bits: "31:27"
                 desc: "Reserved"
-        offset: 40
+            THROTTLE_COUNTER:
+                bits: "63:32"
+                desc: >-
+                    Count of 1ms intervals in which the fabric frequency violated the frequency
+                    limit in the UFS control register. Increments only once within a 1ms interval
+                    if there is a violation
+        offset: 16
         width: 64
     UFS_CONTROL:
         fields:
@@ -92,79 +126,45 @@ registers:
                     EFFICIENCY_LATENCY_CTRL_HIGH_THRESHOLD.
         offset: 24
         width: 64
-    UFS_FABRIC_CLUSTER_OFFSET:
+    UFS_ADV_CONTROL_1:
         fields:
-            OFFSET:
-                bits: "63:0"
-                desc: >-
-                    Offset (Qword, 8 bytes) for status and control registers belonging to local
-                    cluster ID X. Each cluster has 8 bits offset starting with bit 0-7 for cluster
-                    ID 0, bit8-15 for cluster ID 1, etc.
-        offset: 8
-        width: 64
-    UFS_HEADER:
-        fields:
-            INTERFACE_VERSION:
+            SLOPE_1:
                 bits: "7:0"
-                desc: "Version number for this interface"
-            LOCAL_FABRIC_CLUSTER_ID_MASK:
+                desc: >-
+                    Slope that controls how fast the mesh frequency is brought down with
+                    core frequency when the socket is power limited (in 1/16 ratio bins,
+                    S4.3 format)
+            BASE_1:
                 bits: "15:8"
-                desc: "ID assigned for each fabric V/F domain"
-            FLAGS:
-                bits: "31:16"
                 desc: >-
-                     Bit mask of the supported domain register, can be used for discovering
-                     which register is valid in the UFS register bank
-            AUTONOMOUS_UFS_DISABLED:
-                bits: "32:32"
-                desc: "0 - autonomous UFS algorithm is supported, 1 - not supported"
-            FUSION:
-                bits: "33:33"
-                desc: "1 - mesh boot algorithm is supported, 0 - not supported"
-            RATIO_UNIT:
-                bits: "35:34"
-                desc: "Frequency ratio unit: 00 - 100MHz, all others - reserved"
+                    Core frequency below which mesh frequency is brought down when socket
+                    is power limited (S7.0 format)
             RESERVED:
-                bits: "63:36"
+                bits: "63:16"
                 desc: "Reserved"
-        offset: 0
+        offset: 32
         width: 64
-    UFS_STATUS:
+    UFS_ADV_CONTROL_2:
         fields:
-            CURRENT_RATIO:
-                bits: "6:0"
-                desc: "Instantaneous fabric frequency ratio"
-            CURRENT_VOLTAGE:
-                bits: "22:7"
-                desc: "Current Fabric voltage in U3.13 format"
-            AGENT_TYPE_CORE:
-                bits: "23:23"
+            SLOPE_2:
+                bits: "7:0"
                 desc: >-
-                    1 - at least one core agent exists on the fabric cluster, 0 - no core
-                    agent is present on the fabric cluster
-            AGENT_TYPE_CACHE:
-                bits: "24:24"
+                    Slope that controls how fast the mesh frequency is brought down with
+                    core frequency when the socket is power limited (in 1/16 ratio bins,
+                    S4.3 format)
+            BASE_2:
+                bits: "15:8"
                 desc: >-
-                    1 - at least one cache agent exists on the fabric cluster, 0 - no cache
-                    agent is present on the fabric cluster
-            AGENT_TYPE_MEMORY:
-                bits: "25:25"
-                desc: >-
-                    1 - at least one memory agent exists on the fabric cluster, 0 - no memory
-                    agent is present on the fabric cluster
-            AGENT_TYPE_IO:
-                bits: "26:26"
-                desc: >-
-                    1 - at least one I/O agent exists on the fabric cluster, 0 - no I/O
-                    agent is present on the fabric cluster
+                    Core frequency below which mesh frequency is brought down when socket
+                    is power limited (S7.0 format)
+            UTILIZATION_THRESHOLD:
+                bits: "23:16"
+                desc: "Mesh utilization threshold (255 - 100% utilization, 0 - 0% utilization)"
+            HBM_BW_THRESHOLD:
+                bits: "31:24"
+                desc: "HBM bandwidth threshold"
             RESERVED:
-                bits: "31:27"
-                desc: "Reserved"
-            THROTTLE_COUNTER:
                 bits: "63:32"
-                desc: >-
-                    Count of 1ms intervals in which the fabric frequency violated the frequency
-                    limit in the UFS control register. Increments only once within a 1ms interval
-                    if there is a violation
-        offset: 16
+                desc: "Reserved"
+        offset: 40
         width: 64
