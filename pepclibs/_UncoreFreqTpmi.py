@@ -191,7 +191,7 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
 
         if ztype == "low":
             regname = "UFS_CONTROL"
-            bfname = "EFFICIENCY_LATENCY_CTRL_RATIO"
+            bfname = "EFFICIENCY_LATENCY_CTRL_LOW_RATIO"
         elif ztype == "mid":
             regname = "UFS_CONTROL"
             bfname = "EFFICIENCY_LATENCY_CTRL_MID_RATIO"

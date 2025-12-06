@@ -1,44 +1,70 @@
 name: "tpmi_info"
 desc: >-
-    Topology Aware Register and PM Capsule Interface (TPMI) information
+    TPMI Info Registers
 feature_id: 0x81
 
 registers:
-    TPMI_BUS_INFO:
-        fields:
-            BUS:
-                bits: "15:8"
-                desc: "Bus number of the TPMI device"
-            CD_MASK:
-                bits: "49:34"
-                desc: "Bitmap of compute die IDs the partition supports"
-            DEV:
-                bits: "7:3"
-                desc: "Device number of the TPMI device"
-            FUN:
-                bits: "2:0"
-                desc: "Function number of the TPMI device"
-            LOCK:
-                bits: "63:63"
-                desc: "1 - the register is locked and becomes read-only until next reset"
-            PACKAGE_ID:
-                bits: "23:16"
-                desc: "X2APIC Package ID"
-            PARTITION:
-                bits: "33:32"
-                desc: "Partition number"
-            RESERVED:
-                bits: "62:50"
-                desc: "Reserved"
-            SEGMENT:
-                bits: "31:24"
-                desc: "Segment number of the TPMI device"
-        offset: 8
-        width: 64
     TPMI_INFO_HEADER:
+        offset: 0
+        width: 64
         fields:
             INTERFACE_VERSION:
                 bits: "7:0"
-                desc: "Version number for this interface"
-        offset: 0
+                readonly: true
+                desc: >-
+                    Version number for this interface
+            RSVD:
+                bits: "63:8"
+                readonly: true
+                desc: >-
+                    Reserved
+    TPMI_BUS_INFO:
+        offset: 8
         width: 64
+        fields:
+            FUN:
+                bits: "2:0"
+                readonly: true
+                desc: >-
+                    Function number of the TPMI device
+            DEV:
+                bits: "7:3"
+                readonly: true
+                desc: >-
+                    Device number of the TPMI device
+            BUS:
+                bits: "15:8"
+                readonly: true
+                desc: >-
+                    Bus number of the TPMI device
+            PACKAGE_ID:
+                bits: "23:16"
+                readonly: true
+                desc: >-
+                    The X2APIC Package ID
+            SEGMENT:
+                bits: "31:24"
+                readonly: true
+                desc: >-
+                    Segment number of the TPMI device
+            PARTITION:
+                bits: "33:32"
+                readonly: true
+                desc: >-
+                    Partition number of the TPMI device
+            CD_MASK:
+                bits: "49:34"
+                readonly: true
+                desc: >-
+                    Bitmap of compute die IDs the partition supports
+            RSVD:
+                bits: "62:50"
+                readonly: true
+                desc: >-
+                    Reserved
+            LOCK:
+                bits: "63:63"
+                readonly: true
+                desc: >-
+                    When set to 1 the register is locked and becomes read-only until next reset.
+                    BIOS writes 1 to LOCK bit after initializing this register

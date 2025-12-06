@@ -4,214 +4,676 @@ desc: >-
 feature_id: 0x0
 
 registers:
-    DOMAIN_INFO:
-        fields:
-            LOCK:
-                bits: "63:63"
-                desc: "1 - all settings in this register are locked, otherwise unlocked"
-            RESERVED:
-                bits: "62:4"
-                desc: "Reserved"
-            DOMAIN_ID:
-                bits: "3:1"
-                desc: "Domain ID to this package belongs to"
-            ROOT:
-                bits: "0:0"
-                desc: "1 - this package is the domain root, otherwise it is not the domain root"
-        offset: 80
-        width: 64
-    DOMAIN_HEADER_0:
-        fields:
-            FLAGS:
-                bits: "47:32"
-                desc: "Bit mask of the supported domain register"
-            INTERFACE_VERSION:
-                bits: "7:0"
-                desc: "Version number for this interface"
-            PARENT_DOMAIN_INDEX:
-                bits: "31:24"
-                desc: "Parent domain index number"
-            RESERVED:
-                bits: "63:48"
-                desc: "Reserved"
-            SIZE:
-                bits: "23:16"
-                desc: "Units of 128 bytes"
-            TYPE:
-                bits: "15:8"
-                desc: "Package RAPL, DRAM RAPL, platform RAPL, etc"
+    SOCKET_RAPL_DOMAIN_HEADER:
         offset: 0
         width: 64
-    ENERGY_STATUS:
+        fields:
+            INTERFACE_VERSION:
+                bits: "7:0"
+                readonly: true
+                desc: >-
+                    Version number for this interface
+            TYPE:
+                bits: "15:8"
+                readonly: true
+                desc: >-
+                    package rapl, dram rapl, platform rapl, etc
+            SIZE:
+                bits: "23:16"
+                readonly: true
+                desc: >-
+                    units of 128 bytes
+            PARENT_DOMAIN_INDEX:
+                bits: "31:24"
+                readonly: true
+                desc: >-
+                    parent domain index number
+            FLAGS:
+                bits: "47:32"
+                readonly: true
+                desc: >-
+                    Bit mask of the supported domain register. Pcode populates default setting. SW
+                    use it to discover which register is valid in the RAPL register bank. 1: the
+                    corresponding register is valid. 0: register is invalid
+            RSVD:
+                bits: "63:48"
+                readonly: true
+                desc: >-
+                    Reserved
+    SOCKET_RAPL_POWER_UNIT:
+        offset: 8
+        width: 64
+        fields:
+            PWR_UNIT:
+                bits: "3:0"
+                readonly: true
+                desc: >-
+                    Power Units used for power control registers. The actual unit value is
+                    calculated by 1 W / Power(2, PWR_UNIT)
+            RSVD1:
+                bits: "5:4"
+                readonly: true
+                desc: >-
+                    RESERVED
+            ENERGY_UNIT:
+                bits: "10:6"
+                readonly: true
+                desc: >-
+                    Energy Units used for power control registers. The actual unit value is
+                    calculated by 1 J / Power(2,ENERGY_UNIT)
+            RSVD2:
+                bits: "11:11"
+                readonly: true
+                desc: >-
+                    RESERVED
+            TIME_UNIT:
+                bits: "15:12"
+                readonly: true
+                desc: >-
+                    Time Units used for power control registers. The actual unit value is calculated
+                    by 1 s / Power(2,TIME_UNIT)
+            RSVD3:
+                bits: "63:16"
+                readonly: true
+                desc: >-
+                    RESERVED
+    SOCKET_RAPL_PL1_CONTROL:
+        offset: 16
+        width: 64
+        fields:
+            PWR_LIM:
+                bits: "17:0"
+                readonly: true
+                desc: >-
+                    This field indicates the power limitation for the socket RAPL domain. The unit
+                    of measurement is defined in POWER_UNIT[PWR_UNIT]
+            TIME_WINDOW:
+                bits: "24:18"
+                readonly: true
+                desc: >-
+                    Indicates the length of time window over which the power limit will be used by
+                    the processor. The time window is floating point number given by 2^Y * (1.0 + X
+                    / 4.0) * Time_Unit X = TIME_WINDOW[6:5]; Y = TIME_WINDOW[4:0]; Time_Unit is
+                    defined in POWER_UNIT[TIME_UNIT]. The maximal time window is bounded by
+                    PL_INFO[MAX_TW]
+            RSVD:
+                bits: "61:25"
+                readonly: true
+                desc: >-
+                    Reserved
+            PWR_LIM_EN:
+                bits: "62:62"
+                readonly: true
+                desc: >-
+                    Enable(1) or Disable(0)
+            LOCK:
+                bits: "63:63"
+                readonly: true
+                desc: >-
+                    When set, all settings in this register are locked and are treated as Read Only
+                    until next reset
+    SOCKET_RAPL_PL2_CONTROL:
+        offset: 24
+        width: 64
+        fields:
+            PWR_LIM:
+                bits: "17:0"
+                readonly: true
+                desc: >-
+                    This field indicates the power limitation for the socket RAPL domain. The unit
+                    of measurement is defined in POWER_UNIT[PWR_UNIT]
+            TIME_WINDOW:
+                bits: "24:18"
+                readonly: true
+                desc: >-
+                    Indicates the length of time window over which the power limit will be used by
+                    the processor. The time window is floating point number given by 2^Y * (1.0 + X
+                    / 4.0) * Time_Unit X = TIME_WINDOW[6:5]; Y = TIME_WINDOW[4:0]; Time_Unit is
+                    defined in POWER_UNIT[TIME_UNIT]. The maximal time window is bounded by
+                    PL_INFO[MAX_TW]
+            RSVD:
+                bits: "61:25"
+                readonly: true
+                desc: >-
+                    Reserved
+            PWR_LIM_EN:
+                bits: "62:62"
+                readonly: true
+                desc: >-
+                    Enable(1) or Disable(0)
+            LOCK:
+                bits: "63:63"
+                readonly: true
+                desc: >-
+                    When set, all settings in this register are locked and are treated as Read Only
+                    until next reset
+    SOCKET_RAPL_PL4_CONTROL:
+        offset: 40
+        width: 64
+        fields:
+            PWR_LIM:
+                bits: "17:0"
+                readonly: true
+                desc: >-
+                    This field indicates the PL4 power limitation. The unit of measurement is
+                    defined in POWER_UNIT[PWR_UNIT]
+            RSVD:
+                bits: "61:18"
+                readonly: true
+                desc: >-
+                    Reserved
+            PWR_LIM_EN:
+                bits: "62:62"
+                readonly: true
+                desc: >-
+                    Enable(1) or Disable(0)
+            LOCK:
+                bits: "63:63"
+                readonly: true
+                desc: >-
+                    When set, all settings in this register are locked and are treated as Read Only
+                    until next reset
+    SOCKET_RAPL_ENERGY_STATUS:
+        offset: 56
+        width: 64
         fields:
             ENERGY:
                 bits: "31:0"
-                desc: "Total amount of energy consumed since last reset"
+                readonly: true
+                desc: >-
+                    Energy value. The counter will wrap around and continue counting when it reaches
+                    its limit
             TIME:
                 bits: "63:32"
-                desc: "Total time elapsed when the energy was last update"
-        offset: 56
+                readonly: true
+                desc: >-
+                    Total time elapsed when the energy was last updated. This is a monotonic
+                    increment counter with auto wrap back to zero after overflow. Unit is 10ns. SW
+                    calculates the delta change from previous readings in order to determine the
+                    power consumed. Power = delta_energy / delta_time
+    SOCKET_RAPL_PERF_STATUS:
+        offset: 64
         width: 64
-    INTERRUPT:
-        fields:
-            MASK:
-                bits: "0:0"
-                desc: "0 - interrupt is enabled, 1 - interrupt is disabled"
-            RESERVED:
-                bits: "63:2"
-                desc: "Reserved"
-            STATUS:
-                bits: "1:1"
-                desc: "1 - there is a pending interrupt, 0 otherwise"
-        offset: 88
-        width: 64
-    PERF_STATUS:
         fields:
             PWR_LIMIT_THROTTLE_CTR:
                 bits: "31:0"
-                desc: "Number of times power was clipped"
-            RESERVED:
+                readonly: true
+                desc: >-
+                    Reports the number of times (accumulated throttled time) the Power limiting
+                    algorithm had to clip the power limit due to hitting the lowest power state
+                    available
+            RSVD:
                 bits: "63:32"
-                desc: "Reserved"
-        offset: 64
-        width: 64
-    PL1:
-        fields:
-            LOCK:
-                bits: "63:63"
-                desc: "1 - all settings in this register are locked, otherwise unlocked"
-            PWR_LIM:
-                bits: "17:0"
-                desc: "Power limitation for the package RAPL domain"
-            PWR_LIM_EN:
-                bits: "62:62"
-                desc: "1 - enable, 0 - disable"
-            RESERVED:
-                bits: "61:25"
-                desc: "Reserved"
-            TIME_WINDOW:
-                bits: "24:18"
-                desc: "Time window length for the power limit"
-        offset: 16
-        width: 64
-    PL2:
-        fields:
-            LOCK:
-                bits: "63:63"
-                desc: "1 - all settings in this register are locked, otherwise unlocked"
-            PWR_LIM:
-                bits: "17:0"
-                desc: "Power limitation for the package RAPL domain"
-            PWR_LIM_EN:
-                bits: "62:62"
-                desc: "1 - enable, 0 - disable"
-            RESERVED:
-                bits: "61:25"
-                desc: "Reserved"
-            TIME_WINDOW:
-                bits: "24:18"
-                desc: "Time window length for the power limit"
-        offset: 24
-        width: 64
-    PL3:
-        fields:
-            RESERVED:
-                bits: "63:0"
-                desc: "Reserved"
-        offset: 32
-        width: 64
-    PL4:
-        fields:
-            LOCK:
-                bits: "63:63"
-                desc: "1 - all settings in this register are locked, otherwise unlocked"
-            PWR_LIM:
-                bits: "17:0"
-                desc: "Power limitation for the package RAPL domain"
-            PWR_LIM_EN:
-                bits: "62:62"
-                desc: "1 - enable, 0 - disable"
-            RESERVED:
-                bits: "61:18"
-                desc: "Reserved"
-        offset: 40
-        width: 64
-    PL_INFO:
-        fields:
-            LOCK:
-                bits: "63:63"
-                desc: "1 - all settings in this register are locked, otherwise unlocked"
-            MAX_PL1:
-                bits: "17:0"
-                desc: "MAX PL1, meaning depends on domain type"
-            MAX_PL2:
-                bits: "53:36"
-                desc: "MAX PL2, meaning depends on domain type"
-            MAX_TW:
-                bits: "60:54"
-                desc: "The maximum time window allowed"
-            MIN_PL1:
-                bits: "35:18"
-                desc: "MIN PL1, meaning depends on domain type"
-            RESERVED:
-                bits: "62:61"
-                desc: "Reserved"
+                readonly: true
+                desc: >-
+                    Reserved
+    SOCKET_RAPL_PL_INFO:
         offset: 72
         width: 64
-    PL_OFFSET:
         fields:
-            RESERVED:
-                bits: "63:0"
-                desc: "Reserved"
-        offset: 48
+            MAX_PL1:
+                bits: "17:0"
+                readonly: true
+                desc: >-
+                    Max PL1 allowed. This represents the TDP for the package. The units for this
+                    value are defined in POWER_UNIT[PWR_UNIT]
+            MIN_PL:
+                bits: "35:18"
+                readonly: true
+                desc: >-
+                    The minimal package power setting allowed. Lower values will be clamped to this
+                    value. The minimum setting is typical (not guaranteed). The units for this value
+                    are defined in POWER_UNIT[PWR_UNIT]
+            MAX_PL2:
+                bits: "53:36"
+                readonly: true
+                desc: >-
+                    The maximal package power setting allowed. Higher values will be clamped to this
+                    value. The maximum setting is typical (not guaranteed). The units for this value
+                    are defined in POWER_UNIT[PWR_UNIT]
+            MAX_TW:
+                bits: "60:54"
+                readonly: true
+                desc: >-
+                    The maximal time window allowed. Higher values will be clamped to this value.
+                    The timing interval window is floating point number given by 2^Y * (1.0 + X /
+                    4.0) * Time_Unit X = MAX_TW[6:5], Y = MAX_TW[4:0] Time_Unit is defined in
+                    POWER_UNIT[TIME_UNIT]
+            RSVD:
+                bits: "62:61"
+                readonly: true
+                desc: >-
+                    Reserved
+            LOCK:
+                bits: "63:63"
+                readonly: true
+                desc: >-
+                    When set, all settings in this register are locked and are treated as Read Only
+                    until next reset
+    DRAM_RAPL_DOMAIN_HEADER:
+        offset: 128
         width: 64
-    POWER_UNIT:
         fields:
-            ENERGY_UNIT:
-                bits: "10:6"
-                desc: "Energy unit used for power control registers"
+            INTERFACE_VERSION:
+                bits: "7:0"
+                readonly: true
+                desc: >-
+                    Version number for this interface
+            TYPE:
+                bits: "15:8"
+                readonly: true
+                desc: >-
+                    package rapl, dram rapl, platform rapl, etc
+            SIZE:
+                bits: "23:16"
+                readonly: true
+                desc: >-
+                    units of 128 bytes
+            PARENT_DOMAIN_INDEX:
+                bits: "31:24"
+                readonly: true
+                desc: >-
+                    parent domain index number
+            FLAGS:
+                bits: "47:32"
+                readonly: true
+                desc: >-
+                    Bit mask of the supported domain register. Pcode populates default setting. SW
+                    use it to discover which register is valid in the RAPL register bank. 1: the
+                    corresponding register is valid. 0: register is invalid
+            RSVD:
+                bits: "63:48"
+                readonly: true
+                desc: >-
+                    Reserved
+    DRAM_RAPL_POWER_UNIT:
+        offset: 136
+        width: 64
+        fields:
             PWR_UNIT:
                 bits: "3:0"
-                desc: "Power unit used for power control registers"
-            RESERVED_0:
+                readonly: true
+                desc: >-
+                    Power Units used for power control registers. The actual unit value is
+                    calculated by 1 W / Power(2, PWR_UNIT)
+            RSVD1:
                 bits: "5:4"
-                desc: "Reserved"
-            RESERVED_1:
+                readonly: true
+                desc: >-
+                    RESERVED
+            ENERGY_UNIT:
+                bits: "10:6"
+                readonly: true
+                desc: >-
+                    Energy Units used for power control registers. The actual unit value is
+                    calculated by 1 J / Power(2,ENERGY_UNIT)
+            RSVD2:
                 bits: "11:11"
-                desc: "Reserved"
-            RESERVED_2:
-                bits: "63:16"
-                desc: "Reserved"
+                readonly: true
+                desc: >-
+                    RESERVED
             TIME_UNIT:
                 bits: "15:12"
-                desc: "Time units used for power control registers"
-        offset: 8
+                readonly: true
+                desc: >-
+                    Time Units used for power control registers. The actual unit value is calculated
+                    by 1 s / Power(2,TIME_UNIT)
+            RSVD3:
+                bits: "63:16"
+                readonly: true
+                desc: >-
+                    RESERVED
+    DRAM_RAPL_PL1_CONTROL:
+        offset: 144
         width: 64
-    RESERVED_0:
         fields:
-            RESERVED:
-                bits: "63:0"
-                desc: "Reserved"
-        offset: 96
+            PWR_LIM:
+                bits: "17:0"
+                readonly: true
+                desc: >-
+                    This field indicates the power limitation for the DRAM RAPL domain. The unit of
+                    measurement is defined in POWER_UNIT[PWR_UNIT]
+            TIME_WINDOW:
+                bits: "24:18"
+                readonly: true
+                desc: >-
+                    Indicates the length of time window over which the power limit will be used by
+                    the processor. The time window is floating point number given by 2^Y * (1.0 + X
+                    / 4.0) * Time_Unit X = TIME_WINDOW[6:5]; Y = TIME_WINDOW[4:0]; Time_Unit is
+                    defined in POWER_UNIT[TIME_UNIT]. The maximal time window is bounded by
+                    PL_INFO[MAX_TW]
+            RSVD:
+                bits: "61:25"
+                readonly: true
+                desc: >-
+                    Reserved
+            PWR_LIM_EN:
+                bits: "62:62"
+                readonly: true
+                desc: >-
+                    Enable(1) or Disable(0)
+            LOCK:
+                bits: "63:63"
+                readonly: true
+                desc: >-
+                    When set, all settings in this register are locked and are treated as Read Only
+                    until next reset
+    DRAM_RAPL_ENERGY_STATUS:
+        offset: 184
         width: 64
-    RESERVED_1:
         fields:
-            RESERVED:
-                bits: "63:0"
-                desc: "Reserved"
-        offset: 104
+            ENERGY:
+                bits: "31:0"
+                readonly: true
+                desc: >-
+                    Energy value. The counter will wrap around and continue counting when it reaches
+                    its limit
+            TIME:
+                bits: "63:32"
+                readonly: true
+                desc: >-
+                    Total time elapsed when the energy was last updated. This is a monotonic
+                    increment counter with auto wrap back to zero after overflow. Unit is 10ns. SW
+                    calculates the delta change from previous readings in order to determine the
+                    power consumed. Power = delta_energy / delta_time
+    DRAM_RAPL_PERF_STATUS:
+        offset: 192
         width: 64
-    RESERVED_2:
         fields:
-            RESERVED:
-                bits: "63:0"
-                desc: "Reserved"
-        offset: 112
+            PWR_LIMIT_THROTTLE_CTR:
+                bits: "31:0"
+                readonly: true
+                desc: >-
+                    Reports the number of times (accumulated throttled time) the Power limiting
+                    algorithm had to clip the power limit due to hitting the lowest power state
+                    available
+            RSVD:
+                bits: "63:32"
+                readonly: true
+                desc: >-
+                    Reserved
+    DRAM_RAPL_PL_INFO:
+        offset: 200
         width: 64
-    RESERVED_3:
         fields:
-            RESERVED:
-                bits: "63:0"
-                desc: "Reserved"
-        offset: 120
+            TDP:
+                bits: "17:0"
+                readonly: true
+                desc: >-
+                    Typical TDP Power of DRAM Domain. The units for this value are defined in
+                    POWER_UNIT[PWR_UNIT]
+            MIN_PWR:
+                bits: "35:18"
+                readonly: true
+                desc: >-
+                    Typical min power of DRAM Domain. The units for this value are defined in
+                    POWER_UNIT[PWR_UNIT]
+            MAX_PWR:
+                bits: "53:36"
+                readonly: true
+                desc: >-
+                    Typical max power for DRAM Domain. The units for this value are defined in
+                    POWER_UNIT[PWR_UNIT]
+            MAX_TW:
+                bits: "60:54"
+                readonly: true
+                desc: >-
+                    The maximal time window allowed. Higher values will be clamped to this value.
+                    The timing interval window is floating point number given by 2^Y * (1.0 + X /
+                    4.0) * Time_Unit X = MAX_TW[6:5], Y = MAX_TW[4:0] Time_Unit is defined in
+                    POWER_UNIT[TIME_UNIT]
+            RSVD:
+                bits: "62:61"
+                readonly: true
+                desc: >-
+                    Reserved
+            LOCK:
+                bits: "63:63"
+                readonly: true
+                desc: >-
+                    When set, all settings in this register are locked and are treated as Read Only
+                    until next reset
+    PLATFORM_RAPL_DOMAIN_HEADER:
+        offset: 256
         width: 64
+        fields:
+            INTERFACE_VERSION:
+                bits: "7:0"
+                readonly: true
+                desc: >-
+                    Version number for this interface
+            TYPE:
+                bits: "15:8"
+                readonly: true
+                desc: >-
+                    package rapl, dram rapl, platform rapl, etc
+            SIZE:
+                bits: "23:16"
+                readonly: true
+                desc: >-
+                    units of 128 bytes
+            PARENT_DOMAIN_INDEX:
+                bits: "31:24"
+                readonly: true
+                desc: >-
+                    parent domain index number
+            FLAGS:
+                bits: "47:32"
+                readonly: true
+                desc: >-
+                    Bit mask of the supported domain register. Pcode populates default setting. SW
+                    use it to discover which register is valid in the RAPL register bank. 1: the
+                    corresponding register is valid. 0: register is invalid
+            RSVD:
+                bits: "63:48"
+                readonly: true
+                desc: >-
+                    Reserved
+    PLATFORM_RAPL_POWER_UNIT:
+        offset: 264
+        width: 64
+        fields:
+            PWR_UNIT:
+                bits: "3:0"
+                readonly: true
+                desc: >-
+                    Power Units used for power control registers. The actual unit value is
+                    calculated by 1 W / Power(2, PWR_UNIT)
+            RSVD1:
+                bits: "5:4"
+                readonly: true
+                desc: >-
+                    RESERVED
+            ENERGY_UNIT:
+                bits: "10:6"
+                readonly: true
+                desc: >-
+                    Energy Units used for power control registers. The actual unit value is
+                    calculated by 1 J / Power(2,ENERGY_UNIT)
+            RSVD2:
+                bits: "11:11"
+                readonly: true
+                desc: >-
+                    RESERVED
+            TIME_UNIT:
+                bits: "15:12"
+                readonly: true
+                desc: >-
+                    Time Units used for power control registers. The actual unit value is calculated
+                    by 1 s / Power(2,TIME_UNIT)
+            RSVD3:
+                bits: "63:16"
+                readonly: true
+                desc: >-
+                    RESERVED
+    PLATFORM_RAPL_PL1_CONTROL:
+        offset: 272
+        width: 64
+        fields:
+            PWR_LIM:
+                bits: "17:0"
+                readonly: true
+                desc: >-
+                    This field indicates the power limitation for the Platform RAPL domain. The unit
+                    of measurement is defined in POWER_UNIT[PWR_UNIT]
+            TIME_WINDOW:
+                bits: "24:18"
+                readonly: true
+                desc: >-
+                    Indicates the length of time window over which the power limit will be used by
+                    the processor. The timing interval window is floating point number given by 2^Y
+                    * (1.0 + X / 4.0) * Time_Unit X = TIME_WINDOW[6:5]; Y = TIME_WINDOW[4:0];
+                    Time_Unit is defined in POWER_UNIT[TIME_UNIT]. The maximal time window is
+                    bounded by PL_INFO[MAX_TW]
+            RSVD:
+                bits: "61:25"
+                readonly: true
+                desc: >-
+                    Reserved
+            PWR_LIM_EN:
+                bits: "62:62"
+                readonly: true
+                desc: >-
+                    Enable(1) or Disable(0)
+            LOCK:
+                bits: "63:63"
+                readonly: true
+                desc: >-
+                    When set, all settings in this register are locked and are treated as Read Only
+                    until next reset
+    PLATFORM_RAPL_PL2_CONTROL:
+        offset: 280
+        width: 64
+        fields:
+            PWR_LIM:
+                bits: "17:0"
+                readonly: true
+                desc: >-
+                    This field indicates the power limitation for the Platform RAPL domain. The unit
+                    of measurement is defined in POWER_UNIT[PWR_UNIT]
+            TIME_WINDOW:
+                bits: "24:18"
+                readonly: true
+                desc: >-
+                    Indicates the length of time window over which the power limit will be used by
+                    the processor. The timing interval window is floating point number given by 2^Y
+                    * (1.0 + X / 4.0) * Time_Unit X = TIME_WINDOW[6:5]; Y = TIME_WINDOW[4:0];
+                    Time_Unit is defined in POWER_UNIT[TIME_UNIT]. The maximal time window is
+                    bounded by PL_INFO[MAX_TW]
+            RSVD:
+                bits: "61:25"
+                readonly: true
+                desc: >-
+                    Reserved
+            PWR_LIM_EN:
+                bits: "62:62"
+                readonly: true
+                desc: >-
+                    Enable(1) or Disable(0)
+            LOCK:
+                bits: "63:63"
+                readonly: true
+                desc: >-
+                    When set, all settings in this register are locked and are treated as Read Only
+                    until next reset
+    PLATFORM_RAPL_ENERGY_STATUS:
+        offset: 312
+        width: 64
+        fields:
+            ENERGY:
+                bits: "31:0"
+                readonly: true
+                desc: >-
+                    Energy value. The counter will wrap around and continue counting when it reaches
+                    its limit
+            TIME:
+                bits: "63:32"
+                readonly: true
+                desc: >-
+                    Total time elapsed when the energy was last updated. This is a monotonic
+                    increment counter with auto wrap back to zero after overflow. Unit is 10ns. SW
+                    calculates the delta change from previous readings in order to determine the
+                    power consumed. Power = delta_energy / delta_time
+    PLATFORM_RAPL_PERF_STATUS:
+        offset: 320
+        width: 64
+        fields:
+            PWR_LIMIT_THROTTLE_CTR:
+                bits: "31:0"
+                readonly: true
+                desc: >-
+                    Reports the number of times (accumulated throttled time) the Power limiting
+                    algorithm had to clip the power limit due to hitting the lowest power state
+                    available
+            RSVD:
+                bits: "63:32"
+                readonly: true
+                desc: >-
+                    Reserved
+    PLATFORM_RAPL_PL_INFO:
+        offset: 328
+        width: 64
+        fields:
+            MAX_PL1:
+                bits: "17:0"
+                readonly: true
+                desc: >-
+                    Max PL1 allowed for the platform RAPL domain. The units for this value are
+                    defined in POWER_UNIT[PWR_UNIT]
+            MIN_PL:
+                bits: "35:18"
+                readonly: true
+                desc: >-
+                    The minimal Platform power setting allowed. Lower values will be clamped to this
+                    value. The minimum setting is typical (not guaranteed). The units for this value
+                    are defined in POWER_UNIT[PWR_UNIT]
+            MAX_PL2:
+                bits: "53:36"
+                readonly: true
+                desc: >-
+                    The maximal platform PL2 setting allowed. Higher values will be clamped to this
+                    value. The maximum setting is typical (not guaranteed). The units for this value
+                    are defined in POWER_UNIT[PWR_UNIT]
+            MAX_TW:
+                bits: "60:54"
+                readonly: true
+                desc: >-
+                    The maximal time window allowed. Higher values will be clamped to this value.
+                    The timing interval window is floating point number given by 2^Y * (1.0 + X /
+                    4.0) * Time_Unit X = MAX_TW[6:5], Y = MAX_TW[4:0] Time_Unit is defined in
+                    POWER_UNIT[TIME_UNIT]
+            RSVD:
+                bits: "62:61"
+                readonly: true
+                desc: >-
+                    Reserved
+            LOCK:
+                bits: "63:63"
+                readonly: true
+                desc: >-
+                    When set, all settings in this register are locked and are treated as Read Only
+                    until next reset
+    PLATFORM_RAPL_DOMAIN_INFO:
+        offset: 336
+        width: 64
+        fields:
+            ROOT:
+                bits: "0:0"
+                readonly: true
+                desc: >-
+                    If set (1), the Socket is a Psys Root else, Psys leaf
+            DOMAIN_ID:
+                bits: "3:1"
+                readonly: true
+                desc: >-
+                    Psys Logical Domain ID to which the Socket belongs to
+            RSVD:
+                bits: "62:4"
+                readonly: true
+                desc: >-
+                    Reserved
+            LOCK:
+                bits: "63:63"
+                readonly: true
+                desc: >-
+                    If set (1), register is locked and cannot be written by SW

@@ -4,3253 +4,1653 @@ desc: >-
 feature_id: 0x5
 
 registers:
-    L1_SST_BF_HEADER:
-        fields:
-            FEATURE_REVISION:
-                bits: "11:4"
-                desc: "Interface version number for the feature"
-            FEATURE_SUPPORTED:
-                bits: "12:12"
-                desc: "1: this SST feature is supported at this PP level"
-            P1_HI:
-                bits: "20:13"
-                desc: "Base frequency for high priority cores"
-            P1_LO:
-                bits: "28:21"
-                desc: "Base frequency for low priority cores"
-            RESERVED:
-                bits: "63:61"
-                desc: "Reserved"
-            RSVD0:
-                bits: "31:29"
-                desc: "Reserved"
-            SST_FEATURE_ID:
-                bits: "3:0"
-                desc: "Set to 0 (0=SST-CP, 1=SST-PP, 2=SST-BF, 3=SST-TF)"
-            TDP:
-                bits: "60:46"
-                desc: "TDP = SKU"
-            T_CONTROL:
-                bits: "37:32"
-                desc: "Fan temperature target offset"
-            T_PROHOT:
-                bits: "45:38"
-                desc: "DTS max or external Prochot for the specific configuration"
-        offset: 408
-        width: 64
-    L1_SST_BF_INFO-1:
-        fields:
-            P1_HI_CORE_MASK:
-                bits: "63:0"
-                desc: "PBF_P1_HI_CORE_MASK"
-        offset: 416
-        width: 64
-    L1_SST_PP_INFO-00:
-        fields:
-            P1_AMX:
-                bits: "31:24"
-                desc: "Base frequency ratio of the TDP workload, a.k.a. AMX P1"
-            P1_AVX2:
-                bits: "15:8"
-                desc: "Base frequency ratio of the TDP workload, a.k.a. AVX2 P1"
-            P1_AVX512:
-                bits: "23:16"
-                desc: "Base frequency ratio of the TDP workload, a.k.a. AVX P1"
-            P1_SSE:
-                bits: "7:0"
-                desc: "Base frequency ratio of the TDP workload, a.k.a. SSE P1"
-            RESERVED:
-                bits: "63:32"
-                desc: "Reserved"
-        offset: 312
-        width: 64
-    L1_SST_PP_INFO-01:
-        fields:
-            COOLING_TYPE:
-                bits: "63:62"
-                desc: "Cooling Type"
-            FUSED_CORE_COUNT:
-                bits: "7:0"
-                desc: "Core count of the fuse enabled cores"
-            FUSED_LLC_COUNT:
-                bits: "23:16"
-                desc: "LLC count of the fuse enabled LLC slices"
-            MAX_MEMORY_FREQ:
-                bits: "61:55"
-                desc: "The max allowed memory controller frequency ratio for this config level"
-            RESOLVED_CORE_COUNT:
-                bits: "15:8"
-                desc: "Count of P-code's resolved cores"
-            RSVD1:
-                bits: "31:24"
-                desc: "Reserved"
-            TDP:
-                bits: "46:32"
-                desc: "Power for this TDP level in 1/8W units"
-            T_PROCHOT:
-                bits: "54:47"
-                desc: "The DTS max or external Prochot for the specific configuration"
-        offset: 320
-        width: 64
-    L1_SST_PP_INFO-02:
-        fields:
-            RESOLVED_CORE_MASK:
-                bits: "63:0"
-                desc: "Logical core ID mask"
-        offset: 328
-        width: 64
-    L1_SST_PP_INFO-03:
-        fields:
-            RESERVED:
-                bits: "63:0"
-                desc: "Reserved"
-        offset: 336
-        width: 64
-    L1_SST_PP_INFO-04:
-        fields:
-            RATIO_0:
-                bits: "7:0"
-                desc: "Turbo ratio limit level 0, bucket 0"
-            RATIO_1:
-                bits: "15:8"
-                desc: "Turbo ratio limit level 0, bucket 1"
-            RATIO_2:
-                bits: "23:16"
-                desc: "Turbo ratio limit level 0, bucket 2"
-            RATIO_3:
-                bits: "31:24"
-                desc: "Turbo ratio limit level 0, bucket 3"
-            RATIO_4:
-                bits: "39:32"
-                desc: "Turbo ratio limit level 0, bucket 4"
-            RATIO_5:
-                bits: "47:40"
-                desc: "Turbo ratio limit level 0, bucket 5"
-            RATIO_6:
-                bits: "55:48"
-                desc: "Turbo ratio limit level 0, bucket 6"
-            RATIO_7:
-                bits: "63:56"
-                desc: "Turbo ratio limit level 0, bucket 7"
-        offset: 344
-        width: 64
-    L1_SST_PP_INFO-05:
-        fields:
-            RATIO_0:
-                bits: "7:0"
-                desc: "Turbo ratio limit level 0, bucket 0"
-            RATIO_1:
-                bits: "15:8"
-                desc: "Turbo ratio limit level 0, bucket 1"
-            RATIO_2:
-                bits: "23:16"
-                desc: "Turbo ratio limit level 0, bucket 2"
-            RATIO_3:
-                bits: "31:24"
-                desc: "Turbo ratio limit level 0, bucket 3"
-            RATIO_4:
-                bits: "39:32"
-                desc: "Turbo ratio limit level 0, bucket 4"
-            RATIO_5:
-                bits: "47:40"
-                desc: "Turbo ratio limit level 0, bucket 5"
-            RATIO_6:
-                bits: "55:48"
-                desc: "Turbo ratio limit level 0, bucket 6"
-            RATIO_7:
-                bits: "63:56"
-                desc: "Turbo ratio limit level 0, bucket 7"
-        offset: 352
-        width: 64
-    L1_SST_PP_INFO-06:
-        fields:
-            RATIO_0:
-                bits: "7:0"
-                desc: "Turbo ratio limit level 0, bucket 0"
-            RATIO_1:
-                bits: "15:8"
-                desc: "Turbo ratio limit level 0, bucket 1"
-            RATIO_2:
-                bits: "23:16"
-                desc: "Turbo ratio limit level 0, bucket 2"
-            RATIO_3:
-                bits: "31:24"
-                desc: "Turbo ratio limit level 0, bucket 3"
-            RATIO_4:
-                bits: "39:32"
-                desc: "Turbo ratio limit level 0, bucket 4"
-            RATIO_5:
-                bits: "47:40"
-                desc: "Turbo ratio limit level 0, bucket 5"
-            RATIO_6:
-                bits: "55:48"
-                desc: "Turbo ratio limit level 0, bucket 6"
-            RATIO_7:
-                bits: "63:56"
-                desc: "Turbo ratio limit level 0, bucket 7"
-        offset: 360
-        width: 64
-    L1_SST_PP_INFO-07:
-        fields:
-            RATIO_0:
-                bits: "7:0"
-                desc: "Turbo ratio limit level 0, bucket 0"
-            RATIO_1:
-                bits: "15:8"
-                desc: "Turbo ratio limit level 0, bucket 1"
-            RATIO_2:
-                bits: "23:16"
-                desc: "Turbo ratio limit level 0, bucket 2"
-            RATIO_3:
-                bits: "31:24"
-                desc: "Turbo ratio limit level 0, bucket 3"
-            RATIO_4:
-                bits: "39:32"
-                desc: "Turbo ratio limit level 0, bucket 4"
-            RATIO_5:
-                bits: "47:40"
-                desc: "Turbo ratio limit level 0, bucket 5"
-            RATIO_6:
-                bits: "55:48"
-                desc: "Turbo ratio limit level 0, bucket 6"
-            RATIO_7:
-                bits: "63:56"
-                desc: "Turbo ratio limit level 0, bucket 7"
-        offset: 368
-        width: 64
-    L1_SST_PP_INFO-08:
-        fields:
-            RATIO_0:
-                bits: "7:0"
-                desc: "Turbo ratio limit level 0, bucket 0"
-            RATIO_1:
-                bits: "15:8"
-                desc: "Turbo ratio limit level 0, bucket 1"
-            RATIO_2:
-                bits: "23:16"
-                desc: "Turbo ratio limit level 0, bucket 2"
-            RATIO_3:
-                bits: "31:24"
-                desc: "Turbo ratio limit level 0, bucket 3"
-            RATIO_4:
-                bits: "39:32"
-                desc: "Turbo ratio limit level 0, bucket 4"
-            RATIO_5:
-                bits: "47:40"
-                desc: "Turbo ratio limit level 0, bucket 5"
-            RATIO_6:
-                bits: "55:48"
-                desc: "Turbo ratio limit level 0, bucket 6"
-            RATIO_7:
-                bits: "63:56"
-                desc: "Turbo ratio limit level 0, bucket 7"
-        offset: 376
-        width: 64
-    L1_SST_PP_INFO-09:
-        fields:
-            RATIO_0:
-                bits: "7:0"
-                desc: "Turbo ratio limit level 0, bucket 0"
-            RATIO_1:
-                bits: "15:8"
-                desc: "Turbo ratio limit level 0, bucket 1"
-            RATIO_2:
-                bits: "23:16"
-                desc: "Turbo ratio limit level 0, bucket 2"
-            RATIO_3:
-                bits: "31:24"
-                desc: "Turbo ratio limit level 0, bucket 3"
-            RATIO_4:
-                bits: "39:32"
-                desc: "Turbo ratio limit level 0, bucket 4"
-            RATIO_5:
-                bits: "47:40"
-                desc: "Turbo ratio limit level 0, bucket 5"
-            RATIO_6:
-                bits: "55:48"
-                desc: "Turbo ratio limit level 0, bucket 6"
-            RATIO_7:
-                bits: "63:56"
-                desc: "Turbo ratio limit level 0, bucket 7"
-        offset: 384
-        width: 64
-    L1_SST_PP_INFO-10:
-        fields:
-            NUM_CORE_0:
-                bits: "7:0"
-                desc: "Active core ranges for TRL bucket 0"
-            NUM_CORE_1:
-                bits: "15:8"
-                desc: "Active core ranges for TRL bucket 1"
-            NUM_CORE_2:
-                bits: "23:16"
-                desc: "Active core ranges for TRL bucket 2"
-            NUM_CORE_3:
-                bits: "31:24"
-                desc: "Active core ranges for TRL bucket 3"
-            NUM_CORE_4:
-                bits: "39:32"
-                desc: "Active core ranges for TRL bucket 4"
-            NUM_CORE_5:
-                bits: "47:40"
-                desc: "Active core ranges for TRL bucket 5"
-            NUM_CORE_6:
-                bits: "55:48"
-                desc: "Active core ranges for TRL bucket 6"
-            NUM_CORE_7:
-                bits: "63:56"
-                desc: "Active core ranges for TRL bucket 7"
-        offset: 392
-        width: 64
-    L1_SST_PP_INFO-11:
-        fields:
-            P0_CORE_RATIO:
-                bits: "7:0"
-                desc: "Maximum core frequency ratio limit"
-            P0_FABRIC_RATIO:
-                bits: "39:32"
-                desc: "Maximum    fabric (uncore) frequency ratio limit"
-            P1_CORE_RATIO:
-                bits: "15:8"
-                desc: "Core TDP frequency ratio"
-            P1_FABRIC_RATIO:
-                bits: "47:40"
-                desc: "Fabric (uncore) TDP frequency ratio"
-            PM_CORE_RATIO:
-                bits: "31:24"
-                desc: "Minimum core frequency ratio"
-            PM_FABRIC_RATIO:
-                bits: "55:48"
-                desc: "Minimum fabric (uncore) frequency ratio"
-            PN_CORE_RATIO:
-                bits: "23:16"
-                desc: "Maximum core efficiency frequency ratio"
-            RESERVED:
-                bits: "63:56"
-                desc: "Reserved"
-        offset: 400
-        width: 64
-    L1_SST_TF_HEADER:
-        fields:
-            FEATURE_REVISION:
-                bits: "11:4"
-                desc: "Interface version number for the feature"
-            FEATURE_SUPPORTED:
-                bits: "12:12"
-                desc: "1 - the SST feature is supported in this PP level"
-            LP_CLIP_RATIO_0:
-                bits: "23:16"
-                desc: "Low priority cores frequency clipping ratio level 0"
-            LP_CLIP_RATIO_1:
-                bits: "31:24"
-                desc: "Low priority cores frequency clipping ratio level 1"
-            LP_CLIP_RATIO_2:
-                bits: "39:32"
-                desc: "Low priority cores frequency clipping ratio level 2"
-            LP_CLIP_RATIO_3:
-                bits: "47:40"
-                desc: "Low priority cores frequency clipping ratio level 3"
-            LP_CLIP_RATIO_4:
-                bits: "55:48"
-                desc: "Low priority cores frequency clipping ratio level 4"
-            LP_CLIP_RATIO_5:
-                bits: "63:56"
-                desc: "Low priority cores frequency clipping ratio level 5"
-            RSVD1:
-                bits: "15:13"
-                desc: "Allowed level mask used for dynamic config level switching"
-            SST_FEATURE_ID:
-                bits: "3:0"
-                desc: "Set to 0 (0=SST-CP, 1=SST-PP, 2=SST-BF, 3=SST-TF)"
-        offset: 424
-        width: 64
-    L1_SST_TF_INFO-1:
-        fields:
-            NUM_CORE_0:
-                bits: "7:0"
-                desc: "High priority core count for bucket 0"
-            NUM_CORE_1:
-                bits: "15:8"
-                desc: "High priority core count for bucket 1"
-            NUM_CORE_2:
-                bits: "23:16"
-                desc: "High priority core count for bucket 2"
-            NUM_CORE_3:
-                bits: "31:24"
-                desc: "High priority core count for bucket 3"
-            NUM_CORE_4:
-                bits: "39:32"
-                desc: "High priority core count for bucket 4"
-            NUM_CORE_5:
-                bits: "47:40"
-                desc: "High priority core count for bucket 5"
-            NUM_CORE_6:
-                bits: "55:48"
-                desc: "High priority core count for bucket 6"
-            NUM_CORE_7:
-                bits: "63:56"
-                desc: "High priority core count for bucket 7"
-        offset: 432
-        width: 64
-    L1_SST_TF_INFO-2:
-        fields:
-            RATIO_0:
-                bits: "7:0"
-                desc: "Turbo ratio limit level 0, bucket 0"
-            RATIO_1:
-                bits: "15:8"
-                desc: "Turbo ratio limit level 0, bucket 1"
-            RATIO_2:
-                bits: "23:16"
-                desc: "Turbo ratio limit level 0, bucket 2"
-            RATIO_3:
-                bits: "31:24"
-                desc: "Turbo ratio limit level 0, bucket 3"
-            RATIO_4:
-                bits: "39:32"
-                desc: "Turbo ratio limit level 0, bucket 4"
-            RATIO_5:
-                bits: "47:40"
-                desc: "Turbo ratio limit level 0, bucket 5"
-            RATIO_6:
-                bits: "55:48"
-                desc: "Turbo ratio limit level 0, bucket 6"
-            RATIO_7:
-                bits: "63:56"
-                desc: "Turbo ratio limit level 0, bucket 7"
-        offset: 440
-        width: 64
-    L1_SST_TF_INFO-3:
-        fields:
-            RATIO_0:
-                bits: "7:0"
-                desc: "Turbo ratio limit level 0, bucket 0"
-            RATIO_1:
-                bits: "15:8"
-                desc: "Turbo ratio limit level 0, bucket 1"
-            RATIO_2:
-                bits: "23:16"
-                desc: "Turbo ratio limit level 0, bucket 2"
-            RATIO_3:
-                bits: "31:24"
-                desc: "Turbo ratio limit level 0, bucket 3"
-            RATIO_4:
-                bits: "39:32"
-                desc: "Turbo ratio limit level 0, bucket 4"
-            RATIO_5:
-                bits: "47:40"
-                desc: "Turbo ratio limit level 0, bucket 5"
-            RATIO_6:
-                bits: "55:48"
-                desc: "Turbo ratio limit level 0, bucket 6"
-            RATIO_7:
-                bits: "63:56"
-                desc: "Turbo ratio limit level 0, bucket 7"
-        offset: 448
-        width: 64
-    L1_SST_TF_INFO-4:
-        fields:
-            RATIO_0:
-                bits: "7:0"
-                desc: "Turbo ratio limit level 0, bucket 0"
-            RATIO_1:
-                bits: "15:8"
-                desc: "Turbo ratio limit level 0, bucket 1"
-            RATIO_2:
-                bits: "23:16"
-                desc: "Turbo ratio limit level 0, bucket 2"
-            RATIO_3:
-                bits: "31:24"
-                desc: "Turbo ratio limit level 0, bucket 3"
-            RATIO_4:
-                bits: "39:32"
-                desc: "Turbo ratio limit level 0, bucket 4"
-            RATIO_5:
-                bits: "47:40"
-                desc: "Turbo ratio limit level 0, bucket 5"
-            RATIO_6:
-                bits: "55:48"
-                desc: "Turbo ratio limit level 0, bucket 6"
-            RATIO_7:
-                bits: "63:56"
-                desc: "Turbo ratio limit level 0, bucket 7"
-        offset: 456
-        width: 64
-    L1_SST_TF_INFO-5:
-        fields:
-            RATIO_0:
-                bits: "7:0"
-                desc: "Turbo ratio limit level 0, bucket 0"
-            RATIO_1:
-                bits: "15:8"
-                desc: "Turbo ratio limit level 0, bucket 1"
-            RATIO_2:
-                bits: "23:16"
-                desc: "Turbo ratio limit level 0, bucket 2"
-            RATIO_3:
-                bits: "31:24"
-                desc: "Turbo ratio limit level 0, bucket 3"
-            RATIO_4:
-                bits: "39:32"
-                desc: "Turbo ratio limit level 0, bucket 4"
-            RATIO_5:
-                bits: "47:40"
-                desc: "Turbo ratio limit level 0, bucket 5"
-            RATIO_6:
-                bits: "55:48"
-                desc: "Turbo ratio limit level 0, bucket 6"
-            RATIO_7:
-                bits: "63:56"
-                desc: "Turbo ratio limit level 0, bucket 7"
-        offset: 464
-        width: 64
-    L1_SST_TF_INFO-6:
-        fields:
-            RATIO_0:
-                bits: "7:0"
-                desc: "Turbo ratio limit level 0, bucket 0"
-            RATIO_1:
-                bits: "15:8"
-                desc: "Turbo ratio limit level 0, bucket 1"
-            RATIO_2:
-                bits: "23:16"
-                desc: "Turbo ratio limit level 0, bucket 2"
-            RATIO_3:
-                bits: "31:24"
-                desc: "Turbo ratio limit level 0, bucket 3"
-            RATIO_4:
-                bits: "39:32"
-                desc: "Turbo ratio limit level 0, bucket 4"
-            RATIO_5:
-                bits: "47:40"
-                desc: "Turbo ratio limit level 0, bucket 5"
-            RATIO_6:
-                bits: "55:48"
-                desc: "Turbo ratio limit level 0, bucket 6"
-            RATIO_7:
-                bits: "63:56"
-                desc: "Turbo ratio limit level 0, bucket 7"
-        offset: 472
-        width: 64
-    L1_SST_TF_INFO-7:
-        fields:
-            RATIO_0:
-                bits: "7:0"
-                desc: "Turbo ratio limit level 0, bucket 0"
-            RATIO_1:
-                bits: "15:8"
-                desc: "Turbo ratio limit level 0, bucket 1"
-            RATIO_2:
-                bits: "23:16"
-                desc: "Turbo ratio limit level 0, bucket 2"
-            RATIO_3:
-                bits: "31:24"
-                desc: "Turbo ratio limit level 0, bucket 3"
-            RATIO_4:
-                bits: "39:32"
-                desc: "Turbo ratio limit level 0, bucket 4"
-            RATIO_5:
-                bits: "47:40"
-                desc: "Turbo ratio limit level 0, bucket 5"
-            RATIO_6:
-                bits: "55:48"
-                desc: "Turbo ratio limit level 0, bucket 6"
-            RATIO_7:
-                bits: "63:56"
-                desc: "Turbo ratio limit level 0, bucket 7"
-        offset: 480
-        width: 64
-    L2_SST_BF_HEADER:
-        fields:
-            FEATURE_REVISION:
-                bits: "11:4"
-                desc: "Interface version number for the feature"
-            FEATURE_SUPPORTED:
-                bits: "12:12"
-                desc: "1 - the SST feature is supported in this PP level"
-            P1_HI:
-                bits: "20:13"
-                desc: "Base frequency for high priority cores"
-            P1_LO:
-                bits: "28:21"
-                desc: "Base frequency for low priority cores"
-            RESERVED:
-                bits: "63:61"
-                desc: "Reserved"
-            RSVD0:
-                bits: "31:29"
-                desc: "Reserved"
-            SST_FEATURE_ID:
-                bits: "3:0"
-                desc: "Set to 0 (0=SST-CP, 1=SST-PP, 2=SST-BF, 3=SST-TF)"
-            TDP:
-                bits: "60:46"
-                desc: "TDP = SKU"
-            T_CONTROL:
-                bits: "37:32"
-                desc: "Fan temperature target offset"
-            T_PROHOT:
-                bits: "45:38"
-                desc: "DTS max or external Prochot for the specific configuration"
-        offset: 584
-        width: 64
-    L2_SST_BF_INFO-1:
-        fields:
-            P1_HI_CORE_MASK:
-                bits: "63:0"
-                desc: "PBF_P1_HI_CORE_MASK"
-        offset: 592
-        width: 64
-    L2_SST_PP_INFO-00:
-        fields:
-            P1_AMX:
-                bits: "31:24"
-                desc: "Base frequency ratio of the TDP workload, a.k.a. AMX P1"
-            P1_AVX2:
-                bits: "15:8"
-                desc: "Base frequency ratio of the TDP workload, a.k.a. AVX2 P1"
-            P1_AVX512:
-                bits: "23:16"
-                desc: "Base frequency ratio of the TDP workload, a.k.a. AVX P1"
-            P1_SSE:
-                bits: "7:0"
-                desc: "Base frequency ratio of the TDP workload, a.k.a. SSE P1"
-            RSVD1:
-                bits: "63:32"
-                desc: "Reserved"
-        offset: 488
-        width: 64
-    L2_SST_PP_INFO-01:
-        fields:
-            COOLING_TYPE:
-                bits: "63:62"
-                desc: "Cooling type"
-            FUSED_CORE_COUNT:
-                bits: "7:0"
-                desc: "Core count of the fuse enabled cores"
-            FUSED_LLC_COUNT:
-                bits: "23:16"
-                desc: "LLC count of the fuse enabled LLC slices"
-            MAX_MEMORY_FREQ:
-                bits: "61:55"
-                desc: "The max allowed memory controller frequency ratio for this config level"
-            RESOLVED_CORE_COUNT:
-                bits: "15:8"
-                desc: "Count of P-code's resolved cores"
-            RSVD1:
-                bits: "31:24"
-                desc: "Reserved"
-            TDP:
-                bits: "46:32"
-                desc: "Power for this TDP level in 1/8W units"
-            T_PROCHOT:
-                bits: "54:47"
-                desc: "DTS max or external Prochot for the specific configuration"
-        offset: 496
-        width: 64
-    L2_SST_PP_INFO-02:
-        fields:
-            RESOLVED_CORE_MASK:
-                bits: "63:0"
-                desc: "Logical core ID mask"
-        offset: 504
-        width: 64
-    L2_SST_PP_INFO-03:
-        fields:
-            RESERVED:
-                bits: "63:0"
-                desc: "Reserved"
-        offset: 512
-        width: 64
-    L2_SST_PP_INFO-04:
-        fields:
-            RATIO_0:
-                bits: "7:0"
-                desc: "Turbo ratio limit level 0, bucket 0"
-            RATIO_1:
-                bits: "15:8"
-                desc: "Turbo ratio limit level 0, bucket 1"
-            RATIO_2:
-                bits: "23:16"
-                desc: "Turbo ratio limit level 0, bucket 2"
-            RATIO_3:
-                bits: "31:24"
-                desc: "Turbo ratio limit level 0, bucket 3"
-            RATIO_4:
-                bits: "39:32"
-                desc: "Turbo ratio limit level 0, bucket 4"
-            RATIO_5:
-                bits: "47:40"
-                desc: "Turbo ratio limit level 0, bucket 5"
-            RATIO_6:
-                bits: "55:48"
-                desc: "Turbo ratio limit level 0, bucket 6"
-            RATIO_7:
-                bits: "63:56"
-                desc: "Turbo ratio limit level 0, bucket 7"
-        offset: 520
-        width: 64
-    L2_SST_PP_INFO-05:
-        fields:
-            RATIO_0:
-                bits: "7:0"
-                desc: "Turbo ratio limit level 0, bucket 0"
-            RATIO_1:
-                bits: "15:8"
-                desc: "Turbo ratio limit level 0, bucket 1"
-            RATIO_2:
-                bits: "23:16"
-                desc: "Turbo ratio limit level 0, bucket 2"
-            RATIO_3:
-                bits: "31:24"
-                desc: "Turbo ratio limit level 0, bucket 3"
-            RATIO_4:
-                bits: "39:32"
-                desc: "Turbo ratio limit level 0, bucket 4"
-            RATIO_5:
-                bits: "47:40"
-                desc: "Turbo ratio limit level 0, bucket 5"
-            RATIO_6:
-                bits: "55:48"
-                desc: "Turbo ratio limit level 0, bucket 6"
-            RATIO_7:
-                bits: "63:56"
-                desc: "Turbo ratio limit level 0, bucket 7"
-        offset: 528
-        width: 64
-    L2_SST_PP_INFO-06:
-        fields:
-            RATIO_0:
-                bits: "7:0"
-                desc: "Turbo ratio limit level 0, bucket 0"
-            RATIO_1:
-                bits: "15:8"
-                desc: "Turbo ratio limit level 0, bucket 1"
-            RATIO_2:
-                bits: "23:16"
-                desc: "Turbo ratio limit level 0, bucket 2"
-            RATIO_3:
-                bits: "31:24"
-                desc: "Turbo ratio limit level 0, bucket 3"
-            RATIO_4:
-                bits: "39:32"
-                desc: "Turbo ratio limit level 0, bucket 4"
-            RATIO_5:
-                bits: "47:40"
-                desc: "Turbo ratio limit level 0, bucket 5"
-            RATIO_6:
-                bits: "55:48"
-                desc: "Turbo ratio limit level 0, bucket 6"
-            RATIO_7:
-                bits: "63:56"
-                desc: "Turbo ratio limit level 0, bucket 7"
-        offset: 536
-        width: 64
-    L2_SST_PP_INFO-07:
-        fields:
-            RATIO_0:
-                bits: "7:0"
-                desc: "Turbo ratio limit level 0, bucket 0"
-            RATIO_1:
-                bits: "15:8"
-                desc: "Turbo ratio limit level 0, bucket 1"
-            RATIO_2:
-                bits: "23:16"
-                desc: "Turbo ratio limit level 0, bucket 2"
-            RATIO_3:
-                bits: "31:24"
-                desc: "Turbo ratio limit level 0, bucket 3"
-            RATIO_4:
-                bits: "39:32"
-                desc: "Turbo ratio limit level 0, bucket 4"
-            RATIO_5:
-                bits: "47:40"
-                desc: "Turbo ratio limit level 0, bucket 5"
-            RATIO_6:
-                bits: "55:48"
-                desc: "Turbo ratio limit level 0, bucket 6"
-            RATIO_7:
-                bits: "63:56"
-                desc: "Turbo ratio limit level 0, bucket 7"
-        offset: 544
-        width: 64
-    L2_SST_PP_INFO-08:
-        fields:
-            RATIO_0:
-                bits: "7:0"
-                desc: "Turbo ratio limit level 0, bucket 0"
-            RATIO_1:
-                bits: "15:8"
-                desc: "Turbo ratio limit level 0, bucket 1"
-            RATIO_2:
-                bits: "23:16"
-                desc: "Turbo ratio limit level 0, bucket 2"
-            RATIO_3:
-                bits: "31:24"
-                desc: "Turbo ratio limit level 0, bucket 3"
-            RATIO_4:
-                bits: "39:32"
-                desc: "Turbo ratio limit level 0, bucket 4"
-            RATIO_5:
-                bits: "47:40"
-                desc: "Turbo ratio limit level 0, bucket 5"
-            RATIO_6:
-                bits: "55:48"
-                desc: "Turbo ratio limit level 0, bucket 6"
-            RATIO_7:
-                bits: "63:56"
-                desc: "Turbo ratio limit level 0, bucket 7"
-        offset: 552
-        width: 64
-    L2_SST_PP_INFO-09:
-        fields:
-            RATIO_0:
-                bits: "7:0"
-                desc: "Turbo ratio limit level 0, bucket 0"
-            RATIO_1:
-                bits: "15:8"
-                desc: "Turbo ratio limit level 0, bucket 1"
-            RATIO_2:
-                bits: "23:16"
-                desc: "Turbo ratio limit level 0, bucket 2"
-            RATIO_3:
-                bits: "31:24"
-                desc: "Turbo ratio limit level 0, bucket 3"
-            RATIO_4:
-                bits: "39:32"
-                desc: "Turbo ratio limit level 0, bucket 4"
-            RATIO_5:
-                bits: "47:40"
-                desc: "Turbo ratio limit level 0, bucket 5"
-            RATIO_6:
-                bits: "55:48"
-                desc: "Turbo ratio limit level 0, bucket 6"
-            RATIO_7:
-                bits: "63:56"
-                desc: "Turbo ratio limit level 0, bucket 7"
-        offset: 560
-        width: 64
-    L2_SST_PP_INFO-10:
-        fields:
-            NUM_CORE_0:
-                bits: "7:0"
-                desc: "Active core ranges for TRL bucket 0"
-            NUM_CORE_1:
-                bits: "15:8"
-                desc: "Active core ranges for TRL bucket 1"
-            NUM_CORE_2:
-                bits: "23:16"
-                desc: "Active core ranges for TRL bucket 2"
-            NUM_CORE_3:
-                bits: "31:24"
-                desc: "Active core ranges for TRL bucket 3"
-            NUM_CORE_4:
-                bits: "39:32"
-                desc: "Active core ranges for TRL bucket 4"
-            NUM_CORE_5:
-                bits: "47:40"
-                desc: "Active core ranges for TRL bucket 5"
-            NUM_CORE_6:
-                bits: "55:48"
-                desc: "Active core ranges for TRL bucket 6"
-            NUM_CORE_7:
-                bits: "63:56"
-                desc: "Active core ranges for TRL bucket 7"
-        offset: 568
-        width: 64
-    L2_SST_PP_INFO-11:
-        fields:
-            P0_CORE_RATIO:
-                bits: "7:0"
-                desc: "Maximum core frequency ratio limit"
-            P0_FABRIC_RATIO:
-                bits: "39:32"
-                desc: "Maximum    fabric (uncore) frequency ratio limit"
-            P1_CORE_RATIO:
-                bits: "15:8"
-                desc: "Core TDP frequency ratio"
-            P1_FABRIC_RATIO:
-                bits: "47:40"
-                desc: "Fabric (uncore) TDP frequency ratio"
-            PM_CORE_RATIO:
-                bits: "31:24"
-                desc: "Minimum core frequency ratio"
-            PM_FABRIC_RATIO:
-                bits: "55:48"
-                desc: "Minimum fabric (uncore) frequency ratio"
-            PN_CORE_RATIO:
-                bits: "23:16"
-                desc: "Maximum core efficiency frequency ratio"
-            RESERVED:
-                bits: "63:56"
-                desc: "Reserved"
-        offset: 576
-        width: 64
-    L2_SST_TF_HEADER:
-        fields:
-            FEATURE_REVISION:
-                bits: "11:4"
-                desc: "Interface version number for the feature"
-            FEATURE_SUPPORTED:
-                bits: "12:12"
-                desc: "1 - the SST feature is supported in this PP level"
-            LP_CLIP_RATIO_0:
-                bits: "23:16"
-                desc: "Low priority cores frequency clipping ratio level 0"
-            LP_CLIP_RATIO_1:
-                bits: "31:24"
-                desc: "Low priority cores frequency clipping ratio level 1"
-            LP_CLIP_RATIO_2:
-                bits: "39:32"
-                desc: "Low priority cores frequency clipping ratio level 2"
-            LP_CLIP_RATIO_3:
-                bits: "47:40"
-                desc: "Low priority cores frequency clipping ratio level 2"
-            LP_CLIP_RATIO_4:
-                bits: "55:48"
-                desc: "Low priority cores frequency clipping ratio level 3"
-            LP_CLIP_RATIO_5:
-                bits: "63:56"
-                desc: "Low priority cores frequency clipping ratio level 5"
-            RSVD1:
-                bits: "15:13"
-                desc: "Allowed level mask used for dynamic config level switching"
-            SST_FEATURE_ID:
-                bits: "3:0"
-                desc: "Set to 0 (0=SST-CP, 1=SST-PP, 2=SST-BF, 3=SST-TF)"
-        offset: 600
-        width: 64
-    L2_SST_TF_INFO-1:
-        fields:
-            NUM_CORE_0:
-                bits: "7:0"
-                desc: "High priority core count for bucket 0"
-            NUM_CORE_1:
-                bits: "15:8"
-                desc: "High priority core count for bucket 1"
-            NUM_CORE_2:
-                bits: "23:16"
-                desc: "High priority core count for bucket 2"
-            NUM_CORE_3:
-                bits: "31:24"
-                desc: "High priority core count for bucket 3"
-            NUM_CORE_4:
-                bits: "39:32"
-                desc: "High priority core count for bucket 4"
-            NUM_CORE_5:
-                bits: "47:40"
-                desc: "High priority core count for bucket 5"
-            NUM_CORE_6:
-                bits: "55:48"
-                desc: "High priority core count for bucket 6"
-            NUM_CORE_7:
-                bits: "63:56"
-                desc: "High priority core count for bucket 7"
-        offset: 608
-        width: 64
-    L2_SST_TF_INFO-2:
-        fields:
-            RATIO_0:
-                bits: "7:0"
-                desc: "Turbo ratio limit level 0, bucket 0"
-            RATIO_1:
-                bits: "15:8"
-                desc: "Turbo ratio limit level 0, bucket 1"
-            RATIO_2:
-                bits: "23:16"
-                desc: "Turbo ratio limit level 0, bucket 2"
-            RATIO_3:
-                bits: "31:24"
-                desc: "Turbo ratio limit level 0, bucket 3"
-            RATIO_4:
-                bits: "39:32"
-                desc: "Turbo ratio limit level 0, bucket 4"
-            RATIO_5:
-                bits: "47:40"
-                desc: "Turbo ratio limit level 0, bucket 5"
-            RATIO_6:
-                bits: "55:48"
-                desc: "Turbo ratio limit level 0, bucket 6"
-            RATIO_7:
-                bits: "63:56"
-                desc: "Turbo ratio limit level 0, bucket 7"
-        offset: 616
-        width: 64
-    L2_SST_TF_INFO-3:
-        fields:
-            RATIO_0:
-                bits: "7:0"
-                desc: "Turbo ratio limit level 0, bucket 0"
-            RATIO_1:
-                bits: "15:8"
-                desc: "Turbo ratio limit level 0, bucket 1"
-            RATIO_2:
-                bits: "23:16"
-                desc: "Turbo ratio limit level 0, bucket 2"
-            RATIO_3:
-                bits: "31:24"
-                desc: "Turbo ratio limit level 0, bucket 3"
-            RATIO_4:
-                bits: "39:32"
-                desc: "Turbo ratio limit level 0, bucket 4"
-            RATIO_5:
-                bits: "47:40"
-                desc: "Turbo ratio limit level 0, bucket 5"
-            RATIO_6:
-                bits: "55:48"
-                desc: "Turbo ratio limit level 0, bucket 6"
-            RATIO_7:
-                bits: "63:56"
-                desc: "Turbo ratio limit level 0, bucket 7"
-        offset: 624
-        width: 64
-    L2_SST_TF_INFO-4:
-        fields:
-            RATIO_0:
-                bits: "7:0"
-                desc: "Turbo ratio limit level 0, bucket 0"
-            RATIO_1:
-                bits: "15:8"
-                desc: "Turbo ratio limit level 0, bucket 1"
-            RATIO_2:
-                bits: "23:16"
-                desc: "Turbo ratio limit level 0, bucket 2"
-            RATIO_3:
-                bits: "31:24"
-                desc: "Turbo ratio limit level 0, bucket 3"
-            RATIO_4:
-                bits: "39:32"
-                desc: "Turbo ratio limit level 0, bucket 4"
-            RATIO_5:
-                bits: "47:40"
-                desc: "Turbo ratio limit level 0, bucket 5"
-            RATIO_6:
-                bits: "55:48"
-                desc: "Turbo ratio limit level 0, bucket 6"
-            RATIO_7:
-                bits: "63:56"
-                desc: "Turbo ratio limit level 0, bucket 7"
-        offset: 632
-        width: 64
-    L2_SST_TF_INFO-5:
-        fields:
-            RATIO_0:
-                bits: "7:0"
-                desc: "Turbo ratio limit level 0, bucket 0"
-            RATIO_1:
-                bits: "15:8"
-                desc: "Turbo ratio limit level 0, bucket 1"
-            RATIO_2:
-                bits: "23:16"
-                desc: "Turbo ratio limit level 0, bucket 2"
-            RATIO_3:
-                bits: "31:24"
-                desc: "Turbo ratio limit level 0, bucket 3"
-            RATIO_4:
-                bits: "39:32"
-                desc: "Turbo ratio limit level 0, bucket 4"
-            RATIO_5:
-                bits: "47:40"
-                desc: "Turbo ratio limit level 0, bucket 5"
-            RATIO_6:
-                bits: "55:48"
-                desc: "Turbo ratio limit level 0, bucket 6"
-            RATIO_7:
-                bits: "63:56"
-                desc: "Turbo ratio limit level 0, bucket 7"
-        offset: 640
-        width: 64
-    L2_SST_TF_INFO-6:
-        fields:
-            RATIO_0:
-                bits: "7:0"
-                desc: "Turbo ratio limit level 0, bucket 0"
-            RATIO_1:
-                bits: "15:8"
-                desc: "Turbo ratio limit level 0, bucket 1"
-            RATIO_2:
-                bits: "23:16"
-                desc: "Turbo ratio limit level 0, bucket 2"
-            RATIO_3:
-                bits: "31:24"
-                desc: "Turbo ratio limit level 0, bucket 3"
-            RATIO_4:
-                bits: "39:32"
-                desc: "Turbo ratio limit level 0, bucket 4"
-            RATIO_5:
-                bits: "47:40"
-                desc: "Turbo ratio limit level 0, bucket 5"
-            RATIO_6:
-                bits: "55:48"
-                desc: "Turbo ratio limit level 0, bucket 6"
-            RATIO_7:
-                bits: "63:56"
-                desc: "Turbo ratio limit level 0, bucket 7"
-        offset: 648
-        width: 64
-    L2_SST_TF_INFO-7:
-        fields:
-            RATIO_0:
-                bits: "7:0"
-                desc: "Turbo ratio limit level 0, bucket 0"
-            RATIO_1:
-                bits: "15:8"
-                desc: "Turbo ratio limit level 0, bucket 1"
-            RATIO_2:
-                bits: "23:16"
-                desc: "Turbo ratio limit level 0, bucket 2"
-            RATIO_3:
-                bits: "31:24"
-                desc: "Turbo ratio limit level 0, bucket 3"
-            RATIO_4:
-                bits: "39:32"
-                desc: "Turbo ratio limit level 0, bucket 4"
-            RATIO_5:
-                bits: "47:40"
-                desc: "Turbo ratio limit level 0, bucket 5"
-            RATIO_6:
-                bits: "55:48"
-                desc: "Turbo ratio limit level 0, bucket 6"
-            RATIO_7:
-                bits: "63:56"
-                desc: "Turbo ratio limit level 0, bucket 7"
-        offset: 656
-        width: 64
-    L3_SST_BF_HEADER:
-        fields:
-            FEATURE_REVISION:
-                bits: "11:4"
-                desc: "Interface version number for the feature"
-            FEATURE_SUPPORTED:
-                bits: "12:12"
-                desc: "1 - the SST feature is supported in this PP level"
-            P1_HI:
-                bits: "20:13"
-                desc: "Base frequency for high priority cores"
-            P1_LO:
-                bits: "28:21"
-                desc: "Base frequency for low priority cores"
-            RESERVED:
-                bits: "63:61"
-                desc: "Reserved"
-            RSVD0:
-                bits: "31:29"
-                desc: "Reserved"
-            SST_FEATURE_ID:
-                bits: "3:0"
-                desc: "Set to 0 (0=SST-CP, 1=SST-PP, 2=SST-BF, 3=SST-TF)"
-            TDP:
-                bits: "60:46"
-                desc: "TDP = SKU"
-            T_CONTROL:
-                bits: "37:32"
-                desc: "Fan temperature target offset"
-            T_PROHOT:
-                bits: "45:38"
-                desc: "DTS max or external Prochot for the specific configuration"
-        offset: 760
-        width: 64
-    L3_SST_BF_INFO-1:
-        fields:
-            P1_HI_CORE_MASK:
-                bits: "63:0"
-                desc: "PBF_P1_HI_CORE_MASK"
-        offset: 768
-        width: 64
-    L3_SST_PP_INFO-00:
-        fields:
-            P1_AMX:
-                bits: "31:24"
-                desc: "Base frequency ratio of the TDP workload, a.k.a. AMX P1"
-            P1_AVX2:
-                bits: "15:8"
-                desc: "Base frequency ratio of the TDP workload, a.k.a. AVX2 P1"
-            P1_AVX512:
-                bits: "23:16"
-                desc: "Base frequency ratio of the TDP workload, a.k.a. AVX P1"
-            P1_SSE:
-                bits: "7:0"
-                desc: "Base frequency ratio of the TDP workload, a.k.a. SSE P1"
-            RSVD1:
-                bits: "63:32"
-                desc: "Reserved"
-        offset: 664
-        width: 64
-    L3_SST_PP_INFO-01:
-        fields:
-            COOLING_TYPE:
-                bits: "63:62"
-                desc: "Cooling type"
-            FUSED_CORE_COUNT:
-                bits: "7:0"
-                desc: "Core count of the fuse enabled cores"
-            FUSED_LLC_COUNT:
-                bits: "23:16"
-                desc: "LLC count of the fuse enabled LLC slices"
-            MAX_MEMORY_FREQ:
-                bits: "61:55"
-                desc: "The max allowed memory controller frequency ratio for this config level"
-            RESOLVED_CORE_COUNT:
-                bits: "15:8"
-                desc: "Count of P-code's resolved cores"
-            RSVD1:
-                bits: "31:24"
-                desc: "Reserved"
-            TDP:
-                bits: "46:32"
-                desc: "Power for this TDP level in 1/8W units"
-            T_PROCHOT:
-                bits: "54:47"
-                desc: "DTS max or external Prochot for the specific configuration"
-        offset: 672
-        width: 64
-    L3_SST_PP_INFO-02:
-        fields:
-            RESOLVED_CORE_MASK:
-                bits: "63:0"
-                desc: "Logical core ID mask"
-        offset: 680
-        width: 64
-    L3_SST_PP_INFO-03:
-        fields:
-            RESERVED:
-                bits: "63:0"
-                desc: "Reserved"
-        offset: 688
-        width: 64
-    L3_SST_PP_INFO-04:
-        fields:
-            RATIO_0:
-                bits: "7:0"
-                desc: "Turbo ratio limit level 0, bucket 0"
-            RATIO_1:
-                bits: "15:8"
-                desc: "Turbo ratio limit level 0, bucket 1"
-            RATIO_2:
-                bits: "23:16"
-                desc: "Turbo ratio limit level 0, bucket 2"
-            RATIO_3:
-                bits: "31:24"
-                desc: "Turbo ratio limit level 0, bucket 3"
-            RATIO_4:
-                bits: "39:32"
-                desc: "Turbo ratio limit level 0, bucket 4"
-            RATIO_5:
-                bits: "47:40"
-                desc: "Turbo ratio limit level 0, bucket 5"
-            RATIO_6:
-                bits: "55:48"
-                desc: "Turbo ratio limit level 0, bucket 6"
-            RATIO_7:
-                bits: "63:56"
-                desc: "Turbo ratio limit level 0, bucket 7"
-        offset: 696
-        width: 64
-    L3_SST_PP_INFO-05:
-        fields:
-            RATIO_0:
-                bits: "7:0"
-                desc: "Turbo ratio limit level 0, bucket 0"
-            RATIO_1:
-                bits: "15:8"
-                desc: "Turbo ratio limit level 0, bucket 1"
-            RATIO_2:
-                bits: "23:16"
-                desc: "Turbo ratio limit level 0, bucket 2"
-            RATIO_3:
-                bits: "31:24"
-                desc: "Turbo ratio limit level 0, bucket 3"
-            RATIO_4:
-                bits: "39:32"
-                desc: "Turbo ratio limit level 0, bucket 4"
-            RATIO_5:
-                bits: "47:40"
-                desc: "Turbo ratio limit level 0, bucket 5"
-            RATIO_6:
-                bits: "55:48"
-                desc: "Turbo ratio limit level 0, bucket 6"
-            RATIO_7:
-                bits: "63:56"
-                desc: "Turbo ratio limit level 0, bucket 7"
-        offset: 704
-        width: 64
-    L3_SST_PP_INFO-06:
-        fields:
-            RATIO_0:
-                bits: "7:0"
-                desc: "Turbo ratio limit level 0, bucket 0"
-            RATIO_1:
-                bits: "15:8"
-                desc: "Turbo ratio limit level 0, bucket 1"
-            RATIO_2:
-                bits: "23:16"
-                desc: "Turbo ratio limit level 0, bucket 2"
-            RATIO_3:
-                bits: "31:24"
-                desc: "Turbo ratio limit level 0, bucket 3"
-            RATIO_4:
-                bits: "39:32"
-                desc: "Turbo ratio limit level 0, bucket 4"
-            RATIO_5:
-                bits: "47:40"
-                desc: "Turbo ratio limit level 0, bucket 5"
-            RATIO_6:
-                bits: "55:48"
-                desc: "Turbo ratio limit level 0, bucket 6"
-            RATIO_7:
-                bits: "63:56"
-                desc: "Turbo ratio limit level 0, bucket 7"
-        offset: 712
-        width: 64
-    L3_SST_PP_INFO-07:
-        fields:
-            RATIO_0:
-                bits: "7:0"
-                desc: "Turbo ratio limit level 0, bucket 0"
-            RATIO_1:
-                bits: "15:8"
-                desc: "Turbo ratio limit level 0, bucket 1"
-            RATIO_2:
-                bits: "23:16"
-                desc: "Turbo ratio limit level 0, bucket 2"
-            RATIO_3:
-                bits: "31:24"
-                desc: "Turbo ratio limit level 0, bucket 3"
-            RATIO_4:
-                bits: "39:32"
-                desc: "Turbo ratio limit level 0, bucket 4"
-            RATIO_5:
-                bits: "47:40"
-                desc: "Turbo ratio limit level 0, bucket 5"
-            RATIO_6:
-                bits: "55:48"
-                desc: "Turbo ratio limit level 0, bucket 6"
-            RATIO_7:
-                bits: "63:56"
-                desc: "Turbo ratio limit level 0, bucket 7"
-        offset: 720
-        width: 64
-    L3_SST_PP_INFO-08:
-        fields:
-            RATIO_0:
-                bits: "7:0"
-                desc: "Turbo ratio limit level 0, bucket 0"
-            RATIO_1:
-                bits: "15:8"
-                desc: "Turbo ratio limit level 0, bucket 1"
-            RATIO_2:
-                bits: "23:16"
-                desc: "Turbo ratio limit level 0, bucket 2"
-            RATIO_3:
-                bits: "31:24"
-                desc: "Turbo ratio limit level 0, bucket 3"
-            RATIO_4:
-                bits: "39:32"
-                desc: "Turbo ratio limit level 0, bucket 4"
-            RATIO_5:
-                bits: "47:40"
-                desc: "Turbo ratio limit level 0, bucket 5"
-            RATIO_6:
-                bits: "55:48"
-                desc: "Turbo ratio limit level 0, bucket 6"
-            RATIO_7:
-                bits: "63:56"
-                desc: "Turbo ratio limit level 0, bucket 7"
-        offset: 728
-        width: 64
-    L3_SST_PP_INFO-09:
-        fields:
-            RATIO_0:
-                bits: "7:0"
-                desc: "Turbo ratio limit level 0, bucket 0"
-            RATIO_1:
-                bits: "15:8"
-                desc: "Turbo ratio limit level 0, bucket 1"
-            RATIO_2:
-                bits: "23:16"
-                desc: "Turbo ratio limit level 0, bucket 2"
-            RATIO_3:
-                bits: "31:24"
-                desc: "Turbo ratio limit level 0, bucket 3"
-            RATIO_4:
-                bits: "39:32"
-                desc: "Turbo ratio limit level 0, bucket 4"
-            RATIO_5:
-                bits: "47:40"
-                desc: "Turbo ratio limit level 0, bucket 5"
-            RATIO_6:
-                bits: "55:48"
-                desc: "Turbo ratio limit level 0, bucket 6"
-            RATIO_7:
-                bits: "63:56"
-                desc: "Turbo ratio limit level 0, bucket 7"
-        offset: 736
-        width: 64
-    L3_SST_PP_INFO-10:
-        fields:
-            NUM_CORE_0:
-                bits: "7:0"
-                desc: "Active core ranges for TRL bucket 0"
-            NUM_CORE_1:
-                bits: "15:8"
-                desc: "Active core ranges for TRL bucket 1"
-            NUM_CORE_2:
-                bits: "23:16"
-                desc: "Active core ranges for TRL bucket 2"
-            NUM_CORE_3:
-                bits: "31:24"
-                desc: "Active core ranges for TRL bucket 3"
-            NUM_CORE_4:
-                bits: "39:32"
-                desc: "Active core ranges for TRL bucket 4"
-            NUM_CORE_5:
-                bits: "47:40"
-                desc: "Active core ranges for TRL bucket 5"
-            NUM_CORE_6:
-                bits: "55:48"
-                desc: "Active core ranges for TRL bucket 6"
-            NUM_CORE_7:
-                bits: "63:56"
-                desc: "Active core ranges for TRL bucket 7"
-        offset: 744
-        width: 64
-    L3_SST_PP_INFO-11:
-        fields:
-            P0_CORE_RATIO:
-                bits: "7:0"
-                desc: "Maximum core frequency ratio limit"
-            P0_FABRIC_RATIO:
-                bits: "39:32"
-                desc: "Maximum    fabric (uncore) frequency ratio limit"
-            P1_CORE_RATIO:
-                bits: "15:8"
-                desc: "Core TDP frequency ratio"
-            P1_FABRIC_RATIO:
-                bits: "47:40"
-                desc: "Fabric (uncore) TDP frequency ratio"
-            PM_CORE_RATIO:
-                bits: "31:24"
-                desc: "Minimum core frequency ratio"
-            PM_FABRIC_RATIO:
-                bits: "55:48"
-                desc: "Minimum fabric (uncore) frequency ratio"
-            PN_CORE_RATIO:
-                bits: "23:16"
-                desc: "Maximum core efficiency frequency ratio"
-            RESERVED:
-                bits: "63:56"
-                desc: "Reserved"
-        offset: 752
-        width: 64
-    L3_SST_TF_HEADER:
-        fields:
-            FEATURE_REVISION:
-                bits: "11:4"
-                desc: "Interface version number for the feature"
-            FEATURE_SUPPORTED:
-                bits: "12:12"
-                desc: "1 - the SST feature is supported in this PP level"
-            LP_CLIP_RATIO_0:
-                bits: "23:16"
-                desc: "Low priority cores frequency clipping ratio level 0"
-            LP_CLIP_RATIO_1:
-                bits: "31:24"
-                desc: "Low priority cores frequency clipping ratio level 1"
-            LP_CLIP_RATIO_2:
-                bits: "39:32"
-                desc: "Low priority cores frequency clipping ratio level 2"
-            LP_CLIP_RATIO_3:
-                bits: "47:40"
-                desc: "Low priority cores frequency clipping ratio level 2"
-            LP_CLIP_RATIO_4:
-                bits: "55:48"
-                desc: "Low priority cores frequency clipping ratio level 3"
-            LP_CLIP_RATIO_5:
-                bits: "63:56"
-                desc: "Low priority cores frequency clipping ratio level 5"
-            RSVD1:
-                bits: "15:13"
-                desc: "Allowed level mask used for dynamic config level switching"
-            SST_FEATURE_ID:
-                bits: "3:0"
-                desc: "Set to 0 (0=SST-CP, 1=SST-PP, 2=SST-BF, 3=SST-TF)"
-        offset: 776
-        width: 64
-    L3_SST_TF_INFO-1:
-        fields:
-            NUM_CORE_0:
-                bits: "7:0"
-                desc: "High priority core count for bucket 0"
-            NUM_CORE_1:
-                bits: "15:8"
-                desc: "High priority core count for bucket 1"
-            NUM_CORE_2:
-                bits: "23:16"
-                desc: "High priority core count for bucket 2"
-            NUM_CORE_3:
-                bits: "31:24"
-                desc: "High priority core count for bucket 3"
-            NUM_CORE_4:
-                bits: "39:32"
-                desc: "High priority core count for bucket 4"
-            NUM_CORE_5:
-                bits: "47:40"
-                desc: "High priority core count for bucket 5"
-            NUM_CORE_6:
-                bits: "55:48"
-                desc: "High priority core count for bucket 6"
-            NUM_CORE_7:
-                bits: "63:56"
-                desc: "High priority core count for bucket 7"
-        offset: 784
-        width: 64
-    L3_SST_TF_INFO-2:
-        fields:
-            RATIO_0:
-                bits: "7:0"
-                desc: "Turbo ratio limit level 0, bucket 0"
-            RATIO_1:
-                bits: "15:8"
-                desc: "Turbo ratio limit level 0, bucket 1"
-            RATIO_2:
-                bits: "23:16"
-                desc: "Turbo ratio limit level 0, bucket 2"
-            RATIO_3:
-                bits: "31:24"
-                desc: "Turbo ratio limit level 0, bucket 3"
-            RATIO_4:
-                bits: "39:32"
-                desc: "Turbo ratio limit level 0, bucket 4"
-            RATIO_5:
-                bits: "47:40"
-                desc: "Turbo ratio limit level 0, bucket 5"
-            RATIO_6:
-                bits: "55:48"
-                desc: "Turbo ratio limit level 0, bucket 6"
-            RATIO_7:
-                bits: "63:56"
-                desc: "Turbo ratio limit level 0, bucket 7"
-        offset: 792
-        width: 64
-    L3_SST_TF_INFO-3:
-        fields:
-            RATIO_0:
-                bits: "7:0"
-                desc: "Turbo ratio limit level 0, bucket 0"
-            RATIO_1:
-                bits: "15:8"
-                desc: "Turbo ratio limit level 0, bucket 1"
-            RATIO_2:
-                bits: "23:16"
-                desc: "Turbo ratio limit level 0, bucket 2"
-            RATIO_3:
-                bits: "31:24"
-                desc: "Turbo ratio limit level 0, bucket 3"
-            RATIO_4:
-                bits: "39:32"
-                desc: "Turbo ratio limit level 0, bucket 4"
-            RATIO_5:
-                bits: "47:40"
-                desc: "Turbo ratio limit level 0, bucket 5"
-            RATIO_6:
-                bits: "55:48"
-                desc: "Turbo ratio limit level 0, bucket 6"
-            RATIO_7:
-                bits: "63:56"
-                desc: "Turbo ratio limit level 0, bucket 7"
-        offset: 800
-        width: 64
-    L3_SST_TF_INFO-4:
-        fields:
-            RATIO_0:
-                bits: "7:0"
-                desc: "Turbo ratio limit level 0, bucket 0"
-            RATIO_1:
-                bits: "15:8"
-                desc: "Turbo ratio limit level 0, bucket 1"
-            RATIO_2:
-                bits: "23:16"
-                desc: "Turbo ratio limit level 0, bucket 2"
-            RATIO_3:
-                bits: "31:24"
-                desc: "Turbo ratio limit level 0, bucket 3"
-            RATIO_4:
-                bits: "39:32"
-                desc: "Turbo ratio limit level 0, bucket 4"
-            RATIO_5:
-                bits: "47:40"
-                desc: "Turbo ratio limit level 0, bucket 5"
-            RATIO_6:
-                bits: "55:48"
-                desc: "Turbo ratio limit level 0, bucket 6"
-            RATIO_7:
-                bits: "63:56"
-                desc: "Turbo ratio limit level 0, bucket 7"
-        offset: 808
-        width: 64
-    L3_SST_TF_INFO-5:
-        fields:
-            RATIO_0:
-                bits: "7:0"
-                desc: "Turbo ratio limit level 0, bucket 0"
-            RATIO_1:
-                bits: "15:8"
-                desc: "Turbo ratio limit level 0, bucket 1"
-            RATIO_2:
-                bits: "23:16"
-                desc: "Turbo ratio limit level 0, bucket 2"
-            RATIO_3:
-                bits: "31:24"
-                desc: "Turbo ratio limit level 0, bucket 3"
-            RATIO_4:
-                bits: "39:32"
-                desc: "Turbo ratio limit level 0, bucket 4"
-            RATIO_5:
-                bits: "47:40"
-                desc: "Turbo ratio limit level 0, bucket 5"
-            RATIO_6:
-                bits: "55:48"
-                desc: "Turbo ratio limit level 0, bucket 6"
-            RATIO_7:
-                bits: "63:56"
-                desc: "Turbo ratio limit level 0, bucket 7"
-        offset: 816
-        width: 64
-    L3_SST_TF_INFO-6:
-        fields:
-            RATIO_0:
-                bits: "7:0"
-                desc: "Turbo ratio limit level 0, bucket 0"
-            RATIO_1:
-                bits: "15:8"
-                desc: "Turbo ratio limit level 0, bucket 1"
-            RATIO_2:
-                bits: "23:16"
-                desc: "Turbo ratio limit level 0, bucket 2"
-            RATIO_3:
-                bits: "31:24"
-                desc: "Turbo ratio limit level 0, bucket 3"
-            RATIO_4:
-                bits: "39:32"
-                desc: "Turbo ratio limit level 0, bucket 4"
-            RATIO_5:
-                bits: "47:40"
-                desc: "Turbo ratio limit level 0, bucket 5"
-            RATIO_6:
-                bits: "55:48"
-                desc: "Turbo ratio limit level 0, bucket 6"
-            RATIO_7:
-                bits: "63:56"
-                desc: "Turbo ratio limit level 0, bucket 7"
-        offset: 824
-        width: 64
-    L3_SST_TF_INFO-7:
-        fields:
-            RATIO_0:
-                bits: "7:0"
-                desc: "Turbo ratio limit level 0, bucket 0"
-            RATIO_1:
-                bits: "15:8"
-                desc: "Turbo ratio limit level 0, bucket 1"
-            RATIO_2:
-                bits: "23:16"
-                desc: "Turbo ratio limit level 0, bucket 2"
-            RATIO_3:
-                bits: "31:24"
-                desc: "Turbo ratio limit level 0, bucket 3"
-            RATIO_4:
-                bits: "39:32"
-                desc: "Turbo ratio limit level 0, bucket 4"
-            RATIO_5:
-                bits: "47:40"
-                desc: "Turbo ratio limit level 0, bucket 5"
-            RATIO_6:
-                bits: "55:48"
-                desc: "Turbo ratio limit level 0, bucket 6"
-            RATIO_7:
-                bits: "63:56"
-                desc: "Turbo ratio limit level 0, bucket 7"
-        offset: 832
-        width: 64
-    L4_SST_BF_HEADER:
-        fields:
-            FEATURE_REVISION:
-                bits: "11:4"
-                desc: "Interface version number for the feature"
-            FEATURE_SUPPORTED:
-                bits: "12:12"
-                desc: "1 - the SST feature is supported in this PP level"
-            P1_HI:
-                bits: "20:13"
-                desc: "Base frequency for high priority cores"
-            P1_LO:
-                bits: "28:21"
-                desc: "Base frequency for low priority cores"
-            RESERVED:
-                bits: "63:61"
-                desc: "Reserved"
-            RSVD0:
-                bits: "31:29"
-                desc: "Reserved"
-            SST_FEATURE_ID:
-                bits: "3:0"
-                desc: "Set to 0 (0=SST-CP, 1=SST-PP, 2=SST-BF, 3=SST-TF)"
-            TDP:
-                bits: "60:46"
-                desc: "TDP = SKU"
-            T_CONTROL:
-                bits: "37:32"
-                desc: "Fan temperature target offset"
-            T_PROHOT:
-                bits: "45:38"
-                desc: "DTS max or external Prochot for the specific configuration"
-        offset: 936
-        width: 64
-    L4_SST_BF_INFO-1:
-        fields:
-            P1_HI_CORE_MASK:
-                bits: "63:0"
-                desc: "PBF_P1_HI_CORE_MASK"
-        offset: 944
-        width: 64
-    L4_SST_PP_INFO-00:
-        fields:
-            P1_AMX:
-                bits: "31:24"
-                desc: "Base frequency ratio of the TDP workload, a.k.a. AMX P1"
-            P1_AVX2:
-                bits: "15:8"
-                desc: "Base frequency ratio of the TDP workload, a.k.a. AVX2 P1"
-            P1_AVX512:
-                bits: "23:16"
-                desc: "Base frequency ratio of the TDP workload, a.k.a. AVX P1"
-            P1_SSE:
-                bits: "7:0"
-                desc: "Base frequency ratio of the TDP workload, a.k.a. SSE P1"
-            RSVD1:
-                bits: "63:32"
-                desc: "Reserved"
-        offset: 840
-        width: 64
-    L4_SST_PP_INFO-01:
-        fields:
-            COOLING_TYPE:
-                bits: "63:62"
-                desc: "Cooling type"
-            FUSED_CORE_COUNT:
-                bits: "7:0"
-                desc: "Core count of the fuse enabled cores"
-            FUSED_LLC_COUNT:
-                bits: "23:16"
-                desc: "LLC count of the fuse enabled LLC slices"
-            MAX_MEMORY_FREQ:
-                bits: "61:55"
-                desc: "The max allowed memory controller frequency ratio for this config level"
-            RESOLVED_CORE_COUNT:
-                bits: "15:8"
-                desc: "Count of P-code's resolved cores"
-            RSVD1:
-                bits: "31:24"
-                desc: "Reserved"
-            TDP:
-                bits: "46:32"
-                desc: "Power for this TDP level in 1/8W units"
-            T_PROCHOT:
-                bits: "54:47"
-                desc: "DTS max or external Prochot for the specific configuration"
-        offset: 848
-        width: 64
-    L4_SST_PP_INFO-02:
-        fields:
-            RESOLVED_CORE_MASK:
-                bits: "63:0"
-                desc: "Logical core ID mask"
-        offset: 856
-        width: 64
-    L4_SST_PP_INFO-03:
-        fields:
-            RESERVED:
-                bits: "63:0"
-                desc: "Reserved"
-        offset: 864
-        width: 64
-    L4_SST_PP_INFO-04:
-        fields:
-            RATIO_0:
-                bits: "7:0"
-                desc: "Turbo ratio limit level 0, bucket 0"
-            RATIO_1:
-                bits: "15:8"
-                desc: "Turbo ratio limit level 0, bucket 1"
-            RATIO_2:
-                bits: "23:16"
-                desc: "Turbo ratio limit level 0, bucket 2"
-            RATIO_3:
-                bits: "31:24"
-                desc: "Turbo ratio limit level 0, bucket 3"
-            RATIO_4:
-                bits: "39:32"
-                desc: "Turbo ratio limit level 0, bucket 4"
-            RATIO_5:
-                bits: "47:40"
-                desc: "Turbo ratio limit level 0, bucket 5"
-            RATIO_6:
-                bits: "55:48"
-                desc: "Turbo ratio limit level 0, bucket 6"
-            RATIO_7:
-                bits: "63:56"
-                desc: "Turbo ratio limit level 0, bucket 7"
-        offset: 872
-        width: 64
-    L4_SST_PP_INFO-05:
-        fields:
-            RATIO_0:
-                bits: "7:0"
-                desc: "Turbo ratio limit level 0, bucket 0"
-            RATIO_1:
-                bits: "15:8"
-                desc: "Turbo ratio limit level 0, bucket 1"
-            RATIO_2:
-                bits: "23:16"
-                desc: "Turbo ratio limit level 0, bucket 2"
-            RATIO_3:
-                bits: "31:24"
-                desc: "Turbo ratio limit level 0, bucket 3"
-            RATIO_4:
-                bits: "39:32"
-                desc: "Turbo ratio limit level 0, bucket 4"
-            RATIO_5:
-                bits: "47:40"
-                desc: "Turbo ratio limit level 0, bucket 5"
-            RATIO_6:
-                bits: "55:48"
-                desc: "Turbo ratio limit level 0, bucket 6"
-            RATIO_7:
-                bits: "63:56"
-                desc: "Turbo ratio limit level 0, bucket 7"
-        offset: 880
-        width: 64
-    L4_SST_PP_INFO-06:
-        fields:
-            RATIO_0:
-                bits: "7:0"
-                desc: "Turbo ratio limit level 0, bucket 0"
-            RATIO_1:
-                bits: "15:8"
-                desc: "Turbo ratio limit level 0, bucket 1"
-            RATIO_2:
-                bits: "23:16"
-                desc: "Turbo ratio limit level 0, bucket 2"
-            RATIO_3:
-                bits: "31:24"
-                desc: "Turbo ratio limit level 0, bucket 3"
-            RATIO_4:
-                bits: "39:32"
-                desc: "Turbo ratio limit level 0, bucket 4"
-            RATIO_5:
-                bits: "47:40"
-                desc: "Turbo ratio limit level 0, bucket 5"
-            RATIO_6:
-                bits: "55:48"
-                desc: "Turbo ratio limit level 0, bucket 6"
-            RATIO_7:
-                bits: "63:56"
-                desc: "Turbo ratio limit level 0, bucket 7"
-        offset: 888
-        width: 64
-    L4_SST_PP_INFO-07:
-        fields:
-            RATIO_0:
-                bits: "7:0"
-                desc: "Turbo ratio limit level 0, bucket 0"
-            RATIO_1:
-                bits: "15:8"
-                desc: "Turbo ratio limit level 0, bucket 1"
-            RATIO_2:
-                bits: "23:16"
-                desc: "Turbo ratio limit level 0, bucket 2"
-            RATIO_3:
-                bits: "31:24"
-                desc: "Turbo ratio limit level 0, bucket 3"
-            RATIO_4:
-                bits: "39:32"
-                desc: "Turbo ratio limit level 0, bucket 4"
-            RATIO_5:
-                bits: "47:40"
-                desc: "Turbo ratio limit level 0, bucket 5"
-            RATIO_6:
-                bits: "55:48"
-                desc: "Turbo ratio limit level 0, bucket 6"
-            RATIO_7:
-                bits: "63:56"
-                desc: "Turbo ratio limit level 0, bucket 7"
-        offset: 896
-        width: 64
-    L4_SST_PP_INFO-08:
-        fields:
-            RATIO_0:
-                bits: "7:0"
-                desc: "Turbo ratio limit level 0, bucket 0"
-            RATIO_1:
-                bits: "15:8"
-                desc: "Turbo ratio limit level 0, bucket 1"
-            RATIO_2:
-                bits: "23:16"
-                desc: "Turbo ratio limit level 0, bucket 2"
-            RATIO_3:
-                bits: "31:24"
-                desc: "Turbo ratio limit level 0, bucket 3"
-            RATIO_4:
-                bits: "39:32"
-                desc: "Turbo ratio limit level 0, bucket 4"
-            RATIO_5:
-                bits: "47:40"
-                desc: "Turbo ratio limit level 0, bucket 5"
-            RATIO_6:
-                bits: "55:48"
-                desc: "Turbo ratio limit level 0, bucket 6"
-            RATIO_7:
-                bits: "63:56"
-                desc: "Turbo ratio limit level 0, bucket 7"
-        offset: 904
-        width: 64
-    L4_SST_PP_INFO-09:
-        fields:
-            RATIO_0:
-                bits: "7:0"
-                desc: "Turbo ratio limit level 0, bucket 0"
-            RATIO_1:
-                bits: "15:8"
-                desc: "Turbo ratio limit level 0, bucket 1"
-            RATIO_2:
-                bits: "23:16"
-                desc: "Turbo ratio limit level 0, bucket 2"
-            RATIO_3:
-                bits: "31:24"
-                desc: "Turbo ratio limit level 0, bucket 3"
-            RATIO_4:
-                bits: "39:32"
-                desc: "Turbo ratio limit level 0, bucket 4"
-            RATIO_5:
-                bits: "47:40"
-                desc: "Turbo ratio limit level 0, bucket 5"
-            RATIO_6:
-                bits: "55:48"
-                desc: "Turbo ratio limit level 0, bucket 6"
-            RATIO_7:
-                bits: "63:56"
-                desc: "Turbo ratio limit level 0, bucket 7"
-        offset: 912
-        width: 64
-    L4_SST_PP_INFO-10:
-        fields:
-            NUM_CORE_0:
-                bits: "7:0"
-                desc: "Active core ranges for TRL bucket 0"
-            NUM_CORE_1:
-                bits: "15:8"
-                desc: "Active core ranges for TRL bucket 1"
-            NUM_CORE_2:
-                bits: "23:16"
-                desc: "Active core ranges for TRL bucket 2"
-            NUM_CORE_3:
-                bits: "31:24"
-                desc: "Active core ranges for TRL bucket 3"
-            NUM_CORE_4:
-                bits: "39:32"
-                desc: "Active core ranges for TRL bucket 4"
-            NUM_CORE_5:
-                bits: "47:40"
-                desc: "Active core ranges for TRL bucket 5"
-            NUM_CORE_6:
-                bits: "55:48"
-                desc: "Active core ranges for TRL bucket 6"
-            NUM_CORE_7:
-                bits: "63:56"
-                desc: "Active core ranges for TRL bucket 7"
-        offset: 920
-        width: 64
-    L4_SST_PP_INFO-11:
-        fields:
-            P0_CORE_RATIO:
-                bits: "7:0"
-                desc: "Maximum core frequency ratio limit"
-            P0_FABRIC_RATIO:
-                bits: "39:32"
-                desc: "Maximum    fabric (uncore) frequency ratio limit"
-            P1_CORE_RATIO:
-                bits: "15:8"
-                desc: "Core TDP frequency ratio"
-            P1_FABRIC_RATIO:
-                bits: "47:40"
-                desc: "Fabric (uncore) TDP frequency ratio"
-            PM_CORE_RATIO:
-                bits: "31:24"
-                desc: "Minimum core frequency ratio"
-            PM_FABRIC_RATIO:
-                bits: "55:48"
-                desc: "Minimum fabric (uncore) frequency ratio"
-            PN_CORE_RATIO:
-                bits: "23:16"
-                desc: "Maximum core efficiency frequency ratio"
-            RESERVED:
-                bits: "63:56"
-                desc: "Reserved"
-        offset: 928
-        width: 64
-    L4_SST_TF_HEADER:
-        fields:
-            FEATURE_REVISION:
-                bits: "11:4"
-                desc: "Interface version number for the feature"
-            FEATURE_SUPPORTED:
-                bits: "12:12"
-                desc: "1 - the SST feature is supported in this PP level"
-            LP_CLIP_RATIO_0:
-                bits: "23:16"
-                desc: "Low priority cores frequency clipping ratio level 0"
-            LP_CLIP_RATIO_1:
-                bits: "31:24"
-                desc: "Low priority cores frequency clipping ratio level 1"
-            LP_CLIP_RATIO_2:
-                bits: "39:32"
-                desc: "Low priority cores frequency clipping ratio level 2"
-            LP_CLIP_RATIO_3:
-                bits: "47:40"
-                desc: "Low priority cores frequency clipping ratio level 2"
-            LP_CLIP_RATIO_4:
-                bits: "55:48"
-                desc: "Low priority cores frequency clipping ratio level 3"
-            LP_CLIP_RATIO_5:
-                bits: "63:56"
-                desc: "Low priority cores frequency clipping ratio level 5"
-            RSVD1:
-                bits: "15:13"
-                desc: "Allowed level mask used for dynamic config level switching"
-            SST_FEATURE_ID:
-                bits: "3:0"
-                desc: "Set to 0 (0=SST-CP, 1=SST-PP, 2=SST-BF, 3=SST-TF)"
-        offset: 952
-        width: 64
-    L4_SST_TF_INFO-1:
-        fields:
-            NUM_CORE_0:
-                bits: "7:0"
-                desc: "High priority core count for bucket 0"
-            NUM_CORE_1:
-                bits: "15:8"
-                desc: "High priority core count for bucket 1"
-            NUM_CORE_2:
-                bits: "23:16"
-                desc: "High priority core count for bucket 2"
-            NUM_CORE_3:
-                bits: "31:24"
-                desc: "High priority core count for bucket 3"
-            NUM_CORE_4:
-                bits: "39:32"
-                desc: "High priority core count for bucket 4"
-            NUM_CORE_5:
-                bits: "47:40"
-                desc: "High priority core count for bucket 5"
-            NUM_CORE_6:
-                bits: "55:48"
-                desc: "High priority core count for bucket 6"
-            NUM_CORE_7:
-                bits: "63:56"
-                desc: "High priority core count for bucket 7"
-        offset: 960
-        width: 64
-    L4_SST_TF_INFO-2:
-        fields:
-            RATIO_0:
-                bits: "7:0"
-                desc: "Turbo ratio limit level 0, bucket 0"
-            RATIO_1:
-                bits: "15:8"
-                desc: "Turbo ratio limit level 0, bucket 1"
-            RATIO_2:
-                bits: "23:16"
-                desc: "Turbo ratio limit level 0, bucket 2"
-            RATIO_3:
-                bits: "31:24"
-                desc: "Turbo ratio limit level 0, bucket 3"
-            RATIO_4:
-                bits: "39:32"
-                desc: "Turbo ratio limit level 0, bucket 4"
-            RATIO_5:
-                bits: "47:40"
-                desc: "Turbo ratio limit level 0, bucket 5"
-            RATIO_6:
-                bits: "55:48"
-                desc: "Turbo ratio limit level 0, bucket 6"
-            RATIO_7:
-                bits: "63:56"
-                desc: "Turbo ratio limit level 0, bucket 7"
-        offset: 968
-        width: 64
-    L4_SST_TF_INFO-3:
-        fields:
-            RATIO_0:
-                bits: "7:0"
-                desc: "Turbo ratio limit level 0, bucket 0"
-            RATIO_1:
-                bits: "15:8"
-                desc: "Turbo ratio limit level 0, bucket 1"
-            RATIO_2:
-                bits: "23:16"
-                desc: "Turbo ratio limit level 0, bucket 2"
-            RATIO_3:
-                bits: "31:24"
-                desc: "Turbo ratio limit level 0, bucket 3"
-            RATIO_4:
-                bits: "39:32"
-                desc: "Turbo ratio limit level 0, bucket 4"
-            RATIO_5:
-                bits: "47:40"
-                desc: "Turbo ratio limit level 0, bucket 5"
-            RATIO_6:
-                bits: "55:48"
-                desc: "Turbo ratio limit level 0, bucket 6"
-            RATIO_7:
-                bits: "63:56"
-                desc: "Turbo ratio limit level 0, bucket 7"
-        offset: 976
-        width: 64
-    L4_SST_TF_INFO-4:
-        fields:
-            RATIO_0:
-                bits: "7:0"
-                desc: "Turbo ratio limit level 0, bucket 0"
-            RATIO_1:
-                bits: "15:8"
-                desc: "Turbo ratio limit level 0, bucket 1"
-            RATIO_2:
-                bits: "23:16"
-                desc: "Turbo ratio limit level 0, bucket 2"
-            RATIO_3:
-                bits: "31:24"
-                desc: "Turbo ratio limit level 0, bucket 3"
-            RATIO_4:
-                bits: "39:32"
-                desc: "Turbo ratio limit level 0, bucket 4"
-            RATIO_5:
-                bits: "47:40"
-                desc: "Turbo ratio limit level 0, bucket 5"
-            RATIO_6:
-                bits: "55:48"
-                desc: "Turbo ratio limit level 0, bucket 6"
-            RATIO_7:
-                bits: "63:56"
-                desc: "Turbo ratio limit level 0, bucket 7"
-        offset: 984
-        width: 64
-    L4_SST_TF_INFO-5:
-        fields:
-            RATIO_0:
-                bits: "7:0"
-                desc: "Turbo ratio limit level 0, bucket 0"
-            RATIO_1:
-                bits: "15:8"
-                desc: "Turbo ratio limit level 0, bucket 1"
-            RATIO_2:
-                bits: "23:16"
-                desc: "Turbo ratio limit level 0, bucket 2"
-            RATIO_3:
-                bits: "31:24"
-                desc: "Turbo ratio limit level 0, bucket 3"
-            RATIO_4:
-                bits: "39:32"
-                desc: "Turbo ratio limit level 0, bucket 4"
-            RATIO_5:
-                bits: "47:40"
-                desc: "Turbo ratio limit level 0, bucket 5"
-            RATIO_6:
-                bits: "55:48"
-                desc: "Turbo ratio limit level 0, bucket 6"
-            RATIO_7:
-                bits: "63:56"
-                desc: "Turbo ratio limit level 0, bucket 7"
-        offset: 992
-        width: 64
-    L4_SST_TF_INFO-6:
-        fields:
-            RATIO_0:
-                bits: "7:0"
-                desc: "Turbo ratio limit level 0, bucket 0"
-            RATIO_1:
-                bits: "15:8"
-                desc: "Turbo ratio limit level 0, bucket 1"
-            RATIO_2:
-                bits: "23:16"
-                desc: "Turbo ratio limit level 0, bucket 2"
-            RATIO_3:
-                bits: "31:24"
-                desc: "Turbo ratio limit level 0, bucket 3"
-            RATIO_4:
-                bits: "39:32"
-                desc: "Turbo ratio limit level 0, bucket 4"
-            RATIO_5:
-                bits: "47:40"
-                desc: "Turbo ratio limit level 0, bucket 5"
-            RATIO_6:
-                bits: "55:48"
-                desc: "Turbo ratio limit level 0, bucket 6"
-            RATIO_7:
-                bits: "63:56"
-                desc: "Turbo ratio limit level 0, bucket 7"
-        offset: 1000
-        width: 64
-    L4_SST_TF_INFO-7:
-        fields:
-            RATIO_0:
-                bits: "7:0"
-                desc: "Turbo ratio limit level 0, bucket 0"
-            RATIO_1:
-                bits: "15:8"
-                desc: "Turbo ratio limit level 0, bucket 1"
-            RATIO_2:
-                bits: "23:16"
-                desc: "Turbo ratio limit level 0, bucket 2"
-            RATIO_3:
-                bits: "31:24"
-                desc: "Turbo ratio limit level 0, bucket 3"
-            RATIO_4:
-                bits: "39:32"
-                desc: "Turbo ratio limit level 0, bucket 4"
-            RATIO_5:
-                bits: "47:40"
-                desc: "Turbo ratio limit level 0, bucket 5"
-            RATIO_6:
-                bits: "55:48"
-                desc: "Turbo ratio limit level 0, bucket 6"
-            RATIO_7:
-                bits: "63:56"
-                desc: "Turbo ratio limit level 0, bucket 7"
-        offset: 1008
-        width: 64
-    SST_BF_HEADER:
-        fields:
-            FEATURE_REVISION:
-                bits: "11:4"
-                desc: "Interface version number for the feature"
-            FEATURE_SUPPORTED:
-                bits: "12:12"
-                desc: "1 - the SST feature is supported in this PP level"
-            P1_HI:
-                bits: "20:13"
-                desc: "Base frequency for high priority cores"
-            P1_LO:
-                bits: "28:21"
-                desc: "Base frequency for low priority cores"
-            RESERVED:
-                bits: "63:61"
-                desc: "Reserved"
-            RSVD0:
-                bits: "31:29"
-                desc: "Reserved"
-            SST_FEATURE_ID:
-                bits: "3:0"
-                desc: "Set to 0 (0=SST-CP, 1=SST-PP, 2=SST-BF, 3=SST-TF)"
-            TDP:
-                bits: "60:46"
-                desc: "TDP = SKU"
-            T_CONTROL:
-                bits: "37:32"
-                desc: "Fan temperature target offset"
-            T_PROHOT:
-                bits: "45:38"
-                desc: "DTS max or external Prochot for the specific configuration"
-        offset: 232
-        width: 64
-    SST_BF_INFO-1:
-        fields:
-            P1_HI_CORE_MASK:
-                bits: "63:0"
-                desc: "PBF_P1_HI_CORE_MASK"
-        offset: 240
-        width: 64
-    SST_CLOS_ASSOC_0:
-        fields:
-            CLOS_ID_CORE0:
-                bits: "3:0"
-                desc: "CLOS_ID for core 0"
-            CLOS_ID_CORE1:
-                bits: "7:4"
-                desc: "CLOS_ID for core 1"
-            CLOS_ID_CORE10:
-                bits: "43:40"
-                desc: "CLOS_ID for core 10"
-            CLOS_ID_CORE11:
-                bits: "47:44"
-                desc: "CLOS_ID for core 11"
-            CLOS_ID_CORE12:
-                bits: "51:48"
-                desc: "CLOS_ID for core 12"
-            CLOS_ID_CORE13:
-                bits: "55:52"
-                desc: "CLOS_ID for core 13"
-            CLOS_ID_CORE14:
-                bits: "59:56"
-                desc: "CLOS_ID for core 14"
-            CLOS_ID_CORE15:
-                bits: "63:60"
-                desc: "CLOS_ID for core 15"
-            CLOS_ID_CORE2:
-                bits: "11:8"
-                desc: "CLOS_ID for core 2"
-            CLOS_ID_CORE3:
-                bits: "15:12"
-                desc: "CLOS_ID for core 3"
-            CLOS_ID_CORE4:
-                bits: "19:16"
-                desc: "CLOS_ID for core 4"
-            CLOS_ID_CORE5:
-                bits: "23:20"
-                desc: "CLOS_ID for core 5"
-            CLOS_ID_CORE6:
-                bits: "27:24"
-                desc: "CLOS_ID for core 6"
-            CLOS_ID_CORE7:
-                bits: "31:28"
-                desc: "CLOS_ID for core 7"
-            CLOS_ID_CORE8:
-                bits: "35:32"
-                desc: "CLOS_ID for core 8"
-            CLOS_ID_CORE9:
-                bits: "39:36"
-                desc: "CLOS_ID for core 9"
-        offset: 64
-        width: 64
-    SST_CLOS_ASSOC_1:
-        fields:
-            CLOS_ID_CORE16:
-                bits: "3:0"
-                desc: "CLOS_ID for core 16"
-            CLOS_ID_CORE17:
-                bits: "7:4"
-                desc: "CLOS_ID for core 17"
-            CLOS_ID_CORE18:
-                bits: "11:8"
-                desc: "CLOS_ID for core 18"
-            CLOS_ID_CORE19:
-                bits: "15:12"
-                desc: "CLOS_ID for core 19"
-            CLOS_ID_CORE20:
-                bits: "19:16"
-                desc: "CLOS_ID for core 20"
-            CLOS_ID_CORE21:
-                bits: "23:20"
-                desc: "CLOS_ID for core 21"
-            CLOS_ID_CORE22:
-                bits: "27:24"
-                desc: "CLOS_ID for core 22"
-            CLOS_ID_CORE23:
-                bits: "31:28"
-                desc: "CLOS_ID for core 23"
-            CLOS_ID_CORE24:
-                bits: "35:32"
-                desc: "CLOS_ID for core 24"
-            CLOS_ID_CORE25:
-                bits: "39:36"
-                desc: "CLOS_ID for core 25"
-            CLOS_ID_CORE26:
-                bits: "43:40"
-                desc: "CLOS_ID for core 26"
-            CLOS_ID_CORE27:
-                bits: "47:44"
-                desc: "CLOS_ID for core 27"
-            CLOS_ID_CORE28:
-                bits: "51:48"
-                desc: "CLOS_ID for core 28"
-            CLOS_ID_CORE29:
-                bits: "55:52"
-                desc: "CLOS_ID for core 29"
-            CLOS_ID_CORE30:
-                bits: "59:56"
-                desc: "CLOS_ID for core 30"
-            CLOS_ID_CORE31:
-                bits: "63:60"
-                desc: "CLOS_ID for core 31"
-        offset: 72
-        width: 64
-    SST_CLOS_ASSOC_2:
-        fields:
-            CLOS_ID_CORE32:
-                bits: "3:0"
-                desc: "CLOS_ID for core 32"
-            CLOS_ID_CORE33:
-                bits: "7:4"
-                desc: "CLOS_ID for core 33"
-            CLOS_ID_CORE34:
-                bits: "11:8"
-                desc: "CLOS_ID for core 34"
-            CLOS_ID_CORE35:
-                bits: "15:12"
-                desc: "CLOS_ID for core 35"
-            CLOS_ID_CORE36:
-                bits: "19:16"
-                desc: "CLOS_ID for core 36"
-            CLOS_ID_CORE37:
-                bits: "23:20"
-                desc: "CLOS_ID for core 37"
-            CLOS_ID_CORE38:
-                bits: "27:24"
-                desc: "CLOS_ID for core 38"
-            CLOS_ID_CORE39:
-                bits: "31:28"
-                desc: "CLOS_ID for core 39"
-            CLOS_ID_CORE40:
-                bits: "35:32"
-                desc: "CLOS_ID for core 40"
-            CLOS_ID_CORE41:
-                bits: "39:36"
-                desc: "CLOS_ID for core 41"
-            CLOS_ID_CORE42:
-                bits: "43:40"
-                desc: "CLOS_ID for core 42"
-            CLOS_ID_CORE43:
-                bits: "47:44"
-                desc: "CLOS_ID for core 43"
-            CLOS_ID_CORE44:
-                bits: "51:48"
-                desc: "CLOS_ID for core 44"
-            CLOS_ID_CORE45:
-                bits: "55:52"
-                desc: "CLOS_ID for core 45"
-            CLOS_ID_CORE46:
-                bits: "59:56"
-                desc: "CLOS_ID for core 46"
-            CLOS_ID_CORE47:
-                bits: "63:60"
-                desc: "CLOS_ID for core 47"
-        offset: 80
-        width: 64
-    SST_CLOS_ASSOC_3:
-        fields:
-            CLOS_ID_CORE48:
-                bits: "3:0"
-                desc: "CLOS_ID for core 48"
-            CLOS_ID_CORE49:
-                bits: "7:4"
-                desc: "CLOS_ID for core 49"
-            CLOS_ID_CORE50:
-                bits: "11:8"
-                desc: "CLOS_ID for core 50"
-            CLOS_ID_CORE51:
-                bits: "15:12"
-                desc: "CLOS_ID for core 51"
-            CLOS_ID_CORE52:
-                bits: "19:16"
-                desc: "CLOS_ID for core 52"
-            CLOS_ID_CORE53:
-                bits: "23:20"
-                desc: "CLOS_ID for core 53"
-            CLOS_ID_CORE54:
-                bits: "27:24"
-                desc: "CLOS_ID for core 54"
-            CLOS_ID_CORE55:
-                bits: "31:28"
-                desc: "CLOS_ID for core 55"
-            CLOS_ID_CORE56:
-                bits: "35:32"
-                desc: "CLOS_ID for core 56"
-            CLOS_ID_CORE57:
-                bits: "39:36"
-                desc: "CLOS_ID for core 57"
-            CLOS_ID_CORE58:
-                bits: "43:40"
-                desc: "CLOS_ID for core 58"
-            CLOS_ID_CORE59:
-                bits: "47:44"
-                desc: "CLOS_ID for core 59"
-            CLOS_ID_CORE60:
-                bits: "51:48"
-                desc: "CLOS_ID for core 60"
-            CLOS_ID_CORE61:
-                bits: "55:52"
-                desc: "CLOS_ID for core 61"
-            CLOS_ID_CORE62:
-                bits: "59:56"
-                desc: "CLOS_ID for core 62"
-            CLOS_ID_CORE63:
-                bits: "63:60"
-                desc: "CLOS_ID for core 63"
-        offset: 88
-        width: 64
-    SST_CLOS_CONFIG_0:
-        fields:
-            MAX:
-                bits: "23:16"
-                desc: " Maximum PM CLOS frequency ratio (100MHz bins)"
-            MIN:
-                bits: "15:8"
-                desc: " Minimum PM CLOS frequency ratio (100MHz bins)"
-            PROPORTIONAL_PRIORITY:
-                bits: "7:4"
-                desc: "Core frequency weight when CLOS_PRIORITY_TYPE is set to 'proportional'"
-            RESERVED_0:
-                bits: "3:0"
-                desc: "Reserved"
-            RESERVED_1:
-                bits: "63:24"
-                desc: "Reserved"
-        offset: 32
-        width: 64
-    SST_CLOS_CONFIG_1:
-        fields:
-            MAX:
-                bits: "23:16"
-                desc: " Maximum PM CLOS frequency ratio (100MHz bins)"
-            MIN:
-                bits: "15:8"
-                desc: " Minimum PM CLOS frequency ratio (100MHz bins)"
-            PROPORTIONAL_PRIORITY:
-                bits: "7:4"
-                desc: "Core frequency weight when CLOS_PRIORITY_TYPE is set to 'proportional'"
-            RESERVED_0:
-                bits: "3:0"
-                desc: "Reserved"
-            RESERVED_1:
-                bits: "63:24"
-                desc: "Reserved"
-        offset: 40
-        width: 64
-    SST_CLOS_CONFIG_2:
-        fields:
-            MAX:
-                bits: "23:16"
-                desc: " Maximum PM CLOS frequency ratio (100MHz bins)"
-            MIN:
-                bits: "15:8"
-                desc: " Minimum PM CLOS frequency ratio (100MHz bins)"
-            PROPORTIONAL_PRIORITY:
-                bits: "7:4"
-                desc: "Core frequency weight when CLOS_PRIORITY_TYPE is set to 'proportional'"
-            RESERVED_0:
-                bits: "3:0"
-                desc: "Reserved"
-            RESERVED_1:
-                bits: "63:24"
-                desc: "Reserved"
-        offset: 48
-        width: 64
-    SST_CLOS_CONFIG_3:
-        fields:
-            MAX:
-                bits: "23:16"
-                desc: " Maximum PM CLOS frequency ratio (100MHz bins)"
-            MIN:
-                bits: "15:8"
-                desc: " Minimum PM CLOS frequency ratio (100MHz bins)"
-            PROPORTIONAL_PRIORITY:
-                bits: "7:4"
-                desc: "Core frequency weight when CLOS_PRIORITY_TYPE is set to 'proportional'"
-            RESERVED_0:
-                bits: "3:0"
-                desc: "Reserved"
-            RESERVED_1:
-                bits: "63:24"
-                desc: "Reserved"
-        offset: 56
-        width: 64
-    SST_CP_CONTROL:
-        fields:
-            RESET_EXCURSION_TO_MIN:
-                bits: "11:8"
-                desc: "Bitmask for the CLOS groups to clear"
-            RESERVED_0:
-                bits: "7:2"
-                desc: "Reserved"
-            RESERVED_1:
-                bits: "63:12"
-                desc: "Reserved"
-            SST_CP_ENABLE:
-                bits: "0:0"
-                desc: "1: Enable SST-CP. 0: Disable SST-CP"
-            SST_CP_PRIORITY_TYPE:
-                bits: "1:1"
-                desc: "0 - proportional (default), 1 - ordered throttling"
-        offset: 16
-        width: 64
-    SST_CP_HEADER:
-        fields:
-            FEATURE_REVISION:
-                bits: "11:4"
-                desc: "Interface version number for the feature"
-            RATIO_UNIT:
-                bits: "13:12"
-                desc: "Frequency ratio unit: 00 - 100MHz"
-            RESERVED:
-                bits: "63:14"
-                desc: "Reserved"
-            SST_FEATURE_ID:
-                bits: "3:0"
-                desc: "Set to 0 (0=SST-CP, 1=SST-PP, 2=SST-BF, 3=SST-TF)"
-        offset: 8
-        width: 64
-    SST_CP_STATUS:
-        fields:
-            ERROR_TYPE:
-                bits: "5:2"
-                desc: "Type of the last error for this feature"
-            EXCURSION_TO_MIN:
-                bits: "11:8"
-                desc: "Bitmask for the CLOS groups to clear"
-            RESERVED_0:
-                bits: "7:6"
-                desc: "Reserved"
-            RESERVED_1:
-                bits: "63:12"
-                desc: "Reserved"
-            SST_CP_ENABLE:
-                bits: "0:0"
-                desc: "1: Enable SST-CP. 0: Disable SST-CP"
-            SST_CP_PRIORITY_TYPE:
-                bits: "1:1"
-                desc: "0 - proportional (default), 1 - ordered throttling"
-        offset: 24
-        width: 64
     SST_HEADER:
-        fields:
-            CAPABILITY_MASK:
-                bits: "15:8"
-                desc: "Bitmask of the supported sub-features"
-            INTERFACE_VERSION:
-                bits: "7:0"
-                desc: "Version number for this interface"
-            SST_CP_OFFSET:
-                bits: "23:16"
-                desc: "SST-CP Qword offset"
-            SST_PP_OFFSET:
-                bits: "31:24"
-                desc: "SST-PP Qword offset"
         offset: 0
         width: 64
-    SST_PP_CONTROL:
         fields:
-            FEATURE_STATE:
+            INTERFACE_VERSION:
+                bits: "7:0"
+                readonly: true
+                desc: >-
+                    Version number for this interface. Bit[7:5] denotes Major Version and bit[4:0]
+                    for Minor Version
+            CAPABILITY_MASK:
                 bits: "15:8"
-                desc: "Bit mask to control the enable(1) or disable(0) state of each feature"
-            RSVD0:
-                bits: "7:4"
-                desc: "Reserved"
-            RSVD1:
-                bits: "63:16"
-                desc: "Reserved"
-            SST_PP_LEVEL:
-                bits: "2:0"
-                desc: "A SST-PP level that SW intends to switch to"
-            SST_PP_LOCK:
-                bits: "3:3"
-                desc: "SST-PP level select lock (0 - unlocked, 1 - locked till next reset)"
-        offset: 120
+                readonly: true
+                desc: >-
+                    bitmask of the supported sub features. 1=the sub feature is enabled. 0=disabled.
+                    Pcode populates the HW capability setting during early reset. SW uses this field
+                    to discover SST sub features. Bit[8]= SST_CP enable (1), disable (0) bit[9]=
+                    SST_PP enable (1), disable (0)
+            SST_CP_OFFSET:
+                bits: "23:16"
+                readonly: true
+                desc: >-
+                    Qword (8 bytes) offset to the SST_CP register bank
+            SST_PP_OFFSET:
+                bits: "31:24"
+                readonly: true
+                desc: >-
+                    Qword (8 bytes) offset to the SST_PP register bank
+            RSVD:
+                bits: "63:32"
+                readonly: true
+                desc: >-
+                    reserved offset for new features
+    SST_CP_HEADER:
+        offset: 8
         width: 64
-    SST_PP_HEADER:
         fields:
-            ALLOWED_LEVEL_MASK:
-                bits: "27:20"
-                desc: "Allowed level mask used for dynamic config level switching"
-            DYNAMIC_SWITCHING:
-                bits: "42:42"
-                desc: "Dynamic switching of SST performance profiles is supported if 1, otherwise 0"
-            FEATURE_REVISION:
-                bits: "11:4"
-                desc: "Interface version number for the feature"
-            MEMORY_RATIO_UNIT:
-                bits: "44:43"
-                desc: "Memory Controller frequency ratio unit: 00 - 100MHz"
-            PP_BLOCK_SIZE:
-                bits: "41:34"
-                desc: "Size of PP block (stride) in Qword (8 bytes) units"
-            RATIO_UNIT:
-                bits: "33:32"
-                desc: "Frequency ratio unit: 00 - 100MHz"
-            RESERVED_0:
-                bits: "31:28"
-                desc: "Reserved"
-            RESERVED_1:
-                bits: "63:45"
-                desc: "Reserved"
             SST_FEATURE_ID:
                 bits: "3:0"
-                desc: "Set to 0 (0=SST-CP, 1=SST-PP, 2=SST-BF, 3=SST-TF)"
-            SST_PP_LEVEL_EN_MASK:
-                bits: "19:12"
-                desc: "SST-PP level enable/disable fuse mask"
+                readonly: true
+                desc: >-
+                    0=SST-CP, 1=SST-PP, 2=SST-BF, 3=SST-TF, 4-15 = reserved
+            FEATURE_REVISION:
+                bits: "11:4"
+                readonly: true
+                desc: >-
+                    Interface Version number for this SST feature
+            RATIO_UNIT:
+                bits: "13:12"
+                readonly: true
+                desc: >-
+                    Frequency ratio unit. 00: 100MHz. All others : Reserved. Default=0
+            RSVD:
+                bits: "63:14"
+                readonly: true
+                desc: >-
+                    Reserved
+    SST_CP_CONTROL:
+        offset: 16
+        width: 64
+        fields:
+            SST_CP_ENABLE:
+                bits: "0:0"
+                readonly: false
+                desc: >-
+                    1: Enable SST-CP. 0: Disable SST-CP
+            SST_CP_PRIORITY_TYPE:
+                bits: "1:1"
+                readonly: false
+                desc: >-
+                    0x0 (Default) =Proportional. 0x1=Ordered Throttling
+            RSVD1:
+                bits: "7:2"
+                readonly: false
+                desc: >-
+                    Reserved
+            RESET_EXCURSION_TO_MIN:
+                bits: "11:8"
+                readonly: false
+                desc: >-
+                    Bitmask for the CLOS groups. SW clears SST_CP_STATUS.EXCURSION_TO_MIN bits by
+                    writing zero (0) to the respective RESET_EXCURSIONS bit here. Pcode ignores the
+                    bit that SW writes 1 to. Bit8=CLOS0, bit9=CLOS9, etc
+            RSVD2:
+                bits: "63:12"
+                readonly: false
+                desc: >-
+                    Reserved
+    SST_CP_STATUS:
+        offset: 24
+        width: 64
+        fields:
+            SST_CP_ENABLE:
+                bits: "0:0"
+                readonly: true
+                desc: >-
+                    Returns 1 if SST-CP is enabled
+            SST_CP_PRIORITY_TYPE:
+                bits: "1:1"
+                readonly: true
+                desc: >-
+                    Returns current prioritization type. 0x0 (Default) =Proportional. 0x1=Ordered
+                    Throttling
+            ERROR_TYPE:
+                bits: "5:2"
+                readonly: true
+                desc: >-
+                    Returns the type of last error in this feature. 0x0: no error 0x1: SST-CP is not
+                    supported by the hardware. all others: reserved
+            RSVD1:
+                bits: "7:6"
+                readonly: true
+                desc: >-
+                    Reserved
+            EXCURSION_TO_MIN:
+                bits: "11:8"
+                readonly: true
+                desc: >-
+                    Bitmask for the CLOS groups. If set (1), an excursion to Minimum Performance has
+                    occurred for the CLOS. Bit8=CLOS0, bit9=CLOS9, etc
+            RSVD2:
+                bits: "63:12"
+                readonly: true
+                desc: >-
+                    Reserved
+    SST_CLOS_CONFIG_0:
+        offset: 32
+        width: 64
+        fields:
+            RSVD1:
+                bits: "3:0"
+                readonly: false
+                desc: >-
+                    Reserved
+            PROPORTIONAL_PRIORITY:
+                bits: "7:4"
+                readonly: false
+                desc: >-
+                    Used to set frequency weight when CLOS_PRIORITY_TYPE is set to Proportional.
+                    (freq_weight = 0xf -CLOS_PROPORTIONAL_PRIORITY) 0x0 = Max Perf (highest
+                    priority) 0xF = Min Perf (lowest priority)
+            MIN:
+                bits: "15:8"
+                readonly: false
+                desc: >-
+                    Hold the minimum PM CLOS frequency ratio (100MHz bins) for this CLOS group
+            MAX:
+                bits: "23:16"
+                readonly: false
+                desc: >-
+                    Hold the maximum PM CLOS frequency ratio (100MHz bins) for this CLOS group
+            RSVD2:
+                bits: "63:24"
+                readonly: false
+                desc: >-
+                    Reserved
+    SST_CLOS_CONFIG_1:
+        offset: 40
+        width: 64
+        fields:
+            RSVD1:
+                bits: "3:0"
+                readonly: false
+                desc: >-
+                    Reserved
+            PROPORTIONAL_PRIORITY:
+                bits: "7:4"
+                readonly: false
+                desc: >-
+                    Used to set frequency weight when CLOS_PRIORITY_TYPE is set to Proportional.
+                    (freq_weight = 0xf -CLOS_PROPORTIONAL_PRIORITY) 0x0 = Max Perf (highest
+                    priority) 0xF = Min Perf (lowest priority)
+            MIN:
+                bits: "15:8"
+                readonly: false
+                desc: >-
+                    Hold the minimum PM CLOS frequency ratio (100MHz bins) for this CLOS group
+            MAX:
+                bits: "23:16"
+                readonly: false
+                desc: >-
+                    Hold the maximum PM CLOS frequency ratio (100MHz bins) for this CLOS group
+            RSVD2:
+                bits: "63:24"
+                readonly: false
+                desc: >-
+                    Reserved
+    SST_CLOS_CONFIG_2:
+        offset: 48
+        width: 64
+        fields:
+            RSVD1:
+                bits: "3:0"
+                readonly: false
+                desc: >-
+                    Reserved
+            PROPORTIONAL_PRIORITY:
+                bits: "7:4"
+                readonly: false
+                desc: >-
+                    Used to set frequency weight when CLOS_PRIORITY_TYPE is set to Proportional.
+                    (freq_weight = 0xf -CLOS_PROPORTIONAL_PRIORITY) 0x0 = Max Perf (highest
+                    priority) 0xF = Min Perf (lowest priority)
+            MIN:
+                bits: "15:8"
+                readonly: false
+                desc: >-
+                    Hold the minimum PM CLOS frequency ratio (100MHz bins) for this CLOS group
+            MAX:
+                bits: "23:16"
+                readonly: false
+                desc: >-
+                    Hold the maximum PM CLOS frequency ratio (100MHz bins) for this CLOS group
+            RSVD2:
+                bits: "63:24"
+                readonly: false
+                desc: >-
+                    Reserved
+    SST_CLOS_CONFIG_3:
+        offset: 56
+        width: 64
+        fields:
+            RSVD1:
+                bits: "3:0"
+                readonly: false
+                desc: >-
+                    Reserved
+            PROPORTIONAL_PRIORITY:
+                bits: "7:4"
+                readonly: false
+                desc: >-
+                    Used to set frequency weight when CLOS_PRIORITY_TYPE is set to Proportional.
+                    (freq_weight = 0xf -CLOS_PROPORTIONAL_PRIORITY) 0x0 = Max Perf (highest
+                    priority) 0xF = Min Perf (lowest priority)
+            MIN:
+                bits: "15:8"
+                readonly: false
+                desc: >-
+                    Hold the minimum PM CLOS frequency ratio (100MHz bins) for this CLOS group
+            MAX:
+                bits: "23:16"
+                readonly: false
+                desc: >-
+                    Hold the maximum PM CLOS frequency ratio (100MHz bins) for this CLOS group
+            RSVD2:
+                bits: "63:24"
+                readonly: false
+                desc: >-
+                    Reserved
+    SST_CLOS_ASSOC_0:
+        offset: 64
+        width: 64
+        fields:
+            CLOS_ID_core0:
+                bits: "3:0"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 0
+            CLOS_ID_core1:
+                bits: "7:4"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 1
+            CLOS_ID_core2:
+                bits: "11:8"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 2
+            CLOS_ID_core3:
+                bits: "15:12"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 3
+            CLOS_ID_core4:
+                bits: "19:16"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 4
+            CLOS_ID_core5:
+                bits: "23:20"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 5
+            CLOS_ID_core6:
+                bits: "27:24"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 6
+            CLOS_ID_core7:
+                bits: "31:28"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 7
+            CLOS_ID_core8:
+                bits: "35:32"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 8
+            CLOS_ID_core9:
+                bits: "39:36"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 9
+            CLOS_ID_core10:
+                bits: "43:40"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 10
+            CLOS_ID_core11:
+                bits: "47:44"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 11
+            CLOS_ID_core12:
+                bits: "51:48"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 12
+            CLOS_ID_core13:
+                bits: "55:52"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 13
+            CLOS_ID_core14:
+                bits: "59:56"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 14
+            CLOS_ID_core15:
+                bits: "63:60"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 15
+    SST_CLOS_ASSOC_1:
+        offset: 72
+        width: 64
+        fields:
+            CLOS_ID_core16:
+                bits: "3:0"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 16
+            CLOS_ID_core17:
+                bits: "7:4"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 17
+            CLOS_ID_core18:
+                bits: "11:8"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 18
+            CLOS_ID_core19:
+                bits: "15:12"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 19
+            CLOS_ID_core20:
+                bits: "19:16"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 20
+            CLOS_ID_core21:
+                bits: "23:20"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 21
+            CLOS_ID_core22:
+                bits: "27:24"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 22
+            CLOS_ID_core23:
+                bits: "31:28"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 23
+            CLOS_ID_core24:
+                bits: "35:32"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 24
+            CLOS_ID_core25:
+                bits: "39:36"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 25
+            CLOS_ID_core26:
+                bits: "43:40"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 26
+            CLOS_ID_core27:
+                bits: "47:44"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 27
+            CLOS_ID_core28:
+                bits: "51:48"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 28
+            CLOS_ID_core29:
+                bits: "55:52"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 29
+            CLOS_ID_core30:
+                bits: "59:56"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 30
+            CLOS_ID_core31:
+                bits: "63:60"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 31
+    SST_CLOS_ASSOC_2:
+        offset: 80
+        width: 64
+        fields:
+            CLOS_ID_core32:
+                bits: "3:0"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 32
+            CLOS_ID_core33:
+                bits: "7:4"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 33
+            CLOS_ID_core34:
+                bits: "11:8"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 34
+            CLOS_ID_core35:
+                bits: "15:12"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 35
+            CLOS_ID_core36:
+                bits: "19:16"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 36
+            CLOS_ID_core37:
+                bits: "23:20"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 37
+            CLOS_ID_core38:
+                bits: "27:24"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 38
+            CLOS_ID_core39:
+                bits: "31:28"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 39
+            CLOS_ID_core40:
+                bits: "35:32"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 40
+            CLOS_ID_core41:
+                bits: "39:36"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 41
+            CLOS_ID_core42:
+                bits: "43:40"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 42
+            CLOS_ID_core43:
+                bits: "47:44"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 43
+            CLOS_ID_core44:
+                bits: "51:48"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 44
+            CLOS_ID_core45:
+                bits: "55:52"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 45
+            CLOS_ID_core46:
+                bits: "59:56"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 46
+            CLOS_ID_core47:
+                bits: "63:60"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 47
+    SST_CLOS_ASSOC_3:
+        offset: 88
+        width: 64
+        fields:
+            CLOS_ID_core48:
+                bits: "3:0"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 48
+            CLOS_ID_core49:
+                bits: "7:4"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 49
+            CLOS_ID_core50:
+                bits: "11:8"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 50
+            CLOS_ID_core51:
+                bits: "15:12"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 51
+            CLOS_ID_core52:
+                bits: "19:16"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 52
+            CLOS_ID_core53:
+                bits: "23:20"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 53
+            CLOS_ID_core54:
+                bits: "27:24"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 54
+            CLOS_ID_core55:
+                bits: "31:28"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 55
+            CLOS_ID_core56:
+                bits: "35:32"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 56
+            CLOS_ID_core57:
+                bits: "39:36"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 57
+            CLOS_ID_core58:
+                bits: "43:40"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 58
+            CLOS_ID_core59:
+                bits: "47:44"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 59
+            CLOS_ID_core60:
+                bits: "51:48"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 60
+            CLOS_ID_core61:
+                bits: "55:52"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 61
+            CLOS_ID_core62:
+                bits: "59:56"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 62
+            CLOS_ID_core63:
+                bits: "63:60"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Core 63
+    SST_PP_HEADER:
         offset: 96
         width: 64
-    SST_PP_INFO-00:
         fields:
-            P1_AMX:
-                bits: "31:24"
-                desc: "Base frequency ratio of the TDP workload, a.k.a. AMX P1"
-            P1_AVX2:
-                bits: "15:8"
-                desc: "Base frequency ratio of the TDP workload, a.k.a. AVX2 P1"
-            P1_AVX512:
-                bits: "23:16"
-                desc: "Base frequency ratio of the TDP workload, a.k.a. AVX P1"
-            P1_SSE:
-                bits: "7:0"
-                desc: "Base frequency ratio of the TDP workload, a.k.a. SSE P1"
-            RESERVED:
-                bits: "63:32"
-                desc: "Reserved"
-        offset: 136
-        width: 64
-    SST_PP_INFO-01:
-        fields:
-            COOLING_TYPE:
-                bits: "63:62"
-                desc: "Cooling type"
-            FUSED_CORE_COUNT:
-                bits: "7:0"
-                desc: "Core count of the fuse enabled cores"
-            FUSED_LLC_COUNT:
-                bits: "23:16"
-                desc: "LLC count of the fuse enabled LLC slices"
-            MAX_MEMORY_FREQ:
-                bits: "61:55"
-                desc: "The max allowed memory controller frequency ratio for this config level"
-            RESOLVED_CORE_COUNT:
-                bits: "15:8"
-                desc: "Count of P-code's resolved cores"
+            SST_FEATURE_ID:
+                bits: "3:0"
+                readonly: true
+                desc: >-
+                    0=SST-CP, 1=SST-PP, 2=SST-BF, 3=SST-TF, 4-15 = reserved
+            FEATURE_REVISION:
+                bits: "11:4"
+                readonly: true
+                desc: >-
+                    Interface Version number for this SST feature
+            SST_PP_LEVEL_EN_MASK:
+                bits: "19:12"
+                readonly: true
+                desc: >-
+                    SST-PP level enable/disable fuse mask. SoftSKU can toggle fuse bit to
+                    enable/disable a specific level
+            ALLOWED_LEVEL_MASK:
+                bits: "27:20"
+                readonly: true
+                desc: >-
+                    Allowed level mask used for dynamic config level switching. Pcode programs the
+                    mask based on fuse and the current boot config
             RSVD1:
-                bits: "31:24"
-                desc: "Reserved"
-            TDP:
-                bits: "46:32"
-                desc: "Power for this TDP level in 1/8W units"
-            T_PROCHOT:
-                bits: "54:47"
-                desc: "DTS max or external Prochot for the specific configuration"
-        offset: 144
-        width: 64
-    SST_PP_INFO-02:
-        fields:
-            RESOLVED_CORE_MASK:
-                bits: "63:0"
-                desc: "Logical core ID mask"
-        offset: 152
-        width: 64
-    SST_PP_INFO-03:
-        fields:
-            RESERVED:
-                bits: "63:0"
-                desc: "Reserved"
-        offset: 160
-        width: 64
-    SST_PP_INFO-04:
-        fields:
-            RATIO_0:
-                bits: "7:0"
-                desc: "Turbo ratio limit level 0, bucket 0"
-            RATIO_1:
-                bits: "15:8"
-                desc: "Turbo ratio limit level 0, bucket 1"
-            RATIO_2:
-                bits: "23:16"
-                desc: "Turbo ratio limit level 0, bucket 2"
-            RATIO_3:
-                bits: "31:24"
-                desc: "Turbo ratio limit level 0, bucket 3"
-            RATIO_4:
-                bits: "39:32"
-                desc: "Turbo ratio limit level 0, bucket 4"
-            RATIO_5:
-                bits: "47:40"
-                desc: "Turbo ratio limit level 0, bucket 5"
-            RATIO_6:
-                bits: "55:48"
-                desc: "Turbo ratio limit level 0, bucket 6"
-            RATIO_7:
-                bits: "63:56"
-                desc: "Turbo ratio limit level 0, bucket 7"
-        offset: 168
-        width: 64
-    SST_PP_INFO-05:
-        fields:
-            RATIO_0:
-                bits: "7:0"
-                desc: "Turbo ratio limit level 0, bucket 0"
-            RATIO_1:
-                bits: "15:8"
-                desc: "Turbo ratio limit level 0, bucket 1"
-            RATIO_2:
-                bits: "23:16"
-                desc: "Turbo ratio limit level 0, bucket 2"
-            RATIO_3:
-                bits: "31:24"
-                desc: "Turbo ratio limit level 0, bucket 3"
-            RATIO_4:
-                bits: "39:32"
-                desc: "Turbo ratio limit level 0, bucket 4"
-            RATIO_5:
-                bits: "47:40"
-                desc: "Turbo ratio limit level 0, bucket 5"
-            RATIO_6:
-                bits: "55:48"
-                desc: "Turbo ratio limit level 0, bucket 6"
-            RATIO_7:
-                bits: "63:56"
-                desc: "Turbo ratio limit level 0, bucket 7"
-        offset: 176
-        width: 64
-    SST_PP_INFO-06:
-        fields:
-            RATIO_0:
-                bits: "7:0"
-                desc: "Turbo ratio limit level 0, bucket 0"
-            RATIO_1:
-                bits: "15:8"
-                desc: "Turbo ratio limit level 0, bucket 1"
-            RATIO_2:
-                bits: "23:16"
-                desc: "Turbo ratio limit level 0, bucket 2"
-            RATIO_3:
-                bits: "31:24"
-                desc: "Turbo ratio limit level 0, bucket 3"
-            RATIO_4:
-                bits: "39:32"
-                desc: "Turbo ratio limit level 0, bucket 4"
-            RATIO_5:
-                bits: "47:40"
-                desc: "Turbo ratio limit level 0, bucket 5"
-            RATIO_6:
-                bits: "55:48"
-                desc: "Turbo ratio limit level 0, bucket 6"
-            RATIO_7:
-                bits: "63:56"
-                desc: "Turbo ratio limit level 0, bucket 7"
-        offset: 184
-        width: 64
-    SST_PP_INFO-07:
-        fields:
-            RATIO_0:
-                bits: "7:0"
-                desc: "Turbo ratio limit level 0, bucket 0"
-            RATIO_1:
-                bits: "15:8"
-                desc: "Turbo ratio limit level 0, bucket 1"
-            RATIO_2:
-                bits: "23:16"
-                desc: "Turbo ratio limit level 0, bucket 2"
-            RATIO_3:
-                bits: "31:24"
-                desc: "Turbo ratio limit level 0, bucket 3"
-            RATIO_4:
-                bits: "39:32"
-                desc: "Turbo ratio limit level 0, bucket 4"
-            RATIO_5:
-                bits: "47:40"
-                desc: "Turbo ratio limit level 0, bucket 5"
-            RATIO_6:
-                bits: "55:48"
-                desc: "Turbo ratio limit level 0, bucket 6"
-            RATIO_7:
-                bits: "63:56"
-                desc: "Turbo ratio limit level 0, bucket 7"
-        offset: 192
-        width: 64
-    SST_PP_INFO-08:
-        fields:
-            RATIO_0:
-                bits: "7:0"
-                desc: "Turbo ratio limit level 0, bucket 0"
-            RATIO_1:
-                bits: "15:8"
-                desc: "Turbo ratio limit level 0, bucket 1"
-            RATIO_2:
-                bits: "23:16"
-                desc: "Turbo ratio limit level 0, bucket 2"
-            RATIO_3:
-                bits: "31:24"
-                desc: "Turbo ratio limit level 0, bucket 3"
-            RATIO_4:
-                bits: "39:32"
-                desc: "Turbo ratio limit level 0, bucket 4"
-            RATIO_5:
-                bits: "47:40"
-                desc: "Turbo ratio limit level 0, bucket 5"
-            RATIO_6:
-                bits: "55:48"
-                desc: "Turbo ratio limit level 0, bucket 6"
-            RATIO_7:
-                bits: "63:56"
-                desc: "Turbo ratio limit level 0, bucket 7"
-        offset: 200
-        width: 64
-    SST_PP_INFO-09:
-        fields:
-            RATIO_0:
-                bits: "7:0"
-                desc: "Turbo ratio limit level 0, bucket 0"
-            RATIO_1:
-                bits: "15:8"
-                desc: "Turbo ratio limit level 0, bucket 1"
-            RATIO_2:
-                bits: "23:16"
-                desc: "Turbo ratio limit level 0, bucket 2"
-            RATIO_3:
-                bits: "31:24"
-                desc: "Turbo ratio limit level 0, bucket 3"
-            RATIO_4:
-                bits: "39:32"
-                desc: "Turbo ratio limit level 0, bucket 4"
-            RATIO_5:
-                bits: "47:40"
-                desc: "Turbo ratio limit level 0, bucket 5"
-            RATIO_6:
-                bits: "55:48"
-                desc: "Turbo ratio limit level 0, bucket 6"
-            RATIO_7:
-                bits: "63:56"
-                desc: "Turbo ratio limit level 0, bucket 7"
-        offset: 208
-        width: 64
-    SST_PP_INFO-10:
-        fields:
-            NUM_CORE_0:
-                bits: "7:0"
-                desc: "Active core ranges for TRL bucket 0"
-            NUM_CORE_1:
-                bits: "15:8"
-                desc: "Active core ranges for TRL bucket 1"
-            NUM_CORE_2:
-                bits: "23:16"
-                desc: "Active core ranges for TRL bucket 2"
-            NUM_CORE_3:
-                bits: "31:24"
-                desc: "Active core ranges for TRL bucket 3"
-            NUM_CORE_4:
-                bits: "39:32"
-                desc: "Active core ranges for TRL bucket 4"
-            NUM_CORE_5:
-                bits: "47:40"
-                desc: "Active core ranges for TRL bucket 5"
-            NUM_CORE_6:
-                bits: "55:48"
-                desc: "Active core ranges for TRL bucket 6"
-            NUM_CORE_7:
-                bits: "63:56"
-                desc: "Active core ranges for TRL bucket 7"
-        offset: 216
-        width: 64
-    SST_PP_INFO-11:
-        fields:
-            P0_CORE_RATIO:
-                bits: "7:0"
-                desc: "Maximum core frequency ratio limit"
-            P0_FABRIC_RATIO:
-                bits: "39:32"
-                desc: "Maximum    fabric (uncore) frequency ratio limit"
-            P1_CORE_RATIO:
-                bits: "15:8"
-                desc: "Core TDP frequency ratio"
-            P1_FABRIC_RATIO:
-                bits: "47:40"
-                desc: "Fabric (uncore) TDP frequency ratio"
-            PM_CORE_RATIO:
-                bits: "31:24"
-                desc: "Minimum core frequency ratio"
-            PM_FABRIC_RATIO:
-                bits: "55:48"
-                desc: "Minimum fabric (uncore) frequency ratio"
-            PN_CORE_RATIO:
-                bits: "23:16"
-                desc: "Maximum core efficiency frequency ratio"
-            RESERVED:
-                bits: "63:56"
-                desc: "Reserved"
-        offset: 224
-        width: 64
+                bits: "31:28"
+                readonly: true
+                desc: >-
+                    Reserved
+            RATIO_UNIT:
+                bits: "33:32"
+                readonly: true
+                desc: >-
+                    Core frequency ratio unit. 00: 100MHz. All others : Reserved. Default=0
+            PP_BLOCK_SIZE:
+                bits: "41:34"
+                readonly: true
+                desc: >-
+                    Size of PP block (stride) in Qword unit (8 bytes)
+            DYNAMIC_SWITCHING:
+                bits: "42:42"
+                readonly: true
+                desc: >-
+                    If set (1), dynamic switching of SST power profiles is supported, else, not
+            MEMORY_RATIO_UNIT:
+                bits: "44:43"
+                readonly: true
+                desc: >-
+                    Memory controller frequency ratio unit. 00: 100MHz. All others : Reserved.
+                    Default=0
+            RSVD2:
+                bits: "63:45"
+                readonly: true
+                desc: >-
+                    Reserved
     SST_PP_OFFSET_0:
-        fields:
-            RSVD1:
-                bits: "63:24"
-                desc: "Reserved"
-            SST_BF_OFFSET:
-                bits: "15:8"
-                desc: "Qword offset within PP level for the SST_BF register bank"
-            SST_PP_OFFSET:
-                bits: "7:0"
-                desc: "Qword offset within PP level for the SST_PP register bank"
-            SST_TF_OFFSET:
-                bits: "23:16"
-                desc: "Qword offset within PP level for the SST_TF register bank"
         offset: 104
         width: 64
+        fields:
+            SST_PP_OFFSET:
+                bits: "7:0"
+                readonly: true
+                desc: >-
+                    Qword offset within PP level for the SST_PP register bank
+            SST_BF_OFFSET:
+                bits: "15:8"
+                readonly: true
+                desc: >-
+                    Qword offset within PP level for the SST_BF register bank
+            SST_TF_OFFSET:
+                bits: "23:16"
+                readonly: true
+                desc: >-
+                    Qword offset within PP level for the SST_TF register bank
+            RSVD:
+                bits: "63:24"
+                readonly: true
+                desc: >-
+                    Reserved
     SST_PP_OFFSET_1:
+        offset: 112
+        width: 64
         fields:
             PP_OFFSET_0:
                 bits: "7:0"
-                desc: "Qword offset to the register block (stride) of PP level 0"
+                readonly: true
+                desc: >-
+                    Qword offset to the register block (stride) of PP level 0
             PP_OFFSET_1:
                 bits: "15:8"
-                desc: "Qword offset to the register block (stride) of PP level 1"
+                readonly: true
+                desc: >-
+                    Qword offset to the register block (stride) of PP level 1
             PP_OFFSET_2:
                 bits: "23:16"
-                desc: "Qword offset to the register block (stride) of PP level 2"
+                readonly: true
+                desc: >-
+                    Qword offset to the register block (stride) of PP level 2
             PP_OFFSET_3:
                 bits: "31:24"
-                desc: "Qword offset to the register block (stride) of PP level 3"
-            RSVD1:
+                readonly: true
+                desc: >-
+                    Qword offset to the register block (stride) of PP level 3
+            PP_OFFSET_4:
+                bits: "39:32"
+                readonly: true
+                desc: >-
+                    Qword offset to the register block (stride) of PP level 4
+            RSVD:
                 bits: "63:40"
-                desc: "Reserved"
-        offset: 112
+                readonly: true
+                desc: >-
+                    Reserved
+    SST_PP_CONTROL:
+        offset: 120
         width: 64
-    SST_PP_STATUS:
         fields:
-            FEATURE_ERROR_TYPE:
-                bits: "55:32"
-                desc: "Last error of SST-PP control"
-            FEATURE_STATE:
-                bits: "15:8"
-                desc: "Bit mask to control the enable(1) or disable(0) state of each feature"
-            RSVD0:
-                bits: "31:16"
-                desc: "Reserved"
-            RSVD1:
-                bits: "63:56"
-                desc: "Reserved"
-            SST_PP_ERROR_TYPE:
-                bits: "7:4"
-                desc: "Last error of SST-PP control"
             SST_PP_LEVEL:
                 bits: "2:0"
-                desc: "A SST-PP level that SW intends to switch to"
+                readonly: false
+                desc: >-
+                    A SST-PP level that SW intends to switch to. SW must program PP level setting to
+                    each SST instance per their instance-ID order. I.e. program instance 0 first,
+                    and follow by 1, 2, 3, etc. SW must check status and confirm PP switching is
+                    complete before proceeding to next SST instance
             SST_PP_LOCK:
                 bits: "3:3"
-                desc: "SST-PP level select lock (0 - unlocked, 1 - locked till next reset)"
+                readonly: false
+                desc: >-
+                    SST-PP level select lock. 0 - unlocked. 1 - locked till next reset
+            RSVD0:
+                bits: "7:4"
+                readonly: false
+                desc: >-
+                    Reserved
+            FEATURE_STATE:
+                bits: "15:8"
+                readonly: false
+                desc: >-
+                    Bit mask to control the enable(1)/disable(0) state of each feature of the
+                    current PP level. bit 0 = BF, bit 1 = TF, bit 2-7 = reserved
+            RSVD1:
+                bits: "63:16"
+                readonly: false
+                desc: >-
+                    Reserved
+    SST_PP_STATUS:
         offset: 128
         width: 64
-    SST_TF_HEADER:
         fields:
-            FEATURE_REVISION:
-                bits: "11:4"
-                desc: "Interface version number for the feature"
-            FEATURE_SUPPORTED:
-                bits: "12:12"
-                desc: "1 - the SST feature is supported in this PP level"
-            LP_CLIP_RATIO_0:
-                bits: "23:16"
-                desc: "Low priority cores frequency clipping ratio level 0"
-            LP_CLIP_RATIO_1:
-                bits: "31:24"
-                desc: "Low priority cores frequency clipping ratio level 1"
-            LP_CLIP_RATIO_2:
-                bits: "39:32"
-                desc: "Low priority cores frequency clipping ratio level 2"
-            LP_CLIP_RATIO_3:
-                bits: "47:40"
-                desc: "Low priority cores frequency clipping ratio level 2"
-            LP_CLIP_RATIO_4:
-                bits: "55:48"
-                desc: "Low priority cores frequency clipping ratio level 3"
-            LP_CLIP_RATIO_5:
-                bits: "63:56"
-                desc: "Low priority cores frequency clipping ratio level 5"
+            SST_PP_LEVEL:
+                bits: "2:0"
+                readonly: true
+                desc: >-
+                    Returns the current SST-PP level
+            SST_PP_LOCK:
+                bits: "3:3"
+                readonly: true
+                desc: >-
+                    Returns the lock bit setting in SST_CONTROL.SST_PP_LOCK
+            SST_PP_ERROR_TYPE:
+                bits: "7:4"
+                readonly: true
+                desc: >-
+                    Returns last error of SST-PP control. 0x0: no error 0x1: dynamic PP switch is
+                    not allowed. 0x2..0xF: reserved
+            FEATURE_STATE:
+                bits: "15:8"
+                readonly: true
+                desc: >-
+                    Bit mask to indicate the enable(1)/disable(0) state of each feature of the
+                    current PP level. bit 0 = BF, bit 1 = TF, bit 2-7 = reserved
+            RSVD0:
+                bits: "31:16"
+                readonly: true
+                desc: >-
+                    Reserved
+            FEATURE_ERROR_TYPE:
+                bits: "55:32"
+                readonly: true
+                desc: >-
+                    Returns last error of the specific feature. Three error_type bits per feature.
+                    i.e. ERROR_TYPE[2:0] for BF, ERROR_TYPE[5:3] for TF, etc. 0x0: no error 0x1: The
+                    specific feature is not supported by the hardware. 0x2-0x6: Reserved 0x7:
+                    feature state change is not allowed
             RSVD1:
-                bits: "15:13"
-                desc: "Allowed level mask used for dynamic config level switching"
-            SST_FEATURE_ID:
-                bits: "3:0"
-                desc: "Set to 0 (0=SST-CP, 1=SST-PP, 2=SST-BF, 3=SST-TF)"
-        offset: 248
+                bits: "63:56"
+                readonly: true
+                desc: >-
+                    Reserved
+    SST_PP_INFO_0:
+        offset: 136
         width: 64
-    SST_TF_INFO-1:
+        fields:
+            P1_SSE:
+                bits: "7:0"
+                readonly: true
+                desc: >-
+                    Base frequency ratio of the TDP workload, a.k.a. SSE P1
+            P1_AVX2:
+                bits: "15:8"
+                readonly: true
+                desc: >-
+                    P1 frequency ratio of the AVX2 representative workload
+            P1_AVX512:
+                bits: "23:16"
+                readonly: true
+                desc: >-
+                    P1 frequency ratio of the AVX512 representative workload
+            P1_AMX:
+                bits: "31:24"
+                readonly: true
+                desc: >-
+                    P1 frequency ratio of the AMX representative workload
+            RSVD:
+                bits: "63:32"
+                readonly: true
+                desc: >-
+                    Reserved
+    SST_PP_INFO_1:
+        offset: 144
+        width: 64
+        fields:
+            FUSED_CORE_COUNT:
+                bits: "7:0"
+                readonly: true
+                desc: >-
+                    Core Count of the fuse enabled cores
+            RESOLVED_CORE_COUNT:
+                bits: "15:8"
+                readonly: true
+                desc: >-
+                    Core Count of the Pcode's resolved cores
+            FUSED_LLC_COUNT:
+                bits: "23:16"
+                readonly: true
+                desc: >-
+                    LLC Count of the fuse enabled LLC slices
+            RSVD0:
+                bits: "31:24"
+                readonly: true
+                desc: >-
+                    Reserved
+            TDP:
+                bits: "46:32"
+                readonly: true
+                desc: >-
+                    Power for this TDP level. In 1/8 W unit
+            T_PROCHOT:
+                bits: "54:47"
+                readonly: true
+                desc: >-
+                    Provides the DTS max or external Prochot for the specific configuration
+            MAX_MEMORY_FREQ:
+                bits: "61:55"
+                readonly: true
+                desc: >-
+                    The max allowed memory controller frequency ratio for this config level. The
+                    ratio unit in defined in SST_PP_HEADER.memory_ratio_unit
+            COOLING_TYPE:
+                bits: "63:62"
+                readonly: true
+                desc: >-
+                    Cooling Type
+    SST_PP_INFO_2:
+        offset: 152
+        width: 64
+        fields:
+            RESOLVED_CORE_MASK:
+                bits: "63:0"
+                readonly: true
+                desc: >-
+                    This is the logical core ID mask containing the functional (enabled in SKU) and
+                    non-defeatured (not in BIST failure or BIOS disables) cores
+    SST_PP_INFO_3:
+        offset: 160
+        width: 64
+        fields:
+            RSVD:
+                bits: "63:0"
+                readonly: true
+                desc: >-
+                    Reserved
+    SST_PP_INFO_4:
+        offset: 168
+        width: 64
+        fields:
+            RATIO_0:
+                bits: "7:0"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 0 of the specific cdyn level
+            RATIO_1:
+                bits: "15:8"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 1 of the specific cdyn level
+            RATIO_2:
+                bits: "23:16"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 2 of the specific cdyn level
+            RATIO_3:
+                bits: "31:24"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 3 of the specific cdyn level
+            RATIO_4:
+                bits: "39:32"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 4 of the specific cdyn level
+            RATIO_5:
+                bits: "47:40"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 5 of the specific cdyn level
+            RATIO_6:
+                bits: "55:48"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 6 of the specific cdyn level
+            RATIO_7:
+                bits: "63:56"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 7 of the specific cdyn level
+    SST_PP_INFO_5:
+        offset: 176
+        width: 64
+        fields:
+            RATIO_0:
+                bits: "7:0"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 0 of the specific cdyn level
+            RATIO_1:
+                bits: "15:8"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 1 of the specific cdyn level
+            RATIO_2:
+                bits: "23:16"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 2 of the specific cdyn level
+            RATIO_3:
+                bits: "31:24"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 3 of the specific cdyn level
+            RATIO_4:
+                bits: "39:32"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 4 of the specific cdyn level
+            RATIO_5:
+                bits: "47:40"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 5 of the specific cdyn level
+            RATIO_6:
+                bits: "55:48"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 6 of the specific cdyn level
+            RATIO_7:
+                bits: "63:56"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 7 of the specific cdyn level
+    SST_PP_INFO_6:
+        offset: 184
+        width: 64
+        fields:
+            RATIO_0:
+                bits: "7:0"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 0 of the specific cdyn level
+            RATIO_1:
+                bits: "15:8"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 1 of the specific cdyn level
+            RATIO_2:
+                bits: "23:16"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 2 of the specific cdyn level
+            RATIO_3:
+                bits: "31:24"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 3 of the specific cdyn level
+            RATIO_4:
+                bits: "39:32"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 4 of the specific cdyn level
+            RATIO_5:
+                bits: "47:40"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 5 of the specific cdyn level
+            RATIO_6:
+                bits: "55:48"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 6 of the specific cdyn level
+            RATIO_7:
+                bits: "63:56"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 7 of the specific cdyn level
+    SST_PP_INFO_7:
+        offset: 192
+        width: 64
+        fields:
+            RATIO_0:
+                bits: "7:0"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 0 of the specific cdyn level
+            RATIO_1:
+                bits: "15:8"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 1 of the specific cdyn level
+            RATIO_2:
+                bits: "23:16"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 2 of the specific cdyn level
+            RATIO_3:
+                bits: "31:24"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 3 of the specific cdyn level
+            RATIO_4:
+                bits: "39:32"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 4 of the specific cdyn level
+            RATIO_5:
+                bits: "47:40"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 5 of the specific cdyn level
+            RATIO_6:
+                bits: "55:48"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 6 of the specific cdyn level
+            RATIO_7:
+                bits: "63:56"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 7 of the specific cdyn level
+    SST_PP_INFO_8:
+        offset: 200
+        width: 64
+        fields:
+            RATIO_0:
+                bits: "7:0"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 0 of the specific cdyn level
+            RATIO_1:
+                bits: "15:8"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 1 of the specific cdyn level
+            RATIO_2:
+                bits: "23:16"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 2 of the specific cdyn level
+            RATIO_3:
+                bits: "31:24"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 3 of the specific cdyn level
+            RATIO_4:
+                bits: "39:32"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 4 of the specific cdyn level
+            RATIO_5:
+                bits: "47:40"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 5 of the specific cdyn level
+            RATIO_6:
+                bits: "55:48"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 6 of the specific cdyn level
+            RATIO_7:
+                bits: "63:56"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 7 of the specific cdyn level
+    SST_PP_INFO_9:
+        offset: 208
+        width: 64
+        fields:
+            RATIO_0:
+                bits: "7:0"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 0 of the specific cdyn level
+            RATIO_1:
+                bits: "15:8"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 1 of the specific cdyn level
+            RATIO_2:
+                bits: "23:16"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 2 of the specific cdyn level
+            RATIO_3:
+                bits: "31:24"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 3 of the specific cdyn level
+            RATIO_4:
+                bits: "39:32"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 4 of the specific cdyn level
+            RATIO_5:
+                bits: "47:40"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 5 of the specific cdyn level
+            RATIO_6:
+                bits: "55:48"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 6 of the specific cdyn level
+            RATIO_7:
+                bits: "63:56"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 7 of the specific cdyn level
+    SST_PP_INFO_10:
+        offset: 216
+        width: 64
         fields:
             NUM_CORE_0:
                 bits: "7:0"
-                desc: "High priority core count for bucket 0"
+                readonly: true
+                desc: >-
+                    TRL num_core defines the active core ranges for TRL bucket 0
             NUM_CORE_1:
                 bits: "15:8"
-                desc: "High priority core count for bucket 1"
+                readonly: true
+                desc: >-
+                    TRL num_core defines the active core ranges for TRL bucket 1
             NUM_CORE_2:
                 bits: "23:16"
-                desc: "High priority core count for bucket 2"
+                readonly: true
+                desc: >-
+                    TRL num_core defines the active core ranges for TRL bucket 2
             NUM_CORE_3:
                 bits: "31:24"
-                desc: "High priority core count for bucket 3"
+                readonly: true
+                desc: >-
+                    TRL num_core defines the active core ranges for TRL bucket 3
             NUM_CORE_4:
                 bits: "39:32"
-                desc: "High priority core count for bucket 4"
+                readonly: true
+                desc: >-
+                    TRL num_core defines the active core ranges for TRL bucket 4
             NUM_CORE_5:
                 bits: "47:40"
-                desc: "High priority core count for bucket 5"
+                readonly: true
+                desc: >-
+                    TRL num_core defines the active core ranges for TRL bucket 5
             NUM_CORE_6:
                 bits: "55:48"
-                desc: "High priority core count for bucket 6"
+                readonly: true
+                desc: >-
+                    TRL num_core defines the active core ranges for TRL bucket 6
             NUM_CORE_7:
                 bits: "63:56"
-                desc: "High priority core count for bucket 7"
+                readonly: true
+                desc: >-
+                    TRL num_core defines the active core ranges for TRL bucket 7
+    SST_PP_INFO_11:
+        offset: 224
+        width: 64
+        fields:
+            P0_CORE_RATIO:
+                bits: "7:0"
+                readonly: true
+                desc: >-
+                    Core maximum frequency ratio limit
+            P1_CORE_RATIO:
+                bits: "15:8"
+                readonly: true
+                desc: >-
+                    Core TDP frequency ratio
+            PN_CORE_RATIO:
+                bits: "23:16"
+                readonly: true
+                desc: >-
+                    Core maximum efficiency frequency ratio
+            PM_CORE_RATIO:
+                bits: "31:24"
+                readonly: true
+                desc: >-
+                    Core minimum frequency ratio
+            P0_FABRIC_RATIO:
+                bits: "39:32"
+                readonly: true
+                desc: >-
+                    Fabric (Uncore) maximum frequency ratio limit
+            P1_FABRIC_RATIO:
+                bits: "47:40"
+                readonly: true
+                desc: >-
+                    Fabric (Uncore) TDP frequency ratio
+            PM_FABRIC_RATIO:
+                bits: "55:48"
+                readonly: true
+                desc: >-
+                    Fabric (Uncore) minimum frequency ratio
+            RSVD:
+                bits: "63:56"
+                readonly: true
+                desc: >-
+                    Reserved
+    SST_BF_INFO_0:
+        offset: 232
+        width: 64
+        fields:
+            SST_FEATURE_ID:
+                bits: "3:0"
+                readonly: true
+                desc: >-
+                    0=SST-CP, 1=SST-PP, 2=SST-BF, 3=SST-TF, 4-15 = reserved
+            FEATURE_REVISION:
+                bits: "11:4"
+                readonly: true
+                desc: >-
+                    Interface Version number for this SST feature
+            FEATURE_SUPPORTED:
+                bits: "12:12"
+                readonly: true
+                desc: >-
+                    1: This SST feature is supported in this PP level. 0: This SST feature is not
+                    supported
+            P1_HI:
+                bits: "20:13"
+                readonly: true
+                desc: >-
+                    base frequency for high priority cores
+            P1_Lo:
+                bits: "28:21"
+                readonly: true
+                desc: >-
+                    base frequency for low priority cores
+            RSVD0:
+                bits: "31:29"
+                readonly: true
+                desc: >-
+                    Reserved
+            T_CONTROL:
+                bits: "37:32"
+                readonly: true
+                desc: >-
+                    Fan Temperature Target Offset
+            T_PROCHOT:
+                bits: "45:38"
+                readonly: true
+                desc: >-
+                    Provides the DTS max or external Prochot for the specific configuration
+            TDP:
+                bits: "60:46"
+                readonly: true
+                desc: >-
+                    Pcode returns the resolved TDP in this configuration. In 1/8 W units
+            RSVD1:
+                bits: "63:61"
+                readonly: true
+                desc: >-
+                    Reserved
+    SST_BF_INFO_1:
+        offset: 240
+        width: 64
+        fields:
+            P1_HI_CORE_MASK:
+                bits: "63:0"
+                readonly: true
+                desc: >-
+                    Value of PBF_P1_HI_CORE_MASK for index provided as input. This is a logical core
+                    ID mask. Bitmask polarity: 1=enabled core, 0=disabled core
+    SST_TF_INFO_0:
+        offset: 248
+        width: 64
+        fields:
+            SST_FEATURE_ID:
+                bits: "3:0"
+                readonly: true
+                desc: >-
+                    0=SST-CP, 1=SST-PP, 2=SST-BF, 3=SST-TF, 4-15 = reserved
+            FEATURE_REVISION:
+                bits: "11:4"
+                readonly: true
+                desc: >-
+                    Interface Version number for this SST feature
+            FEATURE_SUPPORTED:
+                bits: "12:12"
+                readonly: true
+                desc: >-
+                    1: This SST feature is supported in this PP level. 0: This SST feature is not
+                    supported
+            RSVD1:
+                bits: "15:13"
+                readonly: true
+                desc: >-
+                    Reserved
+            LP_CLIP_RATIO_0:
+                bits: "23:16"
+                readonly: true
+                desc: >-
+                    Low priority cores frequency clipping ratio level 0
+            LP_CLIP_RATIO_1:
+                bits: "31:24"
+                readonly: true
+                desc: >-
+                    Low priority cores frequency clipping ratio level 1
+            LP_CLIP_RATIO_2:
+                bits: "39:32"
+                readonly: true
+                desc: >-
+                    Low priority cores frequency clipping ratio level 2
+            LP_CLIP_RATIO_3:
+                bits: "47:40"
+                readonly: true
+                desc: >-
+                    Low priority cores frequency clipping ratio level 3
+            LP_CLIP_RATIO_4:
+                bits: "55:48"
+                readonly: true
+                desc: >-
+                    Low priority cores frequency clipping ratio level 4
+            LP_CLIP_RATIO_5:
+                bits: "63:56"
+                readonly: true
+                desc: >-
+                    Low priority cores frequency clipping ratio level 5
+    SST_TF_INFO_1:
         offset: 256
         width: 64
-    SST_TF_INFO-2:
         fields:
-            RATIO_0:
+            NUM_CORE_0:
                 bits: "7:0"
-                desc: "Turbo ratio limit level 0, bucket 0"
-            RATIO_1:
+                readonly: true
+                desc: >-
+                    High Priority core count for bucket 0
+            NUM_CORE_1:
                 bits: "15:8"
-                desc: "Turbo ratio limit level 0, bucket 1"
-            RATIO_2:
+                readonly: true
+                desc: >-
+                    High Priority core count for bucket 1
+            NUM_CORE_2:
                 bits: "23:16"
-                desc: "Turbo ratio limit level 0, bucket 2"
-            RATIO_3:
+                readonly: true
+                desc: >-
+                    High Priority core count for bucket 2
+            NUM_CORE_3:
                 bits: "31:24"
-                desc: "Turbo ratio limit level 0, bucket 3"
-            RATIO_4:
+                readonly: true
+                desc: >-
+                    High Priority core count for bucket 3
+            NUM_CORE_4:
                 bits: "39:32"
-                desc: "Turbo ratio limit level 0, bucket 4"
-            RATIO_5:
+                readonly: true
+                desc: >-
+                    High Priority core count for bucket 4
+            NUM_CORE_5:
                 bits: "47:40"
-                desc: "Turbo ratio limit level 0, bucket 5"
-            RATIO_6:
+                readonly: true
+                desc: >-
+                    High Priority core count for bucket 5
+            NUM_CORE_6:
                 bits: "55:48"
-                desc: "Turbo ratio limit level 0, bucket 6"
-            RATIO_7:
+                readonly: true
+                desc: >-
+                    High Priority core count for bucket 6
+            NUM_CORE_7:
                 bits: "63:56"
-                desc: "Turbo ratio limit level 0, bucket 7"
+                readonly: true
+                desc: >-
+                    High Priority core count for bucket 7
+    SST_TF_INFO_2:
         offset: 264
         width: 64
-    SST_TF_INFO-3:
         fields:
             RATIO_0:
                 bits: "7:0"
-                desc: "Turbo ratio limit level 0, bucket 0"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 0 of the specific cdyn level
             RATIO_1:
                 bits: "15:8"
-                desc: "Turbo ratio limit level 0, bucket 1"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 1 of the specific cdyn level
             RATIO_2:
                 bits: "23:16"
-                desc: "Turbo ratio limit level 0, bucket 2"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 2 of the specific cdyn level
             RATIO_3:
                 bits: "31:24"
-                desc: "Turbo ratio limit level 0, bucket 3"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 3 of the specific cdyn level
             RATIO_4:
                 bits: "39:32"
-                desc: "Turbo ratio limit level 0, bucket 4"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 4 of the specific cdyn level
             RATIO_5:
                 bits: "47:40"
-                desc: "Turbo ratio limit level 0, bucket 5"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 5 of the specific cdyn level
             RATIO_6:
                 bits: "55:48"
-                desc: "Turbo ratio limit level 0, bucket 6"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 6 of the specific cdyn level
             RATIO_7:
                 bits: "63:56"
-                desc: "Turbo ratio limit level 0, bucket 7"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 7 of the specific cdyn level
+    SST_TF_INFO_3:
         offset: 272
         width: 64
-    SST_TF_INFO-4:
         fields:
             RATIO_0:
                 bits: "7:0"
-                desc: "Turbo ratio limit level 0, bucket 0"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 0 of the specific cdyn level
             RATIO_1:
                 bits: "15:8"
-                desc: "Turbo ratio limit level 0, bucket 1"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 1 of the specific cdyn level
             RATIO_2:
                 bits: "23:16"
-                desc: "Turbo ratio limit level 0, bucket 2"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 2 of the specific cdyn level
             RATIO_3:
                 bits: "31:24"
-                desc: "Turbo ratio limit level 0, bucket 3"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 3 of the specific cdyn level
             RATIO_4:
                 bits: "39:32"
-                desc: "Turbo ratio limit level 0, bucket 4"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 4 of the specific cdyn level
             RATIO_5:
                 bits: "47:40"
-                desc: "Turbo ratio limit level 0, bucket 5"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 5 of the specific cdyn level
             RATIO_6:
                 bits: "55:48"
-                desc: "Turbo ratio limit level 0, bucket 6"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 6 of the specific cdyn level
             RATIO_7:
                 bits: "63:56"
-                desc: "Turbo ratio limit level 0, bucket 7"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 7 of the specific cdyn level
+    SST_TF_INFO_4:
         offset: 280
         width: 64
-    SST_TF_INFO-5:
         fields:
             RATIO_0:
                 bits: "7:0"
-                desc: "Turbo ratio limit level 0, bucket 0"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 0 of the specific cdyn level
             RATIO_1:
                 bits: "15:8"
-                desc: "Turbo ratio limit level 0, bucket 1"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 1 of the specific cdyn level
             RATIO_2:
                 bits: "23:16"
-                desc: "Turbo ratio limit level 0, bucket 2"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 2 of the specific cdyn level
             RATIO_3:
                 bits: "31:24"
-                desc: "Turbo ratio limit level 0, bucket 3"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 3 of the specific cdyn level
             RATIO_4:
                 bits: "39:32"
-                desc: "Turbo ratio limit level 0, bucket 4"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 4 of the specific cdyn level
             RATIO_5:
                 bits: "47:40"
-                desc: "Turbo ratio limit level 0, bucket 5"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 5 of the specific cdyn level
             RATIO_6:
                 bits: "55:48"
-                desc: "Turbo ratio limit level 0, bucket 6"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 6 of the specific cdyn level
             RATIO_7:
                 bits: "63:56"
-                desc: "Turbo ratio limit level 0, bucket 7"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 7 of the specific cdyn level
+    SST_TF_INFO_5:
         offset: 288
         width: 64
-    SST_TF_INFO-6:
         fields:
             RATIO_0:
                 bits: "7:0"
-                desc: "Turbo ratio limit level 0, bucket 0"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 0 of the specific cdyn level
             RATIO_1:
                 bits: "15:8"
-                desc: "Turbo ratio limit level 0, bucket 1"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 1 of the specific cdyn level
             RATIO_2:
                 bits: "23:16"
-                desc: "Turbo ratio limit level 0, bucket 2"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 2 of the specific cdyn level
             RATIO_3:
                 bits: "31:24"
-                desc: "Turbo ratio limit level 0, bucket 3"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 3 of the specific cdyn level
             RATIO_4:
                 bits: "39:32"
-                desc: "Turbo ratio limit level 0, bucket 4"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 4 of the specific cdyn level
             RATIO_5:
                 bits: "47:40"
-                desc: "Turbo ratio limit level 0, bucket 5"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 5 of the specific cdyn level
             RATIO_6:
                 bits: "55:48"
-                desc: "Turbo ratio limit level 0, bucket 6"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 6 of the specific cdyn level
             RATIO_7:
                 bits: "63:56"
-                desc: "Turbo ratio limit level 0, bucket 7"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 7 of the specific cdyn level
+    SST_TF_INFO_6:
         offset: 296
         width: 64
-    SST_TF_INFO-7:
         fields:
             RATIO_0:
                 bits: "7:0"
-                desc: "Turbo ratio limit level 0, bucket 0"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 0 of the specific cdyn level
             RATIO_1:
                 bits: "15:8"
-                desc: "Turbo ratio limit level 0, bucket 1"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 1 of the specific cdyn level
             RATIO_2:
                 bits: "23:16"
-                desc: "Turbo ratio limit level 0, bucket 2"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 2 of the specific cdyn level
             RATIO_3:
                 bits: "31:24"
-                desc: "Turbo ratio limit level 0, bucket 3"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 3 of the specific cdyn level
             RATIO_4:
                 bits: "39:32"
-                desc: "Turbo ratio limit level 0, bucket 4"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 4 of the specific cdyn level
             RATIO_5:
                 bits: "47:40"
-                desc: "Turbo ratio limit level 0, bucket 5"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 5 of the specific cdyn level
             RATIO_6:
                 bits: "55:48"
-                desc: "Turbo ratio limit level 0, bucket 6"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 6 of the specific cdyn level
             RATIO_7:
                 bits: "63:56"
-                desc: "Turbo ratio limit level 0, bucket 7"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 7 of the specific cdyn level
+    SST_TF_INFO_7:
         offset: 304
         width: 64
+        fields:
+            RATIO_0:
+                bits: "7:0"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 0 of the specific cdyn level
+            RATIO_1:
+                bits: "15:8"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 1 of the specific cdyn level
+            RATIO_2:
+                bits: "23:16"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 2 of the specific cdyn level
+            RATIO_3:
+                bits: "31:24"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 3 of the specific cdyn level
+            RATIO_4:
+                bits: "39:32"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 4 of the specific cdyn level
+            RATIO_5:
+                bits: "47:40"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 5 of the specific cdyn level
+            RATIO_6:
+                bits: "55:48"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 6 of the specific cdyn level
+            RATIO_7:
+                bits: "63:56"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 7 of the specific cdyn level

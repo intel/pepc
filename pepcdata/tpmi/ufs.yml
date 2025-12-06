@@ -5,166 +5,219 @@ feature_id: 0x2
 
 registers:
     UFS_HEADER:
+        offset: 0
+        width: 64
         fields:
             INTERFACE_VERSION:
                 bits: "7:0"
-                desc: "Version number for this interface"
+                readonly: true
+                desc: >-
+                    Version number for this interface
             LOCAL_FABRIC_CLUSTER_ID_MASK:
                 bits: "15:8"
-                desc: "ID assigned for each fabric V/F domain"
+                readonly: true
+                desc: >-
+                    ID assigned for each Fabric V/F Domain
             FLAGS:
                 bits: "31:16"
+                readonly: true
                 desc: >-
-                     Bit mask of the supported domain register, can be used for discovering
-                     which register is valid in the UFS register bank
+                    Bit mask of the supported domain register. Pcode populates default setting. SW
+                    use it to discover which register is valid in the UFS register bank
             AUTONOMOUS_UFS_DISABLED:
                 bits: "32:32"
-                desc: "0 - autonomous UFS algorithm is supported, 1 - not supported"
+                readonly: true
+                desc: >-
+                    0=Autonomous UFS algorithm is supported. 1=not supported
             FUSION:
                 bits: "33:33"
-                desc: "1 - mesh boot algorithm is supported, 0 - not supported"
+                readonly: true
+                desc: >-
+                    FUSION: FABRIC UTILIZATION SCENARIO OPTIMIZATION. 1=Mesh Boot Algorithm is
+                    supported. 0=not supported
             RATIO_UNIT:
                 bits: "35:34"
-                desc: "Frequency ratio unit: 00 - 100MHz, all others - reserved"
-            RESERVED:
+                readonly: true
+                desc: >-
+                    Frequency ratio unit. 00: 100MHz. All others : Reserved. Default=0
+            RSVD:
                 bits: "63:36"
-                desc: "Reserved"
-        offset: 0
-        width: 64
+                readonly: true
+                desc: >-
+                    reserved
     UFS_FABRIC_CLUSTER_OFFSET:
+        offset: 8
+        width: 64
         fields:
             OFFSET:
                 bits: "63:0"
+                readonly: true
                 desc: >-
                     Offset (Qword, 8 bytes) for status and control registers belonging to local
                     cluster ID X. Each cluster has 8 bits offset starting with bit 0-7 for cluster
-                    ID 0, bit8-15 for cluster ID 1, etc.
-        offset: 8
-        width: 64
+                    ID 0, bit8-15 for cluster ID 1, etc
     UFS_STATUS:
+        offset: 16
+        width: 64
         fields:
             CURRENT_RATIO:
                 bits: "6:0"
-                desc: "Instantaneous fabric frequency ratio"
+                readonly: true
+                desc: >-
+                    Instantaenous fabric frequency ratio
             CURRENT_VOLTAGE:
                 bits: "22:7"
-                desc: "Current Fabric voltage in U3.13 format"
+                readonly: true
+                desc: >-
+                    Indicates current Fabric voltage in U3.13 format
             AGENT_TYPE_CORE:
                 bits: "23:23"
+                readonly: true
                 desc: >-
-                    1 - at least one core agent exists on the fabric cluster, 0 - no core
-                    agent is present on the fabric cluster
+                    1: At least one core agent exists on the fabric cluster; 0: No core agent is
+                    present on the fabric cluster
             AGENT_TYPE_CACHE:
                 bits: "24:24"
+                readonly: true
                 desc: >-
-                    1 - at least one cache agent exists on the fabric cluster, 0 - no cache
-                    agent is present on the fabric cluster
+                    1: At least one cache agent exists on the fabric cluster; 0: No cache agent is
+                    present on the fabric cluster
             AGENT_TYPE_MEMORY:
                 bits: "25:25"
+                readonly: true
                 desc: >-
-                    1 - at least one memory agent exists on the fabric cluster, 0 - no memory
-                    agent is present on the fabric cluster
+                    1: At least one memory agent exists on the fabric cluster; 0: No memory agent is
+                    present on the fabric cluster
             AGENT_TYPE_IO:
                 bits: "26:26"
+                readonly: true
                 desc: >-
-                    1 - at least one I/O agent exists on the fabric cluster, 0 - no I/O
-                    agent is present on the fabric cluster
-            RESERVED:
+                    1: At least one IO agent exists on the fabric cluster; 0: No IO agent is present
+                    on the fabric cluster
+            RSVD:
                 bits: "31:27"
-                desc: "Reserved"
+                readonly: true
+                desc: >-
+                    Reserved
             THROTTLE_COUNTER:
                 bits: "63:32"
+                readonly: true
                 desc: >-
-                    Count of 1ms intervals in which the fabric frequency violated the frequency
-                    limit in the UFS control register. Increments only once within a 1ms interval
-                    if there is a violation
-        offset: 16
-        width: 64
+                    Count the number of 1ms intervals in which the fabric frequency violated the
+                    freq bound provided in UFS control register. Increment counter only once within
+                    a 1ms interval if there is violation
     UFS_CONTROL:
+        offset: 24
+        width: 64
         fields:
             UFS_THROTTLE_MODE:
                 bits: "1:0"
-                desc: "UFS throttle mode"
-            RESERVED_0:
+                readonly: false
+                desc: >-
+                    Select one of the UFS throttle modes
+            RSVD1:
                 bits: "7:2"
-                desc: "Reserved"
+                readonly: false
+                desc: >-
+                    Reserved
             MAX_RATIO:
                 bits: "14:8"
-                desc: "Max fabric domain frequency ratio"
+                readonly: false
+                desc: >-
+                    Max fabric domain frequency ratio
             MIN_RATIO:
                 bits: "21:15"
-                desc: "Min fabric domain frequency ratio"
-            EFFICIENCY_LATENCY_CTRL_RATIO:
-                bits: "28:22"
+                readonly: false
                 desc: >-
-                    Fabric domain frequency ratio floor while in the low power activity
-                    region determined by Efficiency_Latency_Ctrl
-            RESERVED_1:
+                    Min fabric domain frequency ratio
+            EFFICIENCY_LATENCY_CTRL_LOW_RATIO:
+                bits: "28:22"
+                readonly: false
+                desc: >-
+                    Fabric domain frequency ratio floor while in the low power activity region
+                    determined by Efficiency_Latency_Ctrl
+            RSVD2:
                 bits: "31:29"
-                desc: "Reserved"
+                readonly: false
+                desc: >-
+                    Reserved
             EFFICIENCY_LATENCY_CTRL_LOW_THRESHOLD:
                 bits: "38:32"
+                readonly: false
                 desc: >-
-                    Low power activity alert threshold - the region of utilization points to which
-                    the Efficiency_Latency_Ctrl mode will be applied
+                    This field provides the flexibility to alter the region of low power activity.
+                    It determines the region of utilization points to which the
+                    Efficiency_Latency_Ctrl mode will be applied
             EFFICIENCY_LATENCY_CTRL_HIGH_THRESHOLD_ENABLE:
                 bits: "39:39"
+                readonly: false
                 desc: >-
                     If set (1), EFFICIENCY_LATENCY_CTRL_HIGH_THRESHOLD is valid
             EFFICIENCY_LATENCY_CTRL_HIGH_THRESHOLD:
                 bits: "46:40"
+                readonly: false
                 desc: >-
-                    Utilization point above which freq will be optimized to optimize latency.
-            RESERVED_2:
+                    Utilization point above which freq will be optimized to optimize latency
+            RSVD4:
                 bits: "56:47"
-                desc: "Reserved"
+                readonly: false
+                desc: >-
+                    Reserved
             EFFICIENCY_LATENCY_CTRL_MID_RATIO:
                 bits: "63:57"
+                readonly: false
                 desc: >-
-                    Fabric domain frequency ratio floor when utilization is higher than
-                    EFFICIENCY_LATENCY_CTRL_LOW_THRESHOLD and lower than
-                    EFFICIENCY_LATENCY_CTRL_HIGH_THRESHOLD.
-        offset: 24
-        width: 64
+                    Fabric ratio when utilization is higher than ELC_LOW_THRESHOLD and lower than
+                    ELC_HIGH_THRESHOLD, if enabled
     UFS_ADV_CONTROL_1:
+        offset: 32
+        width: 64
         fields:
             SLOPE_1:
                 bits: "7:0"
+                readonly: false
                 desc: >-
-                    Slope that controls how fast the mesh frequency is brought down with
-                    core frequency when the socket is power limited (in 1/16 ratio bins,
-                    S4.3 format)
+                    Slope that controls how fast the mesh frequency is brought down with core
+                    frequency when the socket is power limited. In 1/8 ratio bins (S2.3 format)
             BASE_1:
                 bits: "15:8"
+                readonly: false
                 desc: >-
-                    Core frequency below which mesh frequency is brought down when socket
-                    is power limited (S7.0 format)
-            RESERVED:
+                    The core frequency below which mesh frequency is brought down when socket is
+                    power limited. (S7.0 format)
+            RSVD:
                 bits: "63:16"
-                desc: "Reserved"
-        offset: 32
-        width: 64
+                readonly: false
+                desc: >-
+                    Reserved
     UFS_ADV_CONTROL_2:
+        offset: 40
+        width: 64
         fields:
             SLOPE_2:
                 bits: "7:0"
+                readonly: false
                 desc: >-
-                    Slope that controls how fast the mesh frequency is brought down with
-                    core frequency when the socket is power limited (in 1/16 ratio bins,
-                    S4.3 format)
+                    Slope that controls how fast the mesh frequency is brought down with core
+                    frequency when the socket is power limited. In 1/8 ratio bins (S2.3 format)
             BASE_2:
                 bits: "15:8"
+                readonly: false
                 desc: >-
-                    Core frequency below which mesh frequency is brought down when socket
-                    is power limited (S7.0 format)
+                    The core frequency below which mesh frequency is brought down when socket is
+                    power limited. (S7.0 format)
             UTILIZATION_THRESHOLD:
                 bits: "23:16"
-                desc: "Mesh utilization threshold (255 - 100% utilization, 0 - 0% utilization)"
+                readonly: false
+                desc: >-
+                    Mesh Utilization Threshold. 255 = 100% utilization, 0 = 0% utilization
             HBM_BW_THRESHOLD:
                 bits: "31:24"
-                desc: "HBM bandwidth threshold"
-            RESERVED:
+                readonly: false
+                desc: >-
+                    HBM BW Threshold
+            RSVD:
                 bits: "63:32"
-                desc: "Reserved"
-        offset: 40
-        width: 64
+                readonly: false
+                desc: >-
+                    Reserved
