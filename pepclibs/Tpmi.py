@@ -72,7 +72,6 @@ import os
 import re
 import stat
 import typing
-from typing import Literal, cast, get_args
 import contextlib
 from pathlib import Path
 import yaml
@@ -80,7 +79,7 @@ from pepclibs.helperlibs import Logging, YAML, ClassHelpers, FSHelpers, ProjectF
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorPermissionDenied
 
 if typing.TYPE_CHECKING:
-    from typing import Final, TypedDict, Sequence, Iterable, NoReturn, Any
+    from typing import Final, TypedDict, Sequence, Iterable, NoReturn, Literal, cast
     from pepclibs.CPUInfoTypes import CPUInfoTypedDict
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
@@ -148,7 +147,7 @@ if typing.TYPE_CHECKING:
         package: int
         mdmap: _MDMapType
 
-_SDictKeysType = Literal["name", "desc", "feature_id"]
+    _SDictKeysType = Literal["name", "desc", "feature_id"]
 
 # Users can define this environment variable to extend the default spec files.
 _SPECS_PATH_ENVVAR: Final[str] = "PEPC_TPMI_DATA_PATH"
@@ -161,6 +160,8 @@ _MAX_NON_YAML: Final[int] = 32
 _MAX_SCAN_LOAD_ERRORS: Final[int] = 4
 # Maximum spec file size in bytes.
 _MAX_SPEC_FILE_BYTES: Final[int] = 4 * 1024 * 1024 * 1024
+
+_SDICT_KEYS: list[_SDictKeysType] = ["name", "desc", "feature_id"]
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
@@ -233,10 +234,9 @@ def _load_sdict(specpath: Path) -> SDictTypedDict:
             loader.get_event()
 
         # The first 3 keys must be: name, desc, and feature_id.
-        sdict_keys = get_args(_SDictKeysType)
-        left_keys = list(sdict_keys)
+        left_keys = list(_SDICT_KEYS)
         sdict: SDictTypedDict = {}
-        while len(sdict) < len(sdict_keys):
+        while len(sdict) < len(_SDICT_KEYS):
             event = loader.get_event()
             if not event:
                 keys = ", ".join(left_keys)
@@ -247,13 +247,16 @@ def _load_sdict(specpath: Path) -> SDictTypedDict:
                 # pepc versions prior to 1.6.2 used "feature-id" instead of "feature_id".
                 key = "feature_id"
 
-            if key not in sdict_keys:
+            if key not in _SDICT_KEYS:
                 raise Error(f"Bad spec file '{specpath}' format: the first 3 keys must be "
                             f"'name', 'desc', and 'feature_id', got key '{key}' instead")
             if key in sdict:
                 raise Error(f"Bad spec file '{specpath}': repeating key '{key}'")
 
-            vkey: _SDictKeysType = cast(_SDictKeysType, key)
+            if typing.TYPE_CHECKING:
+                vkey: _SDictKeysType = cast(_SDictKeysType, key)
+            else:
+                vkey = key
             event = loader.get_event()
             if not event:
                 raise Error(f"Bad spec file '{specpath}': no value for key '{key}'")
