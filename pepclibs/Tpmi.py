@@ -266,7 +266,7 @@ def _load_sdict(specpath: Path) -> SDictTypedDict:
             else:
                 sdict[vkey] = str(event.value)
 
-            left_keys.remove(key)
+            left_keys.remove(vkey)
     finally:
         if fobj:
             fobj.close()
@@ -711,16 +711,16 @@ class Tpmi(ClassHelpers.SimpleCloseContext):
             for key in check_keys:
                 if key not in allowed_keys:
                     keys_str = ", ".join(allowed_keys)
-                    _raise_exc(f"unexpected key '{key}' {where}, allowed keys are: {keys_str}")
+                    _raise_exc(f"Unexpected key '{key}' {where}, allowed keys are: {keys_str}")
 
             for key in mandatory_keys:
                 if key not in check_keys:
                     keys_str = ", ".join(mandatory_keys)
-                    _raise_exc(f"missing key '{key}' {where}, mandatory keys are: {keys_str}")
+                    _raise_exc(f"Missing key '{key}' {where}, mandatory keys are: {keys_str}")
 
         spec: dict[str, dict[str, dict[str, dict[str, dict[str, str]]]]] = YAML.load(specpath)
         if "registers" not in spec:
-            _raise_exc("the 'registers' top-level key was not found")
+            _raise_exc("The 'registers' top-level key was not found")
 
         if "feature-id" in spec:
             # pepc versions prior to 1.6.2 used "feature-id" instead of "feature_id".
@@ -734,7 +734,7 @@ class Tpmi(ClassHelpers.SimpleCloseContext):
         fdict = spec["registers"]
         for regname, regdict in fdict.items():
             if not regname.isupper():
-                _raise_exc(f"bad TPMI register name '{regname}': should include only upper case "
+                _raise_exc(f"Bad TPMI register name '{regname}': should include only upper case "
                            f"characters")
 
             # The allowed and the mandatory regdict key names.
@@ -745,24 +745,24 @@ class Tpmi(ClassHelpers.SimpleCloseContext):
             # Validate the offset.
             offset = regdict["offset"]
             if not isinstance(offset, int):
-                _raise_exc(f"bad offset '{offset}' in TPMI register '{regname}': must be an "
+                _raise_exc(f"Bad offset '{offset}' in TPMI register '{regname}': must be an "
                            f"integer")
             if offset % 4:
-                _raise_exc(f"bad offset '{offset}' in TPMI register '{regname}': must be multiple "
+                _raise_exc(f"Bad offset '{offset}' in TPMI register '{regname}': must be multiple "
                            f"of 4 bytes")
 
             # Validate the width.
             width = regdict["width"]
             if not isinstance(width, int):
-                _raise_exc(f"bad width '{width}' in TPMI register '{regname}': must be an "
+                _raise_exc(f"Bad width '{width}' in TPMI register '{regname}': must be an "
                            f"integer")
             if width not in (32, 64):
-                _raise_exc(f"bad width '{width}' in TPMI register '{regname}': must be either 32 "
+                _raise_exc(f"Bad width '{width}' in TPMI register '{regname}': must be either 32 "
                            f"or 64")
 
             for bfname, bfdict in regdict["fields"].items():
                 if not bfname.isupper():
-                    _raise_exc(f"bad bit field name '{bfname}' for TPMI register '{regname}': "
+                    _raise_exc(f"Bad bit field name '{bfname}' for TPMI register '{regname}': "
                                f"should include only upper case characters")
 
                 # The allowed and the mandatory bit field dictionary key names.
@@ -772,7 +772,7 @@ class Tpmi(ClassHelpers.SimpleCloseContext):
 
                 # Make sure that the description has no newline character.
                 if "\n" in bfdict["desc"]:
-                    _raise_exc(f"bad description of bit field '{bfname}' of the '{regname}' TPMI "
+                    _raise_exc(f"Bad description of bit field '{bfname}' of the '{regname}' TPMI "
                                f"register: includes a newline character")
 
                 # Verify the bits and add "bitshift" and "bitmask".
@@ -780,7 +780,7 @@ class Tpmi(ClassHelpers.SimpleCloseContext):
                 bits = Trivial.split_csv_line(bfdict["bits"], sep=":")
                 if len(bits) != 2:
                     bits = bfdict["bits"]
-                    _raise_exc(f"bad 'bits' key value '{bits}' {where}: should have the "
+                    _raise_exc(f"Bad 'bits' key value '{bits}' {where}: should have the "
                                f"'<high-bit>:<low-bit>' format")
 
                 what = f"the '%s' value {where}"
@@ -789,7 +789,7 @@ class Tpmi(ClassHelpers.SimpleCloseContext):
 
                 if highbit < lowbit:
                     bits = bfdict["bits"]
-                    _raise_exc(f"bad 'bits' key value '{bits}' {where}: high bit value '{highbit}' "
+                    _raise_exc(f"Bad 'bits' key value '{bits}' {where}: high bit value '{highbit}' "
                                f"is smaller than low bit value '{lowbit}'")
 
                 bitmask = ((1 << (highbit + 1)) - 1) - ((1 << lowbit) - 1)
