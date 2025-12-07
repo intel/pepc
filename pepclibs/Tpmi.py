@@ -141,7 +141,7 @@ if typing.TYPE_CHECKING:
 
         Attributes:
             package: The package number associated with the TPMI device.
-            mdmap: The memory domain map associated with the package.
+            mdmap: The memory dump map associated with the package.
         """
 
         package: int
@@ -366,6 +366,10 @@ class Tpmi(ClassHelpers.SimpleCloseContext):
         # Map feature name to the sdict, which is a partially loaded spec file dictionary.
         self._sdicts: dict[str, SDictTypedDict] = {}
 
+        # Major and minor TPMI interface versions.
+        self._major_version: int = -1
+        self._minor_version: int = -1
+
         # Scan the spec directories and build sdicts - partially loaded spec file dictionaries.
         self._build_sdicts()
 
@@ -506,6 +510,43 @@ class Tpmi(ClassHelpers.SimpleCloseContext):
 
         return mdmap
 
+    def _verify_tpmi_version(self, addr: str, mdmap: _MDMapType, instance: int):
+        """
+        Verify that the TPMI interface version is supported.
+
+        Args:
+            addr: PCI address of the TPMI device.
+            mdmap: The memory dump map (mdmap) for the 'tpmi_info' feature.
+            instance: The instance number to read the version from.
+        """
+
+        version = self._read_register("tpmi_info", addr, instance, "TPMI_INFO_HEADER",
+                                      bfname="INTERFACE_VERSION", mdmap=mdmap)
+
+        # Bits 7:5 contain major version number, bits 4:0 contain minor version number.
+        major_version = (version >> 5) & 0b111
+        minor_version = version & 0b11111
+
+        # Make sure that version is the same across all instances.
+        if self._major_version == -1:
+            self._major_version = major_version
+        elif self._major_version != major_version:
+            raise Error(f"TPMI interface major version mismatch for device at address {addr}: "
+                        f"expected {self._major_version}, got {major_version}")
+
+        if self._minor_version == -1:
+            self._minor_version = minor_version
+        elif self._minor_version != minor_version:
+            raise Error(f"TPMI interface minor version mismatch for device at address {addr}: "
+                        f"expected {self._minor_version}, got {minor_version}")
+
+        # At this point only version 2 is supported.
+        if self._major_version != 2:
+            raise ErrorNotSupported(f"Unsupported TPMI interface major version "
+                                    f"{self._major_version} for device at address {addr}"
+                                    f"{self._pman.hostmsg}.\nOnly TPMI major version 2 is "
+                                    f"supported.")
+
     def _build_fmaps(self):
         """Build fmap for all TPMI features and save them in 'self._fmap'."""
 
@@ -558,6 +599,7 @@ class Tpmi(ClassHelpers.SimpleCloseContext):
                 # package number associated with 'addr'.
                 if addr not in fmaps["tpmi_info"]:
                     mdmap = self._build_mdmap(addr, "tpmi_info")
+
                     package = self._read_register("tpmi_info", addr, 0, "TPMI_BUS_INFO",
                                                   bfname="PACKAGE_ID", mdmap=mdmap)
                     fmaps["tpmi_info"][addr] = {"package": package, "mdmap": mdmap}
@@ -868,7 +910,7 @@ class Tpmi(ClassHelpers.SimpleCloseContext):
             instance: The instance number of the TPMI feature.
             regname: The name of the register to read.
             offset: The offset of the register within the feature.
-            mdmap: A mapping of instance and offset to file position.
+            mdmap: The memory dump map (mdmap) for the TPMI feature.
 
         Returns:
             The integer value of the TPMI register.
