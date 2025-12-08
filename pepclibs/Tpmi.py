@@ -89,6 +89,7 @@ if typing.TYPE_CHECKING:
 
         Attributes:
             desc: A short description of the register field.
+            readonly: Whether the field is read-only.
             bits: The bit positions that define the field within the register (MSB, LSB).
             bitshift: The number of bits to right-shift the register value to align the field to
                       the least significant bit (LSB).
@@ -96,6 +97,7 @@ if typing.TYPE_CHECKING:
         """
 
         desc: str
+        readonly: bool
         bits: tuple[int, int]
         bitshift: int
         bitmask: int
@@ -108,13 +110,15 @@ if typing.TYPE_CHECKING:
         Attributes:
             offset: Offset of the register within the specification.
             width: Width of the register in bits.
+            readonly: Whether the register is read-only.
             fields: The bit field dictionaries (bfdicts), describing the bit-fields within the
                     register.
         """
 
-        fields: dict[str, BFDictTypedDict]
         offset: int
         width: int
+        readonly: bool
+        fields: dict[str, BFDictTypedDict]
 
     class SDictTypedDict(TypedDict, total=False):
         """
@@ -738,7 +742,7 @@ class Tpmi(ClassHelpers.SimpleCloseContext):
                            f"characters")
 
             # The allowed and the mandatory regdict key names.
-            keys = {"fields", "offset", "width"}
+            keys = {"offset", "width", "fields"}
             where = f"in the '{regname}' TPMI register definition"
             _check_keys(regdict, keys, keys, where)
 
@@ -760,6 +764,7 @@ class Tpmi(ClassHelpers.SimpleCloseContext):
                 _raise_exc(f"Bad width '{width}' in TPMI register '{regname}': must be either 32 "
                            f"or 64")
 
+            all_fields_rw = True
             for bfname, bfdict in regdict["fields"].items():
                 if not bfname.isupper():
                     _raise_exc(f"Bad bit field name '{bfname}' for TPMI register '{regname}': "
@@ -783,6 +788,11 @@ class Tpmi(ClassHelpers.SimpleCloseContext):
                     _raise_exc(f"Bad 'bits' key value '{bits}' {where}: should have the "
                                f"'<high-bit>:<low-bit>' format")
 
+                if typing.TYPE_CHECKING:
+                    bftypeddict = cast(BFDictTypedDict, bfdict)
+                else:
+                    bftypeddict = bfdict
+
                 what = f"the '%s' value {where}"
                 highbit = Trivial.str_to_int(bits[0], what=what % bits[0])
                 lowbit = Trivial.str_to_int(bits[1], what=what % bits[1])
@@ -792,9 +802,22 @@ class Tpmi(ClassHelpers.SimpleCloseContext):
                     _raise_exc(f"Bad 'bits' key value '{bits}' {where}: high bit value '{highbit}' "
                                f"is smaller than low bit value '{lowbit}'")
 
+                if not isinstance(bftypeddict["readonly"], bool):
+                    _raise_exc(f"Bad 'readonly' key value '{bftypeddict['readonly']}' {where}: "
+                               f"must be a boolean")
+
+                all_fields_rw = all_fields_rw and not bftypeddict["readonly"]
+
                 bitmask = ((1 << (highbit + 1)) - 1) - ((1 << lowbit) - 1)
-                bfdict["bitshift"] = lowbit
-                bfdict["bitmask"] = bitmask
+                bftypeddict["bitshift"] = lowbit
+                bftypeddict["bitmask"] = bitmask
+
+            # Treat the register as read-write if all its fields are read-write.
+            if typing.TYPE_CHECKING:
+                regtypeddict = cast(RegDictTypedDict, regdict)
+                regtypeddict["readonly"] = not all_fields_rw
+            else:
+                regdict["readonly"] = not all_fields_rw
 
         if typing.TYPE_CHECKING:
             return cast(dict[str, RegDictTypedDict], fdict)
@@ -1056,6 +1079,17 @@ class Tpmi(ClassHelpers.SimpleCloseContext):
             raise ErrorPermissionDenied(f"TPMI is read-only{self._pman.hostmsg}")
 
         regdict = self._get_regdict(fname, regname)
+
+        if bfname:
+            bfdict = self._get_bfdict(fname, regname, bfname)
+            if bfdict["readonly"]:
+                raise ErrorPermissionDenied(f"TPMI register '{regname}' bit field '{bfname}' of "
+                                            f"feature '{fname}' is read-only"
+                                            f"{self._pman.hostmsg}")
+        else:
+            if regdict["readonly"]:
+                raise ErrorPermissionDenied(f"TPMI register '{regname}' of feature '{fname}' is "
+                                            f"read-only{self._pman.hostmsg}")
 
         offset = regdict["offset"]
         width = regdict["width"]
