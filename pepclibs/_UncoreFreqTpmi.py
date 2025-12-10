@@ -122,7 +122,7 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
         if self._addrmap:
             return self._addrmap[package]
 
-        for addr, pkg, _ in self._tpmi.iter_feature("uncore"):
+        for addr, pkg, _ in self._tpmi.iter_feature("ufs"):
             if pkg not in self._addrmap:
                 self._addrmap[pkg] = addr
 
@@ -168,7 +168,7 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
         for package, pkg_dies in dies.items():
             addr = self._get_pci_addr(package)
             for die in pkg_dies:
-                ratio = self._tpmi.read_register("uncore", addr, die, regname, bfname=bfname)
+                ratio = self._tpmi.read_register("ufs", addr, die, regname, bfname=bfname)
                 yield (package, die, ratio * RATIO_MULTIPLIER)
 
     @staticmethod
@@ -211,7 +211,7 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
         for package, pkg_dies in dies.items():
             addr = self._get_pci_addr(package)
             for die in pkg_dies:
-                ratio = self._tpmi.read_register("uncore", addr, die, regname, bfname=bfname)
+                ratio = self._tpmi.read_register("ufs", addr, die, regname, bfname=bfname)
                 yield (package, die, ratio * RATIO_MULTIPLIER)
 
     def _validate_freq(self,
@@ -244,11 +244,11 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
 
         if ftype == "min":
             regname, bfname = self._get_freq_regname("max")
-            ratio = self._tpmi.read_register("uncore", addr, die, regname, bfname=bfname)
+            ratio = self._tpmi.read_register("ufs", addr, die, regname, bfname=bfname)
             max_freq = ratio * RATIO_MULTIPLIER
         else:
             regname, bfname = self._get_freq_regname("min")
-            ratio = self._tpmi.read_register("uncore", addr, die, regname, bfname=bfname)
+            ratio = self._tpmi.read_register("ufs", addr, die, regname, bfname=bfname)
             min_freq = ratio * RATIO_MULTIPLIER
 
         if ztype:
@@ -268,7 +268,7 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
             addr = self._get_pci_addr(package)
             for die in pkg_dies:
                 self._validate_freq(freq, package, die, ftype)
-                self._tpmi.write_register(ratio, "uncore", addr, die, regname, bfname=bfname)
+                self._tpmi.write_register(ratio, "ufs", addr, die, regname, bfname=bfname)
 
     def _set_elc_zone_freq_dies(self,
                                 freq: int,
@@ -284,7 +284,7 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
             addr = self._get_pci_addr(package)
             for die in pkg_dies:
                 self._validate_freq(freq, package, die, ftype, ztype=ztype)
-                self._tpmi.write_register(ratio, "uncore", addr, die, regname, bfname=bfname)
+                self._tpmi.write_register(ratio, "ufs", addr, die, regname, bfname=bfname)
 
     @staticmethod
     def _get_elc_threshold_regname(thrtype: _ELCThresholdType,
@@ -360,7 +360,7 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
         for package, pkg_dies in dies.items():
             addr = self._get_pci_addr(package)
             for die in pkg_dies:
-                threshold = self._tpmi.read_register("uncore", addr, die, regname, bfname=bfname)
+                threshold = self._tpmi.read_register("ufs", addr, die, regname, bfname=bfname)
                 yield (package, die, self._elc_threshold_raw2percent(threshold))
 
     def _get_elc_threshold_status_dies(self,
@@ -374,7 +374,7 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
         for package, pkg_dies in dies.items():
             addr = self._get_pci_addr(package)
             for die in pkg_dies:
-                status = self._tpmi.read_register("uncore", addr, die, regname, bfname=bfname)
+                status = self._tpmi.read_register("ufs", addr, die, regname, bfname=bfname)
                 yield (package, die, bool(status))
 
     def _set_elc_threshold_dies(self,
@@ -390,7 +390,7 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
             for die in pkg_dies:
                 self._validate_elc_threshold(threshold, thrtype, package, die)
                 threshold_raw = self._elc_threshold_percent2raw(threshold)
-                self._tpmi.write_register(threshold_raw, "uncore", addr, die, regname,
+                self._tpmi.write_register(threshold_raw, "ufs", addr, die, regname,
                                           bfname=bfname)
 
     def _set_elc_threshold_status_dies(self,
@@ -404,5 +404,5 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
         for package, pkg_dies in dies.items():
             addr = self._get_pci_addr(package)
             for die in pkg_dies:
-                self._tpmi.write_register(int(status), "uncore", addr, die, regname,
+                self._tpmi.write_register(int(status), "ufs", addr, die, regname,
                                           bfname=bfname)

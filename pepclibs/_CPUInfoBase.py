@@ -353,7 +353,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
         _LOG.debug("Reading I/O dies information from uncore frequency driver")
 
-        for addr, package, die in tpmi.iter_feature("uncore"):
+        for addr, package, die in tpmi.iter_feature("ufs"):
             if package not in self._compute_dies:
                 continue
 
@@ -364,7 +364,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
             regname = "UFS_STATUS"
             bfname = "AGENT_TYPE_CORE"
 
-            val = tpmi.read_register("uncore", addr, die, regname, bfname=bfname)
+            val = tpmi.read_register("ufs", addr, die, regname, bfname=bfname)
             if val != 0:
                 continue
 

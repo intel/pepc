@@ -1,4 +1,4 @@
-name: "uncore"
+name: "ufs"
 desc: >-
     Processor uncore (fabric) monitoring and control
 feature_id: 0x2
