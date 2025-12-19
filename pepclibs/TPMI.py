@@ -619,6 +619,36 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         self._fmaps = fmaps
         self._unknown_fids = unknown_fids
 
+    def _check_keys(self,
+                    check_keys: Iterable[str],
+                    allowed_keys: set[str],
+                    mandatory_keys: set[str],
+                    where: str) -> str:
+        """
+        Validate given keys against allowed and mandatory keys.
+
+        Args:
+            check_keys: The keys to validate.
+            allowed_keys: Keys that are permitted in the dictionary.
+            mandatory_keys: Keys that must be present in the dictionary.
+            where: Contextual information for error messages.
+
+        Returns:
+            An error message if validation fails, otherwise an empty string.
+        """
+
+        for key in check_keys:
+            if key not in allowed_keys:
+                keys_str = ", ".join(allowed_keys)
+                return f"Unexpected key '{key}' {where}, allowed keys are: {keys_str}"
+
+        for key in mandatory_keys:
+            if key not in check_keys:
+                keys_str = ", ".join(mandatory_keys)
+                return f"Missing key '{key}' {where}, mandatory keys are: {keys_str}"
+
+        return ""
+
     def _build_sdicts(self):
         """
         Scan the spec directories, partially load spec files and build the spec dictionaries. The
@@ -692,32 +722,8 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                 msg: The error message to include in the exception.
             """
 
-            pfx = f"Bad '{fname}' spec file '{specpath}'"
+            pfx = f"Bad TPMI feature '{fname}' spec file '{specpath}'"
             raise Error(f"{pfx}:\n{Error(msg).indent(2)}")
-
-        def _check_keys(check_keys: Iterable[str],
-                        allowed_keys: set[str],
-                        mandatory_keys: set[str],
-                        where: str):
-            """
-            Validate given keys against allowed and mandatory keys.
-
-            Args:
-                check_keys: The keys to validate.
-                allowed_keys: Keys that are permitted in the dictionary.
-                mandatory_keys: Keys that must be present in the dictionary.
-                where: Contextual information for error messages.
-            """
-
-            for key in check_keys:
-                if key not in allowed_keys:
-                    keys_str = ", ".join(allowed_keys)
-                    _raise_exc(f"Unexpected key '{key}' {where}, allowed keys are: {keys_str}")
-
-            for key in mandatory_keys:
-                if key not in check_keys:
-                    keys_str = ", ".join(mandatory_keys)
-                    _raise_exc(f"Missing key '{key}' {where}, mandatory keys are: {keys_str}")
 
         spec: dict[str, dict[str, dict[str, dict[str, dict[str, str]]]]] = YAML.load(specpath)
         if "registers" not in spec:
@@ -730,7 +736,9 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         # The allowed and the mandatory top-level key names.
         keys = {"name", "desc", "feature_id", "registers"}
         where = "at the top level of the spec file"
-        _check_keys(spec, keys, keys, where)
+        msg = self._check_keys(spec, keys, keys, where)
+        if msg:
+            _raise_exc(msg)
 
         fdict = spec["registers"]
         for regname, regdict in fdict.items():
@@ -741,7 +749,9 @@ class TPMI(ClassHelpers.SimpleCloseContext):
             # The allowed and the mandatory regdict key names.
             keys = {"offset", "width", "fields"}
             where = f"in the '{regname}' TPMI register definition"
-            _check_keys(regdict, keys, keys, where)
+            msg = self._check_keys(regdict, keys, keys, where)
+            if msg:
+                _raise_exc(msg)
 
             # Validate the offset.
             offset = regdict["offset"]
@@ -770,7 +780,9 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                 # The allowed and the mandatory bit field dictionary key names.
                 keys = {"bits", "readonly", "desc"}
                 where = f"in bit field '{bfname}' of the '{regname}' TPMI register definition"
-                _check_keys(bfdict, keys, keys, where)
+                msg = self._check_keys(bfdict, keys, keys, where)
+                if msg:
+                    _raise_exc(msg)
 
                 # Make sure that the description has no newline character.
                 if "\n" in bfdict["desc"]:
