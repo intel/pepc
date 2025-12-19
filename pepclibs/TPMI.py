@@ -130,11 +130,13 @@ if typing.TYPE_CHECKING:
             fname: Name of the TPMI feature described by the spec file.
             desc: Description of the TPMI feature.
             feature_id: TPMI ID of the feature.
+            path: Path to the spec file.
         """
 
         name: str
         desc: str
         feature_id: int
+        path: Path
 
     # Type for the mdmap dictionary: first indexed by instance number, then by TPMI memory offset.
     # The value is the file position in 'mem_dump'.
@@ -273,6 +275,7 @@ def _load_sdict(specpath: Path) -> SDictTypedDict:
         if fobj:
             fobj.close()
 
+    sdict["path"] = specpath
     return sdict
 
 class TPMI(ClassHelpers.SimpleCloseContext):
@@ -833,6 +836,24 @@ class TPMI(ClassHelpers.SimpleCloseContext):
             return cast(dict[str, RegDictTypedDict], fdict)
         return fdict
 
+    def _get_sdict(self, fname: str) -> SDictTypedDict:
+        """
+        Retrieve the sdict for a specified feature name.
+
+        Args:
+            fname: The name of the feature to retrieve the sdict for.
+
+        Returns:
+            _SDictTypedDict: The sdict associated with the given feature name.
+        """
+
+        if fname not in self._sdicts:
+            known = ", ".join(self._sdicts)
+            raise Error(f"Unknown feature '{fname}'{self._pman.hostname}, known features are: "
+                        f"{known}")
+
+        return self._sdicts[fname]
+
     def _get_fdict(self, fname: str) -> dict[str, RegDictTypedDict]:
         """
         Retrieve and cache the feature dictionary (fdict) for a given feature name.
@@ -851,33 +872,10 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         if fname in self._fdicts:
             return self._fdicts[fname]
 
-        for specdir in self._specdirs:
-            specpath = specdir / (fname + ".yml")
-            self._fdicts[fname] = self._load_and_format_fdict(fname, specpath)
-            break
-
-        if fname not in self._fdicts:
-            raise ErrorNotSupported(f"TPMI feature '{fname}' is not supported")
+        sdict = self._get_sdict(fname)
+        self._fdicts[fname] = self._load_and_format_fdict(fname, sdict["path"])
 
         return self._fdicts[fname]
-
-    def _get_sdict(self, fname: str) -> SDictTypedDict:
-        """
-        Retrieve the sdict for a specified feature name.
-
-        Args:
-            fname: The name of the feature to retrieve the sdict for.
-
-        Returns:
-            _SDictTypedDict: The sdict associated with the given feature name.
-        """
-
-        if fname not in self._sdicts:
-            known = ", ".join(self._sdicts)
-            raise Error(f"Unknown feature '{fname}'{self._pman.hostname}, known features are: "
-                        f"{known}")
-
-        return self._sdicts[fname]
 
     def _get_regdict(self, fname: str, regname: str) -> RegDictTypedDict:
         """
