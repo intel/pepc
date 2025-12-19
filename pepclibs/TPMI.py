@@ -32,8 +32,9 @@ Terminology:
     * spec file - YAML file describing the registers and bit fields for a TPMI feature. Each
                   supported feature has a spec file, which is also required to decode the feature's
                   PCIe VSEC table.
-    * spec directory - Directory containing one or more spec files. Multiple spec directories may
-                       exist.
+    * spec directory - Directory containing spec files. There is an 'index.yml' file in the spec
+                       spec-directory, and sub-directories containing spec files for specific
+                       platforms.
     * sdict - Spec file dictionary containing basic TPMI spec file information: feature name, ID,
               description, and spec file path. Sdicts are built by partially reading spec files
               during initial scanning.
@@ -186,16 +187,23 @@ def _find_spec_dirs() -> list[Path]:
     # the standard spec files.
     val = os.getenv(_SPECS_PATH_ENVVAR)
     if val:
-        path = Path(val)
-        if not path.is_dir():
+        specdir = Path(val)
+        idxpath = specdir / "index.yml"
+        if not specdir.is_dir():
             _LOG.warning("TPMI spec files path '%s' specified in the '%s' environment "
                          "variable does not exist or it is not a directory, ignoring it",
-                         path, _SPECS_PATH_ENVVAR)
+                         specdir, _SPECS_PATH_ENVVAR)
+        elif not idxpath.is_file():
+            _LOG.warning("TPMI spec files path '%s' specified in the '%s' environment "
+                         "variable does not contain an 'index.yml' file, ignoring it",
+                         specdir, _SPECS_PATH_ENVVAR)
         else:
-            specdirs.append(path)
+            specdirs.append(specdir)
 
     # Find the standard spec-files.
-    specdirs.append(ProjectFiles.find_project_data("pepc", "tpmi", what="TPMI spec files"))
+    specdir = ProjectFiles.find_project_data("pepc", "tpmi/index.yml",
+                                             what="TPMI spec directory index file")
+    specdirs.append(specdir.parent)
     return specdirs
 
 def _load_sdict(specpath: Path) -> SDictTypedDict:
@@ -344,6 +352,8 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         if vendor != "GenuineIntel":
             raise ErrorNotSupported(f"Unsupported CPU vendor '{vendor}'{self._pman.hostmsg}\nOnly"
                                     f"Intel CPUs support TPMI")
+
+        self._cpu_info = cpu_info.copy()
 
         # The features dictionary, maps feature name to the fdict (feature dictionary).
         self._fdicts: dict[str, dict[str, RegDictTypedDict]] = {}
@@ -496,7 +506,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                     # Matches two different line formats:
                     #   " 00000020: 013afd40 00004000 2244aacc deadbeef" and
                     #   "[00000020] 013afd40 00004000 2244aacc deadbeef".
-                    # Some older kernels have the second format in place.
+                    # Some older kernels use the latter format.
                     match = re.match(r"^( |\[)([0-9a-f]+)(:|\]) (.*)$", line)
                     if match:
                         offs = Trivial.str_to_int(match.group(2), base=16, what="TPMI offset")
@@ -653,6 +663,64 @@ class TPMI(ClassHelpers.SimpleCloseContext):
 
         return ""
 
+    def _parse_index_file(self, specpath: Path) -> Path:
+        """
+        Parse the 'index.yml' file in a spec directory and return path to the spec files
+        sub-directory containing spec files for the current platform.
+
+        Args:
+            specpath: Path to the spec directory to parse the index file for.
+
+        Returns:
+            Path to a sub-directory within the spec directory containing spec files for the
+            current platform
+        """
+
+        def _raise_exc(msg: str) -> NoReturn:
+            """
+            Raise an 'Error' exception with a formatted message.
+
+            Args:
+                msg: The error message to include in the exception.
+            """
+
+            pfx = f"Bad index file '{specpath / 'index.yml'}'"
+            raise Error(f"{pfx}:\n{Error(msg).indent(2)}")
+
+        idxpath = specpath / "index.yml"
+        idxdict: dict =  YAML.load(idxpath)
+
+        keys = {"version", "vfms"}
+        where = "at the top level of the index file"
+        msg = self._check_keys(idxdict, keys, keys, where)
+        if msg:
+            _raise_exc(msg)
+
+        version: str = idxdict["version"]
+        if version != "1.0":
+            _raise_exc(f"Unsupported index format version '{version}': only version '1.0' is "
+                       f"supported")
+
+        first_vfm = ""
+        vfms: dict[str, dict] = idxdict["vfms"]
+        for vfm, info in vfms.items():
+            keys = {"subdir", "platform_name"}
+            where = f"in VFM={vfm} definition"
+            msg = self._check_keys(info, keys, keys, where)
+            if msg:
+                _raise_exc(msg)
+
+            if vfm == self._cpu_info["vfm"]:
+                return specpath / info["subdir"]
+
+            if not first_vfm:
+                first_vfm = vfm
+
+        # No matching platform found, use the first platform.
+        _LOG.notice("No matching platform for VFM %#x found in TPMI spec index file '%s', using "
+                    "spec files", self._cpu_info["vfm"], idxpath, vfms[first_vfm]["platform_name"])
+        return specpath / vfms[first_vfm]["subdir"]
+
     def _build_sdicts(self):
         """
         Scan the spec directories, partially load spec files and build the spec dictionaries. The
@@ -665,10 +733,14 @@ class TPMI(ClassHelpers.SimpleCloseContext):
             non_yaml_cnt = 0
             load_errors_cnt = 0
 
+            # Parse the index file and get path to the sub-directory containing spec files for the
+            # current platform.
+            specsubdir = self._parse_index_file(specdir)
+
             try:
-                _lsdir = os.listdir(specdir)
+                _lsdir = os.listdir(specsubdir)
             except OSError as err:
-                _LOG.warning("Failed to access TPMI spec files directory '%s':\n%s", specdir,
+                _LOG.warning("Failed to access TPMI spec files directory '%s':\n%s", specsubdir,
                              Error(str(err)).indent(2))
                 continue
 
@@ -676,12 +748,12 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                 if not specname.endswith(".yml") and not specname.endswith(".yaml"):
                     non_yaml_cnt += 1
                     if non_yaml_cnt > _MAX_NON_YAML:
-                        raise Error(f"Too many non-YAML files in '{specdir}', maximum allowed "
+                        raise Error(f"Too many non-YAML files in '{specsubdir}', maximum allowed "
                                     f"count is {_MAX_NON_YAML}")
                     continue
 
                 try:
-                    specpath = specdir / specname
+                    specpath = specsubdir / specname
                     sdict = _load_sdict(specpath)
                 except Error as err:
                     load_errors_cnt += 1
@@ -693,7 +765,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
 
                 spec_files_cnt += 1
                 if spec_files_cnt > _MAX_SPEC_FILES:
-                    raise Error(f"Too many spec files in '{specdir}, maximum allowed spec files "
+                    raise Error(f"Too many spec files in '{specsubdir}, maximum allowed spec files "
                                 f"count is {_MAX_SPEC_FILES}")
 
                 sdicts[sdict["name"]] = sdict

@@ -1,0 +1,39 @@
+# Map VFM (Vendor, Family, Model) to TPMI spec files sub-directory name.
+#
+# Note: TPMI API is architectural, which means that the same interface is expected to be
+# supported across different CPU models and generations. However, newer platforms may add new
+# registers and obsolete older ones (making them no-op). This file provides a mechanism for making
+# TPMI spec files per-platform, when needed.
+#
+# Refer to 'CPUModels.py' for details on VFM encoding.
+#
+# VFM encoding: (vendor << 16) | (family << 8) | model
+# Intel vendor code = 0, so VFM = (family << 8) | model
+#
+# Examples:
+#   Family 6, Model 0xAD -> (6 << 8) | 0xAD = 0x600 | 0xAD = 0x6AD
+#   Family 19, Model 0x1 -> (19 << 8) | 0x1 = 0x1300 | 0x1 = 0x1301
+#
+# Directory paths are relative to the parent directory of this index file
+
+# TPMI spec files format version.
+version: "1.0"
+
+vfms:
+  # Note: GNR, GNR-D, SRF, and CWF have identical TPMI spec files.
+  0x6ad:
+    subdir: "gnr"
+    platform_name: "Granite Rapids Xeon" # (family=6, model=0xAD)
+  0x6ae:
+    subdir: "gnr"
+    platform_name: "Granite Rapids Xeon D" # (family=6, model=0xAE)
+  0x6af:
+    subdir: "gnr"
+    platform_name: "Sierra Forest Xeon" # (family=6, model=0xAF)
+  0x6dd:
+    subdir: "gnr"
+    platform_name: "Clearwater Forest Xeon" # (family=6, model=0xDD)
+  # TPMI spec files for DMR are not publically available yet, so use GNR spec files for now.
+  0x1301:
+    subdir: "gnr"
+    platform_name: "Diamond Rapids Xeon" # (family=19, model=0x1)
