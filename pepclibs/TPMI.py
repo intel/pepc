@@ -247,9 +247,6 @@ def _load_sdict(specpath: Path) -> SDictTypedDict:
                 raise Error(f"Bad spec file '{specpath}': missing keys '{keys}'")
 
             key = str(event.value)
-            if key == "feature-id":
-                # pepc versions prior to 1.6.2 used "feature-id" instead of "feature_id".
-                key = "feature_id"
 
             if key not in _SDICT_KEYS:
                 raise Error(f"Bad spec file '{specpath}' format: the first 3 keys must be "
