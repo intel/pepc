@@ -18,7 +18,7 @@ import pytest
 from tests import common, props_cmdl_common
 from pepclibs.helperlibs.Exceptions import Error, ErrorBadOrder, ErrorNotSupported, ErrorOutOfRange
 
-from pepclibs import CPUInfo, Uncore, _UncoreFreqTpmi
+from pepclibs import CPUInfo, Uncore, _UncoreFreqTPMI
 from pepclibs.Uncore import ErrorTryAnotherMechanism
 
 if typing.TYPE_CHECKING:
@@ -215,8 +215,8 @@ def test_uncore_set_range(params: PropsCmdlTestParamsTypedDict):
     min_limit = cast(int, min_limit)
     max_limit = cast(int, max_limit)
 
-    bad_min_freq = min_limit - _UncoreFreqTpmi.RATIO_MULTIPLIER
-    bad_max_freq = max_limit + _UncoreFreqTpmi.RATIO_MULTIPLIER
+    bad_min_freq = min_limit - _UncoreFreqTPMI.RATIO_MULTIPLIER
+    bad_max_freq = max_limit + _UncoreFreqTPMI.RATIO_MULTIPLIER
 
     # Only the "sysfs" mechanism validates against the min. and max. supported uncore frequency.
     cmd = f"uncore config --mechanisms sysfs --min-freq {bad_min_freq}"
@@ -286,7 +286,7 @@ def test_uncore_set_order(params: PropsCmdlTestParamsTypedDict):
         max_limit = cast(int, max_limit)
 
         delta = (max_limit - min_limit) // 4
-        delta -= delta % _UncoreFreqTpmi.RATIO_MULTIPLIER
+        delta -= delta % _UncoreFreqTPMI.RATIO_MULTIPLIER
 
         val2 = min_limit + delta
         val3 = max_limit - delta

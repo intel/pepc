@@ -26,7 +26,7 @@ from pepclibs.CPUInfoTypes import CPUInfoTypedDict
 
 if typing.TYPE_CHECKING:
     from typing import Iterable
-    from pepclibs import Tpmi
+    from pepclibs import TPMI
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepclibs.CPUInfoTypes import (CPUInfoKeyType, ScopeNameType, AbsNumsType,
                                        HybridCPUKeyType, HybridCPUKeyInfoType)
@@ -55,7 +55,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
         self._close_pman = pman is None
 
-        self._tpmi: Tpmi.Tpmi | None = None
+        self._tpmi: TPMI.TPMI | None = None
         # 'True' if the target system supports TPMI.
         self._tpmi_supported = True
 
@@ -112,25 +112,25 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
         ClassHelpers.close(self, close_attrs=("_tpmi", "_pman"))
 
-    def _get_tpmi(self) -> Tpmi.Tpmi | None:
+    def _get_tpmi(self) -> TPMI.TPMI | None:
         """
-        Return an instance of 'Tpmi.Tpmi' object if TPMI is supported.
+        Return an instance of 'TPMI.TPMI' object if TPMI is supported.
 
         Returns:
-            The 'Tpmi.Tpmi' object or None.
+            The 'TPMI.TPMI' object or None.
         """
 
         if not self._tpmi_supported:
             return None
 
         if not self._tpmi:
-            _LOG.debug("Creating an instance of 'Tpmi.Tpmi'")
+            _LOG.debug("Creating an instance of 'TPMI.TPMI'")
 
             # pylint: disable-next=import-outside-toplevel
-            from pepclibs import Tpmi
+            from pepclibs import TPMI
 
             try:
-                self._tpmi = Tpmi.Tpmi(self.info, pman=self._pman)
+                self._tpmi = TPMI.TPMI(self.info, pman=self._pman)
             except ErrorNotSupported as err:
                 _LOG.debug("TPMI not supported%s:\n%s", self._pman.hostmsg, err.indent(2))
                 self._tpmi_supported = False

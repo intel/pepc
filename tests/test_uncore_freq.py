@@ -7,7 +7,7 @@
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
-Test the for the '_UncoreFreqSysfs' and '_UncoreFreqTpmi' modules.
+Test the for the '_UncoreFreqSysfs' and '_UncoreFreqTPMI' modules.
 """
 
 from  __future__ import annotations # Remove when switching to Python 3.10+.
@@ -15,7 +15,7 @@ from  __future__ import annotations # Remove when switching to Python 3.10+.
 import typing
 import pytest
 from tests import common
-from pepclibs import CPUInfo, _UncoreFreqSysfs, _UncoreFreqTpmi
+from pepclibs import CPUInfo, _UncoreFreqSysfs, _UncoreFreqTPMI
 from pepclibs.helperlibs.Exceptions import Error, ErrorBadOrder, ErrorNotSupported, ErrorOutOfRange
 
 if typing.TYPE_CHECKING:
@@ -23,7 +23,7 @@ if typing.TYPE_CHECKING:
     from tests.common import CommonTestParamsTypedDict
     from pepclibs.CPUInfoTypes import RelNumsType
 
-    _UncoreFreqObjType = Union[_UncoreFreqSysfs.UncoreFreqSysfs, _UncoreFreqTpmi.UncoreFreqTpmi]
+    _UncoreFreqObjType = Union[_UncoreFreqSysfs.UncoreFreqSysfs, _UncoreFreqTPMI.UncoreFreqTpmi]
 
     class _TestParamsTypedDict(CommonTestParamsTypedDict, total=False):
         """
@@ -91,7 +91,7 @@ def _iter_uncore_freq_objects(params: _TestParamsTypedDict) -> Generator[_Uncore
             break
 
     try:
-        with _UncoreFreqTpmi.UncoreFreqTpmi(pman=params["pman"],
+        with _UncoreFreqTPMI.UncoreFreqTpmi(pman=params["pman"],
                                             cpuinfo=params["cpuinfo"]) as uncfreq_obj:
             yield uncfreq_obj
     except ErrorNotSupported:
@@ -263,8 +263,8 @@ def _test_freq_methods_dies_bad(uncfreq_obj: _UncoreFreqObjType, all_dies: RelNu
             *_, min_freq_limit = next(uncfreq_obj.get_min_freq_limit_dies({package: [die]}))
             *_, max_freq_limit = next(uncfreq_obj.get_max_freq_limit_dies({package: [die]}))
         else:
-            min_freq_limit = _UncoreFreqTpmi.MIN_FREQ_LIMIT
-            max_freq_limit = _UncoreFreqTpmi.MAX_FREQ_LIMIT
+            min_freq_limit = _UncoreFreqTPMI.MIN_FREQ_LIMIT
+            max_freq_limit = _UncoreFreqTPMI.MAX_FREQ_LIMIT
 
         try:
             try_min = min_freq_limit - 100_000_000

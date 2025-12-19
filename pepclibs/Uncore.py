@@ -26,7 +26,7 @@ from pepclibs._PropsClassBase import ErrorTryAnotherMechanism, ErrorUsePerCPU
 
 if typing.TYPE_CHECKING:
     from typing import Any, Generator, Union, Sequence
-    from pepclibs import _SysfsIO, _UncoreFreqSysfs, _UncoreFreqTpmi
+    from pepclibs import _SysfsIO, _UncoreFreqSysfs, _UncoreFreqTPMI
     from pepclibs.CPUInfo import CPUInfo
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepclibs.PropsTypes import PropertyValueType, MechanismNameType
@@ -54,7 +54,7 @@ class Uncore(_PropsClassBase.PropsClassBase):
         self._uncfreq_sysfs_obj: _UncoreFreqSysfs.UncoreFreqSysfs | None = None
         self._uncfreq_sysfs_err: str | None = None
 
-        self._uncfreq_tpmi_obj: _UncoreFreqTpmi.UncoreFreqTpmi | None = None
+        self._uncfreq_tpmi_obj: _UncoreFreqTPMI.UncoreFreqTpmi | None = None
         self._uncfreq_tpmi_err: str | None = None
 
         self._init_props_dict(PROPS)
@@ -94,12 +94,12 @@ class Uncore(_PropsClassBase.PropsClassBase):
 
         return self._uncfreq_sysfs_obj
 
-    def _get_uncfreq_tpmi_obj(self) -> _UncoreFreqTpmi.UncoreFreqTpmi:
+    def _get_uncfreq_tpmi_obj(self) -> _UncoreFreqTPMI.UncoreFreqTpmi:
         """
         Get an 'UncoreFreqTpmi' object.
 
         Returns:
-            An instance of '_UncoreFreqTpmi.UncoreFreqTpmi'.
+            An instance of '_UncoreFreqTPMI.UncoreFreqTpmi'.
         """
 
         if self._uncfreq_tpmi_err:
@@ -107,10 +107,10 @@ class Uncore(_PropsClassBase.PropsClassBase):
 
         if not self._uncfreq_tpmi_obj:
             # pylint: disable-next=import-outside-toplevel
-            from pepclibs import _UncoreFreqTpmi
+            from pepclibs import _UncoreFreqTPMI
 
             try:
-                obj = _UncoreFreqTpmi.UncoreFreqTpmi(self._cpuinfo, pman=self._pman)
+                obj = _UncoreFreqTPMI.UncoreFreqTpmi(self._cpuinfo, pman=self._pman)
                 self._uncfreq_tpmi_obj = obj
             except ErrorNotSupported as err:
                 self._uncfreq_tpmi_err = str(err)
@@ -136,7 +136,7 @@ class Uncore(_PropsClassBase.PropsClassBase):
             Hz.
         """
 
-        uncfreq_obj: Union[_UncoreFreqSysfs.UncoreFreqSysfs, _UncoreFreqTpmi.UncoreFreqTpmi]
+        uncfreq_obj: Union[_UncoreFreqSysfs.UncoreFreqSysfs, _UncoreFreqTPMI.UncoreFreqTpmi]
         if mname == "sysfs":
             uncfreq_obj = self._get_uncfreq_sysfs_obj()
         elif mname == "tpmi":
@@ -181,7 +181,7 @@ class Uncore(_PropsClassBase.PropsClassBase):
             value (either a percentage or a boolean indicating enabled/disabled status).
         """
 
-        uncfreq_obj: Union[_UncoreFreqSysfs.UncoreFreqSysfs, _UncoreFreqTpmi.UncoreFreqTpmi]
+        uncfreq_obj: Union[_UncoreFreqSysfs.UncoreFreqSysfs, _UncoreFreqTPMI.UncoreFreqTpmi]
         if mname == "sysfs":
             uncfreq_obj = self._get_uncfreq_sysfs_obj()
         elif mname == "tpmi":
@@ -238,7 +238,7 @@ class Uncore(_PropsClassBase.PropsClassBase):
             number, and 'val' is the uncore frequency or limit.
         """
 
-        uncfreq_obj: Union[_UncoreFreqSysfs.UncoreFreqSysfs, _UncoreFreqTpmi.UncoreFreqTpmi]
+        uncfreq_obj: Union[_UncoreFreqSysfs.UncoreFreqSysfs, _UncoreFreqTPMI.UncoreFreqTpmi]
         if mname == "sysfs":
             uncfreq_obj = self._get_uncfreq_sysfs_obj()
         elif mname == "tpmi":
@@ -283,7 +283,7 @@ class Uncore(_PropsClassBase.PropsClassBase):
             indicating enabled/disabled status).
         """
 
-        uncfreq_obj: Union[_UncoreFreqSysfs.UncoreFreqSysfs, _UncoreFreqTpmi.UncoreFreqTpmi]
+        uncfreq_obj: Union[_UncoreFreqSysfs.UncoreFreqSysfs, _UncoreFreqTPMI.UncoreFreqTpmi]
         if mname == "sysfs":
             uncfreq_obj = self._get_uncfreq_sysfs_obj()
         elif mname == "tpmi":
@@ -347,7 +347,7 @@ class Uncore(_PropsClassBase.PropsClassBase):
             mname: Name of the mechanism to use for setting the property.
         """
 
-        uncfreq_obj: Union[_UncoreFreqSysfs.UncoreFreqSysfs, _UncoreFreqTpmi.UncoreFreqTpmi]
+        uncfreq_obj: Union[_UncoreFreqSysfs.UncoreFreqSysfs, _UncoreFreqTPMI.UncoreFreqTpmi]
         if mname == "sysfs":
             uncfreq_obj = self._get_uncfreq_sysfs_obj()
         elif mname == "tpmi":
@@ -399,7 +399,7 @@ class Uncore(_PropsClassBase.PropsClassBase):
             yield from iterator_max
         elif freq == "mdl":
             # pylint: disable-next=import-outside-toplevel
-            from pepclibs import _UncoreFreqTpmi
+            from pepclibs import _UncoreFreqTPMI
 
             min_limit_iter = self._get_prop_dies_mnames("min_freq_limit", dies, ("sysfs",))
             max_limit_iter = self._get_prop_dies_mnames("max_freq_limit", dies, ("sysfs",))
@@ -409,7 +409,7 @@ class Uncore(_PropsClassBase.PropsClassBase):
                                               None, None], iter_zip)
             else:
                 iterator_mdl = iter_zip
-            ratio = _UncoreFreqTpmi.RATIO_MULTIPLIER
+            ratio = _UncoreFreqTPMI.RATIO_MULTIPLIER
             for (package, die, min_limit), (_, _, max_limit) in iterator_mdl:
                 yield package, die, ratio * round(statistics.mean([min_limit, max_limit]) / ratio)
         elif isinstance(freq, int):
@@ -463,7 +463,7 @@ class Uncore(_PropsClassBase.PropsClassBase):
             mname: Name of the mechanism to use for setting the property.
         """
 
-        uncfreq_obj: Union[_UncoreFreqSysfs.UncoreFreqSysfs, _UncoreFreqTpmi.UncoreFreqTpmi]
+        uncfreq_obj: Union[_UncoreFreqSysfs.UncoreFreqSysfs, _UncoreFreqTPMI.UncoreFreqTpmi]
         if mname == "sysfs":
             uncfreq_obj = self._get_uncfreq_sysfs_obj()
         elif mname == "tpmi":

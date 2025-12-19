@@ -16,7 +16,7 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 import sys
 import typing
 import contextlib
-from pepclibs import Tpmi, CPUInfo
+from pepclibs import TPMI, CPUInfo
 from pepclibs.helperlibs import Logging, Trivial, YAML
 from pepclibs.helperlibs.Exceptions import Error
 
@@ -226,13 +226,13 @@ def _get_write_cmdline_args(args: argparse.Namespace) -> _WriteCmdlineArgsTypedD
 
     return cmdl
 
-def _ls_long(fname: str, tpmi: Tpmi.Tpmi, prefix: str = ""):
+def _ls_long(fname: str, tpmi: TPMI.TPMI, prefix: str = ""):
     """
     Display detailed information about a feature for the 'tpmi ls -l' command.
 
     Args:
         fname: Name of the feature to display information for.
-        tpmi: A 'Tpmi.Tpmi' object.
+        tpmi: A 'TPMI.TPMI' object.
         prefix: String prefix for formatting log output.
     """
 
@@ -278,7 +278,7 @@ def tpmi_ls_command(args: argparse.Namespace, pman: ProcessManagerType):
         cpuinfo = CPUInfo.CPUInfo(pman)
         stack.enter_context(cpuinfo)
 
-        tpmi = Tpmi.Tpmi(cpuinfo.info, pman=pman)
+        tpmi = TPMI.TPMI(cpuinfo.info, pman=pman)
         stack.enter_context(tpmi)
 
         sdicts = tpmi.get_known_features()
@@ -299,7 +299,7 @@ def tpmi_ls_command(args: argparse.Namespace, pman: ProcessManagerType):
                 txt = ", ".join(hex(fid) for fid in fnames)
                 _LOG.info(" - %s", txt)
 
-def _tpmi_read_command_print(tpmi: Tpmi.Tpmi, info: _ReadInfoType):
+def _tpmi_read_command_print(tpmi: TPMI.TPMI, info: _ReadInfoType):
     """
     Print the result of the 'tpmi read' command.
 
@@ -307,7 +307,7 @@ def _tpmi_read_command_print(tpmi: Tpmi.Tpmi, info: _ReadInfoType):
     dictionary and print each element in a structured and indented format.
 
     Args:
-        tpmi: A 'Tpmi.Tpmi' object.
+        tpmi: A 'TPMI.TPMI' object.
         info: The 'pepc tpmi read' result dictionary containing TPMI read command output, organized
               by feature, address, instance, and register.
     """
@@ -356,7 +356,7 @@ def tpmi_read_command(args: argparse.Namespace, pman: ProcessManagerType):
         cpuinfo = CPUInfo.CPUInfo(pman)
         stack.enter_context(cpuinfo)
 
-        tpmi = Tpmi.Tpmi(cpuinfo.info, pman=pman)
+        tpmi = TPMI.TPMI(cpuinfo.info, pman=pman)
         stack.enter_context(tpmi)
 
         fnames = cmdl["fnames"]
@@ -436,7 +436,7 @@ def tpmi_write_command(args, pman):
         cpuinfo = CPUInfo.CPUInfo(pman)
         stack.enter_context(cpuinfo)
 
-        tpmi = Tpmi.Tpmi(cpuinfo.info, pman=pman)
+        tpmi = TPMI.TPMI(cpuinfo.info, pman=pman)
         stack.enter_context(tpmi)
 
         if cmdl["bfname"]:

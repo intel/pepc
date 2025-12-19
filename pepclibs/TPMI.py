@@ -277,7 +277,7 @@ def _load_sdict(specpath: Path) -> SDictTypedDict:
 
     return sdict
 
-class Tpmi(ClassHelpers.SimpleCloseContext):
+class TPMI(ClassHelpers.SimpleCloseContext):
     """
     Provides methods to read and write TPMI registers, query available features, and extract
     bitfield values.
@@ -321,7 +321,7 @@ class Tpmi(ClassHelpers.SimpleCloseContext):
 
         Notes:
             - The reason for taking 'cpu_info' instead of a 'CPUInfo' object is to avoid a circular
-              dependency between the 'Tpmi' and 'CPUInfo' modules.
+              dependency between the 'TPMI' and 'CPUInfo' modules.
         """
 
         self._specdirs = specdirs

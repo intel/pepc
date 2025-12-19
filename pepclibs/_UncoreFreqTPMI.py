@@ -17,7 +17,7 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import math
 import typing
-from pepclibs import Tpmi, _UncoreFreqBase
+from pepclibs import TPMI, _UncoreFreqBase
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs.helperlibs import ClassHelpers
 
@@ -97,7 +97,7 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
 
         super().__init__(cpuinfo, pman, enable_cache=False)
 
-        self._tpmi = Tpmi.Tpmi(cpuinfo.info, pman=self._pman)
+        self._tpmi = TPMI.TPMI(cpuinfo.info, pman=self._pman)
 
         # The package number -> uncore TPMI PCI device address map.
         self._addrmap: dict[int, str] = {}
