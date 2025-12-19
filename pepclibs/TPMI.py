@@ -35,8 +35,8 @@ Terminology:
     * spec directory - Directory containing one or more spec files. Multiple spec directories may
                        exist.
     * sdict - Spec file dictionary containing basic TPMI spec file information: feature name, ID,
-              description, and spec file path. Build sdicts by partially reading spec files during
-              initial scanning.
+              description, and spec file path. Sdicts are built by partially reading spec files
+              during initial scanning.
     * instance - Logical "areas" or "components" within TPMI features, represented by integer
                  instance numbers. Specify the instance when reading or writing TPMI registers.
     * offset - TPMI register offset, as defined in spec files.
@@ -122,13 +122,14 @@ if typing.TYPE_CHECKING:
 
     class SDictTypedDict(TypedDict, total=False):
         """
-        A typed dictionary describing the "header" of a TPMI specification file. Built by partially
-        reading the spec file.
+        A typed dictionary describing a TPMI spec file. Contains only basic attributes extracted
+        during directory scanning, avoiding the overhead of loading complete spec files (the "S"
+        prefix indicates "scanned").
 
         Attributes:
-            name: Name of the TPMI specification.
-            desc: Description of the TPMI specification.
-            feature_id: Unique identifier for the TPMI feature.
+            fname: Name of the TPMI feature described by the spec file.
+            desc: Description of the TPMI feature.
+            feature_id: TPMI ID of the feature.
         """
 
         name: str
