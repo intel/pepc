@@ -1,3 +1,10 @@
+pepc (1.6.11) unstable; urgency=low
+
+  * Refresh TPMI spec files.
+  * Add a mechanism for per-platform TPMI spec files.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Sat, 20 Dec 2025 00:00:00 +0200
+
 pepc (1.6.10) unstable; urgency=low
 
   * Fix remote mode (-H) crash on some Ubuntu systems.

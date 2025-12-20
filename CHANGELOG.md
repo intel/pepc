@@ -6,10 +6,13 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
 ### Added
- - Refresh TPMI spec files.
- - Add a mechanism for per-platform TPMI spec files.
 ### Removed
 ### Changed
+
+## [1.6.11] - 2025-12-20
+### Added
+ - Refresh TPMI spec files.
+ - Add a mechanism for per-platform TPMI spec files.
 
 ## [1.6.10] - 2025-10-22
 ### Fixed
