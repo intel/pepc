@@ -18,25 +18,30 @@ TPMI, or Topology Aware Register and PM Capsule Interface, is a memory-mapped in
 accessing processor registers related to power management on Intel CPUs.
 
 These registers are exposed via PCIe VSEC (Vendor-Specific Extended Capabilities) and grouped into
-TPMI features. For instance, the "uncore" feature includes registers for uncore frequency scaling,
+TPMI features. For instance, the "ufs" feature includes registers for uncore frequency scaling,
 the "rapl" feature covers Running Average Power Limit (RAPL) registers, and the "sst" feature
 includes registers for Intel Speed Select Technology (SST).
 
 To decode TPMI features, the 'pepc' tool requires a spec file describing register names, bits, and
 offsets in the PCIe memory-mapped address space. Features without a spec file cannot be decoded.
 
-The 'pepc' project includes standard spec files searched in the following locations and order:
+The 'pepc' project includes spec files for some, but not all TPMI features. Spec files for other
+features can be requested from Intel Corporation via customer support channels.
+
+The spec files are searched in the following locations and order:
 
    1. './tpmi', in the directory of the running program
-   2. '$PEPC_DATA_PATH/tpmi'
+   2. '$PEPC_TPMI_DATA_PATH/tpmi'
    3. '$HOME/.local/share/pepc/tpmi'
    4. '$VIRTUAL_ENV/share/pepc/tpmi'
    5. '/usr/local/share/pepc/tpmi'
    6. '/usr/share/pepc/tpmi'
 
-Users can also provide custom spec files by placing them in a directory and setting its path via the
-'PEPC_TPMI_DATA_PATH' environment variable. Standard spec files are based on public documentation
-available at https://github.com/intel/tpmi_power_management/.
+The 'PEPC_TPMI_DATA_PATH' provides a mechanism for replacing or extending the standard spec files. Just
+set it to a directory with spec files to have 'pepc' use them.
+
+Spec files are YAML files, but they are generated from Intel proprietary XML files using the
+'tpmi-spec-files-generator' tool available in the 'pepc' source code repository.
 
 General options
 ===============
