@@ -301,7 +301,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         get_fdict(fname):
             Return the feature dictionary (fdict) for the specified TPMI feature.
 
-        iter_feature(fname, addrs=None, packages=None, instances=None):
+        iter_feature(fname, packages=(), addrs=(), instances=()):
             Iterate over TPMI devices and instances for a given feature.
 
         read_register(fname, addr, instance, regname, bfname=None):
@@ -1403,9 +1403,9 @@ class TPMI(ClassHelpers.SimpleCloseContext):
 
     def iter_feature(self,
                      fname: str,
-                     addrs: Iterable[str] = (),
                      packages: Iterable[int] = (),
-                     instances: Iterable[int] = ()) -> Generator[tuple[str, int, int], None, None]:
+                     addrs: Iterable[str] = (),
+                     instances: Iterable[int] = ()) -> Generator[tuple[int, str, int], None, None]:
         """
         Iterate over a TPMI feature and yield tuples of '(addr, package, instance)'.
 
@@ -1415,12 +1415,12 @@ class TPMI(ClassHelpers.SimpleCloseContext):
 
         Args:
             fname: Name of the TPMI feature to iterate.
-            addrs: TPMI device PCI addresses to include.
             packages: Package numbers to include.
+            addrs: TPMI device PCI addresses to include.
             instances: Instance numbers to include.
 
         Yields:
-            Tuples of '(addr, package, instance)' for each matching feature element.
+            Tuples of '(package, addr, instance)' for each matching feature element.
         """
 
         self._validate_fname(fname)
@@ -1448,7 +1448,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                     instances = mdmap
 
                 for instance in instances:
-                    yield (addr, package, instance)
+                    yield (package, addr, instance)
 
     def read_register(self,
                       fname: str,

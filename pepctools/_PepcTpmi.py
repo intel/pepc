@@ -242,7 +242,7 @@ def _ls_long(fname: str, tpmi: TPMI.TPMI, prefix: str = ""):
     #   * regval - instance numbers.
     info: dict[int, dict[str, set[int]]] = {}
 
-    for addr, package, instance in tpmi.iter_feature(fname):
+    for package, addr, instance in tpmi.iter_feature(fname):
         if package not in info:
             info[package] = {}
         if addr not in info[package]:
@@ -379,8 +379,8 @@ def tpmi_read_command(args: argparse.Namespace, pman: ProcessManagerType):
                 # Read all registers except for the reserved ones.
                 regnames = [regname for regname in fdict if not regname.startswith("RESERVED")]
 
-            for addr, package, instance in tpmi.iter_feature(fname, addrs=cmdl["addrs"],
-                                                             packages=cmdl["packages"],
+            for package, addr, instance in tpmi.iter_feature(fname, packages=cmdl["packages"],
+                                                             addrs=cmdl["addrs"],
                                                              instances=cmdl["instances"]):
                 if addr not in info[fname]:
                     info[fname][addr] = {"package": package, "instances": {}}
@@ -446,8 +446,8 @@ def tpmi_write_command(args, pman):
             bfname_str = ""
             val_str = f"{cmdl['value']:#x}"
 
-        for addr, package, instance in tpmi.iter_feature(cmdl["fname"], addrs=cmdl["addrs"],
-                                                         packages=cmdl["packages"],
+        for package, addr, instance in tpmi.iter_feature(cmdl["fname"], packages=cmdl["packages"],
+                                                         addrs=cmdl["addrs"],
                                                          instances=cmdl["instances"]):
             tpmi.write_register(cmdl["value"], cmdl["fname"], addr, instance, cmdl["regname"],
                                 bfname=cmdl["bfname"])

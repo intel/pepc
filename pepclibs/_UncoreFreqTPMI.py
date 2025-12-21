@@ -122,7 +122,7 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
         if self._addrmap:
             return self._addrmap[package]
 
-        for addr, pkg, _ in self._tpmi.iter_feature("ufs"):
+        for pkg, addr, _ in self._tpmi.iter_feature("ufs"):
             if pkg not in self._addrmap:
                 self._addrmap[pkg] = addr
 

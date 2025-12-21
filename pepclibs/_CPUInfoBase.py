@@ -353,7 +353,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
         _LOG.debug("Reading I/O dies information from uncore frequency driver")
 
-        for addr, package, die in tpmi.iter_feature("ufs"):
+        for package, addr, die in tpmi.iter_feature("ufs"):
             if package not in self._compute_dies:
                 continue
 
