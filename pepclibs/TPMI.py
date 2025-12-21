@@ -894,6 +894,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                 all_fields_rw = all_fields_rw and not bftypeddict["readonly"]
 
                 bitmask = ((1 << (highbit + 1)) - 1) - ((1 << lowbit) - 1)
+                bftypeddict["bits"] = (highbit, lowbit)
                 bftypeddict["bitshift"] = lowbit
                 bftypeddict["bitmask"] = bitmask
 
