@@ -771,6 +771,13 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                                     f"{_MAX_SCAN_LOAD_ERRORS}") from err
                     continue
 
+                if sdict["name"] in sdicts:
+                    # Spec file for this feature was already loaded.
+                    _LOG.debug("Spec file for TPMI feature '%s' was already loaded from '%s', "
+                               "skipping '%s'",
+                               sdict["name"], sdicts[sdict["name"]]["path"], specpath)
+                    continue
+
                 spec_files_cnt += 1
                 if spec_files_cnt > _MAX_SPEC_FILES:
                     raise Error(f"Too many spec files in '{specsubdir}, maximum allowed spec files "
