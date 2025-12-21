@@ -298,6 +298,9 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         get_unknown_features():
             Return a list of TPMI feature IDs that are present but lack a specification file.
 
+        get_sdict(fname):
+            Return the spec file dictionary (sdict) for the specified TPMI feature.
+
         get_fdict(fname):
             Return the feature dictionary (fdict) for the specified TPMI feature.
 
@@ -1386,6 +1389,25 @@ class TPMI(ClassHelpers.SimpleCloseContext):
 
         return list(self._unknown_fids)
 
+    def get_sdict(self, fname: str) -> SDictTypedDict:
+        """
+        Retrieve the spec file dictionary for a specified TPMI feature.
+
+        Args:
+            fname: Name of the TPMI feature to retrieve the dictionary for.
+
+        Returns:
+            A spec file dictionary for the specified feature.
+
+        Note:
+            The returned dictionary should be treated as read-only and must not be modified. For
+            performance reasons, a deep copy is not returned.
+        """
+
+        # It would be safer to return deep copy of the dictionary, but for optimization purposes,
+        # avoid the copying.
+        return self._get_sdict(fname)
+
     def get_fdict(self, fname: str) -> dict[str, RegDictTypedDict]:
         """
         Retrieve the feature dictionary for a specified TPMI feature.
@@ -1394,8 +1416,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
             fname: Name of the TPMI feature to retrieve the dictionary for.
 
         Returns:
-            A read-only dictionary mapping feature names to their corresponding register
-            dictionaries.
+            A dictionary mapping feature names to their corresponding register dictionaries.
 
         Note:
             The returned dictionary should be treated as read-only and must not be modified. For
