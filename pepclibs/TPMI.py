@@ -80,7 +80,7 @@ from pepclibs.helperlibs import Logging, YAML, ClassHelpers, FSHelpers, ProjectF
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorPermissionDenied
 
 if typing.TYPE_CHECKING:
-    from typing import Final, TypedDict, Sequence, Iterable, NoReturn, Literal, cast
+    from typing import Final, TypedDict, Sequence, Iterable, NoReturn, Literal, cast, Generator
     from pepclibs.CPUInfoTypes import CPUInfoTypedDict
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
@@ -1405,7 +1405,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                      fname: str,
                      addrs: Iterable[str] = (),
                      packages: Iterable[int] = (),
-                     instances: Iterable[int] = ()):
+                     instances: Iterable[int] = ()) -> Generator[tuple[str, int, int], None, None]:
         """
         Iterate over a TPMI feature and yield tuples of '(addr, package, instance)'.
 
