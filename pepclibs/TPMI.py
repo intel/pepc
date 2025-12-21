@@ -735,7 +735,12 @@ class TPMI(ClassHelpers.SimpleCloseContext):
 
             # Parse the index file and get path to the sub-directory containing spec files for the
             # current platform.
-            specsubdir = self._parse_index_file(specdir)
+            try:
+                specsubdir = self._parse_index_file(specdir)
+            except Error as err:
+                _LOG.warning("Failed to parse TPMI spec index file in directory '%s':\n%s",
+                             specdir, err.indent(2))
+                continue
 
             try:
                 _lsdir = os.listdir(specsubdir)
