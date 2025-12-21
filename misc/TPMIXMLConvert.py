@@ -683,7 +683,7 @@ class TPMIXMLConvert(ClassHelpers.SimpleCloseContext):
         fobj.write("\nregisters:\n")
 
         for regname, reginfo in finfo["registers"].items():
-            fobj.write(f"    {regname}:\n")
+            fobj.write(f"    {regname.upper()}:\n")
             fobj.write(f"        offset: {reginfo['offset']}\n")
             fobj.write(f"        width: {reginfo['width']}\n")
             fobj.write("        fields:\n")
@@ -695,7 +695,7 @@ class TPMIXMLConvert(ClassHelpers.SimpleCloseContext):
                         if fldname in _BITFIELDS_RENAME_TABLE[finfo['name']][regname]:
                             fldname = _BITFIELDS_RENAME_TABLE[finfo['name']][regname][fldname]
 
-                fobj.write(f"            {fldname}:\n")
+                fobj.write(f"            {fldname.upper()}:\n")
                 fobj.write(f"                bits: \"{fldinfo['bits']}\"\n")
                 fobj.write(f"                readonly: {str(fldinfo['readonly']).lower()}\n")
 
