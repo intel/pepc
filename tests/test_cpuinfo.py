@@ -96,7 +96,7 @@ def _get_emulated_cpuinfos(pman: ProcessManagerType) -> Generator[CPUInfo.CPUInf
     """
     Yield CPUInfo objects with various emulated CPU online/offline patterns for testing.
 
-    This generator simulates different CPU online/offline scenarios using emulated test data:
+    This generator simulates different CPU online/offline scenarios using emulation data:
         1. All CPUs online.
         2. Odd-numbered CPUs offline.
         3. All CPUs except the first one offline.

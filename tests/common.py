@@ -33,18 +33,18 @@ if typing.TYPE_CHECKING:
         hostname: str
         pman: ProcessManagerType
 
-def _get_datapath(dataset: str) -> Path:
+def _get_emul_data_path(dataset: str) -> Path:
     """
-    Get the path to the test data for the specified dataset.
+    Get the path to the emulation data for the specified dataset.
 
     Args:
         dataset: Name of the dataset for which to retrieve the path.
 
     Returns:
-        Path to the test data directory for the specified dataset.
+        Path to the emulation data directory for the specified dataset.
     """
 
-    return Path(__file__).parent.resolve() / "data" / dataset
+    return Path(__file__).parent.resolve() / "emul-data" / dataset
 
 def is_emulated(pman: ProcessManagerType) -> bool:
     """
@@ -77,7 +77,7 @@ def get_pman(hostspec: str, username: str = "") -> ProcessManagerType:
     dspath: Path | None = None
     if hostspec.startswith("emulation:"):
         dataset = hostspec.split(":", maxsplit=2)[1]
-        dspath = _get_datapath(dataset)
+        dspath = _get_emul_data_path(dataset)
 
     pman = ProcessManager.get_pman(hostspec, username=username)
 

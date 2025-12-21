@@ -1006,14 +1006,14 @@ def _get_next_dataset(dataset: str) -> Generator[Path, None, None]:
         return
 
     if dataset != "all":
-        path = ProjectFiles.find_project_data(TOOLNAME, f"tests/data/{dataset}",
+        path = ProjectFiles.find_project_data(TOOLNAME, f"tests/emul-data/{dataset}",
                                               what=f"{TOOLNAME} dataset '{dataset}'")
         yield path
         return
 
     datasets: dict[str, Path] = {}
 
-    for base in ProjectFiles.search_project_data(TOOLNAME, "tests/data",
+    for base in ProjectFiles.search_project_data(TOOLNAME, "tests/emul-data",
                                                  what=f"{TOOLNAME} dataset"):
         for name in os.listdir(base):
             if name == "common":

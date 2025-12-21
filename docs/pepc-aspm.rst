@@ -46,19 +46,18 @@ General options
    Timeout for establishing an SSH connection in seconds. Defaults to 8.
 
 **-D** *DATASET*, **--dataset** *DATASET*
-   This option is for debugging and testing. It specifies the dataset to emulate a host for running
-   the command. Typically used when running 'pepc' from the source directory, which includes datasets
-   for various systems.
+   This option is for debugging and testing. It specifies the dataset to use for emulating the host
+   for running the command on. The datasets are available in 'pepc' source code repository.
 
    The argument can be a dataset path or name. If specified by name, the following locations are
    searched for the dataset.
 
-   1. './tests/data' in the program's directory
-   2. '$PEPC_DATA_PATH/tests/data'
-   3. '$HOME/.local/share/pepc/tests/data'
-   4. '$VIRTUAL_ENV/share/tests/data'
-   5. '/usr/local/share/pepc/tests/data'
-   6. '/usr/share/pepc/tests/data'
+   1. './tests/emul-data' in the program's directory
+   2. '$PEPC_DATA_PATH/tests/emul-data'
+   3. '$HOME/.local/share/pepc/tests/emul-data'
+   4. '$VIRTUAL_ENV/share/tests/emul-data'
+   5. '/usr/local/share/pepc/tests/emul-data-data'
+   6. '/usr/share/pepc/tests/emul-data'
 
 **--force-color**
    Force colorized output even if the output stream is not a terminal (adds ANSI escape codes).

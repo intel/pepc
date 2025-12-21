@@ -33,7 +33,7 @@ def pytest_addoption(parser: pytest.Parser):
 
     text = """Name of the host to run the test on. The default value is "emulation", which means
               running on emulated system. Emulation requires a dataset, and there are many datasets
-              available in the "data" subdirectory."""
+              available in the "emul-data" subdirectory."""
     parser.addoption("-H", "--host", dest="hostname", default="emulation", help=text)
 
     text = """Name of the user to use for logging into the remote host over SSH. The default user
@@ -41,21 +41,22 @@ def pytest_addoption(parser: pytest.Parser):
     parser.addoption("-U", "--username", dest="username", default="", help=text)
 
     text = """This option specifies the dataset to use for emulation. By default, all datasets are
-              used. Please, find the available datasets in the "data" subdirectory."""
+              used. Please, find the available datasets in the "emul-data" subdirectory."""
     parser.addoption("-D", "--dataset", dest="dataset", default="all", help=text)
 
 def _get_datasets() -> Generator[str, None, None]:
     """
-    Find and yield the names of all directories in the 'tests/data' directory, excluding 'common'.
+    Find and yield the names of all directories in the 'tests/emul-data' directory, excluding
+    'common'.
 
     Yields:
-        The name of each valid directory in 'tests/data', excluding 'common'.
+        The name of each valid directory in 'tests/emul-data', excluding 'common'.
     """
 
-    basepath = Path(__file__).parent.resolve() / "data"
+    basepath = Path(__file__).parent.resolve() / "emul-data"
     for dirname in os.listdir(basepath):
-        # The "common" dataset contains data for all SUTs and does not represent a single host, so
-        # skip it.
+        # The "common" dataset contains emulation data for all SUTs and does not represent a single
+        # host, so skip it.
         if dirname == "common":
             continue
 
@@ -118,7 +119,7 @@ def pytest_configure(config: pytest.Config):
     dataset = config.getoption("dataset")
 
     if hostname == "emulation" and dataset != "all":
-        path = Path(__file__).parent.resolve() / "data" / dataset
+        path = Path(__file__).parent.resolve() / "emul-data" / dataset
 
         if not path.exists():
             raise pytest.exit(f"Did not find dataset '{dataset}'.")
