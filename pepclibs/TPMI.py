@@ -333,7 +333,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
               dependency between the 'TPMI' and 'CPUInfo' modules.
         """
 
-        self._specdirs = specdirs
+        self.specdirs = specdirs
 
         self._close_pman = pman is None
 
@@ -358,15 +358,15 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         # The features dictionary, maps feature name to the fdict (feature dictionary).
         self._fdicts: dict[str, dict[str, RegDictTypedDict]] = {}
 
-        if not self._specdirs:
-            self._specdirs = _find_spec_dirs()
+        if not self.specdirs:
+            self.specdirs = _find_spec_dirs()
 
         # Keep absolute paths to spec directories - in case of an error a directory path like 'tpmi'
         # may look confusing comparint to a path like '/my/path/tpmi'.
-        specdirs = self._specdirs
-        self._specdirs = []
+        specdirs = self.specdirs
+        self.specdirs = []
         for specdir in specdirs:
-            self._specdirs.append(Path(specdir).resolve().absolute())
+            self.specdirs.append(Path(specdir).resolve().absolute())
 
         # The debugfs mount point.
         self._debugfs_mnt: Path
@@ -596,7 +596,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                                     f"following paths:\n * {paths}")
 
         if "tpmi_info" not in fname2addrs:
-            dirs = "\n * ".join([str(path) for path in self._specdirs])
+            dirs = "\n * ".join([str(path) for path in self.specdirs])
             raise Error(f"Spec file for the 'tpmi_info' TPMI feature was not found, checked in the "
                         f"following directories:\n * {dirs}")
 
@@ -728,7 +728,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         """
 
         sdicts: dict[str, SDictTypedDict] = {}
-        for specdir in self._specdirs:
+        for specdir in self.specdirs:
             spec_files_cnt = 0
             non_yaml_cnt = 0
             load_errors_cnt = 0
@@ -771,7 +771,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                 sdicts[sdict["name"]] = sdict
 
         if not sdicts:
-            paths = "\n * ".join([str(path) for path in self._specdirs])
+            paths = "\n * ".join([str(path) for path in self.specdirs])
             raise ErrorNotSupported(f"No TPMI spec files found, checked the following paths:\n"
                                     f" * {paths}")
 
