@@ -9,6 +9,10 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Removed
 ### Changed
 
+## [1.6.12] - 2025-12-22
+### Fixed
+ - Multiple minor bug fixes in 'pepc tpmi'.
+
 ## [1.6.11] - 2025-12-20
 ### Added
  - Refresh TPMI spec files.
