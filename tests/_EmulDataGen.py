@@ -450,7 +450,13 @@ def _get_cmdline_args(args: argparse.Namespace) -> _CmdlineArgsTypedDict:
     cmdl["username"] = username
     cmdl["privkey"] = privkey
     cmdl["timeout"] = timeout
-    cmdl["outdir"] = getattr(args, "outdir", Path(hostname))
+
+    outdir = getattr(args, "outdir")
+    if outdir:
+        cmdl["outdir"] = outdir
+    else:
+        cmdl["outdir"] = Path(hostname)
+
     return cmdl
 
 def _collect_cmd_output(pman: ProcessManagerType,
