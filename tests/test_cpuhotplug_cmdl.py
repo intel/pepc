@@ -127,6 +127,9 @@ def _test_cpuhotplug(params: _TestParamsTypedDict):
             if core % 2 != 0 and core % 3 == 0:
                 cores_to_offline.append(core)
 
+        if not cores_to_offline:
+            continue
+
         cores_str = ",".join([str(core) for core in cores_to_offline])
         cmd = f"cpu-hotplug offline --packages {pkg} --cores {cores_str}"
         props_cmdl_common.run_pepc(cmd, pman)
