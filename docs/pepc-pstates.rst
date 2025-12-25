@@ -168,14 +168,12 @@ Use target CPU specification options to define a subset of CPUs, cores, dies, or
    '--max-freq-limit' are available with a step equal to '--bus-clock'.
 
 **--base-freq**
-   Retrieve the base CPU frequency, also known as the "guaranteed frequency," HFM (High Frequency
-   Mode), or P1. The supported mechanisms are: 'sysfs', 'cppc', 'msr'.
+   Retrieve the base CPU frequency, also known as HFM (High Frequency Mode), or P1. The supported
+   mechanisms are: 'sysfs', 'msr'.
 
    The preferred mechanism is 'sysfs', which reads
    '/sys/devices/system/cpu/cpu<NUMBER>/cpufreq/base_frequency'. If the file is unavailable, it
    falls back to '/sys/devices/system/cpu/cpu<NUMBER>/cpufreq/bios_limit'.
-
-   The 'cppc' mechanism read the '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/nominal_freq'.
 
    The 'msr' mechanism reads the base CPU frequency from the MSR_HWP_CAPABILITIES (0x771), bits 15:8
    if CPU hardware power management is enabled, otherwise from MSR_PLATFORM_INFO (0xCE), bits 15:8.
@@ -195,8 +193,8 @@ Use target CPU specification options to define a subset of CPUs, cores, dies, or
 
    The 'cppc' mechanism reads '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/lowest_freq'.
    If unavailable, on non-Intel platforms the frequency is calculated as
-   "base_freq * lowest_perf / nominal_perf" using values from:
-   base_freq: '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/nominal_freq',
+   "nominal_freq * lowest_perf / nominal_perf" using values from:
+   nominal_freq: '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/nominal_freq',
    lowest_perf: '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/lowest_perf',
    nominal_perf: '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/nominal_perf'.
 
@@ -215,8 +213,8 @@ Use target CPU specification options to define a subset of CPUs, cores, dies, or
 
    The 'cppc' mechanism reads '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/highest_freq'.
    If unavailable, on non-Intel platforms the frequency is calculated as
-   "base_freq * highest_perf / nominal_perf" using values from:
-   base_freq: '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/nominal_freq',
+   "nominal_freq * highest_perf / nominal_perf" using values from:
+   nominal_freq: '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/nominal_freq',
    highest_perf: '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/highest_perf',
    nominal_perf: '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/nominal_perf'.
 

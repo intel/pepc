@@ -247,7 +247,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         Retrieve and yield frequency values for the specified CPUs using the CPPC mechanism.
 
         Args:
-            pname: Property name to retrieve (e.g., "base_freq").
+            pname: Property name to retrieve.
             cpus: CPU numbers to retrieve frequency values for.
 
         Yields:
@@ -256,9 +256,7 @@ class PStates(_PropsClassBase.PropsClassBase):
 
         cpufreq_obj = self._get_cpufreq_cppc_obj()
 
-        if pname == "base_freq":
-            yield from cpufreq_obj.get_base_freq(cpus)
-        elif pname == "max_turbo_freq":
+        if pname == "max_turbo_freq":
             yield from cpufreq_obj.get_max_freq_limit(cpus)
         elif pname == "min_oper_freq":
             yield from cpufreq_obj.get_min_freq_limit(cpus)
@@ -273,15 +271,15 @@ class PStates(_PropsClassBase.PropsClassBase):
         cpus = self._cpuinfo.get_cpus()
         cpufreq_obj = self._get_cpufreq_cppc_obj()
 
-        iter_base_freq = cpufreq_obj.get_base_freq(cpus)
-        iter_base_perf = cpufreq_obj.get_base_perf(cpus)
+        iter_nominal_freq = cpufreq_obj.get_nominal_freq(cpus)
+        iter_nominal_perf = cpufreq_obj.get_nominal_perf(cpus)
 
-        for (cpu, base_freq), (_, base_perf) in zip(iter_base_freq, iter_base_perf):
-            if base_perf == 0:
-                raise ErrorVerifyFailed(f"Base performance for CPU {cpu} is zero, cannot build "
-                                        "performance-to-frequency mapping")
+        for (cpu, nominal_freq), (_, nominal_perf) in zip(iter_nominal_freq, iter_nominal_perf):
+            if nominal_perf == 0:
+                raise ErrorVerifyFailed(f"Nominal performance for CPU {cpu} is zero, cannot build "
+                                        f"performance-to-frequency mapping")
 
-            perf2freq = base_freq / base_perf
+            perf2freq = nominal_freq / nominal_perf
             self._perf2freq[cpu] = int(perf2freq)
 
     def _get_freq_msr_noerr(self,
@@ -457,8 +455,8 @@ class PStates(_PropsClassBase.PropsClassBase):
 
         Args:
             cpus: CPU numbers to retrieve base frequency for.
-            mname: Name of the mechanism to use for retrieving the base frequency: are 'sysfs',
-                   'msr', and 'cppc'.
+            mname: Name of the mechanism to use for retrieving the base frequency: are 'sysfs' and
+                   'msr'.
             mnames: All mechanism names that were requested for the operation.
 
         Yields:
@@ -469,8 +467,6 @@ class PStates(_PropsClassBase.PropsClassBase):
             yield from self._get_freq_sysfs("base_freq", cpus)
         elif mname == "msr":
             yield from self._get_freq_msr("base_freq", cpus, mnames)
-        elif mname == "cppc":
-            yield from self._get_cppc_freq("base_freq", cpus)
         else:
             raise Error(f"BUG: Unexpected mechanism '{mname}'")
 
@@ -1075,7 +1071,7 @@ class PStates(_PropsClassBase.PropsClassBase):
                 iterator = _iterator
             yield from iterator
         elif freq in {"base", "hfm", "P1"}:
-            _iterator = self._get_prop_cpus_mnames("base_freq", cpus, ("sysfs", "msr", "cppc"))
+            _iterator = self._get_prop_cpus_mnames("base_freq", cpus, ("sysfs", "msr"))
             if typing.TYPE_CHECKING:
                 iterator = cast(Generator[tuple[int, int], None, None], _iterator)
             else:

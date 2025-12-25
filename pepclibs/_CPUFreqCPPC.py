@@ -23,7 +23,7 @@ if typing.TYPE_CHECKING:
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepclibs.CPUInfoTypes import AbsNumsType
 
-    FreqType = Literal["min", "max", "base"]
+    FreqType = Literal["min", "max", "nominal"]
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
@@ -35,10 +35,10 @@ class CPUFreqCPPC(ClassHelpers.SimpleCloseContext):
     Public Methods:
         - get_min_freq_limit(cpus): Yield minimum frequency limits for CPUs from ACPI CPPC.
         - get_max_freq_limit(cpus): Yield maximum frequency limits for CPUs from ACPI CPPC.
-        - get_base_freq(cpus): Yield base frequency for CPUs from ACPI CPPC.
+        - get_nominal_freq(cpus): Yield nominal frequency for CPUs from ACPI CPPC.
         - get_min_perf_limit(cpus): Yield minimum performance limits for CPUs from ACPI CPPC.
         - get_max_perf_limit(cpus): Yield maximum performance limits for CPUs from ACPI CPPC.
-        - get_base_perf(cpus): Yield base performance for CPUs from ACPI CPPC.
+        - get_nominal_perf(cpus): Yield nominal performance for CPUs from ACPI CPPC.
 
     Notes:
         Methods do not validate the 'cpus' argument. Ensure that provided CPU numbers are valid and
@@ -131,7 +131,7 @@ class CPUFreqCPPC(ClassHelpers.SimpleCloseContext):
 
         path = self._get_sysfs_path(cpu, fname)
 
-        val = None
+        val: int | None = None
 
         try:
             val = self._sysfs_io.read_int(path, what=what)
@@ -192,15 +192,15 @@ class CPUFreqCPPC(ClassHelpers.SimpleCloseContext):
             val = self._read_cppc_sysfs_file(cpu, "highest_perf", what)
             yield cpu, val
 
-    def get_base_perf(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
+    def get_nominal_perf(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
-        Retrieve and yield the base performance level value for specified CPUs.
+        Retrieve and yield the nominal performance level value for specified CPUs.
 
         Args:
-            cpus: CPU numbers to get the base performance level value for.
+            cpus: CPU numbers to get the nominal performance level value for.
 
         Yields:
-            Tuple (cpu, value), where 'cpu' is the CPU number and 'value' is the base performance
+            Tuple (cpu, value), where 'cpu' is the CPU number and 'value' is the nominal performance
             level.
 
         Raises:
@@ -208,7 +208,7 @@ class CPUFreqCPPC(ClassHelpers.SimpleCloseContext):
         """
 
         for cpu in cpus:
-            val = self._read_cppc_sysfs_file(cpu, "nominal_perf", f"base CPU {cpu} performance")
+            val = self._read_cppc_sysfs_file(cpu, "nominal_perf", f"nominal CPU {cpu} performance")
             yield cpu, val
 
     def _get_freq(self,
@@ -230,12 +230,12 @@ class CPUFreqCPPC(ClassHelpers.SimpleCloseContext):
             fname = "lowest_freq"
         elif ftype == "max":
             fname = "highest_freq"
-        elif ftype == "base":
+        elif ftype == "nominal":
             fname = "nominal_freq"
         else:
             raise Error(f"BUG: Unknown frequency type '{ftype}'")
 
-        if ftype == "base" or self._min_max_freq_supported:
+        if ftype == "nominal" or self._min_max_freq_supported:
             yielded = False
             try:
                 for cpu in cpus:
@@ -247,9 +247,9 @@ class CPUFreqCPPC(ClassHelpers.SimpleCloseContext):
                 if yielded:
                     # Something was yielded, do not try to recover from the error.
                     raise
-                if ftype == "base":
-                    # The base frequency file is not available, do not try to recover either,
-                    # because the recovery method requires the base frequency.
+                if ftype == "nominal":
+                    # The nominal frequency file is not available, do not try to recover either,
+                    # because the recovery method requires the nominal frequency.
                     raise
                 if self._cpuinfo.info["vendor"] != "GenuineIntel":
                     # I did not see the recovery method giving realistic results on Intel CPUs, but
@@ -265,20 +265,20 @@ class CPUFreqCPPC(ClassHelpers.SimpleCloseContext):
                 return
 
         # Reading min/max frequency files failed. Try to compute the frequency from the performance
-        # values and the base frequency.
+        # values and the nominal frequency.
         if ftype == "min":
             fname = "lowest_perf"
         else:
             fname = "highest_perf"
 
         for cpu in cpus:
-            base_freq = self._read_cppc_sysfs_file(cpu, "nominal_freq",
-                                                   f"nominal CPU {cpu} frequency")
-            base_perf = self._read_cppc_sysfs_file(cpu, "nominal_perf",
+            nominal_freq = self._read_cppc_sysfs_file(cpu, "nominal_freq",
+                                                      f"nominal CPU {cpu} frequency")
+            nominal_perf = self._read_cppc_sysfs_file(cpu, "nominal_perf",
                                                    f"nominal CPU {cpu} performance")
             perf = self._read_cppc_sysfs_file(cpu, fname, f"{ftype} CPU {cpu} performance limit")
 
-            freq = int(base_freq * perf / base_perf)
+            freq = int(nominal_freq * perf / nominal_perf)
             # Round down to the nearest 100MHz.
             freq = freq - (freq % 100)
             yield cpu, freq * 1000 * 1000
@@ -317,19 +317,19 @@ class CPUFreqCPPC(ClassHelpers.SimpleCloseContext):
 
         yield from self._get_freq(cpus, "max")
 
-    def get_base_freq(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
+    def get_nominal_freq(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
-        Retrieve and yield the base frequency for specified CPUs.
+        Retrieve and yield the nominal frequency for specified CPUs.
 
         Args:
-            cpus: CPU numbers to get the base frequency for.
+            cpus: CPU numbers to get the nominal frequency for.
 
         Yields:
-            Tuple (cpu, frequency), where 'cpu' is the CPU number and 'frequency' is the base
+            Tuple (cpu, frequency), where 'cpu' is the CPU number and 'frequency' is the nominal
             frequency in Hz.
 
         Raises:
             ErrorNotSupported: If the ACPI CPPC CPU frequency sysfs file does not exist.
         """
 
-        yield from self._get_freq(cpus, "base")
+        yield from self._get_freq(cpus, "nominal")

@@ -76,7 +76,7 @@ PROPS: Final[dict[str, PropertyTypedDict]] = {
         "unit": "Hz",
         "type": "int",
         "sname": "CPU",
-        "mnames": ("sysfs", "cppc", "msr"),
+        "mnames": ("sysfs", "msr"),
         "writable": False,
     },
     "bus_clock": {
