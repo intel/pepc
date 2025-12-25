@@ -1,0 +1,1 @@
+BOOT_IMAGE=/boot/vmlinuz-6.19.0-rc2-2025-12-24-intel-next+ root=UUID=b1c7f4bd-ce02-41e0-afa4-ba2d0e0901b2 ro console=tty0 console=ttyS0,115200n8 resume=UUID=b1c7f4bd-ce02-41e0-afa4-ba2d0e0901b2 resume_offset=453476352
