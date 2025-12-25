@@ -149,7 +149,8 @@ class CPUFreqCPPC(ClassHelpers.SimpleCloseContext):
             _LOG.debug("ACPI CPPC sysfs file '%s' contains 0%s", path, self._pman.hostmsg)
             raise ErrorNotSupported(f"Read '0' for {what} from '{path}'")
 
-        return self._sysfs_io.cache_add(path, val)
+        self._sysfs_io.cache_add(path, str(val))
+        return val
 
     def get_min_perf_limit(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
