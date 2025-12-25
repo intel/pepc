@@ -1,0 +1,8 @@
+/sys/devices/system/cpu/cpu0/topology/die_id:0
+/sys/devices/system/cpu/cpu1/topology/die_id:0
+/sys/devices/system/cpu/cpu2/topology/die_id:0
+/sys/devices/system/cpu/cpu3/topology/die_id:0
+/sys/devices/system/cpu/cpu0/topology/die_cpus_list:0-3
+/sys/devices/system/cpu/cpu1/topology/die_cpus_list:0-3
+/sys/devices/system/cpu/cpu2/topology/die_cpus_list:0-3
+/sys/devices/system/cpu/cpu3/topology/die_cpus_list:0-3

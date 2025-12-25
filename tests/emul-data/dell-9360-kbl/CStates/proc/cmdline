@@ -1,0 +1,1 @@
+BOOT_IMAGE=/boot/vmlinuz-6.19.0-rc2-2025-12-24-intel-next+ root=UUID=93c8e00d-26e1-42fb-8ea7-1c43f52e10cb ro snd-intel-dspcfg.dsp_driver=1 console=tty0 console=ttyS0,115200n8 resume=UUID=93c8e00d-26e1-42fb-8ea7-1c43f52e10cb resume_offset=34816

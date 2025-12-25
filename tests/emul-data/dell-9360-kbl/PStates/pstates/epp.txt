@@ -1,0 +1,4 @@
+/sys/devices/system/cpu/cpufreq/policy0/energy_performance_preference:balance_performance
+/sys/devices/system/cpu/cpufreq/policy1/energy_performance_preference:balance_performance
+/sys/devices/system/cpu/cpufreq/policy2/energy_performance_preference:balance_performance
+/sys/devices/system/cpu/cpufreq/policy3/energy_performance_preference:balance_performance

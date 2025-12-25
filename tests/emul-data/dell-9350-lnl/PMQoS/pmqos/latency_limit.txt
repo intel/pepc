@@ -1,0 +1,8 @@
+/sys/devices/system/cpu/cpu0/power/pm_qos_resume_latency_us:0
+/sys/devices/system/cpu/cpu1/power/pm_qos_resume_latency_us:0
+/sys/devices/system/cpu/cpu2/power/pm_qos_resume_latency_us:0
+/sys/devices/system/cpu/cpu3/power/pm_qos_resume_latency_us:0
+/sys/devices/system/cpu/cpu4/power/pm_qos_resume_latency_us:0
+/sys/devices/system/cpu/cpu5/power/pm_qos_resume_latency_us:0
+/sys/devices/system/cpu/cpu6/power/pm_qos_resume_latency_us:0
+/sys/devices/system/cpu/cpu7/power/pm_qos_resume_latency_us:0

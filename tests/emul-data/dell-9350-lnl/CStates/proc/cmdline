@@ -1,0 +1,1 @@
+BOOT_IMAGE=/boot/vmlinuz-6.19.0-rc2-dirty root=UUID=cea09add-9b34-4682-84f2-ac9aa6e966c8 ro modprobe.blacklist=iwlwifi console=tty0 console=ttyS0,115200n8 resume=UUID=cea09add-9b34-4682-84f2-ac9aa6e966c8 resume_offset=243785728 crashkernel=2G-4G:320M,4G-32G:512M,32G-64G:1024M,64G-128G:2048M,128G-:4096M

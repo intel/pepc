@@ -1,0 +1,2 @@
+/sys/devices/cpu_atom/cpus:4-7
+/sys/devices/cpu_core/cpus:0-3
