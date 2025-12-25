@@ -1,0 +1,3 @@
+/sys/devices/system/cpu/cpu1/online:1
+/sys/devices/system/cpu/cpu2/online:1
+/sys/devices/system/cpu/cpu3/online:1

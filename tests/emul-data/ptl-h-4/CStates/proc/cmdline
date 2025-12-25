@@ -1,0 +1,1 @@
+BOOT_IMAGE=/boot/vmlinuz-6.19.0-rc2-dirty root=UUID=3335e9e7-923c-417f-bac9-71fdc393ed52 ro log_buf_len=32M console=tty0 console=ttyS0,115200n8
