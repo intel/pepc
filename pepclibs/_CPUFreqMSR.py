@@ -785,7 +785,7 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
             factors["ecore"] = factors["lpecore"] = 100_000_000
         elif self._cpuinfo.info["vfm"] in CPUModels.CPU_GROUPS["LUNARLAKE"]:
             factors["pcore"] = 86_957_000
-            factors["ecore"] = 100_000_000
+            factors["lpecore"] = 100_000_000
         else:
             raise ErrorNeedPerf2Freq(f"Unsupported hybrid CPU model '{self._cpuinfo.info['vfm']}'")
 
