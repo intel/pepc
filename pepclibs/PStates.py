@@ -22,8 +22,7 @@ from pepclibs.PStatesVars import PROPS
 from pepclibs.helperlibs import Human, ClassHelpers, Logging
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorVerifyFailed
 
-# pylint: disable-next=unused-import
-from pepclibs._PropsClassBase import ErrorTryAnotherMechanism, ErrorUsePerCPU
+from pepclibs._PropsClassBase import ErrorTryAnotherMechanism
 
 if typing.TYPE_CHECKING:
     from typing import NoReturn, Generator, Union, Sequence
