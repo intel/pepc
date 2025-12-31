@@ -256,10 +256,10 @@ class PStates(_PropsClassBase.PropsClassBase):
 
         cpufreq_obj = self._get_cpufreq_cppc_obj()
 
-        if pname == "max_turbo_freq":
-            yield from cpufreq_obj.get_max_freq_limit(cpus)
-        elif pname == "min_oper_freq":
+        if pname == "min_freq_limit":
             yield from cpufreq_obj.get_min_freq_limit(cpus)
+        elif pname == "max_freq_limit":
+            yield from cpufreq_obj.get_max_freq_limit(cpus)
         else:
             raise Error(f"BUG: Unexpected property {pname}")
 
@@ -304,10 +304,10 @@ class PStates(_PropsClassBase.PropsClassBase):
             yield from cpufreq_obj.get_max_freq(cpus)
         elif pname == "base_freq":
             yield from cpufreq_obj.get_base_freq(cpus)
-        elif pname == "max_turbo_freq":
-            yield from cpufreq_obj.get_max_turbo_freq(cpus)
-        elif pname == "min_oper_freq":
-            yield from cpufreq_obj.get_min_oper_freq(cpus)
+        elif pname == "min_freq_limit":
+            yield from cpufreq_obj.get_min_freq_limit(cpus)
+        elif pname == "max_freq_limit":
+            yield from cpufreq_obj.get_max_freq_limit(cpus)
         else:
             raise Error(f"BUG: Unexpected CPU frequency property {pname}")
 
@@ -360,57 +360,6 @@ class PStates(_PropsClassBase.PropsClassBase):
 
             for cpu, freq in self._get_freq_msr_noerr(pname, cpus):
                 yield cpu, freq
-
-    def _get_min_oper_freq(self,
-                           cpus: AbsNumsType,
-                           mname: MechanismNameType,
-                           mnames: Sequence[MechanismNameType]) -> Generator[tuple[int, int],
-                                                                             None, None]:
-        """
-        Retrieve and yield the minimum operating frequency for the specified CPUs using the given
-        mechanism.
-
-        Args:
-            cpus: CPU numbers to retrieve minimum operating frequency for.
-            mname: Name of the mechanism to use ('msr' or 'cppc').
-            mnames: All mechanism names that were requested for the operation.
-
-        Yields:
-            Tuple of (cpu, val), where 'cpu' is the CPU number and 'val' is its minimum operating
-            frequency.
-        """
-
-        if mname == "msr":
-            yield from self._get_freq_msr("min_oper_freq", cpus, mnames)
-        elif mname == "cppc":
-            yield from self._get_cppc_freq("min_oper_freq", cpus)
-        else:
-            raise Error(f"BUG: Unexpected mechanism '{mname}'")
-
-    def _get_max_turbo_freq(self,
-                            cpus: AbsNumsType,
-                            mname: MechanismNameType,
-                            mnames: Sequence[MechanismNameType]) -> Generator[tuple[int, int],
-                                                                              None, None]:
-        """
-        Retrieve and yield the maximum turbo frequency for the specified CPUs using the given
-        mechanism.
-
-        Args:
-            cpus: CPU numbers to retrieve maximum turbo frequency for.
-            mname: Name of the mechanism to use ('msr' or 'cppc').
-
-        Yields:
-            Tuple of (cpu, val), where 'cpu' is the CPU number and 'val' is its maximum turbo
-            frequency.
-        """
-
-        if mname == "msr":
-            yield from self._get_freq_msr("max_turbo_freq", cpus, mnames)
-        elif mname == "cppc":
-            yield from self._get_cppc_freq("max_turbo_freq", cpus)
-        else:
-            raise Error(f"BUG: Unexpected mechanism '{mname}'")
 
     def _get_freq_sysfs(self,
                         pname: str,
@@ -500,25 +449,32 @@ class PStates(_PropsClassBase.PropsClassBase):
     def _get_min_max_freq_limit(self,
                                 pname: str,
                                 cpus: AbsNumsType,
-                                mname: MechanismNameType) -> Generator[tuple[int, int], None, None]:
+                                mname: MechanismNameType,
+                                mnames: Sequence[MechanismNameType]) -> Generator[tuple[int, int],
+                                                                                  None, None]:
         """
-        Retrieve and yield min or max CPU frequency limits for the specified CPUs using the sysfs
-        mechanism.
+        Retrieve and yield min or max CPU frequency limits for the specified CPUs using the
+        specified mechanism.
 
         Args:
             pname: Property name to retrieve ("min_freq_limit" or "max_freq_limit").
             cpus: CPU numbers to retrieve frequency values for.
             mname: Name of the mechanism to use for retrieving the frequency limits.
+            mnames: All mechanism names that were requested for the operation.
 
         Yields:
             Tuple of (cpu, val), where 'cpu' is the CPU number and 'val' is its frequency limit in
             Hz.
         """
 
-        if mname != "sysfs":
+        if mname == "msr":
+            yield from self._get_freq_msr(pname, cpus, mnames)
+        elif mname == "cppc":
+            yield from self._get_cppc_freq(pname, cpus)
+        elif mname == "sysfs":
+            yield from self._get_freq_sysfs(pname, cpus)
+        else:
             raise Error(f"BUG: Unexpected mechanism '{mname}'")
-
-        yield from self._get_freq_sysfs(pname, cpus)
 
     def _get_bclks_cpus(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
@@ -816,16 +772,12 @@ class PStates(_PropsClassBase.PropsClassBase):
             yield from self._get_epb(cpus, mname)
         elif pname == "hwp":
             yield from self._get_hwp(cpus, mname)
-        elif pname == "min_oper_freq":
-            yield from self._get_min_oper_freq(cpus, mname, mnames)
-        elif pname == "max_turbo_freq":
-            yield from self._get_max_turbo_freq(cpus, mname, mnames)
         elif pname == "base_freq":
             yield from self._get_base_freq(cpus, mname, mnames)
         elif pname in {"min_freq", "max_freq"}:
             yield from self._get_min_max_freq(pname, cpus, mname, mnames)
         elif pname in {"min_freq_limit", "max_freq_limit"}:
-            yield from self._get_min_max_freq_limit(pname, cpus, mname)
+            yield from self._get_min_max_freq_limit(pname, cpus, mname, mnames)
         elif pname == "frequencies":
             yield from self._get_frequencies(cpus, mname)
         elif pname == "bus_clock":
@@ -1072,13 +1024,6 @@ class PStates(_PropsClassBase.PropsClassBase):
             yield from iterator
         elif freq in {"base", "hfm", "P1"}:
             _iterator = self._get_prop_cpus_mnames("base_freq", cpus, ("sysfs", "msr"))
-            if typing.TYPE_CHECKING:
-                iterator = cast(Generator[tuple[int, int], None, None], _iterator)
-            else:
-                iterator = _iterator
-            yield from iterator
-        elif freq == "Pm":
-            _iterator = self._get_prop_cpus_mnames("min_oper_freq", cpus, ("msr",))
             if typing.TYPE_CHECKING:
                 iterator = cast(Generator[tuple[int, int], None, None], _iterator)
             else:

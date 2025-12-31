@@ -153,12 +153,41 @@ Use target CPU specification options to define a subset of CPUs, cores, dies, or
    MSR_HWP_REQUEST (0x774) register, bits 15:8.
 
 **--min-freq-limit**
-   Retrieve the minimum CPU frequency supported by the Linux kernel from
+   Retrieve the minimum supported CPU frequency using the 'sysfs', 'msr', and 'cppc' mechanisms.
+
+   The 'sysfs' mechanism returns the minimum CPU frequency supported by the Linux kernel, it reads
    "/sys/devices/system/cpu/cpu<NUMBER>/cpufreq/cpuinfo_min_freq".
 
+   The 'msr' mechanism reads MSR_PLATFORM_INFO (0xCE), bits 55:48.
+
+   The 'cppc' mechanism reads '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/lowest_freq'.
+   If unavailable, on non-Intel platforms the frequency is calculated as
+   "nominal_freq * lowest_perf / nominal_perf" using values from:
+   nominal_freq: '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/nominal_freq',
+   lowest_perf: '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/lowest_perf',
+   nominal_perf: '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/nominal_perf'.
+
 **--max-freq-limit**
-   Retrieve the maximum CPU frequency supported by the Linux kernel from
+   Retrieve the maximum supported CPU frequency using the 'sysfs', 'msr', and 'cppc' mechanisms.
+
+   The 'sysfs' mechanism returns the maximum CPU frequency supported by the Linux kernel, it reads
    "/sys/devices/system/cpu/cpu<NUMBER>/cpufreq/cpuinfo_max_freq".
+
+   The 'msr' mechanism retrieves the highest 1-core turbo, also known as P01. If HWP (Hardware
+   P-states) is enabled, the 'msr' mechanism reads MSR_HWP_CAPABILITIES (0x771), bits 7:0, otherwise
+   reads MSR_TURBO_RATIO_LIMIT (0x1AD), bits 7:0.
+
+   The 'cppc' mechanism reads '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/highest_freq'.
+   If unavailable, on non-Intel platforms the frequency is calculated as
+   "nominal_freq * highest_perf / nominal_perf" using values from:
+   nominal_freq: '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/nominal_freq',
+   highest_perf: '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/highest_perf',
+   nominal_perf: '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/nominal_perf'.
+
+**--hwp**
+   Check if hardware power management is enabled. When enabled, CPUs can scale their frequency
+   automatically without OS involvement. Mechanism: 'msr', reads MSR_PM_ENABLE (0x770), bit 0.
+   This setting has global scope.
 
 **--frequencies**
    List CPU frequencies supported by the Linux kernel for '--min-freq' and '--max-freq' options.
@@ -183,45 +212,11 @@ Use target CPU specification options to define a subset of CPUs, cores, dies, or
    MSR_FSB_FREQ (0xCD), bits 2:0, for legacy Intel platforms. For modern Intel platforms, the 'doc'
    mechanism assumes a 100MHz bus clock.
 
-**--min-oper-freq**
-   Retrieve the minimum CPU operating frequency, the lowest frequency the CPU can operate at. This
-   frequency, also known as Pm, may not always be directly available to the OS but can be used by
-   the platform in certain scenarios (e.g., some C-states). The supported mechanisms are: 'msr',
-   'cppc'.
-
-   The 'msr' mechanism: 'msr', reads MSR_PLATFORM_INFO (0xCE), bits 55:48.
-
-   The 'cppc' mechanism reads '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/lowest_freq'.
-   If unavailable, on non-Intel platforms the frequency is calculated as
-   "nominal_freq * lowest_perf / nominal_perf" using values from:
-   nominal_freq: '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/nominal_freq',
-   lowest_perf: '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/lowest_perf',
-   nominal_perf: '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/nominal_perf'.
-
 **--turbo**
    Check if turbo is enabled or disabled. When enabled, CPUs can run at frequencies above the base
    frequency if allowed by the OS and thermal conditions. Reads the sysfs file based on the CPU
    frequency driver: intel_pstate - '/sys/devices/system/cpu/intel_pstate/no_turbo', acpi-cpufreq -
    '/sys/devices/system/cpu/cpufreq/boost'. The setting has global scope.
-
-**--max-turbo-freq**
-   Retrieve the maximum turbo frequency - the highest frequency a single CPU can run on. Also known
-   as max 1-core turbo or P01. The supported mechanisms are: 'msr', 'cppc'.
-
-   The 'msr' mechanism reads MSR_HWP_CAPABILITIES (0x771), bits 7:0 if hardware power management is
-   enabled, otherwise reads MSR_TURBO_RATIO_LIMIT (0x1AD), bits 7:0.
-
-   The 'cppc' mechanism reads '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/highest_freq'.
-   If unavailable, on non-Intel platforms the frequency is calculated as
-   "nominal_freq * highest_perf / nominal_perf" using values from:
-   nominal_freq: '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/nominal_freq',
-   highest_perf: '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/highest_perf',
-   nominal_perf: '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/nominal_perf'.
-
-**--hwp**
-   Check if hardware power management is enabled. When enabled, CPUs can scale their frequency
-   automatically without OS involvement. Mechanism: 'msr', reads MSR_PM_ENABLE (0x770), bit 0.
-   This setting has global scope.
 
 **--epp**
    Retrieve EPP (Energy Performance Preference) using 'sysfs' (preferred) or 'msr' mechanisms. EPP
@@ -294,16 +289,6 @@ packages.
    **base**, **hfm**, **P1**
       Base CPU frequency (see '--base-freq'). Regardless of the '--mechanisms' option, all available
       mechanisms are tried to resolve these special values to the actual base frequency.
-   **Pm**
-      Minimum CPU operating frequency (see '--min-oper-freq'). Regardless of the '--mechanisms'
-      option, the 'msr' mechanism is always used to resolve these special values to the actual
-      minimum CPU operating frequency.
-
-   Note, on some systems 'Pm' is lower than 'Pn'. For example, 'Pm' may be 500MHz, while 'Pn' may
-   be 800MHz. On such systems, Linux may use 'Pn' as the minimum supported frequency limit. From
-   Linux's perspective, the minimum supported frequency is 800MHz, not 500MHz. In this case, using
-   '--min-freq 500MHz --mechanisms sysfs' will fail, while '--min-freq 500MHz --mechanisms msr'
-   will succeed.
 
 **--max-freq** *MAX_FREQ*
    Set the maximum CPU frequency. Uses the same mechanisms as described in the 'info' sub-command.

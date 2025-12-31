@@ -79,7 +79,7 @@ def _get_good_info_opts(sname: ScopeNameType = "package") -> Generator[str, None
                     "--base-freq",
                     "--epp",
                     "--epp --base-freq",
-                    "--max-turbo-freq"]
+                    "--max-freq-limit"]
     else:
         assert False, f"BUG: Bad scope name {sname}"
 

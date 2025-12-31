@@ -144,7 +144,7 @@ def test_freq_msr_vs_sysfs(params: PropsTestParamsTypedDict):
     # Verify the minimum frequency values.
     for cpu in cpuinfo.get_cpus():
         min_freq_sysfs = pobj.get_cpu_prop("min_freq_limit", cpu, mnames=("sysfs",))["val"]
-        min_freq_msr = pobj.get_cpu_prop("min_oper_freq", cpu, mnames=("msr",))["val"]
+        min_freq_msr = pobj.get_cpu_prop("min_freq_limit", cpu, mnames=("msr",))["val"]
 
         if min_freq_sysfs is None or min_freq_msr is None:
             continue
@@ -154,12 +154,12 @@ def test_freq_msr_vs_sysfs(params: PropsTestParamsTypedDict):
 
         if cpuinfo.info["hybrid"]:
             assert min_freq_sysfs == min_freq_msr, \
-                   f"'min_freq_limit' ({min_freq_sysfs}) and 'min_oper_freq' ({min_freq_msr})' " \
-                   f"mismatch on CPU {cpu}: "
+                   f"'min_freq_limit' mismatch for sysfs ({min_freq_sysfs}) and MSR ({min_freq_msr})' " \
+                   f"mechanisms on CPU {cpu}"
         else:
             assert min_freq_sysfs >= min_freq_msr, \
-                   f"'min_freq_limit' ({min_freq_sysfs}) is less than 'min_oper_freq' " \
-                   f"({min_freq_msr}) on CPU {cpu}: "
+                   f"'min_freq_limit' mismatch for sysfs ({min_freq_sysfs}) and MSR ({min_freq_msr}) " \
+                   f"mechanisms on CPU {cpu}"
 
     # Verify the maximum frequency values.
     for cpu in cpuinfo.get_cpus():
@@ -181,15 +181,15 @@ def test_freq_msr_vs_sysfs(params: PropsTestParamsTypedDict):
             continue
 
         if turbo == "on":
-            max_freq_msr = pobj.get_cpu_prop("max_turbo_freq", cpu, mnames=("msr",))["val"]
+            max_freq_msr = pobj.get_cpu_prop("max_freq_limit", cpu, mnames=("msr",))["val"]
             if max_freq_msr is None:
                 continue
 
             min_freq_msr = cast(int, min_freq_msr)
 
             assert max_freq_sysfs == max_freq_msr, \
-                f"'max_freq_limit' ({max_freq_sysfs}) and 'max_turbo_freq' ({max_freq_msr})' " \
-                f"mismatch on CPU {cpu}: "
+                   f"'max_freq_limit' mismatch for sysfs ({max_freq_sysfs}) and MSR ({max_freq_msr}) " \
+                   f"mechanisms on CPU {cpu}"
         else:
             assert turbo == "off", f"Unexpected turbo value: {turbo}"
 

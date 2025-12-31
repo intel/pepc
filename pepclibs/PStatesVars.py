@@ -60,7 +60,7 @@ PROPS: Final[dict[str, PropertyTypedDict]] = {
         "unit": "Hz",
         "type": "int",
         "sname": "CPU",
-        "mnames": ("sysfs",),
+        "mnames": ("sysfs", "msr", "cppc"),
         "writable": False,
     },
     "max_freq_limit": {
@@ -68,7 +68,7 @@ PROPS: Final[dict[str, PropertyTypedDict]] = {
         "unit": "Hz",
         "type": "int",
         "sname": "CPU",
-        "mnames": ("sysfs",),
+        "mnames": ("sysfs", "msr", "cppc"),
         "writable": False,
     },
     "base_freq": {
@@ -85,22 +85,6 @@ PROPS: Final[dict[str, PropertyTypedDict]] = {
         "type": "int",
         "sname": None,
         "mnames": ("msr", "doc"),
-        "writable": False,
-    },
-    "min_oper_freq": {
-        "name": "Min. CPU operating frequency",
-        "unit": "Hz",
-        "type": "int",
-        "sname": "CPU",
-        "mnames": ("msr", "cppc"),
-        "writable": False,
-    },
-    "max_turbo_freq": {
-        "name": "Max. CPU turbo frequency",
-        "unit": "Hz",
-        "type": "int",
-        "sname": "CPU",
-        "mnames": ("msr","cppc"),
         "writable": False,
     },
     "frequencies": {

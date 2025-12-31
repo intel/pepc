@@ -49,8 +49,10 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
         - set_min_freq(freq, cpus): Set the minimum frequency for specified CPUs.
         - set_max_freq(freq, cpus): Set the maximum frequency for specified CPUs.
         - get_base_freq(cpus): Yield (cpu, value) pairs for the base frequency.
-        - get_min_oper_freq(cpus): Yield (cpu, value) pairs for the minimum operating frequency.
-        - get_max_turbo_freq(cpus): Yield (cpu, value) pairs for the maximum turbo frequency.
+        - get_min_freq_limit(cpus): Yield (cpu, value) pairs for the minimum supported CPU
+                                    frequency.
+        - get_max_freq_limit(cpus): Yield (cpu, value) pairs for the maximum supported CPU
+                                    frequency.
         - get_hwp(cpus): Yield (cpu, value) pairs indicating HWP on/off status.
         - set_perf2freq(perf2freq): Set the performance-to-frequency scaling factors.
 
@@ -406,8 +408,8 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
             ErrorBadOrder: If min. CPU frequency is greater than max. CPU frequency and vice versa.
         """
 
-        min_limit_iter = self.get_min_oper_freq(cpus)
-        max_limit_iter = self.get_max_turbo_freq(cpus)
+        min_limit_iter = self.get_min_freq_limit(cpus)
+        max_limit_iter = self.get_max_freq_limit(cpus)
 
         for (cpu, min_freq_limit), (_, max_freq_limit) in zip(min_limit_iter, max_limit_iter):
             if freq < min_freq_limit or freq > max_freq_limit:
@@ -645,17 +647,16 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
 
         yield from self._get_platinfo_freq("max_non_turbo_ratio", cpus)
 
-    def get_min_oper_freq(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
+    def get_min_freq_limit(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
-        Retrieve and yield the minimum operating frequency for specified CPUs.
+        Retrieve and yield the minimum supported CPU frequency for specified CPUs.
 
         Args:
-            cpus: CPU numbers to get the minimum operating frequency for.
+            cpus: CPU numbers to get the minimum supported CPU frequency for.
 
         Yields:
             Tuple of (cpu, frequency), where 'cpu' is the CPU number and 'frequency' is the minimum
-            operating frequency in Hz.
-
+            supported CPU frequency in Hz.
         Raises:
             ErrorNotSupported: If MSRs are not supported.
         """
@@ -711,16 +712,17 @@ class CPUFreqMSR(ClassHelpers.SimpleCloseContext):
                                "maintainers.", self._cpuinfo.cpudescr, self._pman.hostmsg)
                 raise ErrorNotSupported(f"{err1}\n{err2}") from err2
 
-    def get_max_turbo_freq(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
+    def get_max_freq_limit(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
-        Retrieve and yield the maximum 1-core turbo frequency for specified CPUs.
+        Retrieve and yield the maximum supported CPU frequency (max. 1-core turbo) for specified
+        CPUs.
 
         Args:
-            cpus: CPU numbers to get the maximum 1-core turbo frequency for.
+            cpus: CPU numbers to get the maximum supported CPU frequency (max. 1-core turbo) for.
 
         Yields:
             Tuple of (cpu, frequency), where 'cpu' is the CPU number and 'frequency' is the maximum
-            1-core turbo frequency in Hz.
+            supported CPU frequency (max. 1-core turbo) in Hz.
 
         Raises:
             ErrorNotSupported: If the MSRs are not supported.
