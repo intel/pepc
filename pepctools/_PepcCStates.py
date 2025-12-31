@@ -35,7 +35,7 @@ if typing.TYPE_CHECKING:
         Attributes:
             yaml: Whether to output results in YAML format.
             override_cpu_model: Override the CPU model with a custom value.
-            mechanisms: List of mechanisms to use for accessing P-state properties.
+            mechanisms: List of mechanisms to use for accessing C-state properties.
             cpus: List of CPU numbers to operate on.
             cores: List of core numbers to operate on.
             modules: List of module numbers to operate on.
@@ -61,10 +61,10 @@ if typing.TYPE_CHECKING:
 
     class _InfoCmdlineArgsTypedDict(_ConfigCmdlineArgsTypedDict):
         """
-        A typed dictionary for command-line arguments of the 'pepc cstates config' command.
+        A typed dictionary for command-line arguments of the 'pepc cstates info' command.
 
         Attributes:
-            *: All attributes are inherited from _InfoCmdlineArgsTypedDict.
+            *: All attributes are inherited from _ConfigCmdlineArgsTypedDict.
             csnames: List of C-state names to operate on, or "all" to indicate all available
                      C-states.
         """
@@ -132,7 +132,7 @@ def _get_info_cmdline_args(args: argparse.Namespace) -> _InfoCmdlineArgsTypedDic
 
 def cstates_info_command(args: argparse.Namespace, pman: ProcessManagerType):
     """
-    Implement the 'pstates info' command which displays P-state properties of the target host.
+    Implement the 'cstates info' command which displays C-state properties of the target host.
 
     Args:
         args: Parsed command-line arguments.
@@ -214,7 +214,7 @@ def cstates_config_command(args: argparse.Namespace, pman: ProcessManagerType):
     # The '--enable' and '--disable' options.
     enable_opts: dict[str, str] = {}
     # Options to set (excluding '--enable' and '--disable').
-    set_opts: dict[str, PropSetInfoTypedDict] = {}
+    spinfo: dict[str, PropSetInfoTypedDict] = {}
     # Options to print (excluding '--enable' and '--disable').
     print_opts: list[str] = []
 
@@ -224,7 +224,7 @@ def cstates_config_command(args: argparse.Namespace, pman: ProcessManagerType):
         elif optval is None:
             print_opts.append(optname)
         else:
-            set_opts[optname] = {"val" : optval}
+            spinfo[optname] = {"val" : optval}
 
     with contextlib.ExitStack() as stack:
         cpuinfo = CPUInfo.CPUInfo(pman=pman)
@@ -239,9 +239,11 @@ def cstates_config_command(args: argparse.Namespace, pman: ProcessManagerType):
         pobj = CStates.CStates(pman=pman, msr=msr, cpuinfo=cpuinfo)
         stack.enter_context(pobj)
 
-        mnames = []
+        mnames: list[MechanismNameType] = []
         if cmdl["mechanisms"]:
             mnames = _PepcCommon.parse_mechanisms(cmdl["mechanisms"], pobj)
+        for pname_spinfo in spinfo.values():
+            pname_spinfo["mnames"] = mnames
 
         printer = _PepcPrinter.CStatesPrinter(pobj, cpuinfo)
         stack.enter_context(printer)
@@ -265,7 +267,7 @@ def cstates_config_command(args: argparse.Namespace, pman: ProcessManagerType):
         if print_opts:
             printer.print_props(print_opts, optar, mnames=mnames, skip_unsupported=False)
 
-        if set_opts or enable_opts:
+        if spinfo or enable_opts:
             setter = _PepcSetter.CStatesSetter(pman, pobj, cpuinfo, printer, msr=msr)
             stack.enter_context(setter)
 
@@ -280,8 +282,8 @@ def cstates_config_command(args: argparse.Namespace, pman: ProcessManagerType):
                 setter.set_cstates(csnames, cpus=optar.get_cpus(), enable=enable,
                                    mnames=mnames)
 
-        if set_opts:
-            setter.set_props(set_opts, optar, mnames=mnames)
+        if spinfo:
+            setter.set_props(spinfo, optar)
 
-    if enable_opts or set_opts:
+    if enable_opts or spinfo:
         _PepcCommon.check_tuned_presence(pman)

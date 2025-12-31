@@ -36,7 +36,7 @@ if typing.TYPE_CHECKING:
         Attributes:
             yaml: Whether to output results in YAML format.
             override_cpu_model: Override the CPU model with a custom value.
-            mechanisms: List of mechanisms to use for accessing P-state properties.
+            mechanisms: List of mechanisms to use for accessing uncore properties.
             cpus: List of CPU numbers to operate on.
             cores: List of core numbers to operate on.
             modules: List of module numbers to operate on.
@@ -154,7 +154,7 @@ def uncore_config_command(args: argparse.Namespace, pman: ProcessManagerType):
         raise Error("Please, provide a configuration option")
 
     # Options to set.
-    set_opts: dict[str, PropSetInfoTypedDict] = {}
+    spinfo: dict[str, PropSetInfoTypedDict] = {}
     # Options to print.
     print_opts: list[str] = []
 
@@ -162,7 +162,7 @@ def uncore_config_command(args: argparse.Namespace, pman: ProcessManagerType):
         if optval is None:
             print_opts.append(optname)
         else:
-            set_opts[optname] = {"val" : optval}
+            spinfo[optname] = {"val" : optval}
 
     with contextlib.ExitStack() as stack:
         cpuinfo = CPUInfo.CPUInfo(pman=pman)
@@ -183,6 +183,8 @@ def uncore_config_command(args: argparse.Namespace, pman: ProcessManagerType):
         mnames = []
         if cmdl["mechanisms"]:
             mnames = _PepcCommon.parse_mechanisms(cmdl["mechanisms"], pobj)
+        for pname_spinfo in spinfo.values():
+            pname_spinfo["mnames"] = mnames
 
         printer = _PepcPrinter.UncorePrinter(pobj, cpuinfo)
         stack.enter_context(printer)
@@ -196,11 +198,11 @@ def uncore_config_command(args: argparse.Namespace, pman: ProcessManagerType):
         if print_opts:
             printer.print_props(print_opts, optar, mnames=mnames, skip_unsupported=False)
 
-        if set_opts:
+        if spinfo:
             setter = _PepcSetter.UncoreSetter(pman, pobj, cpuinfo, printer, msr=msr,
                                               sysfs_io=sysfs_io)
             stack.enter_context(setter)
-            setter.set_props(set_opts, optar, mnames=mnames)
+            setter.set_props(spinfo, optar)
 
-    if set_opts:
+    if spinfo:
         _PepcCommon.check_tuned_presence(pman)

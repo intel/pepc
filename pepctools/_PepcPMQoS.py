@@ -10,24 +10,93 @@
 Implement the 'pepc pmqos' command.
 """
 
-# TODO: annotate and modernize this module. Define a type for 'args'.
+from __future__ import annotations # Remove when switching to Python 3.10+.
+
+import typing
 import contextlib
 from pepclibs.helperlibs import Logging
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs import PMQoS, CPUInfo, _SysfsIO
 from pepctools import _PepcCommon, _OpTarget, _PepcPrinter, _PepcSetter
 
+if typing.TYPE_CHECKING:
+    import argparse
+    from typing import TypedDict
+    from pepclibs.PropsTypes import MechanismNameType
+    from pepclibs.helperlibs.ProcessManager import ProcessManagerType
+    from pepctools._PepcSetter  import PropSetInfoTypedDict
+    from pepctools._PepcPrinter import PrintFormatType
+
+    class _CmdlineArgsTypedDict(TypedDict, total=False):
+        """
+        A typed dictionary for command-line arguments of the 'pepc pmqos info' and 'pepc pmqos
+        config' commands.
+
+        Attributes:
+            yaml: Whether to output results in YAML format.
+            mechanisms: List of mechanisms to use for accessing P-state properties.
+            cpus: List of CPU numbers to operate on.
+            cores: List of core numbers to operate on.
+            modules: List of module numbers to operate on.
+            dies: List of die numbers to operate on.
+            packages: List of package numbers to operate on.
+            core_siblings: List of core sibling indices to operate on.
+            module_siblings: List of module sibling indices to operate on.
+            oargs: Dictionary of command line argument names and values matching the order of
+            appearance in the command line.
+        """
+
+        yaml: bool
+        mechanisms: list[str]
+        cpus: list[int]
+        cores: list[int]
+        modules: list[int]
+        dies: list[int]
+        packages: list[int]
+        core_siblings: list[int]
+        module_siblings: list[int]
+        oargs: dict[str, str]
+
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
-def pmqos_info_command(args, pman):
+def _get_cmdline_args(args: argparse.Namespace) -> _CmdlineArgsTypedDict:
     """
-    Implement the 'pmqos info' command. The arguments are as follows.
-      * args - command line arguments dictionary
-      * pman - the process manager object for the target host
+    Format command-line arguments into a typed dictionary.
+
+    Args:
+        args: Command-line arguments namespace.
+
+    Returns:
+        A dictionary containing the parsed command-line arguments.
     """
 
+    cmdl: _CmdlineArgsTypedDict = {}
+    cmdl["yaml"] = getattr(args, "yaml", False)
+    cmdl["mechanisms"] = args.mechanisms
+    cmdl["cpus"] = args.cpus
+    cmdl["cores"] = args.cores
+    cmdl["modules"] = args.modules
+    cmdl["dies"] = args.dies
+    cmdl["packages"] = args.packages
+    cmdl["core_siblings"] = args.core_siblings
+    cmdl["module_siblings"] = args.module_siblings
+    cmdl["oargs"] = getattr(args, "oargs", {})
+
+    return cmdl
+
+def pmqos_info_command(args: argparse.Namespace, pman: ProcessManagerType):
+    """
+    Implement the 'pstates pmqos' command which displays PM QoS properties.
+
+    Args:
+        args: Parsed command-line arguments.
+        pman: Process manager object for the target host.
+    """
+
+    cmdl = _get_cmdline_args(args)
+
     # The output format to use.
-    fmt = "yaml" if args.yaml else "human"
+    fmt: PrintFormatType = "yaml" if cmdl["yaml"] else "human"
 
     with contextlib.ExitStack() as stack:
         cpuinfo = CPUInfo.CPUInfo(pman=pman)
@@ -46,8 +115,8 @@ def pmqos_info_command(args, pman):
         stack.enter_context(optar)
 
         if not hasattr(args, "oargs"):
-            printed = pprinter.print_props("all", optar, skip_unsupported=True,
-                                          group=True)
+            # No options, print everything.
+            printed = pprinter.print_props("all", optar, skip_unsupported=True, group=True)
         else:
             pnames = list(getattr(args, "oargs"))
             pnames = _PepcCommon.expand_subprops(pnames, pobj.props)
@@ -56,29 +125,33 @@ def pmqos_info_command(args, pman):
         if not printed:
             _LOG.info("No PM QoS properties supported%s.", pman.hostmsg)
 
-def pmqos_config_command(args, pman):
+def pmqos_config_command(args: argparse.Namespace, pman: ProcessManagerType):
     """
-    Implement the 'pmqos config' command. The arguments are as follows.
-      * args - command line arguments dictionary
-      * pman - the process manager object for the target host
+    Implement the 'pmqos config' command which sets or displays PM QoS properties of the target
+    host.
+
+    Args:
+        args: Parsed command-line arguments.
+        pman: Process manager object for the target host.
     """
 
-    if not hasattr(args, "oargs"):
-        raise Error("please, provide a configuration option")
+    cmdl = _get_cmdline_args(args)
+
+    if not cmdl["oargs"]:
+        raise Error("Please, provide a configuration option")
 
     # Options to set.
-    set_opts = {}
+    spinfo: dict[str, PropSetInfoTypedDict] = {}
     # Options to print.
-    print_opts = []
+    print_opts: list[str] = []
 
-    opts = getattr(args, "oargs", {})
-    for optname, optval in opts.items():
+    for optname, optval in cmdl["oargs"].items():
         if optval is None:
             print_opts.append(optname)
         else:
-            set_opts[optname] = {"val": optval}
+            spinfo[optname] = {"val" : optval, "mnames": ()}
             if optname in ("latency_limit", "global_latency_limit"):
-                set_opts[optname]["default_unit"] = "us"
+                spinfo[optname]["default_unit"] = "us"
 
     with contextlib.ExitStack() as stack:
         cpuinfo = CPUInfo.CPUInfo(pman=pman)
@@ -102,10 +175,10 @@ def pmqos_config_command(args, pman):
         if print_opts:
             printer.print_props(print_opts, optar, skip_unsupported=False)
 
-        if set_opts:
+        if spinfo:
             setter = _PepcSetter.PMQoSSetter(pman, pobj, cpuinfo, printer, sysfs_io=sysfs_io)
             stack.enter_context(setter)
-            setter.set_props(set_opts, optar)
+            setter.set_props(spinfo, optar)
 
-    if set_opts:
+    if spinfo:
         _PepcCommon.check_tuned_presence(pman)

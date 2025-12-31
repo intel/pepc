@@ -34,15 +34,17 @@ if typing.TYPE_CHECKING:
 
     class PropSetInfoTypedDict(TypedDict, total=False):
         """
-        A typed dictionary for property settings.
+        A typed dictionary describing a property to be set to a value.
 
         Attributes:
             val: The value to assign to the property.
             default_unit: The default unit of the property.
+            mnames: Mechanism names to use for setting the property.
         """
 
         val: str
         default_unit: str
+        mnames: Sequence[MechanismNameType]
 
 class _PropsSetter(ClassHelpers.SimpleCloseContext):
     """Base class for pepc property setter classes."""
@@ -142,8 +144,7 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
 
     def set_props(self,
                   spinfo: dict[str, PropSetInfoTypedDict],
-                  optar: _OpTarget.OpTarget,
-                  mnames: Sequence[MechanismNameType] = ()):
+                  optar: _OpTarget.OpTarget):
         """
         Set properties specified CPUs, cores, modules, or other targets.
 
@@ -152,8 +153,6 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
                     set.
             optar: The operation target object defining the processor topology entities (CPUs,
                    cores, etc) to set properties for.
-            mnames: Mechanism names allowed for setting properties. An empty sequence (default)
-                    means that all mechanisms are allowed.
         """
 
         # Remember the mechanism used for every option.
@@ -182,6 +181,7 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
             self._msr.start_transaction()
 
         for pname in list(spinfo):
+            mnames = spinfo[pname]["mnames"]
             self._set_prop_sname(spinfo_copy, pname, optar, mnames, mnames_info)
 
         if self._msr:
