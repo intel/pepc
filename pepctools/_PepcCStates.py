@@ -35,28 +35,28 @@ if typing.TYPE_CHECKING:
         Attributes:
             yaml: Whether to output results in YAML format.
             override_cpu_model: Override the CPU model with a custom value.
-            mechanisms: List of mechanisms to use for accessing C-state properties.
-            cpus: List of CPU numbers to operate on.
-            cores: List of core numbers to operate on.
-            modules: List of module numbers to operate on.
-            dies: List of die numbers to operate on.
-            packages: List of package numbers to operate on.
-            core_siblings: List of core sibling indices to operate on.
-            module_siblings: List of module sibling indices to operate on.
+            mechanisms: Mechanism names to use for accessing C-state properties.
+            cpus: CPU numbers to operate on.
+            cores: Core numbers to operate on.
+            modules: Module numbers to operate on.
+            dies: Die numbers to operate on.
+            packages: Package numbers to operate on.
+            core_siblings: Core sibling indices to operate on.
+            module_siblings: Module sibling indices to operate on.
             oargs: Dictionary of command line argument names and values matching the order of
                    appearance in the command line.
         """
 
         yaml: bool
         override_cpu_model: str
-        mechanisms: list[str]
-        cpus: list[int]
-        cores: list[int]
-        modules: list[int]
-        dies: list[int]
-        packages: list[int]
-        core_siblings: list[int]
-        module_siblings: list[int]
+        mechanisms: str
+        cpus: str
+        cores: str
+        modules: str
+        dies: str
+        packages: str
+        core_siblings: str
+        module_siblings: str
         oargs: dict[str, str]
 
     class _InfoCmdlineArgsTypedDict(_ConfigCmdlineArgsTypedDict):
@@ -187,8 +187,7 @@ def cstates_info_command(args: argparse.Namespace, pman: ProcessManagerType):
                 printed += pprinter.print_cstates(csnames=csnames, cpus=optar.get_cpus(),
                                                   mnames=mnames)
 
-            pnames = list(getattr(cmdl, "oargs", []))
-            pnames = _PepcCommon.expand_subprops(pnames, pobj.props)
+            pnames = _PepcCommon.expand_subprops(cmdl["oargs"], pobj.props)
             if pnames:
                 printed += pprinter.print_props(pnames, optar, mnames=mnames,
                                                 skip_unsupported=False)

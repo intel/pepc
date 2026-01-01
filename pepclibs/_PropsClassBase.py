@@ -1730,7 +1730,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                       pname: str,
                       val: PropertyValueType,
                       cpus: AbsNumsType,
-                      mnames: Sequence[MechanismNameType] = ()) -> str:
+                      mnames: Sequence[MechanismNameType] = ()) -> MechanismNameType:
         """
         Set a property for specified CPUs using specified mechanisms.
 
@@ -1878,7 +1878,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                               val: PropertyValueType,
                               dies: RelNumsType,
                               mnames: Sequence[MechanismNameType],
-                              all_mnames: Sequence[MechanismNameType] = ()) -> str:
+                              all_mnames: Sequence[MechanismNameType] = ()) -> MechanismNameType:
         """
         Set a property for specified CPUs using specified mechanisms.
 
@@ -1926,7 +1926,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                       pname: str,
                       val: PropertyValueType,
                       dies: RelNumsType,
-                      mnames: Sequence[MechanismNameType] = ()) -> str:
+                      mnames: Sequence[MechanismNameType] = ()) -> MechanismNameType:
         """
         Set a property for specified dies using specified mechanisms.
 
@@ -2050,7 +2050,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                                   val: PropertyValueType,
                                   packages: AbsNumsType,
                                   mnames: Sequence[MechanismNameType],
-                                  all_mnames: Sequence[MechanismNameType] = ()) -> str:
+                                  all_mnames: Sequence[MechanismNameType] = ()) -> \
+                                                                            MechanismNameType:
         """
         Set a property for specified packages using specified mechanisms.
 
@@ -2094,7 +2095,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                           pname: str,
                           val: PropertyValueType,
                           packages: AbsNumsType,
-                          mnames: Sequence[MechanismNameType] = ()) -> str:
+                          mnames: Sequence[MechanismNameType] = ()) -> MechanismNameType:
         """
         Set a property for specified packages using specified mechanisms.
 

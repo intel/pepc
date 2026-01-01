@@ -19,7 +19,7 @@ from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupport
 from pepctools._OpTarget import ErrorNoTarget, ErrorNoCPUTarget
 
 if typing.TYPE_CHECKING:
-    from typing import Literal, cast, Union, Sequence, Generator
+    from typing import Literal, cast, Union, Sequence, Generator, Iterable
     from pepctools import _OpTarget
     from pepclibs.PropsTypes import PropertyTypedDict, PropsClassType, MechanismNameType
     from pepclibs.PropsTypes import PVInfoTypedDict, PropertyValueType
@@ -121,7 +121,7 @@ def override_cpu_model(cpuinfo: CPUInfo.CPUInfo, vfmarg: str):
     _LOG.notice("Overriding CPU model with '%s', resulting VFM is '%s:%s:%s",
                 vfmarg, vendor, family, model)
 
-def expand_subprops(pnames: list[str], props: dict[str, PropertyTypedDict]) -> list[str]:
+def expand_subprops(pnames: Iterable[str], props: dict[str, PropertyTypedDict]) -> list[str]:
     """
     Expand a list of property names to include their sub-properties.
 
@@ -256,7 +256,7 @@ def set_prop_sname(pobj: PropsClassType,
                    pname: str,
                    optar: _OpTarget.OpTarget,
                    val: PropertyValueType,
-                   mnames: Sequence[MechanismNameType]) -> str:
+                   mnames: Sequence[MechanismNameType]) -> MechanismNameType:
     """
     Set a property to a value, accounting for its scope.
 
