@@ -71,6 +71,14 @@ PROPS: Final[dict[str, PropertyTypedDict]] = {
         "mnames": ("sysfs", "msr", "cppc"),
         "writable": False,
     },
+    "max_turbo_freq": {
+        "name": "Max. CPU turbo frequency",
+        "unit": "Hz",
+        "type": "int",
+        "sname": "CPU",
+        "mnames": ("msr",),
+        "writable": False,
+    },
     "base_freq": {
         "name": "Base CPU frequency",
         "unit": "Hz",

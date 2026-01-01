@@ -184,6 +184,10 @@ Use target CPU specification options to define a subset of CPUs, cores, dies, or
    highest_perf: '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/highest_perf',
    nominal_perf: '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/nominal_perf'.
 
+**--max-turbo-freq**
+   Same as '--max-freq-limit' with the 'msr' mechanism only. Retrieves the maximum supported CPU turbo
+   frequency.
+
 **--hwp**
    Check if hardware power management is enabled. When enabled, CPUs can scale their frequency
    automatically without OS involvement. Mechanism: 'msr', reads MSR_PM_ENABLE (0x770), bit 0.

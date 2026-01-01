@@ -306,7 +306,7 @@ class PStates(_PropsClassBase.PropsClassBase):
             yield from cpufreq_obj.get_base_freq(cpus)
         elif pname == "min_freq_limit":
             yield from cpufreq_obj.get_min_freq_limit(cpus)
-        elif pname == "max_freq_limit":
+        elif pname in ("max_freq_limit", "max_turbo_freq"):
             yield from cpufreq_obj.get_max_freq_limit(cpus)
         else:
             raise Error(f"BUG: Unexpected CPU frequency property {pname}")
@@ -466,6 +466,10 @@ class PStates(_PropsClassBase.PropsClassBase):
             Tuple of (cpu, val), where 'cpu' is the CPU number and 'val' is its frequency limit in
             Hz.
         """
+
+        if pname == "max_turbo_freq" and mname != "msr":
+            raise ErrorTryAnotherMechanism("The 'max_turbo_freq' property is only supported via "
+                                           "the 'msr' mechanism")
 
         if mname == "msr":
             yield from self._get_freq_msr(pname, cpus, mnames)
@@ -776,7 +780,7 @@ class PStates(_PropsClassBase.PropsClassBase):
             yield from self._get_base_freq(cpus, mname, mnames)
         elif pname in {"min_freq", "max_freq"}:
             yield from self._get_min_max_freq(pname, cpus, mname, mnames)
-        elif pname in {"min_freq_limit", "max_freq_limit"}:
+        elif pname in {"min_freq_limit", "max_freq_limit", "max_turbo_freq"}:
             yield from self._get_min_max_freq_limit(pname, cpus, mname, mnames)
         elif pname == "frequencies":
             yield from self._get_frequencies(cpus, mname)
