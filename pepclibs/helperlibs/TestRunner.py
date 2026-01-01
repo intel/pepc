@@ -49,11 +49,7 @@ def run_tool(tool: ModuleType,
     _LOG.debug("Running: %s", cmd)
     sys.argv = cmd.split()
     try:
-        args = tool.parse_arguments()
-        if pman:
-            ret = args.func(args, pman)
-        else:
-            ret = args.func(args)
+        ret = tool.do_main(pman=pman)
     except Exception as err: # pylint: disable=broad-except
         err_type = type(err)
         msg = f"Command '{toolname} {arguments}' raised the following exception:\n" \

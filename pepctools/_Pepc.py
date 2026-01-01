@@ -1084,10 +1084,13 @@ def _list_mechanisms(args: argparse.Namespace):
 
     _LOG.info("* %s", "\n* ".join(info))
 
-def _main() -> int:
+def do_main(pman: ProcessManagerType | None = None) -> int:
     """
     Implement the tool.
 
+    Args:
+        pman: Optional process manager object. If specified, the tool will use this process
+              manager instead of creating its own. Used for testing purposes.
     Returns:
         int: The program exit code.
     """
@@ -1108,7 +1111,9 @@ def _main() -> int:
     if cmdl["hostname"] != "localhost" and dataset:
         raise Error("The '--dataset' option cannot be used with '--host'")
 
-    if dataset:
+    if pman:
+        args.func(args, pman)
+    elif dataset:
         for dspath in _get_next_dataset(dataset):
             with _get_emul_pman(dspath) as pman:
                 args.func(args, pman)
@@ -1132,7 +1137,7 @@ def main() -> int:
 
     exitcode = -1
     try:
-        return _main()
+        return do_main()
     except KeyboardInterrupt:
         _LOG.info("\nInterrupted, exiting")
     except Error as err:
