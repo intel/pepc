@@ -191,8 +191,8 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
         if self._pprinter:
             for pname in spinfo:
                 mnames = (mnames_info[pname], )
-                self._pprinter.print_props((pname,), optar, mnames=mnames, skip_ro=True,
-                                           skip_unsupported=False, action="set to")
+                self._pprinter.print_props((pname,), optar, mnames=mnames, skip_ro_props=True,
+                                           action="set to")
 
 class _PStatesUncoreSetter(_PropsSetter):
     """Base class for the P-state and Uncore property setters."""
@@ -366,5 +366,5 @@ class CStatesSetter(_PropsSetter):
         else:
             self._pobj.disable_cstates(csnames=csnames, cpus=cpus)
 
-        self._pprinter.print_cstates(csnames=csnames, cpus=cpus, mnames=mnames, skip_ro=True,
+        self._pprinter.print_cstates(csnames=csnames, cpus=cpus, mnames=mnames, skip_ro_props=True,
                                action="set to")

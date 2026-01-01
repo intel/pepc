@@ -620,7 +620,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
                                 pname: str,
                                 optar: _OpTarget.OpTarget,
                                 mnames: Sequence[MechanismNameType],
-                                skip_unsupported: bool,
+                                skip_unsupp_props: bool,
                                 override_sname: ScopeNameType | None = None) -> _AggrPinfoType:
         """
         Build and return an aggregate properties dictionary for human-readable output for a single
@@ -631,7 +631,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
             optar: Operation target specifying the hardware scope.
             mnames: Mechanism names to use for property retrieval. Use all available mechanisms in
                     case of an empty sequence.
-            skip_unsupported: Whether to skip unsupported properties.
+            skip_unsupp_props: Whether to skip unsupported properties.
             override_sname: Override the default scope name for the property.
 
         Raises:
@@ -652,7 +652,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
             val = pvinfo["val"]
             mname = pvinfo["mname"]
 
-            if skip_unsupported and val is None:
+            if skip_unsupp_props and val is None:
                 continue
 
             # Dictionary keys must be of an immutable type, turn lists into tuples.
@@ -711,9 +711,9 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
                           pnames: Iterable[str],
                           optar: _OpTarget.OpTarget,
                           mnames: Sequence[MechanismNameType],
-                          skip_ro: bool,
-                          skip_unsupported: bool,
-                          skip_unsupported_mechanism: bool) -> _AggrPinfoType:
+                          skip_ro_props: bool,
+                          skip_unsupp_props: bool,
+                          skip_unsupp_mechanisms: bool) -> _AggrPinfoType:
         """
         Build and return an aggregate properties infomation dictionary for human-readable output for
         the specified property names.
@@ -749,11 +749,11 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
             optar: Operation target specifying the hardware scope.
             mnames: Mechanism names to use for property retrieval. Use all available mechanisms in
                     case of an empty sequence.
-            skip_ro: Whether to skip read-only properties.
-            skip_unsupported: Whether to skip unsupported properties.
-            skip_unsupported_mechanism: If True, skip the properties that cannot be retrieved using
-                                        the mechanisms in 'mnames', byt can be retrieved using other
-                                        mechanisms. Otherwise, raise an exception.
+            skip_ro_props: Whether to skip read-only properties.
+            skip_unsupp_props: Whether to skip unsupported properties.
+            skip_unsupp_mechanisms: If True, skip the properties that cannot be retrieved using
+                                    the mechanisms in 'mnames', but can be retrieved using other
+                                    mechanisms. Otherwise, raise an exception.
 
         Returns:
             The aggregate properties dictionary structured as described above.
@@ -765,20 +765,20 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
 
         for pname in pnames:
             prop = self._pobj.props[pname]
-            if skip_ro and not prop["writable"]:
+            if skip_ro_props and not prop["writable"]:
                 continue
 
             try:
-                apinfo = self._build_aggr_pinfo_pname(pname, optar, mnames, skip_unsupported)
+                apinfo = self._build_aggr_pinfo_pname(pname, optar, mnames, skip_unsupp_props)
             except ErrorTryAnotherMechanism as err:
                 _LOG.debug(err)
-                if skip_unsupported_mechanism:
+                if skip_unsupp_mechanisms:
                     continue
                 raise
             except ErrorUsePerCPU as err:
                 # Inconsistent property value across package or die siblings. Use per-CPU access.
                 _LOG.warning(err)
-                apinfo = self._build_aggr_pinfo_pname(pname, optar, mnames, skip_unsupported,
+                apinfo = self._build_aggr_pinfo_pname(pname, optar, mnames, skip_unsupp_props,
                                                       override_sname="CPU")
 
             # Merge 'apinfo' to 'aggr_pinfo'.
@@ -791,14 +791,14 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
 
     def _normalize_pnames(self,
                           pnames: Iterable[str] | Literal["all"],
-                          skip_ro: bool = False) -> Iterable[str]:
+                          skip_ro_props: bool = False) -> Iterable[str]:
         """
         Validate and normalize a list of property names.
 
         Args:
             pnames: Property names to validate and normalize, or the string "all" to include all
                     properties.
-            skip_ro: If True, excludes read-only properties from the returned list.
+            skip_ro_props: If True, excludes read-only properties from the returned list.
 
         Returns:
             An iterable of validated and normalized property names.
@@ -811,7 +811,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
                 if pname not in self._pobj.props:
                     raise Error(f"Unknown property name '{pname}'")
 
-        if not skip_ro:
+        if not skip_ro_props:
             return pnames
 
         return [pname for pname in pnames if self._pobj.props[pname]["writable"]]
@@ -820,8 +820,9 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
                     pnames: Iterable[str] | Literal["all"],
                     optar: _OpTarget.OpTarget,
                     mnames: Sequence[MechanismNameType] = (),
-                    skip_ro: bool = False,
-                    skip_unsupported: bool = True,
+                    skip_ro_props: bool = False,
+                    skip_unsupp_props: bool = False,
+                    skip_unsupp_mechanisms: bool = False,
                     group: bool = False,
                     action: str | None = None) -> int:
         """
@@ -834,10 +835,13 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
             mnames: Mechanisms to use for property retrieval. The mechanisms will be tried in the
                     order specified in 'mnames'. By default, all mechanisms supported by the 'pname'
                     property will be tried.
-            skip_ro: If True, skip read-only properties. If False, include read-only properties in
-                     the output.
-            skip_unsupported: If True, skip unsupported properties. If False, print "not supported"
+            skip_ro_props: If True, skip read-only properties. If False, include read-only
+                           properties in the output.
+            skip_unsupp_props: If True, skip unsupported properties. If False, print "not supported"
                               for unsupported properties.
+            skip_unsupp_mechanisms: If True, skip the properties that cannot be retrieved using
+                                    the mechanisms in 'mnames', but can be retrieved using other
+                                    mechanisms. Otherwise, raise an exception.
             group: If True, properties are grouped and printed by their mechanism name. If False,
                    properties are printed without grouping.
             action: An "action" word to include into the messages (nothing by default). For
@@ -848,13 +852,10 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
             The number of printed properties.
         """
 
-        # Make sure limiting the mechanisms when printing all available properties is not failing.
-        skip_unsupported_mechanism = pnames == "all"
+        pnames = self._normalize_pnames(pnames, skip_ro_props=skip_ro_props)
 
-        pnames = self._normalize_pnames(pnames, skip_ro=skip_ro)
-
-        aggr_pinfo = self._build_aggr_pinfo(pnames, optar, mnames, skip_ro, skip_unsupported,
-                                            skip_unsupported_mechanism)
+        aggr_pinfo = self._build_aggr_pinfo(pnames, optar, mnames, skip_ro_props, skip_unsupp_props,
+                                            skip_unsupp_mechanisms)
 
         if self._fmt == "human":
             return self._print_aggr_pinfo_human(aggr_pinfo, group=group, action=action)
@@ -1008,8 +1009,9 @@ class CStatesPrinter(_PropsPrinter):
                     pnames: Iterable[str] | Literal["all"],
                     optar: _OpTarget.OpTarget,
                     mnames: Sequence[MechanismNameType] = (),
-                    skip_ro: bool = False,
-                    skip_unsupported: bool = True,
+                    skip_ro_props: bool = False,
+                    skip_unsupp_props: bool = False,
+                    skip_unsupp_mechanisms: bool = False,
                     group: bool = False,
                     action: str | None = None) -> int:
         """
@@ -1021,10 +1023,13 @@ class CStatesPrinter(_PropsPrinter):
                    which to print the properties.
             mnames: Mechanism names to use for property retrieval. Use all available mechanisms in
                     case of an empty sequence (default).
-            skip_ro: If True, skip read-only properties. If False, include read-only properties in
-                     the output.
-            skip_unsupported: If True, skip unsupported properties. If False, print "not supported"
+            skip_ro_props: If True, skip read-only properties. If False, include read-only
+                           properties in the output.
+            skip_unsupp_props: If True, skip unsupported properties. If False, print "not supported"
                               for unsupported properties.
+            skip_unsupp_mechanisms: If True, skip the properties that cannot be retrieved using
+                                    the mechanisms in 'mnames', but can be retrieved using other
+                                    mechanisms. Otherwise, raise an exception.
             group: If True, properties are grouped and printed by their mechanism name. If False,
                    properties are printed without grouping.
             action: An "action" word to include into the messages (nothing by default). For
@@ -1035,17 +1040,14 @@ class CStatesPrinter(_PropsPrinter):
             The number of printed properties.
         """
 
-        # Make sure limiting the mechanisms when printing all available properties is not failing.
-        skip_unsupported_mechanism = pnames == "all"
+        pnames = self._normalize_pnames(pnames, skip_ro_props=skip_ro_props)
+        aggr_pinfo = self._build_aggr_pinfo(pnames, optar, mnames, skip_ro_props, skip_unsupp_props,
+                                            skip_unsupp_mechanisms)
 
-        pnames = self._normalize_pnames(pnames, skip_ro=skip_ro)
-        aggr_pinfo = self._build_aggr_pinfo(pnames, optar, mnames, skip_ro, skip_unsupported,
-                                            skip_unsupported_mechanism)
-
-        if skip_ro and "pkg_cstate_limit" in pnames:
+        if skip_ro_props and "pkg_cstate_limit" in pnames:
             # Special case: the package C-state limit option is read-write in general, but if it is
-            # locked, it is effectively read-only. Since 'skip_ro' is 'True', we need to adjust
-            # 'aggr_pinfo'.
+            # locked, it is effectively read-only. Since 'skip_ro_props' is 'True', we need to
+            # adjust 'aggr_pinfo'.
             aggr_pinfo = self._adjust_aggr_pinfo_pcs_limit(aggr_pinfo, optar.get_cpus(), mnames)
 
         if self._fmt == "human":
@@ -1237,7 +1239,7 @@ class CStatesPrinter(_PropsPrinter):
                       csnames: Iterable[str] | Literal["all"] = "all",
                       cpus: AbsNumsType | Literal["all"] = "all",
                       mnames: Sequence[MechanismNameType] = (),
-                      skip_ro: bool = False,
+                      skip_ro_props: bool = False,
                       group: bool = False,
                       action: str | None = None) -> int:
         """
@@ -1249,7 +1251,7 @@ class CStatesPrinter(_PropsPrinter):
             mnames: Mechanisms to use for property retrieval. The mechanisms will be tried in the
                     order specified in 'mnames'. By default, all mechanisms supported by the 'pname'
                     property will be tried.
-            skip_ro: If True, print only modifiable properties and skip read-only information.
+            skip_ro_props: If True, print only modifiable properties and skip read-only information.
             group: If True, properties are grouped and printed by their mechanism name. If False,
                    properties are printed without grouping.
             action: An "action" word to include into the messages (nothing by default). For
@@ -1271,7 +1273,7 @@ class CStatesPrinter(_PropsPrinter):
 
         keys: set[ReqCStateInfoKeysType]
 
-        if skip_ro:
+        if skip_ro_props:
             keys = {"disable"}
         else:
             keys = {"disable", "latency", "residency", "desc"}

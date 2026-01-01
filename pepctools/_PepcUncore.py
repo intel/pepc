@@ -128,11 +128,11 @@ def uncore_info_command(args: argparse.Namespace, pman: ProcessManagerType):
 
         if not cmdl["oargs"]:
             # No options, print everything.
-            printed = pprinter.print_props("all", optar, mnames=mnames, skip_unsupported=True,
-                                           group=True)
+            printed = pprinter.print_props("all", optar, mnames=mnames, skip_unsupp_props=True,
+                                           skip_unsupp_mechanisms=True, group=True)
         else:
             pnames = _PepcCommon.expand_subprops(cmdl["oargs"], pobj.props)
-            printed = pprinter.print_props(pnames, optar, mnames=mnames, skip_unsupported=False)
+            printed = pprinter.print_props(pnames, optar, mnames=mnames)
 
         if not printed:
             _LOG.info("No uncore properties supported%s.", pman.hostmsg)
@@ -195,7 +195,7 @@ def uncore_config_command(args: argparse.Namespace, pman: ProcessManagerType):
         stack.enter_context(optar)
 
         if print_opts:
-            printer.print_props(print_opts, optar, mnames=mnames, skip_unsupported=False)
+            printer.print_props(print_opts, optar, mnames=mnames)
 
         if spinfo:
             setter = _PepcSetter.UncoreSetter(pman, pobj, cpuinfo, printer, msr=msr,

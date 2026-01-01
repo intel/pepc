@@ -116,11 +116,12 @@ def pmqos_info_command(args: argparse.Namespace, pman: ProcessManagerType):
 
         if not hasattr(args, "oargs"):
             # No options, print everything.
-            printed = pprinter.print_props("all", optar, skip_unsupported=True, group=True)
+            printed = pprinter.print_props("all", optar, skip_unsupp_props=True,
+                                           skip_unsupp_mechanisms=True, group=True)
         else:
             pnames = list(getattr(args, "oargs"))
             pnames = _PepcCommon.expand_subprops(pnames, pobj.props)
-            printed = pprinter.print_props(pnames, optar, skip_unsupported=False)
+            printed = pprinter.print_props(pnames, optar)
 
         if not printed:
             _LOG.info("No PM QoS properties supported%s.", pman.hostmsg)
@@ -173,7 +174,7 @@ def pmqos_config_command(args: argparse.Namespace, pman: ProcessManagerType):
         stack.enter_context(optar)
 
         if print_opts:
-            printer.print_props(print_opts, optar, skip_unsupported=False)
+            printer.print_props(print_opts, optar)
 
         if spinfo:
             setter = _PepcSetter.PMQoSSetter(pman, pobj, cpuinfo, printer, sysfs_io=sysfs_io)

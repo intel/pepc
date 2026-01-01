@@ -177,8 +177,8 @@ def cstates_info_command(args: argparse.Namespace, pman: ProcessManagerType):
             # they add clutter.
             printed += pprinter.print_cstates(csnames="all", cpus=optar.get_cpus(), mnames=mnames,
                                               group=True)
-            printed += pprinter.print_props("all", optar, mnames=mnames, skip_unsupported=True,
-                                            group=True)
+            printed += pprinter.print_props("all", optar, mnames=mnames, skip_unsupp_props=True,
+                                            skip_unsupp_mechanisms=True, group=True)
         else:
             if cmdl["csnames"]:
                 csnames = cmdl["csnames"]
@@ -189,8 +189,7 @@ def cstates_info_command(args: argparse.Namespace, pman: ProcessManagerType):
 
             pnames = _PepcCommon.expand_subprops(cmdl["oargs"], pobj.props)
             if pnames:
-                printed += pprinter.print_props(pnames, optar, mnames=mnames,
-                                                skip_unsupported=False)
+                printed += pprinter.print_props(pnames, optar, mnames=mnames)
 
         if not printed:
             _LOG.info("No C-state properties supported%s", pman.hostmsg)
@@ -264,7 +263,7 @@ def cstates_config_command(args: argparse.Namespace, pman: ProcessManagerType):
                 del enable_opts[optname]
 
         if print_opts:
-            printer.print_props(print_opts, optar, mnames=mnames, skip_unsupported=False)
+            printer.print_props(print_opts, optar, mnames=mnames)
 
         if spinfo or enable_opts:
             setter = _PepcSetter.CStatesSetter(pman, pobj, cpuinfo, printer, msr=msr)
