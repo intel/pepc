@@ -52,7 +52,7 @@ if typing.TYPE_CHECKING:
     _AggrPinfoType = dict[MechanismNameType, dict[str, _AggrSubPinfoTypdDict]]
 
     # Type for a property value in the aggregate properties dictionary for YAML output.
-    _YAMLPinfoValueType = Union[int, float, str, list[int], list[float], list[str]]
+    _YAMLPinfoValueType = Union[int, float, str, list[int], list[str]]
 
     class _YAMLAggrPinfoValueTypedDict(TypedDict, total=False):
         """
@@ -313,7 +313,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
             Human-readable representation of the value.
         """
 
-        def _detect_progression(vals: list[float | int], min_len: int) -> float | int | None:
+        def _detect_progression(vals: list[int], min_len: int) -> int | None:
             """
             Determine if a list of numbers forms an arithmetic progression.
 
@@ -335,7 +335,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
 
             return step
 
-        def _format_unit(val: int | float, prop: PropertyTypedDict) -> str:
+        def _format_unit(val: int, prop: PropertyTypedDict) -> str:
             """
             Format a numeric value with its unit, applying SI prefixes when appropriate.
 
@@ -370,9 +370,9 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
 
         if prop["type"] == "list[str]":
             result = ", ".join(cast(list[str], val))
-        elif prop["type"] in ("list[int]", "list[float]"):
+        elif prop["type"] == "list[int]":
             if typing.TYPE_CHECKING:
-                cval = cast(list[Union[float, int]], val)
+                cval = cast(list[int], val)
             else:
                 cval = val
             step = _detect_progression(cval, 4)
@@ -456,7 +456,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
             if val == "" and (prop["type"].startswith("list")):
                 return
 
-            if sfx and prop["type"] not in {"int", "float", "list[int]", "list[float]"}:
+            if sfx and prop["type"] not in ("int", "float"):
                 val = f"'{val}'"
 
         if action is not None:
@@ -653,14 +653,10 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
             if skip_unsupported and val is None:
                 continue
 
-            # Dictionary keys must be of an immutable type (python language requirement). Turn lists
-            # and dictionaries into tuples.
+            # Dictionary keys must be of an immutable type, turn lists into tuples.
             if prop["type"].startswith("list["):
                 if val is not None:
                     val = tuple(val)
-            if prop["type"].startswith("dict["):
-                if val is not None:
-                    val = tuple((k, v) for k, v in val.items())
 
             num_tuple: tuple[int, int]
             num_int: int
