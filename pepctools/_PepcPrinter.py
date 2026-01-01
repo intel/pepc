@@ -35,6 +35,11 @@ if typing.TYPE_CHECKING:
     from pepclibs.PropsTypes import MechanismNameType, PropsClassType
     from pepclibs.CPUInfoTypes import AbsNumsType, RelNumsType, ScopeNameType
 
+    _AggrPropertyValueTypeNonTuple = Union[int, float, bool, str, None]
+    _AggrPropertyValueTypeTuple = Union[tuple[str, ...], tuple[int, ...]]
+    # Should be same as PropertyValueType, but include only hashable.
+    _AggrPropertyValueType = Union[_AggrPropertyValueTypeNonTuple, _AggrPropertyValueTypeTuple]
+
     class _AggrSubPinfoTypdDict(TypedDict, total=False):
         """
         Type for the aggregate properties sub-dictionary for human-readable output.
@@ -46,13 +51,10 @@ if typing.TYPE_CHECKING:
         """
 
         sname: ScopeNameType
-        vals: dict[PropertyValueType, AbsNumsType | RelNumsType]
+        vals: dict[_AggrPropertyValueType, AbsNumsType | RelNumsType]
 
     # The aggregate properties dictionary for human-readable output.
     _AggrPinfoType = dict[MechanismNameType, dict[str, _AggrSubPinfoTypdDict]]
-
-    # Type for a property value in the aggregate properties dictionary for YAML output.
-    _YAMLPinfoValueType = Union[int, float, str, list[int], list[str]]
 
     class _YAMLAggrPinfoValueTypedDict(TypedDict, total=False):
         """
@@ -65,7 +67,7 @@ if typing.TYPE_CHECKING:
             package: Packages for which the property value applies.
         """
 
-        value: _YAMLPinfoValueType
+        value: _AggrPropertyValueType
         CPU: str
         die: dict[int, str]
         package: str
@@ -299,7 +301,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
 
         raise Error(f"BUG: Unexpected scope name {sname} for message formatting")
 
-    def _format_value_human(self, _, prop: PropertyTypedDict, val: PropertyValueType) -> str:
+    def _format_value_human(self, _, prop: PropertyTypedDict, val: _AggrPropertyValueType) -> str:
         """
         Format a property value into a human-readable string based on its type and metadata.
 
@@ -414,7 +416,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
                           pname: str,
                           prop: PropertyTypedDict,
                           sname: ScopeNameType,
-                          val: PropertyValueType,
+                          val: _AggrPropertyValueType,
                           nums: AbsNumsType | RelNumsType,
                           action: str | None = None,
                           prefix: str | None = None):
@@ -654,9 +656,18 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
                 continue
 
             # Dictionary keys must be of an immutable type, turn lists into tuples.
-            if prop["type"].startswith("list["):
-                if val is not None:
-                    val = tuple(val)
+            val_key: _AggrPropertyValueType
+            if prop["type"].startswith("list[") and val is not None:
+                if typing.TYPE_CHECKING:
+                    val = cast(Union[list[str], list[int]], val)
+                    val_key = cast(_AggrPropertyValueTypeTuple, tuple(val))
+                else:
+                    val_key = tuple(val)
+            else:
+                if typing.TYPE_CHECKING:
+                    val_key = cast(_AggrPropertyValueTypeNonTuple, val)
+                else:
+                    val_key = val
 
             num_tuple: tuple[int, int]
             num_int: int
@@ -675,19 +686,19 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
 
             pinfo = apinfo[mname][pname]
 
-            if val not in pinfo["vals"]:
+            if val_key not in pinfo["vals"]:
                 if sname == "die":
-                    pinfo["vals"][val] = {package: [die]}
+                    pinfo["vals"][val_key] = {package: [die]}
                 else:
-                    pinfo["vals"][val] = [num_int]
+                    pinfo["vals"][val_key] = [num_int]
             else:
                 if sname == "die":
-                    dies = cast(dict[int, list[int]], pinfo["vals"][val])
+                    dies = cast(dict[int, list[int]], pinfo["vals"][val_key])
                     if package not in dies:
                         dies[package] = []
                     dies[package].append(die)
                 else:
-                    nums = cast(list[int], pinfo["vals"][val])
+                    nums = cast(list[int], pinfo["vals"][val_key])
                     nums.append(num_int)
 
             if sname != pinfo["sname"]:
@@ -891,7 +902,10 @@ class PMQoSPrinter(_PropsPrinter):
 
         self._pobj: PMQoS.PMQoS
 
-    def _format_value_human(self, pname, prop: PropertyTypedDict, val: PropertyValueType) -> str:
+    def _format_value_human(self,
+                            pname: str,
+                            prop: PropertyTypedDict,
+                            val: _AggrPropertyValueType) -> str:
         """
         Format a property value into a human-readable string based on its type and metadata.
 
