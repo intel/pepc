@@ -191,8 +191,9 @@ def _get_sname_and_nums(pobj: PropsClassType,
     """
 
     if override_sname is None:
-        sname = pobj.get_sname(pname)
-        if sname is None:
+        try:
+            sname = pobj.get_sname(pname)
+        except ErrorNotSupported:
             sname = "CPU"
     else:
         sname = override_sname

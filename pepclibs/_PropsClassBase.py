@@ -221,6 +221,9 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         Returns:
             A string containing a 1-line description of the mechanism.
+
+        Raises:
+            ErrorNotSupported: If the mechanism is not supported.
         """
 
         if mname not in self.mechanisms:
@@ -293,6 +296,9 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         Returns:
             List of validated and deduplicated mechanism names.
+
+        Raises:
+            ErrorNotSupported: If none of the provided mechanism names are supported.
         """
 
         if not mnames:
@@ -335,30 +341,29 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         raise NotImplementedError("PropsClassBase._set_sname")
 
-    def get_sname(self, pname: str) -> ScopeNameType | None:
+    def get_sname(self, pname: str) -> ScopeNameType:
         """
         Return the scope name for the given property name.
-
-        If the property is not supported, return None, but this is not guaranteed. In some cases,
-        a valid scope name may be returned even if the property is unsupported on the current
-        platform. Therefore, the caller should check if the property is supported before or after
-        calling this method.
 
         Args:
             pname: Name of the property.
 
         Returns:
             The scope name for the property, or None if unavailable.
+
+        Raises:
+            ErrorNotSupported: If the property is not supported,  but this is not guaranteed. In
+                               some cases, a valid scope name may be returned even if the property
+                               is not supported on the current platform. Therefore, the caller
+                               should check if the property is supported before or after calling
+                               this method.
+
         """
 
         try:
             if not self._props[pname]["sname"]:
-                try:
-                    self._set_sname(pname)
-                except ErrorNotSupported:
-                    return None
-
-            return self._props[pname]["sname"]
+                self._set_sname(pname)
+            return cast(ScopeNameType, self._props[pname]["sname"])
         except KeyError as err:
             raise Error(f"Property '{pname}' does not exist") from err
 

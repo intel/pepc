@@ -341,7 +341,6 @@ def _set_freq_pairs(params: PropsCmdlTestParamsTypedDict, min_pname: str, max_pn
     max_opt = f"--{max_pname.replace('_', '-')}"
 
     sname = pobj.get_sname(min_pname)
-    assert sname is not None
 
     siblings = params["cpuinfo"].get_cpu_siblings(0, sname=sname)
     cpus_opt = f"--cpus {Trivial.rangify(siblings)}"
@@ -374,8 +373,11 @@ def test_pstates_frequency_set_order(params: PropsCmdlTestParamsTypedDict):
 
     # When Turbo is disabled, the max frequency may be limited.
     if pobj.prop_is_supported_cpu("turbo", cpu):
-        sname = pobj.get_sname("turbo")
-        if sname:
+        try:
+            sname = pobj.get_sname("turbo")
+        except ErrorNotSupported:
+            pass
+        else:
             siblings = cpuinfo.get_cpu_siblings(0, sname=sname)
             pobj.set_prop_cpus("turbo", "on", siblings)
 

@@ -225,8 +225,9 @@ def set_and_verify(params: PropsTestParamsTypedDict,
     core_cpus = cpuinfo.cores_to_cpus(cores=(tline["core"],), packages=(tline["package"],))
 
     for pname, val in props_vals:
-        sname = pobj.get_sname(pname)
-        if sname is None:
+        try:
+            sname = pobj.get_sname(pname)
+        except ErrorNotSupported:
             continue
 
         if sname == "CPU":
@@ -366,8 +367,9 @@ def verify_set_bool_props(params: PropsTestParamsTypedDict, cpu: int):
         if pinfo["type"] != "bool":
             continue
 
-        sname = pobj.get_sname(pname)
-        if sname is None:
+        try:
+            sname = pobj.get_sname(pname)
+        except ErrorNotSupported:
             continue
 
         if sname not in siblings:
