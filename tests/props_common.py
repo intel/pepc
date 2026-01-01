@@ -3,7 +3,7 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2025 Intel Corporation
+# Copyright (C) 2020-2026 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Author: Niklas Neronin <niklas.neronin@intel.com>
@@ -23,9 +23,8 @@ if typing.TYPE_CHECKING:
     from tests.common import CommonTestParamsTypedDict
     from pepclibs.CPUInfoTypes import ScopeNameType, AbsNumsType, RelNumsType
     from pepclibs.PropsTypes import PropertyTypeType, PropertyValueType, MechanismNameType
+    from pepclibs.PropsTypes import PropsClassType
     from pepclibs import CPUInfo, CStates, PStates, Uncore
-
-    _PropsClassType = CStates.CStates | PStates.PStates | Uncore.Uncore
 
     class PropsTestParamsTypedDict(CommonTestParamsTypedDict, total=False):
         """
@@ -37,7 +36,7 @@ if typing.TYPE_CHECKING:
         """
 
         cpuinfo: CPUInfo.CPUInfo
-        pobj: _PropsClassType
+        pobj: PropsClassType
 
 def get_enable_cache_param() -> Generator[bool, None, None]:
     """
@@ -52,7 +51,7 @@ def get_enable_cache_param() -> Generator[bool, None, None]:
     yield False
 
 def extend_params(params: CommonTestParamsTypedDict,
-                  pobj: _PropsClassType,
+                  pobj: PropsClassType,
                   cpuinfo: CPUInfo.CPUInfo) -> PropsTestParamsTypedDict:
     """
     Extend the common test parameters dictionary with additional keys required for running
@@ -75,7 +74,7 @@ def extend_params(params: CommonTestParamsTypedDict,
 
     return params
 
-def _verify_after_set_per_cpu(pobj: _PropsClassType,
+def _verify_after_set_per_cpu(pobj: PropsClassType,
                               pname: str,
                               val: PropertyValueType,
                               cpus: AbsNumsType):
@@ -117,7 +116,7 @@ def _verify_after_set_per_cpu(pobj: _PropsClassType,
                   f"Read back property '{pname}', but did not get value for the " \
                   f"following CPUs: {cpus_set}"
 
-def _verify_after_set_per_die(pobj: _PropsClassType,
+def _verify_after_set_per_die(pobj: PropsClassType,
                               cpuinfo: CPUInfo.CPUInfo,
                               pname: str,
                               val: PropertyValueType,
@@ -168,7 +167,7 @@ def _verify_after_set_per_die(pobj: _PropsClassType,
                   f"Read back property '{pname}', but did not get value for the " \
                   f"following packages and dies: {dies_left_str}"
 
-def _verify_after_set_per_package(pobj: _PropsClassType,
+def _verify_after_set_per_package(pobj: PropsClassType,
                                   pname: str,
                                   val: PropertyValueType,
                                   packages: AbsNumsType):

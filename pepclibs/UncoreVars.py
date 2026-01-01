@@ -17,7 +17,7 @@ import typing
 
 if typing.TYPE_CHECKING:
     from typing import Final
-    from pepclibs.PropsTypes import PropertyTypedDict
+    from pepclibs._PropsTypes import PropertyTypedDict
 
 # Special values for writable uncore frequency properties.
 _SPECIAL_UNCORE_FREQ_VALS = {"min", "max", "mdl"}

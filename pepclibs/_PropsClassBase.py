@@ -50,8 +50,8 @@ if typing.TYPE_CHECKING:
     from pepclibs import _SysfsIO
     from pepclibs.msr import MSR
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
-    from pepclibs.PropsTypes import PVInfoTypedDict, PropertyValueType, PropertyTypedDict
-    from pepclibs.PropsTypes import MechanismTypedDict, MechanismNameType
+    from pepclibs._PropsTypes import PVInfoTypedDict, PropertyValueType, PropertyTypedDict
+    from pepclibs._PropsTypes import MechanismTypedDict, MechanismNameType
     from pepclibs.CPUInfoTypes import AbsNumsType, RelNumsType
 
     class _PropertyTypedDict(PropertyTypedDict):

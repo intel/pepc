@@ -17,7 +17,7 @@ import typing
 
 if typing.TYPE_CHECKING:
     from typing import Final
-    from pepclibs.PropsTypes import PropertyTypedDict
+    from pepclibs._PropsTypes import PropertyTypedDict
 
 # Special values for writable CPU frequency properties.
 _SPECIAL_FREQ_VALS = {"min", "max", "base", "hfm", "P1", "Pm"}

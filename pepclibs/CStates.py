@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2025 Intel Corporation
+# Copyright (C) 2020-2026 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Authors: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
@@ -33,7 +33,7 @@ if typing.TYPE_CHECKING:
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepclibs.CPUIdle import ReqCStateInfoTypedDict, ReqCStateInfoValuesType
     from pepclibs.CPUIdle import ReqCStateInfoKeysType, ReqCStateToggleResultType
-    from pepclibs.PropsTypes import PropertyValueType, MechanismNameType
+    from pepclibs._PropsTypes import PropertyValueType, MechanismNameType
     from pepclibs.CPUInfoTypes import AbsNumsType
 
 class CStates(_PropsClassBase.PropsClassBase):

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2025 Intel Corporation
+# Copyright (C) 2020-2026 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Authors: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
@@ -25,10 +25,9 @@ if typing.TYPE_CHECKING:
     from pepctools import _OpTarget, _PepcPrinter
     from pepclibs import CPUInfo, _SysfsIO, PStates, CStates, Uncore, PMQoS
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
-    from pepclibs.PropsTypes import MechanismNameType, PropertyValueType
+    from pepclibs.PropsTypes import MechanismNameType, PropertyValueType, PropsClassType
     from pepclibs.CPUInfoTypes import AbsNumsType, RelNumsType, ScopeNameType
 
-    _PropsClassType = Union[CStates.CStates, PStates.PStates, Uncore.Uncore, PMQoS.PMQoS]
     _PepcPrinterClassType = Union[_PepcPrinter.CStatesPrinter, _PepcPrinter.PStatesPrinter,
                                   _PepcPrinter.UncorePrinter, _PepcPrinter.PMQoSPrinter]
 
@@ -51,7 +50,7 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
 
     def __init__(self,
                  pman: ProcessManagerType,
-                 pobj: _PropsClassType,
+                 pobj: PropsClassType,
                  cpuinfo: CPUInfo.CPUInfo,
                  pprinter: _PepcPrinterClassType,
                  msr: MSR.MSR | None = None,
@@ -110,7 +109,7 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
         mnames_info[pname] = mname
 
     @staticmethod
-    def _set_prop(pobj: _PropsClassType,
+    def _set_prop(pobj: PropsClassType,
                   pname: str,
                   sname: ScopeNameType,
                   val: PropertyValueType,

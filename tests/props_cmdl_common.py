@@ -3,7 +3,7 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2025 Intel Corporation
+# Copyright (C) 2020-2026 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Authors: Niklas Neronin <niklas.neronin@intel.com>
@@ -24,8 +24,7 @@ if typing.TYPE_CHECKING:
     from pepclibs.CPUInfoTypes import ScopeNameType
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepclibs.helperlibs.Exceptions import ExceptionType
-
-    _PropsClassType = CStates.CStates | PStates.PStates | Uncore.Uncore
+    from pepclibs.PropsTypes import PropsClassType
 
     class PropsCmdlTestParamsTypedDict(CommonTestParamsTypedDict, total=False):
         """
@@ -43,7 +42,7 @@ if typing.TYPE_CHECKING:
         """
 
         cpuinfo: CPUInfo.CPUInfo
-        pobj: _PropsClassType
+        pobj: PropsClassType
         cpus: list[int]
         cores: dict[int, list[int]]
         modules: dict[int, list[int]]
@@ -51,7 +50,7 @@ if typing.TYPE_CHECKING:
         packages: list[int]
 
 def extend_params(params: CommonTestParamsTypedDict,
-                  pobj: _PropsClassType,
+                  pobj: PropsClassType,
                   cpuinfo: CPUInfo.CPUInfo) -> PropsCmdlTestParamsTypedDict:
     """
     Extend the common test parameters dictionary with additional keys required for running

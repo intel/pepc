@@ -27,13 +27,13 @@ if typing.TYPE_CHECKING:
         The test parameters dictionary.
 
         Attributes:
-            pobj: A 'PMQoS.PMQoS' object.
             cpuinfo: A 'CPUInfo.CPUInfo' object.
+            pobj: A 'PMQoS.PMQoS' object.
             cpus: All CPU numbers in the system.
         """
 
-        pobj: PMQoS.PMQoS
         cpuinfo: CPUInfo.CPUInfo
+        pobj: PMQoS.PMQoS
         cpus: list[int]
 
 @pytest.fixture(name="params", scope="module")

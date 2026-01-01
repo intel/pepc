@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2025 Intel Corporation
+# Copyright (C) 2020-2026 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Authors: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
@@ -32,10 +32,8 @@ if typing.TYPE_CHECKING:
     from pepclibs.CPUIdle import ReqCStateInfoTypedDict, ReqCStateInfoValuesType
     from pepclibs.CPUIdle import ReqCStateInfoKeysType
     from pepclibs.PropsTypes import PropertyTypedDict, PropertyValueType, PVInfoTypedDict
-    from pepclibs.PropsTypes import MechanismNameType
+    from pepclibs.PropsTypes import MechanismNameType, PropsClassType
     from pepclibs.CPUInfoTypes import AbsNumsType, RelNumsType, ScopeNameType
-
-    _PropsClassType = Union[CStates.CStates, PStates.PStates, Uncore.Uncore, PMQoS.PMQoS]
 
     class _AggrSubPinfoTypdDict(TypedDict, total=False):
         """
@@ -123,7 +121,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
     """
 
     def __init__(self,
-                 pobj: _PropsClassType,
+                 pobj: PropsClassType,
                  cpuinfo: CPUInfo.CPUInfo,
                  fobj: IO[str] | None = None,
                  fmt: PrintFormatType = "human"):

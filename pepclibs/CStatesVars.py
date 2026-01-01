@@ -20,7 +20,7 @@ from pepclibs._PropsClassBase import ErrorUsePerCPU, ErrorTryAnotherMechanism
 
 if typing.TYPE_CHECKING:
     from typing import Final
-    from pepclibs.PropsTypes import PropertyTypedDict
+    from pepclibs._PropsTypes import PropertyTypedDict
     from pepclibs.CPUIdle import ReqCStateInfoTypedDict, ReqCStateInfoValuesType
     from pepclibs.CPUIdle import ReqCStateInfoKeysType
 
