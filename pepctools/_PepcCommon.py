@@ -16,13 +16,12 @@ import typing
 from pepclibs import CPUInfo, CPUModels
 from pepclibs.helperlibs import Logging, Systemctl, Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported, ErrorBadFormat
-from pepctools._OpTarget import ErrorNoTarget, ErrorNoCPUTarget
+from pepctools._OpTarget import ErrorNoTarget
 
 if typing.TYPE_CHECKING:
-    from typing import Literal, cast, Union, Sequence, Generator, Iterable
+    from typing import cast, Union, Iterable
     from pepctools import _OpTarget
     from pepclibs.PropsTypes import PropertyTypedDict, PropsClassType, MechanismNameType
-    from pepclibs.PropsTypes import PVInfoTypedDict, PropertyValueType
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepclibs.CPUInfoTypes import AbsNumsType, RelNumsType, ScopeNameType
 
@@ -154,10 +153,10 @@ def parse_mechanisms(mechanisms: str, pobj: PropsClassType) -> list[MechanismNam
         return cast(list[MechanismNameType], mnames)
     return mnames
 
-def _get_sname_and_nums(pobj: PropsClassType,
-                        pname: str,
-                        optar: _OpTarget.OpTarget,
-                        override_sname: ScopeNameType | None = None) -> \
+def get_sname_and_nums(pobj: PropsClassType,
+                       pname: str,
+                       optar: _OpTarget.OpTarget,
+                       override_sname: ScopeNameType | None = None) -> \
                                         tuple[ScopeNameType, Union[AbsNumsType, RelNumsType]]:
     """
     Determine the scope and target CPU, die, or package number for a property operation.
@@ -195,85 +194,3 @@ def _get_sname_and_nums(pobj: PropsClassType,
             sname = "CPU"
 
     return "CPU", optar.get_cpus()
-
-def get_prop_sname(pobj: PropsClassType,
-                   pname: str,
-                   optar: _OpTarget.OpTarget,
-                   mnames: Sequence[MechanismNameType],
-                   override_sname: ScopeNameType | None = None) -> \
-                                                    Generator[PVInfoTypedDict, None, None]:
-    """
-    Yield property value dictionaries for a property, accounting for its scope.
-
-    Args:
-        pobj: The properties object (e.g., 'PStates', 'CStates').
-        pname: Name of the property to retrieve.
-        optar: Operation target object specifying CPUs, packages, etc.
-        mnames: Mechanism names to use for retrieving the property.
-        override_sname: Optional scope name to use instead of the property's default scope.
-
-    Yields:
-        Property value info dictionaries ('PVInfoTypedDict') for the specified property.
-
-    Raises:
-        ErrorNoCPUTarget: If no valid CPUs/dies/packages can be determined for the operation.
-    """
-
-    try:
-        sname, nums = _get_sname_and_nums(pobj, pname, optar, override_sname=override_sname)
-    except ErrorNoCPUTarget as err:
-        name = pobj.props[pname]["name"]
-        raise ErrorNoCPUTarget(f"Impossible to get {name}:\n{err.indent(2)}") from err
-
-    if sname == "die":
-        if typing.TYPE_CHECKING:
-            nums = cast(RelNumsType, nums)
-        yield from pobj.get_prop_dies(pname, nums, mnames=mnames)
-    else:
-        if typing.TYPE_CHECKING:
-            nums = cast(AbsNumsType, nums)
-        if sname == "CPU":
-            yield from pobj.get_prop_cpus(pname, nums, mnames=mnames)
-        else:
-            yield from pobj.get_prop_packages(pname, nums, mnames=mnames)
-
-def set_prop_sname(pobj: PropsClassType,
-                   pname: str,
-                   optar: _OpTarget.OpTarget,
-                   val: PropertyValueType,
-                   mnames: Sequence[MechanismNameType]) -> MechanismNameType:
-    """
-    Set a property to a value, accounting for its scope.
-
-    Args:
-        pobj: The properties object (e.g., 'PStates', 'CStates').
-        pname: Name of the property to set.
-        optar: Operation target object specifying CPUs, packages, etc.
-        val: The value to set the property to.
-        mnames: Mechanism names to use for setting the property.
-
-    Returns:
-        Name of the mechanism used to set the property.
-
-    Raises:
-        ErrorNoCPUTarget: If no valid CPUs/dies/packages can be determined for the operation.
-    """
-
-    try:
-        sname, nums = _get_sname_and_nums(pobj, pname, optar)
-    except ErrorNoCPUTarget as err:
-        name = pobj.props[pname]["name"]
-        raise ErrorNoCPUTarget(f"Impossible to set {name}:\n{err.indent(2)}") from err
-
-    if sname == "die":
-        if typing.TYPE_CHECKING:
-            nums = cast(RelNumsType, nums)
-        return pobj.set_prop_dies(pname, val, nums, mnames=mnames)
-
-    if typing.TYPE_CHECKING:
-        nums = cast(AbsNumsType, nums)
-
-    if sname == "CPU":
-        return pobj.set_prop_cpus(pname, val, nums, mnames=mnames)
-
-    return pobj.set_prop_packages(pname, val, nums, mnames=mnames)

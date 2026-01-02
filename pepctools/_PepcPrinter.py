@@ -18,6 +18,7 @@ import sys
 import typing
 from typing import Literal, get_args, cast
 from pepctools import _PepcCommon
+from pepctools._OpTarget import ErrorNoCPUTarget
 from pepclibs import CPUInfo
 from pepclibs.helperlibs import Logging, ClassHelpers, Human, YAML, Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
@@ -26,7 +27,7 @@ from pepclibs._PropsClassBase import ErrorUsePerCPU, ErrorTryAnotherMechanism
 PrintFormatType = Literal["human", "yaml"]
 
 if typing.TYPE_CHECKING:
-    from typing import TypedDict, Iterable, Sequence, IO, Iterator, Union
+    from typing import TypedDict, Iterable, Sequence, IO, Iterator, Union, Generator
     from pepctools import _OpTarget
     from pepclibs import CStates, PStates, Uncore, PMQoS
     from pepclibs.CPUIdle import ReqCStateInfoTypedDict, ReqCStateInfoValuesType
@@ -616,6 +617,47 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         raise Error("BUG: Bad property value dictionary, no 'cpu', 'die', or 'package' key found\n"
                     "The dictionary: {pvinfo}")
 
+    def _get_prop_sname(self,
+                        pname: str,
+                        optar: _OpTarget.OpTarget,
+                        mnames: Sequence[MechanismNameType],
+                        override_sname: ScopeNameType | None = None) -> \
+                                                        Generator[PVInfoTypedDict, None, None]:
+        """
+        Yield property value dictionaries for a property, accounting for its scope.
+
+        Args:
+            pname: Name of the property to retrieve.
+            optar: Operation target object specifying CPUs, packages, etc.
+            mnames: Mechanism names to use for retrieving the property.
+            override_sname: Optional scope name to use instead of the property's default scope.
+
+        Yields:
+            Property value info dictionaries ('PVInfoTypedDict') for the specified property.
+
+        Raises:
+            ErrorNoCPUTarget: If no valid CPUs/dies/packages can be determined for the operation.
+        """
+
+        try:
+            sname, nums = _PepcCommon.get_sname_and_nums(self._pobj, pname, optar,
+                                                         override_sname=override_sname)
+        except ErrorNoCPUTarget as err:
+            name = self._pobj.props[pname]["name"]
+            raise ErrorNoCPUTarget(f"Impossible to get {name}:\n{err.indent(2)}") from err
+
+        if sname == "die":
+            if typing.TYPE_CHECKING:
+                nums = cast(RelNumsType, nums)
+            yield from self._pobj.get_prop_dies(pname, nums, mnames=mnames)
+        else:
+            if typing.TYPE_CHECKING:
+                nums = cast(AbsNumsType, nums)
+            if sname == "CPU":
+                yield from self._pobj.get_prop_cpus(pname, nums, mnames=mnames)
+            else:
+                yield from self._pobj.get_prop_packages(pname, nums, mnames=mnames)
+
     def _build_aggr_pinfo_pname(self,
                                 pname: str,
                                 optar: _OpTarget.OpTarget,
@@ -646,8 +688,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         prop = self._pobj.props[pname]
         apinfo: _AggrPinfoType = {}
 
-        for pvinfo in _PepcCommon.get_prop_sname(self._pobj, pname, optar, mnames,
-                                                 override_sname=override_sname):
+        for pvinfo in self._get_prop_sname(pname, optar, mnames, override_sname=override_sname):
             sname, num = self._get_pvinfo_num(pvinfo)
             val = pvinfo["val"]
             mname = pvinfo["mname"]

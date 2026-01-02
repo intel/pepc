@@ -16,6 +16,7 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 import typing
 from typing import cast
 from pepctools import _PepcCommon
+from pepctools._OpTarget import ErrorNoCPUTarget
 from pepclibs.helperlibs import ClassHelpers, Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorBadOrder
 from pepclibs.msr import MSR
@@ -80,6 +81,46 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
         ClassHelpers.close(self, unref_attrs=("_sysfs_io", "_msr", "_pprinter", "_cpuinfo", "_pobj",
                                               "_pman"))
 
+    def _do_set_prop_sname(self,
+                           pname: str,
+                           optar: _OpTarget.OpTarget,
+                           val: PropertyValueType,
+                           mnames: Sequence[MechanismNameType]) -> MechanismNameType:
+        """
+        Set a property to a value, accounting for its scope.
+
+        Args:
+            pname: Name of the property to set.
+            optar: Operation target object specifying CPUs, packages, etc.
+            val: The value to set the property to.
+            mnames: Mechanism names to use for setting the property.
+
+        Returns:
+            Name of the mechanism used to set the property.
+
+        Raises:
+            ErrorNoCPUTarget: If no valid CPUs/dies/packages can be determined for the operation.
+        """
+
+        try:
+            sname, nums = _PepcCommon.get_sname_and_nums(self._pobj, pname, optar)
+        except ErrorNoCPUTarget as err:
+            name = self._pobj.props[pname]["name"]
+            raise ErrorNoCPUTarget(f"Impossible to set {name}:\n{err.indent(2)}") from err
+
+        if sname == "die":
+            if typing.TYPE_CHECKING:
+                nums = cast(RelNumsType, nums)
+            return self._pobj.set_prop_dies(pname, val, nums, mnames=mnames)
+
+        if typing.TYPE_CHECKING:
+            nums = cast(AbsNumsType, nums)
+
+        if sname == "CPU":
+            return self._pobj.set_prop_cpus(pname, val, nums, mnames=mnames)
+
+        return self._pobj.set_prop_packages(pname, val, nums, mnames=mnames)
+
     def _set_prop_sname(self,
                         spinfo: dict[str, PropSetInfoTypedDict],
                         pname: str,
@@ -103,8 +144,7 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
         if pname not in spinfo:
             return
 
-        mname = _PepcCommon.set_prop_sname(self._pobj, pname, optar, spinfo[pname]["val"],
-                                           mnames=mnames)
+        mname = self._do_set_prop_sname(pname, optar, spinfo[pname]["val"], mnames=mnames)
         del spinfo[pname]
         mnames_info[pname] = mname
 
@@ -268,8 +308,7 @@ class _PStatesUncoreSetter(_PropsSetter):
                 raise
 
             for pnm in (other_pname, pname):
-                mname = _PepcCommon.set_prop_sname(self._pobj, pnm, optar, spinfo[pnm]["val"],
-                                                   mnames=mnames)
+                mname = self._do_set_prop_sname(pnm, optar, spinfo[pnm]["val"], mnames=mnames)
                 del spinfo[pnm]
                 mnames_info[pnm] = mname
 
