@@ -177,10 +177,10 @@ def test_uncore_config_freq_bad(params: PropsCmdlTestParamsTypedDict):
     pman = params["pman"]
     pobj = params["pobj"]
 
-    min_limit = pobj.get_cpu_prop("min_freq_limit", cpu)["val"]
-    max_limit = pobj.get_cpu_prop("max_freq_limit", cpu)["val"]
-
-    if not min_limit or not max_limit:
+    try:
+        min_limit = pobj.get_cpu_prop("min_freq_limit", cpu)["val"]
+        max_limit = pobj.get_cpu_prop("max_freq_limit", cpu)["val"]
+    except ErrorNotSupported:
         return
 
     if min_limit != max_limit:
@@ -206,10 +206,10 @@ def test_uncore_set_range(params: PropsCmdlTestParamsTypedDict):
     pobj = params["pobj"]
     pman = params["pman"]
 
-    min_limit = pobj.get_cpu_prop("min_freq_limit", cpu)["val"]
-    max_limit = pobj.get_cpu_prop("max_freq_limit", cpu)["val"]
-
-    if not min_limit or not max_limit:
+    try:
+        min_limit = pobj.get_cpu_prop("min_freq_limit", cpu)["val"]
+        max_limit = pobj.get_cpu_prop("max_freq_limit", cpu)["val"]
+    except ErrorNotSupported:
         return
 
     min_limit = cast(int, min_limit)
@@ -278,10 +278,11 @@ def test_uncore_set_order(params: PropsCmdlTestParamsTypedDict):
     cpu = 0
     pobj = params["pobj"]
 
-    min_limit = pobj.get_cpu_prop("min_freq_limit", cpu)["val"]
-    max_limit = pobj.get_cpu_prop("max_freq_limit", cpu)["val"]
+    if pobj.prop_is_supported_cpu("min_freq", cpu) and \
+       pobj.prop_is_supported_cpu("max_freq", cpu):
+        min_limit = pobj.get_cpu_prop("min_freq_limit", cpu)["val"]
+        max_limit = pobj.get_cpu_prop("max_freq_limit", cpu)["val"]
 
-    if min_limit and max_limit:
         min_limit = cast(int, min_limit)
         max_limit = cast(int, max_limit)
 

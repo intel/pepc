@@ -17,9 +17,11 @@ from  __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
 from typing import cast
+import contextlib
 import pytest
 from tests import common, props_common
 from pepclibs import CPUInfo, PStates
+from pepclibs.helperlibs.Exceptions import ErrorNotSupported
 
 if typing.TYPE_CHECKING:
     from typing import Generator
@@ -68,10 +70,11 @@ def _get_set_and_verify_data(params: PropsTestParamsTypedDict,
     # The initial value of each property is unknown, so multiple values are yielded per property.
     # This ensures that the property is actually modified during testing.
 
-    pvinfo = pobj.get_cpu_prop("driver", cpu)
-    if pvinfo["val"] == "intel_pstate":
-        yield "intel_pstate_mode", "active"
-        yield "intel_pstate_mode", "passive"
+    with contextlib.suppress(ErrorNotSupported):
+        pvinfo = pobj.get_cpu_prop("driver", cpu)
+        if pvinfo["val"] == "intel_pstate":
+            yield "intel_pstate_mode", "active"
+            yield "intel_pstate_mode", "passive"
 
     yield "turbo", "on"
     yield "turbo", "off"
@@ -83,20 +86,17 @@ def _get_set_and_verify_data(params: PropsTestParamsTypedDict,
     yield "epb", 0
     yield "epb", 15
 
-    pvinfo = pobj.get_cpu_prop("governors", cpu)
-    if pvinfo["val"] is not None:
+    with contextlib.suppress(ErrorNotSupported):
+        pvinfo = pobj.get_cpu_prop("governors", cpu)
         governors = cast(list[str], pvinfo["val"])
         yield "governor", governors[0]
         yield "governor", governors[-1]
 
-    min_limit = pobj.get_cpu_prop("min_freq_limit", cpu)["val"]
-    max_limit = pobj.get_cpu_prop("max_freq_limit", cpu)["val"]
-    if min_limit is not None or max_limit is not None:
-        yield "min_freq", "min"
-        yield "max_freq", "min"
+    yield "min_freq", "min"
+    yield "max_freq", "min"
 
-        yield "max_freq", "max"
-        yield "min_freq", "max"
+    yield "max_freq", "max"
+    yield "min_freq", "max"
 
 def test_pstates_set_and_verify(params: PropsTestParamsTypedDict):
     """
@@ -142,78 +142,68 @@ def test_freq_msr_vs_sysfs(params: PropsTestParamsTypedDict):
     cpuinfo = params["cpuinfo"]
 
     # Verify the minimum frequency values.
-    for cpu in cpuinfo.get_cpus():
-        min_freq_sysfs = pobj.get_cpu_prop("min_freq_limit", cpu, mnames=("sysfs",))["val"]
-        min_freq_msr = pobj.get_cpu_prop("min_freq_limit", cpu, mnames=("msr",))["val"]
+    with contextlib.suppress(ErrorNotSupported):
+        for cpu in cpuinfo.get_cpus():
+            min_freq_sysfs = pobj.get_cpu_prop("min_freq_limit", cpu, mnames=("sysfs",))["val"]
+            min_freq_msr = pobj.get_cpu_prop("min_freq_limit", cpu, mnames=("msr",))["val"]
 
-        if min_freq_sysfs is None or min_freq_msr is None:
-            continue
-
-        min_freq_sysfs = cast(int, min_freq_sysfs)
-        min_freq_msr = cast(int, min_freq_msr)
-
-        if cpuinfo.info["hybrid"]:
-            assert min_freq_sysfs == min_freq_msr, \
-                   f"'min_freq_limit' mismatch for sysfs ({min_freq_sysfs}) and MSR ({min_freq_msr})' " \
-                   f"mechanisms on CPU {cpu}"
-        else:
-            assert min_freq_sysfs >= min_freq_msr, \
-                   f"'min_freq_limit' mismatch for sysfs ({min_freq_sysfs}) and MSR ({min_freq_msr}) " \
-                   f"mechanisms on CPU {cpu}"
-
-    # Verify the maximum frequency values.
-    for cpu in cpuinfo.get_cpus():
-        driver = pobj.get_cpu_prop("driver", cpu)["val"]
-        if driver == "acpi-cpufreq":
-            # In case of the 'acpi-cpufreq' driver, the 'max_freq_limit' property is the TAR value
-            # (at least on Intel platforms), which is the base frequency + a small value. It is not
-            # the max. turbo frequency, so skip the check.
-            continue
-
-        max_freq_sysfs = pobj.get_cpu_prop("max_freq_limit", cpu, mnames=("sysfs",))["val"]
-        if not max_freq_sysfs:
-            continue
-
-        max_freq_sysfs = cast(int, max_freq_sysfs)
-
-        turbo = pobj.get_cpu_prop("turbo", cpu)["val"]
-        if turbo is None:
-            continue
-
-        if turbo == "on":
-            max_freq_msr = pobj.get_cpu_prop("max_freq_limit", cpu, mnames=("msr",))["val"]
-            if max_freq_msr is None:
-                continue
-
+            min_freq_sysfs = cast(int, min_freq_sysfs)
             min_freq_msr = cast(int, min_freq_msr)
 
-            assert max_freq_sysfs == max_freq_msr, \
-                   f"'max_freq_limit' mismatch for sysfs ({max_freq_sysfs}) and MSR ({max_freq_msr}) " \
-                   f"mechanisms on CPU {cpu}"
-        else:
-            assert turbo == "off", f"Unexpected turbo value: {turbo}"
+            if cpuinfo.info["hybrid"]:
+                assert min_freq_sysfs == min_freq_msr, \
+                    f"'min_freq_limit' mismatch for sysfs ({min_freq_sysfs}) and MSR " \
+                    f"({min_freq_msr})' mechanisms on CPU {cpu}"
+            else:
+                assert min_freq_sysfs >= min_freq_msr, \
+                    f"'min_freq_limit' mismatch for sysfs ({min_freq_sysfs}) and MSR " \
+                    f"({min_freq_msr}) mechanisms on CPU {cpu}"
 
-            base_freq = pobj.get_cpu_prop("base_freq", cpu)["val"]
-            if base_freq is None:
+    # Verify the maximum frequency values.
+    with contextlib.suppress(ErrorNotSupported):
+        for cpu in cpuinfo.get_cpus():
+            driver = pobj.get_cpu_prop("driver", cpu)["val"]
+            if driver == "acpi-cpufreq":
+                # In case of the 'acpi-cpufreq' driver, the 'max_freq_limit' property is the TAR
+                # value (at least on Intel platforms), which is the base frequency + a small value.
+                # It is not the max. turbo frequency, so skip the check.
                 continue
 
-            base_freq = cast(int, base_freq)
+            max_freq_sysfs = pobj.get_cpu_prop("max_freq_limit", cpu, mnames=("sysfs",))["val"]
+            max_freq_sysfs = cast(int, max_freq_sysfs)
 
-            assert max_freq_sysfs == base_freq, \
-                f"'max_freq_limit' ({max_freq_sysfs}) and 'base_freq' ({base_freq})' " \
-                f"mismatch on CPU {cpu}"
+            turbo = pobj.get_cpu_prop("turbo", cpu)["val"]
+
+            if turbo == "on":
+                max_freq_msr = pobj.get_cpu_prop("max_freq_limit", cpu, mnames=("msr",))["val"]
+                if max_freq_msr is None:
+                    continue
+
+                assert max_freq_sysfs == max_freq_msr, \
+                    f"'max_freq_limit' mismatch for sysfs ({max_freq_sysfs}) and MSR " \
+                    f"({max_freq_msr}) mechanisms on CPU {cpu}"
+            else:
+                assert turbo == "off", f"Unexpected turbo value: {turbo}"
+
+                base_freq = pobj.get_cpu_prop("base_freq", cpu)["val"]
+                if base_freq is None:
+                    continue
+
+                base_freq = cast(int, base_freq)
+
+                assert max_freq_sysfs == base_freq, \
+                    f"'max_freq_limit' ({max_freq_sysfs}) and 'base_freq' ({base_freq})' " \
+                    f"mismatch on CPU {cpu}"
 
     # Verify the base frequency.
-    for cpu in cpuinfo.get_cpus():
-        base_freq_sysfs = pobj.get_cpu_prop("base_freq", cpu, mnames=("sysfs",))["val"]
-        base_freq_msr = pobj.get_cpu_prop("base_freq", cpu, mnames=("msr",))["val"]
+    with contextlib.suppress(ErrorNotSupported):
+        for cpu in cpuinfo.get_cpus():
+            base_freq_sysfs = pobj.get_cpu_prop("base_freq", cpu, mnames=("sysfs",))["val"]
+            base_freq_msr = pobj.get_cpu_prop("base_freq", cpu, mnames=("msr",))["val"]
 
-        base_freq_sysfs = cast(int, base_freq_sysfs)
-        base_freq_msr = cast(int, base_freq_msr)
+            base_freq_sysfs = cast(int, base_freq_sysfs)
+            base_freq_msr = cast(int, base_freq_msr)
 
-        if base_freq_sysfs is None or base_freq_msr is None:
-            continue
-
-        assert base_freq_sysfs == base_freq_msr, \
-               f"'base_freq' ({base_freq_sysfs}) and 'base_freq' ({base_freq_msr})' mismatch " \
-               f"on CPU {cpu}"
+            assert base_freq_sysfs == base_freq_msr, \
+                f"'base_freq' ({base_freq_sysfs}) and 'base_freq' ({base_freq_msr})' mismatch " \
+                f"on CPU {cpu}"

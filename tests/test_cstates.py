@@ -16,9 +16,11 @@ Test for the 'CStates' module.
 from  __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
+import contextlib
 import pytest
 from tests import common, props_common
 from pepclibs import CPUInfo, CStates
+from pepclibs.helperlibs.Exceptions import ErrorNotSupported
 
 if typing.TYPE_CHECKING:
     from typing import Generator, cast
@@ -72,8 +74,9 @@ def _get_set_and_verify_data(params: PropsTestParamsTypedDict,
         yield pname, "on"
         yield pname, "off"
 
-    pvinfo = pobj.get_cpu_prop("governors", cpu)
-    if pvinfo["val"] is not None:
+    with contextlib.suppress(ErrorNotSupported):
+        pvinfo = pobj.get_cpu_prop("governors", cpu)
+
         if typing.TYPE_CHECKING:
             governors = cast(list[str], pvinfo["val"])
         else:
@@ -127,8 +130,9 @@ def test_req_cstates(params: PropsTestParamsTypedDict):
 
     cpu = params["cpuinfo"].get_cpus()[-1]
 
-    driver = pobj.get_cpu_prop("idle_driver", cpu)["val"]
-    if driver is None:
+    try:
+        driver = pobj.get_cpu_prop("idle_driver", cpu)["val"]
+    except ErrorNotSupported:
         return
 
     csinfo = pobj.get_cpu_cstates_info(cpu)

@@ -16,15 +16,15 @@ Common functions for class-level C-state, P-state, and uncore property tests ('C
 from  __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
+import contextlib
 from pepclibs.helperlibs.Exceptions import ErrorNotSupported
 
 if typing.TYPE_CHECKING:
     from typing import Generator, cast, Iterable
     from tests.common import CommonTestParamsTypedDict
-    from pepclibs.CPUInfoTypes import ScopeNameType, AbsNumsType, RelNumsType
-    from pepclibs.PropsTypes import PropertyTypeType, PropertyValueType, MechanismNameType
-    from pepclibs.PropsTypes import PropsClassType
-    from pepclibs import CPUInfo, CStates, PStates, Uncore
+    from pepclibs.CPUInfoTypes import AbsNumsType, RelNumsType
+    from pepclibs.PropsTypes import PropertyTypeType, PropertyValueType, PropsClassType
+    from pepclibs import CPUInfo
 
     class PropsTestParamsTypedDict(CommonTestParamsTypedDict, total=False):
         """
@@ -225,49 +225,32 @@ def set_and_verify(params: PropsTestParamsTypedDict,
     core_cpus = cpuinfo.cores_to_cpus(cores=(tline["core"],), packages=(tline["package"],))
 
     for pname, val in props_vals:
-        try:
+        with contextlib.suppress(ErrorNotSupported):
             sname = pobj.get_sname(pname)
-        except ErrorNotSupported:
-            continue
 
-        if sname == "CPU":
-            try:
+            if sname == "CPU":
                 pobj.set_prop_cpus(pname, val, (cpu,))
-            except ErrorNotSupported:
-                continue
-        elif sname == "core":
-            try:
+            elif sname == "core":
                 pobj.set_prop_cpus(pname, val, core_cpus)
-            except ErrorNotSupported:
-                continue
-        elif sname == "die":
-            try:
+            elif sname == "die":
                 pobj.set_prop_dies(pname, val, dies)
-            except ErrorNotSupported:
-                continue
-        elif sname == "package":
-            try:
+            elif sname == "package":
                 pobj.set_prop_packages(pname, val, packages)
-            except ErrorNotSupported:
-                continue
-        elif sname == "global":
-            try:
+            elif sname == "global":
                 pobj.set_prop_packages(pname, val, cpuinfo.get_packages())
-            except ErrorNotSupported:
-                continue
-        else:
-            assert False, f"Unknown scope name '{sname}'."
+            else:
+                assert False, f"Unknown scope name '{sname}'."
 
-        _verify_after_set_per_cpu(pobj, pname, val, (cpu,))
+            _verify_after_set_per_cpu(pobj, pname, val, (cpu,))
 
-        if pobj.props[pname]["sname"] in {"core", "die", "package", "global"}:
-            _verify_after_set_per_cpu(pobj, pname, val, core_cpus)
+            if pobj.props[pname]["sname"] in {"core", "die", "package", "global"}:
+                _verify_after_set_per_cpu(pobj, pname, val, core_cpus)
 
-        if pobj.props[pname]["sname"] in {"die", "package", "global"}:
-            _verify_after_set_per_die(pobj, cpuinfo, pname, val, dies)
+            if pobj.props[pname]["sname"] in {"die", "package", "global"}:
+                _verify_after_set_per_die(pobj, cpuinfo, pname, val, dies)
 
-        if pobj.props[pname]["sname"] in ("package", "global"):
-            _verify_after_set_per_package(pobj, pname, val, packages)
+            if pobj.props[pname]["sname"] in ("package", "global"):
+                _verify_after_set_per_package(pobj, pname, val, packages)
 
 def _verify_value_type(pname: str, ptype: PropertyTypeType, val: PropertyValueType):
     """
@@ -314,38 +297,39 @@ def verify_get_all_props(params: PropsTestParamsTypedDict, cpu: int):
     pobj = params["pobj"]
 
     for pname, pinfo in pobj.props.items():
-        # Test all mechanisms one by one.
-        for mname in pinfo["mnames"]:
-            try:
+        with contextlib.suppress(ErrorNotSupported):
+            # Test all mechanisms one by one.
+            for mname in pinfo["mnames"]:
                 pvinfo = pobj.get_cpu_prop(pname, cpu, mnames=(mname,))
-            except ErrorNotSupported:
-                pass
-            else:
-                assert pvinfo["mname"] == mname, \
-                       f"Bad mechanism name returned by" \
-                       f"'get_cpu_props(\"{pname}\", {cpu}, mnames=(\"{mname}\",))'.\n" \
-                       f"Expected '{mname}', got '{pvinfo['mname']}'."
 
-        pvinfo = pobj.get_cpu_prop(pname, cpu)
-        if pvinfo["val"] is not None:
+                assert pvinfo["mname"] == mname, \
+                        f"Bad mechanism name returned by" \
+                        f"'get_cpu_props(\"{pname}\", {cpu}, mnames=(\"{mname}\",))'.\n" \
+                        f"Expected '{mname}', got '{pvinfo['mname']}'."
+
+            pvinfo = pobj.get_cpu_prop(pname, cpu)
+
             _verify_value_type(pname, pobj.props[pname]["type"], pvinfo["val"])
 
-        # Test all mechanisms in reverse order.
-        reverse_mnames = list(pinfo["mnames"])
-        reverse_mnames.reverse()
-        pvinfo = pobj.get_cpu_prop(pname, cpu, mnames=reverse_mnames)
-        assert pvinfo["mname"] in reverse_mnames, \
-               f"Bad mechanism name returned by" \
-               f"'get_cpu_props(\"{pname}\", {cpu}, mnames=(\"{reverse_mnames}\",))'.\n" \
-               f"Expected one of '{reverse_mnames}', got '{pvinfo['mname']}'."
+            # Test all mechanisms in reverse order.
+            reverse_mnames = list(pinfo["mnames"])
+            reverse_mnames.reverse()
 
-        # Read using the claimed mechanisms and compare.
-        mnames = (pvinfo["mname"],)
-        pvinfo1 = pobj.get_cpu_prop(pname, cpu, mnames=mnames)
-        assert pvinfo1["mname"] == pvinfo["mname"], \
-               f"Bad mechanism name returned by" \
-               f"'get_cpu_props(\"{pname}\", {cpu}, mnames=(\"{mnames}\",))'\n" \
-               f"Expected '{pvinfo['mname']}', got '{pvinfo1['mname']}'."
+            pvinfo = pobj.get_cpu_prop(pname, cpu, mnames=reverse_mnames)
+
+            assert pvinfo["mname"] in reverse_mnames, \
+                   f"Bad mechanism name returned by" \
+                   f"'get_cpu_props(\"{pname}\", {cpu}, mnames=(\"{reverse_mnames}\",))'.\n" \
+                   f"Expected one of '{reverse_mnames}', got '{pvinfo['mname']}'."
+
+            # Read using the claimed mechanisms and compare.
+            mnames = (pvinfo["mname"],)
+            pvinfo1 = pobj.get_cpu_prop(pname, cpu, mnames=mnames)
+
+            assert pvinfo1["mname"] == pvinfo["mname"], \
+                   f"Bad mechanism name returned by" \
+                   f"'get_cpu_props(\"{pname}\", {cpu}, mnames=(\"{mnames}\",))'\n" \
+                   f"Expected '{pvinfo['mname']}', got '{pvinfo1['mname']}'."
 
 def verify_set_bool_props(params: PropsTestParamsTypedDict, cpu: int):
     """
@@ -362,31 +346,26 @@ def verify_set_bool_props(params: PropsTestParamsTypedDict, cpu: int):
     pobj = params["pobj"]
 
     for pname, pinfo in pobj.props.items():
-        if not pinfo["writable"]:
-            continue
-        if pinfo["type"] != "bool":
-            continue
+        with contextlib.suppress(ErrorNotSupported):
+            if not pinfo["writable"]:
+                continue
+            if pinfo["type"] != "bool":
+                continue
 
-        try:
             sname = pobj.get_sname(pname)
-        except ErrorNotSupported:
-            continue
 
-        if sname not in siblings:
-            siblings[sname] = cpuinfo.get_cpu_siblings(cpu, sname=sname)
-        cpus = siblings[sname]
+            if sname not in siblings:
+                siblings[sname] = cpuinfo.get_cpu_siblings(cpu, sname=sname)
+            cpus = siblings[sname]
 
-        dies: RelNumsType = {}
-        if sname == "die":
-            # Per-die properties do not support CPU-based API at the moment. Have to use per-die API
-            # instead.
-            dies = {cpuinfo.cpu_to_package(cpu): (cpuinfo.cpu_to_die(cpu),)}
+            dies: RelNumsType = {}
+            if sname == "die":
+                # Per-die properties do not support CPU-based API at the moment. Have to use per-die
+                # API instead.
+                dies = {cpuinfo.cpu_to_package(cpu): (cpuinfo.cpu_to_die(cpu),)}
 
-        for mname in pinfo["mnames"]:
-            try:
+            for mname in pinfo["mnames"]:
                 pvinfo = pobj.get_cpu_prop(pname, cpu, mnames=(mname,))
-                if pvinfo["val"] is None:
-                    continue
 
                 if pvinfo["val"] == "on":
                     val = "off"
@@ -399,25 +378,23 @@ def verify_set_bool_props(params: PropsTestParamsTypedDict, cpu: int):
                     used_mname = pobj.set_prop_cpus(pname, val, cpus, mnames=(mname,))
                 else:
                     used_mname = pobj.set_prop_dies(pname, val, dies, mnames=(mname,))
-            except ErrorNotSupported:
-                continue
 
-            if sname != "die":
-                what = f"CPU {cpu}"
-            else:
-                package = cpuinfo.cpu_to_package(cpu)
-                die = cpuinfo.cpu_to_die(cpu)
-                what = f"package {package} die {die}"
+                if sname != "die":
+                    what = f"CPU {cpu}"
+                else:
+                    package = cpuinfo.cpu_to_package(cpu)
+                    die = cpuinfo.cpu_to_die(cpu)
+                    what = f"package {package} die {die}"
 
-            assert used_mname == mname, f"Set property '{pname}' to value '{val}' on {what} " \
-                                        f"using mechanism '{used_mname}', but 'set_prop_cpus()' " \
-                                        f"returned machanism name '{mname}'."
+                assert used_mname == mname, f"Set property '{pname}' to value '{val}' on {what} " \
+                                            f"using mechanism '{used_mname}', but " \
+                                            f"'set_prop_cpus()' returned machanism name '{mname}'."
 
-            pvinfo = pobj.get_cpu_prop(pname, cpu, mnames=(mname,))
-            assert pvinfo["val"] == val, f"Set property '{pname}' to value '{val}' on " \
-                                          f"{what}, but read back value '{pvinfo['val']}'."
+                pvinfo = pobj.get_cpu_prop(pname, cpu, mnames=(mname,))
+                assert pvinfo["val"] == val, f"Set property '{pname}' to value '{val}' on " \
+                                            f"{what}, but read back value '{pvinfo['val']}'."
 
-            if sname != "die":
-                pobj.set_prop_cpus(pname, saved_val, cpus, mnames=(mname,))
-            else:
-                pobj.set_prop_dies(pname, saved_val, dies, mnames=(mname,))
+                if sname != "die":
+                    pobj.set_prop_cpus(pname, saved_val, cpus, mnames=(mname,))
+                else:
+                    pobj.set_prop_dies(pname, saved_val, dies, mnames=(mname,))

@@ -205,7 +205,8 @@ def _get_good_config_non_freq_opts(params: PropsCmdlTestParamsTypedDict,
     pobj = params["pobj"]
 
     if sname == "global":
-        if pobj.prop_is_supported_cpu("intel_pstate_mode", cpu):
+        if pobj.prop_is_supported_cpu("intel_pstate_mode", cpu) and \
+           pobj.prop_is_supported_cpu("hwp", cpu):
             # The "off" mode is not supported when HWP is enabled.
             if pobj.get_cpu_prop("hwp", cpu)["val"] == "off":
                 yield "--intel-pstate-mode off"
@@ -221,7 +222,8 @@ def _get_good_config_non_freq_opts(params: PropsCmdlTestParamsTypedDict,
                         "--turbo enable",
                         "--turbo OFF"]
 
-    if pobj.prop_is_supported_cpu("governor", cpu):
+    if pobj.prop_is_supported_cpu("governor", cpu) and \
+       pobj.prop_is_supported_cpu("governors", cpu):
         yield "--governor"
         governors = pobj.get_cpu_prop("governors", cpu)["val"]
         for governor in cast(list[str], governors):
@@ -324,8 +326,9 @@ def _set_freq_pairs(params: PropsCmdlTestParamsTypedDict, min_pname: str, max_pn
     pman = params["pman"]
     pobj = params["pobj"]
 
-    pvinfo = pobj.get_cpu_prop("frequencies", cpu)
-    if pvinfo["val"] is None:
+    try:
+        pvinfo = pobj.get_cpu_prop("frequencies", cpu)
+    except ErrorNotSupported:
         return
 
     frequencies = cast(list[int], pvinfo["val"])
@@ -373,13 +376,9 @@ def test_pstates_frequency_set_order(params: PropsCmdlTestParamsTypedDict):
 
     # When Turbo is disabled, the max frequency may be limited.
     if pobj.prop_is_supported_cpu("turbo", cpu):
-        try:
-            sname = pobj.get_sname("turbo")
-        except ErrorNotSupported:
-            pass
-        else:
-            siblings = cpuinfo.get_cpu_siblings(0, sname=sname)
-            pobj.set_prop_cpus("turbo", "on", siblings)
+        sname = pobj.get_sname("turbo")
+        siblings = cpuinfo.get_cpu_siblings(0, sname=sname)
+        pobj.set_prop_cpus("turbo", "on", siblings)
 
     if pobj.prop_is_supported_cpu("min_freq", cpu):
         _set_freq_pairs(params, "min_freq", "max_freq")

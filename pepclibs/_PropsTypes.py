@@ -60,7 +60,7 @@ class PropertyTypedDict(TypedDict, total=False):
     special_vals: set[str]
     subprops: tuple[str, ...]
 
-PropertyValueType = Union[int, float, bool, str, list[str], list[int], None]
+PropertyValueType = Union[int, float, bool, str, list[str], list[int]]
 
 class PVInfoTypedDict(TypedDict, total=False):
     """

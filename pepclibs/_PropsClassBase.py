@@ -528,7 +528,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         disagreed_pvinfos: tuple[PVInfoTypedDict, PVInfoTypedDict] | None = None
         pvinfos: dict[int, PVInfoTypedDict] = {}
 
-        for pvinfo in self._get_prop_pvinfo_cpus(pname, cpus, mnames, raise_not_supported=False):
+        for pvinfo in self._get_prop_pvinfo_cpus(pname, cpus, mnames):
             cpu = pvinfo["cpu"]
             pvinfos[cpu] = pvinfo
 
@@ -797,9 +797,6 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         """
         Retrieve and yield property values for the specified CPUs using the specified mechanism.
 
-        If the property is not supported for a CPU, yield (cpu, None). If the property is not
-        supported for the specified CPUs and mechanism, raise 'ErrorNotSupported'.
-
         Has to be implemented by the sub-class.
 
         Args:
@@ -811,10 +808,6 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         Yields:
             (cpu, value) tuples for each CPU in 'cpus'. Yield (cpu, None) if the property is not
             supported for a CPU.
-
-        Raises:
-            ErrorNotSupported: If the property is not supported for the specified CPUs and
-                               mechanism.
         """
 
         raise NotImplementedError("PropsClassBase._get_cpu_prop")
@@ -823,17 +816,11 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                               pname: str,
                               cpus: AbsNumsType,
                               mnames: Sequence[MechanismNameType],
-                              all_mnames: Sequence[MechanismNameType] = (),
-                              raise_not_supported: bool = True) -> Generator[PVInfoTypedDict,
-                                                                             None, None]:
+                              all_mnames: Sequence[MechanismNameType] = ()) -> \
+                                                        Generator[PVInfoTypedDict, None, None]:
         """
         Retrieve and yield property value dictionaries for the specified CPUs using the specified
         mechanisms.
-
-        If the property is not supported for a CPU, yield a dictionary with 'None' value. If the
-        property is not supported for the specified CPUs and mechanisms, raise 'ErrorNotSupported'
-        or yield a property value dictionary with 'None' values, depending on the
-        'raise_not_supported' argument.
 
         Args:
             pname: Name of the property to retrieve.
@@ -841,14 +828,12 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             mnames: Mechanism names to use for property retrieval.
             all_mnames: All mechanism names that were requested for the operation. Assumed to be the
                         same as 'mnames' if not provided.
-            raise_not_supported: Whether to raise an exception if the property is not supported.
 
         Yields:
             PVInfoTypedDict: A property value dictionary for each CPU in 'cpus'.
 
         Raises:
-            ErrorNotSupported: If none of the CPUs and mechanisms support the property and
-                               'raise_not_supported' is True.
+            ErrorNotSupported: If none of the mechanisms support the property.
         """
 
         _LOG.debug("Request to get property '%s' CPUs for %s via mechanisms '%s'",
@@ -881,14 +866,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                                 f"CPUs") from err
 
         # None of the methods succeeded.
-        if raise_not_supported:
-            # The below will raise an exception and won't return.
-            self._prop_not_supported_cpus(pname, cpus, mnames, "get", exceptions=exceptions)
-        else:
-            self._prop_not_supported_cpus(pname, cpus, mnames, "get")
-
-        for cpu in cpus:
-            yield self._construct_cpu_pvinfo(pname, cpu, mnames[-1], None)
+        self._prop_not_supported_cpus(pname, cpus, mnames, "get", exceptions=exceptions)
 
     def _get_prop_cpus_mnames(self,
                               pname: str,
@@ -898,9 +876,6 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                                             Generator[tuple[int, PropertyValueType], None, None]:
         """
         Yield (cpu, value) tuples for the specified property and CPUs, using specified mechanisms.
-
-        If the property is not supported for a CPU, yield (cpu, None). If the property is not
-        supported for the specified CPUs and mechanisms, raise 'ErrorNotSupported'.
 
         Args:
             pname: Name of the property to retrieve.
@@ -914,7 +889,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             CPU, yield (cpu, None).
 
         Raises:
-            ErrorNotSupported: If none of the CPUs and mechanisms support the property.
+            ErrorNotSupported: If none of the the specified mechanisms are supported.
         """
 
         for pvinfo in self._get_prop_pvinfo_cpus(pname, cpus, mnames, all_mnames=all_mnames):
@@ -939,7 +914,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             The value of the requested property for the specified CPU.
 
         Raises:
-            ErrorNotSupported: If none of the mechanisms support the property.
+            ErrorNotSupported: If none of the specified mechanisms support the property.
         """
 
         for pvinfo in self._get_prop_pvinfo_cpus(pname, (cpu,), mnames, all_mnames=all_mnames):
@@ -956,10 +931,6 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         Read property 'pname' for CPUs in 'cpus', and for every CPU yield the property value
         dictionary.
 
-        If the property is not supported for a CPU, yield a dictionary with 'None' value. If the
-        property is not supported for the specified CPUs and mechanisms, raise an
-        'ErrorNotSupported'.
-
         Args:
             pname: Name of the property to read and yield the values for. The property will be read
                    for every CPU in 'cpus'.
@@ -972,7 +943,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             PVInfoTypedDict: A property value dictionary for every CPU in 'cpus'.
 
         Raises:
-            ErrorNotSupported: If none of the CPUs and mechanisms support the property.
+            ErrorNotSupported: If none of the specified mechanisms are supported.
 
         Notes:
             Properties of "bool" type use the following values:
@@ -987,14 +958,9 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         if len(cpuz) == 0:
             return
 
-        try:
-            self._set_sname(pname)
-        except ErrorNotSupported:
-            for cpu in cpuz:
-                yield self._construct_cpu_pvinfo(pname, cpu, mnames[-1], None)
-            return
+        self._set_sname(pname)
 
-        yield from self._get_prop_pvinfo_cpus(pname, cpuz, mnames, raise_not_supported=False)
+        yield from self._get_prop_pvinfo_cpus(pname, cpuz, mnames)
 
     def get_cpu_prop(self,
                      pname: str,
@@ -1034,7 +1000,11 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             True if the property is supported by the specified CPU, False otherwise.
         """
 
-        return self.get_cpu_prop(pname, cpu)["val"] is not None
+        try:
+            self.get_cpu_prop(pname, cpu)["val"]
+        except ErrorNotSupported:
+            return False
+        return True
 
     def _get_prop_dies(self,
                        pname: str,
@@ -1044,9 +1014,6 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                                     Generator[tuple[int, int, PropertyValueType], None, None]:
         """
         Retrieve and yield property values for the specified dies using the specified mechanism.
-
-        If the property is not supported for a die, yield None as the value. Raise
-        'ErrorNotSupported' if the property is not supported for any die in 'dies'.
 
         Args:
             pname: Name of the property to retrieve.
@@ -1058,8 +1025,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             Tuples of (package, die, value), where 'value' is the property value or None.
 
         Raises:
-            ErrorNotSupported: If the property is not supported for the specified dies and
-                               mechanism.
+            ErrorNotSupported: If none of the specified mechanisms support the property.
         """
 
         for package, pkg_dies in dies.items():
@@ -1075,17 +1041,11 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                               pname: str,
                               dies: RelNumsType,
                               mnames: Sequence[MechanismNameType],
-                              all_mnames: Sequence[MechanismNameType] = (),
-                              raise_not_supported: bool = True) -> Generator[PVInfoTypedDict,
-                                                                             None, None]:
+                              all_mnames: Sequence[MechanismNameType] = ()) -> \
+                                                            Generator[PVInfoTypedDict, None, None]:
         """
         Retrieve and yield property value dictionaries for the specified dies using the specified
         mechanisms.
-
-        If a property is not supported for a die, yield a dictionary with 'None' value. If the
-        property is not supported for the specified dies and mechanisms, raise 'ErrorNotSupported'
-        or yield a property value dictionary with 'None' values, depending on the
-        'raise_not_supported' argument.
 
         Args:
             pname: Name of the property to retrieve.
@@ -1093,14 +1053,12 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             mnames: Mechanism names to use for property retrieval.
             all_mnames: All mechanism names that were requested for the operation. Assumed to be the
                         same as 'mnames' if not provided.
-            raise_not_supported: Whether to raise an exception if the property is not supported.
 
         Yields:
             PVInfoTypedDict: A property value dictionary for each die in 'dies'.
 
         Raises:
-            ErrorNotSupported: If none of the dies and mechanisms support the property and
-                               'raise_not_supported' is True.
+            ErrorNotSupported: If none of the mechanisms support the property.
         """
 
         _LOG.debug("Request to get property '%s' for %s via mechanisms '%s'",
@@ -1135,15 +1093,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                                 f"dies") from err
 
         # None of the methods succeeded.
-        if raise_not_supported:
-            # The below will raise an exception and won't return.
-            self._prop_not_supported_dies(pname, dies, mnames, "get", exceptions=exceptions)
-        else:
-            self._prop_not_supported_dies(pname, dies, mnames, "get")
-
-        for package, pkg_dies in dies.items():
-            for die in pkg_dies:
-                yield self._construct_die_pvinfo(pname, package, die, mnames[-1], None)
+        self._prop_not_supported_dies(pname, dies, mnames, "get", exceptions=exceptions)
 
     def _get_prop_dies_mnames(self,
                               pname: str,
@@ -1153,10 +1103,6 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                                           Generator[tuple[int, int, PropertyValueType], None, None]:
         """
         Retrieve and yield property values for the specified dies using the specified mechanisms.
-
-        If the property is not supported for a die, yield None the as the value. Raise
-        'ErrorNotSupported' if the property is not supported for any die in 'dies' and any
-        mechanism.
 
         Args:
             pname: Name of the property to retrieve.
@@ -1214,10 +1160,6 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         Read property 'pname' for dies in 'dies', and for every die yield the property value
         dictionary.
 
-        If the property is not supported for a die, yield a dictionary with 'None' value. If the
-        property is not supported for the specified dies and mechanisms, raise an
-        'ErrorNotSupported'.
-
         Args:
             pname: Name of the property to read and yield the values for. The property will be read
                    for every die in 'dies'.
@@ -1231,7 +1173,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             PVInfoTypedDict: A property value dictionary for every die in 'dies'.
 
         Raises:
-            ErrorNotSupported: If none of the dies and mechanisms support the property.
+            ErrorNotSupported: If none of the specified mechanisms support the property.
 
         Notes:
             Properties of "bool" type use the following values:
@@ -1252,14 +1194,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         if len(diez) == 0:
             return
 
-        try:
-            self._set_sname(pname)
-        except ErrorNotSupported:
-            for package, pkg_dies in diez.items():
-                for die in pkg_dies:
-                    yield self._construct_die_pvinfo(pname, package, die, mnames[-1], None)
-            return
-
+        self._set_sname(pname)
         self._validate_prop_vs_scope(pname, "die")
 
         for package, pkg_dies in diez.items():
@@ -1269,7 +1204,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                 cpus = self._cpuinfo.dies_to_cpus(dies=(die,), packages=(package,))
                 self._validate_prop_vs_ioscope(pname, cpus, mnames, package=package, die=die)
 
-        yield from self._get_prop_pvinfo_dies(pname, diez, mnames, raise_not_supported=False)
+        yield from self._get_prop_pvinfo_dies(pname, diez, mnames)
 
     def get_die_prop(self,
                      pname: str,
@@ -1292,7 +1227,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             The property value dictionary for the specified die and property.
 
         Raises:
-            ErrorNotSupported: If the property is not supported by any mechanism.
+            ErrorNotSupported: If none of the specified mechanisms support the property.
         """
 
         dies: RelNumsType = {package: (die,)}
@@ -1325,9 +1260,6 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         """
         Retrieve and yield property values for the specified packages using the specified mechanism.
 
-        If the property is not supported for a package, yield None as the value. Raise
-        'ErrorNotSupported' if the property is not supported for any package.
-
         Args:
             pname: Name of the property to retrieve.
             packages: Package numbers.
@@ -1338,7 +1270,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             Tuple of (package, value), where value is the property value or None.
 
         Raises:
-            ErrorNotSupported: If the property is not supported for any package.
+            ErrorNotSupported: If none of the specified mechanisms support the property.
         """
 
         for package in packages:
@@ -1350,17 +1282,11 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                                   pname: str,
                                   packages: AbsNumsType,
                                   mnames: Sequence[MechanismNameType],
-                                  all_mnames: Sequence[MechanismNameType] = (),
-                                  raise_not_supported: bool = True) -> Generator[PVInfoTypedDict,
-                                                                                 None, None]:
+                                  all_mnames: Sequence[MechanismNameType] = ()) -> \
+                                                            Generator[PVInfoTypedDict, None, None]:
         """
         Retrieve and yield property value dictionaries for the specified packages using the
         specified mechanisms.
-
-        If a property is not supported for a package, yield a dictionary with 'None' value. If the
-        property is not supported for the specified packages and mechanisms, raise
-        'ErrorNotSupported' or yield a property value dictionary with 'None' values, depending on
-        the 'raise_not_supported' argument.
 
         Args:
             pname: Name of the property to retrieve.
@@ -1368,14 +1294,12 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             mnames: Mechanism names to use for property retrieval.
             all_mnames: All mechanism names that were requested for the operation. Assumed to be the
                         same as 'mnames' if not provided.
-            raise_not_supported: Whether to raise an exception if the property is not supported.
 
         Yields:
             PVInfoTypedDict: Property value dictionary for each package in 'packages'.
 
         Raises:
-            ErrorNotSupported: If none of the packages and mechanisms support the property and
-                               'raise_not_supported' is True.
+            ErrorNotSupported: If none of the specified mechanisms support the property.
         """
 
         if not all_mnames:
@@ -1405,14 +1329,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                                 f"packages") from err
 
         # None of the methods succeeded.
-        if raise_not_supported:
-            # The below will raise an exception and won't return.
-            self._prop_not_supported_packages(pname, packages, mnames, "get", exceptions=exceptions)
-        else:
-            self._prop_not_supported_packages(pname, packages, mnames, "get")
-
-        for package in packages:
-            yield self._construct_package_pvinfo(pname, package, mnames[-1], None)
+        self._prop_not_supported_packages(pname, packages, mnames, "get", exceptions=exceptions)
 
     def _get_prop_packages_mnames(self,
                                   pname: str,
@@ -1423,9 +1340,6 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         """
         Yield (package, value) tuples for the specified property and packages, using specified
         mechanisms.
-
-        If the property is not supported for a package, yield (package, None). If the property is
-        not supported for the specified packages and mechanisms, raise 'ErrorNotSupported'.
 
         Args:
             pname: Name of the property to retrieve.
@@ -1439,7 +1353,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             supported for a package, yield (package, None).
 
         Raises:
-            ErrorNotSupported: If none of the packages and mechanisms support the property.
+            ErrorNotSupported: If none of the specified mechanisms support the property.
         """
 
         for pvinfo in self._get_prop_pvinfo_packages(pname, packages, mnames,
@@ -1466,7 +1380,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             The value of the requested property for the specified package.
 
         Rises:
-            ErrorNotSupported: If none of the mechanisms support the property.
+            ErrorNotSupported: If none of the specified mechanisms support the property.
         """
 
         for pvinfo in self._get_prop_pvinfo_packages(pname, (package,), mnames,
@@ -1484,10 +1398,6 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         Read property 'pname' for packages in 'packages', and for every package yield the property
         value dictionary.
 
-        If the property is not supported for a package, yield a dictionary with 'None' value. If the
-        property is not supported for the specified packages and mechanisms, raise an
-        'ErrorNotSupported'.
-
         Args:
             pname: Name of the property to read and yield the values for. The property will be read
                    for every package in 'packages'.
@@ -1501,7 +1411,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             PVInfoTypedDict: A property value dictionary for every package in 'packages'.
 
         Raises:
-            ErrorNotSupported: If none of the packages and mechanisms support the property.
+            ErrorNotSupported: If none of the specified mechanisms support the property.
 
         Notes:
             Properties of "bool" type use the following values:
@@ -1516,13 +1426,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         if len(normalizes_packages) == 0:
             return
 
-        try:
-            self._set_sname(pname)
-        except ErrorNotSupported:
-            for package in normalizes_packages:
-                yield self._construct_package_pvinfo(pname, package, mnames[-1], None)
-            return
-
+        self._set_sname(pname)
         self._validate_prop_vs_scope(pname, "package")
 
         for package in normalizes_packages:
@@ -1531,8 +1435,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             cpus = self._cpuinfo.package_to_cpus(package)
             self._validate_prop_vs_ioscope(pname, cpus, mnames, package=package)
 
-        yield from self._get_prop_pvinfo_packages(pname, normalizes_packages, mnames,
-                                                  raise_not_supported=False)
+        yield from self._get_prop_pvinfo_packages(pname, normalizes_packages, mnames)
 
     def get_package_prop(self,
                          pname: str,
@@ -1677,8 +1580,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             mnames: All mechanism names that were requested for the operation.
 
         Raises:
-            ErrorNotSupported: If the property is not supported for the specified CPUs and
-                               mechanism.
+            ErrorNotSupported: If the property is not supported for the specified CPUs or
+                               mechanisms.
             ErrorTryAnotherMechanism: If the property is not supported for the specified CPUs by the
                                       specified mechanism, but may be supported by another
                                       mechanism.
@@ -1708,7 +1611,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             Name of the mechanism used to set the property.
 
         Raises:
-            ErrorNotSupported: If the property is not supported for the specified CPUs and
+            ErrorNotSupported: If the property is not supported for the specified CPUs or
                                mechanisms.
             ErrorTryAnotherMechanism: If the property is not supported for the specified CPUs by the
                                       specified mechanisms, but may be supported by other
@@ -1754,7 +1657,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             Name of the mechanism used to set the property.
 
         Raises:
-            ErrorNotSupported: If the property is not supported for the specified CPUs and
+            ErrorNotSupported: If the property is not supported for the specified CPUs or
                                mechanisms.
             ErrorTryAnotherMechanism: If the property is not supported for the specified CPUs by the
                                       specified mechanisms, but may be supported by other
@@ -1794,7 +1697,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             Name of the mechanism used to set the property.
 
         Raises:
-            ErrorNotSupported: If the property is not supported the CPU and mechanisms.
+            ErrorNotSupported: If the property is not supported for the specified CPU or mechanisms.
             ErrorTryAnotherMechanism: If the property is not supported for CPU by the specified
                                       mechanisms, but may be supported by other mechanisms.
         """
@@ -1856,7 +1759,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             mnames: All mechanism names that were requested for the operation.
 
         Raises:
-            ErrorNotSupported: If the property is not supported for the specified dies and
+            ErrorNotSupported: If the property is not supported for the specified dies or
                                mechanism.
             ErrorTryAnotherMechanism: If the property is not supported for the specified dies by the
                                       specified mechanism, but may be supported by other mechanisms.
@@ -1902,7 +1805,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             Name of the mechanism used to set the property.
 
         Raises:
-            ErrorNotSupported: If the property is not supported for the specified CPUs and
+            ErrorNotSupported: If the property is not supported for the specified CPUs or
                                mechanisms.
             ErrorTryAnotherMechanism: If the property is not supported for the specified CPUs by the
                                       specified mechanisms, but may be supported by other
@@ -1950,7 +1853,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             Name of the mechanism used to set the property.
 
         Raises:
-            ErrorNotSupported: If the property is not supported for the specified dies and
+            ErrorNotSupported: If the property is not supported for the specified dies or
                                mechanisms.
             ErrorTryAnotherMechanism: If the property is not supported for the specified dies by the
                                       specified mechanisms, but may be supported by other
@@ -2002,7 +1905,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             Name of the mechanism used to set the property.
 
         Raises:
-            ErrorNotSupported: If the property is not supported the die and mechanisms.
+            ErrorNotSupported: If the property is not supported for the specified die or mechanisms.
             ErrorTryAnotherMechanism: If the property is not supported for die by the specified
                                       mechanisms, but may be supported by other mechanisms.
         """
@@ -2032,7 +1935,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             Name of the mechanism used to set the property.
 
         Raises:
-            ErrorNotSupported: If the property is not supported for the specified packages and
+            ErrorNotSupported: If the property is not supported for the specified packages or
                                mechanism.
             ErrorTryAnotherMechanism: If the property is not supported for the specified packages by
                                       the specified mechanism, but may be supported by other
@@ -2075,7 +1978,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             Name of the mechanism used to set the property.
 
         Raises:
-            ErrorNotSupported: If the property is not supported for the specified packages and
+            ErrorNotSupported: If the property is not supported for the specified packages or
                                mechanisms.
             ErrorTryAnotherMechanism: If the property is not supported for the specified packages by
                                       the specified mechanisms, but may be supported by other
@@ -2119,7 +2022,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             Name of the mechanism used to set the property.
 
         Raises:
-            ErrorNotSupported: If the property is not supported for the specified packages and
+            ErrorNotSupported: If the property is not supported for the specified packages or
                                mechanisms.
             ErrorTryAnotherMechanism: If the property is not supported for the specified packages by
                                       the specified mechanisms, but may be supported by other
@@ -2159,7 +2062,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             Name of the mechanism used to set the property.
 
         Raises:
-            ErrorNotSupported: If the property is not supported the package and mechanisms.
+            ErrorNotSupported: If the property is not supported for the specified package or
+                               mechanisms.
             ErrorTryAnotherMechanism: If the property is not supported for package by the specified
                                       mechanisms, but may be supported by other mechanisms.
         """

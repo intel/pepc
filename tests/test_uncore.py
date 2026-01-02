@@ -48,33 +48,23 @@ def get_params(hostspec: str,
         params = common.build_params(pman)
         yield props_common.extend_params(params, pobj, cpuinfo)
 
-def _get_set_and_verify_data(params: PropsTestParamsTypedDict,
-                             cpu: int) -> Generator[tuple[str, str | int], None, None]:
+def _get_set_and_verify_data() -> Generator[tuple[str, str | int], None, None]:
     """
     Yield property name and value pairs running various tests for the property and the value.
-
-    Args:
-        params: Dictionary containing test parameters and objects required for property retrieval.
-        cpu: CPU to test property with.
 
     Yields:
         tuple: A pair containing the property name and the value to run a test with.
     """
 
-    pobj = params["pobj"]
+    yield "min_freq", "min"
+    yield "max_freq", "min"
+    yield "max_freq", "max"
+    yield "min_freq", "max"
 
-    min_limit = pobj.get_cpu_prop("min_freq_limit", cpu)["val"]
-    max_limit = pobj.get_cpu_prop("max_freq_limit", cpu)["val"]
-    if min_limit is not None or max_limit is not None:
-        yield "min_freq", "min"
-        yield "max_freq", "min"
-        yield "max_freq", "max"
-        yield "min_freq", "max"
-
-        yield "min_freq", "min"
-        yield "elc_low_zone_min_freq", "min"
-        yield "elc_low_zone_min_freq", "max"
-        yield "min_freq", "max"
+    yield "min_freq", "min"
+    yield "elc_low_zone_min_freq", "min"
+    yield "elc_low_zone_min_freq", "max"
+    yield "min_freq", "max"
 
     yield "elc_high_threshold_status", "off"
 
@@ -97,7 +87,7 @@ def test_uncore_set_and_verify(params: PropsTestParamsTypedDict):
         params: The test parameters.
     """
 
-    props_vals = _get_set_and_verify_data(params, 0)
+    props_vals = _get_set_and_verify_data()
     props_common.set_and_verify(params, props_vals, 0)
 
 def test_uncore_get_all_props(params: PropsTestParamsTypedDict):

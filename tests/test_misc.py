@@ -76,12 +76,16 @@ def test_unknown_cpu_model(params: _TestParamsTypedDict):
         cpuinfo.info["model"] = 0
 
         with PStates.PStates(pman=pman, cpuinfo=cpuinfo) as pobj:
-            pname = next(iter(pobj.props))
-            pobj.get_cpu_prop(pname, 0)
+            for pname in pobj.props:
+                if pobj.prop_is_supported_cpu(pname, 0):
+                    pobj.get_cpu_prop(pname, 0)
+                    break
 
         with CStates.CStates(pman=pman, cpuinfo=cpuinfo) as pobj:
-            pname = next(iter(pobj.props))
-            pobj.get_cpu_prop(pname, 0)
+            for pname in pobj.props:
+                if pobj.prop_is_supported_cpu(pname, 0):
+                    pobj.get_cpu_prop(pname, 0)
+                    break
 
 def test_propscache_scope(params: _TestParamsTypedDict):
     """
