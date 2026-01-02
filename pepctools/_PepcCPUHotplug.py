@@ -11,10 +11,14 @@ Implement the 'pepc cpu-hotplug' command.
 """
 
 # TODO: annotate and modernize this module. Define a type for 'args'.
+import typing
 from pepclibs.helperlibs import Logging, Trivial
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs import CPUInfo, CPUOnline
-from pepctools import _PepcCommon, _OpTarget
+from pepctools import _OpTarget
+
+if typing.TYPE_CHECKING:
+    from typing import Literal
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
@@ -44,8 +48,14 @@ def cpu_hotplug_online_command(args, pman):
     if not args.cpus:
         raise Error("please, specify the CPUs to online")
 
+    cpus: list[int] | Literal["all"]
+    if args.cpus == "all":
+        cpus = "all"
+    else:
+        cpus = Trivial.parse_int_list(args.cpus, dedup=True, what="CPU numbers")
+
     with CPUOnline.CPUOnline(loglevel=Logging.INFO, pman=pman) as onl:
-        onl.online(cpus=_PepcCommon.parse_cpus_string(args.cpus))
+        onl.online(cpus=cpus)
 
 def cpu_hotplug_offline_command(args, pman):
     """

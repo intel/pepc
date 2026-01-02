@@ -47,22 +47,6 @@ def check_tuned_presence(pman: ProcessManagerType):
     except Error as err:
         _LOG.warning("Failed to check for 'tuned' presence:\n%s", err.indent(2))
 
-def parse_cpus_string(cpus_str: str) -> list[int] | Literal["all"]:
-    """
-    Parse a comma-separated string of CPU numbers and ranges into a list of integers.
-
-    Args:
-        cpus_str: String containing CPU numbers and/or ranges (e.g., "0,2-4,7"), or "all" for all
-                  CPUs.
-
-    Returns:
-        The string "all" if input is "all", otherwise a deduplicated list of integer CPU numbers.
-    """
-
-    if cpus_str == "all":
-        return "all"
-    return Trivial.parse_int_list(cpus_str, dedup=True, what="CPU numbers")
-
 def override_cpu_model(cpuinfo: CPUInfo.CPUInfo, vfmarg: str):
     """
     Override the CPU model in the provided 'CPUInfo' object.
