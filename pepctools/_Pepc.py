@@ -1115,8 +1115,8 @@ def do_main(pman: ProcessManagerType | None = None) -> int:
         args.func(args, pman)
     elif dataset:
         for dspath in _get_next_dataset(dataset):
-            with _get_emul_pman(dspath) as pman:
-                args.func(args, pman)
+            with _get_emul_pman(dspath) as emul_pman:
+                args.func(args, emul_pman)
     else:
         # pylint: disable-next=import-outside-toplevel
         from pepclibs.helperlibs import ProcessManager

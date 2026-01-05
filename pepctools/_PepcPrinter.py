@@ -644,7 +644,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         if mnames:
             mname = mnames[0]
         else:
-            mname = next(iter(self._pobj.mechanisms))
+            mname = list(self._pobj.mechanisms)[0]
 
         pvinfo: PVInfoTypedDict = {"val": val, "mname": mname}
 
