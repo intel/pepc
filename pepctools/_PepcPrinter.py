@@ -41,7 +41,7 @@ if typing.TYPE_CHECKING:
     # Should be same as PropertyValueType, but include only hashable.
     _AggrPropertyValueType = Union[_AggrPropertyValueTypeNonTuple, _AggrPropertyValueTypeTuple]
 
-    class _AggrSubPinfoTypdDict(TypedDict, total=False):
+    class _AggrSubPinfoTypedDict(TypedDict, total=False):
         """
         Type for the aggregate properties sub-dictionary for human-readable output.
 
@@ -55,7 +55,7 @@ if typing.TYPE_CHECKING:
         vals: dict[_AggrPropertyValueType, AbsNumsType | RelNumsType]
 
     # The aggregate properties dictionary for human-readable output.
-    _AggrPinfoType = dict[MechanismNameType, dict[str, _AggrSubPinfoTypdDict]]
+    _AggrPinfoType = dict[MechanismNameType, dict[str, _AggrSubPinfoTypedDict]]
 
     class _YAMLAggrPinfoValueTypedDict(TypedDict, total=False):
         """
@@ -470,7 +470,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         self._print(msg)
 
     def _do_print_aggr_pinfo_human(self,
-                                   apinfo: dict[str, _AggrSubPinfoTypdDict],
+                                   apinfo: dict[str, _AggrSubPinfoTypedDict],
                                    action: str | None = None,
                                    prefix: str | None = None) -> int:
         """
@@ -1088,7 +1088,7 @@ class CStatesPrinter(_PropsPrinter):
                 del pinfo["pkg_cstate_limit"]
                 continue
 
-            new_pcsl_info: _AggrSubPinfoTypdDict = {"sname": pcsl_info["sname"], "vals": {}}
+            new_pcsl_info: _AggrSubPinfoTypedDict = {"sname": pcsl_info["sname"], "vals": {}}
             for val, _cpus in pcsl_info["vals"].items():
                 new_cpus = []
                 for cpu in _cpus:
