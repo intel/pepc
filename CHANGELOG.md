@@ -7,6 +7,9 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Fixed
  - Fix 'pepc pstates' crash on Lunar Lake.
 ### Added
+ - Make 'info' commands (e.g. pepc pstates info) not fail when permission is
+   denied to read certain properties. Instead, print "Permission denied" for
+   such properties and continue.
 ### Removed
 ### Changed
 
