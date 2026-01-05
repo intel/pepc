@@ -13,8 +13,12 @@ formats.
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
+import typing
 from pepclibs.helperlibs import Logging, Trivial
 from pepclibs.helperlibs.Exceptions import Error
+
+if typing.TYPE_CHECKING:
+    from typing import cast
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
@@ -448,7 +452,7 @@ def parse_human(hval: str | float | int,
                 unit: str,
                 target_unit: str | None = None,
                 integer: bool = True,
-                what: str | None = None):
+                what: str | None = None) -> int | float:
     """
     Convert a user-provided value 'hval' into an integer or float amount of 'unit' units (hertz,
     seconds, etc).
@@ -490,7 +494,7 @@ def parse_human(hval: str | float | int,
     if target_unit:
         target_sipfx, target_base_unit = separate_si_prefix(target_unit)
         if target_base_unit != base_unit:
-            raise Error(f"the target base unit has to be '{base_unit}', not '{target_base_unit}")
+            raise Error(f"The target base unit has to be '{base_unit}', not '{target_base_unit}")
 
     hval = str(hval)
     if Trivial.is_num(hval):
@@ -511,6 +515,37 @@ def parse_human(hval: str | float | int,
     if integer:
         result = round(result)
 
+    return result
+
+def parse_human_int(hval: str | float | int,
+                    unit: str,
+                    target_unit: str | None = None,
+                    what: str | None = None) -> int:
+    """
+    Same as 'parse_human()', but verifies that the result is an integer and returns it as an 'int'
+    type.
+    """
+
+    result = parse_human(hval, unit, target_unit, integer=False, what=what)
+
+    if not result.is_integer():
+        what = what if what else ""
+        raise Error(f"Bad{what} value '{hval}': not an integer")
+
+    return int(result)
+
+def parse_human_float(hval: str | float | float,
+                    unit: str,
+                    target_unit: str | None = None,
+                    what: str | None = None) -> float:
+    """
+    Same as 'parse_human()', but returns the result as a float.
+    """
+
+    result = parse_human(hval, unit, target_unit, integer=False, what=what)
+
+    if typing.TYPE_CHECKING:
+        return cast(float, result)
     return result
 
 def parse_human_range(rng: str,
@@ -549,7 +584,7 @@ def parse_human_range(rng: str,
     if len(split_rng) != 2:
         raise Error(f"Bad {what} range '{rng}', it should include 2 numbers separated with '{sep}'")
 
-    vals = [0, 0]
+    vals: list[int | float] = [0, 0]
 
     for idx, val in enumerate(split_rng):
         vals[idx] = parse_human(val, unit=unit, target_unit=target_unit, integer=integer, what=what)
@@ -565,6 +600,39 @@ def parse_human_range(rng: str,
     if integer:
         return round(vals[0]), round(vals[1])
     return vals[0], vals[1]
+
+def parse_human_range_int(rng: str,
+                          unit: str,
+                          target_unit: str | None = None,
+                          sep: str = ",",
+                          what: str | None = None) -> tuple[int, int]:
+    """
+    Same as 'parse_human_range()', but verifies that the resulting tuple contains integers and
+    returns them as 'int' types.
+    """
+
+    result = parse_human_range(rng, unit, target_unit, integer=False, sep=sep, what=what)
+
+    if not result[0].is_integer() or not result[1].is_integer():
+        what = what if what else ""
+        raise Error(f"Bad{what} range '{rng}': must be integers")
+
+    return int(result[0]), int(result[1])
+
+def parse_human_range_float(rng: str,
+                            unit: str,
+                            target_unit: str | None = None,
+                            sep: str = ",",
+                            what: str | None = None) -> tuple[float, float]:
+    """
+    Same as 'parse_human_range()', but returns the resulting tuple as floats.
+    """
+
+    result = parse_human_range(rng, unit, target_unit, integer=False, sep=sep, what=what)
+
+    if typing.TYPE_CHECKING:
+        return cast(tuple[float, float], result)
+    return result
 
 def capitalize(sentence: str) -> str:
     """
