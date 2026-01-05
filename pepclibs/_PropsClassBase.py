@@ -37,7 +37,7 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import copy
 import typing
-from typing import cast, get_args
+from typing import get_args
 
 from pepclibs import CPUInfo
 from pepclibs.helperlibs import Logging, Trivial, Human, ClassHelpers, EmulProcessManager
@@ -46,12 +46,13 @@ from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs.CPUInfoTypes import ScopeNameType
 
 if typing.TYPE_CHECKING:
-    from typing import Any, Sequence, Literal, Generator, Final
+    from typing import Any, Sequence, Literal, Generator, Final, cast
     from pepclibs import _SysfsIO
     from pepclibs.msr import MSR
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
-    from pepclibs._PropsTypes import PVInfoTypedDict, PropertyValueType, PropertyTypedDict
-    from pepclibs._PropsTypes import MechanismTypedDict, MechanismNameType
+    from pepclibs._PropsTypes import PVInfoTypedDict, PVInfoTypedDictInt, PVInfoTypedDictFloat
+    from pepclibs._PropsTypes import PropertyTypedDict, PropertyValueType, MechanismTypedDict
+    from pepclibs._PropsTypes import MechanismNameType
     from pepclibs.CPUInfoTypes import AbsNumsType, RelNumsType
 
     class _PropertyTypedDict(PropertyTypedDict):
@@ -132,7 +133,11 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
     Per-CPU Methods:
         - get_prop_cpus(): Yield property values for multiple CPUs.
+        - get_prop_cpus_int(): Yield property integer values for multiple CPUs.
+        - get_prop_cpus_float(): Yield property float values for multiple CPUs.
         - get_cpu_prop(): Return property value for a single CPU.
+        - get_cpu_prop_int(): Return property integer value for a single CPU.
+        - get_cpu_prop_float(): Return property float value for a single CPU.
         - set_prop_cpus(): Set property value for multiple CPUs.
         - set_cpu_prop(): Set property value for a single CPU.
         - prop_is_supported_cpu(): Check if a property is supported for a single CPU.
@@ -363,7 +368,9 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         try:
             if not self._props[pname]["sname"]:
                 self._set_sname(pname)
-            return cast(ScopeNameType, self._props[pname]["sname"])
+            if typing.TYPE_CHECKING:
+                return cast(ScopeNameType, self._props[pname]["sname"])
+            return self._props[pname]["sname"]
         except KeyError as err:
             raise Error(f"Property '{pname}' does not exist") from err
 
@@ -965,6 +972,46 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         yield from self._get_prop_pvinfo_cpus(pname, cpuz, mnames)
 
+    def get_prop_cpus_int(self,
+                          pname: str,
+                          cpus: AbsNumsType | Literal["all"] = "all",
+                          mnames: Sequence[MechanismNameType] = ()) -> Generator[PVInfoTypedDictInt,
+                                                                                 None, None]:
+        """
+        Same as 'get_prop_cpus()', but for properties with integer values, yields integer property
+        value dictionaries.
+        """
+
+        if self._props[pname]["type"] != "int":
+            name = self._props[pname]["name"]
+            raise Error(f"{name} ({pname}) is not an integer property")
+
+        if typing.TYPE_CHECKING:
+            for pvinfo in self.get_prop_cpus(pname, cpus=cpus, mnames=mnames):
+                yield cast(PVInfoTypedDictInt, pvinfo)
+        else:
+            yield from self.get_prop_cpus(pname, cpus=cpus, mnames=mnames)
+
+    def get_prop_cpus_float(self,
+                            pname: str,
+                            cpus: AbsNumsType | Literal["all"] = "all",
+                            mnames: Sequence[MechanismNameType] = ()) -> \
+                                                    Generator[PVInfoTypedDictFloat, None, None]:
+        """
+        Same as 'get_prop_cpus()', but for properties with float values, yields float property value
+        dictionaries.
+        """
+
+        if self._props[pname]["type"] != "float":
+            name = self._props[pname]["name"]
+            raise Error(f"{name} ({pname}) is not a float property")
+
+        if typing.TYPE_CHECKING:
+            for pvinfo in self.get_prop_cpus(pname, cpus=cpus, mnames=mnames):
+                yield cast(PVInfoTypedDictFloat, pvinfo)
+        else:
+            yield from self.get_prop_cpus(pname, cpus=cpus, mnames=mnames)
+
     def get_cpu_prop(self,
                      pname: str,
                      cpu: int,
@@ -987,6 +1034,46 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         """
 
         for pvinfo in self.get_prop_cpus(pname, cpus=(cpu,), mnames=mnames):
+            return pvinfo
+
+        raise Error(f"BUG: Failed to get property '{pname}' for CPU {cpu}")
+
+    def get_cpu_prop_int(self,
+                         pname: str,
+                         cpu: int,
+                         mnames: Sequence[MechanismNameType] = ()) -> PVInfoTypedDictInt:
+        """
+        Same as 'get_cpu_prop()', but for properties with integer values, returns an integer
+        property value dictionary.
+        """
+
+        if self._props[pname]["type"] != "int":
+            name = self._props[pname]["name"]
+            raise Error(f"{name} ({pname}) is not an integer property")
+
+        for pvinfo in self.get_prop_cpus(pname, cpus=(cpu,), mnames=mnames):
+            if typing.TYPE_CHECKING:
+                return cast(PVInfoTypedDictInt, pvinfo)
+            return pvinfo
+
+        raise Error(f"BUG: Failed to get property '{pname}' for CPU {cpu}")
+
+    def get_cpu_prop_float(self,
+                           pname: str,
+                           cpu: int,
+                           mnames: Sequence[MechanismNameType] = ()) -> PVInfoTypedDictFloat:
+        """
+        Same as 'get_cpu_prop()', but for properties with float values, returns a float property
+        value dictionary.
+        """
+
+        if self._props[pname]["type"] != "float":
+            name = self._props[pname]["name"]
+            raise Error(f"{name} ({pname}) is not a float property")
+
+        for pvinfo in self.get_prop_cpus(pname, cpus=(cpu,), mnames=mnames):
+            if typing.TYPE_CHECKING:
+                return cast(PVInfoTypedDictFloat, pvinfo)
             return pvinfo
 
         raise Error(f"BUG: Failed to get property '{pname}' for CPU {cpu}")
@@ -1550,10 +1637,14 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             return val
 
         if Trivial.is_num(val):
-            if prop["type"] == "int":
-                val = Trivial.str_to_int(cast(str, val))
+            if typing.TYPE_CHECKING:
+                val_str = cast(str, val)
             else:
-                val = Trivial.str_to_float(cast(str, val))
+                val_str = val
+            if prop["type"] == "int":
+                val = Trivial.str_to_int(val_str)
+            else:
+                val = Trivial.str_to_float(val_str)
         elif "special_vals" not in prop or val not in prop["special_vals"]:
             # This property has a unit, and the value is not a number, nor it is one of the
             # special values. Presumably this is a value with a unit, such as "100MHz" or

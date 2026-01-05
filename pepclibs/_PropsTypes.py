@@ -62,16 +62,15 @@ class PropertyTypedDict(TypedDict, total=False):
 
 PropertyValueType = Union[int, float, bool, str, list[str], list[int]]
 
-class PVInfoTypedDict(TypedDict, total=False):
+class _PVInfoTypedDictBase(TypedDict, total=False):
     """
-    Type for the property value dictionary (pvinfo).
+    Base type for the property value dictionary (pvinfo).
 
     Attributes:
         cpu: The CPU number.
         die: The die number.
         package: The package number.
         pname: The name of the property.
-        val: The value of the property.
         mname: The name of the mechanism used to retrieve the property.
     """
 
@@ -79,5 +78,36 @@ class PVInfoTypedDict(TypedDict, total=False):
     die: int
     package: int
     pname: str
-    val: PropertyValueType
     mname: MechanismNameType
+class PVInfoTypedDict(_PVInfoTypedDictBase, total=False):
+    """
+    Type for the property value dictionary (pvinfo).
+
+    Attributes:
+        *: All attributes from _PVInfoTypedDictBase.
+        val: The value of the property.
+    """
+
+    val: PropertyValueType
+
+class PVInfoTypedDictInt(_PVInfoTypedDictBase, total=False):
+    """
+    Type for the property value dictionary (pvinfo) with integer value.
+
+    Attributes:
+        *: All attributes from _PVInfoTypedDictBase.
+        val: The value of the property.
+    """
+
+    val: int
+
+class PVInfoTypedDictFloat(_PVInfoTypedDictBase, total=False):
+    """
+    Type for the property value dictionary (pvinfo) with float value.
+
+    Attributes:
+        *: All attributes from _PVInfoTypedDictBase.
+        val: The value of the property.
+    """
+
+    val: float
