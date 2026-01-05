@@ -855,6 +855,9 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                 # Yielded a 'pvinfo' for every CPU.
                 return
             except ErrorNotSupported as err:
+                _LOG.debug("Property '%s' not supported using mechanism '%s': %s",
+                           pname, mname, str(err))
+                _LOG.debug_print_stacktrace()
                 exceptions.append(err)
                 # If something was yielded already, this is an error condition. Otherwise, try the
                 # next mechanism.

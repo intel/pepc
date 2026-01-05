@@ -21,7 +21,7 @@ from pepctools import _PepcCommon
 from pepctools._OpTarget import ErrorNoCPUTarget
 from pepclibs import CPUInfo
 from pepclibs.helperlibs import Logging, ClassHelpers, Human, YAML, Trivial
-from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorPermissionDenied
 from pepclibs._PropsClassBase import ErrorUsePerCPU, ErrorTryAnotherMechanism
 
 PrintFormatType = Literal["human", "yaml"]
@@ -120,6 +120,8 @@ _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
 # A special property value indicating that the property is not supported.
 _UNSUPPORTED_PROP = "not supported"
+# A special property value indicating that permission is denied to access the property.
+_PERMISSION_DENIED = "permission denied"
 
 class _PropsPrinter(ClassHelpers.SimpleCloseContext):
     """
@@ -441,10 +443,13 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         Notes:
             - Omit CPU/die/package numbers in case of a global property.
             - If the property value is _UNSUPPORTED_PROP, indicate it is not supported.
+            - If the property value is _PERMISSION_DENIED, indicate permission is denied.
             - For non-numeric types, quote the value when printing with a suffix.
         """
 
-        if val is _UNSUPPORTED_PROP or prop["sname"] == "global":
+        is_unsupp_or_perm = val is _UNSUPPORTED_PROP or val is _PERMISSION_DENIED
+
+        if prop["sname"] == "global" or is_unsupp_or_perm:
             sfx = ""
         else:
             nums_str = self._fmt_nums(sname, nums)
@@ -455,7 +460,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         if prefix is not None:
             msg = prefix + msg
 
-        if val is not _UNSUPPORTED_PROP:
+        if not is_unsupp_or_perm:
             val = self._format_value_human(pname, prop, val)
             if val == "" and (prop["type"].startswith("list")):
                 return
@@ -618,6 +623,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
     def _get_prop_sname_dummy(self,
                               sname: ScopeNameType,
                               nums: Union[AbsNumsType, RelNumsType],
+                              val: str,
                               mnames: Sequence[MechanismNameType] = ()) -> \
                                                             Generator[PVInfoTypedDict, None, None]:
         """
@@ -627,11 +633,11 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
             sname: Scope name of the property (e.g., "CPU", "die", "package").
             nums: The CPU, die, or package numbers for which to yield the dummy property value
                   dictionaries.
+            val: The dummy value to use for the property.
             mnames: Mechanism names that were tried for retrieving the property.
 
         Yields:
-            Property value info dictionaries ('PVInfoTypedDict') with the value set to
-            '_UNSUPPORTED_PROP'.
+            Property value info dictionaries ('PVInfoTypedDict') with the value set to 'val'.
         """
 
         # The mechanism name does not matter in this case, just need to provide some.
@@ -640,7 +646,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         else:
             mname = next(iter(self._pobj.mechanisms))
 
-        pvinfo: PVInfoTypedDict = {"val": _UNSUPPORTED_PROP, "mname": mname}
+        pvinfo: PVInfoTypedDict = {"val": val, "mname": mname}
 
         if sname == "die":
             if typing.TYPE_CHECKING:
@@ -674,7 +680,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         Yield property value dictionaries for a property, accounting for its scope.
 
         If the property is not supported, yield property value dictionaries with the value set to
-        '_UNSUPPORTED_PROP'.
+        '_UNSUPPORTED_PROP' or '_PERMISSION_DENIED'.
 
         Args:
             pname: Name of the property to retrieve.
@@ -710,7 +716,12 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
                     yield from self._pobj.get_prop_packages(pname, nums, mnames=mnames)
         except ErrorNotSupported as err:
             _LOG.debug(f"Property '{pname}' is not supported:\n{err.indent(2)}")
-            yield from self._get_prop_sname_dummy(sname, nums, mnames=mnames)
+            _LOG.debug_print_stacktrace()
+            yield from self._get_prop_sname_dummy(sname, nums, _UNSUPPORTED_PROP, mnames=mnames)
+        except ErrorPermissionDenied as err:
+            _LOG.debug(f"Permission denied for property '{pname}':\n{err.indent(2)}")
+            _LOG.debug_print_stacktrace()
+            yield from self._get_prop_sname_dummy(sname, nums, _PERMISSION_DENIED, mnames=mnames)
 
     def _build_aggr_pinfo_pname(self,
                                 pname: str,
@@ -747,12 +758,13 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
             val = pvinfo["val"]
             mname = pvinfo["mname"]
 
-            if skip_unsupp_props and val is _UNSUPPORTED_PROP:
+            is_unsupp_or_perm = val is _UNSUPPORTED_PROP or val is _PERMISSION_DENIED
+            if skip_unsupp_props and is_unsupp_or_perm:
                 continue
 
             # Dictionary keys must be of an immutable type, turn lists into tuples.
             val_key: _AggrPropertyValueType
-            if prop["type"].startswith("list[") and val is not _UNSUPPORTED_PROP:
+            if prop["type"].startswith("list["):
                 if typing.TYPE_CHECKING:
                     val = cast(Union[list[str], list[int]], val)
                     val_key = cast(_AggrPropertyValueTypeTuple, tuple(val))
@@ -1067,10 +1079,10 @@ class CStatesPrinter(_PropsPrinter):
             if not pcsl_info:
                 continue
 
-            if len(pcsl_info["vals"]) == 1 and \
-               list(pcsl_info["vals"].values())[0] is _UNSUPPORTED_PROP:
-                # The 'pkg_cstate_limit' property is not supported, nothing to do.
-                continue
+            if len(pcsl_info["vals"]) == 1:
+                val = list(pcsl_info["vals"])[0]
+                if val is _UNSUPPORTED_PROP or val is _PERMISSION_DENIED:
+                    continue
 
             locked_cpus = set()
             for pvinfo in self._pobj.get_prop_cpus("pkg_cstate_limit_lock", cpus=cpus,
@@ -1195,9 +1207,7 @@ class CStatesPrinter(_PropsPrinter):
         if prefix is not None:
             msg = prefix + msg
 
-        if val is _UNSUPPORTED_PROP:
-            val = "not supported"
-        elif cpus is not None:
+        if cpus is not None and val is not _UNSUPPORTED_PROP and val is not _PERMISSION_DENIED:
             val = f"'{val}'"
 
         msg += f"{val}{sfx}"
@@ -1317,7 +1327,7 @@ class CStatesPrinter(_PropsPrinter):
                     aggr_rcsinfo[csname] = {}
 
                 for key, val in values.items():
-                    if key not in keys or val is _UNSUPPORTED_PROP:
+                    if key not in keys or val is _UNSUPPORTED_PROP or val is _PERMISSION_DENIED:
                         continue
 
                     if typing.TYPE_CHECKING:

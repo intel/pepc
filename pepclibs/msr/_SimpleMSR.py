@@ -83,14 +83,14 @@ class SimpleMSR(ClassHelpers.SimpleCloseContext):
         try:
             self._msr_drv = KernelModule.KernelModule(drvname, pman=self._pman)
         except Error as err:
-            raise Error(f"{msg}\n{err.indent(2)}") from err
+            raise type(err)(f"{msg}\n{err.indent(2)}") from err
 
         try:
             loaded = self._msr_drv.is_loaded()
         except Error as err:
             self._msr_drv.close()
             self._msr_drv = None
-            raise Error(f"{msg}\n{err.indent(2)}") from err
+            raise type(err)(f"{msg}\n{err.indent(2)}") from err
 
         if loaded:
             self._msr_drv.close()
@@ -103,7 +103,7 @@ class SimpleMSR(ClassHelpers.SimpleCloseContext):
         except Error as err:
             self._msr_drv.close()
             self._msr_drv = None
-            raise Error(f"{msg}\n{err.indent(2)}") from err
+            raise type(err)(f"{msg}\n{err.indent(2)}") from err
 
     def _normalize_bits(self, bits: tuple[int, int] | list[int]) -> tuple[int, int]:
         """
@@ -247,8 +247,8 @@ for cpu in cpus:
                 fobj.seek(regaddr)
                 regval = fobj.read(self.regbytes)
         except Error as err:
-            raise Error(f"Failed to read MSR '{regaddr:#x}' from file '{path}'"
-                        f"{self._pman.hostmsg}:\n{err.indent(2)}") from err
+            raise type(err)(f"Failed to read MSR '{regaddr:#x}' from file '{path}'"
+                            f"{self._pman.hostmsg}:\n{err.indent(2)}") from err
 
         regval = int.from_bytes(regval, byteorder=_CPU_BYTEORDER)
         _LOG.debug("CPU%d: MSR 0x%x: Read 0x%x%s", cpu, regaddr, regval, self._pman.hostmsg)
@@ -367,5 +367,6 @@ for cpu in cpus:
                 fobj.flush()
                 _LOG.debug("CPU%d: MSR 0x%x: Wrote 0x%x", cpu, regaddr, regval)
             except Error as err:
-                raise Error(f"Failed to write '{regval:#x}' to MSR '{regaddr:#x}' of CPU "
-                            f"{cpu}{self._pman.hostmsg} (file '{path}'):\n{err.indent(2)}") from err
+                raise type(err)(f"Failed to write '{regval:#x}' to MSR '{regaddr:#x}' of CPU "
+                                f"{cpu}{self._pman.hostmsg} (file '{path}'):\n"
+                                f"{err.indent(2)}") from err
