@@ -62,19 +62,31 @@ def get_project_helpers_envar(prjname: str) -> str:
     name = prjname.replace("-", "_").upper()
     return f"{name}_HELPERSPATH"
 
-def get_python_data_package_path(prjname: str) -> Path | None:
+def _get_project_data_package_name(prjname: str) -> str:
     """
-    Return the path to the package directory of the given project. The path is in the standard
-    python "site-packages" directory of the running program.
+    Return the standard python package name for the data package of the given project.
 
     Args:
-        prjname: Project name.
+        prjname: Python project name.
+
+    Returns:
+        Standard python package name for the project data package.
+    """
+
+    return prjname.replace("-", "") + "data"
+
+def _get_python_data_package_path(pkgname: str) -> Path | None:
+    """
+    Return the full path to a python package. The path is in the standard python "site-packages"
+    directory of the running program.
+
+    Args:
+        pkgname: Python package name.
 
     Returns:
         Path to the package directory.
     """
 
-    pkgname = prjname.replace("-", "") + "data"
     pkgpath: Path | None = None
     try:
         with contextlib.suppress(ModuleNotFoundError):
@@ -92,8 +104,9 @@ def get_python_data_package_path(prjname: str) -> Path | None:
 
     return None
 
-def search_project_data(subpath: str,
-                        tpath: str | Path,
+def search_project_data(tpath: str | Path,
+                        prjname: str = "",
+                        pkgname: str = "",
                         pman: ProcessManagerType | None = None,
                         what: str | None = None,
                         envars: Sequence[str] | None = None) -> Generator[Path, None, None]:
@@ -103,25 +116,29 @@ def search_project_data(subpath: str,
     predefined search locations.
 
     The search order is as follows:
-        1. Local host only: the directory of the running program (e.g., if the program is
-           '/bar/baz/foo', check '/bar/baz/<tpath>', if it exists, yield the path).
-        2. Directories specified by environment variables in 'envars' (e.g., if an environment
-           variable from 'envars' is set to '/foo/bar/', check '/foo/bar/<tpath>', and if it
-           exists, yield the path).
+        1. Local host only: the directory of the running program. For example, if the program is
+           '/bar/baz/foo':
+           - Check '/bar/baz/<tpath>', if it exists, yield the path.
+           - Check '/bar/baz/<pkgname>/<tpath>', if it exists, yield the path.
+        2. Directories specified by environment variables in 'envars'. For example, if an
+           environment variable from 'envars' is set to '/foo/bar/':
+           - Check '/foo/bar/<tpath>', if it exists, yield the path.
+           - Check '/foo/bar/<pkgname>/<tpath>', if it exists, yield the path.
         3. Local host only: the standard python "site-packages" directory of the running program.
-           Search for python package '<subpath>data'. For example, if the program site-packages
-           directory is '/base_dir/lib/python3.12/site-packages', and 'subpath' is 'xyz', check
-           '/base_dir/lib/python3.12/<subpath>xyz', and if it exists, yield the path.
-        4. '$VIRTUAL_ENV/share/<subpath>/<tpath>', if 'VIRTUAL_ENV' is set.
-        5. '$HOME/.local/share/<subpath>/<tpath>', if 'HOME' is set.
-        6. '$HOME/share/<subpath>/<tpath>', if 'HOME' is set.
-        7. '/usr/local/share/<subpath>/<tpath>'.
-        8. '/usr/share/<subpath>/<tpath>'.
-
+           For example, if the python "site-packages" directory is
+           '/base_dir/lib/python3.12/site-packages', and, check
+           '/base_dir/lib/python3.12/site-packages/<pkgname>', if it exists, yield the path.
+        4. '$VIRTUAL_ENV/share/<prjname>/<tpath>', if 'VIRTUAL_ENV' is set.
+        5. '$HOME/.local/share/<prjname>/<tpath>', if 'HOME' is set.
+        6. '$HOME/share/<prjname>/<tpath>', if 'HOME' is set.
+        7. '/usr/local/share/<prjname>/<tpath>'.
+        8. '/usr/share/<prjname>/<tpath>'.
     Args:
-        subpath: Sub-path to append to the searched paths (used only for some of the predefined
-                 locations).
         tpath: The sub-path (last part of the full path) to the project data to search for.
+        prjname: Name of the project whose data directory is being searched. If not given, paths
+                 including "<prjname>" will not be searched.
+        pkgname: The python package name for the project data. If not given, generated from
+                 'prjname'.
         pman: Process manager object for the host to search on (defaults to local host).
         what: Human-readable description of what is being searched for, used in error messages.
         envars: Collection of environment variable names that may define custom search paths.
@@ -133,136 +150,129 @@ def search_project_data(subpath: str,
         ErrorNotFound: If project data cannot be found in any of the searched locations.
     """
 
-    searched = []
+    if not prjname and not pkgname:
+        raise Error("BUG: Either 'prjname' or 'pkgname' argument must be given")
+
+    if not pkgname:
+        pkgname = _get_project_data_package_name(prjname)
+
+    candidates: list[Path] = []
     yield_count = 0
-    candidates = []
+
+    check_candidates: list[Path]
 
     with ProcessManager.pman_or_local(pman) as wpman:
         # Check the directory of the running program first.
         if not wpman.is_remote:
-            candidate = Path(sys.argv[0]).parent.resolve().absolute() / tpath
-            candidates.append(candidate)
-            if wpman.exists(candidate):
-                _LOG.debug(f"Found '{tpath}' in the program directory: {candidate}")
-                yield_count += 1
-                yield candidate
+            check_candidates = [Path(sys.argv[0]).parent.resolve().absolute() / tpath]
+            if pkgname:
+                path_with_pkgname = Path(sys.argv[0]).parent.resolve().absolute() / pkgname / tpath
+                check_candidates.append(path_with_pkgname)
+
+            for candidate in check_candidates:
+                candidates.append(candidate)
+                if wpman.exists(candidate):
+                    _LOG.debug(f"Found '{tpath}' in the program directory: {candidate}")
+                    yield_count += 1
+                    yield candidate
 
         if envars:
             # Check the directories specified by the environment variables.
             for envar in envars:
-                path = wpman.get_envar(envar)
-                if not path:
-                    path = os.environ.get(envar)
-                if not path:
+                envvar_path = wpman.get_envar(envar)
+                if not envvar_path:
+                    envvar_path = os.environ.get(envar)
+                if not envvar_path:
                     continue
 
-                candidate = Path(path) / tpath
+                check_candidates = [Path(envvar_path) / tpath]
+                if pkgname:
+                    check_candidates.append(Path(envvar_path) / pkgname / tpath)
+                for candidate in check_candidates:
+                    candidates.append(candidate)
+                    if wpman.exists(candidate):
+                        _LOG.debug(f"Found '{tpath}' in the '{envar}' environment variable: "
+                                   f"{candidate}")
+                        yield_count += 1
+                        yield candidate
+
+        if pkgname:
+            if not wpman.is_remote:
+                # Check the standard python "site-packages" directory of the running program.
+                pkgpath = _get_python_data_package_path(pkgname)
+                if pkgpath:
+                    candidate = pkgpath / tpath
+                    candidates.append(candidate)
+                    if wpman.exists(candidate):
+                        _LOG.debug(f"Found '{tpath}' in the python package directory: {candidate}")
+                        yield_count += 1
+                        yield candidate
+
+        if prjname:
+            venvdir = wpman.get_envar("VIRTUAL_ENV")
+            if venvdir:
+                # Check the virtual environment directory.
+                candidate = Path(venvdir) / f"share/{prjname}/{tpath}"
                 candidates.append(candidate)
                 if wpman.exists(candidate):
-                    _LOG.debug(f"Found '{tpath}' in the '{envar}' environment variable: "
-                               f"{candidate}")
+                    _LOG.debug(f"Found '{tpath}' in the virtual environment directory: {candidate}")
                     yield_count += 1
                     yield candidate
 
-        if not wpman.is_remote:
-            # Check the standard python "site-packages" directory of the running program.
-            pkgpath = get_python_data_package_path(subpath)
-            if pkgpath:
-                candidate = pkgpath / tpath
+            homedir = wpman.get_envar("HOME")
+            if homedir:
+                # Check the home directory.
+                candidate = Path(homedir) / f".local/share/{prjname}/{tpath}"
                 candidates.append(candidate)
                 if wpman.exists(candidate):
-                    _LOG.debug(f"Found '{tpath}' in the python package directory: {candidate}")
+                    _LOG.debug(f"Found '{tpath}' in the home directory: {candidate}")
                     yield_count += 1
                     yield candidate
 
-        venvdir = wpman.get_envar("VIRTUAL_ENV")
-        if venvdir:
-            # Check the virtual environment directory.
-            candidate = Path(venvdir) / f"share/{subpath}/{tpath}"
+                candidate = Path(homedir) / f"share/{prjname}/{tpath}"
+                candidates.append(candidate)
+                if wpman.exists(candidate):
+                    _LOG.debug(f"Found '{tpath}' in the home directory: {candidate}")
+                    yield_count += 1
+                    yield candidate
+
+            # Check the system directories.
+            candidate = Path(f"/usr/local/share/{prjname}/{tpath}")
             candidates.append(candidate)
             if wpman.exists(candidate):
-                _LOG.debug(f"Found '{tpath}' in the virtual environment directory: {candidate}")
+                _LOG.debug(f"Found '{tpath}' in the system directory: {candidate}")
                 yield_count += 1
                 yield candidate
 
-        homedir = wpman.get_envar("HOME")
-        if homedir:
-            # Check the home directory.
-            candidate = Path(homedir) / f".local/share/{subpath}/{tpath}"
+            # Check the system directories.
+            candidate = Path(f"/usr/share/{prjname}/{tpath}")
             candidates.append(candidate)
             if wpman.exists(candidate):
-                _LOG.debug(f"Found '{tpath}' in the home directory: {candidate}")
+                _LOG.debug(f"Found '{tpath}' in the system directory: {candidate}")
                 yield_count += 1
                 yield candidate
-
-            candidate = Path(homedir) / f"share/{subpath}/{tpath}"
-            candidates.append(candidate)
-            if wpman.exists(candidate):
-                _LOG.debug(f"Found '{tpath}' in the home directory: {candidate}")
-                yield_count += 1
-                yield candidate
-
-        # Check the system directories.
-        candidate = Path(f"/usr/local/share/{subpath}/{tpath}")
-        candidates.append(candidate)
-        if wpman.exists(candidate):
-            _LOG.debug(f"Found '{tpath}' in the system directory: {candidate}")
-            yield_count += 1
-            yield candidate
-
-        # Check the system directories.
-        candidate = Path(f"/usr/share/{subpath}/{tpath}")
-        candidates.append(candidate)
-        if wpman.exists(candidate):
-            _LOG.debug(f"Found '{tpath}' in the system directory: {candidate}")
-            yield_count += 1
-            yield candidate
 
         if yield_count > 0:
             return
 
         if not what:
-            what = f"'{subpath}/{tpath}'"
+            if prjname:
+                what = f"'{prjname}' project data '{tpath}'"
+            else:
+                what = f"'{pkgname}/{tpath}'"
+
         searched = [str(path) for path in candidates]
         dirs = " * " + "\n * ".join(searched)
 
-        if envars:
-            envar_msg = f"\nIt is possible to specify a custom location for {what} using "
-            if len(envars) == 1:
-                envar_msg += f"the '{envars[0]}' environment variable"
-            else:
-                envars = ", ".join(envars)
-                envar_msg += f"the one of the following environment variables: {envars}"
-        else:
-            envar_msg = ""
-
         raise ErrorNotFound(f"Cannot find {what}{wpman.hostmsg}, searched in the following "
-                            f"locations:\n{dirs}.{envar_msg}")
+                            f"locations:\n{dirs}")
 
 def find_project_data(prjname: str,
                       tpath: str | Path,
                       pman: ProcessManagerType | None = None,
                       what: str | None = None) -> Path:
     """
-    Search for project data in a predefined set of locations and return the first found path. The
-    data to search are defined by the 'tpath' argument, which is the sub-path to append to the
-    predefined search locations.
-
-    The search order is as follows:
-        1. Local host only: the directory of the running program (e.g., if the program is
-           '/bar/baz/foo', check '/bar/baz/<tpath>', if it exists, return the path).
-        2. The directory specified by the '<prjname>_DATA_PATH' environment variable. (e.g., if the
-           environment variable from is set to '/foo/bar/', check '/foo/bar/<tpath>', and if it
-           exists, return the path).
-        3. Local host only: the standard python "site-packages" directory of the running program,
-           search for python package '<prjname>data'. For example, if the program site-packages
-           directory is '/base_dir/lib/python3.12/site-packages', and project name is 'foo', check
-           '/base_dir/lib/python3.12/foodata', and if it exists, yield the path.
-        3. '$VIRTUAL_ENV/share/<subpath>/<tpath>', if 'VIRTUAL_ENV' is set.
-        4. '$HOME/.local/share/<prjname>/'.
-        5. '$HOME/share/<prjname>/'.
-        6. '/usr/local/share/<prjname>/'.
-        7. '/usr/share/<prjname>/'.
+    Similar to 'search_project_data()', but return only the first found path.
 
     Args:
         prjname: Name of the project whose data directory is being searched.
@@ -277,8 +287,17 @@ def find_project_data(prjname: str,
         ErrorNotFound: If project data cannot be found in any of the searched locations.
     """
 
-    return next(search_project_data(prjname, tpath, pman=pman, what=what,
-                                    envars=(get_project_data_envar(prjname),)))
+    envar = get_project_data_envar(prjname)
+
+    try:
+        return next(search_project_data(tpath, prjname=prjname, pman=pman, what=what,
+                                        envars=(envar,)))
+    except ErrorNotFound as err:
+        if not what:
+            what = f"'{prjname}' project data '{tpath}'"
+        envar_msg = f"\nIt is possible to specify a custom location for {what} using the " \
+                    f"'{envar}' environment variable"
+        raise type(err)(str(err) + envar_msg) from err
 
 def get_project_data_search_descr(prjname: str, tpath: str | Path) -> str:
     """
@@ -294,11 +313,15 @@ def get_project_data_search_descr(prjname: str, tpath: str | Path) -> str:
     """
 
     envar = get_project_data_envar(prjname)
+    pkgname = _get_project_data_package_name(prjname)
+    pkgpath = _get_python_data_package_path(pkgname)
 
-    paths = [f"{Path(sys.argv[0]).parent}/{tpath} (local host only)",
-             f"${envar}/{tpath}"]
+    proc_path = Path(sys.argv[0]).parent.resolve().absolute()
+    paths = [f"{proc_path}/{tpath} (local host only)",
+             f"{proc_path}/{pkgname}/{tpath} (local host only)",
+             f"${envar}/{tpath}",
+             f"${envar}/{pkgname}/{tpath}"]
 
-    pkgpath = get_python_data_package_path(prjname)
     if pkgpath:
         paths.append(f"{pkgpath}/{tpath} (local host only)")
 

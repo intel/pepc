@@ -1013,7 +1013,7 @@ def _get_next_dataset(dataset: str) -> Generator[Path, None, None]:
 
     datasets: dict[str, Path] = {}
 
-    for base in ProjectFiles.search_project_data(TOOLNAME, "tests/emul-data",
+    for base in ProjectFiles.search_project_data("tests/emul-data", prjname=TOOLNAME,
                                                  what=f"{TOOLNAME} dataset"):
         for name in os.listdir(base):
             if name == "common":
