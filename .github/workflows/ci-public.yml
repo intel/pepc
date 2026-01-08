@@ -1,5 +1,8 @@
 # Name of the workflow, visible in the GitHub Actions UI
 name: "CI public"
+permissions:
+  contents: "read"
+
 # Define the events that trigger this workflow
 on:
   # Trigger on push events
