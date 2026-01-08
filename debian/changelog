@@ -1,3 +1,12 @@
+pepc (1.6.13) unstable; urgency=low
+
+  * Fix 'pepc pstates' crash on Lunar Lake.
+  * Make 'info' commands (e.g. pepc pstates info) not fail when permission is
+    denied to read certain properties. Instead, print "Permission denied" for
+    such properties and continue.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Thu, 08 Jan 2026 00:00:00 +0200
+
 pepc (1.6.12) unstable; urgency=low
 
   * Multiple minor bug fixes in 'pepc tpmi'.

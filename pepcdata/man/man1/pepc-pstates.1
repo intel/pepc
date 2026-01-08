@@ -184,12 +184,66 @@ while \[aq]msr\[aq] reads the MSR_HWP_REQUEST (0x774) register, bits
 15:8.
 .TP
 \f[B]\-\-min\-freq\-limit\f[R]
-Retrieve the minimum CPU frequency supported by the Linux kernel from
+Retrieve the minimum supported CPU frequency using the \[aq]sysfs\[aq],
+\[aq]msr\[aq], and \[aq]cppc\[aq] mechanisms.
+.RS
+.PP
+The \[aq]sysfs\[aq] mechanism returns the minimum CPU frequency
+supported by the Linux kernel, it reads
 \[dq]/sys/devices/system/cpu/cpu<NUMBER>/cpufreq/cpuinfo_min_freq\[dq].
+.PP
+The \[aq]msr\[aq] mechanism reads MSR_PLATFORM_INFO (0xCE), bits 55:48.
+.PP
+The \[aq]cppc\[aq] mechanism reads
+\[aq]/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/lowest_freq\[aq].
+If unavailable, on non\-Intel platforms the frequency is calculated as
+\[dq]nominal_freq * lowest_perf / nominal_perf\[dq] using values from:
+nominal_freq:
+\[aq]/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/nominal_freq\[aq],
+lowest_perf:
+\[aq]/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/lowest_perf\[aq],
+nominal_perf:
+\[aq]/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/nominal_perf\[aq].
+.RE
 .TP
 \f[B]\-\-max\-freq\-limit\f[R]
-Retrieve the maximum CPU frequency supported by the Linux kernel from
+Retrieve the maximum supported CPU frequency using the \[aq]sysfs\[aq],
+\[aq]msr\[aq], and \[aq]cppc\[aq] mechanisms.
+.RS
+.PP
+The \[aq]sysfs\[aq] mechanism returns the maximum CPU frequency
+supported by the Linux kernel, it reads
 \[dq]/sys/devices/system/cpu/cpu<NUMBER>/cpufreq/cpuinfo_max_freq\[dq].
+.PP
+The \[aq]msr\[aq] mechanism retrieves the highest 1\-core turbo, also
+known as P01.
+If HWP (Hardware P\-states) is enabled, the \[aq]msr\[aq] mechanism
+reads MSR_HWP_CAPABILITIES (0x771), bits 7:0, otherwise reads
+MSR_TURBO_RATIO_LIMIT (0x1AD), bits 7:0.
+.PP
+The \[aq]cppc\[aq] mechanism reads
+\[aq]/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/highest_freq\[aq].
+If unavailable, on non\-Intel platforms the frequency is calculated as
+\[dq]nominal_freq * highest_perf / nominal_perf\[dq] using values from:
+nominal_freq:
+\[aq]/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/nominal_freq\[aq],
+highest_perf:
+\[aq]/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/highest_perf\[aq],
+nominal_perf:
+\[aq]/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/nominal_perf\[aq].
+.RE
+.TP
+\f[B]\-\-max\-turbo\-freq\f[R]
+Same as \[aq]\-\-max\-freq\-limit\[aq] with the \[aq]msr\[aq] mechanism
+only.
+Retrieves the maximum supported CPU turbo frequency.
+.TP
+\f[B]\-\-hwp\f[R]
+Check if hardware power management is enabled.
+When enabled, CPUs can scale their frequency automatically without OS
+involvement.
+Mechanism: \[aq]msr\[aq], reads MSR_PM_ENABLE (0x770), bit 0.
+This setting has global scope.
 .TP
 \f[B]\-\-frequencies\f[R]
 List CPU frequencies supported by the Linux kernel for
@@ -203,19 +257,15 @@ from \[aq]\-\-min\-freq\-limit\[aq] to \[aq]\-\-max\-freq\-limit\[aq]
 are available with a step equal to \[aq]\-\-bus\-clock\[aq].
 .TP
 \f[B]\-\-base\-freq\f[R]
-Retrieve the base CPU frequency, also known as the \[dq]guaranteed
-frequency,\[dq] HFM (High Frequency Mode), or P1.
-The supported mechanisms are: \[aq]sysfs\[aq], \[aq]cppc\[aq],
-\[aq]msr\[aq].
+Retrieve the base CPU frequency, also known as HFM (High Frequency
+Mode), or P1.
+The supported mechanisms are: \[aq]sysfs\[aq], \[aq]msr\[aq].
 .RS
 .PP
 The preferred mechanism is \[aq]sysfs\[aq], which reads
 \[aq]/sys/devices/system/cpu/cpu<NUMBER>/cpufreq/base_frequency\[aq].
 If the file is unavailable, it falls back to
 \[aq]/sys/devices/system/cpu/cpu<NUMBER>/cpufreq/bios_limit\[aq].
-.PP
-The \[aq]cppc\[aq] mechanism read the
-\[aq]/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/nominal_freq\[aq].
 .PP
 The \[aq]msr\[aq] mechanism reads the base CPU frequency from the
 MSR_HWP_CAPABILITIES (0x771), bits 15:8 if CPU hardware power management
@@ -229,30 +279,6 @@ legacy Intel platforms.
 For modern Intel platforms, the \[aq]doc\[aq] mechanism assumes a 100MHz
 bus clock.
 .TP
-\f[B]\-\-min\-oper\-freq\f[R]
-Retrieve the minimum CPU operating frequency, the lowest frequency the
-CPU can operate at.
-This frequency, also known as Pm, may not always be directly available
-to the OS but can be used by the platform in certain scenarios (e.g.,
-some C\-states).
-The supported mechanisms are: \[aq]msr\[aq], \[aq]cppc\[aq].
-.RS
-.PP
-The \[aq]msr\[aq] mechanism: \[aq]msr\[aq], reads MSR_PLATFORM_INFO
-(0xCE), bits 55:48.
-.PP
-The \[aq]cppc\[aq] mechanism reads
-\[aq]/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/lowest_freq\[aq].
-If unavailable, on non\-Intel platforms the frequency is calculated as
-\[dq]base_freq * lowest_perf / nominal_perf\[dq] using values from:
-base_freq:
-\[aq]/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/nominal_freq\[aq],
-lowest_perf:
-\[aq]/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/lowest_perf\[aq],
-nominal_perf:
-\[aq]/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/nominal_perf\[aq].
-.RE
-.TP
 \f[B]\-\-turbo\f[R]
 Check if turbo is enabled or disabled.
 When enabled, CPUs can run at frequencies above the base frequency if
@@ -261,36 +287,6 @@ Reads the sysfs file based on the CPU frequency driver: intel_pstate \-
 \[aq]/sys/devices/system/cpu/intel_pstate/no_turbo\[aq], acpi\-cpufreq
 \-\[aq]/sys/devices/system/cpu/cpufreq/boost\[aq].
 The setting has global scope.
-.TP
-\f[B]\-\-max\-turbo\-freq\f[R]
-Retrieve the maximum turbo frequency \- the highest frequency a single
-CPU can run on.
-Also known as max 1\-core turbo or P01.
-The supported mechanisms are: \[aq]msr\[aq], \[aq]cppc\[aq].
-.RS
-.PP
-The \[aq]msr\[aq] mechanism reads MSR_HWP_CAPABILITIES (0x771), bits 7:0
-if hardware power management is enabled, otherwise reads
-MSR_TURBO_RATIO_LIMIT (0x1AD), bits 7:0.
-.PP
-The \[aq]cppc\[aq] mechanism reads
-\[aq]/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/highest_freq\[aq].
-If unavailable, on non\-Intel platforms the frequency is calculated as
-\[dq]base_freq * highest_perf / nominal_perf\[dq] using values from:
-base_freq:
-\[aq]/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/nominal_freq\[aq],
-highest_perf:
-\[aq]/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/highest_perf\[aq],
-nominal_perf:
-\[aq]/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/nominal_perf\[aq].
-.RE
-.TP
-\f[B]\-\-hwp\f[R]
-Check if hardware power management is enabled.
-When enabled, CPUs can scale their frequency automatically without OS
-involvement.
-Mechanism: \[aq]msr\[aq], reads MSR_PM_ENABLE (0x770), bit 0.
-This setting has global scope.
 .TP
 \f[B]\-\-epp\f[R]
 Retrieve EPP (Energy Performance Preference) using \[aq]sysfs\[aq]
@@ -390,22 +386,6 @@ frequency.
 Regardless of the \[aq]\-\-mechanisms\[aq] option, all available
 mechanisms are tried to resolve these special values to the actual base
 frequency.
-\f[B]Pm\f[R] Minimum CPU operating frequency (see
-\[aq]\-\-min\-oper\-freq\[aq]).
-Regardless of the \[aq]\-\-mechanisms\[aq] option, the \[aq]msr\[aq]
-mechanism is always used to resolve these special values to the actual
-minimum CPU operating frequency.
-.PP
-Note, on some systems \[aq]Pm\[aq] is lower than \[aq]Pn\[aq].
-For example, \[aq]Pm\[aq] may be 500MHz, while \[aq]Pn\[aq] may be
-800MHz.
-On such systems, Linux may use \[aq]Pn\[aq] as the minimum supported
-frequency limit.
-From Linux\[aq]s perspective, the minimum supported frequency is 800MHz,
-not 500MHz.
-In this case, using \[aq]\-\-min\-freq 500MHz \-\-mechanisms sysfs\[aq]
-will fail, while \[aq]\-\-min\-freq 500MHz \-\-mechanisms msr\[aq] will
-succeed.
 .RE
 .TP
 \f[B]\-\-max\-freq\f[R] \f[I]MAX_FREQ\f[R]
