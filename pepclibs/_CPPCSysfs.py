@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2023-2025 Intel Corporation
+# Copyright (C) 2023-2026 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
-Provide a capability for reading and CPU frequency settings from ACPI CPPC via Linux sysfs.
+Provide a capability for reading ACPI CPPC properties via Linux sysfs.
 """
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
@@ -23,16 +23,25 @@ if typing.TYPE_CHECKING:
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepclibs.CPUInfoTypes import AbsNumsType
 
-    FreqType = Literal["min", "max", "nominal"]
+    PerfLevelNameType = Literal["lowest", "lowest_nonlinear", "guaranteed", "nominal", "highest"]
+
+_PERF_LEVEL_NAMES: set[PerfLevelNameType] = {
+    "lowest",
+    "lowest_nonlinear",
+    "guaranteed",
+    "nominal",
+    "highest",
+}
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
-class CPUFreqCPPC(ClassHelpers.SimpleCloseContext):
+class CPPCSysfs(ClassHelpers.SimpleCloseContext):
     """
     Provide a capability to read CPU frequency and performance information from ACPI CPPC via Linux
     sysfs.
 
     Public Methods:
+        TODO: update
         - get_min_freq_limit(cpus): Yield minimum frequency limits for CPUs from ACPI CPPC.
         - get_max_freq_limit(cpus): Yield maximum frequency limits for CPUs from ACPI CPPC.
         - get_nominal_freq(cpus): Yield nominal frequency for CPUs from ACPI CPPC.
@@ -71,10 +80,6 @@ class CPUFreqCPPC(ClassHelpers.SimpleCloseContext):
         self._close_sysfs_io = sysfs_io is None
 
         self._sysfs_base = Path("/sys/devices/system/cpu")
-
-        # The min. and max frequency limit files are often problematic. This flag helps to avoid
-        # repeated read attempts.
-        self._min_max_freq_supported = True
 
         if not pman:
             self._pman = LocalProcessManager.LocalProcessManager()
@@ -152,45 +157,81 @@ class CPUFreqCPPC(ClassHelpers.SimpleCloseContext):
         self._sysfs_io.cache_add(path, str(val))
         return val
 
-    def get_min_perf_limit(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
+    def _get_perf_level(self, plname: PerfLevelNameType,
+                        cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
-        Retrieve and yield the the minimum performance level limit for specified CPUs.
+        Retrieve and yield the performance level value for specified CPUs and performance level
+        name.
 
         Args:
-            cpus: CPU numbers to get the minimum performance level limit for.
+            plname: Name of the performance level to retrieve (e.g., "nominal").
+            cpus: CPU numbers to get the performance level value for.
 
         Yields:
-            Tuple of (cpu, val), where 'cpu' is the CPU number and 'val' is its minimum performance
-            level limit.
+            Tuple of (cpu, value), where 'cpu' is the CPU number and 'value' is the performance
+            level.
+        """
+
+        if plname not in _PERF_LEVEL_NAMES:
+            raise Error(f"BUG: Unknown performance level name '{plname}'")
+
+        fname = f"{plname}_perf"
+
+        for cpu in cpus:
+            val = self._read_cppc_sysfs_file(cpu, fname, f"{plname} CPU {cpu} performance")
+            yield cpu, val
+
+    def get_lowest_perf(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
+        """
+        Retrieve and yield the lowest performance level value for specified CPUs.
+
+        Args:
+            cpus: CPU numbers to get the lowest performance level value for.
+
+        Yields:
+            Tuple (cpu, value), where 'cpu' is the CPU number and 'value' is the lowest performance
+            level.
 
         Raises:
             ErrorNotSupported: If the ACPI CPPC sysfs file does not exist.
         """
 
-        for cpu in cpus:
-            what = f"min. CPU {cpu} performance limit"
-            val = self._read_cppc_sysfs_file(cpu, "lowest_perf", what)
-            yield cpu, val
+        yield from self._get_perf_level("lowest", cpus)
 
-    def get_max_perf_limit(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
+    def get_lowest_nonlinear_perf(self,
+                                  cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
-        Retrieve and yield the the maximum performance level limit for specified CPUs.
+        Retrieve and yield the lowest_nonlinear performance level value for specified CPUs.
 
         Args:
-            cpus: CPU numbers to get the maximum performance level limit for.
+            cpus: CPU numbers to get the lowest_nonlinear performance level value for.
 
         Yields:
-            Tuple of (cpu, val), where 'cpu' is the CPU number and 'val' is its maximum performance
-            level limit.
+            Tuple (cpu, value), where 'cpu' is the CPU number and 'value' is the lowest nonlinear
+            performance level.
 
         Raises:
             ErrorNotSupported: If the ACPI CPPC sysfs file does not exist.
         """
 
-        for cpu in cpus:
-            what = f"max. CPU {cpu} performance limit"
-            val = self._read_cppc_sysfs_file(cpu, "highest_perf", what)
-            yield cpu, val
+        yield from self._get_perf_level("lowest_nonlinear", cpus)
+
+    def get_guaranteed_perf(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
+        """
+        Retrieve and yield the guaranteed performance level value for specified CPUs.
+
+        Args:
+            cpus: CPU numbers to get the guaranteed performance level value for.
+
+        Yields:
+            Tuple (cpu, value), where 'cpu' is the CPU number and 'value' is the guaranteed
+            performance level.
+
+        Raises:
+            ErrorNotSupported: If the ACPI CPPC sysfs file does not exist.
+        """
+
+        yield from self._get_perf_level("guaranteed", cpus)
 
     def get_nominal_perf(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
@@ -207,115 +248,48 @@ class CPUFreqCPPC(ClassHelpers.SimpleCloseContext):
             ErrorNotSupported: If the ACPI CPPC sysfs file does not exist.
         """
 
-        for cpu in cpus:
-            val = self._read_cppc_sysfs_file(cpu, "nominal_perf", f"nominal CPU {cpu} performance")
-            yield cpu, val
+        yield from self._get_perf_level("nominal", cpus)
+
+    def get_highest_perf(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
+        """
+        Retrieve and yield the highest performance level value for specified CPUs.
+
+        Args:
+            cpus: CPU numbers to get the highest performance level value for.
+
+        Yields:
+            Tuple (cpu, value), where 'cpu' is the CPU number and 'value' is the highest performance
+            level.
+
+        Raises:
+            ErrorNotSupported: If the ACPI CPPC sysfs file does not exist.
+        """
+
+        yield from self._get_perf_level("highest", cpus)
 
     def _get_freq(self,
                   cpus: AbsNumsType,
-                  ftype: FreqType) -> Generator[tuple[int, int], None, None]:
+                  plname: PerfLevelNameType) -> Generator[tuple[int, int], None, None]:
         """
-        Retrieve and yield or specified CPUs.
+        Retrieve and yield the frequency for specified CPUs and performance level name.
 
         Args:
             cpus: CPU numbers to get the frequency limit for.
-            ltype: Type of frequency to retrieve (e.g., "min").
+            plname: Name of the performance level to retrieve (e.g., "nominal").
 
         Yields:
             Tuple of (cpu, frequency), where 'cpu' is the CPU number and 'frequency' is the
             frequency in Hz.
         """
 
-        if ftype == "min":
-            fname = "lowest_freq"
-        elif ftype == "max":
-            fname = "highest_freq"
-        elif ftype == "nominal":
-            fname = "nominal_freq"
-        else:
-            raise Error(f"BUG: Unknown frequency type '{ftype}'")
+        if plname not in _PERF_LEVEL_NAMES:
+            raise Error(f"BUG: Unknown performance level name '{plname}'")
 
-        if ftype == "nominal" or self._min_max_freq_supported:
-            yielded = False
-            try:
-                for cpu in cpus:
-                    val = self._read_cppc_sysfs_file(cpu, fname,
-                                                     f"{ftype} CPU {cpu} frequency")
-                    yield cpu, val * 1000 * 1000
-                    yielded = True
-            except Error:
-                if yielded:
-                    # Something was yielded, do not try to recover from the error.
-                    raise
-                if ftype == "nominal":
-                    # The nominal frequency file is not available, do not try to recover either,
-                    # because the recovery method requires the nominal frequency.
-                    raise
-                if self._cpuinfo.info["vendor"] != "GenuineIntel":
-                    # I did not see the recovery method giving realistic results on Intel CPUs, but
-                    # it seems to give correct results on AMD Server CPUs (checked Rome, Milan,
-                    # Genoa).
-                    raise
-
-                # Do not try reading frequency files again.
-                self._min_max_freq_supported = False
-
-            if self._min_max_freq_supported:
-                # All frequencies were read and yielded successfully.
-                return
-
-        # Reading min/max frequency files failed. Try to compute the frequency from the performance
-        # values and the nominal frequency.
-        if ftype == "min":
-            fname = "lowest_perf"
-        else:
-            fname = "highest_perf"
+        fname = f"{plname}_freq"
 
         for cpu in cpus:
-            nominal_freq = self._read_cppc_sysfs_file(cpu, "nominal_freq",
-                                                      f"nominal CPU {cpu} frequency")
-            nominal_perf = self._read_cppc_sysfs_file(cpu, "nominal_perf",
-                                                   f"nominal CPU {cpu} performance")
-            perf = self._read_cppc_sysfs_file(cpu, fname, f"{ftype} CPU {cpu} performance limit")
-
-            freq = int(nominal_freq * perf / nominal_perf)
-            # Round down to the nearest 100MHz.
-            freq = freq - (freq % 100)
-            yield cpu, freq * 1000 * 1000
-
-    def get_min_freq_limit(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
-        """
-        Retrieve and yield the minimum frequency limit for specified CPUs.
-
-        Args:
-            cpus: CPU numbers to get the minimum frequency limit for.
-
-        Yields:
-            Tuple of (cpu, frequency), where 'cpu' is the CPU number and 'frequency' is the minimum
-            frequency limit in Hz.
-
-        Raises:
-            ErrorNotSupported: If the ACPI CPPC CPU frequency sysfs file does not exist.
-        """
-
-        yield from self._get_freq(cpus, "min")
-
-    def get_max_freq_limit(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
-        """
-        Retrieve and yield the maximum frequency limit for specified CPUs.
-
-        Args:
-            cpus: CPU numbers to get the maximum frequency limit for.
-
-        Yields:
-            Tuple of (cpu, frequency), where 'cpu' is the CPU number and 'frequency' is the maximum
-            frequency limit in Hz.
-
-        Raises:
-            ErrorNotSupported: If the ACPI CPPC CPU frequency sysfs file does not exist.
-        """
-
-        yield from self._get_freq(cpus, "max")
+            val = self._read_cppc_sysfs_file(cpu, fname, f"{plname} CPU {cpu} frequency")
+            yield cpu, val * 1000 * 1000
 
     def get_nominal_freq(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """

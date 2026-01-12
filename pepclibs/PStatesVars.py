@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2025 Intel Corporation
+# Copyright (C) 2020-2026 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
@@ -79,20 +79,20 @@ PROPS: Final[dict[str, PropertyTypedDict]] = {
         "mnames": ("sysfs",),
         "writable": False,
     },
-    "bus_clock": {
-        "name": "Bus clock speed",
-        "unit": "Hz",
-        "type": "int",
-        "sname": None,
-        "mnames": ("msr", "doc"),
-        "writable": False,
-    },
     "frequencies": {
         "name": "Acceptable CPU frequencies",
         "unit": "Hz",
         "type": "list[int]",
         "sname": "CPU",
         "mnames": ("sysfs",),
+        "writable": False,
+    },
+    "bus_clock": {
+        "name": "Bus clock speed",
+        "unit": "Hz",
+        "type": "int",
+        "sname": None,
+        "mnames": ("msr", "doc"),
         "writable": False,
     },
     "hwp": {
@@ -141,6 +141,49 @@ PROPS: Final[dict[str, PropertyTypedDict]] = {
         "name": "Available CPU frequency governors",
         "type": "list[str]",
         "sname": "global",
+        "mnames": ("sysfs",),
+        "writable": False,
+    },
+    "cppc_lowest_perf": {
+        "name": "ACPI CPPC lowest performance level",
+        "type": "int",
+        "sname": "CPU",
+        "mnames": ("sysfs",),
+        "writable": False,
+    },
+    "cppc_lowest_nonlinear_perf": {
+        "name": "ACPI CPPC lowest nonlinear performance level",
+        "type": "int",
+        "sname": "CPU",
+        "mnames": ("sysfs",),
+        "writable": False,
+    },
+    "cppc_guaranteed_perf": {
+        "name": "ACPI CPPC guaranteed performance level",
+        "type": "int",
+        "sname": "CPU",
+        "mnames": ("sysfs",),
+        "writable": False,
+    },
+    "cppc_nominal_perf": {
+        "name": "ACPI CPPC nominal performance level",
+        "type": "int",
+        "sname": "CPU",
+        "mnames": ("sysfs",),
+        "writable": False,
+    },
+    "cppc_highest_perf": {
+        "name": "ACPI CPPC highest performance level",
+        "type": "int",
+        "sname": "CPU",
+        "mnames": ("sysfs",),
+        "writable": False,
+    },
+    "cppc_nominal_freq": {
+        "name": "ACPI CPPC nominal frequency",
+        "unit": "Hz",
+        "type": "int",
+        "sname": "CPU",
         "mnames": ("sysfs",),
         "writable": False,
     },

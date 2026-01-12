@@ -92,11 +92,6 @@ MECHANISMS: Final[dict[MechanismNameType, MechanismTypedDict]] = {
         "long":  "Model Specific Register (MSR)",
         "writable": True,
     },
-    "cppc" : {
-        "short": "ACPI CPPC",
-        "long":  "ACPI Collaborative Processor Performance Control (CPPC)",
-        "writable": False,
-    },
     "doc" : {
         "short": "Documentation",
         "long":  "Hardware documentation",

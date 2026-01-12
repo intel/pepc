@@ -27,7 +27,7 @@ from pepclibs._PropsClassBase import ErrorTryAnotherMechanism
 if typing.TYPE_CHECKING:
     from typing import NoReturn, Generator, Union, Sequence
     from pepclibs.msr import MSR, FSBFreq
-    from pepclibs import _CPUFreqSysfs, _CPUFreqCPPC, _CPUFreqMSR
+    from pepclibs import _CPUFreqSysfs, _CPPCSysfs, _CPUFreqMSR
     from pepclibs import _SysfsIO, EPP, EPB, CPUInfo
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepclibs._PropsTypes import PropertyValueType, MechanismNameType
@@ -57,7 +57,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         self._fsbfreq: FSBFreq.FSBFreq | None = None
 
         self._cpufreq_sysfs_obj: _CPUFreqSysfs.CPUFreqSysfs | None = None
-        self._cpufreq_cppc_obj: _CPUFreqCPPC.CPUFreqCPPC | None = None
+        self._cppc_sysfs_obj: _CPPCSysfs.CPPCSysfs | None = None
         self._cpufreq_msr_obj: _CPUFreqMSR.CPUFreqMSR | None= None
 
         self._perf2freq: dict[int, int] = {}
@@ -67,7 +67,7 @@ class PStates(_PropsClassBase.PropsClassBase):
     def close(self):
         """Uninitialize the class instance."""
 
-        close_attrs = ("_eppobj", "_epbobj", "_fsbfreq", "_cpufreq_sysfs_obj", "_cpufreq_cppc_obj",
+        close_attrs = ("_eppobj", "_epbobj", "_fsbfreq", "_cpufreq_sysfs_obj", "_cppc_sysfs_obj",
                        "_cpufreq_msr_obj")
         ClassHelpers.close(self, close_attrs=close_attrs)
 
@@ -146,23 +146,23 @@ class PStates(_PropsClassBase.PropsClassBase):
                                                                  enable_cache=self._enable_cache)
         return self._cpufreq_sysfs_obj
 
-    def _get_cpufreq_cppc_obj(self) -> _CPUFreqCPPC.CPUFreqCPPC:
+    def _get_cppc_sysfs_obj(self) -> _CPPCSysfs.CPPCSysfs:
         """
-        Get an 'CPUFreqCPPC' object.
+        Get a 'CPPCSysfs' object.
 
         Returns:
-            An instance of '_CPUFreqCPPC.CPUFreqCPPC'.
+            An instance of '_CPPCSysfs.CPPCSysfs'.
         """
 
-        if not self._cpufreq_cppc_obj:
+        if not self._cppc_sysfs_obj:
             # pylint: disable-next=import-outside-toplevel
-            from pepclibs import _CPUFreqCPPC
+            from pepclibs import _CPPCSysfs
 
             sysfs_io = self._get_sysfs_io()
-            self._cpufreq_cppc_obj = _CPUFreqCPPC.CPUFreqCPPC(cpuinfo=self._cpuinfo,
-                                                              pman=self._pman, sysfs_io=sysfs_io,
-                                                              enable_cache=self._enable_cache)
-        return self._cpufreq_cppc_obj
+            self._cppc_sysfs_obj = _CPPCSysfs.CPPCSysfs(cpuinfo=self._cpuinfo, pman=self._pman,
+                                                        sysfs_io=sysfs_io,
+                                                        enable_cache=self._enable_cache)
+        return self._cppc_sysfs_obj
 
     def _get_cpufreq_msr_obj(self) -> _CPUFreqMSR.CPUFreqMSR:
         """
@@ -513,6 +513,39 @@ class PStates(_PropsClassBase.PropsClassBase):
         else:
             raise Error(f"BUG: Unexpected mechanism '{mname}' for property 'bus_clock'")
 
+    def _get_cppc_perf_or_freq(self,
+                               pname: str,
+                               cpus: AbsNumsType,
+                               mname: MechanismNameType) -> Generator[tuple[int, int], None, None]:
+        """
+        Retrieve and yield CPPC performance or frequency values for the specified CPUs.
+
+        Args:
+            pname: Name of the property to retrieve.
+            cpus: CPU numbers to retrieve CPPC performance or frequency values for.
+            mname: Name of the mechanism to use for retrieving CPPC performance or frequency values
+                   (must be "sysfs").
+        """
+
+        if mname != "sysfs":
+            raise Error(f"BUG: Unexpected mechanism '{mname}' for property '{pname}'")
+
+        cppc_sysfs_obj = self._get_cppc_sysfs_obj()
+        if pname == "cppc_lowest_perf":
+            yield from cppc_sysfs_obj.get_lowest_perf(cpus)
+        elif pname == "cppc_lowest_nonlinear_perf":
+            yield from cppc_sysfs_obj.get_lowest_nonlinear_perf(cpus)
+        elif pname == "cppc_guaranteed_perf":
+            yield from cppc_sysfs_obj.get_guaranteed_perf(cpus)
+        elif pname == "cppc_nominal_perf":
+            yield from cppc_sysfs_obj.get_nominal_perf(cpus)
+        elif pname == "cppc_highest_perf":
+            yield from cppc_sysfs_obj.get_highest_perf(cpus)
+        elif pname == "cppc_nominal_freq":
+            yield from cppc_sysfs_obj.get_nominal_freq(cpus)
+        else:
+            raise Error(f"BUG: Unexpected CPPC property '{pname}'")
+
     def _get_turbo(self,
                    cpus: AbsNumsType,
                    mname: MechanismNameType) -> Generator[tuple[int, str], None, None]:
@@ -645,6 +678,9 @@ class PStates(_PropsClassBase.PropsClassBase):
             yield from self._get_frequencies(cpus, mname)
         elif pname == "bus_clock":
             yield from self._get_bus_clock(cpus, mname)
+        elif pname in {"cppc_lowest_perf", "cppc_lowest_nonlinear_perf", "cppc_guaranteed_perf",
+                       "cppc_nominal_perf", "cppc_highest_perf", "cppc_nominal_freq"}:
+            yield from self._get_cppc_perf_or_freq(pname, cpus, mname)
         elif pname == "turbo":
             yield from self._get_turbo(cpus, mname)
         elif pname == "driver":

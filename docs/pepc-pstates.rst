@@ -222,6 +222,30 @@ Use target CPU specification options to define a subset of CPUs, cores, dies, or
    governors are listed in
    '/sys/devices/system/cpu/cpufreq/policy<NUMBER>/scaling_available_governors'.
 
+**---cppc-lowest-perf**
+   Retrieve the ACPI CPPC lowest performance level value for specified CPUs from
+   '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/lowest_perf'.
+
+**---cppc-lowest-nonlinear-perf**
+   Retrieve the ACPI CPPC lowest nonlinear performance level value for specified CPUs from
+   '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/lowest_nonlinear_perf'.
+
+**---cppc-guaranteed-perf**
+   Retrieve the ACPI CPPC guaranteed performance level value for specified CPUs from
+   '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/guaranteed_perf'.
+
+**---cppc-nominal-perf**
+   Retrieve the ACPI CPPC nominal performance level value for specified CPUs from
+   '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/nominal_perf'.
+
+**---cppc-highest-perf**
+   Retrieve the ACPI CPPC highest performance level value for specified CPUs from
+   '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/highest_perf'.
+
+**---cppc-nominal-freq**
+   Retrieve the ACPI CPPC nominal frequency for specified CPUs from
+   '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/nominal_freq'.
+
 Subcommand *'config'*
 =====================
 
