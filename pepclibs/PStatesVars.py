@@ -20,7 +20,7 @@ if typing.TYPE_CHECKING:
     from pepclibs._PropsTypes import PropertyTypedDict
 
 # Special values for writable CPU frequency properties.
-_SPECIAL_FREQ_VALS = {"min", "max", "base", "hfm", "P1"}
+_SPECIAL_FREQ_VALS = {"min", "max", "base", "hfm"}
 
 # This properties dictionary defines the CPU properties supported by this module.
 #
@@ -42,7 +42,7 @@ PROPS: Final[dict[str, PropertyTypedDict]] = {
         "unit": "Hz",
         "type": "int",
         "sname": "CPU",
-        "mnames": ("sysfs", "msr"),
+        "mnames": ("sysfs",),
         "writable": True,
         "special_vals": _SPECIAL_FREQ_VALS,
     },
@@ -51,7 +51,7 @@ PROPS: Final[dict[str, PropertyTypedDict]] = {
         "unit": "Hz",
         "type": "int",
         "sname": "CPU",
-        "mnames": ("sysfs", "msr"),
+        "mnames": ("sysfs",),
         "writable": True,
         "special_vals": _SPECIAL_FREQ_VALS,
     },
@@ -60,7 +60,7 @@ PROPS: Final[dict[str, PropertyTypedDict]] = {
         "unit": "Hz",
         "type": "int",
         "sname": "CPU",
-        "mnames": ("sysfs", "msr", "cppc"),
+        "mnames": ("sysfs",),
         "writable": False,
     },
     "max_freq_limit": {
@@ -68,15 +68,7 @@ PROPS: Final[dict[str, PropertyTypedDict]] = {
         "unit": "Hz",
         "type": "int",
         "sname": "CPU",
-        "mnames": ("sysfs", "msr", "cppc"),
-        "writable": False,
-    },
-    "max_turbo_freq": {
-        "name": "Max. CPU turbo frequency",
-        "unit": "Hz",
-        "type": "int",
-        "sname": "CPU",
-        "mnames": ("msr",),
+        "mnames": ("sysfs",),
         "writable": False,
     },
     "base_freq": {
@@ -84,7 +76,7 @@ PROPS: Final[dict[str, PropertyTypedDict]] = {
         "unit": "Hz",
         "type": "int",
         "sname": "CPU",
-        "mnames": ("sysfs", "msr"),
+        "mnames": ("sysfs",),
         "writable": False,
     },
     "bus_clock": {

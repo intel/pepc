@@ -143,50 +143,20 @@ Use target CPU specification options to define a subset of CPUs, cores, dies, or
    Display available mechanisms for retrieving CPU P-states information.
 
 **--min-freq**
-   Retrieve the minimum CPU frequency using the 'sysfs' or 'msr' mechanisms. The 'sysfs' mechanism
-   reads '/sys/devices/system/cpu/cpu<NUMBER>/cpufreq/scaling_min_freq', while 'msr' reads the
-   MSR_HWP_REQUEST (0x774) register, bits 7:0.
+   Retrieve the minimum CPU frequency from
+   '/sys/devices/system/cpu/cpu<NUMBER>/cpufreq/scaling_min_freq'.
 
 **--max-freq**
-   Retrieve the maximum CPU frequency using the 'sysfs' or 'msr' mechanisms. The 'sysfs' mechanism
-   reads '/sys/devices/system/cpu/cpu<NUMBER>/cpufreq/scaling_max_freq', while 'msr' reads the
-   MSR_HWP_REQUEST (0x774) register, bits 15:8.
+   Retrieve the maximum CPU frequency from
+   '/sys/devices/system/cpu/cpu<NUMBER>/cpufreq/scaling_max_freq'.
 
 **--min-freq-limit**
-   Retrieve the minimum supported CPU frequency using the 'sysfs', 'msr', and 'cppc' mechanisms.
-
-   The 'sysfs' mechanism returns the minimum CPU frequency supported by the Linux kernel, it reads
-   "/sys/devices/system/cpu/cpu<NUMBER>/cpufreq/cpuinfo_min_freq".
-
-   The 'msr' mechanism reads MSR_PLATFORM_INFO (0xCE), bits 55:48.
-
-   The 'cppc' mechanism reads '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/lowest_freq'.
-   If unavailable, on non-Intel platforms the frequency is calculated as
-   "nominal_freq * lowest_perf / nominal_perf" using values from:
-   nominal_freq: '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/nominal_freq',
-   lowest_perf: '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/lowest_perf',
-   nominal_perf: '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/nominal_perf'.
+   Retrieve the minimum supported CPU frequency from
+   '/sys/devices/system/cpu/cpu<NUMBER>/cpufreq/cpuinfo_min_freq'.
 
 **--max-freq-limit**
-   Retrieve the maximum supported CPU frequency using the 'sysfs', 'msr', and 'cppc' mechanisms.
-
-   The 'sysfs' mechanism returns the maximum CPU frequency supported by the Linux kernel, it reads
-   "/sys/devices/system/cpu/cpu<NUMBER>/cpufreq/cpuinfo_max_freq".
-
-   The 'msr' mechanism retrieves the highest 1-core turbo, also known as P01. If HWP (Hardware
-   P-states) is enabled, the 'msr' mechanism reads MSR_HWP_CAPABILITIES (0x771), bits 7:0, otherwise
-   reads MSR_TURBO_RATIO_LIMIT (0x1AD), bits 7:0.
-
-   The 'cppc' mechanism reads '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/highest_freq'.
-   If unavailable, on non-Intel platforms the frequency is calculated as
-   "nominal_freq * highest_perf / nominal_perf" using values from:
-   nominal_freq: '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/nominal_freq',
-   highest_perf: '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/highest_perf',
-   nominal_perf: '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/nominal_perf'.
-
-**--max-turbo-freq**
-   Same as '--max-freq-limit' with the 'msr' mechanism only. Retrieves the maximum supported CPU turbo
-   frequency.
+   Retrieve the maximum supported CPU frequency from
+   '/sys/devices/system/cpu/cpu<NUMBER>/cpufreq/cpuinfo_max_freq'.
 
 **--hwp**
    Check if hardware power management is enabled. When enabled, CPUs can scale their frequency
@@ -201,15 +171,9 @@ Use target CPU specification options to define a subset of CPUs, cores, dies, or
    '--max-freq-limit' are available with a step equal to '--bus-clock'.
 
 **--base-freq**
-   Retrieve the base CPU frequency, also known as HFM (High Frequency Mode), or P1. The supported
-   mechanisms are: 'sysfs', 'msr'.
-
-   The preferred mechanism is 'sysfs', which reads
+   Retrieve the base CPU frequency from
    '/sys/devices/system/cpu/cpu<NUMBER>/cpufreq/base_frequency'. If the file is unavailable, it
    falls back to '/sys/devices/system/cpu/cpu<NUMBER>/cpufreq/bios_limit'.
-
-   The 'msr' mechanism reads the base CPU frequency from the MSR_HWP_CAPABILITIES (0x771), bits 15:8
-   if CPU hardware power management is enabled, otherwise from MSR_PLATFORM_INFO (0xCE), bits 15:8.
 
 **--bus-clock**
    Retrieve the bus clock frequency, one of the CPU's reference clocks. The 'msr' mechanism reads
@@ -276,27 +240,20 @@ packages.
    Display available mechanisms for configuring CPU P-states.
 
 **--min-freq** *MIN_FREQ*
-   Set the minimum CPU frequency. The default unit is 'Hz', but 'kHz', 'MHz', and 'GHz' can also be
-   used (for example "900MHz"). The supported mechanisms are: 'sysfs', 'msr'. The 'sysfs' mechanism
-   uses '/sys/devices/system/cpu/cpu<NUMBER>/cpufreq/scaling_min_freq'. The 'msr' mechanism uses the
-   MSR_HWP_REQUEST (0x774) register, bits 7:0.
+   Set the minimum CPU frequency via '/sys/devices/system/cpu/cpu<NUMBER>/cpufreq/scaling_min_freq'.
+   The default unit is 'Hz', but 'kHz', 'MHz', and 'GHz' can also be used (for example "900MHz").
 
    The following special values can also be used:
    **min**
       Minimum frequency supported by the Linux CPU frequency driver (see '--min-freq-limit').
-      Regardless of the '--mechanisms' option, the 'sysfs' mechanism is always used to resolve 'min'
-      to the actual minimum frequency.
    **max**
       Maximum frequency supported by the Linux CPU frequency driver (see '--max-freq-limit').
-      Regardless of the '--mechanisms' option, the 'sysfs' mechanism is always used to resolve 'max'
-      to the actual maximum frequency.
-   **base**, **hfm**, **P1**
-      Base CPU frequency (see '--base-freq'). Regardless of the '--mechanisms' option, all available
-      mechanisms are tried to resolve these special values to the actual base frequency.
+   **base**, **hfm**
+      Base CPU frequency (see '--base-freq').
 
 **--max-freq** *MAX_FREQ*
-   Set the maximum CPU frequency. Uses the same mechanisms as described in the 'info' sub-command.
-   Similar to '--min-freq', but applies to the maximum frequency.
+   Similar to '--min-freq', but sets the maximum CPU frequency via
+   '/sys/devices/system/cpu/cpu<NUMBER>/cpufreq/scaling_max_freq'.
 
 **--turbo** *on|off*
    Toggle turbo mode globally via sysfs. When enabled, CPUs can exceed the base frequency if allowed
