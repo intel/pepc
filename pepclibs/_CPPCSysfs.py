@@ -41,13 +41,13 @@ class CPPCSysfs(ClassHelpers.SimpleCloseContext):
     sysfs.
 
     Public Methods:
-        TODO: update
-        - get_min_freq_limit(cpus): Yield minimum frequency limits for CPUs from ACPI CPPC.
-        - get_max_freq_limit(cpus): Yield maximum frequency limits for CPUs from ACPI CPPC.
+        - get_lowest_perf(cpus): Yield lowest performance level for CPUs from ACPI CPPC.
+        - get_lowest_nonlinear_perf(cpus): Yield lowest nonlinear performance level for CPUs from
+                                           ACPI CPPC.
+        - get_guaranteed_perf(cpus): Yield guaranteed performance level for CPUs from ACPI CPPC.
+        - get_nominal_perf(cpus): Yield nominal performance level for CPUs from ACPI CPPC.
+        - get_highest_perf(cpus): Yield highest performance level for CPUs from ACPI CPPC.
         - get_nominal_freq(cpus): Yield nominal frequency for CPUs from ACPI CPPC.
-        - get_min_perf_limit(cpus): Yield minimum performance limits for CPUs from ACPI CPPC.
-        - get_max_perf_limit(cpus): Yield maximum performance limits for CPUs from ACPI CPPC.
-        - get_nominal_perf(cpus): Yield nominal performance for CPUs from ACPI CPPC.
 
     Notes:
         Methods do not validate the 'cpus' argument. Ensure that provided CPU numbers are valid and
@@ -157,7 +157,8 @@ class CPPCSysfs(ClassHelpers.SimpleCloseContext):
         self._sysfs_io.cache_add(path, str(val))
         return val
 
-    def _get_perf_level(self, plname: PerfLevelNameType,
+    def _get_perf_level(self,
+                        plname: PerfLevelNameType,
                         cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the performance level value for specified CPUs and performance level

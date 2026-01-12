@@ -27,7 +27,7 @@ from pepclibs._PropsClassBase import ErrorTryAnotherMechanism
 if typing.TYPE_CHECKING:
     from typing import NoReturn, Generator, Union, Sequence
     from pepclibs.msr import MSR, FSBFreq
-    from pepclibs import _CPUFreqSysfs, _CPPCSysfs, _CPUFreqMSR
+    from pepclibs import _CPUFreqSysfs, _CPPCSysfs, _HWPMSR
     from pepclibs import _SysfsIO, EPP, EPB, CPUInfo
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepclibs._PropsTypes import PropertyValueType, MechanismNameType
@@ -58,7 +58,7 @@ class PStates(_PropsClassBase.PropsClassBase):
 
         self._cpufreq_sysfs_obj: _CPUFreqSysfs.CPUFreqSysfs | None = None
         self._cppc_sysfs_obj: _CPPCSysfs.CPPCSysfs | None = None
-        self._cpufreq_msr_obj: _CPUFreqMSR.CPUFreqMSR | None= None
+        self._hwp_msr_obj: _HWPMSR.HWPMSR | None= None
 
         self._perf2freq: dict[int, int] = {}
 
@@ -68,7 +68,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         """Uninitialize the class instance."""
 
         close_attrs = ("_eppobj", "_epbobj", "_fsbfreq", "_cpufreq_sysfs_obj", "_cppc_sysfs_obj",
-                       "_cpufreq_msr_obj")
+                       "_hwp_msr_obj")
         ClassHelpers.close(self, close_attrs=close_attrs)
 
         super().close()
@@ -164,22 +164,22 @@ class PStates(_PropsClassBase.PropsClassBase):
                                                         enable_cache=self._enable_cache)
         return self._cppc_sysfs_obj
 
-    def _get_cpufreq_msr_obj(self) -> _CPUFreqMSR.CPUFreqMSR:
+    def _get_hwp_msr_obj(self) -> _HWPMSR.HWPMSR:
         """
-        Get an 'CPUFreqMSR' object.
+        Get an 'HWPMSR' object.
 
         Returns:
-            An instance of '_CPUFreqMSR.CPUFreqMSR'.
+            An instance of '_HWPMSR.HWPMSR'.
         """
 
-        if not self._cpufreq_msr_obj:
+        if not self._hwp_msr_obj:
             # pylint: disable-next=import-outside-toplevel
-            from pepclibs import _CPUFreqMSR
+            from pepclibs import _HWPMSR
 
             msr = self._get_msr()
-            self._cpufreq_msr_obj = _CPUFreqMSR.CPUFreqMSR(cpuinfo=self._cpuinfo, pman=self._pman,
-                                                           msr=msr, enable_cache=self._enable_cache)
-        return self._cpufreq_msr_obj
+            self._hwp_msr_obj = _HWPMSR.HWPMSR(cpuinfo=self._cpuinfo, pman=self._pman, msr=msr,
+                                               enable_cache=self._enable_cache)
+        return self._hwp_msr_obj
 
     def _get_epp(self,
                  cpus: AbsNumsType,
@@ -237,8 +237,8 @@ class PStates(_PropsClassBase.PropsClassBase):
         if mname != "msr":
             raise Error(f"BUG: Unexpected mechanism '{mname}' for property 'hwp'")
 
-        cpufreq_obj = self._get_cpufreq_msr_obj()
-        yield from cpufreq_obj.get_hwp(cpus=cpus)
+        hwp_msr_obj = self._get_hwp_msr_obj()
+        yield from hwp_msr_obj.get_hwp(cpus=cpus)
 
     def _get_freq_sysfs(self,
                         pname: str,
@@ -546,6 +546,29 @@ class PStates(_PropsClassBase.PropsClassBase):
         else:
             raise Error(f"BUG: Unexpected CPPC property '{pname}'")
 
+    def _get_hwp_perf(self,
+                      pname: str,
+                      cpus: AbsNumsType,
+                      mname: MechanismNameType) -> Generator[tuple[int, int], None, None]:
+        """
+        """
+
+        if mname != "msr":
+            raise Error(f"BUG: Unexpected mechanism '{mname}' for property '{pname}'")
+
+        hwp_msr_obj = self._get_hwp_msr_obj()
+
+        if pname == "hwp_lowest_perf":
+            yield from hwp_msr_obj.get_lowest_perf(cpus)
+        elif pname == "hwp_efficient_perf":
+            yield from hwp_msr_obj.get_efficient_perf(cpus)
+        elif pname == "hwp_guaranteed_perf":
+            yield from hwp_msr_obj.get_guaranteed_perf(cpus)
+        elif pname == "hwp_highest_perf":
+            yield from hwp_msr_obj.get_highest_perf(cpus)
+        else:
+            raise Error(f"BUG: Unexpected HWP property '{pname}'")
+
     def _get_turbo(self,
                    cpus: AbsNumsType,
                    mname: MechanismNameType) -> Generator[tuple[int, str], None, None]:
@@ -678,9 +701,6 @@ class PStates(_PropsClassBase.PropsClassBase):
             yield from self._get_frequencies(cpus, mname)
         elif pname == "bus_clock":
             yield from self._get_bus_clock(cpus, mname)
-        elif pname in {"cppc_lowest_perf", "cppc_lowest_nonlinear_perf", "cppc_guaranteed_perf",
-                       "cppc_nominal_perf", "cppc_highest_perf", "cppc_nominal_freq"}:
-            yield from self._get_cppc_perf_or_freq(pname, cpus, mname)
         elif pname == "turbo":
             yield from self._get_turbo(cpus, mname)
         elif pname == "driver":
@@ -691,6 +711,12 @@ class PStates(_PropsClassBase.PropsClassBase):
             yield from self._get_governor(cpus, mname)
         elif pname == "governors":
             yield from self._get_governors(cpus, mname)
+        elif pname in {"cppc_lowest_perf", "cppc_lowest_nonlinear_perf", "cppc_guaranteed_perf",
+                       "cppc_nominal_perf", "cppc_highest_perf", "cppc_nominal_freq"}:
+            yield from self._get_cppc_perf_or_freq(pname, cpus, mname)
+        elif pname in {"hwp_lowest_perf", "hwp_efficient_perf", "hwp_guaranteed_perf",
+                       "hwp_highest_perf"}:
+            yield from self._get_hwp_perf(pname, cpus, mname)
         else:
             raise Error(f"BUG: Unknown property '{pname}'")
 

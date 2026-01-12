@@ -25,7 +25,7 @@ from pepclibs.helperlibs.Exceptions import ErrorOutOfRange, ErrorBadOrder
 
 if typing.TYPE_CHECKING:
     from typing import Generator, Literal
-    from pepclibs import _CPUFreqMSR
+    from pepclibs import _HWPMSR
     from pepclibs.msr import MSR
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepclibs.CPUInfoTypes import AbsNumsType
@@ -105,7 +105,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
         self._close_msr = msr is None
         self._close_sysfs_io = sysfs_io is None
 
-        self._cpufreq_msr_obj: _CPUFreqMSR.CPUFreqMSR | None = None
+        self._hwp_msr_obj: _HWPMSR.HWPMSR | None = None
 
         self._sysfs_base = Path("/sys/devices/system/cpu")
 
@@ -132,7 +132,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
     def close(self):
         """Uninitialize the class instance."""
 
-        close_attrs = ("_sysfs_io", "_msr", "_cpufreq_msr_obj", "_cpuinfo", "_pman")
+        close_attrs = ("_sysfs_io", "_msr", "_hwp_msr_obj", "_cpuinfo", "_pman")
         ClassHelpers.close(self, close_attrs=close_attrs)
 
     def _warn_no_ecores_bug(self):
@@ -191,17 +191,17 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         return self._msr
 
-    def _get_cpufreq_msr_obj(self) -> _CPUFreqMSR.CPUFreqMSR:
-        """Return an instance of 'CPUFreqMSR' class."""
+    def _get_hwp_msr_obj(self) -> _HWPMSR.HWPMSR:
+        """Return an instance of 'HWPMSR' class."""
 
-        if not self._cpufreq_msr_obj:
+        if not self._hwp_msr_obj:
             # pylint: disable-next=import-outside-toplevel
-            from pepclibs import _CPUFreqMSR
+            from pepclibs import _HWPMSR
 
             msr = self._get_msr()
-            self._cpufreq_msr_obj = _CPUFreqMSR.CPUFreqMSR(cpuinfo=self._cpuinfo, pman=self._pman,
-                                                           msr=msr, enable_cache=self._enable_cache)
-        return self._cpufreq_msr_obj
+            self._hwp_msr_obj = _HWPMSR.HWPMSR(cpuinfo=self._cpuinfo, pman=self._pman, msr=msr,
+                                               enable_cache=self._enable_cache)
+        return self._hwp_msr_obj
 
     def _get_policy_sysfs_path(self, cpu: int, fname: str) -> Path:
         """
@@ -713,8 +713,8 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
                 # Setting 'intel_pstate' driver mode to "off" is only possible in non-HWP (legacy)
                 # mode. Check for this situation and try to provide a helpful error message.
                 try:
-                    cpufreq_obj = self._get_cpufreq_msr_obj()
-                    _, hwp = next(cpufreq_obj.get_hwp((cpu,)))
+                    hwp_msr_obj = self._get_hwp_msr_obj()
+                    _, hwp = next(hwp_msr_obj.get_hwp((cpu,)))
                 except Error as exc:
                     # Failed to provide additional help, just raise the original exception.
                     raise type(err)(str(err)) from exc

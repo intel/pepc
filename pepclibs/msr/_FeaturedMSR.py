@@ -22,14 +22,13 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
 import copy
-from typing import cast
 from pepclibs import CPUModels
 from pepclibs.helperlibs import Logging, LocalProcessManager, ClassHelpers, Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs.msr import MSR
 
 if typing.TYPE_CHECKING:
-    from typing import TypedDict, Sequence, Literal, Union, Generator, Protocol
+    from typing import TypedDict, Sequence, Literal, Union, Generator, Protocol, cast
     from pepclibs import CPUInfo
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepclibs.CPUInfoTypes import ScopeNameType
@@ -163,13 +162,15 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
 
     Public Methods Overview:
         1. Multiple CPUs:
-            - Read/write feature: 'read_feature()', 'write_feature()'
+            - Read feature: 'read_feature()', 'read_feature_int()'
+            - Write feature: 'write_feature()'
             - Enable/disable feature: 'enable_feature()'
             - Check if feature is enabled: 'is_feature_enabled()'
             - Check if feature is supported: 'is_feature_supported()',
                                              'validate_feature_supported()'
         2. Single CPU:
-            - Read/write feature: 'read_cpu_feature()', 'write_cpu_feature()'
+            - Read feature: 'read_cpu_feature()'
+            - Write feature: 'write_cpu_feature()'
             - Enable/disable feature: 'enable_cpu_feature()'
             - Check if feature is enabled: 'is_cpu_feature_enabled()'
             - Check if feature is supported: 'is_cpu_feature_supported()'
@@ -299,7 +300,10 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
                     finfo["vals_nocase"] = {}
                     finfo["rvals_nocase"] = {}
                     for name, code in finfo["vals"].items():
-                        name_str = cast(str, name)
+                        if typing.TYPE_CHECKING:
+                            name_str = cast(str, name)
+                        else:
+                            name_str = name
                         name_str = name_str.lower()
                         finfo["vals_nocase"][name_str] = code
                         finfo["rvals_nocase"][code] = name_str
@@ -486,7 +490,10 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
             val_str = str(val)
 
         if val_str in finfo["vals"]:
-            vals_dict = cast(dict[str, int], finfo["vals"])
+            if typing.TYPE_CHECKING:
+                vals_dict = cast(dict[str, int], finfo["vals"])
+            else:
+                vals_dict = finfo["vals"]
             return vals_dict[val_str]
 
         if "vals_nocase" in finfo and val_str.lower() in finfo["vals_nocase"]:
@@ -529,8 +536,30 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
             for cpu, val in self._msr.read_bits(self.regaddr, bits, cpus=cpus,
                                                     iosname=self._features[fname]["iosname"]):
                 if "rvals" in self._features[fname]:
-                    val = self._features[fname]["rvals"][cast(int, val)]
+                    if typing.TYPE_CHECKING:
+                        _val = cast(int, val)
+                    else:
+                        _val = val
+                    val = self._features[fname]["rvals"][_val]
                 yield cpu, val
+
+    def read_feature_int(self,
+                         fname: str,
+                         cpus: Sequence[int] | Literal["all"] = "all") -> \
+                                                    Generator[tuple[int, int], None, None]:
+        """
+        Same as 'read_feature()', but ensures that the returned value is of type 'int'.
+        """
+
+        finfo = self._features[fname]
+        if finfo["type"] != "int":
+            raise Error(f"BUG: Feature '{fname}' is not of integer type")
+
+        if typing.TYPE_CHECKING:
+            for cpu, val in self.read_feature(fname, cpus=cpus):
+                yield cpu, cast(int, val)
+        else:
+            yield from self.read_feature(fname, cpus=cpus)
 
     def read_cpu_feature(self, fname: str, cpu: int) -> FeatureValueType:
         """
@@ -575,7 +604,6 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
         for cpu, val in self.read_feature(fname, cpus=cpus):
             enabled = val in {"on", "enabled"}
             yield cpu, enabled
-
     def is_cpu_feature_enabled(self, fname, cpu):
         """
         Check if a CPU feature is enabled for a CPU.

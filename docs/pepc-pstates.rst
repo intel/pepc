@@ -222,29 +222,45 @@ Use target CPU specification options to define a subset of CPUs, cores, dies, or
    governors are listed in
    '/sys/devices/system/cpu/cpufreq/policy<NUMBER>/scaling_available_governors'.
 
-**---cppc-lowest-perf**
+**--cppc-lowest-perf**
    Retrieve the ACPI CPPC lowest performance level value for specified CPUs from
    '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/lowest_perf'.
 
-**---cppc-lowest-nonlinear-perf**
+**--cppc-lowest-nonlinear-perf**
    Retrieve the ACPI CPPC lowest nonlinear performance level value for specified CPUs from
    '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/lowest_nonlinear_perf'.
 
-**---cppc-guaranteed-perf**
+**--cppc-guaranteed-perf**
    Retrieve the ACPI CPPC guaranteed performance level value for specified CPUs from
    '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/guaranteed_perf'.
 
-**---cppc-nominal-perf**
+**--cppc-nominal-perf**
    Retrieve the ACPI CPPC nominal performance level value for specified CPUs from
    '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/nominal_perf'.
 
-**---cppc-highest-perf**
+**--cppc-highest-perf**
    Retrieve the ACPI CPPC highest performance level value for specified CPUs from
    '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/highest_perf'.
 
-**---cppc-nominal-freq**
+**--cppc-nominal-freq**
    Retrieve the ACPI CPPC nominal frequency for specified CPUs from
    '/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/nominal_freq'.
+
+**--hwp-lowest-perf**
+   Retrieve the HWP lowest performance level for specified CPUs. Reads MSR_HWP_CAPABILITIES (0x771),
+   bits 31:24.
+
+**--hwp-efficient-perf**
+   Retrieve the HWP most efficient performance level for specified CPUs. Reads
+   MSR_HWP_CAPABILITIES (0x771), bits 23:16.
+
+**--hwp-guaranteed-perf**
+   Retrieve the HWP guaranteed performance level for specified CPUs. Reads MSR_HWP_CAPABILITIES (0x771),
+   bits 15:8.
+
+**--hwp-highest-perf**
+   Retrieve the HWP highest performance level for specified CPUs. Reads MSR_HWP_CAPABILITIES (0x771),
+   bits 7:0.
 
 Subcommand *'config'*
 =====================

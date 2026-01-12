@@ -30,41 +30,41 @@ MSR_HWP_CAPABILITIES: Final = 0x771
 
 # Description of CPU features controlled by the the Power Control MSR.
 FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
-    "max_perf": {
-        "name": "Max. CPU performance",
+    "highest_perf": {
+        "name": "Highest CPU performance level",
         "sname": "CPU",
         "iosname": "CPU",
-        "help": """The maximum CPU performance (P01).""",
+        "help": """The highest CPU HWP performance level.""",
         "cpuflags": {"hwp"},
         "type": "int",
         "bits": (7, 0),
         "writable": False,
     },
-    "base_perf": {
-        "name": "Base CPU performance",
+    "guaranteed_perf": {
+        "name": "Guaranteed CPU performance level",
         "sname": "CPU",
         "iosname": "CPU",
-        "help": """The base (guaranteed) CPU performance (P1).""",
+        "help": """The guaranteed CPU HWP performance level.""",
         "cpuflags": {"hwp"},
         "type": "int",
         "bits": (15, 8),
         "writable": False,
     },
-    "eff_perf": {
-        "name": "Max. efficiency CPU performance",
+    "efficient_perf": {
+        "name": "Most efficient CPU performance",
         "sname": "CPU",
         "iosname": "CPU",
-        "help": """The maximum efficiency CPU performance (Pn).""",
+        "help": """The most efficient CPU HWP performance level.""",
         "cpuflags": {"hwp"},
         "type": "int",
         "bits": (23, 16),
         "writable": False,
     },
-    "min_perf": {
-        "name": "Min. CPU performance",
+    "lowest_perf": {
+        "name": "Lowest CPU performance",
         "sname": "CPU",
         "iosname": "CPU",
-        "help": """The minimum CPU performance (Pm).""",
+        "help": """The lowest CPU HWP performance level.""",
         "cpuflags": {"hwp"},
         "type": "int",
         "bits": (31, 24),

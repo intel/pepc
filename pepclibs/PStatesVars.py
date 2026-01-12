@@ -187,4 +187,32 @@ PROPS: Final[dict[str, PropertyTypedDict]] = {
         "mnames": ("sysfs",),
         "writable": False,
     },
+    "hwp_lowest_perf": {
+        "name": "HWP lowest performance level",
+        "type": "int",
+        "sname": "CPU",
+        "mnames": ("msr",),
+        "writable": False,
+    },
+    "hwp_efficient_perf": {
+        "name": "HWP most efficient performance level",
+        "type": "int",
+        "sname": "CPU",
+        "mnames": ("msr",),
+        "writable": False,
+    },
+    "hwp_guaranteed_perf": {
+        "name": "HWP guaranteed performance level",
+        "type": "int",
+        "sname": "CPU",
+        "mnames": ("msr",),
+        "writable": False,
+    },
+    "hwp_highest_perf": {
+        "name": "HWP highest performance level",
+        "type": "int",
+        "sname": "CPU",
+        "mnames": ("msr",),
+        "writable": False,
+    },
 }
