@@ -900,6 +900,23 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         for pvinfo in self._get_prop_pvinfo_cpus(pname, cpus, mnames, all_mnames=all_mnames):
             yield (pvinfo["cpu"], pvinfo["val"])
 
+    def _get_prop_cpus_mnames_int(self,
+                                  pname: str,
+                                  cpus: AbsNumsType,
+                                  mnames: Sequence[MechanismNameType],
+                                  all_mnames: Sequence[MechanismNameType] = ()) -> \
+                                               Generator[tuple[int, int], None, None]:
+        """
+        Same as '_get_prop_cpus_mnames()', but makes sure the returned property values are integers.
+        """
+
+        if typing.TYPE_CHECKING:
+            for pvinfo in self._get_prop_pvinfo_cpus(pname, cpus, mnames, all_mnames=all_mnames):
+                yield (pvinfo["cpu"], cast(int, pvinfo["val"]))
+        else:
+            for pvinfo in self._get_prop_pvinfo_cpus(pname, cpus, mnames, all_mnames=all_mnames):
+                yield (pvinfo["cpu"], pvinfo["val"])
+
     def _get_cpu_prop_mnames(self,
                              pname: str,
                              cpu: int,
@@ -926,6 +943,23 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             return pvinfo["val"]
 
         raise Error(f"BUG: Failed to get property '{pname}' for CPU {cpu}")
+
+    def _get_cpu_prop_mnames_int(self,
+                                 pname: str,
+                                 cpu: int,
+                                 mnames: Sequence[MechanismNameType],
+                                 all_mnames: Sequence[MechanismNameType] = ()) -> int:
+        """
+        Same as '_get_cpu_prop_mnames()', but makes sure the returned property value is an integer.
+        """
+
+        if self._props[pname]["type"] != "int":
+            raise Error(f"BUG: {pname} is not an integer property")
+
+        val = self._get_cpu_prop_mnames(pname, cpu, mnames, all_mnames=all_mnames)
+        if typing.TYPE_CHECKING:
+            return cast(int, val)
+        return val
 
     def get_prop_cpus(self,
                       pname: str,

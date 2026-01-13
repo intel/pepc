@@ -15,7 +15,6 @@ Provide a capability of retrieving and setting P-state related properties.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
-from typing import cast
 import contextlib
 from pepclibs import _PropsClassBase
 from pepclibs.PStatesVars import PROPS
@@ -25,8 +24,8 @@ from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorVerify
 from pepclibs._PropsClassBase import ErrorTryAnotherMechanism
 
 if typing.TYPE_CHECKING:
-    from typing import NoReturn, Generator, Union, Sequence
-    from pepclibs.msr import MSR, FSBFreq
+    from typing import Generator, cast, Sequence, NoReturn, Union
+    from pepclibs.msr import MSR, FSBFreq, PlatformInfo
     from pepclibs import _CPUFreqSysfs, _CPPCSysfs, _HWPMSR
     from pepclibs import _SysfsIO, EPP, EPB, CPUInfo
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
@@ -55,6 +54,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         self._eppobj: EPP.EPP | None = None
         self._epbobj: EPB.EPB | None = None
         self._fsbfreq: FSBFreq.FSBFreq | None = None
+        self._platinfo: PlatformInfo.PlatformInfo | None = None
 
         self._cpufreq_sysfs_obj: _CPUFreqSysfs.CPUFreqSysfs | None = None
         self._cppc_sysfs_obj: _CPPCSysfs.CPPCSysfs | None = None
@@ -67,8 +67,8 @@ class PStates(_PropsClassBase.PropsClassBase):
     def close(self):
         """Uninitialize the class instance."""
 
-        close_attrs = ("_eppobj", "_epbobj", "_fsbfreq", "_cpufreq_sysfs_obj", "_cppc_sysfs_obj",
-                       "_hwp_msr_obj")
+        close_attrs = ("_eppobj", "_epbobj", "_platinfo", "_fsbfreq", "_cpufreq_sysfs_obj",
+                       "_cppc_sysfs_obj", "_hwp_msr_obj")
         ClassHelpers.close(self, close_attrs=close_attrs)
 
         super().close()
@@ -89,6 +89,24 @@ class PStates(_PropsClassBase.PropsClassBase):
             self._fsbfreq = FSBFreq.FSBFreq(pman=self._pman, cpuinfo=self._cpuinfo, msr=msr)
 
         return self._fsbfreq
+
+    def _get_platinfo(self) -> PlatformInfo.PlatformInfo:
+        """
+        Get an 'PlatformInfo' object.
+
+        Returns:
+            An instance of 'PlatformInfo.PlatformInfo'.
+        """
+
+        if not self._platinfo:
+            # pylint: disable-next=import-outside-toplevel
+            from pepclibs.msr import PlatformInfo
+
+            msr = self._get_msr()
+            self._platinfo = PlatformInfo.PlatformInfo(pman=self._pman, cpuinfo=self._cpuinfo,
+                                                       msr=msr)
+
+        return self._platinfo
 
     def _get_eppobj(self) -> EPP.EPP:
         """
@@ -180,6 +198,70 @@ class PStates(_PropsClassBase.PropsClassBase):
             self._hwp_msr_obj = _HWPMSR.HWPMSR(cpuinfo=self._cpuinfo, pman=self._pman, msr=msr,
                                                enable_cache=self._enable_cache)
         return self._hwp_msr_obj
+
+    def _get_bclks_cpus(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
+        """
+        Retrieve and yield bus clock speed for the specified CPUs using the MSR mechanism.
+
+        Args:
+            cpus: CPU numbers to retrieve bus clock speed for.
+
+        Yields:
+            Tuples of (cpu, val), where 'cpu' is the CPU number and 'val' is the bus clock speed in
+            Hz.
+        """
+
+        try:
+            fsbfreq = self._get_fsbfreq()
+        except ErrorNotSupported:
+            if self._cpuinfo.info["vendor"] != "GenuineIntel":
+                raise
+            # Fall back to 100MHz bus clock speed.
+            for cpu in cpus:
+                yield cpu, 100000000
+        else:
+            for cpu, bclk in fsbfreq.read_feature_int("fsb", cpus=cpus):
+                # Convert MHz to Hz.
+                yield cpu, bclk * 1000000
+
+    def _get_bclks_dies(self, dies: RelNumsType) -> Generator[tuple[int, int, int], None, None]:
+        """
+        Retrieve and yield bus clock speed for the specified dies using the MSR mechanism.
+
+        Args:
+            dies: Dictionary mapping package numbers to collections of die numbers.
+
+        Yields:
+            Tuples of (package, die, val), where 'package' is the package number, 'die' is the die
+            number, and 'val' is the bus clock speed in Hz for the specified die.
+        """
+
+        try:
+            self._get_fsbfreq()
+        except ErrorNotSupported:
+            if self._cpuinfo.info["vendor"] != "GenuineIntel":
+                raise
+            # Fall back to 100MHz bus clock speed.
+            for package, pkg_dies in dies.items():
+                for die in pkg_dies:
+                    yield package, die, 100000000
+        else:
+            # Only legacy platforms support 'MSR_FSB_FREQ'.
+            raise Error("BUG: Not implemented, contact project maintainers")
+
+    def _get_bclk(self, cpu: int) -> int:
+        """
+        Return the bus clock speed in Hz for the specified CPU.
+
+        Args:
+            cpu: CPU number.
+
+        Returns:
+            Bus clock speed in Hz.
+        """
+
+        _, val = next(self._get_bclks_cpus((cpu,)))
+        return val
 
     def _get_epp(self,
                  cpus: AbsNumsType,
@@ -281,8 +363,7 @@ class PStates(_PropsClassBase.PropsClassBase):
 
         Args:
             cpus: CPU numbers to retrieve base frequency for.
-            mname: Name of the mechanism to use for retrieving the base frequency: are 'sysfs' and
-                   'msr'.
+            mname: Name of the mechanism to use for retrieving the base frequency.
 
         Yields:
             Tuple of (cpu, val), where 'cpu' is the CPU number and 'val' is its base frequency.
@@ -292,6 +373,41 @@ class PStates(_PropsClassBase.PropsClassBase):
             raise Error(f"BUG: Unexpected mechanism '{mname}' for property 'base_freq'")
 
         yield from self._get_freq_sysfs("base_freq", cpus)
+
+    def _get_fixed_base_freq(self,
+                             cpus: AbsNumsType,
+                             mname: MechanismNameType) -> Generator[tuple[int, int], None, None]:
+        """
+        Retrieve and yield the fixed base frequency for the specified CPUs using the given
+        mechanism.
+
+        Args:
+            cpus: CPU numbers to retrieve fixed base frequency for.
+            mname: Name of the mechanism to use for retrieving the fixed base frequency.
+
+        Yields:
+            Tuple of (cpu, val), where 'cpu' is the CPU number and 'val' is its fixed base
+            frequency.
+        """
+
+        if mname != "msr":
+            raise Error(f"BUG: Unexpected mechanism '{mname}' for property 'fixed_base_freq'")
+
+        platinfo = self._get_platinfo()
+
+        platinfo_iter = platinfo.read_feature_int("max_non_turbo_ratio", cpus=cpus)
+        bclks_iter = self._get_bclks_cpus(cpus)
+
+        iter_zip = zip(platinfo_iter, bclks_iter)
+        if typing.TYPE_CHECKING:
+            iterator = cast(Generator[tuple[tuple[int, int], tuple[int, int]], None, None],
+                            iter_zip)
+        else:
+            iterator = iter_zip
+
+        for (cpu, base_freq), (_, bclk) in iterator:
+            # 'base_freq' is given in MHz, convert it to Hz.
+            yield cpu, base_freq * bclk
 
     def _get_min_max_freq(self,
                           pname: str,
@@ -337,70 +453,6 @@ class PStates(_PropsClassBase.PropsClassBase):
             raise Error(f"BUG: Unexpected mechanism '{mname}' for property '{pname}'")
 
         yield from self._get_freq_sysfs(pname, cpus)
-
-    def _get_bclks_cpus(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
-        """
-        Retrieve and yield bus clock speed for the specified CPUs using the MSR mechanism.
-
-        Args:
-            cpus: CPU numbers to retrieve bus clock speed for.
-
-        Yields:
-            Tuples of (cpu, val), where 'cpu' is the CPU number and 'val' is the bus clock speed in
-            Hz.
-        """
-
-        try:
-            fsbfreq = self._get_fsbfreq()
-        except ErrorNotSupported:
-            if self._cpuinfo.info["vendor"] != "GenuineIntel":
-                raise
-            # Fall back to 100MHz bus clock speed.
-            for cpu in cpus:
-                yield cpu, 100000000
-        else:
-            for cpu, bclk in fsbfreq.read_feature("fsb", cpus=cpus):
-                # Convert MHz to Hz.
-                yield cpu, int(bclk * 1000000)
-
-    def _get_bclks_dies(self, dies: RelNumsType) -> Generator[tuple[int, int, int], None, None]:
-        """
-        Retrieve and yield bus clock speed for the specified dies using the MSR mechanism.
-
-        Args:
-            dies: Dictionary mapping package numbers to collections of die numbers.
-
-        Yields:
-            Tuples of (package, die, val), where 'package' is the package number, 'die' is the die
-            number, and 'val' is the bus clock speed in Hz for the specified die.
-        """
-
-        try:
-            self._get_fsbfreq()
-        except ErrorNotSupported:
-            if self._cpuinfo.info["vendor"] != "GenuineIntel":
-                raise
-            # Fall back to 100MHz bus clock speed.
-            for package, pkg_dies in dies.items():
-                for die in pkg_dies:
-                    yield package, die, 100000000
-        else:
-            # Only legacy platforms support 'MSR_FSB_FREQ'.
-            raise Error("BUG: Not implemented, contact project maintainers")
-
-    def _get_bclk(self, cpu: int) -> int:
-        """
-        Return the bus clock speed in Hz for the specified CPU.
-
-        Args:
-            cpu: CPU number.
-
-        Returns:
-            Bus clock speed in Hz.
-        """
-
-        _, val = next(self._get_bclks_cpus((cpu,)))
-        return val
 
     def _get_frequencies_intel(self,
                                cpus: AbsNumsType) -> Generator[tuple[int, list[int]], None, None]:
@@ -496,8 +548,8 @@ class PStates(_PropsClassBase.PropsClassBase):
         """
 
         if mname == "msr":
-            for cpu, val in self._get_fsbfreq().read_feature("fsb", cpus=cpus):
-                yield cpu, int(val * 1000000)
+            for cpu, val in self._get_fsbfreq().read_feature_int("fsb", cpus=cpus):
+                yield cpu, val * 1000000
         elif mname == "doc":
             try:
                 self._get_fsbfreq()
@@ -693,6 +745,8 @@ class PStates(_PropsClassBase.PropsClassBase):
             yield from self._get_hwp(cpus, mname)
         elif pname == "base_freq":
             yield from self._get_base_freq(cpus, mname)
+        elif pname == "fixed_base_freq":
+            yield from self._get_fixed_base_freq(cpus, mname)
         elif pname in {"min_freq", "max_freq"}:
             yield from self._get_min_max_freq(pname, cpus, mname)
         elif pname in {"min_freq_limit", "max_freq_limit"}:
@@ -789,12 +843,15 @@ class PStates(_PropsClassBase.PropsClassBase):
         if err.expected is None:
             raise Error("BUG: Frequency is not set in the 'ErrorVerifyFailed' object")
 
-        freq = cast(int, err.expected)
+        if typing.TYPE_CHECKING:
+            freq = cast(int, err.expected)
+            read_freq = cast(int, err.actual)
+        else:
+            freq = err.expected
+            read_freq = err.actual
 
         if err.actual is None:
             raise Error("BUG: Read frequency is not set in the 'ErrorVerifyFailed' object")
-
-        read_freq = cast(int, err.actual)
 
         if err.cpu is None:
             raise Error("BUG: CPU number is not set in the 'ErrorVerifyFailed' object")
@@ -805,7 +862,10 @@ class PStates(_PropsClassBase.PropsClassBase):
         with contextlib.suppress(Error):
             _frequencies = self._get_cpu_prop_mnames("frequencies", cpu,
                                                      self._props["frequencies"]["mnames"])
-            frequencies = cast(list[int], _frequencies)
+            if typing.TYPE_CHECKING:
+                frequencies = cast(list[int], _frequencies)
+            else:
+                frequencies = _frequencies
 
             frequencies_set = set(frequencies)
             if freq not in frequencies_set and read_freq in frequencies_set:
@@ -816,9 +876,8 @@ class PStates(_PropsClassBase.PropsClassBase):
 
         with contextlib.suppress(Error):
             if self._get_cpu_prop_mnames("turbo", cpu, self._props["turbo"]["mnames"]) == "off":
-                _base_freq = self._get_cpu_prop_mnames("base_freq", cpu,
-                                                       self._props["base_freq"]["mnames"])
-                base_freq = cast(int, _base_freq)
+                base_freq = self._get_cpu_prop_mnames_int("base_freq", cpu,
+                                                          self._props["base_freq"]["mnames"])
 
                 if base_freq and freq > base_freq:
                     base_freq_str = Human.num2si(base_freq, unit="Hz", decp=4)
@@ -846,29 +905,16 @@ class PStates(_PropsClassBase.PropsClassBase):
         """
 
         if freq == "min":
-            _iterator = self._get_prop_cpus_mnames("min_freq_limit", cpus, ("sysfs",))
-            if typing.TYPE_CHECKING:
-                iterator = cast(Generator[tuple[int, int], None, None], _iterator)
-            else:
-                iterator = _iterator
-            yield from iterator
+            yield from self._get_prop_cpus_mnames_int("min_freq_limit", cpus, ("sysfs",))
         elif freq == "max":
-            _iterator = self._get_prop_cpus_mnames("max_freq_limit", cpus, ("sysfs",))
-            if typing.TYPE_CHECKING:
-                iterator = cast(Generator[tuple[int, int], None, None], _iterator)
-            else:
-                iterator = _iterator
-            yield from iterator
+            yield from self._get_prop_cpus_mnames_int("max_freq_limit", cpus, ("sysfs",))
         elif freq in {"base", "hfm"}:
-            _iterator = self._get_prop_cpus_mnames("base_freq", cpus, ("sysfs",))
-            if typing.TYPE_CHECKING:
-                iterator = cast(Generator[tuple[int, int], None, None], _iterator)
-            else:
-                iterator = _iterator
-            yield from iterator
+            yield from self._get_prop_cpus_mnames_int("base_freq", cpus, ("sysfs",))
         else:
+            if typing.TYPE_CHECKING:
+                freq = cast(int, freq)
             for cpu in cpus:
-                yield cpu, cast(int, freq)
+                yield cpu, freq
 
     def _set_cpu_freq(self,
                       pname: str,
@@ -975,17 +1021,29 @@ class PStates(_PropsClassBase.PropsClassBase):
         elif pname == "epb":
             self._get_epbobj().set_vals(val, cpus=cpus, mnames=(mname,))
         elif pname == "turbo":
-            self._set_turbo(cast(bool, val), cpus, mname)
+            if typing.TYPE_CHECKING:
+                _turbo_val = cast(bool, val)
+            else:
+                _turbo_val = val
+            self._set_turbo(_turbo_val, cpus, mname)
         elif pname == "intel_pstate_mode":
-            self._set_intel_pstate_mode(cast(str, val), cpus, mname)
+            if typing.TYPE_CHECKING:
+                _mode_val = cast(str, val)
+            else:
+                _mode_val = val
+            self._set_intel_pstate_mode(_mode_val, cpus, mname)
         elif pname == "governor":
-            self._set_governor(cast(str, val), cpus, mname)
+            if typing.TYPE_CHECKING:
+                _governor_val = cast(str, val)
+            else:
+                _governor_val = val
+            self._set_governor(_governor_val, cpus, mname)
         elif pname in ("min_freq", "max_freq"):
             if typing.TYPE_CHECKING:
-                _val = cast(Union[str, int], val)
+                _freq_val = cast(Union[str, int], val)
             else:
-                _val = val
-            self._set_cpu_freq(pname, _val, cpus, mname)
+                _freq_val = val
+            self._set_cpu_freq(pname, _freq_val, cpus, mname)
         else:
             raise Error(f"BUG: Unsupported property '{pname}'")
 

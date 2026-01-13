@@ -54,7 +54,8 @@ _MIN_OPER_RATIO_VFMS: Final = CPUModels.CPU_GROUPS["DMR"] +              \
                               CPUModels.CPU_GROUPS["PHI"]
 
 # CPUs supporting the "maximum efficiency ratio" feature.
-_BASEFREQ_VFMS: Final = CPUModels.CPU_GROUPS["GNR"] +         \
+_BASEFREQ_VFMS: Final = CPUModels.CPU_GROUPS["DMR"] +         \
+                        CPUModels.CPU_GROUPS["GNR"] +         \
                         CPUModels.CPU_GROUPS["EMR"] +         \
                         CPUModels.CPU_GROUPS["ARROWLAKE"] +   \
                         CPUModels.CPU_GROUPS["METEORLAKE"] +  \

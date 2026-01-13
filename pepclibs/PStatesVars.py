@@ -72,11 +72,19 @@ PROPS: Final[dict[str, PropertyTypedDict]] = {
         "writable": False,
     },
     "base_freq": {
-        "name": "Base CPU frequency",
+        "name": "CPU base frequency",
         "unit": "Hz",
         "type": "int",
         "sname": "CPU",
         "mnames": ("sysfs",),
+        "writable": False,
+    },
+    "fixed_base_freq": {
+        "name": "Fixed CPU base frequency",
+        "unit": "Hz",
+        "type": "int",
+        "sname": "global",
+        "mnames": ("msr",),
         "writable": False,
     },
     "frequencies": {

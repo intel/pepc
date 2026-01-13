@@ -175,6 +175,9 @@ Use target CPU specification options to define a subset of CPUs, cores, dies, or
    '/sys/devices/system/cpu/cpu<NUMBER>/cpufreq/base_frequency'. If the file is unavailable, it
    falls back to '/sys/devices/system/cpu/cpu<NUMBER>/cpufreq/bios_limit'.
 
+**--fixed-base-freq**
+   Retrieve the CPU fixed base frequency from MSR_PLATFORM_INFO (0xCE), bits 15:8.
+
 **--bus-clock**
    Retrieve the bus clock frequency, one of the CPU's reference clocks. The 'msr' mechanism reads
    MSR_FSB_FREQ (0xCD), bits 2:0, for legacy Intel platforms. For modern Intel platforms, the 'doc'
