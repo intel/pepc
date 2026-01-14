@@ -181,16 +181,17 @@ def test_iter_feature(params: _TestParamsTypedDict):
 
     sdicts = tpmi.get_known_features()
 
-    packages: list[int] = []
-    # TPMI devices are per-package.
-    addrs: dict[int, list[str]] = {}
-    # Instances are per-address.
-    instances: dict[str, list[int]] = {}
-
     valid_packages = set(params["cpuinfo"].get_packages())
 
     for sdict in sdicts:
         fname = sdict["name"]
+
+        packages: list[int] = []
+        # TPMI devices are per-package.
+        addrs: dict[int, list[str]] = {}
+        # Instances are per-address.
+        instances: dict[str, list[int]] = {}
+
         for package, addr, instance in tpmi.iter_feature(fname):
             assert isinstance(addr, str)
             assert isinstance(package, int)
@@ -325,6 +326,15 @@ desc: >-
 feature_id: 0x2
 
 registers:
+    UFS_HEADER:
+        offset: 0
+        width: 64
+        fields:
+            INTERFACE_VERSION:
+                bits: "7:0"
+                readonly: true
+                desc: >-
+                    Version number for this interface
     UFS_SOMETHING:
         offset: 16
         width: 64
@@ -416,7 +426,7 @@ def test_spec_file_override(params: _TestParamsTypedDict, tmp_path: Path):
         for _, addr, instance in tpmi.iter_feature("ufs"):
             tpmi.read_register("ufs", addr, instance, "UFS_SOMETHING", bfname="SOME_FIELD")
             with pytest.raises(Error):
-                tpmi.read_register("ufs", addr, instance, "UFS_HEADER", bfname="INTERFACE_VERSION")
+                tpmi.read_register("ufs", addr, instance, "UFS_HEADER", bfname="FLAGS")
             break
 
         # Verify that other spec files are still usable.

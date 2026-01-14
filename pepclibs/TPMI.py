@@ -384,10 +384,6 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         # Map feature name to the sdict, which is a partially loaded spec file dictionary.
         self._sdicts: dict[str, SDictTypedDict] = {}
 
-        # Major and minor TPMI interface versions.
-        self._major_version: int = -1
-        self._minor_version: int = -1
-
         # Scan the spec directories and build sdicts - partially loaded spec file dictionaries.
         self._build_sdicts()
 
@@ -461,6 +457,98 @@ class TPMI(ClassHelpers.SimpleCloseContext):
 
         return path
 
+    def _verify_interface_version(self, version: int, fname: str, addr: str):
+        """
+        Verify that the TPMI interface version is supported.
+
+        Args:
+            version: The TPMI interface version number to verify.
+            fname: Name of the TPMI feature.
+            addr: PCI address of the TPMI device.
+        """
+
+        _major_version = _minor_version = -1
+
+        # Bits 7:5 contain major version number, bits 4:0 contain minor version number.
+        major_version = (version >> 5) & 0b111
+        minor_version = version & 0b11111
+
+        # Make sure that version is the same across all instances.
+        if _major_version == -1:
+            _major_version = major_version
+        elif _major_version != major_version:
+            raise Error(f"TPMI interface major version mismatch for feature '{fname}', address "
+                        f"{addr}{self._pman.hostmsg}: expected {_major_version}, "
+                        f"got {major_version}")
+
+        if _minor_version == -1:
+            _minor_version = minor_version
+        elif _minor_version != minor_version:
+            raise Error(f"TPMI interface minor version mismatch for feature '{fname}', address "
+                        f"{addr}{self._pman.hostmsg}: expected {_minor_version}, "
+                        f"got {minor_version}")
+
+        # At this point only version 0.2 is supported.
+        if _major_version != 0 or _minor_version > 2:
+            raise ErrorNotSupported(f"Unsupported TPMI interface version "
+                                    f"{_major_version}.{_minor_version} for feature "
+                                    f"'{fname}', address {addr}{self._pman.hostmsg}.\n"
+                                    f"Only TPMI up to version 0.2 is supported.")
+
+    def _drop_dead_instances(self,
+                              fname: str,
+                              addr: str,
+                              mdmap: _MDMapType,
+                              vals: dict[int, dict[int, int]]):
+        """
+        Drop dead (not implemented) instances from the memory dump map (mdmap) and verify that the
+        TPMI interface version is supported.
+
+        Args:
+            fname: Name of the TPMI feature.
+            addr: PCI address of the TPMI device.
+            mdmap: The memory dump map (mdmap) for the feature.
+            vals: Register values for all instances and offsets.
+        """
+
+        verified = False
+
+        fdict = self._get_fdict(fname)
+        for regname, regdict in fdict.items():
+            bfdicts: dict[str, BFDictTypedDict] = regdict.get("fields", {})
+            if "INTERFACE_VERSION" not in bfdicts:
+                continue
+
+            for instance in list(mdmap):
+                _LOG.debug("Verifying version for TPMI feature '%s', address %s, instance %d%s",
+                           fname, addr, instance, self._pman.hostmsg)
+                try:
+                    regval = vals[instance][regdict["offset"]]
+                except KeyError:
+                    raise Error(f"BUG: missing register {regname} at offset {regdict['offset']:#x} "
+                                f"for TPMI feature '{fname}', instance {instance}, address "
+                                f"{addr}{self._pman.hostmsg}") from None
+
+                bfdict = bfdicts["INTERFACE_VERSION"]
+                version = (regval & bfdict["bitmask"]) >> bfdict["bitshift"]
+                if version == 0xFF:
+                    # Version 0xFF indicates that the instance of the feature is not
+                    # implemented.
+                    _LOG.debug("TPMI feature '%s', address %s, instance %d%s is not "
+                               "implemented (version %#x): dropping it",
+                                fname, addr, instance, self._pman.hostmsg, version)
+                    del mdmap[instance]
+                else:
+                    self._verify_interface_version(version, fname, addr)
+                    verified = True
+
+        if not mdmap:
+            raise Error(f"No instances or only dead instances found for TPMI feature '{fname}', "
+                        f"address {addr}{self._pman.hostmsg}")
+
+        if not verified:
+            raise Error(f"TPMI interface version register not found for feature '{fname}'")
+
     def _build_mdmap(self, addr, fname) -> _MDMapType:
         """
         Build and return the memory dump map (mdmap) for a TPMI feature at a given PCI device
@@ -490,10 +578,13 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         path = self._get_debugfs_feature_path(addr, fname)
         path = path / "mem_dump"
 
-        _LOG.debug("reading 'mem_dump' file at '%s'", path)
+        _LOG.debug("Reading 'mem_dump' of feature '%s' at '%s'", fname, path)
 
         mdmap: _MDMapType = {}
         pos = 0
+
+        # Values for all the instances and offsets found in the 'mem_dump' file.
+        vals: dict[int, dict[int, int]] = {}
 
         with self._pman.open(path, "r") as fobj:
             for line in fobj:
@@ -505,6 +596,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                 if match:
                     instance = Trivial.str_to_int(match.group(1), what="instance number")
                     mdmap[instance] = {}
+                    vals[instance] = {}
                 else:
                     # Matches two different line formats:
                     #   " 00000020: 013afd40 00004000 2244aacc deadbeef" and
@@ -517,7 +609,9 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                         line_pos += 3 + len(match.group(2))
                         for regval in regvals:
                             # Sanity-check register values and drop them.
-                            Trivial.str_to_int(regval, base=16, what="TPMI value")
+                            what = f"TPMI feature {fname} register at offset {offs:#x}, " \
+                                   f"instance {instance}, file '{path}'"
+                            vals[instance][offs] = Trivial.str_to_int(regval, base=16, what=what)
                             mdmap[instance][offs] = pos + line_pos
                             line_pos += 9
                             offs += 4
@@ -526,51 +620,8 @@ class TPMI(ClassHelpers.SimpleCloseContext):
 
                 pos += len(line) + 1
 
+        self._drop_dead_instances(fname, addr, mdmap, vals)
         return mdmap
-
-    def _verify_interface_version(self,
-                                  fname: str,
-                                  addr: str,
-                                  regname: str,
-                                  bfname: str,
-                                  mdmap: _MDMapType,
-                                  instance: int):
-        """
-        Verify that the TPMI interface version is supported.
-
-        Args:
-            fname: Name of the TPMI feature.
-            addr: PCI address of the TPMI device.
-            regname: Name of the register to read the interface version from.
-            mdmap: The memory dump map (mdmap) for the feature.
-            instance: The instance number to read the interface version from.
-        """
-
-        version = self._read_register(fname, addr, instance, regname, bfname=bfname, mdmap=mdmap)
-
-        # Bits 7:5 contain major version number, bits 4:0 contain minor version number.
-        major_version = (version >> 5) & 0b111
-        minor_version = version & 0b11111
-
-        # Make sure that version is the same across all instances.
-        if self._major_version == -1:
-            self._major_version = major_version
-        elif self._major_version != major_version:
-            raise Error(f"TPMI interface major version mismatch for feature '{fname}', address "
-                        f"{addr}: expected {self._major_version}, got {major_version}")
-
-        if self._minor_version == -1:
-            self._minor_version = minor_version
-        elif self._minor_version != minor_version:
-            raise Error(f"TPMI interface minor version mismatch for feature '{fname}', address "
-                        f"{addr}: expected {self._minor_version}, got {minor_version}")
-
-        # At this point only version 0.2 is supported.
-        if self._major_version != 0 or self._minor_version != 2:
-            raise ErrorNotSupported(f"Unsupported TPMI interface version "
-                                    f"{self._major_version}.{self._minor_version} for feature "
-                                    f"'{fname}', address {addr}{self._pman.hostmsg}.\n"
-                                    f"Only TPMI version 0.2 is supported.")
 
     def _build_fmaps(self):
         """Build fmap for all TPMI features and save them in 'self._fmap'."""
@@ -624,10 +675,6 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                 # package number associated with 'addr'.
                 if addr not in fmaps["tpmi_info"]:
                     mdmap = self._build_mdmap(addr, "tpmi_info")
-
-                    self._verify_interface_version("tpmi_info", addr, "TPMI_INFO_HEADER",
-                                                   "INTERFACE_VERSION", mdmap, 0)
-
                     package = self._read_register("tpmi_info", addr, 0, "TPMI_BUS_INFO",
                                                   bfname="PACKAGE_ID", mdmap=mdmap)
                     fmaps["tpmi_info"][addr] = {"package": package, "mdmap": mdmap}
@@ -1054,8 +1101,8 @@ class TPMI(ClassHelpers.SimpleCloseContext):
             fobj.seek(mdmap[instance][offset])
             val = fobj.read(8)
 
-        _LOG.debug("Read TPMI register '%s' (offset '%#x'), value is %s, file: %s, file offset %d",
-                   regname, offset, val, path, mdmap[instance][offset])
+        _LOG.debug("Read 0x%s: feature '%s', register '%s', offset '%#x', file: %s, file offset %d",
+                   val, fname, regname, offset, path, mdmap[instance][offset])
 
         what = f"value of register '{regname}' (offset '{offset:#x}') of TPMI feature '{fname}'"
         return Trivial.str_to_int(val, base=16, what=what)
@@ -1157,8 +1204,8 @@ class TPMI(ClassHelpers.SimpleCloseContext):
 
         if bfname:
             val = self._get_bitfield(val, fname, regname, bfname)
+            _LOG.debug("Value of TPMI register '%s', bit-field '%s' is %#x", regname, bfname, val)
 
-        _LOG.debug("Value of TPMI register '%s', bit-field '%s' is 0x%x", regname, bfname, val)
         return val
 
     def _write_register(self,
@@ -1215,7 +1262,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         path = self._get_debugfs_feature_path(addr, fname)
         path = path / "mem_write"
 
-        _LOG.debug("Writing 0x%x to '%s' register '%s', instance '%d' at offset 0x%x of TPMI "
+        _LOG.debug("Writing %#x to '%s' register '%s', instance '%d' at offset %#x of TPMI "
                    "device '%s'", value, fname, regname, instance, offset, addr)
 
         if bfname:
@@ -1486,11 +1533,12 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                 if instances:
                     for instance in instances:
                         self._validate_instance(fname, addr, instance)
+                    _instances = instances
                 else:
                     mdmap = self._get_mdmap(fname, addr)
-                    instances = mdmap
+                    _instances = mdmap
 
-                for instance in instances:
+                for instance in _instances:
                     yield (package, addr, instance)
 
     def read_register(self,
