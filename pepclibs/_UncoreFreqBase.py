@@ -912,16 +912,16 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
         if thrtype == "low":
             for _, _, high_threshold in self._get_elc_threshold_dies("high", {package: [die]}):
                 if threshold > high_threshold:
-                    raise ErrorBadOrder(f"Cannot set the ELC low threshold to {threshold}%: it is "
-                                        f"higher than the currently configured high threshold of "
-                                        f"{high_threshold}%")
+                    raise ErrorBadOrder(f"Cannot set the ELC low threshold to "
+                                        f"{threshold}%{self._pman.hostmsg}: it is higher than the "
+                                        f"currently configured high threshold of {high_threshold}%")
                 break
         elif thrtype == "high":
             for _, _, low_threshold in self._get_elc_threshold_dies("low", {package: [die]}):
                 if threshold < low_threshold:
-                    raise ErrorBadOrder(f"Cannot set the ELC high threshold to {threshold}%: it is "
-                                        f"lower than the currently configured low threshold of "
-                                        f"{low_threshold}%")
+                    raise ErrorBadOrder(f"Cannot set the ELC high threshold to "
+                                        f"{threshold}%{self._pman.hostmsg}: it is lower than the "
+                                        f"currently configured low threshold of {low_threshold}%")
                 break
         else:
             raise Error(f"BUG: bad ELC threshold type '{thrtype}'")
