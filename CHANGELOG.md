@@ -6,6 +6,11 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
 ### Added
+### Removed
+### Changed
+
+## [1.6.14] - 2026-01-14
+### Added
  - 'pepc pstates info --fixed-base-perf'
  - 'pepc pstates info --cppc-nominal-perf' and other CPPC performance levels
    support.
@@ -13,7 +18,6 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
    support.
 ### Removed
  - Stop trying to mimic sysfs frequency via MSRs.
-### Changed
 
 ## [1.6.13] - 2026-01-08
 ### Fixed
