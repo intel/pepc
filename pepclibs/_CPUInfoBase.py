@@ -349,6 +349,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
         tpmi = self._get_tpmi()
         if not tpmi:
+            _LOG.debug("TPMI is not supported, cannot read I/O dies information")
             return
 
         _LOG.debug("Reading I/O dies information from uncore frequency driver")
