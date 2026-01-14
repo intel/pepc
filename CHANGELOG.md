@@ -5,10 +5,13 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
- - pepc tpmi read: Fix bit-fields print format.
 ### Added
 ### Removed
 ### Changed
+
+## [1.6.15] - 2026-01-14
+### Fixed
+ - pepc tpmi read: Fix bit-fields print format.
 
 ## [1.6.14] - 2026-01-14
 ### Added

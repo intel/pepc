@@ -1,6 +1,12 @@
+pepc (1.6.15) unstable; urgency=low
+
+  * pepc tpmi read: Fix bit-fields print format.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Wed, 14 Jan 2026 00:00:00 +0200
+
 pepc (1.6.14) unstable; urgency=low
 
-  * 'pepc pstates info --fixed-base-perf'
+  * 'pepc pstates info --fixed-base-perf'.
   * 'pepc pstates info --cppc-nominal-perf' and other CPPC performance levels
     support.
   * 'pepc pstates info --hwp-guaranteed-perf' and other HWP performance levels
