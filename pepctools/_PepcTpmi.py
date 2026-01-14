@@ -338,8 +338,8 @@ def _tpmi_read_command_print(tpmi: TPMI.TPMI, info: _ReadInfoType):
                     for bfname, bfval in reginfo["fields"].items():
                         bfinfo = fdict[regname]["fields"][bfname]
                         pfx_indent = 8
-                        _LOG.info("%s%s[%s]: %d",
-                                  " " * pfx_indent + pfx, bfname, bfinfo["bits"], bfval)
+                        _LOG.info("%s%s[%d:%d]: %d", " " * pfx_indent + pfx, bfname,
+                                  bfinfo["bits"][0], bfinfo["bits"][1], bfval)
 
 def tpmi_read_command(args: argparse.Namespace, pman: ProcessManagerType):
     """
