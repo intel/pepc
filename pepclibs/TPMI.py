@@ -528,18 +528,25 @@ class TPMI(ClassHelpers.SimpleCloseContext):
 
         return mdmap
 
-    def _verify_tpmi_version(self, addr: str, mdmap: _MDMapType, instance: int):
+    def _verify_interface_version(self,
+                                  fname: str,
+                                  addr: str,
+                                  regname: str,
+                                  bfname: str,
+                                  mdmap: _MDMapType,
+                                  instance: int):
         """
         Verify that the TPMI interface version is supported.
 
         Args:
+            fname: Name of the TPMI feature.
             addr: PCI address of the TPMI device.
-            mdmap: The memory dump map (mdmap) for the 'tpmi_info' feature.
-            instance: The instance number to read the version from.
+            regname: Name of the register to read the interface version from.
+            mdmap: The memory dump map (mdmap) for the feature.
+            instance: The instance number to read the interface version from.
         """
 
-        version = self._read_register("tpmi_info", addr, instance, "TPMI_INFO_HEADER",
-                                      bfname="INTERFACE_VERSION", mdmap=mdmap)
+        version = self._read_register(fname, addr, instance, regname, bfname=bfname, mdmap=mdmap)
 
         # Bits 7:5 contain major version number, bits 4:0 contain minor version number.
         major_version = (version >> 5) & 0b111
@@ -549,21 +556,21 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         if self._major_version == -1:
             self._major_version = major_version
         elif self._major_version != major_version:
-            raise Error(f"TPMI interface major version mismatch for device at address {addr}: "
-                        f"expected {self._major_version}, got {major_version}")
+            raise Error(f"TPMI interface major version mismatch for feature '{fname}', address "
+                        f"{addr}: expected {self._major_version}, got {major_version}")
 
         if self._minor_version == -1:
             self._minor_version = minor_version
         elif self._minor_version != minor_version:
-            raise Error(f"TPMI interface minor version mismatch for device at address {addr}: "
-                        f"expected {self._minor_version}, got {minor_version}")
+            raise Error(f"TPMI interface minor version mismatch for feature '{fname}', address "
+                        f"{addr}: expected {self._minor_version}, got {minor_version}")
 
-        # At this point only version 2 is supported.
-        if self._major_version != 2:
-            raise ErrorNotSupported(f"Unsupported TPMI interface major version "
-                                    f"{self._major_version} for device at address {addr}"
-                                    f"{self._pman.hostmsg}.\nOnly TPMI major version 2 is "
-                                    f"supported.")
+        # At this point only version 0.2 is supported.
+        if self._major_version != 0 or self._minor_version != 2:
+            raise ErrorNotSupported(f"Unsupported TPMI interface version "
+                                    f"{self._major_version}.{self._minor_version} for feature "
+                                    f"'{fname}', address {addr}{self._pman.hostmsg}.\n"
+                                    f"Only TPMI version 0.2 is supported.")
 
     def _build_fmaps(self):
         """Build fmap for all TPMI features and save them in 'self._fmap'."""
@@ -617,6 +624,9 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                 # package number associated with 'addr'.
                 if addr not in fmaps["tpmi_info"]:
                     mdmap = self._build_mdmap(addr, "tpmi_info")
+
+                    self._verify_interface_version("tpmi_info", addr, "TPMI_INFO_HEADER",
+                                                   "INTERFACE_VERSION", mdmap, 0)
 
                     package = self._read_register("tpmi_info", addr, 0, "TPMI_BUS_INFO",
                                                   bfname="PACKAGE_ID", mdmap=mdmap)
