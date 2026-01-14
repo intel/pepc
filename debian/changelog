@@ -1,3 +1,9 @@
+pepc (1.6.16) unstable; urgency=low
+
+  * pepc tpmi read: Do not read dead instances.
+
+ -- Artem Bityutskiy <artem.bityutskiy@intel.com>  Wed, 14 Jan 2026 00:00:00 +0200
+
 pepc (1.6.15) unstable; urgency=low
 
   * pepc tpmi read: Fix bit-fields print format.

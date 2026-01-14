@@ -9,6 +9,10 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Removed
 ### Changed
 
+## [1.6.16] - 2026-01-14
+### Fixed
+ - pepc tpmi read: Do not read dead instances.
+
 ## [1.6.15] - 2026-01-14
 ### Fixed
  - pepc tpmi read: Fix bit-fields print format.
