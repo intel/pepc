@@ -2,110 +2,107 @@
 -*- coding: utf-8 -*-
 vim: ts=4 sw=4 tw=100 et ai si
 
-# Copyright (C) 2020-2025 Intel Corporation
+# Copyright (C) 2020-2026 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 
 Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 -->
 
-Document author: Artem Bityutskiy <dedekind1@gmail.com>
+* Author: Artem Bityutskiy <dedekind1@gmail.com>
 
 - [Introduction](#introduction)
-  - [Context](#context)
-- [Authors and contributors](#authors-and-contributors)
-- [What is supported](#what-is-supported)
+- [Disclaimer](#disclaimer)
+- [Privileges](#privileges)
 - [Requirements](#requirements)
 - [Installation](#installation)
-- [Examples](#examples)
+- [Usage Examples](#usage-examples)
+- [Man pages](#man-pages)
 - [Helpful resources](#helpful-resources)
 - [FAQ](#faq)
 
 # Introduction
 
-Pepc, short for "Power, Energy, and Performance Configurator", is a command-line tool designed for
-managing and optimizing CPU power management features.
+`pepc`, short for "Power, Energy, and Performance Configurator", is a command-line tool designed for
+reading and changing power management features. For example, `pepc` can be used to modify CPU
+or uncore frequency limits for all or a subset of CPUs, cores, modules, dies, or packages in the
+system.
 
-**IMPORTANT**: This tool is intended for debugging and research purposes only. It requires root
-permissions and should only be used in a lab environment, not in production.
+`pepc` consolidates power management configuration in one tool with a consistent and convenient
+command-line interface instead of using various tools, such as `cpupower`, `rdmsr`,
+`cat /sys/...`, etc.
 
-## Context
+# Disclaimer
 
-There are numerous Linux tools for power management configuration. This section explains why we
-created another one.
+This is not an official Intel product. It is an open-source tool developed by Intel engineers to
+facilitate power and performance configuration in Linux in lab environments. Please use it
+at your own risk.
 
-We work on power and performance, including measuring C-state latencies using
-[wult](https://github.com/intel/wult) and collecting power and performance statistics using
-[stats-collect](https://github.com/intel/stats-collect). We frequently configure power and
-performance  settings, such as enabling/disabling C-states, limiting CPU/uncore frequency,
-or tweaking features like C1 demotion, among others.
+# Privileges
 
-Before pepc, we relied on multiple tools like cpupower and lscpu, and memorized sysfs paths for
-various settings, such as disabling a C-state. This approach was cumbersome and error-prone. It
-lacked flexibility; for instance, disabling C1 for a single CPU module required identifying the
-CPU numbers in that module and disabling C1 for each CPU individually. Additionally, configuring
-hardware features like C1 demotion required knowledge of MSR registers and specific bit toggles.
-While tools like wrmsr and rdmsr were useful, they were not user-friendly for frequent use.
-
-Pepc simplifies power and performance configuration by eliminating the need to remember sysfs paths
-and platform-specific MSR numbers. It is flexible, supports various CPU models, well-structured,
-and offers a Python API for integration with other Python projects.
-
-# Authors and contributors
-
-* Artem Bityutskiy <dedekind1@gmail.com> - original author, project maintainer.
-* Antti Laakso <antti.laakso@linux.intel.com> - contributor, project maintainer.
-* Niklas Neronin <niklas.neronin@intel.com> - contributor.
-* Adam Hawley <adam.james.hawley@intel.com> - contributor.
-* Alexey Gladkov <legion@kernel.org> - contributor.
-* Tero Kristo <tero.kristo@gmail.com>> - contributor.
-* Ali Erdinç Köroğlu <ali.erdinc.koroglu@intel.com> - contributor.
-* Juha Haapakorpi <juha.haapakorpi@intel.com> - contributor.
-
-# What is supported
-
-Pepc supports discovering and configuring the following features.
-* CPU C-states: [documentation](docs/pepc-cstates.rst)
-* CPU P-states: [documentation](docs/pepc-pstates.rst)
-* Uncore properties: [documentation](docs/pepc-uncore.rst)
-* PM QoS: [documentation](docs/pepc-pmqos.rst)
-* CPU onlining and offlining: [documentation](docs/pepc-cpu-hotplug.rst)
-* ASPM: [documentation](docs/pepc-aspm.rst)
-* CPU topology: [documentation](docs/pepc-topology.rst)
-* TPMI: [documentation](docs/pepc-tpmi.rst)
-
-Some features are hardware-agnostic, while others depend on specific hardware capabilities.
+Some `pepc` read operations may be done without superuser privileges, some require superuser
+privileges (root). This depends on the specific operation and the underlying mechanism. For example,
+reading CPU frequency limits from sysfs does not need root, therefore `pepc pstates info --min-freq`
+can be run as a normal user. On the other hand, reading an MSR (Model Specific Register) needs
+superuser privileges, so something like `pepc cstates info --pkg-cstate-limit` needs to be run as
+root.
 
 # Requirements
 
-* Pepc requires Python 3.9 or newer.
-* Run pepc as a superuser (e.g., using "sudo").
-* Many options need access to MSRs (Model Specific Registers), requiring the "msr" kernel driver.
-  Ensure the "msr" kernel driver is available, as some Linux distributions may disable it by
+* `pepc` requires Python 3.9 or newer.
+* Many options need access to MSRs (Model Specific Registers), requiring the `msr` kernel driver.
+  Ensure the `msr` kernel driver is available, as some Linux distributions may disable it by
   default.
 
 # Installation
 
-Please, refer to the [installation guide](docs/guide-install.md) document.
+Please refer to the [installation guide](docs/guide-install.md) document.
 
-# Examples
+# Usage Examples
 
-Please, refer to the [usage examples](docs/guide-examples.md) document.
+Please refer to the [usage examples](docs/guide-examples.md) document.
+
+# Man pages
+
+Here are the manual pages for all `pepc` features. They are also installed along with `pepc` and can be
+accessed via the `man` command (e.g., `man pepc-cstates`).
+* CPU C-states: [man page](docs/pepc-cstates.rst)
+* CPU P-states: [man page](docs/pepc-pstates.rst)
+* Uncore properties: [man page](docs/pepc-uncore.rst)
+* PM QoS: [man page](docs/pepc-pmqos.rst)
+* ASPM: [man page](docs/pepc-aspm.rst)
+* CPU onlining and offlining: [man page](docs/pepc-cpu-hotplug.rst)
+* CPU topology: [man page](docs/pepc-topology.rst)
+* TPMI: [man page](docs/pepc-tpmi.rst)
+
+Some features are hardware-agnostic, while others depend on specific hardware capabilities.
 
 # Helpful resources
 
-* A document describing Intel C-state namespaces: [here](docs/misc-cstate-namespaces.md).
-* A document explaining MSR scope and how pepc simplifies understanding a complex processor
-  configuration: [here](doc/misc-msr-scope.md).
+* [CPU Base Frequency and TDP Levels](docs/misc-cpu-base-freq.md) - explains the concept of CPU base
+  frequency and many CPU performance scaling topics.
+* [Intel C-state namespaces](docs/misc-cstate-namespaces.md) - explains C-state naming conventions.
+* [Xeon C6P and C6SP Idle States](docs/misc-c6p-c6sp.md) - explains the C6P and C6SP idle states on
+  Intel Xeon platforms.
+* [Uncore ELC and Frequency Scaling](docs/misc-uncore-elc.md) - explains the uncore ELC mechanism.
+* [MSR scope](docs/misc-msr-scope.md) - explains the concept of MSR scope (per-core, per-module,
+  per-package) and related pitfalls.
+
+The following articles are not directly related to `pepc`, but may be helpful to understand some of
+the features `pepc` manages.
+* [Measured CPU Frequency and C-states](docs/misc-c1e-cpu-freq.md) - explains why measured CPU
+  frequency may be lower than expected when C1E or deeper C-states are enabled.
+* [TSC, APERF, and MPERF Counters](docs/misc-tsc-amperf.md) - explains the TSC, APERF, and MPERF
+  counters and their interaction.
 
 # FAQ
 
 ## What to do if my platform is not supported?
 
-Some pepc features (e.g., --pkg-cstate-limit) are implemented only for certain Intel platforms.
-This does not necessarily mean that the feature is not supported by other platforms, it only means
-that we verified it on a limited amount of platforms. Just to be on a safe side, we refuse changing
-the underlying MSR registers on platforms we did not verify.
+`pepc` features (e.g., '--pkg-cstate-limit') are implemented only for certain Intel platforms.
+This means that we verified the feature on a limited number of platforms, not that it is
+unsupported by other platforms. To be on the safe side, we refuse to change the underlying MSR
+registers on platforms we did not verify.
 
-If pepc fails with a message like "this feature is not supported on this platform" for you, feel
+If `pepc` fails with a message like "this feature is not supported on this platform" for you, feel
 free to contact the authors with a request. Very often it ends up with just adding a CPU ID to the
-list of supported platforms, and may be you can do it yourself and submit a patch/pull request.
+list of supported platforms, and maybe you can do it yourself and submit a patch/pull request.
