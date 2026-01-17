@@ -13,7 +13,7 @@
 Emulation data generator for collecting system data used to emulate SUTs.
 """
 
-from tests._EmulDataGen import main
+from pepctools._EmulDataGen import main
 
 if __name__ == "__main__":
     raise SystemExit(main())

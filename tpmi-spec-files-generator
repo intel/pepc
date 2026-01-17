@@ -18,7 +18,7 @@ import typing
 import argparse
 import contextlib
 from pathlib import Path
-from misc import TPMIXMLConvert
+from pepctools import _TPMIXMLConvert
 from pepclibs.helperlibs import ArgParse, Logging, Trivial
 from pepclibs.helperlibs.Exceptions import Error
 
@@ -134,7 +134,7 @@ def _main() -> int:
         cmdl = _get_cmdline_args(args)
 
         with contextlib.ExitStack() as stack:
-            conv = TPMIXMLConvert.TPMIXMLConvert(cmdl["input_dir"])
+            conv = _TPMIXMLConvert.TPMIXMLConvert(cmdl["input_dir"])
             stack.enter_context(conv)
 
             conv.convert(feature_names=cmdl["feature_names"],
