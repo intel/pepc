@@ -84,9 +84,8 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         # are lists of topology lines (tlines) sorted in the key order (or more precisely, in the
         # order specified by the sorting map).
         #
-        # Note, die numbers are relative to the package, and core numbers are relative to the
-        # package in older kernels. For this reason, the die and core topology lines are sorted by
-        # package first, then by die/core.
+        # Note, core and die numbers are relative to the package. For this reason, the die and core
+        # topology lines are sorted by package first, then by die/core.
         self._sorting_map: dict[ScopeNameType, tuple[ScopeNameType, ...]] = \
             {"CPU":     ("CPU",),
              "core":    ("package", "core", "CPU"),

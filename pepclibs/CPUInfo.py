@@ -1052,28 +1052,34 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
     def cpus_div_cores(self, cpus: AbsNumsType) -> tuple[dict[int, list[int]], list[int]]:
         """
-        Split a collection of CPU numbers into groups by core, inverse of 'cores_to_cpus()'.
+        Group CPU numbers by complete cores, inverse of 'cores_to_cpus()'.
+
+        Given a collection of CPU numbers, identify which cores have all their CPUs included in the
+        input. Return those cores grouped by package, along with any remaining CPUs that don't form
+        complete cores.
 
         Args:
-            cpus: CPU numbers to split by core.
+            cpus: CPU numbers to group by core.
 
         Returns:
             tuple:
-                - Dictionary mapping package numbers to lists of core numbers.
-                - List of remaining CPUs that could not be grouped by core.
+            - Dictionary mapping package numbers to lists of core numbers where all CPUs of
+              each core are present in 'cpus'.
+            - List of CPUs from 'cpus' that don't belong to any complete core.
 
-        Example.
+        Notes:
+            - Core numbers may be relative to package or globally unique, depending on kernel
+              version.
+            - The order of rem_cpus matches the input order.
+
+        Example:
             Consider a system with 2 packages, 1 core per package, 2 CPUs per core.
-                - package 0 includes core 0 and CPUs 0 and 1
-                - package 1 includes core 0 and CPUs 2 and 3
+            - package 0 includes core 0 and CPUs 0 and 1
+            - package 1 includes core 0 and CPUs 2 and 3
 
             1. cpus_div_cores([0, 1, 2, 3]) returns ({0:[0], 1:[0]}, []).
             2. cpus_div_cores([2, 3])       returns ({1:[0]},        []).
             3. cpus_div_cores([0, 3])       returns ({},             [0,3]).
-
-        Note:
-            In older kernels, core numbers are relative to package numbers. In newer kernels,
-            core numbers are globally unique.
         """
 
         cpus = self.normalize_cpus(cpus, offline_ok=True)
