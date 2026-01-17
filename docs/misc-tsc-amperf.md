@@ -1,7 +1,17 @@
+<!--
+-*- coding: utf-8 -*-
+vim: ts=4 sw=4 tw=100 et ai si
+
+# Copyright (C) 2024-2026 Intel Corporation
+# SPDX-License-Identifier: BSD-3-Clause
+
+Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
+-->
+
 # TSC, APERF, and MPERF Counters
 
-* Author: Artem Bityutskiy <dedekind1@gmail.com>
-* Date: December, 2025
+- Author: Artem Bityutskiy <dedekind1@gmail.com>
+- Date: December, 2025
 
 ## Table of Contents
 
@@ -32,7 +42,7 @@ This article explores TSC, APERF, and MPERF - three important counters in Intel 
 clarify their operation and practical applications in Linux power management and performance tools.
 
 The following counters are covered:
-- TSC (Time Stamp Counter), accessible via the RDTSC instruction
+- TSC (Time Stamp Counter), accessible via the 'RDTSC' instruction
 - APERF: MSR 0xe8 (IA32_MSR_APERF)
 - MPERF: MSR 0xe7 (IA32_MSR_MPERF)
 
@@ -72,18 +82,18 @@ value. The actual bus clock frequency may vary slightly due to spread spectrum t
 
 ## TSC
 
-The TSC is a 64-bit counter accessible via the RDTSC instruction. It provides a monotonically
+The TSC is a 64-bit counter accessible via the 'RDTSC' instruction. It provides a monotonically
 increasing timestamp that software uses for performance measurement and timekeeping. TSC effectively
 measures elapsed time at a constant frequency.
 
-On most modern Intel platforms, Linux uses TSC as the default clock source. Linux's high-resolution 
-timer subsystem uses CPU's LAPIC controller in TSC deadline mode, which allows arming timer
+On most modern Intel platforms, Linux uses TSC as the default clock source. Linux's high-resolution
+timer subsystem uses the CPU's LAPIC controller in TSC deadline mode, which allows arming timer
 interrupts by specifying a target TSC value to trigger the interrupt at.
 
 ### Legacy TSC
 
 In very old Intel processors, TSC stopped during C-states and scaled with CPU frequency changes.
-In later processor, TSC continued running in C-states but still scaled with frequency. This
+In later processors, TSC continued running in C-states but still scaled with frequency. This
 behavior made TSC impractical for time measurements since dynamic P-state transitions would affect
 the counter rate.
 
@@ -107,10 +117,10 @@ From a software engineering perspective, ART is an unnecessary abstraction layer
 to understand the crystal clock frequency in order to understand TSC. However, ART is mentioned in
 the Intel Software Developer's Manual, so is included here for completeness.
 
-I think about it this way: Crystal clock serves many purposes beyond TSC, ART is specifically for
-TSC.
+I think about it this way: The crystal clock serves many purposes beyond TSC. ART is specifically
+for TSC.
 
-Intel Software Developer's Manual provides the following formula for TSC:
+The Intel Software Developer's Manual provides the following formula for TSC:
 
 ```
 TSC = P × ART + K
@@ -150,8 +160,8 @@ to easily distinguish between the two counters.
 
 ### From Intel SDM
 
-Here is how Intel Software Developer's Manual describes the APERF and MPERF counters as of November
-2025.
+Here is how the Intel Software Developer's Manual describes the APERF and MPERF counters as of
+November 2025.
 > - The IA32_MPERF MSR (0xE7) increments in proportion to a fixed frequency, which is configured when
 >   the processor is booted.
 > - The IA32_APERF MSR (0xE8) increments in proportion to actual performance, while accounting for
@@ -186,7 +196,7 @@ conditions like thermal constraints. Software can also request duty cycle inject
 for details.
 
 The rest of the APERF/MPERF description is based on my experience and source code analysis of the
-open source Linux codebase.
+open-source Linux codebase.
 
 ### MPERF
 
@@ -214,19 +224,19 @@ If you let the CPU frequency scale freely, APERF frequency will be an average CP
 measurement interval.
 
 This was true on both server and hybrid client platforms (for both E-cores and P-cores) I have
-worked with. Howerver, Intel SDM does not guarantee this behavior, so it may not hold true in the
+worked with. However, Intel SDM does not guarantee this behavior, so it may not hold true in the
 future.
 
 ### The Reference Clock
 
 While TSC operates based on the crystal clock frequency, CPU frequency along with APERF and MPERF
-counters are based on the bus clock. Bus clock frequency varies to reduce electromagnetic
+counters are based on the bus clock. The bus clock frequency varies to reduce electromagnetic
 interference, which explains why MPERF frequency is close to TSC frequency, but not identical.
 
 ## Usage
 
 This section discusses some practical applications of TSC, APERF, and MPERF counters, with examples
-from the open source Linux `turbostat` tool developed by Len Brown.
+from the open-source Linux `turbostat` tool developed by Len Brown.
 
 ### Busy%
 
@@ -245,14 +255,14 @@ Indeed, since MPERF counts only in C0 state, while TSC counts all the time, the 
 TSC gives the fraction of time spent in C0 state.
 
 Because MPERF and TSC are based on different clocks (bus clock vs crystal clock), they run at
-slightly different rates. Therefore, ratio is not precisely accurate, but good enough for practical
-purposes.
+slightly different rates. Therefore, the ratio is not precisely accurate, but good enough for
+practical purposes.
 
 However, Intel SDM explicitly states that there is no architecturally defined meaning for MPERF
 other than its ratio with APERF. So this calculation is based on practical experience rather than
 official documentation, and it may not hold true in the future. However, it has been working
 reliably for many years on a variety of Intel platforms (all platforms I've worked with). The tool
-is open source, and if there was a propblem with this calculation, someone would propbably have
+is open source, and if there was a problem with this calculation, someone would probably have
 reported it by now. If this ever breaks, a possible solution could be to use the
 CPU_CLK_UNHALTED.REF_TSC performance counter instead of MPERF.
 
@@ -295,8 +305,8 @@ BaseFreqMHz is obtained either via CPUID.16H or calculated as 'ΔTSC / Interval_
 latter assumes that TSC frequency approximates the base frequency.
 
 The calculation works as follows:
-- ΔAPERF / ΔMPERF provides the ratio of actual frequency to base frequency during C0 state.
-- Multiplying this ratio by the base frequency yields the average CPU frequency while in C0 state
+- ΔAPERF / ΔMPERF provides the ratio of actual frequency to base frequency during the C0 state.
+- Multiplying this ratio by the base frequency yields the average CPU frequency while in the C0 state.
 
 #### Base vs Guaranteed Frequency
 
