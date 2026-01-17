@@ -2,182 +2,177 @@
 -*- coding: utf-8 -*-
 vim: ts=4 sw=4 tw=100 et ai si
 
-# Copyright (C) 2020-2025 Intel Corporation
+# Copyright (C) 2020-2026 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 
 Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 -->
 
-Document author: Artem Bityutskiy <dedekind1@gmail.com>
+- Author: Artem Bityutskiy <dedekind1@gmail.com>
 
-- [Introduction](#introduction)
-- [Dependencies](#dependencies)
-  - [Fedora](#fedora)
-  - [Ubuntu](#ubuntu)
+- [Pepc Packages](#pepc-packages)
+- [Installation Script](#installation-script)
+- [Pepc Package Dependencies](#pepc-package-dependencies)
+- [Installation Using pip](#installation-using-pip)
 - [Using uv](#using-uv)
-- [Using pip](#using-pip)
-- [Fedora](#fedora-1)
-- [CentOS 9 Stream](#centos-9-stream)
+- [sudo complication](#sudo-complication)
 - [Tab completions](#tab-completions)
 - [Man pages](#man-pages)
 - [Example of .bashrc](#example-of-bashrc)
 
-# Introduction
+# Pepc Packages
 
-This document provides a guide for installing the `pepc` tool.
+Some OS distributions may provide `pepc` as an installable package. However, these packages are
+often outdated. Therefore, it is recommended to install `pepc` using `pip` or `uv` as described
+below.
 
-**IMPORTANT**: This tool is intended for debugging and research purposes only. It requires root
-permissions and should only be used in a lab environment, not in production.
+# Installation Script
 
-# Dependencies
+If you prefer, you can skip reading this guide and use the provided installation script
+[`misc/install-pepc.sh`](../misc/install-pepc.sh) to install `pepc`. The script automates the steps
+described in this guide and installs `pepc` using the `pip` method.
 
-Pepc requires certain system tools and libraries. Below are the installation instructions.
+Script usage examples.
 
-## Fedora
-
+```bash
+# Read help message.
+install-pepc.sh --help
+# Install pepc to the default location (~/.pmtools) from the public repository.
+install-pepc.sh
+# Same as above, but also install OS package dependencies for Ubuntu.
+install-pepc.sh --os-name ubuntu
 ```
+
+# Pepc Package Dependencies
+
+`pepc` relies on a few system tools and libraries. Ensure the following packages are installed on your
+system.
+
+**Fedora / CentOS**
+
+```bash
 sudo dnf install -y rsync util-linux procps-ng git
 ```
 
-## Ubuntu
+**Ubuntu**
 
-```
+```bash
 sudo apt install -y rsync util-linux procps git
 ```
 
-# Using uv
+# Installation Using pip
 
-Uv is a modern Python project and package management tool. Install it on your system. Many Linux
-distributions provide a package for it. For example, in Fedora, run:
+This method installs `pepc` into a Python virtual environment (basically just directory) in your
+home directory.
 
-```
-sudo dnf install uv
-```
+Make sure you have Python `pip3` and `venv` tools installed. To install them, run the following
+commands as superuser.
 
-Install pepc by running the following command.
+**Fedora / CentOS**
 
-```
-uv tool install git+https://github.com/intel/pepc.git@release
-```
-
-uv installs projects to '$HOME/.local'. Ensure '$HOME/.local/bin' is in your 'PATH'.
-
-```
-$ which pepc
-~/.local/bin/pepc
+```bash
+sudo dnf install python-pip
 ```
 
-If you installed pepc as root and plan to use pepc as root, no additional steps are required.
+**Ubuntu**
 
-## sudo complication
-
-Unfortunately, running pepc with sudo works only when you provide the full path to the executable.
-
-```
-sudo ~/.local/bin/pepc --version
-1.5.32
+```bash
+sudo apt install python3-venv
 ```
 
-Using only the command name causes an error.
+The following installation process does not require superuser privileges.
 
-```
-sudo pepc
-sudo: pepc: command not found
-```
+Install `pepc` and all its Python dependencies into a sub-directory of your choice. Here we use
+'~/.pmtools' as an example.
 
-To overcome this, create an alias as shown below and add it to your `$HOME/.bashrc` file:
-
-```
-alias pepc="sudo $HOME/.local/bin/pepc"
-```
-You can now run `pepc` directly. For example:
-
-```
-pepc pstates info
-[sudo] password for user:
-Source: Linux sysfs file-system
- - Turbo: on
- - Min. CPU frequency: 800.00MHz for all CPUs
-... snip ...
-```
-
-# Using pip
-
-Install pip and python virtualenv on your system. Most modern Linux distributions include a package
-for this. For example, in Fedora, run
-
-```
-dnf install python-pip
-```
-
-In Ubuntu, run
-
-```
-apt install python3-venv
-```
-
-Install pepc into a python virtual environment using the following commands.
-
-```
+```bash
 python3 -m venv ~/.pmtools
 ~/.pmtools/bin/pip3 install git+https://github.com/intel/pepc.git@release
 ```
 
-Ensure that '$HOME/.pmtools/bin' is in your 'PATH'. Verify this as follows.
+Ensure that '~/.pmtools/bin' is in your 'PATH', add it if necessary.
 
+```bash
+export PATH="$PATH:$HOME/.pmtools/bin"
 ```
-$ which pepc
-~/.pmtools/bin/pepc
+
+# Using uv
+
+`uv` is a modern Python project and package management tool. Many Linux distributions provide a
+package for it. For example, in Fedora, run:
+
+```bash
+sudo dnf install uv
 ```
 
-If you installed pepc as root and plan to use pepc as root, no additional steps are required.
+Install `pepc` by running the following command.
 
-## sudo complication
-
-Similar to the "using uv" case, create an alias and add it to your `$HOME/.bashrc` file as shown
-below:
-
+```bash
+uv tool install git+https://github.com/intel/pepc.git@release
 ```
+
+`uv` installs projects to '$HOME/.local'. Ensure '$HOME/.local/bin' is in your 'PATH'.
+
+```bash
+export PATH="$PATH:$HOME/.local/bin"
+```
+
+# sudo complication
+
+This section applies to both `pip` and `uv` installation methods.
+
+Unfortunately, running `pepc` with `sudo` works only when you provide the full path to the
+executable. This is a standard challenge with using `sudo` and custom 'PATH' settings: `sudo` resets
+the 'PATH' variable to a default value for security reasons.
+
+You can use standard methods to overcome this issue. One of them is using a shell alias, for example
+in your '~/.bashrc' file:
+
+```bash
 alias pepc="sudo VIRTUAL_ENV=$HOME/.pmtools $HOME/.pmtools/bin/pepc"
 ```
 
-# Fedora
+With this alias, you can run `pepc` with `sudo` transparently, for example:
 
-An old version of pepc is available in Fedora starting from version 38. But it is currently
-unmaintained, please do not use it.
-
-# CentOS 9 Stream
-
-An old version of pepc is available in CentOS 9 Stream. But it is currently unmaintained, please do
-not use it.
-
+```bash
+$ pepc pstates info
+[sudo] password for user:
+Source: Linux sysfs file-system
+ - Turbo: on
+ - Min. CPU frequency: 800.00MHz for all CPUs
+ - Max. CPU frequency: 3.90GHz for all CPUs
+... snip ...
+```
 # Tab completions
 
-Pepc supports tab completions, but it requires specific environment variables to be set. Make sure
-'pepc' is in your '$PATH', and  use the following:
+`pepc` supports tab completions, but it requires specific environment variables to be set. Make sure
+`pepc` is in your 'PATH', and use the following:
 
-```
-# Assuming pepc was installed to '$HOME/.pmtools'.
+```bash
+# For pip installation (adjust path if you used a different location):
 eval "$($HOME/.pmtools/bin/register-python-argcomplete pepc)"
+
+# For uv installation:
+eval "$($HOME/.local/bin/register-python-argcomplete pepc)"
 ```
 
-Add this line to '$HOME/.bashrc' file to enable tab completion by default.
+Add this line to your '$HOME/.bashrc' file to enable tab completion by default.
 
 # Man pages
 
-Pepc provides man pages. If you install pepc using 'pip' or 'uv', the man pages are placed in
-Python's "site-packages" directory, which is not searched by the "man" tool by default. To make
-them available, add the pepc man page path to your 'MANPATH' environment variable.
+`pepc` provides man pages. If you install `pepc` using `pip` or `uv`, the man pages are placed in
+Python's 'site-packages' directory, which is not searched by the `man` tool by default. To make
+them available, add the `pepc` man page path to your 'MANPATH' environment variable.
 
 Find the man page location with:
 
-```
+```bash
 pepc --print-man-path
 ```
 
 This prints a path like '..../lib/pythonX.Y/site-packages/pepcdata/man'. Add it to 'MANPATH' with:
 
-```
+```bash
 export MANPATH="$MANPATH:$(pepc --print-man-path)"
 ```
 
@@ -185,19 +180,19 @@ Add this line to your '$HOME/.bashrc' to make it persistent.
 
 Verify that man pages are available:
 
-```
+```bash
 man pepc-cstates
 ```
 
-Note: Pepc provides man pages for each subcommand.
+**Note:** `pepc` provides man pages for each subcommand.
 
 # Example of .bashrc
 
-Here is an example of a `$HOME/.bashrc` file that includes the necessary settings for using pepc:
+Here is an example of a '$HOME/.bashrc' file that includes the necessary settings for using `pepc`:
 
-```
-# Change the path if you installed pepc to a different location.
-VENV="$HOME/.pmtools"
+```bash
+# === pepc settings ===
+VENV='$HOME/.pmtools'
 VENV_BIN="$VENV/bin"
 
 # Ensure the virtual environment's bin directory is in the PATH.
@@ -211,4 +206,5 @@ eval "$($VENV_BIN/register-python-argcomplete pepc)"
 
 # Enable man pages.
 export MANPATH="$MANPATH:$($VENV_BIN/pepc --print-man-path)"
+# === end of pepc settings ===
 ```
