@@ -3,7 +3,7 @@
 
 :Title: ASPM
 
-.. Contents::
+.. contents::
    :depth: 2
 ..
 
@@ -18,7 +18,7 @@ General options
    Show a short help message and exit.
 
 **-q**
-   Be quiet (print only improtant messages like warnings).
+   Be quiet (print only important messages like warnings).
 
 **-d**
    Print debugging information.
@@ -36,7 +36,8 @@ General options
    using SSH, instead of running it locally. If not specified, the command will be run locally.
 
 **-U** *USERNAME*, **--username** *USERNAME*
-   Username for SSH login to the remote host. Defaults to 'root'.
+   Name of the user to use for logging into the remote host over SSH. The default user name is
+   'root'.
 
 **-K** *PRIVKEY*, **--priv-key** *PRIVKEY*
    Path to the private SSH key for logging into the remote host. Defaults to keys in standard paths
@@ -56,48 +57,49 @@ General options
    2. '$PEPC_DATA_PATH/tests/emul-data'
    3. '$HOME/.local/share/pepc/tests/emul-data'
    4. '$VIRTUAL_ENV/share/tests/emul-data'
-   5. '/usr/local/share/pepc/tests/emul-data-data'
+   5. '/usr/local/share/pepc/tests/emul-data'
    6. '/usr/share/pepc/tests/emul-data'
 
 **--force-color**
    Force colorized output even if the output stream is not a terminal (adds ANSI escape codes).
 
 **--print-man-path**
-  Print path to pepc manual pages directory and exit. This path can be added to the 'MANPATH'
-  environment variable to make the manual pages available to the 'man' tool.
+   Print path to pepc manual pages directory and exit. This path can be added to the 'MANPATH'
+   environment variable to make the manual pages available to the 'man' tool.
 
 Subcommand *'info'*
 ===================
 
-Get information about current PCI ASPM configuration.
+Retrieve PCI ASPM information for the system.
 
-**--policy** *NAME*
-   Display the current global PCI ASPM policy from
+**--policy**
+   Retrieve the current global PCI ASPM policy from
    '/sys/module/pcie_aspm/parameters/policy'. The "default" policy indicates the system's default.
 
-**--policies** *NAME*
-   List available PCI ASPM policies from '/sys/module/pcie_aspm/parameters/policy'.
+**--policies**
+   Retrieve the list of available PCI ASPM policies from '/sys/module/pcie_aspm/parameters/policy'.
 
 **--device** *ADDR*
    Specify the PCI device address for the '--l1-aspm' option. Example: '0000:00:02.0'.
 
 **--l1-aspm**
    Retrieve the L1 ASPM status (on/off) for the PCI device specified by '--device'. Reads from
-  '/sys/bus/pci/devices/{device}/link/l1_aspm'.
+   '/sys/bus/pci/devices/{device}/link/l1_aspm'.
 
 Subcommand *'config'*
 =====================
 
-Change PCI ASPM configuration.
+Configure PCI ASPM settings. If no parameter is provided, the current value(s) will be displayed.
 
-**--policy** *NAME*
+**--policy** *[NAME]*
    Set the global PCI ASPM policy by writing to '/sys/module/pcie_aspm/parameters/policy'. Use
    "default" to reset the policy to the system's default setting.
 
 **--device** *ADDR*
    Specify the PCI device address for the '--l1-aspm' option. Example: '0000:00:02.0'.
 
-**--l1-aspm** *OPTION*
+**--l1-aspm** *[OPTION]*
    Enable or disable L1 ASPM for the PCI device specified by '--device'. This is done via
    '/sys/bus/pci/devices/{device}/link/l1_aspm'. Valid values are 'on', 'off', 'enable', 'disable',
    'true', or 'false'.
+

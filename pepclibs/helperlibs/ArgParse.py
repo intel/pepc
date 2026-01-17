@@ -355,7 +355,7 @@ class ArgsParser(argparse.ArgumentParser):
         text = "Show this help message and exit."
         self.add_argument("-h", "--help", dest="help", action="help", help=text)
 
-        text = "Be quiet (print only improtant messages like warnings)."
+        text = "Be quiet (print only important messages like warnings)."
         self.add_argument("-q", "--quiet", dest="quiet", action="store_true", help=text)
 
         text = """Force colorized output even if the output stream is not a terminal (adds ANSI

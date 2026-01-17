@@ -3,7 +3,7 @@
 
 :Title: Topology
 
-.. Contents::
+.. contents::
    :depth: 2
 ..
 
@@ -18,7 +18,7 @@ General options
    Show a short help message and exit.
 
 **-q**
-   Be quiet (print only improtant messages like warnings).
+   Be quiet (print only important messages like warnings).
 
 **-d**
    Print debugging information.
@@ -64,8 +64,8 @@ General options
    Force colorized output even if the output stream is not a terminal (adds ANSI escape codes).
 
 **--print-man-path**
-  Print path to pepc manual pages directory and exit. This path can be added to the 'MANPATH'
-  environment variable to make the manual pages available to the 'man' tool.
+   Print path to pepc manual pages directory and exit. This path can be added to the 'MANPATH'
+   environment variable to make the manual pages available to the 'man' tool.
 
 Subcommand *'info'*
 ===================
@@ -76,41 +76,46 @@ Display CPU topology details.
 topology values (e.g., package number) are replaced with "?".
 
 **--cpus** *CPUS*
-   Specify CPUs to display topology information for. Accepts individual CPU numbers or ranges,
-   e.g., '1-4,7,8,10-12' for CPUs 1 to 4, 7, 8, and 10 to 12. Use 'all' to include all CPUs.
+   The list can include individual CPU numbers and CPU number ranges. For example, '1-4,7,8,10-12'
+   would mean CPUs 1 to 4, CPUs 7, 8, and 10 to 12. Use the special keyword 'all' to specify all
+   CPUs.
 
 **--cores** *CORES*
-   Specify cores to display topology information for. Accepts individual core numbers or ranges,
-   e.g., '1-4,7,8,10-12' for cores 1 to 4, 7, 8, and 10 to 12. Use 'all' to include all cores. This
-   option requires the '--package' option, as core numbers are relative to the package.
+   The list can include individual core numbers and core number ranges. For example, '1-4,7,8,10-12'
+   would mean cores 1 to 4, cores 7, 8, and 10 to 12. Use the special keyword 'all' to specify all
+   cores. This option has to be used with the '--packages' option, because core numbers are
+   relative to the package.
 
 **--modules** *MODULES*
-   Specify modules to display topology information for. Accepts individual module numbers or ranges,
-   e.g., '0,2-5' for modules 0, 2, 3, 4, and 5. Use 'all' to include all modules.
+   The list can include individual module numbers and module number ranges. For example, '0,2-5'
+   would mean module 0 and modules 2, 3, 4, and 5. Use the special keyword 'all' to specify all
+   modules. Note, unlike core and die numbers, module numbers are absolute.
 
 **--dies** *DIES*
-   Specify dies to display topology information for. Accepts individual die numbers or ranges,
-   e.g., '0-3,5' for dies 0 to 3 and die 5. Use 'all' to include all dies. On some systems, die
-   numbers are globally unique, while on others they are relative to the package. In the latter
-   case, this option requires the '--package' option.
+   The list can include individual die numbers and die number ranges. For example, '0-3,5' would
+   mean dies 0 to 3, and die 5. Use the special keyword 'all' to specify all dies. On some systems,
+   die numbers are globally unique, while on other systems they are relative to the package. In the
+   latter case, this option has to be used with the '--packages' option.
 
 **--packages** *PACKAGES*
-   Specify packages to display topology information for. Accepts individual package numbers or
-   ranges, e.g., '0,2-4' for package 0 and packages 2 to 4. Use 'all' to include all packages.
+   The list can include individual package numbers and package number ranges. For example, '0,2-4'
+   would mean package 0 and packages 2 to 4. Use the special keyword 'all' to specify all packages.
 
 **--core-siblings** *CORE_SIBLINGS*
-   List of core sibling indices (CPUs sharing the same core). Specify individual indices or ranges.
-   For example, if a core includes CPUs 2 and 3, index '0' refers to CPU 2, and index '1' refers to
-   CPU 3. This option applies only to online CPUs, as Linux lacks topology details for offline CPUs.
-   If CPU 2 is offline, index '0' refers to CPU 3. On Intel processors with hyper-threading, this is
-   typically used to offline hyperthreads.
+   Core siblings are CPUs sharing the same core. The list can include individual core sibling
+   indices or index ranges. For example, if a core includes CPUs 2 and 3, index 0 would mean CPU 2
+   and index 1 would mean CPU 3. This option can only be used to reference online CPUs, because
+   Linux does not provide topology information for offline CPUs. In the example with CPUs 2 and 3,
+   if CPU 2 was offline, then index 0 would mean CPU 3. On Intel processors with hyper-threading,
+   this is typically used to offline hyperthreads.
 
 **--module-siblings** *MODULE_SIBLINGS*
-   List of module sibling indices (CPUs sharing the same module). Specify individual indices or
-   ranges. For example, if a module includes CPUs 4, 5, 6, and 7, index '0' refers to CPU 4, index
-   '1' to CPU 5, and index '4' to CPU 7. This option applies only to online CPUs, as Linux lacks
-   topology details for offline CPUs. In the example, if CPU 5 is offline, index '1' refers to
-   CPU 1.
+   Module siblings are CPUs sharing the same module. The list can include individual module sibling
+   indices or index ranges. For example, if a module includes CPUs 4, 5, 6, and 7, index 0 would
+   mean CPU 4, index 1 would mean CPU 5, index 2 would mean CPU 6, and index 3 would mean CPU 7.
+   This option can only be used to reference online CPUs, because Linux does not provide topology
+   information for offline CPUs. In the example with CPUs 4, 5, 6, and 7, if CPU 5 was offline,
+   then index 1 would mean CPU 6, index 2 would mean CPU 7, and index 3 would be invalid.
 
 **--order** *ORDER*
    By default, the topology table is sorted by CPU number. Use this option to sort by core, module,

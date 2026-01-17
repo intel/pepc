@@ -3,7 +3,7 @@
 
 :Title: TPMI
 
-.. Contents::
+.. contents::
    :depth: 2
 ..
 
@@ -50,7 +50,7 @@ General options
    Show a short help message and exit.
 
 **-q**
-   Be quiet (print only improtant messages like warnings).
+   Be quiet (print only important messages like warnings).
 
 **-d**
    Print debugging information.
@@ -64,7 +64,8 @@ General options
    Print the version number and exit.
 
 **-H** *HOSTNAME*, **--host** *HOSTNAME*
-   User name for SSH login to the remote host. Defaults to 'root.
+   Host name or IP address of the target system. The pepc command will be executed on this system
+   using SSH, instead of running it locally. If not specified, the command will be run locally.
 
 **-U** *USERNAME*, **--username** *USERNAME*
    Name of the user to use for logging into the remote host over SSH. The default user name is
@@ -95,8 +96,8 @@ General options
    Force colorized output even if the output stream is not a terminal (adds ANSI escape codes).
 
 **--print-man-path**
-  Print path to pepc manual pages directory and exit. This path can be added to the 'MANPATH'
-  environment variable to make the manual pages available to the 'man' tool.
+   Print path to pepc manual pages directory and exit. This path can be added to the 'MANPATH'
+   environment variable to make the manual pages available to the 'man' tool.
 
 Subcommand *'ls'*
 =================
@@ -114,24 +115,24 @@ Subcommand *'read'*
 
 Read one or more TPMI registers.
 
-**-F** FEATURES, **--features** FEATURES
+**-F** *[FEATURES]*, **--features** *[FEATURES]*
    Comma-separated list of TPMI feature names to read the registers for. Defaults to all supported
    features.
 
-**-a** ADDRS, **--addresses** ADDRS
+**-a** *[ADDRS]*, **--addresses** *[ADDRS]*
    Comma-separated list of TPMI device PCI addresses to read the registers from. Defaults to all
    devices.
 
-**--packages** PACKAGES
+**--packages** *[PACKAGES]*
    Comma-separated list of package numbers to read TPMI registers for (defaults to all packages).
 
-**-i** INSTANCES, **--instances** INSTANCES
+**-i** *[INSTANCES]*, **--instances** *[INSTANCES]*
    Comma-separated list of TPMI instance numbers to read registers from (defaults to all instances).
 
-**-R** REGISTERS, **--registers** REGISTERS
+**-R** *[REGISTERS]*, **--registers** *[REGISTERS]*
    Comma-separated list of TPMI register names to read. Defaults to all registers.
 
-**-b** BFNAMES, **--bitfields** BFNAMES
+**-b** *[BFNAMES]*, **--bitfields** *[BFNAMES]*
    Comma-separated list of TPMI register bit field names to read. Defaults to all bit fields.
 
 **--yaml**
@@ -142,24 +143,24 @@ Subcommand *'write'*
 
 Write a value to a TPMI register or its bit field.
 
-**-F** FEATURE, **--feature** FEATURE
+**-F** *FEATURE*, **--feature** *FEATURE*
    Name of the TPMI feature the register belongs to.
 
-**-a** ADDRS, **--addresses** ADDRS
+**-a** *ADDRS*, **--addresses** *ADDRS*
    Comma-separated list of PCI addresses of TPMI devices to write to.
 
-**--packages** PACKAGES
+**--packages** *PACKAGES*
    Comma-separated list of package numbers to write to (defaults to all packages).
 
-**-i** INSTANCES, **--instances** INSTANCES
+**-i** *INSTANCES*, **--instances** *INSTANCES*
    Comma-separated list of TPMI instance numbers to write to. Defaults to all instances.
 
-**-R** REGNAME, **--register** REGNAME
+**-R** *REGNAME*, **--register** *REGNAME*
    Name of the TPMI register to write.
 
-**-b** BITFIELD, **--bitfield** BITFIELD
+**-b** *BITFIELD*, **--bitfield** *BITFIELD*
    Name of the TPMI register bitfield to write. Defaults to writing to the entire register if not
    specified.
 
-**-V** VALUE, **--value** VALUE
+**-V** *VALUE*, **--value** *VALUE*
    Value to write to the TPMI register or bit field.

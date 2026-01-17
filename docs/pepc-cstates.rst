@@ -3,7 +3,7 @@
 
 :Title: C-states
 
-.. Contents::
+.. contents::
    :depth: 2
 ..
 
@@ -18,7 +18,7 @@ General options
    Show a short help message and exit.
 
 **-q**
-   Be quiet (print only improtant messages like warnings).
+   Be quiet (print only important messages like warnings).
 
 **-d**
    Print debugging information.
@@ -64,15 +64,15 @@ General options
    Force colorized output even if the output stream is not a terminal (adds ANSI escape codes).
 
 **--print-man-path**
-  Print path to pepc manual pages directory and exit. This path can be added to the 'MANPATH'
-  environment variable to make the manual pages available to the 'man' tool.
+   Print path to pepc manual pages directory and exit. This path can be added to the 'MANPATH'
+   environment variable to make the manual pages available to the 'man' tool.
 
 **--override-cpu-model** *VFM*
    This option is for debugging and testing purposes only. Override the target host CPU model and
-   force {TOOLNAME} treat the host as a specific CPU model. The format is
+   force pepc to treat the host as a specific CPU model. The format is
    '[<Vendor>:][<Family>:]<Model>', where '<Vendor>' is the CPU vendor (e.g., 'GenuineIntel' or
    'AuthenticAMD'), '<Family>' is the CPU family (e.g., 6), and '<Model>' is the CPU model (e.g.,
-   0x8F). Example: 'GenuineIntel:6:0x8F' will force the tool treating the target host CPU as a
+   0x8F). Example: 'GenuineIntel:6:0x8F' will force the tool to treat the target host CPU as a
    Sapphire Rapids Xeon. The vendor and family are optional and if not specified, the tool will use
    the vendor and family of the target host CPU. The family and model can be specified in decimal
    or hexadecimal format.
@@ -80,19 +80,19 @@ General options
 Target CPU specification options
 ================================
 
-All sub-commans (*'info'*, *'config'*) support the following target CPU specification
+All subcommands (*'info'*, *'config'*) support the following target CPU specification
 options.
 
 **--cpus** *CPUS*
-   The list can include individual CPU numbers and CPU number ranges. For example,'1-4,7,8,10-12'
+   The list can include individual CPU numbers and CPU number ranges. For example, '1-4,7,8,10-12'
    would mean CPUs 1 to 4, CPUs 7, 8, and 10 to 12. Use the special keyword 'all' to specify all
    CPUs.
 
 **--cores** *CORES*
    The list can include individual core numbers and core number ranges. For example, '1-4,7,8,10-12'
-   would mean cores 1 to 4, cores 7, 8, and 10 to 1. Use the special keyword 'all' to specify all
-   cores. This option has to be accompanied by the '--package' option, because core numbers are
-   per-package.
+   would mean cores 1 to 4, cores 7, 8, and 10 to 12. Use the special keyword 'all' to specify all
+   cores. This option has to be used with the '--packages' option, because core numbers are
+   relative to the package.
 
 **--modules** *MODULES*
    The list can include individual module numbers and module number ranges. For example, '0,2-5'
@@ -103,7 +103,7 @@ options.
    The list can include individual die numbers and die number ranges. For example, '0-3,5' would
    mean dies 0 to 3, and die 5. Use the special keyword 'all' to specify all dies. On some systems,
    die numbers are globally unique, while on other systems they are relative to the package. In the
-   latter case, this option has to be accompanied by the '--package' option.
+   latter case, this option has to be used with the '--packages' option.
 
 **--packages** *PACKAGES*
    The list can include individual package numbers and package number ranges. For example, '0,2-4'
@@ -111,40 +111,40 @@ options.
 
 **--core-siblings** *CORE_SIBLINGS*
    Core siblings are CPUs sharing the same core. The list can include individual core sibling
-   indices or index ranges. For example, if a core includes CPUs 3 and 4, sibling index 0 refers to
-   CPU 3 and index 1 refers to CPU 4. This option can only be used to reference online CPUs, because
+   indices or index ranges. For example, if a core includes CPUs 3 and 4, index 0 would mean CPU 3
+   and index 1 would mean CPU 4. This option can only be used to reference online CPUs, because
    Linux does not provide topology information for offline CPUs. In the example with CPUs 3 and 4,
-   if CPU 3 was offline, then index 0 would refer to CPU 4 and index 1 would be invalid.
+   if CPU 3 was offline, then index 0 would mean CPU 4.
 
 **--module-siblings** *MODULE_SIBLINGS*
    Module siblings are CPUs sharing the same module. The list can include individual module sibling
-   indices or index ranges. For example, if a module includes CPUs 3, 4, 5, and 6, index 0 refers to
-   CPU 3, index 1 refers to CPU 4, and index 2 refers to CPU 5, and index 3 refers to CPU 6. This
-   option can only be used to reference online CPUs, because Linux does not provide topology
-   information for offline CPUs. In the example with CPUs 3, 4, 5 and 6, if CPU 4 was offline, then
-   index 1 would refer to CPU 5, index 2 would refer to CPU 6, and index 3 would be invalid.
+   indices or index ranges. For example, if a module includes CPUs 3, 4, 5, and 6, index 0 would
+   mean CPU 3, index 1 would mean CPU 4, index 2 would mean CPU 5, and index 3 would mean
+   CPU 6. This option can only be used to reference online CPUs, because Linux does not provide
+   topology information for offline CPUs. In the example with CPUs 3, 4, 5, and 6, if CPU 4 was
+   offline, then index 1 would mean CPU 5, index 2 would mean CPU 6, and index 3 would be
+   invalid.
 
 Subcommand *'info'*
 ===================
 
 Retrieve C-state information for specified CPUs. By default, display all details for all CPUs. Use
-target CPU specification options to limit the scope to specific CPUs, cores, dies, or packages.
+target CPU specification options to define a subset of CPUs, cores, dies, or packages.
 
 **--yaml**
-   Print information in YAML format.
+   Display output in YAML format.
 
 **-m** *MECHANISMS*, **--mechanisms** *MECHANISMS*
-   Comma-separated list of mechanisms to use for retrieving C-states information. Use
-   '--list-mechanisms' to view available mechanisms. Many options support only one mechanism
-   (e.g., 'sysfs'), while some support multiple (e.g., 'sysfs' and 'msr'). Mechanisms are tried
-   in the specified order. By default, all mechanisms are allowed, with the most preferred tried
-   first.
+   A comma-separated list of mechanisms for retrieving information. Use '--list-mechanisms' to
+   view available mechanisms. Many options support only one mechanism (e.g., 'sysfs'), while
+   others may support multiple (e.g., 'sysfs' and 'msr'). Mechanisms are tried in the specified
+   order. By default, all mechanisms are allowed, and the most preferred ones are tried first.
 
 **--list-mechanisms**
-   List available mechanisms for retrieving C-states information.
+   Display available mechanisms for retrieving C-states information.
 
 **--cstates** *[CSTATES]*
-   Comma-separated list of C-states to retrieve information about, specified by name (e.g., C1).
+   A comma-separated list of C-states to retrieve information about, specified by name (e.g., C1).
    Use 'all' to include all available Linux C-states (default). Remember, Linux C-states (e.g., C6)
    are requests Linux can make, while hardware C-states (e.g., Core C6 or Package C6 on Intel
    platforms) are platform-specific states entered upon such requests. See the
@@ -174,7 +174,7 @@ target CPU specification options to limit the scope to specific CPUs, cores, die
 **--cstate-prewake**
    Check if C-state prewake is enabled. When enabled, the CPU considers idle timers and starts
    exiting deep C-states early, before the next local APIC timer event. This ensures the CPU is
-   nearly awake by the tim the timer fires. Read from MSR_POWER_CTL (0x1FC), bit 30.
+   nearly awake by the time the timer fires. Read from MSR_POWER_CTL (0x1FC), bit 30.
 
 **--idle-driver**
    Retrieve the idle driver name. The idle driver enumerates available C-states and issues
@@ -192,53 +192,54 @@ target CPU specification options to limit the scope to specific CPUs, cores, die
 Subcommand *'config'*
 =====================
 
-Configure C-states for specified CPUs. If no parameter is provided, the current configuration will
-be displayed. Use target CPU specification options to limit the scope to specific CPUs, cores, dies,
-or packages.
+Configure C-states for specified CPUs. If no parameter is provided, the current value(s) will be
+displayed. Use target CPU specification options to define the subset of CPUs, cores, dies, or
+packages.
 
 **-m** *MECHANISMS*, **--mechanisms** *MECHANISMS*
-   Comma-separated list of mechanisms to use for configuring C-states. Use '--list-mechanisms' to
-   view available mechanisms. Many options support only one mechanism (e.g., 'sysfs'), while some
-   support multiple (e.g., 'sysfs' and 'msr'). Mechanisms are tried in the specified order. By
-   default, all mechanisms are allowed, with the most preferred tried first.
+   A comma-separated list of mechanisms allowed for configuring C-states. Use '--list-mechanisms'
+   to view available mechanisms. Many options support only one mechanism (e.g., 'sysfs'), while
+   some support multiple (e.g., 'sysfs' and 'msr'). Mechanisms are tried in the specified order. By
+   default, all mechanisms are allowed, and the most preferred ones are tried first.
 
 **--list-mechanisms**
-   List available mechanisms for configuring C-states.
+   Display available mechanisms for configuring C-states.
 
-**--enable** *CSTATES*
-   Comma-separated list of C-state names to enable. Use 'all' to include all available Linux
+**--enable** *[CSTATES]*
+   A comma-separated list of C-state names to enable. Use 'all' to include all available Linux
    C-states (default). Remember, Linux C-states (e.g., C6) are requests Linux can make, while
    hardware C-states (e.g., Core C6 or Package C6 on Intel platforms) are platform-specific states
    entered upon such requests. See the
    'https://github.com/intel/pepc/blob/main/docs/misc-cstate-namespaces.md' document for details.
 
-**--disable** *CSTATES*
+**--disable** *[CSTATES]*
    Similar to '--enable', but specifies the C-states to disable.
 
-**--pkg-cstate-limit** *PKG_CSTATE_LIMIT*
+**--pkg-cstate-limit** *[PKG_CSTATE_LIMIT]*
    Set the package C-state limit, defining the deepest hardware package C-state the platform can
    enter. Writes to MSR_PKG_CST_CONFIG_CONTROL (0xE2), bits 2:0 or 3:0, depending on the CPU model.
    Writing is refused if the lock bit (bit 15) in the same MSR is set.
 
-**--c1-demotion** *on|off*
+**--c1-demotion** *[on|off]*
    Enable or disable C1 demotion. On Intel platforms, this feature monitors CPU wake-up rates. If
    the rate exceeds a threshold, deep C-state requests are demoted to C1 to improve performance at
    the cost of higher power consumption. Writes to MSR_PKG_CST_CONFIG_CONTROL (0xE2), bit 26.
 
-**--c1-undemotion** *on|off*
+**--c1-undemotion** *[on|off]*
    Enable or disable C1 undemotion. When enabled, the CPU can reverse previously demoted C1
    requests back to deeper C-states (e.g., C6) if frequent wake-ups have stopped. Writes to
    MSR_PKG_CST_CONFIG_CONTROL (0xE2), bit 28.
 
-**--c1e-autopromote** *on|off*
+**--c1e-autopromote** *[on|off]*
    Enable or disable C1E autopromotion. When enabled, all C1 C-state requests are converted to
    C1E. Writes to MSR_POWER_CTL (0x1FC), bit 1.
 
-**--cstate-prewake** *on|off*
+**--cstate-prewake** *[on|off]*
    Enable or disable C-state prewake. When enabled, the CPU considers idle timers and starts
    exiting deep C-states early, before the next local APIC timer event. This ensures the CPU is
-   nearly awake by the tim the timer fires. Writes to MSR_POWER_CTL (0x1FC), bit 30.
+   nearly awake by the time the timer fires. Writes to MSR_POWER_CTL (0x1FC), bit 30.
 
-**--governor** *NAME*
+**--governor** *[NAME]*
    Configure the idle governor, which decides the C-state to request for an idle CPU. Updates
    '/sys/devices/system/cpu/cpuidle/scaling_governor'.
+

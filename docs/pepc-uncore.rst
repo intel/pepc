@@ -1,9 +1,9 @@
 .. -*- coding: utf-8 -*-
 .. vim: ts=4 sw=4 tw=100 et ai si
 
-:Title: Uncore properties.
+:Title: Uncore properties
 
-.. Contents::
+.. contents::
    :depth: 2
 ..
 
@@ -18,7 +18,7 @@ General options
    Show a short help message and exit.
 
 **-q**
-   Be quiet (print only improtant messages like warnings).
+   Be quiet (print only important messages like warnings).
 
 **-d**
    Print debugging information.
@@ -64,15 +64,15 @@ General options
    Force colorized output even if the output stream is not a terminal (adds ANSI escape codes).
 
 **--print-man-path**
-  Print path to pepc manual pages directory and exit. This path can be added to the 'MANPATH'
-  environment variable to make the manual pages available to the 'man' tool.
+   Print path to pepc manual pages directory and exit. This path can be added to the 'MANPATH'
+   environment variable to make the manual pages available to the 'man' tool.
 
 **--override-cpu-model** *VFM*
    This option is for debugging and testing purposes only. Override the target host CPU model and
-   force {TOOLNAME} treat the host as a specific CPU model. The format is
+   force pepc to treat the host as a specific CPU model. The format is
    '[<Vendor>:][<Family>:]<Model>', where '<Vendor>' is the CPU vendor (e.g., 'GenuineIntel' or
    'AuthenticAMD'), '<Family>' is the CPU family (e.g., 6), and '<Model>' is the CPU model (e.g.,
-   0x8F). Example: 'GenuineIntel:6:0x8F' will force the tool treating the target host CPU as a
+   0x8F). Example: 'GenuineIntel:6:0x8F' will force the tool to treat the target host CPU as a
    Sapphire Rapids Xeon. The vendor and family are optional and if not specified, the tool will use
    the vendor and family of the target host CPU. The family and model can be specified in decimal
    or hexadecimal format.
@@ -80,18 +80,18 @@ General options
 Target domain specification options
 ===================================
 
-All sub-commans (*'info'*, *'config'*) support the following target domain specification options.
+All subcommands (*'info'*, *'config'*) support the following target domain specification options.
 
 **--cpus** *CPUS*
-   The list can include individual CPU numbers and CPU number ranges. For example,'1-4,7,8,10-12'
+   The list can include individual CPU numbers and CPU number ranges. For example, '1-4,7,8,10-12'
    would mean CPUs 1 to 4, CPUs 7, 8, and 10 to 12. Use the special keyword 'all' to specify all
    CPUs.
 
 **--cores** *CORES*
    The list can include individual core numbers and core number ranges. For example, '1-4,7,8,10-12'
-   would mean cores 1 to 4, cores 7, 8, and 10 to 1. Use the special keyword 'all' to specify all
-   cores. This option has to be accompanied by the '--package' option, because core numbers are
-   per-package.
+   would mean cores 1 to 4, cores 7, 8, and 10 to 12. Use the special keyword 'all' to specify all
+   cores. This option has to be used with the '--packages' option, because core numbers are
+   relative to the package.
 
 **--modules** *MODULES*
    The list can include individual module numbers and module number ranges. For example, '0,2-5'
@@ -102,7 +102,7 @@ All sub-commans (*'info'*, *'config'*) support the following target domain speci
    The list can include individual die numbers and die number ranges. For example, '0-3,5' would
    mean dies 0 to 3, and die 5. Use the special keyword 'all' to specify all dies. On some systems,
    die numbers are globally unique, while on other systems they are relative to the package. In the
-   latter case, this option has to be accompanied by the '--package' option.
+   latter case, this option has to be used with the '--packages' option.
 
 **--packages** *PACKAGES*
    The list can include individual package numbers and package number ranges. For example, '0,2-4'
@@ -110,18 +110,18 @@ All sub-commans (*'info'*, *'config'*) support the following target domain speci
 
 **--core-siblings** *CORE_SIBLINGS*
    Core siblings are CPUs sharing the same core. The list can include individual core sibling
-   indices or index ranges. For example, if a core includes CPUs 3 and 4, sibling index 0 refers to
-   CPU 3 and index 1 refers to CPU 4. This option can only be used to reference online CPUs, because
+   indices or index ranges. For example, if a core includes CPUs 3 and 4, index 0 would mean
+   CPU 3 and index 1 would mean CPU 4. This option can only be used to reference online CPUs, because
    Linux does not provide topology information for offline CPUs. In the example with CPUs 3 and 4,
-   if CPU 3 was offline, then index 0 would refer to CPU 4 and index 1 would be invalid.
+   if CPU 3 was offline, then index 0 would mean CPU 4 and index 1 would be invalid.
 
 **--module-siblings** *MODULE_SIBLINGS*
    Module siblings are CPUs sharing the same module. The list can include individual module sibling
-   indices or index ranges. For example, if a module includes CPUs 3, 4, 5, and 6, index 0 refers to
-   CPU 3, index 1 refers to CPU 4, and index 2 refers to CPU 5, and index 3 refers to CPU 6. This
-   option can only be used to reference online CPUs, because Linux does not provide topology
-   information for offline CPUs. In the example with CPUs 3, 4, 5 and 6, if CPU 4 was offline, then
-   index 1 would refer to CPU 5, index 2 would refer to CPU 6, and index 3 would be invalid.
+   indices or index ranges. For example, if a module includes CPUs 3, 4, 5, and 6, index 0 would
+   mean CPU 3, index 1 would mean CPU 4, index 2 would mean CPU 5, and index 3 would mean
+   CPU 6. This option can only be used to reference online CPUs, because Linux does not provide
+   topology information for offline CPUs. In the example with CPUs 3, 4, 5, and 6, if CPU 4 was
+   offline, then index 1 would mean CPU 5, index 2 would mean CPU 6, and index 3 would be invalid.
 
 Subcommand *'info'*
 ===================
@@ -135,7 +135,7 @@ target domain specification options to define a subset of CPUs, cores, dies, or 
 **-m** *MECHANISMS*, **--mechanisms** *MECHANISMS*
    A comma-separated list of mechanisms for retrieving information. Use '--list-mechanisms' to
    view available mechanisms. Many options support only one mechanism (e.g., 'sysfs'), while
-   others may support multiple (e.g., 'sysfs' and 'msr'). Mechanisms are tried in the specified
+   others may support multiple (e.g., 'sysfs' and 'tpmi'). Mechanisms are tried in the specified
    order. By default, all mechanisms are allowed, and the most preferred ones are tried first.
 
 **--list-mechanisms**
@@ -159,13 +159,16 @@ target domain specification options to define a subset of CPUs, cores, dies, or 
    'max_freq_khz' file instead of 'min_freq_khz'.
 
 **--min-freq-limit**
-   Get minimum uncore frequency limit supported but the kernel. The supported mechanism is 'sysfs'.
+   Get minimum uncore frequency limit supported by the kernel. The supported mechanism is 'sysfs'.
    In case of the 'intel_uncore_frequency_tpmi' driver, read
-   /sys/devices/system/cpu/intel_uncore_frequency/uncore<NUMBER>/initial_min_freq_khz'. In case of
+   '/sys/devices/system/cpu/intel_uncore_frequency/uncore<NUMBER>/initial_min_freq_khz'. In case of
    the 'intel_uncore_frequency' driver, read
    '/sys/devices/system/cpu/intel_uncore_frequency/package\_<NUMBER>_die\_<NUMBER>/initial_min_freq_khz'.
 
-   The 'tpmi' mechanism does not provide min/max uncore frequency limits, therefore not available.
+   The 'tpmi' mechanism does not provide minimum or maximum uncore frequency limits (the allowed
+   range). The Linux uncore frequency driver determines these limits by reading and storing the
+   default minimum and maximum frequencies from TPMI during initialization, assuming they were
+   correctly configured by the BIOS during platform boot.
 
 **--max-freq-limit**
    Retrieve the maximum uncore frequency limit. Similar to '--min-freq-limit', but for the
@@ -174,7 +177,7 @@ target domain specification options to define a subset of CPUs, cores, dies, or 
 
 **--elc-low-zone-min-freq**
    Retrieve the ELC low zone minimum uncore frequency. The supported mechanisms are: 'sysfs', 'tpmi'.
-   In case of the 'sysfs' mechanism read.
+   In case of the 'sysfs' mechanism, read
    '/sys/devices/system/cpu/intel_uncore_frequency/uncore<NUMBER>/elc_floor_freq_khz'.
 
    The 'tpmi' mechanism uses the tpmi driver debugfs interface to access TPMI registers. The exact
@@ -200,7 +203,7 @@ target domain specification options to define a subset of CPUs, cores, dies, or 
 **--elc-low-threshold**
    Get the uncore ELC low threshold. The threshold defines the aggregate die utilization percentage.
    When utilization falls below this threshold, the platform sets the uncore frequency floor to the
-   low ELC frequency (subject to the the '--min-freq-limit' - if the limit is higher than the
+   low ELC frequency (subject to the '--min-freq-limit' - if the limit is higher than the
    low ELC frequency, the limit is used as the floor instead).
 
    Supported mechanisms are: 'sysfs', 'tpmi'. The 'sysfs' mechanism reads the
@@ -229,20 +232,21 @@ target domain specification options to define a subset of CPUs, cores, dies, or 
 Subcommand *'config'*
 =====================
 
-Configure uncore proparties for specified dies. If no parameter is provided, the current value(s)
+Configure uncore properties for specified dies. If no parameter is provided, the current value(s)
 will be displayed. Use target domain specification options to define the subset of CPUs, cores,
 dies, or packages.
 
 **-m** *MECHANISMS*, **--mechanisms** *MECHANISMS*
-   A comma-separated list of mechanisms allowed for configuring uncore properties. Use '--list-mechanisms'
-   to view available mechanisms. Many options support only one mechanism (e.g., 'sysfs'), while
-   some support multiple (e.g., 'sysfs' and 'msr'). Mechanisms are tried in the specified order.
-   By default, all mechanisms are allowed, and the most preferred ones are tried first.
+   A comma-separated list of mechanisms allowed for configuring uncore properties. Use
+   '--list-mechanisms' to view available mechanisms. Many options support only one mechanism (e.g.,
+   'sysfs'), while some support multiple (e.g., 'sysfs' and 'tpmi'). Mechanisms are tried in the
+   specified order. By default, all mechanisms are allowed, and the most preferred ones are tried
+   first.
 
 **--list-mechanisms**
    Display available mechanisms for configuring uncore properties.
 
-**--min-freq** *MIN_FREQ*
+**--min-freq** *[MIN_FREQ]*
    Set the minimum uncore frequency. The default unit is 'Hz', but 'kHz', 'MHz', and 'GHz' can also
    be used (for example '900MHz'). Uses the same mechanisms as described in the 'info' sub-command.
 
@@ -265,28 +269,28 @@ dies, or packages.
    limits, such as setting the minimum frequency below the actual minimum limit. Use caution when
    configuring uncore frequencies with the 'tpmi' mechanism.
 
-**--max-freq** *MAX_FREQ*
+**--max-freq** *[MAX_FREQ]*
    Set the maximum uncore frequency. Uses the same mechanisms as described in the 'info'
    sub-command. Similar to '--min-freq', but applies to the maximum frequency.
 
-**--elc-low-zone-min-freq**
+**--elc-low-zone-min-freq** *[ELC_LOW_ZONE_MIN_FREQ]*
    Set the ELC low zone minimum uncore frequency. Uses the same mechanisms as described in the
    'info' sub-command. Supports special values **min**, **max**, and **mdl**, similar to
    '--min-freq'.
 
-**--elc-mid-zone-min-freq**
+**--elc-mid-zone-min-freq** *[ELC_MID_ZONE_MIN_FREQ]*
    Set the ELC middle zone minimum uncore frequency. Uses the same mechanisms as described in the
    'info' sub-command. Supports special values **min**, **max**, and **mdl**, similar to
    '--min-freq'.
 
-**--elc-low-threshold**
+**--elc-low-threshold** *[ELC_LOW_THRESHOLD]*
    Set the uncore ELC low threshold. Same as in the 'info' sub-command, but sets the ELC low
    threshold.
 
-**--elc-high-threshold**
+**--elc-high-threshold** *[ELC_HIGH_THRESHOLD]*
    Set the uncore ELC high threshold. Same as in the 'info' sub-command, but sets the ELC high
    threshold.
 
-**--elc-high-threshold-status**
+**--elc-high-threshold-status** *[on/off]*
    Set the uncore ELC high threshold enabled/disabled status. Same as in the 'info' sub-command, but
    sets the ELC high threshold status.
