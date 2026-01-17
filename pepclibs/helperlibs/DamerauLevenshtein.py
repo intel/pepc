@@ -7,7 +7,7 @@
 # Author: Jan-Kristian Herring
 
 """
-This module provides the Damerau–Levenshtein distance calculation helpers.
+This module provides the Damerau-Levenshtein distance calculation helpers.
 """
 
 def closest_match(string, strings, max_distance=2, case_sensitive=False):
