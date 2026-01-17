@@ -3,7 +3,7 @@
 Name:		pepc
 Version:	1.6.16
 Release:	1%{?dist}
-Summary:	Power, Energy, and Performance configuration tool
+Summary:	Power, Energy, and Performance Configuration tool
 
 License:	BSD-3-Clause
 Url:		https://github.com/intel/pepc
@@ -18,9 +18,10 @@ BuildRequires:	python3-pytest
 Requires:	python3-pepc
 
 %description
-Pepc stands for "Power, Energy, and Performance Configurator".
-This is a command-line tool for configuring various Linux and Hardware 
-power management features.
+Pepc, short for "Power, Energy, and Performance Configurator", is a command-line tool designed for
+reading and changing power management features. For example, pepc can be used to modify CPU
+or uncore frequency limits for all or a subset of CPUs, cores, modules, dies, or packages in the
+system.
 
 %package -n python3-%{name}
 Summary:	Pepc Python libraries
@@ -49,7 +50,7 @@ install -pDm644 docs/man1/*.1 %{buildroot}/%{_mandir}/man1/pepc
 
 %files
 %doc README.md
-%license debian/LICENSE.md
+%license LICENSE.md
 %{_bindir}/pepc
 %{_mandir}/man1/pepc/pepc-*.1
 

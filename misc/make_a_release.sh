@@ -34,8 +34,6 @@ RST_FILES="$BASEDIR/docs/pepc-pstates.rst
            $BASEDIR/docs/pepc-topology.rst
            $BASEDIR/docs/pepc-cpu-hotplug.rst"
 
-# Path to the script converting CHANGELOG.md into debian changelog.
-CHANGELOG_MD_TO_DEBIAN="$BASEDIR/misc/changelog_md_to_debian"
 # Path to the script that prepares CHANGELOG.md for the release.
 PREPARE_CHENGELOG_MD="$BASEDIR/misc/prepare_changelog_md"
 
@@ -105,9 +103,6 @@ ask_question "Did you update 'CHANGELOG.md'"
 
 # Update CHANGELOG.md.
 "$PREPARE_CHENGELOG_MD" "$new_ver" "$CHANGELOG_FILE"
-# Update debian changelog.
-"$CHANGELOG_MD_TO_DEBIAN" -o "$BASEDIR/debian/changelog" -p "pepc" -n "Artem Bityutskiy" \
-                          -e "artem.bityutskiy@intel.com" "$CHANGELOG_FILE"
 
 # Update the tool version.
 sed -i -e "s/$VERSION_VAR_REGEX/_VERSION\1= \"$new_ver\"/" "$PEPC_FILE"
