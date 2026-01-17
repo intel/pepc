@@ -119,8 +119,8 @@ SSH_OPTIONS: list[ArgTypedDict] = [
         "kwargs" : {
             "dest" : "hostname",
             "default" : "localhost",
-            "help" : "Host name or IP address of the remote host to connect to over SSH and run "
-                     "the command on. Run the command on the local host if not specified."
+            "help" : "Host name or IP address of the remote host to run the command on over SSH. "
+                     "Defaults to local host."
         },
     },
     {
@@ -130,8 +130,7 @@ SSH_OPTIONS: list[ArgTypedDict] = [
         "kwargs" : {
             "dest" : "username",
             "default" : "",
-            "help" : "Name of the user to use for logging into the remote host over SSH. The "
-                     "default user name is 'root'."
+            "help" : "User name for logging into the remote host over SSH. Defaults to 'root'."
         },
     },
     {
@@ -142,7 +141,7 @@ SSH_OPTIONS: list[ArgTypedDict] = [
             "dest" : "privkey",
             "default" : "",
             "help" : "Path to the private SSH key for logging into the remote host. Defaults to "
-                     "keys in standard paths like '$HOME/.ssh'."
+                     "standard paths like '$HOME/.ssh'."
         },
     },
     {
@@ -152,7 +151,7 @@ SSH_OPTIONS: list[ArgTypedDict] = [
         "kwargs" : {
             "dest" : "timeout",
             "default" : "",
-            "help" : "Timeout for establishing an SSH connection in seconds. Defaults to 8."
+            "help" : "SSH connection timeout in seconds. Defaults to 8."
         },
     },
 ]

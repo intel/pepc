@@ -49,8 +49,8 @@ _DATASET_OPTION: Final[ArgTypedDict] = {
     "argcomplete": None,
     "kwargs": {
         "dest": "dataset",
-        "help": """This option is for debugging and testing. It specifies the dataset to emulate a
-                   host for running the command. The argument can be a dataset path or name."""
+        "help": """Specify dataset to emulate a host for running the command. Can be a dataset path
+                   or name. For debugging and testing."""
     },
 }
 
@@ -61,9 +61,9 @@ _OVERRIDE_CPU_OPTION: Final[ArgTypedDict] = {
     "kwargs": {
         "metavar": "VFM",
         "dest": "override_cpu_model",
-        "help": f"""This option is for debugging and testing purposes only. Override the target host
-                    CPU model and force {TOOLNAME} treat the host as a specific CPU model. The
-                    format is '[<Vendor>:][<Family>:]<Model>'."""
+        "help": f"""Override the target host CPU model and force {TOOLNAME} to treat the host as a
+                    specific CPU model. Format: '[<Vendor>:][<Family>:]<Model>'. For debugging and
+                    testing only."""
     },
 }
 
@@ -75,7 +75,7 @@ _MECHANISMS_OPTIONS: Final[list[ArgTypedDict]] = [
         "kwargs": {
             "dest": "list_mechanisms",
             "action": "store_true",
-            "help": """List all supported mechanisms and exit.""",
+            "help": """List available mechanisms and exit.""",
         },
     },
     {
@@ -84,9 +84,9 @@ _MECHANISMS_OPTIONS: Final[list[ArgTypedDict]] = [
         "argcomplete": None,
         "kwargs": {
             "dest": "mechanisms",
-            "help": """Comma-separated list of allowed mechanisms names (e.g., 'sysfs' or 'msr').
-                    Use '--list-mechanisms' to get all names. By default, use the best available
-                    mechanism is used.""",
+            "help": """Comma-separated list of allowed mechanism names (e.g., 'sysfs', 'msr'). Use
+                       '--list-mechanisms' to see all available mechanisms. By default, the best
+                       available mechanism is used.""",
         },
     },
 ]
@@ -107,46 +107,47 @@ def _add_target_cpus_arguments(subpars: ArgParse.ArgsParser, fmt: str, exclude: 
 
     if "--cpus" not in exclude:
         text = fmt % "CPUs"
-        text += """ Specify individual CPU numbers or ranges (e.g., '1-4,7,8,10-12'). Use 'all' for
-                    all CPUs. If not specified, all CPUs are used by default."""
+        text += """ Specify individual CPU numbers or ranges (e.g., '1-4,7,8,10-12'). Use 'all' to
+                   specify all CPUs."""
         subpars.add_argument("--cpus", help=text)
 
     if "--cores" not in exclude:
         text = fmt % "cores"
-        text += """ The list can include individual core numbers or ranges (e.g., '0-3,5'). Core
-                   numbers are relative to their package."""
+        text += """ The list can include individual core numbers or ranges (e.g., '0-3,5'). Use
+                  'all' to specify all cores. Core numbers are relative to the package."""
         subpars.add_argument("--cores", help=text)
 
     if "--modules" not in exclude:
         text = fmt % "modules"
-        text += """ Specify individual module numbers or ranges (e.g., '0-3,5'). Format is similar
-                    to '--cpus'."""
+        text += """ Specify individual module numbers or ranges (e.g., '0,2-5'). Use 'all' to
+                   specify all modules. Module numbers are absolute."""
         subpars.add_argument("--modules", help=text)
 
     if "--dies" not in exclude:
         text = fmt % "dies"
-        text += """ Specify die numbers or ranges (e.g., '0-3,5'). Format is similar to '--cpus'."""
+        text += """ Specify die numbers or ranges (e.g., '0-3,5'). Use 'all' to specify all dies. On
+                   some systems die numbers are relative to the package."""
         subpars.add_argument("--dies", help=text)
 
     if "--packages" not in exclude:
         text = fmt % "packages"
-        text += """ Specify individual package numbers or ranges (e.g., '0-3,5'). Format is similar
-                   to '--cpus'."""
+        text += """ Specify individual package numbers or ranges (e.g., '0,2-4'). Use 'all' to
+                   specify all packages."""
         subpars.add_argument("--packages", help=text)
 
     if "--core-siblings" not in exclude:
         text = fmt % "core sibling indices"
-        text += """ Specify core sibling indices or ranges (e.g., '0-1'). Core siblings are CPUs
-                    sharing the same core. For example, if a core includes CPUs 2 and 3, sibling
-                    index 0 refers to CPU 2 and index 1 refers to CPU 3."""
+        text += """ Specify core sibling indices or ranges. Core siblings are CPUs sharing the same
+                   core. For example, if a core includes CPUs 3 and 4, index 0 refers to CPU 3 and index 1
+                   refers to CPU 4."""
         subpars.add_argument("--core-siblings", help=text)
 
     if "--module-siblings" not in exclude:
         text = fmt % "module sibling indices"
-        text += """ Specify module sibling indices or ranges (e.g., '0-1'). Module siblings are CPUs
-                   sharing the same module. For example, if a module includes CPUs 4, 5, 6, and 7,
-                   sibling index 0 refers to CPU 4, index 1 to CPU 5, and index 2 to CPU 6, and
-                   index 3 to CPU 7."""
+        text += """ Specify module sibling indices or ranges. Module siblings are CPUs sharing the
+                   same module. For example, if a module includes CPUs 3, 4, 5, and 6, index 0
+                   refers to CPU 3, index 1 refers to CPU 4, index 2 refers to CPU 5, and index 3
+                   refers to CPU 6."""
         subpars.add_argument("--module-siblings", help=text)
 
 def _get_info_subcommand_prop_help_text(prop: PropertyTypedDict) -> str:
@@ -310,8 +311,8 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
 
     ArgParse.add_options(subpars2, ssh_options)
 
-    text = """List of CPUs to bring online. Specify individual CPU numbers or ranges, e.g.,
-              '1-4,7,8,10-12' for CPUs 1 to 4, 7, 8, and 10 to 12. Use 'all' to specify all CPUs."""
+    text = """List of CPUs to bring online. Specify individual CPU numbers or ranges (e.g.,
+              '1-4,7,8,10-12'). Use 'all' to specify all CPUs."""
     subpars2.add_argument("--cpus", help=text)
 
     #
@@ -354,7 +355,7 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
 
     _add_target_cpus_arguments(subpars2, "List of %s to get information about.")
 
-    text = """Print information in YAML format."""
+    text = """Display output in YAML format."""
     subpars2.add_argument("--yaml", action="store_true", help=text)
 
     text = f"""Comma-separated list of C-states to get information about (all C-states by default).
@@ -413,7 +414,7 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
 
     _add_target_cpus_arguments(subpars2, "List of %s to get information about.")
 
-    text = """Print information in YAML format."""
+    text = """Display output in YAML format."""
     subpars2.add_argument("--yaml", action="store_true", help=text)
 
     _add_info_subcommand_options(PStatesVars.PROPS, subpars2)
@@ -459,7 +460,7 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
 
     _add_target_cpus_arguments(subpars2, "List of %s to get information about.")
 
-    text = """Print information in YAML format."""
+    text = """Display output in YAML format."""
     subpars2.add_argument("--yaml", action="store_true", help=text)
 
     _add_info_subcommand_options(UncoreVars.PROPS, subpars2)
@@ -505,7 +506,7 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
 
     _add_target_cpus_arguments(subpars2, "List of %s to get information about.")
 
-    text = """Print information in YAML format."""
+    text = """Display information in YAML format."""
     subpars2.add_argument("--yaml", action="store_true", help=text)
 
     _add_info_subcommand_options(PMQoSVars.PROPS, subpars2)
@@ -548,11 +549,11 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
 
     ArgParse.add_options(subpars2, ssh_options)
 
-    text = """Display the current global PCI ASPM policy. The "default" policy indicates the
+    text = """Retrieve the current global PCI ASPM policy. The "default" policy indicates the
               system's default."""
     subpars2.add_argument("--policy", action=ArgParse.OrderedArg, nargs=0, help=text)
 
-    text = "List available PCI ASPM policies from '/sys/module/pcie_aspm/parameters/policy'."
+    text = """Retrieve the list of available PCI ASPM policies."""
     subpars2.add_argument("--policies", action=ArgParse.OrderedArg, nargs=0, help=text)
 
     text = "Specify the PCI device address for the '--l1-aspm' option. Example: '0000:00:02.0'."
@@ -572,15 +573,13 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
 
     ArgParse.add_options(subpars2, ssh_options)
 
-    text = """Set the global PCI ASPM policy. Use "default" to reset the policy to the system's
-              default setting."""
+    text = """Set the global PCI ASPM policy. Use "default" to reset to the system's default."""
     subpars2.add_argument("--policy", action=ArgParse.OrderedArg, nargs="?", help=text)
 
     text = "Specify the PCI device address for the '--l1-aspm' option. Example: '0000:00:02.0'."
     subpars2.add_argument("--device", metavar="ADDR", action="store", help=text)
 
-    text = """Enable or disable L1 ASPM for the PCI device specified by '--device'. Valid values are
-              'on', 'off', 'enable', 'disable', 'true', or 'false'."""
+    text = """Enable or disable L1 ASPM for the PCI device specified by '--device'."""
     subpars2.add_argument("--l1-aspm", metavar="on/off", action=ArgParse.OrderedArg, nargs="?",
                           help=text)
 
@@ -611,17 +610,16 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     _add_target_cpus_arguments(subpars2, "List of %s to print topology information for.")
 
     orders = ", ".join([lvl.lower() for lvl in CPUInfoVars.SCOPE_NAMES])
-    text = f"""By default, the topology table is printed in CPU number order. Use this option to
-               print it in a different order (e.g., core or package number order). Here are the
-               supported order names: {orders}."""
+    text = f"""Sort topology table by the specified order instead of CPU number. Supported values:
+               {orders}."""
     subpars2.add_argument("--order", help=text, default="CPU")
 
-    text = """Include only online CPUs. By default offline and online CPUs are included."""
+    text = """Include only online CPUs. By default, both online and offline CPUs are included."""
     subpars2.add_argument("--online-only", action="store_true", help=text)
 
     columns = ", ".join(list(CPUInfoVars.SCOPE_NAMES) + ["hybrid"])
-    text = f"""Comma-separated list of the topology columns to print. Available columns are:
-            {columns}. Example: --columns Package,Core,CPU."""
+    text = f"""Comma-separated list of topology columns to display. Available columns: {columns}.
+               Example: --columns Package,Core,CPU."""
     subpars2.add_argument("--columns", help=text)
 
     #
@@ -648,10 +646,11 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
 
     ArgParse.add_options(subpars2, ssh_options)
 
-    text = """Include information about packages, TPMI addresses, and instances."""
+    text = """Include details like TPMI device PCI addresses and instance numbers for more specific
+              output."""
     subpars2.add_argument("-l", "--long", action="store_true", help=text)
 
-    text = """List unknown TPMI features as well (the features without a spec file available)."""
+    text = """Include TPMI features without spec files (unknown features)."""
     subpars2.add_argument("--all", action="store_true", help=text)
 
     #
@@ -665,30 +664,30 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
 
     ArgParse.add_options(subpars2, ssh_options)
 
-    text = """Comma-separated list of TPMI feature names to read the register(s) for (all features
-              by default)."""
+    text = """Comma-separated list of TPMI feature names to read the registers for. Defaults to all
+              supported features."""
     subpars2.add_argument("-F", "--features", metavar="FEATURES", dest="fnames", help=text)
 
-    text = """Comma-separated list of TPMI device PCI addresses to read the registers from (all
-              devices by default)."""
+    text = """Comma-separated list of TPMI device PCI addresses to read the registers from. Defaults
+              to all devices."""
     subpars2.add_argument("-a", "--addresses", dest="addrs", help=text)
 
-    text = """Comma-separated list of package numbers to read TPMI registers for (all packages by
-              default)."""
+    text = """Comma-separated list of package numbers to read TPMI registers for (defaults to all
+              packages)."""
     subpars2.add_argument("--packages", help=text)
 
-    text = """Comma-separated list of integer TPMI instance numbers to read the registers from (all
-              instances by default)."""
+    text = """Comma-separated list of TPMI instance numbers to read registers from (defaults to all
+              instances)."""
     subpars2.add_argument("-i", "--instances", help=text)
 
-    text = """Comma-separated list of TPMI registers names to read (all registers by default)."""
+    text = """Comma-separated list of TPMI register names to read. Defaults to all registers."""
     subpars2.add_argument("-R", "--registers", help=text)
 
-    text = """Comma-separated list of TPMI register bit field names to read (all bit fields by
-              default)."""
+    text = """Comma-separated list of TPMI register bit field names to read. Defaults to all bit
+              fields."""
     subpars2.add_argument("-b", "--bitfields", metavar="BITFIELDS", dest="bfnames", help=text)
 
-    text = """Print information in YAML format."""
+    text = """Output information in YAML format."""
     subpars2.add_argument("--yaml", action="store_true", help=text)
 
     #
