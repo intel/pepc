@@ -279,54 +279,50 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     all_options = ssh_mechanisms_options + [_OVERRIDE_CPU_OPTION]
 
     #
-    # Create parser for the 'cpu-hotplug' command.
+    # Create parser for the 'pstates' command.
     #
-    text = "CPU online/offline commands"
-    man_msg = """Refer to 'pepc-cpu-hotplug' manual page for more information."""
-    descr = "CPU online/offline commands. " + man_msg
-    subpars = subparsers.add_parser("cpu-hotplug", help=text, description=descr)
+    text = "CPU P-state commands."
+    man_msg = "Refer to 'pepc-pstates' manual page for more information."
+    descr = "Various commands related to P-states (CPU performance states). " + man_msg
+    subpars = subparsers.add_parser("pstates", help=text, description=descr)
     subpars = cast(ArgParse.ArgsParser, subpars)
     subparsers2 = subpars.add_subparsers(title="Further sub-commands")
     subparsers2.required = True
 
     #
-    # Create parser for the 'cpu-hotplug info' command.
+    # Create parser for the 'pstates info' command.
     #
-    text = "Display the list of online and offline CPUs."
-    descr = "Display the list of online and offline CPUs. " + man_msg
+    text = "Get CPU P-states information."
+    descr = """Get P-states information for specified CPUs. By default, print all information for
+               all CPUs. """ + man_msg
     subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
     subpars2 = cast(ArgParse.ArgsParser, subpars2)
-    subpars2.set_defaults(func=_cpu_hotplug_info_command)
+    subpars2.set_defaults(func=_pstates_info_command)
 
-    ArgParse.add_options(subpars2, ssh_options)
+    ArgParse.add_options(subpars2, all_options)
+
+    _add_target_cpus_arguments(subpars2, "List of %s to get information about.")
+
+    text = """Display output in YAML format."""
+    subpars2.add_argument("--yaml", action="store_true", help=text)
+
+    _add_info_subcommand_options(PStatesVars.PROPS, subpars2)
 
     #
-    # Create parser for the 'cpu-hotplug online' command.
+    # Create parser for the 'pstates config' command.
     #
-    text = """Bring CPUs online."""
-    descr = "Bring specified CPUs online. " + man_msg
-    subpars2 = subparsers2.add_parser("online", help=text, description=descr, epilog=man_msg)
+    text = """Configure CPU P-states."""
+    descr = """Configure P-states on specified CPUs. All options can be used without a parameter,
+               in which case the currently configured value(s) will be printed. """ + man_msg
+    subpars2 = subparsers2.add_parser("config", help=text, description=descr, epilog=man_msg)
     subpars2 = cast(ArgParse.ArgsParser, subpars2)
-    subpars2.set_defaults(func=_cpu_hotplug_online_command)
+    subpars2.set_defaults(func=_pstates_config_command)
 
-    ArgParse.add_options(subpars2, ssh_options)
+    ArgParse.add_options(subpars2, all_options)
 
-    text = """List of CPUs to bring online. Specify individual CPU numbers or ranges (e.g.,
-              '1-4,7,8,10-12'). Use 'all' to specify all CPUs."""
-    subpars2.add_argument("--cpus", help=text)
+    _add_target_cpus_arguments(subpars2, "List of %s to configure P-states for.")
 
-    #
-    # Create parser for the 'cpu-hotplug offline' command.
-    #
-    text = """Bring CPUs offline."""
-    descr = "Bring specified CPUs offline. " + man_msg
-    subpars2 = subparsers2.add_parser("offline", help=text, description=descr, epilog=man_msg)
-    subpars2 = cast(ArgParse.ArgsParser, subpars2)
-    subpars2.set_defaults(func=_cpu_hotplug_offline_command)
-
-    ArgParse.add_options(subpars2, ssh_options)
-
-    _add_target_cpus_arguments(subpars2, "List of %s to bring offline.")
+    _add_config_subcommand_options(PStatesVars.PROPS, subpars2)
 
     #
     # Create parser for the 'cstates' command.
@@ -390,52 +386,6 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     _add_config_subcommand_options(CStatesVars.PROPS, subpars2)
 
     #
-    # Create parser for the 'pstates' command.
-    #
-    text = "CPU P-state commands."
-    man_msg = "Refer to 'pepc-pstates' manual page for more information."
-    descr = "Various commands related to P-states (CPU performance states). " + man_msg
-    subpars = subparsers.add_parser("pstates", help=text, description=descr)
-    subpars = cast(ArgParse.ArgsParser, subpars)
-    subparsers2 = subpars.add_subparsers(title="Further sub-commands")
-    subparsers2.required = True
-
-    #
-    # Create parser for the 'pstates info' command.
-    #
-    text = "Get CPU P-states information."
-    descr = """Get P-states information for specified CPUs. By default, print all information for
-               all CPUs. """ + man_msg
-    subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
-    subpars2 = cast(ArgParse.ArgsParser, subpars2)
-    subpars2.set_defaults(func=_pstates_info_command)
-
-    ArgParse.add_options(subpars2, all_options)
-
-    _add_target_cpus_arguments(subpars2, "List of %s to get information about.")
-
-    text = """Display output in YAML format."""
-    subpars2.add_argument("--yaml", action="store_true", help=text)
-
-    _add_info_subcommand_options(PStatesVars.PROPS, subpars2)
-
-    #
-    # Create parser for the 'pstates config' command.
-    #
-    text = """Configure CPU P-states."""
-    descr = """Configure P-states on specified CPUs. All options can be used without a parameter,
-               in which case the currently configured value(s) will be printed. """ + man_msg
-    subpars2 = subparsers2.add_parser("config", help=text, description=descr, epilog=man_msg)
-    subpars2 = cast(ArgParse.ArgsParser, subpars2)
-    subpars2.set_defaults(func=_pstates_config_command)
-
-    ArgParse.add_options(subpars2, all_options)
-
-    _add_target_cpus_arguments(subpars2, "List of %s to configure P-states for.")
-
-    _add_config_subcommand_options(PStatesVars.PROPS, subpars2)
-
-    #
     # Create parser for the 'uncore' command.
     #
     text = "Uncore commands."
@@ -482,6 +432,95 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     _add_config_subcommand_options(UncoreVars.PROPS, subpars2)
 
     #
+    # Create parser for the 'cpu-hotplug' command.
+    #
+    text = "CPU online/offline commands"
+    man_msg = """Refer to 'pepc-cpu-hotplug' manual page for more information."""
+    descr = "CPU online/offline commands. " + man_msg
+    subpars = subparsers.add_parser("cpu-hotplug", help=text, description=descr)
+    subpars = cast(ArgParse.ArgsParser, subpars)
+    subparsers2 = subpars.add_subparsers(title="Further sub-commands")
+    subparsers2.required = True
+
+    #
+    # Create parser for the 'cpu-hotplug info' command.
+    #
+    text = "Display the list of online and offline CPUs."
+    descr = "Display the list of online and offline CPUs. " + man_msg
+    subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
+    subpars2 = cast(ArgParse.ArgsParser, subpars2)
+    subpars2.set_defaults(func=_cpu_hotplug_info_command)
+
+    ArgParse.add_options(subpars2, ssh_options)
+
+    #
+    # Create parser for the 'cpu-hotplug online' command.
+    #
+    text = """Bring CPUs online."""
+    descr = "Bring specified CPUs online. " + man_msg
+    subpars2 = subparsers2.add_parser("online", help=text, description=descr, epilog=man_msg)
+    subpars2 = cast(ArgParse.ArgsParser, subpars2)
+    subpars2.set_defaults(func=_cpu_hotplug_online_command)
+
+    ArgParse.add_options(subpars2, ssh_options)
+
+    text = """List of CPUs to bring online. Specify individual CPU numbers or ranges (e.g.,
+              '1-4,7,8,10-12'). Use 'all' to specify all CPUs."""
+    subpars2.add_argument("--cpus", help=text)
+
+    #
+    # Create parser for the 'cpu-hotplug offline' command.
+    #
+    text = """Bring CPUs offline."""
+    descr = "Bring specified CPUs offline. " + man_msg
+    subpars2 = subparsers2.add_parser("offline", help=text, description=descr, epilog=man_msg)
+    subpars2 = cast(ArgParse.ArgsParser, subpars2)
+    subpars2.set_defaults(func=_cpu_hotplug_offline_command)
+
+    ArgParse.add_options(subpars2, ssh_options)
+
+    _add_target_cpus_arguments(subpars2, "List of %s to bring offline.")
+
+    #
+    # Create parser for the 'topology' command.
+    #
+    text = "CPU topology commands."
+    man_msg = "Refer to 'pepc-topology' manual page for more information."
+    descr = "Various commands related to CPU topology. " + man_msg
+    subpars = subparsers.add_parser("topology", help=text, description=descr)
+    subpars = cast(ArgParse.ArgsParser, subpars)
+    subparsers2 = subpars.add_subparsers(title="Further sub-commands")
+    subparsers2.required = True
+
+    #
+    # Create parser for the 'topology info' command.
+    #
+    text = "Print CPU topology."
+    descr = """Print CPU topology information. Note, the topology information for some offline CPUs
+               may be unavailable, in these cases the number will be substituted with "?". Refer to
+               'pepc-topology' manual page for more information."""
+    subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
+    subpars2 = cast(ArgParse.ArgsParser, subpars2)
+    subpars2.set_defaults(func=_topology_info_command)
+
+    ArgParse.add_options(subpars2, ssh_options)
+
+    _add_target_cpus_arguments(subpars2, "List of %s to print topology information for.")
+
+    orders = ", ".join([lvl.lower() for lvl in CPUInfoVars.SCOPE_NAMES])
+    text = f"""Sort topology table by the specified order instead of CPU number. Supported values:
+               {orders}."""
+    subpars2.add_argument("--order", help=text, default="CPU")
+
+    text = """Include only online CPUs. By default, both online and offline CPUs are included."""
+    subpars2.add_argument("--online-only", action="store_true", help=text)
+
+    columns = ", ".join(list(CPUInfoVars.SCOPE_NAMES) + ["hybrid"])
+    text = f"""Comma-separated list of topology columns to display. Available columns: {columns}.
+               Example: --columns Package,Core,CPU."""
+    subpars2.add_argument("--columns", help=text)
+
+    #
     # Create parser for the 'pmqos' command.
     #
     text = "PM QoS commands."
@@ -526,101 +565,6 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     _add_target_cpus_arguments(subpars2, "List of %s to configure PM QoS for.")
 
     _add_config_subcommand_options(PMQoSVars.PROPS, subpars2)
-
-    #
-    # Create parser for the 'aspm' command.
-    #
-    text = "PCI ASPM commands."
-    man_msg = "Refer to 'pepc-aspm' manual page for more information."
-    descr = "Manage Active State Power Management configuration. " + man_msg
-    subpars = subparsers.add_parser("aspm", help=text, description=descr)
-    subpars = cast(ArgParse.ArgsParser, subpars)
-    subparsers2 = subpars.add_subparsers(title="Further sub-commands")
-    subparsers2.required = True
-
-    #
-    # Create parser for the 'aspm info' command.
-    #
-    text = "Get PCI ASPM information."
-    descr = "Get information about current PCI ASPM configuration. " + man_msg
-    subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
-    subpars2 = cast(ArgParse.ArgsParser, subpars2)
-    subpars2.set_defaults(func=_aspm_info_command)
-
-    ArgParse.add_options(subpars2, ssh_options)
-
-    text = """Retrieve the current global PCI ASPM policy. The "default" policy indicates the
-              system's default."""
-    subpars2.add_argument("--policy", action=ArgParse.OrderedArg, nargs=0, help=text)
-
-    text = """Retrieve the list of available PCI ASPM policies."""
-    subpars2.add_argument("--policies", action=ArgParse.OrderedArg, nargs=0, help=text)
-
-    text = "Specify the PCI device address for the '--l1-aspm' option. Example: '0000:00:02.0'."
-    subpars2.add_argument("--device", metavar="ADDR", action="store", help=text)
-
-    text = "Retrieve the L1 ASPM status (on/off) for the PCI device specified by '--device'."
-    subpars2.add_argument("--l1-aspm", action=ArgParse.OrderedArg, nargs=0, help=text)
-
-    #
-    # Create parser for the 'aspm config' command.
-    #
-    text = "Change PCI ASPM configuration."
-    descr = "Change PCI ASPM configuration. " + man_msg
-    subpars2 = subparsers2.add_parser("config", help=text, description=descr, epilog=man_msg)
-    subpars2 = cast(ArgParse.ArgsParser, subpars2)
-    subpars2.set_defaults(func=_aspm_config_command)
-
-    ArgParse.add_options(subpars2, ssh_options)
-
-    text = """Set the global PCI ASPM policy. Use "default" to reset to the system's default."""
-    subpars2.add_argument("--policy", action=ArgParse.OrderedArg, nargs="?", help=text)
-
-    text = "Specify the PCI device address for the '--l1-aspm' option. Example: '0000:00:02.0'."
-    subpars2.add_argument("--device", metavar="ADDR", action="store", help=text)
-
-    text = """Enable or disable L1 ASPM for the PCI device specified by '--device'."""
-    subpars2.add_argument("--l1-aspm", metavar="on/off", action=ArgParse.OrderedArg, nargs="?",
-                          help=text)
-
-    #
-    # Create parser for the 'topology' command.
-    #
-    text = "CPU topology commands."
-    man_msg = "Refer to 'pepc-topology' manual page for more information."
-    descr = "Various commands related to CPU topology. " + man_msg
-    subpars = subparsers.add_parser("topology", help=text, description=descr)
-    subpars = cast(ArgParse.ArgsParser, subpars)
-    subparsers2 = subpars.add_subparsers(title="Further sub-commands")
-    subparsers2.required = True
-
-    #
-    # Create parser for the 'topology info' command.
-    #
-    text = "Print CPU topology."
-    descr = """Print CPU topology information. Note, the topology information for some offline CPUs
-               may be unavailable, in these cases the number will be substituted with "?". Refer to
-               'pepc-topology' manual page for more information."""
-    subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
-    subpars2 = cast(ArgParse.ArgsParser, subpars2)
-    subpars2.set_defaults(func=_topology_info_command)
-
-    ArgParse.add_options(subpars2, ssh_options)
-
-    _add_target_cpus_arguments(subpars2, "List of %s to print topology information for.")
-
-    orders = ", ".join([lvl.lower() for lvl in CPUInfoVars.SCOPE_NAMES])
-    text = f"""Sort topology table by the specified order instead of CPU number. Supported values:
-               {orders}."""
-    subpars2.add_argument("--order", help=text, default="CPU")
-
-    text = """Include only online CPUs. By default, both online and offline CPUs are included."""
-    subpars2.add_argument("--online-only", action="store_true", help=text)
-
-    columns = ", ".join(list(CPUInfoVars.SCOPE_NAMES) + ["hybrid"])
-    text = f"""Comma-separated list of topology columns to display. Available columns: {columns}.
-               Example: --columns Package,Core,CPU."""
-    subpars2.add_argument("--columns", help=text)
 
     #
     # Create parser for the 'tpmi' command.
@@ -726,6 +670,62 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     text = "The value to write to the TPMI register or its bit field."
     subpars2.add_argument("-V", "--value", help=text, required=True)
 
+    #
+    # Create parser for the 'aspm' command.
+    #
+    text = "PCI ASPM commands."
+    man_msg = "Refer to 'pepc-aspm' manual page for more information."
+    descr = "Manage Active State Power Management configuration. " + man_msg
+    subpars = subparsers.add_parser("aspm", help=text, description=descr)
+    subpars = cast(ArgParse.ArgsParser, subpars)
+    subparsers2 = subpars.add_subparsers(title="Further sub-commands")
+    subparsers2.required = True
+
+    #
+    # Create parser for the 'aspm info' command.
+    #
+    text = "Get PCI ASPM information."
+    descr = "Get information about current PCI ASPM configuration. " + man_msg
+    subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
+    subpars2 = cast(ArgParse.ArgsParser, subpars2)
+    subpars2.set_defaults(func=_aspm_info_command)
+
+    ArgParse.add_options(subpars2, ssh_options)
+
+    text = """Retrieve the current global PCI ASPM policy. The "default" policy indicates the
+              system's default."""
+    subpars2.add_argument("--policy", action=ArgParse.OrderedArg, nargs=0, help=text)
+
+    text = """Retrieve the list of available PCI ASPM policies."""
+    subpars2.add_argument("--policies", action=ArgParse.OrderedArg, nargs=0, help=text)
+
+    text = "Specify the PCI device address for the '--l1-aspm' option. Example: '0000:00:02.0'."
+    subpars2.add_argument("--device", metavar="ADDR", action="store", help=text)
+
+    text = "Retrieve the L1 ASPM status (on/off) for the PCI device specified by '--device'."
+    subpars2.add_argument("--l1-aspm", action=ArgParse.OrderedArg, nargs=0, help=text)
+
+    #
+    # Create parser for the 'aspm config' command.
+    #
+    text = "Change PCI ASPM configuration."
+    descr = "Change PCI ASPM configuration. " + man_msg
+    subpars2 = subparsers2.add_parser("config", help=text, description=descr, epilog=man_msg)
+    subpars2 = cast(ArgParse.ArgsParser, subpars2)
+    subpars2.set_defaults(func=_aspm_config_command)
+
+    ArgParse.add_options(subpars2, ssh_options)
+
+    text = """Set the global PCI ASPM policy. Use "default" to reset to the system's default."""
+    subpars2.add_argument("--policy", action=ArgParse.OrderedArg, nargs="?", help=text)
+
+    text = "Specify the PCI device address for the '--l1-aspm' option. Example: '0000:00:02.0'."
+    subpars2.add_argument("--device", metavar="ADDR", action="store", help=text)
+
+    text = """Enable or disable L1 ASPM for the PCI device specified by '--device'."""
+    subpars2.add_argument("--l1-aspm", metavar="on/off", action=ArgParse.OrderedArg, nargs="?",
+                          help=text)
+
     if _ARGCOMPLETE_AVAILABLE:
         argcomplete.autocomplete(parser)
 
@@ -756,9 +756,9 @@ def parse_arguments() -> argparse.Namespace:
 
     return args
 
-def _topology_info_command(args: argparse.Namespace, pman: ProcessManagerType):
+def _pstates_info_command(args: argparse.Namespace, pman: ProcessManagerType):
     """
-    Implement the 'topology info' command.
+    Implement the 'pstates info' command.
 
     Args:
         args: Parsed command-line arguments.
@@ -766,13 +766,13 @@ def _topology_info_command(args: argparse.Namespace, pman: ProcessManagerType):
     """
 
     # pylint: disable-next=import-outside-toplevel
-    from pepctools import _PepcTopology
+    from pepctools import _PepcPStates
 
-    _PepcTopology.topology_info_command(args, pman)
+    _PepcPStates.pstates_info_command(args, pman)
 
-def _tpmi_ls_command(args: argparse.Namespace, pman: ProcessManagerType):
+def _pstates_config_command(args: argparse.Namespace, pman: ProcessManagerType):
     """
-    Implement the 'tpmi ls' command.
+    Implement the 'pstates config' command.
 
     Args:
         args: Parsed command-line arguments.
@@ -780,25 +780,65 @@ def _tpmi_ls_command(args: argparse.Namespace, pman: ProcessManagerType):
     """
 
     # pylint: disable-next=import-outside-toplevel
-    from pepctools import _PepcTpmi
+    from pepctools import _PepcPStates
 
-    _PepcTpmi.tpmi_ls_command(args, pman)
+    _PepcPStates.pstates_config_command(args, pman)
 
-def _tpmi_read_command(args: argparse.Namespace, pman: ProcessManagerType):
-    """Implements the 'tpmi read' command."""
+def _cstates_info_command(args: argparse.Namespace, pman: ProcessManagerType):
+    """
+    Implement the 'cstates info' command.
 
-    # pylint: disable-next=import-outside-toplevel
-    from pepctools import _PepcTpmi
-
-    _PepcTpmi.tpmi_read_command(args, pman)
-
-def _tpmi_write_command(args: argparse.Namespace, pman: ProcessManagerType):
-    """Implements the 'tpmi write' command."""
+    Args:
+        args: Parsed command-line arguments.
+        pman: Process manager object for the host to run the command for.
+    """
 
     # pylint: disable-next=import-outside-toplevel
-    from pepctools import _PepcTpmi
+    from pepctools import _PepcCStates
 
-    _PepcTpmi.tpmi_write_command(args, pman)
+    _PepcCStates.cstates_info_command(args, pman)
+
+def _cstates_config_command(args: argparse.Namespace, pman: ProcessManagerType):
+    """
+    Implement the 'cstates config' command.
+
+    Args:
+        args: Parsed command-line arguments.
+        pman: Process manager object for the host to run the command for.
+    """
+
+    # pylint: disable-next=import-outside-toplevel
+    from pepctools import _PepcCStates
+
+    _PepcCStates.cstates_config_command(args, pman)
+
+def _uncore_info_command(args: argparse.Namespace, pman: ProcessManagerType):
+    """
+    Implement the 'uncore info' command.
+
+    Args:
+        args: Parsed command-line arguments.
+        pman: Process manager object for the host to run the command for.
+    """
+
+    # pylint: disable-next=import-outside-toplevel
+    from pepctools import _PepcUncore
+
+    _PepcUncore.uncore_info_command(args, pman)
+
+def _uncore_config_command(args: argparse.Namespace, pman: ProcessManagerType):
+    """
+    Implement the 'uncore config' command.
+
+    Args:
+        args: Parsed command-line arguments.
+        pman: Process manager object for the host to run the command for.
+    """
+
+    # pylint: disable-next=import-outside-toplevel
+    from pepctools import _PepcUncore
+
+    _PepcUncore.uncore_config_command(args, pman)
 
 def _cpu_hotplug_info_command(args: argparse.Namespace, pman: ProcessManagerType):
     """
@@ -842,9 +882,9 @@ def _cpu_hotplug_offline_command(args: argparse.Namespace, pman: ProcessManagerT
 
     _PepcCPUHotplug.cpu_hotplug_offline_command(args, pman)
 
-def _cstates_info_command(args: argparse.Namespace, pman: ProcessManagerType):
+def _topology_info_command(args: argparse.Namespace, pman: ProcessManagerType):
     """
-    Implement the 'cstates info' command.
+    Implement the 'topology info' command.
 
     Args:
         args: Parsed command-line arguments.
@@ -852,79 +892,9 @@ def _cstates_info_command(args: argparse.Namespace, pman: ProcessManagerType):
     """
 
     # pylint: disable-next=import-outside-toplevel
-    from pepctools import _PepcCStates
+    from pepctools import _PepcTopology
 
-    _PepcCStates.cstates_info_command(args, pman)
-
-def _cstates_config_command(args: argparse.Namespace, pman: ProcessManagerType):
-    """
-    Implement the 'cstates config' command.
-
-    Args:
-        args: Parsed command-line arguments.
-        pman: Process manager object for the host to run the command for.
-    """
-
-    # pylint: disable-next=import-outside-toplevel
-    from pepctools import _PepcCStates
-
-    _PepcCStates.cstates_config_command(args, pman)
-
-def _pstates_info_command(args: argparse.Namespace, pman: ProcessManagerType):
-    """
-    Implement the 'pstates info' command.
-
-    Args:
-        args: Parsed command-line arguments.
-        pman: Process manager object for the host to run the command for.
-    """
-
-    # pylint: disable-next=import-outside-toplevel
-    from pepctools import _PepcPStates
-
-    _PepcPStates.pstates_info_command(args, pman)
-
-def _pstates_config_command(args: argparse.Namespace, pman: ProcessManagerType):
-    """
-    Implement the 'pstates config' command.
-
-    Args:
-        args: Parsed command-line arguments.
-        pman: Process manager object for the host to run the command for.
-    """
-
-    # pylint: disable-next=import-outside-toplevel
-    from pepctools import _PepcPStates
-
-    _PepcPStates.pstates_config_command(args, pman)
-
-def _uncore_info_command(args: argparse.Namespace, pman: ProcessManagerType):
-    """
-    Implement the 'uncore info' command.
-
-    Args:
-        args: Parsed command-line arguments.
-        pman: Process manager object for the host to run the command for.
-    """
-
-    # pylint: disable-next=import-outside-toplevel
-    from pepctools import _PepcUncore
-
-    _PepcUncore.uncore_info_command(args, pman)
-
-def _uncore_config_command(args: argparse.Namespace, pman: ProcessManagerType):
-    """
-    Implement the 'uncore config' command.
-
-    Args:
-        args: Parsed command-line arguments.
-        pman: Process manager object for the host to run the command for.
-    """
-
-    # pylint: disable-next=import-outside-toplevel
-    from pepctools import _PepcUncore
-
-    _PepcUncore.uncore_config_command(args, pman)
+    _PepcTopology.topology_info_command(args, pman)
 
 def _pmqos_info_command(args: argparse.Namespace, pman: ProcessManagerType):
     """
@@ -953,6 +923,36 @@ def _pmqos_config_command(args: argparse.Namespace, pman: ProcessManagerType):
     from pepctools import _PepcPMQoS
 
     _PepcPMQoS.pmqos_config_command(args, pman)
+
+def _tpmi_ls_command(args: argparse.Namespace, pman: ProcessManagerType):
+    """
+    Implement the 'tpmi ls' command.
+
+    Args:
+        args: Parsed command-line arguments.
+        pman: Process manager object for the host to run the command for.
+    """
+
+    # pylint: disable-next=import-outside-toplevel
+    from pepctools import _PepcTpmi
+
+    _PepcTpmi.tpmi_ls_command(args, pman)
+
+def _tpmi_read_command(args: argparse.Namespace, pman: ProcessManagerType):
+    """Implements the 'tpmi read' command."""
+
+    # pylint: disable-next=import-outside-toplevel
+    from pepctools import _PepcTpmi
+
+    _PepcTpmi.tpmi_read_command(args, pman)
+
+def _tpmi_write_command(args: argparse.Namespace, pman: ProcessManagerType):
+    """Implements the 'tpmi write' command."""
+
+    # pylint: disable-next=import-outside-toplevel
+    from pepctools import _PepcTpmi
+
+    _PepcTpmi.tpmi_write_command(args, pman)
 
 def _aspm_info_command(args: argparse.Namespace, pman: ProcessManagerType):
     """
@@ -1058,10 +1058,10 @@ def _list_mechanisms(args: argparse.Namespace):
 
     props: dict[str, PropertyTypedDict]
     fname: str = args.func.__name__
-    if fname.startswith("_cstates_"):
-        props = CStatesVars.PROPS
-    elif fname.startswith("_pstates_"):
+    if fname.startswith("_pstates_"):
         props = PStatesVars.PROPS
+    elif fname.startswith("_cstates_"):
+        props = CStatesVars.PROPS
     elif fname.startswith("_uncore_"):
         props = UncoreVars.PROPS
     elif fname.startswith("_pmqos_"):
