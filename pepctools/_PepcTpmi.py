@@ -32,7 +32,7 @@ if typing.TYPE_CHECKING:
 
         Attributes:
             value: The register value.
-            fields: A dictionary of bit field names and their values.
+            fields: A dictionary of bit-field names and their values.
         """
 
         value: int
@@ -77,7 +77,7 @@ if typing.TYPE_CHECKING:
             packages: List of package numbers to operate on.
             instances: List of TPMI instance numbers to read from.
             regnames: List of register names to read.
-            bfnames: List of bit field names to read.
+            bfnames: List of bit-field names to read.
             yaml: Whether to output results in YAML format.
         """
 
@@ -99,7 +99,7 @@ if typing.TYPE_CHECKING:
             packages: List of package numbers to operate on.
             instances: List of TPMI instance numbers to write to.
             regname: Name of the register to write to.
-            bfname: Name of the bit field to write to (if any).
+            bfname: Name of the bit-field to write to (if any).
             value: Value to write.
         """
 
@@ -409,7 +409,7 @@ def tpmi_read_command(args: argparse.Namespace, pman: ProcessManagerType):
                         bfinfo[bfname] = bfval
 
                     if not bfinfo:
-                        # No bit fields information, probably all of them are reserved. Delete the
+                        # No bit-fields information, probably all of them are reserved. Delete the
                         # entire "fields" key so that it does not show up in the output.
                         del reginfo["fields"]
 
@@ -440,7 +440,7 @@ def tpmi_write_command(args, pman):
         stack.enter_context(tpmi)
 
         if cmdl["bfname"]:
-            bfname_str = f", bit field '{cmdl['bfname']}'"
+            bfname_str = f", bit-field '{cmdl['bfname']}'"
             val_str = f"{cmdl['value']}"
         else:
             bfname_str = ""
