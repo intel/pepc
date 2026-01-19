@@ -102,7 +102,7 @@ the features `pepc` manages.
 
 ## What to do if my platform is not supported?
 
-`pepc` features (e.g., `--pkg-cstate-limit`) are implemented only for certain Intel platforms.
+Some `pepc` features (e.g., `--pkg-cstate-limit`) are implemented only for certain Intel platforms.
 This means that we verified the feature on a limited number of platforms, not that it is
 unsupported by other platforms. To be on the safe side, we refuse to change the underlying MSR
 registers on platforms we did not verify.
