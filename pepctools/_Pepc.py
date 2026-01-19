@@ -1121,8 +1121,8 @@ def do_main(pman: ProcessManagerType | None = None) -> int:
         from pepclibs.helperlibs import ProcessManager
 
         with ProcessManager.get_pman(cmdl["hostname"], username=cmdl["username"],
-                                     privkeypath=cmdl["privkey"], timeout=cmdl["timeout"]) as pman:
-            args.func(args, pman)
+                                     privkeypath=cmdl["privkey"], timeout=cmdl["timeout"]) as _pman:
+            args.func(args, _pman)
 
     return 0
 
