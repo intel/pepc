@@ -75,25 +75,25 @@ make the manual pages available to the \[aq]man\[aq] tool.
 .TP
 \f[B]\-\-override\-cpu\-model\f[R] \f[I]VFM\f[R]
 This option is for debugging and testing purposes only.
-Override the target host CPU model and force {TOOLNAME} treat the host
-as a specific CPU model.
+Override the target host CPU model and force pepc to treat the host as a
+specific CPU model.
 The format is \[aq][<Vendor>:][<Family>:]<Model>\[aq], where
 \[aq]<Vendor>\[aq] is the CPU vendor (e.g., \[aq]GenuineIntel\[aq] or
 \[aq]AuthenticAMD\[aq]), \[aq]<Family>\[aq] is the CPU family (e.g., 6),
 and \[aq]<Model>\[aq] is the CPU model (e.g., 0x8F).
-Example: \[aq]GenuineIntel:6:0x8F\[aq] will force the tool treating the
+Example: \[aq]GenuineIntel:6:0x8F\[aq] will force the tool to treat the
 target host CPU as a Sapphire Rapids Xeon.
 The vendor and family are optional and if not specified, the tool will
 use the vendor and family of the target host CPU.
 The family and model can be specified in decimal or hexadecimal format.
 .SS Target CPU specification options
-All sub\-commans (\f[I]\[aq]info\[aq]\f[R], \f[I]\[aq]config\[aq]\f[R])
+All subcommands (\f[I]\[aq]info\[aq]\f[R], \f[I]\[aq]config\[aq]\f[R])
 support the following target CPU specification options.
 .TP
 \f[B]\-\-cpus\f[R] \f[I]CPUS\f[R]
 The list can include individual CPU numbers and CPU number ranges.
-For example,\[aq]1\-4,7,8,10\-12\[aq] would mean CPUs 1 to 4, CPUs 7, 8,
-and 10 to 12.
+For example, \[aq]1\-4,7,8,10\-12\[aq] would mean CPUs 1 to 4, CPUs 7,
+8, and 10 to 12.
 Use the special keyword \[aq]all\[aq] to specify all CPUs.
 .TP
 \f[B]\-\-cores\f[R] \f[I]CORES\f[R]
@@ -101,8 +101,8 @@ The list can include individual core numbers and core number ranges.
 For example, \[aq]1\-4,7,8,10\-12\[aq] would mean cores 1 to 4, cores 7,
 8, and 10 to 12.
 Use the special keyword \[aq]all\[aq] to specify all cores.
-This option has to be accompanied by the \[aq]\-\-package\[aq] option,
-because core numbers are per\-package.
+This option has to be used with the \[aq]\-\-packages\[aq] option,
+because core numbers are relative to the package.
 .TP
 \f[B]\-\-modules\f[R] \f[I]MODULES\f[R]
 The list can include individual module numbers and module number ranges.
@@ -117,8 +117,8 @@ For example, \[aq]0\-3,5\[aq] would mean dies 0 to 3, and die 5.
 Use the special keyword \[aq]all\[aq] to specify all dies.
 On some systems, die numbers are globally unique, while on other systems
 they are relative to the package.
-In the latter case, this option has to be accompanied by the
-\[aq]\-\-package\[aq] option.
+In the latter case, this option has to be used with the
+\[aq]\-\-packages\[aq] option.
 .TP
 \f[B]\-\-packages\f[R] \f[I]PACKAGES\f[R]
 The list can include individual package numbers and package number
@@ -129,48 +129,47 @@ Use the special keyword \[aq]all\[aq] to specify all packages.
 \f[B]\-\-core\-siblings\f[R] \f[I]CORE_SIBLINGS\f[R]
 Core siblings are CPUs sharing the same core.
 The list can include individual core sibling indices or index ranges.
-For example, if a core includes CPUs 3 and 4, sibling index 0 refers to
-CPU 3 and index 1 refers to CPU 4.
+For example, if a core includes CPUs 3 and 4, index 0 would mean CPU 3
+and index 1 would mean CPU 4.
 This option can only be used to reference online CPUs, because Linux
 does not provide topology information for offline CPUs.
 In the example with CPUs 3 and 4, if CPU 3 was offline, then index 0
-would refer to CPU 4 and index 1 would be invalid.
+would mean CPU 4.
 .TP
 \f[B]\-\-module\-siblings\f[R] \f[I]MODULE_SIBLINGS\f[R]
 Module siblings are CPUs sharing the same module.
 The list can include individual module sibling indices or index ranges.
-For example, if a module includes CPUs 3, 4, 5, and 6, index 0 refers to
-CPU 3, index 1 refers to CPU 4, and index 2 refers to CPU 5, and index 3
-refers to CPU 6.
+For example, if a module includes CPUs 3, 4, 5, and 6, index 0 would
+mean CPU 3, index 1 would mean CPU 4, index 2 would mean CPU 5, and
+index 3 would mean CPU 6.
 This option can only be used to reference online CPUs, because Linux
 does not provide topology information for offline CPUs.
-In the example with CPUs 3, 4, 5 and 6, if CPU 4 was offline, then index
-1 would refer to CPU 5, index 2 would refer to CPU 6, and index 3 would
-be invalid.
+In the example with CPUs 3, 4, 5, and 6, if CPU 4 was offline, then
+index 1 would mean CPU 5, index 2 would mean CPU 6, and index 3 would be
+invalid.
 .SS Subcommand \f[I]\[aq]info\[aq]\f[R]
 Retrieve C\-state information for specified CPUs.
 By default, display all details for all CPUs.
-Use target CPU specification options to limit the scope to specific
-CPUs, cores, dies, or packages.
+Use target CPU specification options to define a subset of CPUs, cores,
+dies, or packages.
 .TP
 \f[B]\-\-yaml\f[R]
-Print information in YAML format.
+Display output in YAML format.
 .TP
 \f[B]\-m\f[R] \f[I]MECHANISMS\f[R], \f[B]\-\-mechanisms\f[R] \f[I]MECHANISMS\f[R]
-Comma\-separated list of mechanisms to use for retrieving C\-states
-information.
+A comma\-separated list of mechanisms for retrieving information.
 Use \[aq]\-\-list\-mechanisms\[aq] to view available mechanisms.
 Many options support only one mechanism (e.g., \[aq]sysfs\[aq]), while
-some support multiple (e.g., \[aq]sysfs\[aq] and \[aq]msr\[aq]).
+others may support multiple (e.g., \[aq]sysfs\[aq] and \[aq]msr\[aq]).
 Mechanisms are tried in the specified order.
-By default, all mechanisms are allowed, with the most preferred tried
-first.
+By default, all mechanisms are allowed, and the most preferred ones are
+tried first.
 .TP
 \f[B]\-\-list\-mechanisms\f[R]
-List available mechanisms for retrieving C\-states information.
+Display available mechanisms for retrieving C\-states information.
 .TP
 \f[B]\-\-cstates\f[R] \f[I][CSTATES]\f[R]
-Comma\-separated list of C\-states to retrieve information about,
+A comma\-separated list of C\-states to retrieve information about,
 specified by name (e.g., C1).
 Use \[aq]all\[aq] to include all available Linux C\-states (default).
 Remember, Linux C\-states (e.g., C6) are requests Linux can make, while
@@ -212,7 +211,7 @@ Read from MSR_POWER_CTL (0x1FC), bit 1.
 Check if C\-state prewake is enabled.
 When enabled, the CPU considers idle timers and starts exiting deep
 C\-states early, before the next local APIC timer event.
-This ensures the CPU is nearly awake by the tim the timer fires.
+This ensures the CPU is nearly awake by the time the timer fires.
 Read from MSR_POWER_CTL (0x1FC), bit 30.
 .TP
 \f[B]\-\-idle\-driver\f[R]
@@ -233,25 +232,24 @@ Different governors implement various selection policies.
 Read from \[aq]/sys/devices/system/cpu/cpuidle/available_governors\[aq].
 .SS Subcommand \f[I]\[aq]config\[aq]\f[R]
 Configure C\-states for specified CPUs.
-If no parameter is provided, the current configuration will be
-displayed.
-Use target CPU specification options to limit the scope to specific
-CPUs, cores, dies, or packages.
+If no parameter is provided, the current value(s) will be displayed.
+Use target CPU specification options to define the subset of CPUs,
+cores, dies, or packages.
 .TP
 \f[B]\-m\f[R] \f[I]MECHANISMS\f[R], \f[B]\-\-mechanisms\f[R] \f[I]MECHANISMS\f[R]
-Comma\-separated list of mechanisms to use for configuring C\-states.
+A comma\-separated list of mechanisms allowed for configuring C\-states.
 Use \[aq]\-\-list\-mechanisms\[aq] to view available mechanisms.
 Many options support only one mechanism (e.g., \[aq]sysfs\[aq]), while
 some support multiple (e.g., \[aq]sysfs\[aq] and \[aq]msr\[aq]).
 Mechanisms are tried in the specified order.
-By default, all mechanisms are allowed, with the most preferred tried
-first.
+By default, all mechanisms are allowed, and the most preferred ones are
+tried first.
 .TP
 \f[B]\-\-list\-mechanisms\f[R]
-List available mechanisms for configuring C\-states.
+Display available mechanisms for configuring C\-states.
 .TP
-\f[B]\-\-enable\f[R] \f[I]CSTATES\f[R]
-Comma\-separated list of C\-state names to enable.
+\f[B]\-\-enable\f[R] \f[I][CSTATES]\f[R]
+A comma\-separated list of C\-state names to enable.
 Use \[aq]all\[aq] to include all available Linux C\-states (default).
 Remember, Linux C\-states (e.g., C6) are requests Linux can make, while
 hardware C\-states (e.g., Core C6 or Package C6 on Intel platforms) are
@@ -260,42 +258,42 @@ See the
 \[aq]https://github.com/intel/pepc/blob/main/docs/misc\-cstate\-namespaces.md\[aq]
 document for details.
 .TP
-\f[B]\-\-disable\f[R] \f[I]CSTATES\f[R]
+\f[B]\-\-disable\f[R] \f[I][CSTATES]\f[R]
 Similar to \[aq]\-\-enable\[aq], but specifies the C\-states to disable.
 .TP
-\f[B]\-\-pkg\-cstate\-limit\f[R] \f[I]PKG_CSTATE_LIMIT\f[R]
+\f[B]\-\-pkg\-cstate\-limit\f[R] \f[I][PKG_CSTATE_LIMIT]\f[R]
 Set the package C\-state limit, defining the deepest hardware package
 C\-state the platform can enter.
 Writes to MSR_PKG_CST_CONFIG_CONTROL (0xE2), bits 2:0 or 3:0, depending
 on the CPU model.
 Writing is refused if the lock bit (bit 15) in the same MSR is set.
 .TP
-\f[B]\-\-c1\-demotion\f[R] \f[I]on|off\f[R]
+\f[B]\-\-c1\-demotion\f[R] \f[I][on|off]\f[R]
 Enable or disable C1 demotion.
 On Intel platforms, this feature monitors CPU wake\-up rates.
 If the rate exceeds a threshold, deep C\-state requests are demoted to
 C1 to improve performance at the cost of higher power consumption.
 Writes to MSR_PKG_CST_CONFIG_CONTROL (0xE2), bit 26.
 .TP
-\f[B]\-\-c1\-undemotion\f[R] \f[I]on|off\f[R]
+\f[B]\-\-c1\-undemotion\f[R] \f[I][on|off]\f[R]
 Enable or disable C1 undemotion.
 When enabled, the CPU can reverse previously demoted C1 requests back to
 deeper C\-states (e.g., C6) if frequent wake\-ups have stopped.
 Writes to MSR_PKG_CST_CONFIG_CONTROL (0xE2), bit 28.
 .TP
-\f[B]\-\-c1e\-autopromote\f[R] \f[I]on|off\f[R]
+\f[B]\-\-c1e\-autopromote\f[R] \f[I][on|off]\f[R]
 Enable or disable C1E autopromotion.
 When enabled, all C1 C\-state requests are converted to C1E.
 Writes to MSR_POWER_CTL (0x1FC), bit 1.
 .TP
-\f[B]\-\-cstate\-prewake\f[R] \f[I]on|off\f[R]
+\f[B]\-\-cstate\-prewake\f[R] \f[I][on|off]\f[R]
 Enable or disable C\-state prewake.
 When enabled, the CPU considers idle timers and starts exiting deep
 C\-states early, before the next local APIC timer event.
-This ensures the CPU is nearly awake by the tim the timer fires.
+This ensures the CPU is nearly awake by the time the timer fires.
 Writes to MSR_POWER_CTL (0x1FC), bit 30.
 .TP
-\f[B]\-\-governor\f[R] \f[I]NAME\f[R]
+\f[B]\-\-governor\f[R] \f[I][NAME]\f[R]
 Configure the idle governor, which decides the C\-state to request for
 an idle CPU.
 Updates \[aq]/sys/devices/system/cpu/cpuidle/scaling_governor\[aq].

@@ -29,8 +29,8 @@ running it locally.
 If not specified, the command will be run locally.
 .TP
 \f[B]\-U\f[R] \f[I]USERNAME\f[R], \f[B]\-\-username\f[R] \f[I]USERNAME\f[R]
-Username for SSH login to the remote host.
-Defaults to \[aq]root\[aq].
+Name of the user to use for logging into the remote host over SSH.
+The default user name is \[aq]root\[aq].
 .TP
 \f[B]\-K\f[R] \f[I]PRIVKEY\f[R], \f[B]\-\-priv\-key\f[R] \f[I]PRIVKEY\f[R]
 Path to the private SSH key for logging into the remote host.
@@ -59,7 +59,7 @@ dataset.
 .IP "4." 3
 \[aq]$VIRTUAL_ENV/share/tests/emul\-data\[aq]
 .IP "5." 3
-\[aq]/usr/local/share/pepc/tests/emul\-data\-data\[aq]
+\[aq]/usr/local/share/pepc/tests/emul\-data\[aq]
 .IP "6." 3
 \[aq]/usr/share/pepc/tests/emul\-data\[aq]
 .RE
@@ -73,15 +73,15 @@ Print path to pepc manual pages directory and exit.
 This path can be added to the \[aq]MANPATH\[aq] environment variable to
 make the manual pages available to the \[aq]man\[aq] tool.
 .SS Subcommand \f[I]\[aq]info\[aq]\f[R]
-Get information about current PCI ASPM configuration.
+Retrieve PCI ASPM information for the system.
 .TP
-\f[B]\-\-policy\f[R] \f[I]NAME\f[R]
-Display the current global PCI ASPM policy from
+\f[B]\-\-policy\f[R]
+Retrieve the current global PCI ASPM policy from
 \[aq]/sys/module/pcie_aspm/parameters/policy\[aq].
 The \[dq]default\[dq] policy indicates the system\[aq]s default.
 .TP
-\f[B]\-\-policies\f[R] \f[I]NAME\f[R]
-List available PCI ASPM policies from
+\f[B]\-\-policies\f[R]
+Retrieve the list of available PCI ASPM policies from
 \[aq]/sys/module/pcie_aspm/parameters/policy\[aq].
 .TP
 \f[B]\-\-device\f[R] \f[I]ADDR\f[R]
@@ -93,9 +93,10 @@ Retrieve the L1 ASPM status (on/off) for the PCI device specified by
 \[aq]\-\-device\[aq].
 Reads from \[aq]/sys/bus/pci/devices/{device}/link/l1_aspm\[aq].
 .SS Subcommand \f[I]\[aq]config\[aq]\f[R]
-Change PCI ASPM configuration.
+Configure PCI ASPM settings.
+If no parameter is provided, the current value(s) will be displayed.
 .TP
-\f[B]\-\-policy\f[R] \f[I]NAME\f[R]
+\f[B]\-\-policy\f[R] \f[I][NAME]\f[R]
 Set the global PCI ASPM policy by writing to
 \[aq]/sys/module/pcie_aspm/parameters/policy\[aq].
 Use \[dq]default\[dq] to reset the policy to the system\[aq]s default
@@ -105,7 +106,7 @@ setting.
 Specify the PCI device address for the \[aq]\-\-l1\-aspm\[aq] option.
 Example: \[aq]0000:00:02.0\[aq].
 .TP
-\f[B]\-\-l1\-aspm\f[R] \f[I]OPTION\f[R]
+\f[B]\-\-l1\-aspm\f[R] \f[I][OPTION]\f[R]
 Enable or disable L1 ASPM for the PCI device specified by
 \[aq]\-\-device\[aq].
 This is done via \[aq]/sys/bus/pci/devices/{device}/link/l1_aspm\[aq].

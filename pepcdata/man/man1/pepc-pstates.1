@@ -75,25 +75,25 @@ make the manual pages available to the \[aq]man\[aq] tool.
 .TP
 \f[B]\-\-override\-cpu\-model\f[R] \f[I]VFM\f[R]
 This option is for debugging and testing purposes only.
-Override the target host CPU model and force {TOOLNAME} treat the host
-as a specific CPU model.
+Override the target host CPU model and force pepc to treat the host as a
+specific CPU model.
 The format is \[aq][<Vendor>:][<Family>:]<Model>\[aq], where
 \[aq]<Vendor>\[aq] is the CPU vendor (e.g., \[aq]GenuineIntel\[aq] or
 \[aq]AuthenticAMD\[aq]), \[aq]<Family>\[aq] is the CPU family (e.g., 6),
 and \[aq]<Model>\[aq] is the CPU model (e.g., 0x8F).
-Example: \[aq]GenuineIntel:6:0x8F\[aq] will force the tool treating the
+Example: \[aq]GenuineIntel:6:0x8F\[aq] will force the tool to treat the
 target host CPU as a Sapphire Rapids Xeon.
 The vendor and family are optional and if not specified, the tool will
 use the vendor and family of the target host CPU.
 The family and model can be specified in decimal or hexadecimal format.
 .SS Target CPU specification options
-All sub\-commans (\f[I]\[aq]info\[aq]\f[R], \f[I]\[aq]config\[aq]\f[R])
+All subcommands (\f[I]\[aq]info\[aq]\f[R], \f[I]\[aq]config\[aq]\f[R])
 support the following target CPU specification options.
 .TP
 \f[B]\-\-cpus\f[R] \f[I]CPUS\f[R]
 The list can include individual CPU numbers and CPU number ranges.
-For example,\[aq]1\-4,7,8,10\-12\[aq] would mean CPUs 1 to 4, CPUs 7, 8,
-and 10 to 12.
+For example, \[aq]1\-4,7,8,10\-12\[aq] would mean CPUs 1 to 4, CPUs 7,
+8, and 10 to 12.
 Use the special keyword \[aq]all\[aq] to specify all CPUs.
 .TP
 \f[B]\-\-cores\f[R] \f[I]CORES\f[R]
@@ -101,8 +101,8 @@ The list can include individual core numbers and core number ranges.
 For example, \[aq]1\-4,7,8,10\-12\[aq] would mean cores 1 to 4, cores 7,
 8, and 10 to 12.
 Use the special keyword \[aq]all\[aq] to specify all cores.
-This option has to be accompanied by the \[aq]\-\-package\[aq] option,
-because core numbers are per\-package.
+This option has to be used with the \[aq]\-\-packages\[aq] option,
+because core numbers are relative to the package.
 .TP
 \f[B]\-\-modules\f[R] \f[I]MODULES\f[R]
 The list can include individual module numbers and module number ranges.
@@ -117,8 +117,8 @@ For example, \[aq]0\-3,5\[aq] would mean dies 0 to 3, and die 5.
 Use the special keyword \[aq]all\[aq] to specify all dies.
 On some systems, die numbers are globally unique, while on other systems
 they are relative to the package.
-In the latter case, this option has to be accompanied by the
-\[aq]\-\-package\[aq] option.
+In the latter case, this option has to be used with the
+\[aq]\-\-packages\[aq] option.
 .TP
 \f[B]\-\-packages\f[R] \f[I]PACKAGES\f[R]
 The list can include individual package numbers and package number
@@ -129,23 +129,24 @@ Use the special keyword \[aq]all\[aq] to specify all packages.
 \f[B]\-\-core\-siblings\f[R] \f[I]CORE_SIBLINGS\f[R]
 Core siblings are CPUs sharing the same core.
 The list can include individual core sibling indices or index ranges.
-For example, if a core includes CPUs 3 and 4, index \[aq]0\[aq] would
-mean CPU 3 and index \[aq]1\[aq] would mean CPU 4.
+For example, if a core includes CPUs 3 and 4, index 0 would mean CPU 3
+and index 1 would mean CPU 4.
 This option can only be used to reference online CPUs, because Linux
 does not provide topology information for offline CPUs.
-In the example with CPUs 3 and 4, if CPU 3 was offline, then index
-\[aq]0\[aq] would mean CPU 4.
+In the example with CPUs 3 and 4, if CPU 3 was offline, then index 0
+would mean CPU 4.
 .TP
 \f[B]\-\-module\-siblings\f[R] \f[I]MODULE_SIBLINGS\f[R]
 Module siblings are CPUs sharing the same module.
 The list can include individual module sibling indices or index ranges.
-For example, if a module includes CPUs 3, 4, 5, and 6, index \[aq]0\[aq]
-would mean CPU 3, index \[aq]1\[aq] would mean CPU 4, and idex
-\[aq]3\[aq] would mean CPU 5.
+For example, if a module includes CPUs 3, 4, 5, and 6, index 0 would
+mean CPU 3, index 1 would mean CPU 4, index 2 would mean CPU 5, and
+index 3 would mean CPU 6.
 This option can only be used to reference online CPUs, because Linux
 does not provide topology information for offline CPUs.
-In the example with CPUs 3, 4, 5 and 6, if CPU 4 was offline, then index
-\[aq]1\[aq] would mean CPU 5.
+In the example with CPUs 3, 4, 5, and 6, if CPU 4 was offline, then
+index 1 would mean CPU 5, index 2 would mean CPU 6, and index 3 would be
+invalid.
 .SS Subcommand \f[I]\[aq]info\[aq]\f[R]
 Retrieve CPU P\-states information for specified CPUs.
 By default, display all details for all CPUs.
@@ -197,7 +198,7 @@ If
 \[aq]/sys/devices/system/cpu/cpufreq/policy<NUMBER>/scaling_available_frequencies\[aq]
 is available (usually the case with the \[aq]acpi_cpufreq\[aq] driver),
 retrieve the data from there.
-Otherwise, in case of an Intel platform, assume that all frequencies
+Otherwise, in the case of an Intel platform, assume that all frequencies
 from \[aq]\-\-min\-freq\-limit\[aq] to \[aq]\-\-max\-freq\-limit\[aq]
 are available with a step equal to \[aq]\-\-bus\-clock\[aq].
 .TP
@@ -343,7 +344,7 @@ tried first.
 \f[B]\-\-list\-mechanisms\f[R]
 Display available mechanisms for configuring CPU P\-states.
 .TP
-\f[B]\-\-min\-freq\f[R] \f[I]MIN_FREQ\f[R]
+\f[B]\-\-min\-freq\f[R] \f[I][MIN_FREQ]\f[R]
 Set the minimum CPU frequency via
 \[aq]/sys/devices/system/cpu/cpu<NUMBER>/cpufreq/scaling_min_freq\[aq].
 The default unit is \[aq]Hz\[aq], but \[aq]kHz\[aq], \[aq]MHz\[aq], and
@@ -359,21 +360,21 @@ driver (see \[aq]\-\-max\-freq\-limit\[aq]).
 \[aq]\-\-base\-freq\[aq]).
 .RE
 .TP
-\f[B]\-\-max\-freq\f[R] \f[I]MAX_FREQ\f[R]
+\f[B]\-\-max\-freq\f[R] \f[I][MAX_FREQ]\f[R]
 Similar to \[aq]\-\-min\-freq\[aq], but sets the maximum CPU frequency
 via
 \[aq]/sys/devices/system/cpu/cpu<NUMBER>/cpufreq/scaling_max_freq\[aq].
 .TP
-\f[B]\-\-turbo\f[R] \f[I]on|off\f[R]
+\f[B]\-\-turbo\f[R] \f[I][on|off]\f[R]
 Toggle turbo mode globally via sysfs.
 When enabled, CPUs can exceed the base frequency if allowed by the OS
 and thermal conditions.
-In case of \[aq]intel_pstate\[aq] driver, use
-\[aq]/sys/devices/system/cpu/intel_pstate/no_turbo\[aq], in case of
-\[aq]acpi\-cpufreq\[aq] driver, use
+In the case of the \[aq]intel_pstate\[aq] driver, use
+\[aq]/sys/devices/system/cpu/intel_pstate/no_turbo\[aq].
+In the case of the \[aq]acpi\-cpufreq\[aq] driver, use
 \[aq]/sys/devices/system/cpu/cpufreq/boost\[aq].
 .TP
-\f[B]\-\-epp\f[R] \f[I]EPP\f[R]
+\f[B]\-\-epp\f[R] \f[I][EPP]\f[R]
 Set EPP (Energy Performance Preference) using \[aq]sysfs\[aq]
 (preferred) or \[aq]msr\[aq] mechanisms.
 EPP is a hint to the CPU on energy efficiency vs performance.
@@ -385,7 +386,7 @@ The \[aq]sysfs\[aq] mechanism writes to
 while the \[aq]msr\[aq] mechanism writes to MSR_HWP_REQUEST (0x774),
 bits 31:24.
 .TP
-\f[B]\-\-epb\f[R] \f[I]EPB\f[R]
+\f[B]\-\-epb\f[R] \f[I][EPB]\f[R]
 Set EPB (Energy Performance Bias) using \[aq]sysfs\[aq] (preferred) or
 \[aq]msr\[aq] mechanisms.
 EPB is a hint to the CPU on energy efficiency versus performance.

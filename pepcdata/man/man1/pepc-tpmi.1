@@ -69,8 +69,10 @@ messages from the \[aq]MSR\[aq] module.
 Print the version number and exit.
 .TP
 \f[B]\-H\f[R] \f[I]HOSTNAME\f[R], \f[B]\-\-host\f[R] \f[I]HOSTNAME\f[R]
-User name for SSH login to the remote host.
-Defaults to \[aq]root.
+Host name or IP address of the target system.
+The pepc command will be executed on this system using SSH, instead of
+running it locally.
+If not specified, the command will be run locally.
 .TP
 \f[B]\-U\f[R] \f[I]USERNAME\f[R], \f[B]\-\-username\f[R] \f[I]USERNAME\f[R]
 Name of the user to use for logging into the remote host over SSH.
@@ -129,28 +131,28 @@ files for decoding.
 .SS Subcommand \f[I]\[aq]read\[aq]\f[R]
 Read one or more TPMI registers.
 .TP
-\f[B]\-F\f[R] FEATURES, \f[B]\-\-features\f[R] FEATURES
+\f[B]\-F\f[R] \f[I][FEATURES]\f[R], \f[B]\-\-features\f[R] \f[I][FEATURES]\f[R]
 Comma\-separated list of TPMI feature names to read the registers for.
 Defaults to all supported features.
 .TP
-\f[B]\-a\f[R] ADDRS, \f[B]\-\-addresses\f[R] ADDRS
+\f[B]\-a\f[R] \f[I][ADDRS]\f[R], \f[B]\-\-addresses\f[R] \f[I][ADDRS]\f[R]
 Comma\-separated list of TPMI device PCI addresses to read the registers
 from.
 Defaults to all devices.
 .TP
-\f[B]\-\-packages\f[R] PACKAGES
+\f[B]\-\-packages\f[R] \f[I][PACKAGES]\f[R]
 Comma\-separated list of package numbers to read TPMI registers for
 (defaults to all packages).
 .TP
-\f[B]\-i\f[R] INSTANCES, \f[B]\-\-instances\f[R] INSTANCES
+\f[B]\-i\f[R] \f[I][INSTANCES]\f[R], \f[B]\-\-instances\f[R] \f[I][INSTANCES]\f[R]
 Comma\-separated list of TPMI instance numbers to read registers from
 (defaults to all instances).
 .TP
-\f[B]\-R\f[R] REGISTERS, \f[B]\-\-registers\f[R] REGISTERS
+\f[B]\-R\f[R] \f[I][REGISTERS]\f[R], \f[B]\-\-registers\f[R] \f[I][REGISTERS]\f[R]
 Comma\-separated list of TPMI register names to read.
 Defaults to all registers.
 .TP
-\f[B]\-b\f[R] BFNAMES, \f[B]\-\-bitfields\f[R] BFNAMES
+\f[B]\-b\f[R] \f[I][BFNAMES]\f[R], \f[B]\-\-bitfields\f[R] \f[I][BFNAMES]\f[R]
 Comma\-separated list of TPMI register bit field names to read.
 Defaults to all bit fields.
 .TP
@@ -159,26 +161,26 @@ Output information in YAML format.
 .SS Subcommand \f[I]\[aq]write\[aq]\f[R]
 Write a value to a TPMI register or its bit field.
 .TP
-\f[B]\-F\f[R] FEATURE, \f[B]\-\-feature\f[R] FEATURE
+\f[B]\-F\f[R] \f[I]FEATURE\f[R], \f[B]\-\-feature\f[R] \f[I]FEATURE\f[R]
 Name of the TPMI feature the register belongs to.
 .TP
-\f[B]\-a\f[R] ADDRS, \f[B]\-\-addresses\f[R] ADDRS
+\f[B]\-a\f[R] \f[I]ADDRS\f[R], \f[B]\-\-addresses\f[R] \f[I]ADDRS\f[R]
 Comma\-separated list of PCI addresses of TPMI devices to write to.
 .TP
-\f[B]\-\-packages\f[R] PACKAGES
+\f[B]\-\-packages\f[R] \f[I]PACKAGES\f[R]
 Comma\-separated list of package numbers to write to (defaults to all
 packages).
 .TP
-\f[B]\-i\f[R] INSTANCES, \f[B]\-\-instances\f[R] INSTANCES
+\f[B]\-i\f[R] \f[I]INSTANCES\f[R], \f[B]\-\-instances\f[R] \f[I]INSTANCES\f[R]
 Comma\-separated list of TPMI instance numbers to write to.
 Defaults to all instances.
 .TP
-\f[B]\-R\f[R] REGNAME, \f[B]\-\-register\f[R] REGNAME
+\f[B]\-R\f[R] \f[I]REGNAME\f[R], \f[B]\-\-register\f[R] \f[I]REGNAME\f[R]
 Name of the TPMI register to write.
 .TP
-\f[B]\-b\f[R] BITFIELD, \f[B]\-\-bitfield\f[R] BITFIELD
+\f[B]\-b\f[R] \f[I]BITFIELD\f[R], \f[B]\-\-bitfield\f[R] \f[I]BITFIELD\f[R]
 Name of the TPMI register bitfield to write.
 Defaults to writing to the entire register if not specified.
 .TP
-\f[B]\-V\f[R] VALUE, \f[B]\-\-value\f[R] VALUE
+\f[B]\-V\f[R] \f[I]VALUE\f[R], \f[B]\-\-value\f[R] \f[I]VALUE\f[R]
 Value to write to the TPMI register or bit field.

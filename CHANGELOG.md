@@ -6,8 +6,12 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
 ### Added
- - Add a new article about base frequency.
 ### Removed
+### Changed
+
+## [1.6.17] - 2026-01-19
+### Added
+ - Add a new article about base frequency.
 ### Changed
  - Extend and improve documentation and man pages.
 
