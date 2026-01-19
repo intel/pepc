@@ -10,6 +10,8 @@ Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 - Author: Artem Bityutskiy <dedekind1@gmail.com>
 
+# Table of Contents
+
 - [Introduction](#introduction)
 - [Disclaimer](#disclaimer)
 - [Privileges](#privileges)

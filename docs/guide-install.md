@@ -10,6 +10,8 @@ Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 - Author: Artem Bityutskiy <dedekind1@gmail.com>
 
+# Table of Contents
+
 - [Pepc Packages](#pepc-packages)
 - [Installation Script](#installation-script)
 - [Pepc Package Dependencies](#pepc-package-dependencies)
