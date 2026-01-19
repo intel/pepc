@@ -40,7 +40,12 @@ Terminology:
               during initial scanning.
     * instance - Logical "areas" or "components" within TPMI features, represented by integer
                  instance numbers. Specify the instance when reading or writing TPMI registers.
-    * offset - TPMI register offset, as defined in spec files.
+    * cluster - An instance of UFS (Uncore Frequency Scaling) TPMI is further divided into multiple
+                clusters, each representing a copy of UFS registers. Clusters are identified by
+                cluster IDs (0-7). Each cluster has its own offset within the TPMI instance memory
+                space.
+    * offset - TPMI register offset relative to the start of the TPMI instance memory space, as
+               defined in spec files.
 """
 
 # Internal terms (not exposed to users of this module).
@@ -64,11 +69,12 @@ Terminology:
 #             'mem_dump'. mdmap is a two-level dictionary: first indexed by instance number, then by
 #             TPMI memory offset. The value is the file position in 'mem_dump'. Use mdmap to quickly
 #             locate the file position for a given instance and register offset.
-#   * position - Refers to a file position relative to the start of the file (e.g., in 'mem_dump').
-#                See the standard Unix 'fsetpos()' for details.
+#   * cmap - Clusters map. Map UFS clusters IDs to their offsets relative to the start of the TPMI
+#            instance memory space.
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
+from calendar import c
 import os
 import re
 import stat
@@ -139,8 +145,9 @@ if typing.TYPE_CHECKING:
         feature_id: int
         path: Path
 
-    # Type for the mdmap dictionary: first indexed by instance number, then by TPMI memory offset.
-    # The value is the file position in 'mem_dump'.
+    # Type for the mdmap dictionary: {instance: {offset: file_position}}.
+    # First indexed by instance number, then by TPMI memory offset. The value is the file position
+    # in 'mem_dump'.
     _MDMapType = dict[int, dict[int, int]]
 
     class _AddrMDMapTypedDict(TypedDict, total=False):
@@ -309,8 +316,14 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         iter_feature(fname, packages=(), addrs=(), instances=()):
             Iterate over TPMI devices and instances for a given feature.
 
+        iter_ufs_feature(fname, packages=(), addrs=(), instances=(), clusters=()):
+            Iterate over TPMI devices, instances, and clusters for the UFS feature.
+
         read_register(fname, addr, instance, regname, bfname=None):
             Read the value of a TPMI register or a specific bitfield.
+
+        read_ufs_register(addr, instance, regname, cluster, bfname=None):
+            Read the value of a UFS TPMI register or a specific bitfield.
 
         write_register(value, fname, addr, instance, regname, bfname=None):
             Write a value to a TPMI register or a specific bitfield.
@@ -383,7 +396,8 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         self._tpmi_pci_paths: list[Path] = []
         self._tpmi_pci_paths = self._get_debugfs_tpmi_dirs()
 
-        # Map feature name to the sdict, which is a partially loaded spec file dictionary.
+        # Map feature name to the sdict, which is a partially loaded spec file dictionary:
+        # {feature_name: {"name": ..., "desc": ..., "feature_id": ..., "path": ...}}.
         self._sdicts: dict[str, SDictTypedDict] = {}
 
         # Scan the spec directories and build sdicts - partially loaded spec file dictionaries.
@@ -394,12 +408,18 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         for fname, sdict in self._sdicts.items():
             self._fid2fname[sdict["feature_id"]] = fname
 
-        # Feature maps.
+        # Feature maps: {feature_name: {addr: _AddrMDMapTypedDict}}.
         self._fmaps: dict[str, dict[str, _AddrMDMapTypedDict]] = {}
-        # Package number -> set of PCI addresses.
+
+        # Package number -> set of PCI addresses: {package: {addr1, addr2, ...}}.
         self._pkg2addrs: dict[int, set[str]] = {}
+
         # Unknown feature IDs (no spec file).
         self._unknown_fids: list[int] = []
+
+        # A map of UFS feature addresses and instances to their clusters and offsets (cmap):
+        #   {addr: {instance: {cluster: offset}}}.
+        self._cmaps: dict[str, dict[int, dict[int, int]]] = {}
 
         self._build_fmaps()
 
@@ -1056,6 +1076,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
             fname: Name of the TPMI feature.
             addr: TPMI device PCI address.
             instance: Instance number to validate.
+            cluster: Cluster number (UFS-only).
             regname: Register name.
             offset: Register offset to validate.
             mdmap: Metadata map containing valid instances and offsets.
@@ -1069,13 +1090,14 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         if offset < 0 or offset % 4 != 0 or offset not in mdmap[instance]:
             max_offset = max(mdmap[instance])
             raise Error(f"Bad offset '{offset:#x}' for register '{regname}' of TPMI feature "
-                        f"'{fname}': should be a positive integer aligned to 4 and not "
+                        f"'{fname}': Should be a positive integer aligned to 4 and not "
                         f"exceeding '{max_offset}'")
 
     def _read(self,
               fname: str,
               addr: str,
               instance: int,
+              cluster: int,
               regname: str,
               offset: int,
               mdmap: _MDMapType) -> int:
@@ -1086,6 +1108,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
             fname: Name of the TPMI feature.
             addr: TPMI device PCI address.
             instance: The instance number of the TPMI feature.
+            cluster: The cluster number (UFS-only).
             regname: The name of the register to read.
             offset: The offset of the register within the feature.
             mdmap: The memory dump map (mdmap) for the TPMI feature.
@@ -1098,6 +1121,16 @@ class TPMI(ClassHelpers.SimpleCloseContext):
 
         path = self._get_debugfs_feature_path(addr, fname)
         path = path / "mem_dump"
+
+        if cluster != 0:
+            # UFS-only: adjust the offset based on the cluster.
+            coffset = self._cmaps[addr][instance][cluster]
+
+            # UFS header registers (UFS_HEADER and UFS_FABRIC_CLUSTER_OFFSET) are per-instance and
+            # not part of clusters. Cluster offsets point to UFS_STATUS, which follows the 16-byte
+            # header. Since spec file offsets include the header, subtract 16 bytes to get the
+            # correct offset within the cluster.
+            offset += coffset - 16
 
         with self._pman.open(path, "r") as fobj:
             fobj.seek(mdmap[instance][offset])
@@ -1173,6 +1206,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                        addr: str,
                        instance: int,
                        regname: str,
+                       cluster: int = 0,
                        bfname: str = "",
                        mdmap: _MDMapType | None = None) -> int:
         """
@@ -1183,6 +1217,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
             addr: TPMI device address.
             instance: TPMI instance to read the register from.
             regname: Name of the TPMI register to read.
+            cluster: Cluster to read the register from (UFS-only).
             bfname: Bit field name to extract (read the whole register by default).
             mdmap: Optional mdmap to use for register access.
 
@@ -1200,9 +1235,11 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         else:
             _mdmap = mdmap
 
-        val = self._read(fname, addr, instance, regname, offset, _mdmap)
+        # TODO: Make one read operation for 64-bit registers.
+        val = self._read(fname, addr, instance, cluster, regname, offset, _mdmap)
         if width > 32:
-            val = val + (self._read(fname, addr, instance, regname, offset + 4, _mdmap) << 32)
+            val_high = self._read(fname, addr, instance, cluster, regname, offset + 4, _mdmap) << 32
+            val += val_high
 
         if bfname:
             val = self._get_bitfield(val, fname, regname, bfname)
@@ -1422,6 +1459,34 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         raise Error(f"Instance {instance} not available for the '{fname}' TPMI device '{addr}'"
                     f"{self._pman.hostmsg}, available instances are: {instances}")
 
+    def _validate_cluster(self, addr: str, instance: int, cluster: int, regname: str):
+        """
+        Verify that the specified cluster ID is valid for the given TPMI UFS instance.
+
+        Args:
+            addr: The address of the TPMI device.
+            instance: The instance number to validate.
+            cluster: The cluster ID to validate.
+            regname: The register name that is being accessed.
+        """
+
+        if cluster == 0:
+            return
+
+        if regname in {"UFS_HEADER", "UFS_FABRIC_CLUSTER_OFFSET"}:
+            raise Error(f"Register '{regname}' cannot be accessed for cluster '{cluster}' of "
+                        f"UFS TPMI device '{addr}', instance '{instance}': this register is "
+                        f"per-instance, not per-cluster")
+
+        cmap = self._get_cmap(addr, instance)
+        if cluster in cmap:
+            return
+
+        clusters = Trivial.rangify(list(cmap))
+        raise Error(f"Cluster {cluster} not available for the UFS TPMI device '{addr}', "
+                    f"instance '{instance}'{self._pman.hostmsg}, available cluster IDs are: "
+                    f"{clusters}")
+
     def get_known_features(self) -> list[SDictTypedDict]:
         """
         Retrieve a list of specification dictionaries for all known features.
@@ -1504,6 +1569,10 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         TPMI feature. It is possible to restrict the iteration to specific addresses, packages, or
         instances by providing the corresponding arguments.
 
+        Note, in case of UFS feature, each instance may contain multiple clusters of registers. Use
+        'iter_ufs_feature()' to iterate over a clusters. This method yields only cluster number 0
+        for each UFS instance.
+
         Args:
             fname: Name of the TPMI feature to iterate.
             packages: Package numbers to include.
@@ -1543,6 +1612,104 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                 for instance in _instances:
                     yield (package, addr, instance)
 
+    def _get_cmap(self, addr: str, instance: int) -> dict[int, int]:
+        """
+        Retrieve the clusters and their offsets for the specified TPMI UFS instance.
+
+        Args:
+            addr: TPMI device PCI address.
+            instance: TPMI instance number.
+
+        Returns:
+            A dictionary mapping cluster IDs to their offsets for the specified TPMI instance.
+        """
+
+        if addr not in self._cmaps:
+            self._cmaps[addr] = {}
+        if instance in self._cmaps[addr]:
+            return self._cmaps[addr][instance]
+
+        # Read the UFS cluster information from the TPMI registers.
+        #
+        # The 8-bit 'LOCAL_FABRIC_CLUSTER_ID_MASK' bitfield tells which clusters exists: if a bit is
+        # set to 1, the corresponding cluster exists. There can be up to 8 clusters.
+        clusters_mask = self._read_register("ufs", addr, instance, "UFS_HEADER",
+                                            bfname="LOCAL_FABRIC_CLUSTER_ID_MASK")
+
+        # The 'UFS_FABRIC_CLUSTER_OFFSET' register contains the offsets of all 8 possible clusters
+        # in groups of 8 bits.
+        clusters_offsets = self._read_register("ufs", addr, instance, "UFS_FABRIC_CLUSTER_OFFSET")
+
+        cmap = self._cmaps[addr][instance] = {}
+        mdmap = self._get_mdmap("ufs", addr)
+
+        _LOG.debug("Building UFS cluster map for TPMI device '%s', instance '%d': "
+                   "clusters_mask=%#x, clusters_offsets=%#x",
+                   addr, instance, clusters_mask, clusters_offsets)
+
+        for cluster in range(8):
+            if clusters_mask & (1 << cluster) == 0:
+                continue
+
+            offset_index = (clusters_offsets >> (cluster * 8)) & 0xFF
+            # The offset of the cluster in the register is 8-byte units, not in bytes.
+            offset = offset_index * 8
+            cmap[cluster] = offset
+
+            _LOG.debug("Cluster %d: offset_index=%#x, offset=%#x", cluster, offset_index, offset)
+
+            # Validate the cluster offset.
+            coffset = self._cmaps[addr][instance][cluster]
+            if coffset < 0 or coffset % 4 != 0 or coffset not in mdmap[instance]:
+                max_coffset = max(mdmap[instance])
+                raise Error(f"Bad cluster offset '{coffset:#x}' for UFS cluster '{cluster}' at "
+                            f"address '{addr}', instance '{instance}': Should be a positive integer "
+                            f"aligned to 4 and not exceeding '{max_coffset}'")
+
+        return cmap
+
+    def iter_ufs_feature(self,
+                         packages: Iterable[int] = (),
+                         addrs: Iterable[str] = (),
+                         instances: Iterable[int] = (),
+                         clusters: Iterable[int] = ()) -> Generator[tuple[int, str, int, int],
+                                                                    None, None]:
+        """
+        Iterate over TPMI UFS feature and yield tuples of '(addr, package, instance, cluster)'.
+        Similar to 'TPMI.TPMI.iter_feature()', but with added support for UFS clusters.
+
+        The UFS TPMI feature is unique in that each instance can contain multiple clusters of
+        registers, unlike other TPMI features which have only one cluster per instance.
+
+        Args:
+            fname: Name of the TPMI feature to iterate.
+            packages: Package numbers to include.
+            addrs: TPMI device PCI addresses to include.
+            instances: Instance numbers to include.
+            clusters: Cluster numbers to include.
+
+        Yields:
+            Tuples of '(package, addr, instance, cluster)' for each matching TPMI UFS instance and
+            cluster.
+        """
+
+        for package, addr, instance in self.iter_feature("ufs", packages=packages, addrs=addrs,
+                                                         instances=instances):
+            cmap = self._get_cmap(addr, instance)
+            if not clusters:
+                clusters_iter: Iterable[int] = cmap
+            else:
+                clusters_iter = clusters
+
+            for cluster in clusters_iter:
+                if cluster not in cmap:
+                    all_clusters_str = ", ".join(str(c) for c in sorted(cmap))
+                    raise Error(f"Cluster {cluster} is not available in TPMI UFS instance "
+                                f"{instance} at address {addr}. Available clusters: "
+                                f"{all_clusters_str}.")
+
+                yield package, addr, instance, cluster
+
     def read_register(self,
                       fname: str,
                       addr: str,
@@ -1560,7 +1727,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
             bfname: Name of the bit field to read. Read the entire register by default.
 
         Returns:
-            The value of the TPMI register or bit field.
+            The value of the TPMI register or bit-field.
         """
 
         self._validate_fname(fname)
@@ -1569,6 +1736,34 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         self._validate_instance(fname, addr, instance)
 
         return self._read_register(fname, addr, instance, regname, bfname=bfname)
+
+    def read_ufs_register(self,
+                          addr: str,
+                          instance: int,
+                          cluster: int,
+                          regname: str,
+                          bfname: str = "") -> int:
+        """
+        Read a TPMI register or a bit field and return its value.
+
+        Args:
+            fname: Name of the TPMI feature to read.
+            addr: Optional TPM device PCI address.
+            instance: TPMI instance number to read.
+            regname: Name of the TPMI register to read.
+            cluster: Cluster number to read (UFS-only).
+            bfname: Name of the bit field to read. Read the entire register by default.
+
+        Returns:
+            The value of the TPMI register or bit-field.
+        """
+
+        self._validate_addr("ufs", addr)
+        self._validate_regname("ufs", regname, bfname=bfname)
+        self._validate_instance("ufs", addr, instance)
+        self._validate_cluster(addr, instance, cluster, regname)
+
+        return self._read_register("ufs", addr, instance, regname, cluster=cluster, bfname=bfname)
 
     def get_bitfield(self, regval: int, fname: str, regname: str, bfname: str) -> int:
         """
