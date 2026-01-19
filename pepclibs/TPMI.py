@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2024 Intel Corporation
+# Copyright (C) 2024-2026 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
-# Authors: Tero Kristo <tero.kristo@linux.intel.com>
-#          Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
+# Authors: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
+#          Tero Kristo <tero.kristo@linux.intel.com>
 
 """
-Enable reading and writing of TPMI registers on Intel CPUs. TPMI stands for "Topology Aware Register
-and PM Capsule Interface" - a memory-mapped interface for accessing power management features on
-Intel CPUs, supplementing the existing MSRs.
+Provide a capability of reading and writing of TPMI registers on Intel CPUs. TPMI stands for
+"Topology Aware Register and PM Capsule Interface" - a memory-mapped interface for accessing power
+management features on Intel CPUs.
 
 Terminology:
     * feature - A group of TPMI registers exposed by the processor via PCIe VSEC (Vendor-Specific
@@ -168,6 +168,8 @@ _MAX_NON_YAML: Final[int] = 32
 _MAX_SCAN_LOAD_ERRORS: Final[int] = 4
 # Maximum spec file size in bytes.
 _MAX_SPEC_FILE_BYTES: Final[int] = 4 * 1024 * 1024 * 1024
+# Maximum number of addresses to display in formatted address lists.
+_MAX_FORMATTED_ADDRS: Final[int] = 8
 
 _SDICT_KEYS: list[_SDictKeysType] = ["name", "desc", "feature_id"]
 
@@ -288,7 +290,7 @@ def _load_sdict(specpath: Path) -> SDictTypedDict:
 
 class TPMI(ClassHelpers.SimpleCloseContext):
     """
-    Provides methods to read and write TPMI registers, query available features, and extract
+    Provide methods to read and write TPMI registers, query available features, and extract
     bitfield values.
 
     Public Methods:
@@ -353,8 +355,8 @@ class TPMI(ClassHelpers.SimpleCloseContext):
 
         vendor = cpu_info["vendor"]
         if vendor != "GenuineIntel":
-            raise ErrorNotSupported(f"Unsupported CPU vendor '{vendor}'{self._pman.hostmsg}\nOnly"
-                                    f"Intel CPUs support TPMI")
+            raise ErrorNotSupported(f"Unsupported CPU vendor '{vendor}'{self._pman.hostmsg}. "
+                                    f"Only Intel CPUs support TPMI")
 
         self._cpu_info = cpu_info.copy()
 
@@ -488,7 +490,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                         f"{addr}{self._pman.hostmsg}: expected {_minor_version}, "
                         f"got {minor_version}")
 
-        # At this point only version 0.2 is supported.
+        # TPMI interface versions up to version 0.2 are supported.
         if _major_version != 0 or _minor_version > 2:
             raise ErrorNotSupported(f"Unsupported TPMI interface version "
                                     f"{_major_version}.{_minor_version} for feature "
@@ -837,8 +839,8 @@ class TPMI(ClassHelpers.SimpleCloseContext):
 
                 spec_files_cnt += 1
                 if spec_files_cnt > _MAX_SPEC_FILES:
-                    raise Error(f"Too many spec files in '{specsubdir}, maximum allowed spec files "
-                                f"count is {_MAX_SPEC_FILES}")
+                    raise Error(f"Too many spec files in '{specsubdir}', maximum allowed spec "
+                                f"files count is {_MAX_SPEC_FILES}")
 
                 sdicts[sdict["name"]] = sdict
 
@@ -1310,10 +1312,9 @@ class TPMI(ClassHelpers.SimpleCloseContext):
             A formatted string with a bulleted list of PCI addresses.
         """
 
-        max_addrs = 8
-        if len(addrs) > max_addrs:
+        if len(addrs) > _MAX_FORMATTED_ADDRS:
             # The list of addresses may potentially be long, limit it.
-            addrs = list(addrs)[:max_addrs]
+            addrs = list(addrs)[:_MAX_FORMATTED_ADDRS]
             addrs.append("... and more ...")
         return "\n * ".join(addrs)
 
@@ -1341,7 +1342,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         """
 
         if not addr and package is None:
-            raise Error("BUG: either 'addr' or 'package' must be specified")
+            raise Error("BUG: at least one of 'addr' or 'package' must be specified")
 
         if not addr:
             if package not in self._pkg2addrs:
@@ -1499,9 +1500,9 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         """
         Iterate over a TPMI feature and yield tuples of '(addr, package, instance)'.
 
-        This generator yields all combinations of TPMI device PCI address, package numbers, and
-        instance numbers for the specified TPMI feature. It is possible to restrict the iteration to
-        specific addresses, packages, or instances by providing the corresponding arguments.
+        Yield all TPMI device PCI address, package numbers, and instance numbers for the specified
+        TPMI feature. It is possible to restrict the iteration to specific addresses, packages, or
+        instances by providing the corresponding arguments.
 
         Args:
             fname: Name of the TPMI feature to iterate.
@@ -1510,7 +1511,8 @@ class TPMI(ClassHelpers.SimpleCloseContext):
             instances: Instance numbers to include.
 
         Yields:
-            Tuples of '(package, addr, instance)' for each matching feature element.
+            Tuples of '(package, addr, instance)' for each matching TPMI instance of feature
+            registers.
         """
 
         self._validate_fname(fname)
