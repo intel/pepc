@@ -329,20 +329,22 @@ class TPMIXMLConvert(ClassHelpers.SimpleCloseContext):
             field["readonly"] = xmlfield.attrib["AccessType"].lower() != "rw"
 
             for xmldata in xmlfield:
-                if xmldata.tag == "LongDescription":
-                    for desc_data in xmldata:
-                        if desc_data.tag != "Text":
-                            raise Error(f"Unexpected XML element tag '{desc_data.tag}' "
-                                        f"in LongDescription of field '{name}' of TPMI register "
-                                        f"'{regname}' in XML file '{self._xml_paths['regs']}'")
-                        if desc_data.text:
-                            desc = desc_data.text.strip()
-                            # Remove newlines and multiple spaces/tabs.
-                            desc = " ".join(desc.split())
-                            if desc.endswith('.'):
-                                desc = desc[:-1]
-                            field["desc"] = desc
-                        break
+                if xmldata.tag != "LongDescription":
+                    continue
+
+                for desc_data in xmldata:
+                    if desc_data.tag != "Text":
+                        raise Error(f"Unexpected XML element tag '{desc_data.tag}' in "
+                                    f"LongDescription of field '{name}' of TPMI register "
+                                    f"'{regname}' in XML file '{self._xml_paths['regs']}'")
+                    if desc_data.text:
+                        desc = desc_data.text.strip()
+                        # Remove newlines and multiple spaces/tabs.
+                        desc = " ".join(desc.split())
+                        if desc.endswith('.'):
+                            desc = desc[:-1]
+                        field["desc"] = desc
+                    break
 
             if name in reg["fields"]:
                 raise Error(f"Duplicate field '{name}' found in TPMI register '{regname}' in XML "
@@ -442,6 +444,126 @@ class TPMIXMLConvert(ClassHelpers.SimpleCloseContext):
         data = Trivial.str_to_int(xmldata.attrib["Data"], what=what)
         return data
 
+    def __parse_instance(self,
+                         xmlreg: ET.Element,
+                         instpath: Path,
+                         feature_names_set: set[str],
+                         include_intelrsvd: bool = False,
+                         include_nonos: bool = False):
+        """
+        Implement '_parse_instance()' method, helps avoiding too many nested levels.
+        """
+
+        for attrname in ("Name", "AddressOffset", "ValueDataType"):
+            if attrname not in xmlreg.attrib:
+                _LOG.debug("Missing '%s' attribute in the following XML element:\n%s",
+                           attrname, ET.tostring(xmlreg, encoding='unicode'))
+                raise Error(f"Missing '{attrname}' attribute in a 3rd-level 'RegisterInstance' XML "
+                            f"element in XML file '{instpath}'")
+
+        regname = xmlreg.attrib["Name"]
+        regtype = xmlreg.attrib["ValueDataType"]
+
+        if "ShortDescription" in xmlreg.attrib:
+            desc = xmlreg.attrib["ShortDescription"].strip()
+            # Remove newlines and multiple spaces/tabs.
+            desc = " ".join(desc.split())
+            if desc.endswith('.'):
+                desc = desc[:-1]
+        else:
+            desc = ""
+
+
+        feature_id: int = -1
+        is_intel_reserved: bool = False
+
+        for xmldata in xmlreg:
+            if xmldata.tag == "LongDescription":
+                for desc_data in xmldata:
+                    if desc_data.tag != "Text":
+                        raise Error(f"Unexpected XML element tag '{desc_data.tag}' in "
+                                    f"'LongDescription' of TPMI register '{regname}' in TPMI "
+                                    f"instance file '{instpath}'")
+                    if desc_data.text:
+                        desc = desc_data.text.strip()
+                        # Remove newlines and multiple spaces/tabs.
+                        desc = " ".join(desc.split())
+                    break
+
+            if xmldata.tag == "Extension":
+                if xmldata.attrib.get("Key", "") == "TPMI_ID":
+                    data = self._get_extension_data(xmldata, "TPMI_ID", regname, instpath)
+                    if data is None:
+                        break
+                    feature_id = data
+                elif xmldata.attrib.get("Key", "") == "IntelRsvd":
+                    data = self._get_extension_data(xmldata, "IntelRsvd", regname, instpath)
+                    if data:
+                        is_intel_reserved = True
+                        break
+
+        if is_intel_reserved and not include_intelrsvd:
+            _LOG.debug("TPMI register '%s' in TPMI instance file '%s' is marked as IntelRsvd, "
+                       "skipping it", regname, instpath)
+            return
+
+        if feature_id == -1:
+            _LOG.debug("TPMI register '%s' in TPMI instance file '%s' has no TPMI_ID",
+                       regname, instpath)
+            return
+
+        # Skip register definition presence verification until after TPMI_ID processing. Registers
+        # without a valid # TPMI_ID will be filtered out, avoiding unnecessary warnings for
+        # registers that are intentionally excluded from the registers XML file.
+        if regtype not in self._regs:
+            if "RESERVED" not in regname and "RSVD" not in regname:
+                _LOG.warning("TPMI register '%s' referenced in TPMI instance file '%s' is not "
+                             "defined in the TPMI registers XML file '%s'",
+                             regname, instpath, self._xml_paths["regs"])
+            return
+
+        if feature_id not in FEATURES_INFO:
+            _LOG.warning("Unknown TPMI feature ID %#x for TPMI register '%s' in TPMI instance file "
+                         "'%s'", feature_id, regname, instpath)
+            return
+
+        if FEATURES_INFO[feature_id]["name"] not in feature_names_set:
+            _LOG.debug("Skipping TPMI register '%s' in TPMI instance file '%s' because its feature "
+                       "'%s' is not in the include list",
+                       regname, instpath, FEATURES_INFO[feature_id]["name"])
+            return
+
+        if FEATURES_INFO[feature_id]["ignore"] and not include_nonos:
+            _LOG.debug("Ignoring TPMI register '%s' in TPMI instance file '%s' because its feature "
+                       "ID %#x is marked as ignored", regname, instpath, feature_id)
+            return
+
+        addr = Trivial.str_to_int(xmlreg.attrib["AddressOffset"],
+                                  what=f"Address of TPMI register '{regname}' in TPMI instance "
+                                       f"file '{instpath}'")
+
+        fname = FEATURES_INFO[feature_id]["name"]
+
+        if fname not in self._features:
+            feature: _TPMIFeatureTypedDict = {}
+            feature["name"] = fname
+            feature["desc"] = FEATURES_INFO[feature_id]["desc"]
+            feature["feature_id"] = feature_id
+            feature["registers"] = {}
+            self._features[fname] = feature
+
+        if regname not in self._features[fname]["registers"]:
+            reg = self._regs[regtype].copy()
+            if "desc" not in reg and desc:
+                reg["desc"] = desc
+
+            # The offset will be adjusted a bit later to become relative to the feature
+            # base.
+            reg["offset"] = addr
+            self._features[fname]["registers"][regname] = reg
+
+        _LOG.debug("Processed TPMI register '%s' in TPMI instance file '%s'", regname, instpath)
+
     def _parse_instance(self,
                         instpath: Path,
                         feature_names: Sequence[str],
@@ -459,7 +581,6 @@ class TPMIXMLConvert(ClassHelpers.SimpleCloseContext):
         """
 
         feature_names_set = set(feature_names)
-
         try:
             tree = ET.parse(instpath)
             root = tree.getroot()
@@ -478,118 +599,9 @@ class TPMIXMLConvert(ClassHelpers.SimpleCloseContext):
                     raise Error(f"Unexpected 3rd-level XML element tag '{xmlreg.tag}' in XML file "
                                 f"'{instpath}'")
 
-                for attrname in ("Name", "AddressOffset", "ValueDataType"):
-                    if attrname not in xmlreg.attrib:
-                        _LOG.debug("Missing '%s' attribute in the following XML element:\n%s",
-                                   attrname, ET.tostring(xmlreg, encoding='unicode'))
-                        raise Error(f"Missing '{attrname}' attribute in a 3rd-level "
-                                    f"'RegisterInstance' XML element in XML file '{instpath}'")
-
-                regname = xmlreg.attrib["Name"]
-                regtype = xmlreg.attrib["ValueDataType"]
-
-                if "ShortDescription" in xmlreg.attrib:
-                    desc = xmlreg.attrib["ShortDescription"].strip()
-                    # Remove newlines and multiple spaces/tabs.
-                    desc = " ".join(desc.split())
-                    if desc.endswith('.'):
-                        desc = desc[:-1]
-                else:
-                    desc = ""
-
-
-                feature_id: int = -1
-                is_intel_reserved: bool = False
-
-                for xmldata in xmlreg:
-                    if xmldata.tag == "LongDescription":
-                        for desc_data in xmldata:
-                            if desc_data.tag != "Text":
-                                raise Error(f"Unexpected XML element tag '{desc_data.tag}' "
-                                            f"in 'LongDescription' of TPMI register '{regname}' in "
-                                            f"TPMI instance file '{instpath}'")
-                            if desc_data.text:
-                                desc = desc_data.text.strip()
-                                # Remove newlines and multiple spaces/tabs.
-                                desc = " ".join(desc.split())
-                            break
-
-                    if xmldata.tag == "Extension":
-                        if xmldata.attrib.get("Key", "") == "TPMI_ID":
-                            data = self._get_extension_data(xmldata, "TPMI_ID", regname, instpath)
-                            if data is None:
-                                break
-                            feature_id = data
-                        elif xmldata.attrib.get("Key", "") == "IntelRsvd":
-                            data = self._get_extension_data(xmldata, "IntelRsvd", regname, instpath)
-                            if data:
-                                is_intel_reserved = True
-                                break
-
-                if is_intel_reserved and not include_intelrsvd:
-                    _LOG.debug("TPMI register '%s' in TPMI instance file '%s' is marked as "
-                               "IntelRsvd, skipping it", regname, instpath)
-                    continue
-
-                if feature_id == -1:
-                    _LOG.debug("TPMI register '%s' in TPMI instance file '%s' has no TPMI_ID",
-                               regname, instpath)
-                    continue
-
-                # Skip register definition presence verification until after TPMI_ID processing.
-                # Registers without a valid # TPMI_ID will be filtered out, avoiding unnecessary
-                # warnings for registers that are intentionally excluded from the registers XML
-                # file.
-                if regtype not in self._regs:
-                    if "RESERVED" not in regname and "RSVD" not in regname:
-                        _LOG.warning("TPMI register '%s' referenced in TPMI instance file '%s' is "
-                                     "not defined in the TPMI registers XML file '%s'",
-                                     regname, instpath, self._xml_paths["regs"])
-                    continue
-
-                if feature_id not in FEATURES_INFO:
-                    _LOG.warning("Unknown TPMI feature ID %#x for TPMI register '%s' in TPMI "
-                                 "instance file '%s'", feature_id, regname, instpath)
-                    continue
-
-                if FEATURES_INFO[feature_id]["name"] not in feature_names_set:
-                    _LOG.debug("Skipping TPMI register '%s' in TPMI instance file '%s' because its "
-                               "feature '%s' is not in the include list", regname, instpath,
-                               FEATURES_INFO[feature_id]["name"])
-                    continue
-
-                if FEATURES_INFO[feature_id]["ignore"] and not include_nonos:
-                    _LOG.debug("Ignoring TPMI register '%s' in TPMI instance file '%s' because "
-                               "its feature ID %#x is marked as ignored",
-                               regname, instpath, feature_id)
-                    continue
-
-                addr = Trivial.str_to_int(xmlreg.attrib["AddressOffset"],
-                                          what=f"Address of TPMI register '{regname}' in TPMI "
-                                               f"instance file '{instpath}'")
-
-                fname = FEATURES_INFO[feature_id]["name"]
-
-                if fname not in self._features:
-                    feature: _TPMIFeatureTypedDict = {}
-                    feature["name"] = fname
-                    feature["desc"] = FEATURES_INFO[feature_id]["desc"]
-                    feature["feature_id"] = feature_id
-                    feature["registers"] = {}
-                    self._features[fname] = feature
-
-                if regname not in self._features[fname]["registers"]:
-                    reg = self._regs[regtype].copy()
-                    if "desc" not in reg and desc:
-                        reg["desc"] = desc
-
-                    # The offset will be adjusted a bit later to become relative to the feature
-                    # base.
-                    reg["offset"] = addr
-                    self._features[fname]["registers"][regname] = reg
-
-                _LOG.debug("Processed TPMI register '%s' in TPMI instance file '%s'",
-                           regname, instpath)
+                self.__parse_instance(xmlreg, instpath, feature_names_set,
+                                      include_intelrsvd=include_intelrsvd,
+                                      include_nonos=include_nonos)
 
     def _parse_instances(self,
                          feature_names: Sequence[str],
