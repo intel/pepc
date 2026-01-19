@@ -13,20 +13,32 @@ Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 # Table of Contents
 
 - [Pepc Packages](#pepc-packages)
+- [Using From Source](#using-from-source)
 - [Installation Script](#installation-script)
 - [Pepc Package Dependencies](#pepc-package-dependencies)
 - [Installation Using pip](#installation-using-pip)
 - [Using uv](#using-uv)
-- [sudo complication](#sudo-complication)
+- [Sudo Complication](#sudo-complication)
 - [Tab completions](#tab-completions)
 - [Man pages](#man-pages)
 - [Example of .bashrc](#example-of-bashrc)
 
 # Pepc Packages
 
-Some OS distributions may provide `pepc` as an installable package. However, these packages are
+Some Linux distributions provide `pepc` as an installable package. However, these packages are
 often outdated. Therefore, it is recommended to install `pepc` using `pip` or `uv` as described
 below.
+
+# Using From Source
+
+You can use `pepc` directly from the source code without installation. Clone the repository, change
+to the cloned directory, and run `pepc` from there.
+
+```bash
+git clone https://github.com/intel/pepc.git
+cd pepc
+./pepc --help
+```
 
 # Installation Script
 
@@ -119,7 +131,7 @@ uv tool install git+https://github.com/intel/pepc.git@release
 export PATH="$PATH:$HOME/.local/bin"
 ```
 
-# sudo complication
+# Sudo Complication
 
 This section applies to both `pip` and `uv` installation methods.
 
@@ -131,7 +143,7 @@ You can use standard methods to overcome this issue. One of them is using a shel
 in your '~/.bashrc' file:
 
 ```bash
-alias pepc="sudo VIRTUAL_ENV=$HOME/.pmtools $HOME/.pmtools/bin/pepc"
+alias pepc="sudo PATH=$PATH VIRTUAL_ENV=$HOME/.pmtools $HOME/.pmtools/bin/pepc"
 ```
 
 With this alias, you can run `pepc` with `sudo` transparently, for example:
@@ -147,8 +159,8 @@ Source: Linux sysfs file-system
 ```
 # Tab completions
 
-`pepc` supports tab completions, but it requires specific environment variables to be set. Make sure
-`pepc` is in your 'PATH', and use the following:
+`pepc` supports tab completions, but it requires specific environment variables to be set. Run the
+following:
 
 ```bash
 # For pip installation (adjust path if you used a different location):
@@ -194,7 +206,7 @@ Here is an example of a '$HOME/.bashrc' file that includes the necessary setting
 
 ```bash
 # === pepc settings ===
-VENV='$HOME/.pmtools'
+VENV="$HOME/.pmtools"
 VENV_BIN="$VENV/bin"
 
 # Ensure the virtual environment's bin directory is in the PATH.
