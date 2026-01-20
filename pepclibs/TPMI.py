@@ -164,6 +164,16 @@ if typing.TYPE_CHECKING:
 
     _SDictKeysType = Literal["name", "desc", "feature_id"]
 
+# UFS header register names. These registers are per-instance rather than per-cluster. All other
+# registers are "control registers" and are per-cluster.
+UFS_HEADER_REGNAMES: Final[set[str]] = {
+    "UFS_HEADER",
+    "UFS_FABRIC_CLUSTER_OFFSET",
+}
+
+# Size of the UFS header in bytes.
+_UFS_HEADER_SIZE: Final[int] = 16
+
 # Users can define this environment variable to extend the default spec files.
 _SPECS_PATH_ENVVAR: Final[str] = "PEPC_TPMI_DATA_PATH"
 
@@ -1110,11 +1120,10 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         # UFS-only: adjust the offset based on the cluster.
         coffset = self._cmaps[addr][instance][cluster]
 
-        # UFS header registers (UFS_HEADER and UFS_FABRIC_CLUSTER_OFFSET) are per-instance and
-        # not part of clusters. Cluster offsets point to UFS_STATUS, which follows the 16-byte
-        # header. Since spec file offsets include the header, subtract 16 bytes to get the
-        # correct offset within the cluster.
-        return offset + coffset - 16
+        # UFS header registers are per-instance and not part of clusters. Cluster offsets point to
+        # UFS_STATUS, which follows the 16-byte header. Since spec file offsets include the header,
+        # subtract 16 bytes to get the correct offset within the cluster.
+        return offset + coffset - _UFS_HEADER_SIZE
 
     def _read(self,
               fname: str,
@@ -1494,7 +1503,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         if cluster == 0:
             return
 
-        if regname in {"UFS_HEADER", "UFS_FABRIC_CLUSTER_OFFSET"}:
+        if regname in UFS_HEADER_REGNAMES:
             raise Error(f"Register '{regname}' cannot be accessed for cluster '{cluster}' of "
                         f"UFS TPMI device '{addr}', instance '{instance}': this register is "
                         f"per-instance, not per-cluster")

@@ -627,12 +627,19 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
               instances)."""
     subpars2.add_argument("-i", "--instances", help=text)
 
+    text = """Comma-separated list of cluster numbers within TPMI instances (UFS-only, defaults to
+              all clusters)."""
+    subpars2.add_argument("-c", "--clusters", help=text)
+
     text = """Comma-separated list of TPMI register names to read. Defaults to all registers."""
     subpars2.add_argument("-R", "--registers", help=text)
 
-    text = """Comma-separated list of TPMI register bit field names to read. Defaults to all bit
-              fields."""
+    text = """Comma-separated list of TPMI register bit field names to decode. Defaults decoding all
+              bit-fields."""
     subpars2.add_argument("-b", "--bitfields", metavar="BITFIELDS", dest="bfnames", help=text)
+
+    text = """Do not decode and display bit-field values, just read and display register values."""
+    subpars2.add_argument("-n", "--no-bitfields", action="store_true", help=text)
 
     text = """Output information in YAML format."""
     subpars2.add_argument("--yaml", action="store_true", help=text)

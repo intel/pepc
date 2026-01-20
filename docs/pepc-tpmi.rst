@@ -133,11 +133,20 @@ Read one or more TPMI registers.
 **-i** *[INSTANCES]*, **--instances** *[INSTANCES]*
    Comma-separated list of TPMI instance numbers to read registers from (defaults to all instances).
 
+**-c** *[CLUSTERS]*, **--clusters** *[CLUSTERS]*
+   Comma-separated list of cluster numbers to read registers (defaults to all clusters). This option
+   is only useful for the 'ufs' TPMI feature, because there may be multiple copies of UFS control
+   registers within a TPMI instance, and the copies are referred to as clusters. All other TPMI
+   features have only one cluster - cluster 0.
+
 **-R** *[REGISTERS]*, **--registers** *[REGISTERS]*
    Comma-separated list of TPMI register names to read. Defaults to all registers.
 
 **-b** *[BFNAMES]*, **--bitfields** *[BFNAMES]*
    Comma-separated list of TPMI register bit field names to read. Defaults to all bit fields.
+
+**-n**, **--no-bitfields**
+   Do not decode and display TPMI register bit fields, only display register values.
 
 **--yaml**
    Output information in YAML format.

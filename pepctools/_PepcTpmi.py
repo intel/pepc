@@ -17,6 +17,8 @@ import sys
 import typing
 import contextlib
 
+from numpy import int_
+
 from pepclibs import TPMI, CPUInfo
 from pepclibs.helperlibs import Logging, Trivial, YAML
 from pepclibs.helperlibs.Exceptions import Error
@@ -24,6 +26,7 @@ from pepclibs.helperlibs.Exceptions import Error
 if typing.TYPE_CHECKING:
     import argparse
     from typing import TypedDict, Iterable
+    from pepclibs.TPMI import RegDictTypedDict
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
     class _RegInfoTypedDict(TypedDict, total=False):
@@ -79,8 +82,10 @@ if typing.TYPE_CHECKING:
             addrs: List of TPMI device PCI addresses to read from.
             packages: List of package numbers to operate on.
             instances: List of TPMI instance numbers to read from.
+            clusters: List of TPMI cluster numbers to read from (UFS-only).
             regnames: List of register names to read.
             bfnames: List of bit-field names to read.
+            no_bitfields: Whether to skip decoding and displaying bit-field values.
             yaml: Whether to output results in YAML format.
         """
 
@@ -90,6 +95,7 @@ if typing.TYPE_CHECKING:
         instances: list[int]
         regnames: list[str]
         bfnames: list[str]
+        no_bitfields: bool
         yaml: bool
 
     class _WriteCmdlineArgsTypedDict(TypedDict, total=False):
@@ -191,7 +197,8 @@ def _get_read_cmdline_args(args: argparse.Namespace) -> _ReadCmdlineArgsTypedDic
     cmdl["instances"] = instances
     cmdl["regnames"] = regnames
     cmdl["bfnames"] = bfnames
-    cmdl["yaml"] = getattr(args, "yaml", False)
+    cmdl["no_bitfields"] = args.no_bitfields
+    cmdl["yaml"] = args.yaml
 
     return cmdl
 
@@ -235,22 +242,41 @@ def _get_write_cmdline_args(args: argparse.Namespace) -> _WriteCmdlineArgsTypedD
 
     return cmdl
 
-def _ls_topology(fname: str, tpmi: TPMI.TPMI, prefix: str = ""):
+def _pfx_bullet(level: int) -> str:
+    """
+    Return a prefix string with a bullet for the given indentation level.
+
+    Args:
+        level: Indentation level.
+
+    Returns:
+        A prefix string with a bullet.
+    """
+
+    return "  " * level + "- "
+
+def _pfx_blanks(level: int) -> str:
+    """
+    Return a prefix string with blanks for the given indentation level.
+
+    Args:
+        level: Indentation level.
+
+    Returns:
+        A prefix string with blanks.
+    """
+
+    return "  " * level + "  "
+
+def _ls_topology(fname: str, tpmi: TPMI.TPMI, level: int = 0):
     """
     Display TPMI topology for a feature.
 
     Args:
         fname: Name of the feature to display topology for.
         tpmi: A 'TPMI.TPMI' object.
-        prefix: String prefix for formatting log output.
+        level: The starting indentation level for formatting log output.
     """
-
-    def _pfx_bullet(level: int) -> str:
-        """ Return a prefix string with a bullet for the given indentation level. """
-        return prefix + "  " * level + "- "
-    def _pfx_blanks(level: int) -> str:
-        """ Return a prefix string with blanks for the given indentation level. """
-        return prefix + "  " * level + "  "
 
     # A dictionary with the info that will be printed.
     #   * first level key - package number.
@@ -267,21 +293,20 @@ def _ls_topology(fname: str, tpmi: TPMI.TPMI, prefix: str = ""):
 
     for package in sorted(info):
         for addr in sorted(info[package]):
-            _LOG.info("%sPCI address: %s", _pfx_bullet(0), addr)
+            _LOG.info("%sPCI address: %s", _pfx_bullet(level), addr)
 
-            _LOG.info("%sPackage: %d", _pfx_blanks(0), package)
+            _LOG.info("%sPackage: %d", _pfx_blanks(level), package)
 
             if fname != "ufs":
                 instances = Trivial.rangify(info[package][addr])
-                _LOG.info("%sInstances: %s", _pfx_blanks(0), instances)
+                _LOG.info("%sInstances: %s", _pfx_blanks(level), instances)
                 continue
 
-                # UFS is special, it is further divided into clusters.
             for instance in sorted(info[package][addr]):
-                _LOG.info("%sInstance: %d", _pfx_bullet(1), instance)
+                _LOG.info("%sInstance: %d", _pfx_bullet(level + 1), instance)
                 for _, _, _, cluster in tpmi.iter_ufs_feature(packages=(package,), addrs=(addr,),
                                                               instances=(instance,)):
-                    _LOG.info("%sCluster: %d", _pfx_bullet(2), cluster)
+                    _LOG.info("%sCluster: %d", _pfx_bullet(level + 2), cluster)
 
 def tpmi_ls_command(args: argparse.Namespace, pman: ProcessManagerType):
     """
@@ -320,7 +345,7 @@ def tpmi_ls_command(args: argparse.Namespace, pman: ProcessManagerType):
                 sdict = sdicts[fname]
                 _LOG.info("- %s: %s", sdict["name"], sdict["desc"].strip())
                 if cmdl["topology"]:
-                    _ls_topology(sdict["name"], tpmi, prefix="  ")
+                    _ls_topology(sdict["name"], tpmi, level=1)
 
         if cmdl["unknown"]:
             if fnames and cmdl["unknown"]:
@@ -330,12 +355,37 @@ def tpmi_ls_command(args: argparse.Namespace, pman: ProcessManagerType):
                 txt = ", ".join(hex(fid) for fid in fids)
                 _LOG.info(" - %s", txt)
 
-def _tpmi_read_command_print(tpmi: TPMI.TPMI, info: _ReadInfoType):
+def _print_registers(reginfos: dict[str, _RegInfoTypedDict],
+                     fdict: dict[str, RegDictTypedDict],
+                     level: int):
+    """
+    Print TPMI register information.
+
+    Args:
+        reginfos: A dictionary where keys are register names and values are register information
+                  dictionaries.
+        fdict: The TPMI feature dictionary.
+        level: The starting indentation level for formatting log output.
+    """
+
+    for regname, reginfo in reginfos.items():
+        if "fields" not in reginfo:
+            _LOG.info("%s%s: %#x", _pfx_blanks(level), regname, reginfo["value"])
+            continue
+
+        _LOG.info("%s%s: %#x", _pfx_bullet(level), regname, reginfo["value"])
+
+        for bfname, bfval in reginfo["fields"].items():
+            bfinfo = fdict[regname]["fields"][bfname]
+            _LOG.info("%s%s[%d:%d]: %d", _pfx_blanks(level + 1), bfname,
+                    bfinfo["bits"][0], bfinfo["bits"][1], bfval)
+
+def _print_tpmi_info(tpmi: TPMI.TPMI, info: _ReadInfoType):
     """
     Print the result of the 'tpmi read' command.
 
-    Iterate through the features, PCI addresses, instances, registers, and bitfields in the 'info'
-    dictionary and print each element in a structured and indented format.
+    Iterate through the features, PCI addresses, instances, cluster, registers, and bitfields in the
+    'info' dictionary and print each element in a structured and indented format.
 
     Args:
         tpmi: A 'TPMI.TPMI' object.
@@ -343,34 +393,33 @@ def _tpmi_read_command_print(tpmi: TPMI.TPMI, info: _ReadInfoType):
               by feature, address, instance, and register.
     """
 
-    pfx = "- "
-    nopfx = "  "
     for fname, feature_info in info.items():
-        pfx_indent = 0
-        _LOG.info("%sTPMI feature: %s", " " * pfx_indent + pfx, fname)
+        _LOG.info("%sTPMI feature: %s", _pfx_bullet(0), fname)
 
         fdict = tpmi.get_fdict(fname)
         for addr, addr_info in feature_info.items():
-            pfx_indent = 2
-            _LOG.info("%sPCI address: %s", " " * pfx_indent + pfx, addr)
-            _LOG.info("%sPackage: %d", " " * pfx_indent + nopfx, addr_info["package"])
+            _LOG.info("%sPCI address: %s", _pfx_bullet(1), addr)
+            _LOG.info("%sPackage: %d", _pfx_blanks(1), addr_info["package"])
 
             for instance, instance_info in addr_info["instances"].items():
-                pfx_indent = 4
-                _LOG.info("%sInstance: %d", " " * pfx_indent + pfx, instance)
+                _LOG.info("%sInstance: %d", _pfx_bullet(1), instance)
 
-                for regname, reginfo in instance_info.items():
-                    pfx_indent = 6
-                    _LOG.info("%s%s: %#x", " " * pfx_indent + pfx, regname, reginfo["value"])
+                if fname != "ufs":
+                    _print_registers(instance_info, fdict, 2)
+                    continue
 
-                    if "fields" not in reginfo:
-                        continue
+                # Only the control UFS registers are per-cluster, the header registers are
+                # per-instance.
+                hdr_names = TPMI.UFS_HEADER_REGNAMES
+                _info = {nm: inf for nm, inf in instance_info.items() if nm in hdr_names}
+                _print_registers(_info, fdict, 2)
 
-                    for bfname, bfval in reginfo["fields"].items():
-                        bfinfo = fdict[regname]["fields"][bfname]
-                        pfx_indent = 8
-                        _LOG.info("%s%s[%d:%d]: %d", " " * pfx_indent + pfx, bfname,
-                                  bfinfo["bits"][0], bfinfo["bits"][1], bfval)
+                for _, _, _, cluster in tpmi.iter_ufs_feature(packages=(addr_info["package"],),
+                                                              addrs=(addr,), instances=(instance,)):
+                    _LOG.info("%sCluster: %d", _pfx_bullet(2), cluster)
+
+                    _info = {nm: inf for nm, inf in instance_info.items() if nm not in hdr_names}
+                    _print_registers(_info, fdict, 3)
 
 def tpmi_read_command(args: argparse.Namespace, pman: ProcessManagerType):
     """
@@ -390,12 +439,20 @@ def tpmi_read_command(args: argparse.Namespace, pman: ProcessManagerType):
         tpmi = TPMI.TPMI(cpuinfo.info, pman=pman)
         stack.enter_context(tpmi)
 
+        sdicts = tpmi.get_known_features()
+
+        fnames: Iterable[str]
+        if cmdl["fnames"]:
+            fnames = cmdl["fnames"]
+        else:
+            fnames = sdicts
+
         # Prepare all the information to print in the 'info' dictionary.
         #  * first level key - feature name.
         #  * second level key - PCI address.
         #  * third level key - "package" or "instances".
         info: _ReadInfoType = {}
-        for fname in tpmi.get_known_features():
+        for fname in fnames:
             info[fname] = {}
 
             fdict = tpmi.get_fdict(fname)
@@ -419,9 +476,15 @@ def tpmi_read_command(args: argparse.Namespace, pman: ProcessManagerType):
                     regval = tpmi.read_register(fname, addr, instance, regname)
 
                     assert regname not in info[fname][addr]["instances"][instance]
+
                     bfinfo: dict[str, int] = {}
-                    reginfo: _RegInfoTypedDict = {"value": regval, "fields": bfinfo}
+                    reginfo: _RegInfoTypedDict = {"value": regval}
                     info[fname][addr]["instances"][instance][regname] = reginfo
+
+                    if cmdl["no_bitfields"]:
+                        continue
+
+                    reginfo["fields"] = bfinfo
 
                     if cmdl["bfnames"]:
                         bfnames = cmdl["bfnames"]
@@ -444,9 +507,9 @@ def tpmi_read_command(args: argparse.Namespace, pman: ProcessManagerType):
             raise Error("BUG: No matches")
 
         if cmdl["yaml"]:
-            YAML.dump(info, sys.stdout)
+            YAML.dump(info, sys.stdout, int_format="%#x")
         else:
-            _tpmi_read_command_print(tpmi, info)
+            _print_tpmi_info(tpmi, info)
 
 def tpmi_write_command(args, pman):
     """
