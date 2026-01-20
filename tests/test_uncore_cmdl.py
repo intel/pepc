@@ -118,6 +118,7 @@ def _get_good_config_opts() -> Generator[str, None, None]:
 
                 "--elc-high-threshold-status",
                 "--elc-low-threshold",
+                "--elc-high-threshold 85",
                 "--elc-high-threshold-status off",
                 "--elc-low-threshold 65",
                 "--elc-high-threshold 78",
