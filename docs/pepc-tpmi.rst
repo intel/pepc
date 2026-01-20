@@ -104,11 +104,15 @@ Subcommand *'ls'*
 
 Display supported TPMI features.
 
-**-l**, **--long**
-   Include details like TPMI device PCI addresses and instance numbers for more specific output.
+**-t**, **--topology**
+   Display TPMI topology (PCI addresses, instance numbers, etc.).
 
-**--all**
-   Include IDs of TPMI features supported by the processor but lacking spec files for decoding.
+**-F** *[FEATURES]*, **--features** *[FEATURES]*
+   Comma-separated list of TPMI feature names to include in the output. Defaults to all supported
+   features.
+
+**--unknown**
+   Include TPMI features without spec files (unknown features).
 
 Subcommand *'read'*
 ===================

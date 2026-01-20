@@ -16,13 +16,14 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 import sys
 import typing
 import contextlib
+
 from pepclibs import TPMI, CPUInfo
 from pepclibs.helperlibs import Logging, Trivial, YAML
 from pepclibs.helperlibs.Exceptions import Error
 
 if typing.TYPE_CHECKING:
     import argparse
-    from typing import TypedDict
+    from typing import TypedDict, Iterable
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
     class _RegInfoTypedDict(TypedDict, total=False):
@@ -60,12 +61,14 @@ if typing.TYPE_CHECKING:
         A typed dictionary for command-line arguments of the 'pepc tpmi ls' command.
 
         Attributes:
-            long: Whether to output extra information about each feature.
-            all: Whether to list all features, including the unknown ones.
+            topology: Whether to output TPMI topology information.
+            fnames: List of TPMI feature names to display.
+            unknown: Include unknown TPMI features (without spec files) in the output.
         """
 
-        long: bool
-        all: bool
+        topology: bool
+        fnames: list[str]
+        unknown: bool
 
     class _ReadCmdlineArgsTypedDict(TypedDict, total=False):
         """
@@ -125,9 +128,15 @@ def _get_ls_cmdline_args(args: argparse.Namespace) -> _LsCmdlineArgsTypedDict:
     """
 
     cmdl: _LsCmdlineArgsTypedDict = {}
-    cmdl["long"] = args.long
-    cmdl["all"] = args.all
 
+    if args.fnames:
+        fnames = Trivial.split_csv_line(args.fnames, dedup=True)
+    else:
+        fnames = []
+
+    cmdl["topology"] = args.topology
+    cmdl["fnames"] = fnames
+    cmdl["unknown"] = args.unknown
     return cmdl
 
 def _get_read_cmdline_args(args: argparse.Namespace) -> _ReadCmdlineArgsTypedDict:
@@ -226,12 +235,12 @@ def _get_write_cmdline_args(args: argparse.Namespace) -> _WriteCmdlineArgsTypedD
 
     return cmdl
 
-def _ls_long(fname: str, tpmi: TPMI.TPMI, prefix: str = ""):
+def _ls_topology(fname: str, tpmi: TPMI.TPMI, prefix: str = ""):
     """
-    Display detailed information about a feature for the 'tpmi ls -l' command.
+    Display TPMI topology for a feature.
 
     Args:
-        fname: Name of the feature to display information for.
+        fname: Name of the feature to display topology for.
         tpmi: A 'TPMI.TPMI' object.
         prefix: String prefix for formatting log output.
     """
@@ -274,6 +283,9 @@ def tpmi_ls_command(args: argparse.Namespace, pman: ProcessManagerType):
 
     cmdl = _get_ls_cmdline_args(args)
 
+    if cmdl["unknown"] and cmdl["topology"]:
+        raise Error("'--unknown' and '--topology' options cannot be used together")
+
     with contextlib.ExitStack() as stack:
         cpuinfo = CPUInfo.CPUInfo(pman)
         stack.enter_context(cpuinfo)
@@ -286,17 +298,25 @@ def tpmi_ls_command(args: argparse.Namespace, pman: ProcessManagerType):
             _LOG.info("Not supported TPMI features found")
         else:
             _LOG.info("Supported TPMI features")
-            for sdict in sdicts:
-                _LOG.info(" - %s: %s", sdict["name"], sdict["desc"].strip())
-                if cmdl["long"]:
-                    _ls_long(sdict["name"], tpmi, prefix="   ")
 
-        if cmdl["all"]:
-            fnames = tpmi.get_unknown_features()
-            if fnames and cmdl["all"]:
+            fnames: Iterable[str]
+            if cmdl["fnames"]:
+                fnames = cmdl["fnames"]
+            else:
+                fnames = sdicts
+
+            for fname in fnames:
+                sdict = sdicts[fname]
+                _LOG.info(" - %s: %s", sdict["name"], sdict["desc"].strip())
+                if cmdl["topology"]:
+                    _ls_topology(sdict["name"], tpmi, prefix="   ")
+
+        if cmdl["unknown"]:
+            if fnames and cmdl["unknown"]:
                 _LOG.info("Unknown TPMI features (available%s, but no spec file found)",
                           pman.hostmsg)
-                txt = ", ".join(hex(fid) for fid in fnames)
+                fids = tpmi.get_unknown_features()
+                txt = ", ".join(hex(fid) for fid in fids)
                 _LOG.info(" - %s", txt)
 
 def _tpmi_read_command_print(tpmi: TPMI.TPMI, info: _ReadInfoType):
@@ -359,16 +379,12 @@ def tpmi_read_command(args: argparse.Namespace, pman: ProcessManagerType):
         tpmi = TPMI.TPMI(cpuinfo.info, pman=pman)
         stack.enter_context(tpmi)
 
-        fnames = cmdl["fnames"]
-        if not cmdl["fnames"]:
-            fnames = [sdict["name"] for sdict in tpmi.get_known_features()]
-
         # Prepare all the information to print in the 'info' dictionary.
         #  * first level key - feature name.
         #  * second level key - PCI address.
         #  * third level key - "package" or "instances".
         info: _ReadInfoType = {}
-        for fname in fnames:
+        for fname in tpmi.get_known_features():
             info[fname] = {}
 
             fdict = tpmi.get_fdict(fname)

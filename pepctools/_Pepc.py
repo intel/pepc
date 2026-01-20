@@ -590,12 +590,15 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
 
     ArgParse.add_options(subpars2, ssh_options)
 
-    text = """Include details like TPMI device PCI addresses and instance numbers for more specific
-              output."""
-    subpars2.add_argument("-l", "--long", action="store_true", help=text)
+    text = """Display TPMI topology (PCI addresses, instance numbers, etc.)"""
+    subpars2.add_argument("-t", "--topology", action="store_true", help=text)
+
+    text = """Comma-separated list of TPMI feature names to display. Defaults to all supported
+              features."""
+    subpars2.add_argument("-F", "--features", metavar="FEATURES", dest="fnames", help=text)
 
     text = """Include TPMI features without spec files (unknown features)."""
-    subpars2.add_argument("--all", action="store_true", help=text)
+    subpars2.add_argument("--unknown", action="store_true", help=text)
 
     #
     # Create parser for the 'tpmi read' command.
