@@ -74,7 +74,6 @@ Terminology:
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
-from calendar import c
 import os
 import re
 import stat
@@ -83,7 +82,8 @@ import contextlib
 from pathlib import Path
 import yaml
 from pepclibs.helperlibs import Logging, YAML, ClassHelpers, FSHelpers, ProjectFiles, Trivial, Human
-from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorPermissionDenied
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
+from pepclibs.helperlibs.Exceptions import ErrorPermissionDenied
 
 if typing.TYPE_CHECKING:
     from typing import Final, TypedDict, Sequence, Iterable, NoReturn, Literal, cast, Generator
@@ -510,12 +510,12 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                         f"{addr}{self._pman.hostmsg}: expected {_minor_version}, "
                         f"got {minor_version}")
 
-        # TPMI interface versions up to version 0.2 are supported.
-        if _major_version != 0 or _minor_version > 2:
+        # TPMI interface versions up to version 0.3 are supported.
+        if _major_version != 0 or _minor_version > 3:
             raise ErrorNotSupported(f"Unsupported TPMI interface version "
                                     f"{_major_version}.{_minor_version} for feature "
                                     f"'{fname}', address {addr}{self._pman.hostmsg}.\n"
-                                    f"Only TPMI up to version 0.2 is supported.")
+                                    f"Only TPMI up to version 0.3 is supported.")
 
     def _drop_dead_instances(self,
                               fname: str,
@@ -565,8 +565,8 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                     verified = True
 
         if not mdmap:
-            raise Error(f"No instances or only dead instances found for TPMI feature '{fname}', "
-                        f"address {addr}{self._pman.hostmsg}")
+            raise ErrorNotFound(f"No instances or only dead instances found for TPMI feature "
+                                f"'{fname}', address {addr}{self._pman.hostmsg}")
 
         if not verified:
             raise Error(f"TPMI interface version register not found for feature '{fname}'")
@@ -1487,25 +1487,22 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                     f"instance '{instance}'{self._pman.hostmsg}, available cluster IDs are: "
                     f"{clusters}")
 
-    def get_known_features(self) -> list[SDictTypedDict]:
+    def get_known_features(self) -> dict[str, SDictTypedDict]:
         """
-        Retrieve a list of specification dictionaries for all known features.
-
-        Return a list of sdicts - dictionaries representing a feature that is supported by the
-        target host and has an available specification file.
+        Retrieve a dictionary of sdicts (specification dictionaries) for all known features.
 
         Note:
             The returned dictionaries should be treated as read-only and must not be modified.
 
         Returns:
-            List of sdicts for all known features.
+            Dictionary of sdicts for all known features.
         """
 
-        sdicts = []
+        sdicts: dict[str, SDictTypedDict] = {}
         for fname in self._fmaps:
             # It would be safer to return deep copy of the dictionary, but for optimization
             # purposes, avoid the copying.
-            sdicts.append(self._sdicts[fname])
+            sdicts[fname] = self._sdicts[fname]
         return sdicts
 
     def get_unknown_features(self) -> list[int]:
@@ -1606,7 +1603,13 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                         self._validate_instance(fname, addr, instance)
                     _instances = instances
                 else:
-                    mdmap = self._get_mdmap(fname, addr)
+                    try:
+                        mdmap = self._get_mdmap(fname, addr)
+                    except ErrorNotFound as err:
+                        # No instances found for this feature on this device, skip it.
+                        _LOG.debug(err)
+                        continue
+
                     _instances = mdmap
 
                 for instance in _instances:
@@ -1663,8 +1666,8 @@ class TPMI(ClassHelpers.SimpleCloseContext):
             if coffset < 0 or coffset % 4 != 0 or coffset not in mdmap[instance]:
                 max_coffset = max(mdmap[instance])
                 raise Error(f"Bad cluster offset '{coffset:#x}' for UFS cluster '{cluster}' at "
-                            f"address '{addr}', instance '{instance}': Should be a positive integer "
-                            f"aligned to 4 and not exceeding '{max_coffset}'")
+                            f"address '{addr}', instance '{instance}': Should be a positive "
+                            f"integer aligned to 4 and not exceeding '{max_coffset}'")
 
         return cmap
 

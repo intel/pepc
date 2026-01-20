@@ -92,9 +92,9 @@ def test_get_known_features(params: _TestParamsTypedDict):
     unknown_fids = set(tpmi.get_unknown_features())
 
     sdicts = tpmi.get_known_features()
-    assert isinstance(sdicts, list)
+    assert isinstance(sdicts, dict)
 
-    for sdict in sdicts:
+    for sdict in sdicts.values():
         assert isinstance(sdict, dict)
 
         assert "name" in sdict
@@ -123,9 +123,7 @@ def test_get_fdict(params: _TestParamsTypedDict):
     tpmi = params["tpmi"]
     sdicts = tpmi.get_known_features()
 
-    for sdict in sdicts:
-        fname = sdict["name"]
-
+    for fname in sdicts:
         fdict = tpmi.get_fdict(fname)
         assert isinstance(fdict, dict)
 
@@ -183,9 +181,7 @@ def test_iter_feature(params: _TestParamsTypedDict):
 
     valid_packages = set(params["cpuinfo"].get_packages())
 
-    for sdict in sdicts:
-        fname = sdict["name"]
-
+    for fname in sdicts:
         packages: list[int] = []
         # TPMI devices are per-package.
         addrs: dict[int, list[str]] = {}
@@ -248,8 +244,7 @@ def test_read_register(params: _TestParamsTypedDict):
 
     sdicts = tpmi.get_known_features()
 
-    for sdict in sdicts:
-        fname = sdict["name"]
+    for fname in sdicts:
         fdict = tpmi.get_fdict(fname)
         for _, addr, instance in tpmi.iter_feature(fname):
             for regname in fdict:
