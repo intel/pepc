@@ -245,6 +245,13 @@ def _ls_topology(fname: str, tpmi: TPMI.TPMI, prefix: str = ""):
         prefix: String prefix for formatting log output.
     """
 
+    def _pfx_bullet(level: int) -> str:
+        """ Return a prefix string with a bullet for the given indentation level. """
+        return prefix + "  " * level + "- "
+    def _pfx_blanks(level: int) -> str:
+        """ Return a prefix string with blanks for the given indentation level. """
+        return prefix + "  " * level + "  "
+
     # A dictionary with the info that will be printed.
     #   * first level key - package number.
     #   * second level key - PCI address.
@@ -259,18 +266,22 @@ def _ls_topology(fname: str, tpmi: TPMI.TPMI, prefix: str = ""):
         info[package][addr].add(instance)
 
     for package in sorted(info):
-        pfx1 = prefix + "- "
-        pfx2 = prefix + "  "
-
         for addr in sorted(info[package]):
-            _LOG.info("%sPCI address: %s", pfx1, addr)
-            pfx1 = pfx2 + "- "
-            pfx2 += "  "
+            _LOG.info("%sPCI address: %s", _pfx_bullet(0), addr)
 
-            _LOG.info("%sPackage: %s", pfx2, package)
+            _LOG.info("%sPackage: %d", _pfx_blanks(0), package)
 
-            instances = Trivial.rangify(info[package][addr])
-            _LOG.info("%sInstances: %s", pfx2, instances)
+            if fname != "ufs":
+                instances = Trivial.rangify(info[package][addr])
+                _LOG.info("%sInstances: %s", _pfx_blanks(0), instances)
+                continue
+
+                # UFS is special, it is further divided into clusters.
+            for instance in sorted(info[package][addr]):
+                _LOG.info("%sInstance: %d", _pfx_bullet(1), instance)
+                for _, _, _, cluster in tpmi.iter_ufs_feature(packages=(package,), addrs=(addr,),
+                                                              instances=(instance,)):
+                    _LOG.info("%sCluster: %d", _pfx_bullet(2), cluster)
 
 def tpmi_ls_command(args: argparse.Namespace, pman: ProcessManagerType):
     """
@@ -307,9 +318,9 @@ def tpmi_ls_command(args: argparse.Namespace, pman: ProcessManagerType):
 
             for fname in fnames:
                 sdict = sdicts[fname]
-                _LOG.info(" - %s: %s", sdict["name"], sdict["desc"].strip())
+                _LOG.info("- %s: %s", sdict["name"], sdict["desc"].strip())
                 if cmdl["topology"]:
-                    _ls_topology(sdict["name"], tpmi, prefix="   ")
+                    _ls_topology(sdict["name"], tpmi, prefix="  ")
 
         if cmdl["unknown"]:
             if fnames and cmdl["unknown"]:

@@ -1093,6 +1093,29 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                         f"'{fname}': Should be a positive integer aligned to 4 and not "
                         f"exceeding '{max_offset}'")
 
+    def _adjust_ufs_offset(self, addr: str, instance: int, cluster: int, offset: int) -> int:
+        """
+        Adjust a TPMI UFS control register offset based on the cluster number.
+
+        Args:
+            addr: TPMI device PCI address.
+            instance: The instance number of the UFS feature.
+            cluster: The cluster number.
+            offset: The register offset to adjust.
+
+        Returns:
+            The adjusted register offset.
+        """
+
+        # UFS-only: adjust the offset based on the cluster.
+        coffset = self._cmaps[addr][instance][cluster]
+
+        # UFS header registers (UFS_HEADER and UFS_FABRIC_CLUSTER_OFFSET) are per-instance and
+        # not part of clusters. Cluster offsets point to UFS_STATUS, which follows the 16-byte
+        # header. Since spec file offsets include the header, subtract 16 bytes to get the
+        # correct offset within the cluster.
+        return offset + coffset - 16
+
     def _read(self,
               fname: str,
               addr: str,
@@ -1122,15 +1145,8 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         path = self._get_debugfs_feature_path(addr, fname)
         path = path / "mem_dump"
 
-        if cluster != 0:
-            # UFS-only: adjust the offset based on the cluster.
-            coffset = self._cmaps[addr][instance][cluster]
-
-            # UFS header registers (UFS_HEADER and UFS_FABRIC_CLUSTER_OFFSET) are per-instance and
-            # not part of clusters. Cluster offsets point to UFS_STATUS, which follows the 16-byte
-            # header. Since spec file offsets include the header, subtract 16 bytes to get the
-            # correct offset within the cluster.
-            offset += coffset - 16
+        if cluster > 0:
+            offset = self._adjust_ufs_offset(addr, instance, cluster, offset)
 
         with self._pman.open(path, "r") as fobj:
             fobj.seek(mdmap[instance][offset])
@@ -1253,6 +1269,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                         addr: str,
                         instance: int,
                         regname: str,
+                        cluster: int = 0,
                         bfname: str = ""):
         """
         Write a value to a TPMI register or its bit field.
@@ -1263,6 +1280,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
             addr: TPMI device address.
             instance: TPMI instance to write the register to.
             regname: Name of the TPMI register to write to.
+            cluster: Cluster to write the register to (UFS-only).
             bfname: Name of the register bit field to write to. If not specified, writes to the
                     entire register.
         """
@@ -1307,6 +1325,9 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         if bfname:
             regval = self._read_register(fname, addr, instance, regname)
             value = self._set_bitfield(regval, value, fname, regname, bfname)
+
+        if cluster > 0:
+            offset = self._adjust_ufs_offset(addr, instance, cluster, offset)
 
         with self._pman.open(path, "r+") as fobj:
             while width > 0:
@@ -1811,3 +1832,29 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         self._validate_instance(fname, addr, instance)
 
         self._write_register(value, fname, addr, instance, regname, bfname=bfname)
+
+    def write_ufs_register(self,
+                           value: int,
+                           addr: str,
+                           instance: int,
+                           cluster: int,
+                           regname: str,
+                           bfname: str = ""):
+        """
+        Write a value to a TPMI UFS register or its bit field.
+
+        Args:
+            value: Value to write to the register or bit field.
+            addr: TPMI device address.
+            instance: TPMI instance to write the register to.
+            cluster: Cluster number to write the register to (UFS-only).
+            regname: Name of the TPMI register to write to.
+            bfname: Name of the bit field to write to. If not provided, write the entire register.
+        """
+
+        self._validate_addr("ufs", addr)
+        self._validate_regname("ufs", regname, bfname=bfname)
+        self._validate_instance("ufs", addr, instance)
+        self._validate_cluster(addr, instance, cluster, regname)
+
+        self._write_register(value, "ufs", addr, instance, regname, cluster=cluster, bfname=bfname)

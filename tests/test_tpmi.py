@@ -226,11 +226,13 @@ def test_iter_feature(params: _TestParamsTypedDict):
                 assert pkg == package
                 assert addr in addrs_set[pkg]
 
-        for package, addr, instance in tpmi.iter_feature(fname, addrs=addrs_set[package],
-                                                         instances=instances_set[addr]):
-            assert package in packages_set
-            assert addr in addrs_set[package]
-            assert instance in instances_set[addr]
+        for package in packages_set:
+            for address in addrs_set[package]:
+                for pkg, addr, instance in tpmi.iter_feature(fname, addrs=(address,),
+                                                             instances=instances_set[address]):
+                    assert pkg in packages_set
+                    assert addr in addrs_set[package]
+                    assert instance in instances_set[address]
 
 def test_read_register(params: _TestParamsTypedDict):
     """
