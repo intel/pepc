@@ -102,7 +102,8 @@ def _represent_posixpath(dumper: yaml.Dumper, value: PosixPath) -> yaml.ScalarNo
 
 def dump(data: Mapping[str, Any],
          path: Path | IO[str],
-         float_format: str | None = None,
+         float_format: str = "",
+         int_format: str = "",
          skip_none: bool = False):
     """
     Dump a dictionary to a YAML file.
@@ -112,7 +113,7 @@ def dump(data: Mapping[str, Any],
         path: The file path or file object to write the YAML data to.
         float_format: The floating-point output format. For example, if set to '%.2f', only two
                       decimal places will be used for floating-point numbers. Use python 'yaml'
-                      module default format if None.
+                      module default format if an empty string.
         skip_none: If True, exclude keys with 'None' values from the output.
     """
 
@@ -128,12 +129,23 @@ def dump(data: Mapping[str, Any],
             A YAML scalar node representing the formatted floating-point number.
         """
 
-        if typing.TYPE_CHECKING:
-            _data = cast(str, float_format) % data
-        else:
-            _data = float_format % data
-
+        _data = float_format % data
         return dumper.represent_scalar("tag:yaml.org,2002:float", _data)
+
+    def _represent_int(dumper: yaml.Dumper, data: int) -> yaml.ScalarNode:
+        """
+        Represent an integer in YAML format using format in 'int_format'.
+
+        Args:
+            dumper: The YAML dumper instance used to serialize the data.
+            data: The integer to be formatted and represented.
+
+        Returns:
+            A YAML scalar node representing the formatted integer.
+        """
+
+        _data = int_format % data
+        return dumper.represent_scalar("tag:yaml.org,2002:int", _data)
 
     if skip_none:
         data = _drop_none(data)
@@ -143,6 +155,9 @@ def dump(data: Mapping[str, Any],
 
     if float_format:
         yaml.add_representer(float, _represent_float)
+
+    if int_format:
+        yaml.add_representer(int, _represent_int)
 
     try:
         if hasattr(path, "write"):
