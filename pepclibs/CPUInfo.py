@@ -24,6 +24,7 @@ from pepclibs.CPUInfoVars import SCOPE_NAMES, HYBRID_TYPE_INFO, NA, INVALID
 
 if typing.TYPE_CHECKING:
     from typing import Iterable, Literal
+    from pepclibs import TPMI
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepclibs.CPUInfoTypes import HybridCPUKeyType, ScopeNameType, AbsNumsType, RelNumsType
 
@@ -99,16 +100,17 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         - 'dies_to_str()' - turn a die numbers dictionary into a string.
     """
 
-    def __init__(self, pman: ProcessManagerType | None = None):
+    def __init__(self, pman: ProcessManagerType | None = None, tpmi: TPMI.TPMI | None = None):
         """
         Initialize a class instance.
 
         Args:
             pman: The process manager object that defines the target host. If not provided, a local
                   process manager is created.
+            tpmi: An instance of the TPMI class. If not provided, a new instance is created.
         """
 
-        super().__init__(pman=pman)
+        super().__init__(pman=pman, tpmi=tpmi)
 
         # Scope name to its index number.
         self._sname2idx: dict[ScopeNameType, int]

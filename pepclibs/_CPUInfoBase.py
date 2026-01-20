@@ -39,13 +39,14 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
     the public API.
     """
 
-    def __init__(self, pman: ProcessManagerType | None = None):
+    def __init__(self, pman: ProcessManagerType | None = None, tpmi: TPMI.TPMI | None = None):
         """
         Initialize a class instance.
 
         Args:
             pman: The process manager object that defines the target host. If not provided, a local
                   process manager is created.
+            tpmi: An instance of the TPMI class. If not provided, a new instance is created.
         """
 
         _LOG.debug("Initializing the '%s' class object", self.__class__.__name__)
@@ -55,7 +56,8 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
         self._close_pman = pman is None
 
-        self._tpmi: TPMI.TPMI | None = None
+        self._tpmi: TPMI.TPMI | None = tpmi
+        self._close_tpmi = tpmi is None
         # 'True' if the target system supports TPMI.
         self._tpmi_supported = True
 
