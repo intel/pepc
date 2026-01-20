@@ -13,23 +13,20 @@ Provide the base class for the 'CPUInfo.CPUInfo' class.
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
-import re
 import typing
 import contextlib
 from pathlib import Path
-from pepclibs import CPUModels
-from pepclibs.helperlibs import Logging, LocalProcessManager, ClassHelpers, Trivial, KernelVersion
+from pepclibs import CPUModels, ProcCpuinfo
+from pepclibs.helperlibs import Logging, LocalProcessManager, ClassHelpers, Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorNotFound
 from pepclibs.CPUInfoVars import SCOPE_NAMES, NA
 
-from pepclibs.CPUInfoTypes import CPUInfoTypedDict
-
 if typing.TYPE_CHECKING:
-    from typing import Iterable
+    from typing import Iterable, cast
     from pepclibs import TPMI
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
-    from pepclibs.CPUInfoTypes import (CPUInfoKeyType, ScopeNameType, AbsNumsType,
-                                       HybridCPUKeyType, HybridCPUKeyInfoType)
+    from pepclibs.CPUInfoTypes import (ScopeNameType, AbsNumsType, HybridCPUKeyType,
+                                       HybridCPUKeyInfoType)
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
@@ -103,8 +100,17 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         else:
             self._pman = LocalProcessManager.LocalProcessManager()
 
-        self.info = self._get_cpu_info()
+        if self._tpmi:
+            self.proc_cpuinfo = self._tpmi.proc_cpuinfo
+        else:
+            self.proc_cpuinfo = ProcCpuinfo.get_proc_cpuinfo(pman=self._pman)
+
         self.cpudescr = self._get_cpu_description()
+
+        if self._pman.exists("/sys/devices/cpu_atom/cpus"):
+            self.is_hybrid = True
+        else:
+            self.is_hybrid = False
 
     def close(self):
         """Uninitialize the class object."""
@@ -118,7 +124,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         Return an instance of 'TPMI.TPMI' object if TPMI is supported.
 
         Returns:
-            The 'TPMI.TPMI' object or None.
+            The 'TPMI.TPMI' object.
         """
 
         if not self._tpmi_supported:
@@ -131,12 +137,30 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
             from pepclibs import TPMI
 
             try:
-                self._tpmi = TPMI.TPMI(self.info, pman=self._pman)
+                self._tpmi = TPMI.TPMI(self.proc_cpuinfo, pman=self._pman)
             except ErrorNotSupported as err:
-                _LOG.debug("TPMI not supported%s:\n%s", self._pman.hostmsg, err.indent(2))
+                _LOG.debug("TPMI not supported for %s%s:\n%s",
+                           self.cpudescr, self._pman.hostmsg, err.indent(2))
                 self._tpmi_supported = False
 
         return self._tpmi
+
+    def get_tpmi(self) -> TPMI.TPMI:
+        """
+        Return an instance of 'TPMI.TPMI' object.
+
+        Returns:
+            The 'TPMI.TPMI' object.
+
+        Raises:
+            ErrorNotSupported: if TPMI is not supported on the target system.
+        """
+
+        tpmi = self._get_tpmi()
+        if not tpmi:
+            raise ErrorNotSupported(f"CPU model {self.cpudescr}{self._pman.hostmsg} does not "
+                                    f"support TPMI")
+        return tpmi
 
     def _add_cores_and_packages(self,
                                 cpu_tdict: dict[int, dict[ScopeNameType, int]],
@@ -144,59 +168,19 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         """
         Add core and package numbers for the specified CPUs to the provided CPU topology dictionary.
 
-        Exctract the core and package numbers from the '/proc/cpuinfo'.
-
         Args:
             cpu_tdict: The CPU topology dictionary to update with core and package information.
             cpus: CPU numbers for which to add core and package numbers.
         """
 
-        def _get_number(start: str, lines: list[str], index: int) -> int:
-            """
-            Validate that a '/proc/cpuinfo' line at the specified index starts with the given
-            prefix, extract and return its integer value.
+        cpus_set = set(cpus)
 
-            Args:
-                start: The expected prefix at the beginning of the line.
-                lines: The list of lines to search through.
-                index: The index of the line to check.
-
-            Returns:
-                The integer value found after the ':' character in the specified line.
-            """
-
-            try:
-                line = lines[index]
-            except IndexError:
-                lines_count = len(lines)
-                lines_str = "\n".join(lines)
-                lines_str = Error(lines_str).indent(2)
-                raise Error(f"There are to few lines in '/proc/cpuinfo' for CPU '{cpu}'.\n"
-                            f"Expected at least {index + 1} lines, got {lines_count}.\n"
-                            f"The lines:\n{lines_str}") from None
-
-            if not line.startswith(start):
-                raise Error(f"Expected line {index + 1} for CPU {cpu} in '/proc/cpuinfo' to start "
-                            f"with \"{start}\", got:\n{line!r}.")
-
-            return Trivial.str_to_int(line.partition(":")[2],
-                                      what=f"value of '{start}' from '/proc/cpuinfo'")
-
-        _LOG.debug("Reading CPU topology information from '/proc/cpuinfo'")
-
-        info: dict[int, list[str]] = {}
-        for data in self._pman.read_file("/proc/cpuinfo").strip().split("\n\n"):
-            lines = data.split("\n")
-            cpu = _get_number("processor", lines, 0)
-            info[cpu] = lines
-
-        for cpu in cpus:
-            if cpu not in info:
-                raise Error(f"CPU {cpu} is missing from '/proc/cpuinfo'")
-
-            lines = info[cpu]
-            cpu_tdict[cpu]["package"] = _get_number("physical id", lines, 9)
-            cpu_tdict[cpu]["core"] = _get_number("core id", lines, 11)
+        for package, pkg_cores in self.proc_cpuinfo["topology"].items():
+            for core, core_cpus in pkg_cores.items():
+                for cpu in core_cpus:
+                    if cpu in cpus_set:
+                        cpu_tdict[cpu]["package"] = package
+                        cpu_tdict[cpu]["core"] = core
 
     def _add_modules(self, cpu_tdict: dict[int, dict[ScopeNameType, int]], cpus: AbsNumsType):
         """
@@ -271,7 +255,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
                     self._io_dies[package] = set()
             self._compute_dies[package].add(die)
 
-        if self.info["vfm"] not in CPUModels.MODELS_WITH_HIDDEN_DIES:
+        if self.proc_cpuinfo["vfm"] not in CPUModels.MODELS_WITH_HIDDEN_DIES:
             _LOG.debug("Reading compute die information from sysfs")
             for cpu in cpus:
                 if "die" in cpu_tdict[cpu]:
@@ -345,7 +329,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
             tlines: The topology table (list of dictionaries) to which I/O dies should be added.
         """
 
-        if self.info["vfm"] not in CPUModels.MODELS_WITH_HIDDEN_DIES:
+        if self.proc_cpuinfo["vfm"] not in CPUModels.MODELS_WITH_HIDDEN_DIES:
             return
 
         tpmi = self._get_tpmi()
@@ -530,67 +514,6 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
         return self._all_cpus_set
 
-    def _get_cpu_info(self) -> CPUInfoTypedDict:
-        """
-        Collect and return general CPU information such as model, and architecture.
-
-        Returns:
-            CPUInfoTypeDict: The CPU information dictionary.
-        """
-
-        _LOG.debug("Building CPU information")
-
-        cpuinfo: CPUInfoTypedDict = {}
-
-        lscpu, _ = self._pman.run_verify_nojoin("lscpu")
-
-        # Parse misc. information about the CPU.
-        patterns: tuple[tuple[str, CPUInfoKeyType], ...] = \
-                    ((r"^Architecture:\s*(.*)$", "arch"),
-                     (r"^Vendor ID:\s*(.*)$", "vendor"),
-                     (r"^CPU family:\s*(.*)$", "family"),
-                     (r"^Model:\s*(.*)$", "model"),
-                     (r"^Model name:\s*(.*)$", "modelname"),
-                     (r"^Flags:\s*(.*)$", "flags"))
-
-        key_types = typing.get_type_hints(CPUInfoTypedDict)
-        for line in lscpu:
-            for pattern, key in patterns:
-                match = re.match(pattern, line.strip())
-                if not match:
-                    continue
-
-                val = match.group(1)
-                if key_types[key] is int:
-                    what=f"'{key}' value from 'lscpu' output"
-                    cpuinfo[key] = Trivial.str_to_int(val, what=what)
-                elif key_types[key] is str:
-                    cpuinfo[key] = val
-                elif key == "flags":
-                    cpuflags = set(val.split())
-                    cpuinfo["flags"] = {}
-                    # Assume that all CPUs share the same flags, this is the case for current CPUs.
-                    # But generally, the flags could be different for different CPUs, in which case
-                    # they would be read from '/proc/cpuinfo'.
-                    for cpu in self._get_online_cpus():
-                        cpuinfo["flags"][cpu] = cpuflags
-                else:
-                    raise Error(f"Unexpected type for '{key}', expected "
-                                f"{key_types[key]}, got {type(val)}")
-
-        if self._pman.exists("/sys/devices/cpu_atom/cpus"):
-            cpuinfo["hybrid"] = True
-        else:
-            cpuinfo["hybrid"] = False
-            with contextlib.suppress(Error):
-                kver = KernelVersion.get_kver(pman=self._pman)
-                if KernelVersion.kver_lt(kver, "5.13"):
-                    _LOG.warn_once("Kernel v%s does not support hybrid CPU topology. The minimum "
-                                   "required kernel version is v5.13.", kver)
-
-        cpuinfo["vfm"] = CPUModels.make_vfm(cpuinfo["vendor"], cpuinfo["family"], cpuinfo["model"])
-        return cpuinfo
-
     def _get_cpu_description(self) -> str:
         """
         Build and return a human-readable string describing the processor.
@@ -600,16 +523,15 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         """
 
         # Some pre-release Intel CPUs are labeled as "GENUINE INTEL", hence 'lower()' is used.
-        if "genuine intel" in self.info["modelname"].lower():
-            cpudescr = f"Intel processor model {self.info['model']:#x}"
+        if "genuine intel" in self.proc_cpuinfo["modelname"].lower():
+            cpudescr = f"Intel processor model {self.proc_cpuinfo['model']:#x}"
 
             for info in CPUModels.MODELS.values():
-                if info["vfm"] == self.info["vfm"]:
+                if info["vfm"] == self.proc_cpuinfo["vfm"]:
                     cpudescr += f" (codename: {info['codename']})"
                     break
         else:
-            cpudescr = self.info["modelname"]
-
+            cpudescr = self.proc_cpuinfo["modelname"]
         return cpudescr
 
     def _probe_lpe_cores_l3(self):

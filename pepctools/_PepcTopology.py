@@ -128,7 +128,7 @@ def topology_info_command(args, pman):
                         columns = ", ".join(columns)
                         raise Error(f"invalid column name '{colname}', use one of: {columns}")
 
-        if show_hybrid and not cpuinfo.info["hybrid"]:
+        if show_hybrid and not cpuinfo.is_hybrid:
             raise Error(f"no hybrid CPU found{pman.hostmsg}, found {cpuinfo.cpudescr}")
 
         order = args.order
@@ -157,7 +157,7 @@ def topology_info_command(args, pman):
         # separately in necessary.
         topology = cpuinfo.get_topology(snames=colnames, order=order)
 
-        if show_hybrid is None and cpuinfo.info["hybrid"]:
+        if show_hybrid is None and cpuinfo.is_hybrid:
             show_hybrid = True
 
         if show_hybrid:

@@ -201,7 +201,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
             else:
                 msg += f" (packages {pkgs_range})"
 
-        if self._cpuinfo.info["hybrid"]:
+        if self._cpuinfo.is_hybrid:
             hybrid_info = self._cpuinfo.get_hybrid_cpus()
             if len(hybrid_info) > 1:
                 for htype, hcpus in hybrid_info.items():

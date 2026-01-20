@@ -73,7 +73,7 @@ def test_unknown_cpu_model(params: _TestParamsTypedDict):
     pman = params["pman"]
 
     with CPUInfo.CPUInfo(pman=pman) as cpuinfo:
-        cpuinfo.info["model"] = 0
+        cpuinfo.proc_cpuinfo["model"] = 0
 
         with PStates.PStates(pman=pman, cpuinfo=cpuinfo) as pobj:
             for pname in pobj.props:

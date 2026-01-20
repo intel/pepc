@@ -150,7 +150,7 @@ def test_freq_msr_vs_sysfs(params: PropsTestParamsTypedDict):
             min_freq_sysfs = cast(int, min_freq_sysfs)
             min_freq_msr = cast(int, min_freq_msr)
 
-            if cpuinfo.info["hybrid"]:
+            if cpuinfo.is_hybrid:
                 assert min_freq_sysfs == min_freq_msr, \
                     f"'min_freq_limit' mismatch for sysfs ({min_freq_sysfs}) and MSR " \
                     f"({min_freq_msr})' mechanisms on CPU {cpu}"

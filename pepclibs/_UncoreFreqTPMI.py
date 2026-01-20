@@ -97,7 +97,7 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
 
         super().__init__(cpuinfo, pman, enable_cache=False)
 
-        self._tpmi = TPMI.TPMI(cpuinfo.info, pman=self._pman)
+        self._tpmi: TPMI.TPMI = cpuinfo.get_tpmi()
 
         # The package number -> uncore TPMI PCI device address map.
         self._addrmap: dict[int, str] = {}
@@ -105,8 +105,8 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
     def close(self):
         """Uninitialize the class object."""
 
-        close_attrs = ("_tpmi",)
-        ClassHelpers.close(self, close_attrs=close_attrs)
+        unref_attrs = ("_tpmi",)
+        ClassHelpers.close(self, unref_attrs=unref_attrs)
 
     def _get_pci_addr(self, package: int) -> str:
         """

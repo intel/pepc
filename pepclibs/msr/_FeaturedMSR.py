@@ -150,7 +150,7 @@ def get_clx_ap_adjusted_msr_scope(cpuinfo: CPUInfo.CPUInfo) -> Literal["die", "p
         "die" if the platform is CLX-AP (i.e., two dies in one package), otherwise "package".
     """
 
-    vfm = cpuinfo.info["vfm"]
+    vfm = cpuinfo.proc_cpuinfo["vfm"]
     if vfm == CPUModels.MODELS["SKYLAKE_X"]["vfm"] and len(cpuinfo.get_package_dies(package=0)) > 1:
         return "die"
 
@@ -219,7 +219,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
         else:
             self._pman = LocalProcessManager.LocalProcessManager()
 
-        if self._cpuinfo.info["vendor"] != self.vendor:
+        if self._cpuinfo.proc_cpuinfo["vendor"] != self.vendor:
             raise ErrorNotSupported(f"Unsupported MSR {self.regaddr:#x} ({self.regname}), it is "
                                     f"only available on {self.vendor} CPUs")
 
@@ -249,7 +249,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
         """Initialize the 'supported' flag for all features."""
 
         supported = False
-        vfm = self._cpuinfo.info["vfm"]
+        vfm = self._cpuinfo.proc_cpuinfo["vfm"]
 
         for finfo in self._features.values():
             finfo["supported"] = {}
@@ -265,7 +265,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
                     finfo["supported"][cpu] = True
             else:
                 for cpu in self._cpuinfo.get_cpus():
-                    cpuflags = self._cpuinfo.info["flags"][cpu]
+                    cpuflags = self._cpuinfo.proc_cpuinfo["flags"][cpu]
                     finfo["supported"][cpu] = finfo["cpuflags"].issubset(cpuflags)
                     if finfo["supported"][cpu]:
                         supported = True

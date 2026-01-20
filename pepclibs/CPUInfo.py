@@ -1513,7 +1513,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
             In case of a non-hybrid system, only the "pcore" key is present.
         """
 
-        if self.info["hybrid"] is False:
+        if not self.is_hybrid:
             return {"pcore": self.get_cpus()}
 
         return self._get_hybrid_cpus()

@@ -153,7 +153,7 @@ class HWPRequest(_FeaturedMSR.FeaturedMSR):
             cpus = cpuinfo.package_to_cpus(pkg)
 
             # Make sure the CPU supports HWP and has HWP is enabled.
-            cpuflags = cpuinfo.info["flags"][cpus[0]]
+            cpuflags = cpuinfo.proc_cpuinfo["flags"][cpus[0]]
             if "hwp" in cpuflags:
                 if self._msr.read_cpu_bits(PMEnable.MSR_PM_ENABLE,
                                            cast(tuple[int, int], PMEnable.FEATURES["hwp"]["bits"]),

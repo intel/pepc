@@ -150,10 +150,11 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
         else:
             self._sysfs_io = sysfs_io
 
-        vendor = self._cpuinfo.info["vendor"]
+        vendor = self._cpuinfo.proc_cpuinfo["vendor"]
         if vendor != "GenuineIntel":
-            raise ErrorNotSupported(f"Unsupported CPU vendor '{vendor}'{self._pman.hostmsg}\nOnly"
-                                    f"Intel CPU uncore frequency control is currently supported")
+            raise ErrorNotSupported(f"Unsupported CPU model {self._cpuinfo.cpudescr}'"
+                                    f"{self._pman.hostmsg}\nOnly Intel CPU uncore frequency "
+                                    f"control is currently supported")
 
         if not self._pman.exists(self._sysfs_base):
             _LOG.debug("The uncore frequency sysfs directory '%s' does not exist%s.",
@@ -614,7 +615,7 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
         Attempt to determine and load the required kernel module for uncore frequency support.
         """
 
-        vfm = self._cpuinfo.info["vfm"]
+        vfm = self._cpuinfo.proc_cpuinfo["vfm"]
         errmsg = ""
 
         # If the CPU supports MSR_UNCORE_RATIO_LIMIT, the uncore frequency driver is

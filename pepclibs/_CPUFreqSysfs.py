@@ -148,7 +148,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         if not self._check_no_ecores_bug:
             return
-        if not self._cpuinfo.info["hybrid"]:
+        if not self._cpuinfo.is_hybrid:
             return
 
         hybrid_cpus = self._cpuinfo.get_hybrid_cpus()

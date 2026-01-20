@@ -149,7 +149,7 @@ class PlatformInfo(_FeaturedMSR.FeaturedMSR):
         can re-define this method and call individual '_init_features_dict_*()' methods.
         """
 
-        if self._cpuinfo.info["hybrid"]:
+        if self._cpuinfo.is_hybrid:
             # On hybrid platforms the MSR shows the performance, not the ratio.
             for finfo in self._partial_features.values():
                 finfo["help"] = finfo["help"].replace("ratio", "performance")

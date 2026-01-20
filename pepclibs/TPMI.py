@@ -87,7 +87,7 @@ from pepclibs.helperlibs.Exceptions import ErrorPermissionDenied
 
 if typing.TYPE_CHECKING:
     from typing import Final, TypedDict, Sequence, Iterable, NoReturn, Literal, cast, Generator
-    from pepclibs.CPUInfoTypes import CPUInfoTypedDict
+    from pepclibs.ProcCpuinfo import ProcCpuinfoTypedDict
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
     class BFDictTypedDict(TypedDict, total=False):
@@ -343,22 +343,18 @@ class TPMI(ClassHelpers.SimpleCloseContext):
     """
 
     def __init__(self,
-                 cpu_info: CPUInfoTypedDict,
+                 proc_cpuinfo: ProcCpuinfoTypedDict,
                  pman: ProcessManagerType | None = None,
                  specdirs: Sequence[Path] = ()):
         """
         Initialize a class instance.
 
         Args:
-            cpu_info: The CPU information dictionary.
+            proc_cpuinfo: The CPU information dictionary.
             pman: The Process manager object that defines the host to access TPMI registers on. If
                   not provided, a local process manager will be used.
             specdirs: Spec directory paths on the local host to search for spec files. If not
                       provided, directories are auto-detected.
-
-        Notes:
-            - The reason for taking 'cpu_info' instead of a 'CPUInfo' object is to avoid a circular
-              dependency between the 'TPMI' and 'CPUInfo' modules.
         """
 
         self.specdirs = specdirs
@@ -376,12 +372,12 @@ class TPMI(ClassHelpers.SimpleCloseContext):
 
             self._pman = LocalProcessManager.LocalProcessManager()
 
-        vendor = cpu_info["vendor"]
+        vendor = proc_cpuinfo["vendor"]
         if vendor != "GenuineIntel":
             raise ErrorNotSupported(f"Unsupported CPU vendor '{vendor}'{self._pman.hostmsg}. "
                                     f"Only Intel CPUs support TPMI")
 
-        self._cpu_info = cpu_info.copy()
+        self.proc_cpuinfo = proc_cpuinfo
 
         # The features dictionary, maps feature name to the fdict (feature dictionary).
         self._fdicts: dict[str, dict[str, RegDictTypedDict]] = {}
@@ -440,7 +436,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
             with contextlib.suppress(Error):
                 self._pman.run(f"unmount {self._debugfs_mnt}")
 
-        ClassHelpers.close(self, close_attrs=("_pman",))
+        ClassHelpers.close(self, close_attrs=("_pman",), unref_attrs=("proc_cpuinfo",))
 
     def _get_debugfs_tpmi_dirs(self) -> list[Path]:
         """
@@ -802,7 +798,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
             if msg:
                 _raise_exc(msg)
 
-            if vfm == self._cpu_info["vfm"]:
+            if vfm == self.proc_cpuinfo["vfm"]:
                 return specpath / info["subdir"]
 
             if not first_vfm:
@@ -810,7 +806,9 @@ class TPMI(ClassHelpers.SimpleCloseContext):
 
         # No matching platform found, use the first platform.
         _LOG.notice("No matching platform for VFM %#x found in TPMI spec index file '%s', using "
-                    "spec files", self._cpu_info["vfm"], idxpath, vfms[first_vfm]["platform_name"])
+                    "spec files", self.proc_cpuinfo["vfm"], idxpath,
+                    vfms[first_vfm]["platform_name"])
+
         return specpath / vfms[first_vfm]["subdir"]
 
     def _build_sdicts(self):

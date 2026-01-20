@@ -60,7 +60,7 @@ def get_params(hostspec: str, username: str) -> Generator[_TestParamsTypedDict, 
 
         params["cpuinfo"] = cpuinfo
         try:
-            params["tpmi"] = TPMI.TPMI(cpuinfo.info, pman=pman)
+            params["tpmi"] = cpuinfo.get_tpmi()
         except ErrorNotSupported:
             pytest.skip(f"TPMI is not supported by {hostspec}.")
 
@@ -305,15 +305,15 @@ def test_specdirs(params: _TestParamsTypedDict):
 
     # Attempt to create a TPMI object with a non-existent specdir.
     with pytest.raises(Error):
-        TPMI.TPMI(cpuinfo.info, pman=pman, specdirs=[Path("/non/existent/dir")])
+        TPMI.TPMI(cpuinfo.proc_cpuinfo, pman=pman, specdirs=[Path("/non/existent/dir")])
 
     # Create a TPMI object with valid specdirs.
-    tpmi = TPMI.TPMI(cpuinfo.info, pman=pman, specdirs=params["tpmi"].specdirs)
+    tpmi = TPMI.TPMI(cpuinfo.proc_cpuinfo, pman=pman, specdirs=params["tpmi"].specdirs)
     tpmi.close()
 
     # Create a TPMI object with a mix of valid and non-existent specdirs.
     specdirs = [Path("/non/existent/dir"), *params["tpmi"].specdirs]
-    tpmi = TPMI.TPMI(cpuinfo.info, pman=pman, specdirs=specdirs)
+    tpmi = TPMI.TPMI(cpuinfo.proc_cpuinfo, pman=pman, specdirs=specdirs)
     tpmi.close()
 
 _TMP_UFS_SPEC_FILE_CONTENTS: Final[str] = r"""# Modified version of the UFS spec file for testing.
@@ -369,7 +369,7 @@ def _prepare_specdir(params: _TestParamsTypedDict, tmp_path: Path) -> Path:
 
     for specdir in specdirs:
         try:
-            with TPMI.TPMI(cpuinfo.info, pman=pman, specdirs=[specdir]) as tpmi:
+            with TPMI.TPMI(cpuinfo.proc_cpuinfo, pman=pman, specdirs=[specdir]) as tpmi:
                 for _, addr, instance in tpmi.iter_feature("ufs"):
                     tpmi.read_register("ufs", addr, instance, "UFS_HEADER",
                                        bfname="INTERFACE_VERSION")
@@ -418,7 +418,7 @@ def test_spec_file_override(params: _TestParamsTypedDict, tmp_path: Path):
 
     specdirs = [tmpspecdir, *params["tpmi"].specdirs]
 
-    with TPMI.TPMI(cpuinfo.info, pman=pman, specdirs=specdirs) as tpmi:
+    with TPMI.TPMI(cpuinfo.proc_cpuinfo, pman=pman, specdirs=specdirs) as tpmi:
         # Verify that original spec file is overridden.
         for _, addr, instance in tpmi.iter_feature("ufs"):
             tpmi.read_register("ufs", addr, instance, "UFS_SOMETHING", bfname="SOME_FIELD")

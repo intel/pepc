@@ -21,33 +21,6 @@ RelNumsType = Mapping[int, AbsNumsType]
 
 ScopeNameType = Literal["CPU", "core", "module", "die", "node", "package", "global"]
 
-class CPUInfoTypedDict(TypedDict, total=False):
-    """
-    Type for the CPU information dictionary ('CPUInfo.info').
-
-    Attributes:
-        arch: The CPU architecture (e.g., "x86_64").
-        vendor: The CPU vendor (e.g., "GenuineIntel").
-        packages: The number of CPU packages.
-        family: The CPU family number.
-        model: The CPU model number.
-        modelname: The full name of the CPU model.
-        flags: A dictionary mapping CPU numbers to their flags.
-        hybrid: Whether the CPU is a hybrid architecture (e.g., Intel's P-core/E-core).
-        vfm: The vendor-family-model identifier for the CPU.
-    """
-
-    arch: str
-    vendor: str
-    family: int
-    model: int
-    modelname: str
-    flags: dict[int, set[str]]
-    hybrid: bool
-    vfm: int
-
-CPUInfoKeyType = Literal["arch", "vendor", "family", "model", "modelname", "flags", "hybrid", "vfm"]
-
 HybridCPUKeyType = Literal["pcore", "ecore", "lpecore"]
 
 class HybridCPUKeyInfoType(TypedDict, total=False):

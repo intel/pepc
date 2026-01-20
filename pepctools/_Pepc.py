@@ -627,18 +627,18 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
               instances)."""
     subpars2.add_argument("-i", "--instances", help=text)
 
-    text = """Comma-separated list of cluster numbers within TPMI instances (UFS-only, defaults to
-              all clusters)."""
+    text = """Comma-separated list of cluster numbers to read registers from. This option is only
+              relevant for the 'ufs' TPMI feature (defaults to all clusters)."""
     subpars2.add_argument("-c", "--clusters", help=text)
 
     text = """Comma-separated list of TPMI register names to read. Defaults to all registers."""
     subpars2.add_argument("-R", "--registers", help=text)
 
-    text = """Comma-separated list of TPMI register bit field names to decode. Defaults decoding all
-              bit-fields."""
+    text = """Comma-separated list of TPMI register bit field names to decode. Defaults to decoding
+              all bit fields."""
     subpars2.add_argument("-b", "--bitfields", metavar="BITFIELDS", dest="bfnames", help=text)
 
-    text = """Do not decode and display bit-field values, just read and display register values."""
+    text = """Do not decode and display bit field values, just read and display register values."""
     subpars2.add_argument("-n", "--no-bitfields", action="store_true", help=text)
 
     text = """Output information in YAML format."""
@@ -673,8 +673,8 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     text = """Name of the TPMI register to write to."""
     subpars2.add_argument("-R", "--register", dest="regname", help=text, required=True)
 
-    text = """Name of the TPMI register bitfield to write to. If not specified, write to the
-              register, not a bit field of the register."""
+    text = """Name of the TPMI register bit field to write to. If not specified, write to the entire
+              register."""
     subpars2.add_argument("-b", "--bitfield", metavar="BITFIELD", dest="bfname", help=text)
 
     text = "The value to write to the TPMI register or its bit field."
@@ -949,7 +949,13 @@ def _tpmi_ls_command(args: argparse.Namespace, pman: ProcessManagerType):
     _PepcTpmi.tpmi_ls_command(args, pman)
 
 def _tpmi_read_command(args: argparse.Namespace, pman: ProcessManagerType):
-    """Implements the 'tpmi read' command."""
+    """
+    Implement the 'tpmi read' command.
+
+    Args:
+        args: Parsed command-line arguments.
+        pman: Process manager object for the host to run the command for.
+    """
 
     # pylint: disable-next=import-outside-toplevel
     from pepctools import _PepcTpmi
@@ -957,7 +963,13 @@ def _tpmi_read_command(args: argparse.Namespace, pman: ProcessManagerType):
     _PepcTpmi.tpmi_read_command(args, pman)
 
 def _tpmi_write_command(args: argparse.Namespace, pman: ProcessManagerType):
-    """Implements the 'tpmi write' command."""
+    """
+    Implement the 'tpmi write' command.
+
+    Args:
+        args: Parsed command-line arguments.
+        pman: Process manager object for the host to run the command for.
+    """
 
     # pylint: disable-next=import-outside-toplevel
     from pepctools import _PepcTpmi
@@ -984,7 +996,7 @@ def _aspm_config_command(args: argparse.Namespace, pman: ProcessManagerType):
 
     Args:
         args: Parsed command-line arguments.
-        pman: Process manager object for the host to run the command on..
+        pman: Process manager object for the host to run the command for.
     """
 
     # pylint: disable-next=import-outside-toplevel

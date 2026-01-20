@@ -25,7 +25,7 @@ Naming conventions:
              per-core, per-package, etc.
     - iosname: The I/O scope name of the property. Typically the same as 'sname', but may may be
                different to the functional scope in case of some MSR-backed properties. More
-               information: https://github.com/intel/pepc/blob/main/docs/misc-msr-scope.md
+               information: docs/misc-msr-scope.md
     - core siblings: All CPUs sharing the same core. For example, "CPU6 core siblings" are all CPUs
                      sharing the same core as CPU 6.
     - module siblings: All CPUs sharing the same module.
@@ -37,13 +37,10 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import copy
 import typing
-from typing import get_args
 
 from pepclibs import CPUInfo
 from pepclibs.helperlibs import Logging, Trivial, Human, ClassHelpers, EmulProcessManager
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
-
-from pepclibs.CPUInfoTypes import ScopeNameType
 
 if typing.TYPE_CHECKING:
     from typing import Any, Sequence, Literal, Generator, Final, cast
@@ -53,7 +50,7 @@ if typing.TYPE_CHECKING:
     from pepclibs._PropsTypes import PVInfoTypedDict, PVInfoTypedDictInt, PVInfoTypedDictFloat
     from pepclibs._PropsTypes import PropertyTypedDict, PropertyValueType, MechanismTypedDict
     from pepclibs._PropsTypes import MechanismNameType
-    from pepclibs.CPUInfoTypes import AbsNumsType, RelNumsType
+    from pepclibs.CPUInfoTypes import AbsNumsType, RelNumsType, ScopeNameType
 
     class _PropertyTypedDict(PropertyTypedDict):
         """
@@ -70,6 +67,8 @@ if typing.TYPE_CHECKING:
         iosname: ScopeNameType | None
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
+
+_SCOPE_NAMES_SET = {"CPU", "core", "module", "die", "node", "package", "global"}
 
 MECHANISMS: Final[dict[MechanismNameType, MechanismTypedDict]] = {
     "sysfs" : {
@@ -399,7 +398,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         sname = self._props[pname]["sname"]
 
-        if sname not in get_args(ScopeNameType):
+        if sname not in _SCOPE_NAMES_SET:
             raise Error(f"BUG: Unknown scope name '{sname}'")
 
         if sname == "CPU":

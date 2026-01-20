@@ -120,10 +120,11 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
         else:
             self._pman = pman
 
-        vendor = self._cpuinfo.info["vendor"]
+        vendor = self._cpuinfo.proc_cpuinfo["vendor"]
         if vendor != "GenuineIntel":
-            raise ErrorNotSupported(f"Unsupported CPU vendor '{vendor}'{self._pman.hostmsg}\nOnly"
-                                    f"Intel CPU uncore frequency control is currently supported")
+            raise ErrorNotSupported(f"Unsupported CPU model {self._cpuinfo.cpudescr}'"
+                                    f"{self._pman.hostmsg}\nOnly Intel CPU uncore frequency "
+                                    f"control is currently supported")
 
     def close(self):
         """Uninitialize the class object."""

@@ -71,12 +71,12 @@ def override_cpu_model(cpuinfo: CPUInfo.CPUInfo, vfmarg: str):
         family_str = split[1]
         model_str = split[2]
     elif len(split) == 2:
-        vendor = cpuinfo.info["vendor"]
+        vendor = cpuinfo.proc_cpuinfo["vendor"]
         family_str = split[0]
         model_str = split[1]
     else:
-        vendor = cpuinfo.info["vendor"]
-        family_str = str(cpuinfo.info["family"])
+        vendor = cpuinfo.proc_cpuinfo["vendor"]
+        family_str = str(cpuinfo.proc_cpuinfo["family"])
         model_str = split[0]
 
     if vendor not in CPUModels.X86_CPU_VENDORS:
@@ -94,10 +94,10 @@ def override_cpu_model(cpuinfo: CPUInfo.CPUInfo, vfmarg: str):
     if model < 0 or model > 4095:
         raise ErrorBadFormat(f"Bad CPU model '{model_str}': Should be in the range of 0-4095")
 
-    cpuinfo.info["vendor"] = vendor
-    cpuinfo.info["family"] = family
-    cpuinfo.info["model"] = model
-    cpuinfo.info["vfm"] = CPUModels.make_vfm(vendor, family, model)
+    cpuinfo.proc_cpuinfo["vendor"] = vendor
+    cpuinfo.proc_cpuinfo["family"] = family
+    cpuinfo.proc_cpuinfo["model"] = model
+    cpuinfo.proc_cpuinfo["vfm"] = CPUModels.make_vfm(vendor, family, model)
 
     cpuinfo.cpudescr += f", overridden with {vfmarg}"
 

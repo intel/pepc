@@ -15,9 +15,6 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import sys
 import typing
-import contextlib
-
-from numpy import int_
 
 from pepclibs import TPMI, CPUInfo
 from pepclibs.helperlibs import Logging, Trivial, YAML
@@ -322,12 +319,8 @@ def tpmi_ls_command(args: argparse.Namespace, pman: ProcessManagerType):
     if cmdl["unknown"] and cmdl["topology"]:
         raise Error("'--unknown' and '--topology' options cannot be used together")
 
-    with contextlib.ExitStack() as stack:
-        cpuinfo = CPUInfo.CPUInfo(pman)
-        stack.enter_context(cpuinfo)
-
-        tpmi = TPMI.TPMI(cpuinfo.info, pman=pman)
-        stack.enter_context(tpmi)
+    with CPUInfo.CPUInfo(pman) as cpuinfo:
+        tpmi = cpuinfo.get_tpmi()
 
         sdicts = tpmi.get_known_features()
         if not sdicts:
@@ -432,12 +425,8 @@ def tpmi_read_command(args: argparse.Namespace, pman: ProcessManagerType):
 
     cmdl = _get_read_cmdline_args(args)
 
-    with contextlib.ExitStack() as stack:
-        cpuinfo = CPUInfo.CPUInfo(pman)
-        stack.enter_context(cpuinfo)
-
-        tpmi = TPMI.TPMI(cpuinfo.info, pman=pman)
-        stack.enter_context(tpmi)
+    with CPUInfo.CPUInfo(pman) as cpuinfo:
+        tpmi = cpuinfo.get_tpmi()
 
         sdicts = tpmi.get_known_features()
 
@@ -511,7 +500,7 @@ def tpmi_read_command(args: argparse.Namespace, pman: ProcessManagerType):
         else:
             _print_tpmi_info(tpmi, info)
 
-def tpmi_write_command(args, pman):
+def tpmi_write_command(args: argparse.Namespace, pman: ProcessManagerType):
     """
     Implement the 'tpmi write' command.
 
@@ -522,12 +511,8 @@ def tpmi_write_command(args, pman):
 
     cmdl = _get_write_cmdline_args(args)
 
-    with contextlib.ExitStack() as stack:
-        cpuinfo = CPUInfo.CPUInfo(pman)
-        stack.enter_context(cpuinfo)
-
-        tpmi = TPMI.TPMI(cpuinfo.info, pman=pman)
-        stack.enter_context(tpmi)
+    with CPUInfo.CPUInfo(pman) as cpuinfo:
+        tpmi = cpuinfo.get_tpmi()
 
         if cmdl["bfname"]:
             bfname_str = f", bit-field '{cmdl['bfname']}'"

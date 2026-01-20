@@ -270,7 +270,7 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
 
         self._partial_features = copy.deepcopy(FEATURES)
 
-        model = cpuinfo.info["vfm"]
+        model = cpuinfo.proc_cpuinfo["vfm"]
 
         iosname: ScopeNameType
         if model in _MODULE_IO_SCOPE_VFMS:
@@ -303,13 +303,12 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
         platform-specific information.
         """
 
-        info = self._cpuinfo.info
-        vfm = info["vfm"]
+        vfm = self._cpuinfo.proc_cpuinfo["vfm"]
         if vfm in _PKG_CST_LIMITS:
             limits = _PKG_CST_LIMITS[vfm]
         else:
-            _LOG.warning("Unknown Package C-state limits for CPU model %s (VFM %d), assuming only "
-                         "PC0 is supported", info['modelname'], info['vfm'])
+            _LOG.warning("Unknown Package C-state limits for CPU model %s, assuming only "
+                         "PC0 is supported", self._cpuinfo.cpudescr)
             limits = _UNKNOWN_PKG_CST_LIMITS
 
         finfo = self._features["pkg_cstate_limit"]

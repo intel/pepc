@@ -122,8 +122,8 @@ def _get_emulated_cpuinfos(pman: ProcessManagerType) -> Generator[CPUInfo.CPUInf
             yield cpuinfo
             cpuonline.online(cpus=cpus)
 
-        if cpuinfo.info["vfm"] == CPUModels.MODELS["ICELAKE_X"]["vfm"]:
-            cpuinfo.info["vfm"] = 255
+        if cpuinfo.proc_cpuinfo["vfm"] == CPUModels.MODELS["ICELAKE_X"]["vfm"]:
+            cpuinfo.proc_cpuinfo["vfm"] = 255
             yield cpuinfo
 
 def _get_cpuinfos(params: CommonTestParamsTypedDict) -> Generator[CPUInfo.CPUInfo, None, None]:
