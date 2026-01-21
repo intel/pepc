@@ -22,7 +22,7 @@ Terminology:
     * known feature - A supported feature with a corresponding spec file, allowing decoding and
                       usage.
     * unknown feature - A supported feature without a spec file.
-    * feature ID - A unique integer identifier for a feature.
+    * feature_id - A unique integer identifier for a feature.
     * fdict - A dictionary describing TPMI registers associated with a feature. The fdict structure
               matches the "registers" section of the feature spec file. Keys are register names.
               Values are register dictionaries (regdicts). Information outside "registers" is stored
@@ -118,7 +118,7 @@ if typing.TYPE_CHECKING:
             offset: Offset of the register within the specification.
             width: Width of the register in bits.
             readonly: Whether the register is read-only.
-            fields: The bit field dictionaries (bfdicts), describing the bit fields within the
+            fields: The bit field dictionaries (bfdicts) describing the bit fields within the
                     register.
         """
 
@@ -179,7 +179,7 @@ _SPECS_PATH_ENVVAR: Final[str] = "PEPC_TPMI_DATA_PATH"
 
 # Maximum count of spec files per directory.
 _MAX_SPEC_FILES: Final[int] = 256
-# Maximum count of non-YAML files (extention is other than '.yml' or '.yaml') per directory.
+# Maximum count of non-YAML files (extension is other than '.yml' or '.yaml') per directory.
 _MAX_NON_YAML: Final[int] = 32
 # Maximum count of spec file loading/parsing errors during scanning per spec directory.
 _MAX_SCAN_LOAD_ERRORS: Final[int] = 4
@@ -255,7 +255,7 @@ def _load_sdict(specpath: Path) -> SDictTypedDict:
             fobj = open(specpath, "r", encoding="utf-8") # pylint: disable=consider-using-with
         except OSError as err:
             msg = Error(str(err)).indent(2)
-            raise Error(f"Failed to open spec file '{specpath}:\n{msg}") from err
+            raise Error(f"Failed to open spec file '{specpath}':\n{msg}") from err
 
         loader = yaml.SafeLoader(fobj)
         event = None
@@ -304,6 +304,222 @@ def _load_sdict(specpath: Path) -> SDictTypedDict:
 
     sdict["path"] = specpath
     return sdict
+
+def _check_keys(check_keys: Iterable[str],
+                allowed_keys: set[str],
+                mandatory_keys: set[str],
+                where: str) -> str:
+    """
+    Validate given keys against allowed and mandatory keys.
+
+    Args:
+        check_keys: The keys to validate.
+        allowed_keys: Keys that are permitted in the dictionary.
+        mandatory_keys: Keys that must be present in the dictionary.
+        where: Contextual information for error messages.
+
+    Returns:
+        An error message if validation fails, otherwise an empty string.
+    """
+
+    for key in check_keys:
+        if key not in allowed_keys:
+            keys_str = ", ".join(allowed_keys)
+            return f"Unexpected key '{key}' {where}, allowed keys are: {keys_str}"
+
+    for key in mandatory_keys:
+        if key not in check_keys:
+            keys_str = ", ".join(mandatory_keys)
+            return f"Missing key '{key}' {where}, mandatory keys are: {keys_str}"
+
+    return ""
+
+def _parse_index_file(specpath: Path, vfm: int = -1, subdir: str = "") -> Path:
+    """
+    Parse the 'index.yml' file in a spec directory and return path to the spec files
+    sub-directory containing spec files for the current platform.
+
+    Args:
+        specpath: Path to the spec directory to parse the index file for.
+        vfm: The VFM value to match against the index file entries. If -1, do not match against VFM.
+        subdir: The sub-directory name to match against the index file entries. If empty, do not
+                match against sub-directory name.
+
+    Returns:
+        Path to a sub-directory within the spec directory containing spec files for the
+        current platform
+
+    Notes:
+        Matches first against 'vfm', then against 'subdir'. If no matching entry is found, the
+        first entry in the index file is used.
+
+    """
+
+    def _raise_exc(msg: str) -> NoReturn:
+        """
+        Raise an 'Error' exception with a formatted message.
+
+        Args:
+            msg: The error message to include in the exception.
+        """
+
+        pfx = f"Bad index file '{specpath / 'index.yml'}'"
+        raise Error(f"{pfx}:\n{Error(msg).indent(2)}")
+
+    idxpath = specpath / "index.yml"
+    idxdict: dict =  YAML.load(idxpath)
+
+    keys = {"version", "vfms"}
+    where = "at the top level of the index file"
+    msg = _check_keys(idxdict, keys, keys, where)
+    if msg:
+        _raise_exc(msg)
+
+    version: str = idxdict["version"]
+    if version != "1.0":
+        _raise_exc(f"Unsupported index format version '{version}': only version '1.0' is "
+                   f"supported")
+
+    first_vfm = ""
+    vfms: dict[str, dict] = idxdict["vfms"]
+    for _vfm, info in vfms.items():
+        keys = {"subdir", "platform_name"}
+        where = f"in VFM={_vfm} definition"
+        msg = _check_keys(info, keys, keys, where)
+        if msg:
+            _raise_exc(msg)
+
+        if vfm != -1 and _vfm == vfm:
+            return specpath / info["subdir"]
+        if subdir and info["subdir"] == subdir:
+            return specpath / info["subdir"]
+
+        if not first_vfm:
+            first_vfm = _vfm
+
+    match_str = ""
+    if vfm != -1:
+        match_str += f"VFM {vfm:#x}"
+        if subdir:
+            match_str += " or"
+    if subdir:
+        match_str += f" subdir name '{subdir}'"
+
+    if match_str:
+        _LOG.notice("No matching platform for %s found in TPMI spec index file '%s', using "
+                    "spec files for '%s'", match_str, idxpath, vfms[first_vfm]["platform_name"])
+    else:
+        _LOG.debug("No match criteria provided, using the first platform '%s' from TPMI spec "
+                   "index file '%s'", vfms[first_vfm]["platform_name"], idxpath)
+
+    return specpath / vfms[first_vfm]["subdir"]
+
+def get_features(specdirs: Sequence[Path] = (),
+                 vfm: int = -1,
+                 subdir: str = "") -> tuple[dict[str, SDictTypedDict], list[Path]]:
+    """
+    Retrieve a dictionary of sdicts (specification dictionaries) for all features described by
+    available TPMI spec files. Also return the list of spec directories that were scanned. Do not
+    verify whether the features are actually supported by the system, just scan the available spec
+    files.
+
+    If 'specdirs' is not provided, auto-detect spec directories.
+
+    Args:
+        specdirs: Spec directory paths on the local host to search for spec files. If not provided,
+                  directories are auto-detected.
+        vfm: The VFM value to match against specdir index file entries. If -1, do not match
+             against VFM.
+        subdir: The sub-directory name to match against the index file entries. If empty, do not
+                match against sub-directory name.
+
+    Returns:
+        A tuple containing:
+            * A dictionary mapping feature names to their spec file dictionaries (sdicts).
+            * A list of Path objects representing the spec directories that were scanned.
+
+    Notes:
+        1. During the scanning process, only the headers of spec files are read. The entire YAML
+           file is not parsed, to avoid the overhead of loading complete spec files.
+        2. Every spec directory must contain an 'index.yml' file, which is used to find the
+           sub-directory containing spec files for the current platform.
+        3. The 'vfm' and 'subdir' arguments are used to select the appropriate sub-directory from
+           the index file.
+        4. If neither 'vfm' nor 'subdir' match any entry in the index file, the first entry in the
+           index file is used.
+    """
+
+    if not specdirs:
+        specdirs = _find_spec_dirs()
+
+    # Keep absolute paths to spec directories - in case of an error a directory path like 'tpmi'
+    # may look confusing compared to a path like '/my/path/tpmi'.
+    _specdirs: list[Path] = []
+    for specdir in specdirs:
+        _specdirs.append(Path(specdir).resolve().absolute())
+    specdirs = _specdirs
+
+    sdicts: dict[str, SDictTypedDict] = {}
+    for specdir in specdirs:
+        spec_files_cnt = 0
+        non_yaml_cnt = 0
+        load_errors_cnt = 0
+
+        # Parse the index file and get path to the sub-directory containing spec files for the
+        # current platform.
+        try:
+            specsubdir = _parse_index_file(specdir, vfm=vfm, subdir=subdir)
+        except Error as err:
+            _LOG.warning("Failed to parse TPMI spec index file in directory '%s':\n%s",
+                         specdir, err.indent(2))
+            continue
+
+        try:
+            _lsdir = os.listdir(specsubdir)
+        except OSError as err:
+            _LOG.warning("Failed to access TPMI spec files directory '%s':\n%s", specsubdir,
+                         Error(str(err)).indent(2))
+            continue
+
+        for specname in _lsdir:
+            if not specname.endswith(".yml") and not specname.endswith(".yaml"):
+                non_yaml_cnt += 1
+                if non_yaml_cnt > _MAX_NON_YAML:
+                    raise Error(f"Too many non-YAML files in '{specsubdir}', maximum allowed "
+                                f"count is {_MAX_NON_YAML}")
+                continue
+
+            try:
+                specpath = specsubdir / specname
+                sdict = _load_sdict(specpath)
+            except Error as err:
+                load_errors_cnt += 1
+                if load_errors_cnt > _MAX_SCAN_LOAD_ERRORS:
+                    raise Error(f"Failed to load spec file '{specpath}':\n{err.indent(2)}\n"
+                                f"Reached the maximum spec file load errors count of "
+                                f"{_MAX_SCAN_LOAD_ERRORS}") from err
+                continue
+
+            if sdict["name"] in sdicts:
+                # A spec file for this feature was already loaded.
+                _LOG.debug("Spec file for TPMI feature '%s' was already loaded from '%s', "
+                           "skipping '%s'",
+                           sdict["name"], sdicts[sdict["name"]]["path"], specpath)
+                continue
+
+            spec_files_cnt += 1
+            if spec_files_cnt > _MAX_SPEC_FILES:
+                raise Error(f"Too many spec files in '{specsubdir}', maximum allowed number of "
+                            f"spec files is {_MAX_SPEC_FILES}")
+
+            sdicts[sdict["name"]] = sdict
+
+    if not sdicts:
+        paths = "\n * ".join([str(path) for path in specdirs])
+        raise ErrorNotSupported(f"No TPMI spec files found, checked the following paths:\n"
+                                f" * {paths}")
+
+    return sdicts, specdirs
 
 class TPMI(ClassHelpers.SimpleCloseContext):
     """
@@ -369,8 +585,6 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                       provided, directories are auto-detected.
         """
 
-        self.specdirs = specdirs
-
         self._close_pman = pman is None
 
         # Whether the TPMI interface is read-only.
@@ -386,23 +600,13 @@ class TPMI(ClassHelpers.SimpleCloseContext):
 
         vendor = proc_cpuinfo["vendor"]
         if vendor != "GenuineIntel":
-            raise ErrorNotSupported(f"Unsupported CPU vendor '{vendor}'{self._pman.hostmsg}. "
+            raise ErrorNotSupported(f"Unsupported CPU vendor '{vendor}'{self._pman.hostmsg}: "
                                     f"Only Intel CPUs support TPMI")
 
         self.proc_cpuinfo = proc_cpuinfo
 
         # The features dictionary, maps feature name to the fdict (feature dictionary).
         self._fdicts: dict[str, dict[str, RegDictTypedDict]] = {}
-
-        if not self.specdirs:
-            self.specdirs = _find_spec_dirs()
-
-        # Keep absolute paths to spec directories - in case of an error a directory path like 'tpmi'
-        # may look confusing compared to a path like '/my/path/tpmi'.
-        specdirs = self.specdirs
-        self.specdirs = []
-        for specdir in specdirs:
-            self.specdirs.append(Path(specdir).resolve().absolute())
 
         # The debugfs mount point.
         self._debugfs_mnt: Path
@@ -419,7 +623,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         self._sdicts: dict[str, SDictTypedDict] = {}
 
         # Scan the spec directories and build sdicts - partially loaded spec file dictionaries.
-        self._build_sdicts()
+        self._sdicts, self.specdirs = get_features(specdirs=specdirs, vfm=proc_cpuinfo["vfm"])
 
         # The feature ID -> feature name dictionary (supported features only).
         self._fid2fname: dict[int, str] = {}
@@ -555,7 +759,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                 if major_version != 0 or minor_version > 3:
                     raise ErrorNotSupported(f"Unsupported TPMI interface version "
                                             f"{major_version}.{minor_version} for feature "
-                                            f"'{fname}', address {addr}{self._pman.hostmsg}.\n"
+                                            f"'{fname}', address {addr}{self._pman.hostmsg}: "
                                             f"Only TPMI up to version 0.3 is supported.")
 
                 # Verify version consistency across all instances.
@@ -573,7 +777,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                                     f"{expected_minor_version}, got {minor_version}")
 
         if not mdmap:
-            raise ErrorNotFound(f"No instances or only dead instances found for TPMI feature "
+            raise ErrorNotFound(f"No instances or only dead instances were found for TPMI feature "
                                 f"'{fname}', address {addr}{self._pman.hostmsg}")
 
         if not version_reg_found:
@@ -720,164 +924,6 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         self._fmaps = fmaps
         self._unknown_fids = unknown_fids
 
-    def _check_keys(self,
-                    check_keys: Iterable[str],
-                    allowed_keys: set[str],
-                    mandatory_keys: set[str],
-                    where: str) -> str:
-        """
-        Validate given keys against allowed and mandatory keys.
-
-        Args:
-            check_keys: The keys to validate.
-            allowed_keys: Keys that are permitted in the dictionary.
-            mandatory_keys: Keys that must be present in the dictionary.
-            where: Contextual information for error messages.
-
-        Returns:
-            An error message if validation fails, otherwise an empty string.
-        """
-
-        for key in check_keys:
-            if key not in allowed_keys:
-                keys_str = ", ".join(allowed_keys)
-                return f"Unexpected key '{key}' {where}, allowed keys are: {keys_str}"
-
-        for key in mandatory_keys:
-            if key not in check_keys:
-                keys_str = ", ".join(mandatory_keys)
-                return f"Missing key '{key}' {where}, mandatory keys are: {keys_str}"
-
-        return ""
-
-    def _parse_index_file(self, specpath: Path) -> Path:
-        """
-        Parse the 'index.yml' file in a spec directory and return path to the spec files
-        sub-directory containing spec files for the current platform.
-
-        Args:
-            specpath: Path to the spec directory to parse the index file for.
-
-        Returns:
-            Path to a sub-directory within the spec directory containing spec files for the
-            current platform
-        """
-
-        def _raise_exc(msg: str) -> NoReturn:
-            """
-            Raise an 'Error' exception with a formatted message.
-
-            Args:
-                msg: The error message to include in the exception.
-            """
-
-            pfx = f"Bad index file '{specpath / 'index.yml'}'"
-            raise Error(f"{pfx}:\n{Error(msg).indent(2)}")
-
-        idxpath = specpath / "index.yml"
-        idxdict: dict =  YAML.load(idxpath)
-
-        keys = {"version", "vfms"}
-        where = "at the top level of the index file"
-        msg = self._check_keys(idxdict, keys, keys, where)
-        if msg:
-            _raise_exc(msg)
-
-        version: str = idxdict["version"]
-        if version != "1.0":
-            _raise_exc(f"Unsupported index format version '{version}': only version '1.0' is "
-                       f"supported")
-
-        first_vfm = ""
-        vfms: dict[str, dict] = idxdict["vfms"]
-        for vfm, info in vfms.items():
-            keys = {"subdir", "platform_name"}
-            where = f"in VFM={vfm} definition"
-            msg = self._check_keys(info, keys, keys, where)
-            if msg:
-                _raise_exc(msg)
-
-            if vfm == self.proc_cpuinfo["vfm"]:
-                return specpath / info["subdir"]
-
-            if not first_vfm:
-                first_vfm = vfm
-
-        # No matching platform found, use the first platform.
-        _LOG.notice("No matching platform for VFM %#x found in TPMI spec index file '%s', using "
-                    "spec files", self.proc_cpuinfo["vfm"], idxpath,
-                    vfms[first_vfm]["platform_name"])
-
-        return specpath / vfms[first_vfm]["subdir"]
-
-    def _build_sdicts(self):
-        """
-        Scan the spec directories, partially load spec files and build the spec dictionaries. The
-        goal is to get basic information about all known TPMI features supported by the system.
-        """
-
-        sdicts: dict[str, SDictTypedDict] = {}
-        for specdir in self.specdirs:
-            spec_files_cnt = 0
-            non_yaml_cnt = 0
-            load_errors_cnt = 0
-
-            # Parse the index file and get path to the sub-directory containing spec files for the
-            # current platform.
-            try:
-                specsubdir = self._parse_index_file(specdir)
-            except Error as err:
-                _LOG.warning("Failed to parse TPMI spec index file in directory '%s':\n%s",
-                             specdir, err.indent(2))
-                continue
-
-            try:
-                _lsdir = os.listdir(specsubdir)
-            except OSError as err:
-                _LOG.warning("Failed to access TPMI spec files directory '%s':\n%s", specsubdir,
-                             Error(str(err)).indent(2))
-                continue
-
-            for specname in _lsdir:
-                if not specname.endswith(".yml") and not specname.endswith(".yaml"):
-                    non_yaml_cnt += 1
-                    if non_yaml_cnt > _MAX_NON_YAML:
-                        raise Error(f"Too many non-YAML files in '{specsubdir}', maximum allowed "
-                                    f"count is {_MAX_NON_YAML}")
-                    continue
-
-                try:
-                    specpath = specsubdir / specname
-                    sdict = _load_sdict(specpath)
-                except Error as err:
-                    load_errors_cnt += 1
-                    if load_errors_cnt > _MAX_SCAN_LOAD_ERRORS:
-                        raise Error(f"Failed to load spec file '{specpath}':\n{err.indent(2)}\n"
-                                    f"Reached the maximum spec file load errors count of "
-                                    f"{_MAX_SCAN_LOAD_ERRORS}") from err
-                    continue
-
-                if sdict["name"] in sdicts:
-                    # Spec file for this feature was already loaded.
-                    _LOG.debug("Spec file for TPMI feature '%s' was already loaded from '%s', "
-                               "skipping '%s'",
-                               sdict["name"], sdicts[sdict["name"]]["path"], specpath)
-                    continue
-
-                spec_files_cnt += 1
-                if spec_files_cnt > _MAX_SPEC_FILES:
-                    raise Error(f"Too many spec files in '{specsubdir}', maximum allowed spec "
-                                f"files count is {_MAX_SPEC_FILES}")
-
-                sdicts[sdict["name"]] = sdict
-
-        if not sdicts:
-            paths = "\n * ".join([str(path) for path in self.specdirs])
-            raise ErrorNotSupported(f"No TPMI spec files found, checked the following paths:\n"
-                                    f" * {paths}")
-
-        self._sdicts = sdicts
-
     def _load_and_format_fdict(self, fname: str, specpath: Path) -> dict[str, RegDictTypedDict]:
         """
         Load and validate a TPMI spec file, then return the fdict.
@@ -913,7 +959,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         # The allowed and the mandatory top-level key names.
         keys = {"name", "desc", "feature_id", "registers"}
         where = "at the top level of the spec file"
-        msg = self._check_keys(spec, keys, keys, where)
+        msg = _check_keys(spec, keys, keys, where)
         if msg:
             _raise_exc(msg)
 
@@ -926,7 +972,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
             # The allowed and the mandatory regdict key names.
             keys = {"offset", "width", "fields"}
             where = f"in the '{regname}' TPMI register definition"
-            msg = self._check_keys(regdict, keys, keys, where)
+            msg = _check_keys(regdict, keys, keys, where)
             if msg:
                 _raise_exc(msg)
 
@@ -957,7 +1003,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                 # The allowed and the mandatory bit field dictionary key names.
                 keys = {"bits", "readonly", "desc"}
                 where = f"in bit field '{bfname}' of the '{regname}' TPMI register definition"
-                msg = self._check_keys(bfdict, keys, keys, where)
+                msg = _check_keys(bfdict, keys, keys, where)
                 if msg:
                     _raise_exc(msg)
 
@@ -1187,7 +1233,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
 
     def _get_bitfield(self, regval: int, fname: str, regname: str, bfname: str) -> int:
         """
-        Extract the value of a specific bit field from a register value.
+        Extract the value of a bit field from a register value.
 
         Args:
             regval: The value of the register to extract the bit field from.
@@ -1299,12 +1345,12 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         if bfname:
             bfdict = self._get_bfdict(fname, regname, bfname)
             if bfdict["readonly"]:
-                raise ErrorPermissionDenied(f"TPMI register '{regname}' bit field '{bfname}' of "
-                                            f"feature '{fname}' is read-only"
+                raise ErrorPermissionDenied(f"Bit field '{bfname}' of TPMI register '{regname}' "
+                                            f"in feature '{fname}' is read-only"
                                             f"{self._pman.hostmsg}")
         else:
             if regdict["readonly"]:
-                raise ErrorPermissionDenied(f"TPMI register '{regname}' of feature '{fname}' is "
+                raise ErrorPermissionDenied(f"TPMI register '{regname}' in feature '{fname}' is "
                                             f"read-only{self._pman.hostmsg}")
 
         offset = regdict["offset"]
@@ -1316,7 +1362,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                         f"{width}-bit integer")
         max_value = (1 << width) - 1
         if value > max_value:
-            raise Error(f"Too large value '{value}' for a {width}-bit register '{regname}")
+            raise Error(f"Too large value '{value}' for a {width}-bit register '{regname}'")
 
         mdmap = self._get_mdmap(fname, addr)
 
