@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2023-2025 Intel Corporation
+# Copyright (C) 2023-2026 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
-# Authors: Tero Kristo <tero.kristo@linux.intel.com>
-#          Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
+# Authors: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
+#          Tero Kristo <tero.kristo@linux.intel.com>
 
 """
 Implement the 'pepc tpmi' command.
@@ -22,7 +22,7 @@ from pepclibs.helperlibs.Exceptions import Error
 
 if typing.TYPE_CHECKING:
     import argparse
-    from typing import TypedDict, Iterable
+    from typing import TypedDict, Iterable, Generator
     from pepclibs.TPMI import RegDictTypedDict
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
@@ -33,28 +33,28 @@ if typing.TYPE_CHECKING:
 
         Attributes:
             value: The register value.
-            fields: A dictionary of bit-field names and their values.
+            fields: A dictionary of bit field names and their values.
         """
 
         value: int
         fields: dict[str, int]
 
-    class _PkgInstnacesTypedDict(TypedDict, total=False):
+    class _PkgInstancesTypedDict(TypedDict, total=False):
         """
         A typed dictionary used for collecting the 'pepc tpmi read' command results.
 
         Attributes:
             package: The package number.
-            instances: A dictionary where keys are the instance numbers and values are dictionaries
-                       where keys are register names and values the register descriptions
-                       dictionaries.
+            instances: A dictionary of instances, clusters, and registers of the cluster:
+                       {instance: {cluster: {_RegInfoTypedDict}}}.
         """
 
         package: int
-        instances: dict[int, dict[str, _RegInfoTypedDict]]
+        instances: dict[int, dict[int, dict[str, _RegInfoTypedDict]]]
 
     # A type for the 'pepc tpmi read' command output dictionary.
-    _ReadInfoType = dict[str, dict[str, _PkgInstnacesTypedDict]]
+    # {feature_name: {pci_address: _PkgInstancesTypedDict}}.
+    _ReadInfoType = dict[str, dict[str, _PkgInstancesTypedDict]]
 
     class _LsCmdlineArgsTypedDict(TypedDict, total=False):
         """
@@ -79,10 +79,10 @@ if typing.TYPE_CHECKING:
             addrs: List of TPMI device PCI addresses to read from.
             packages: List of package numbers to operate on.
             instances: List of TPMI instance numbers to read from.
-            clusters: List of TPMI cluster numbers to read from (UFS-only).
+            clusters: List of TPMI cluster numbers to read from.
             regnames: List of register names to read.
-            bfnames: List of bit-field names to read.
-            no_bitfields: Whether to skip decoding and displaying bit-field values.
+            bfnames: List of bit field names to read.
+            no_bitfields: Whether to skip decoding and displaying bit field values.
             yaml: Whether to output results in YAML format.
         """
 
@@ -90,6 +90,7 @@ if typing.TYPE_CHECKING:
         addrs: list[str]
         packages: list[int]
         instances: list[int]
+        clusters: list[int]
         regnames: list[str]
         bfnames: list[str]
         no_bitfields: bool
@@ -104,8 +105,9 @@ if typing.TYPE_CHECKING:
             addrs: List of TPMI device PCI addresses to write to.
             packages: List of package numbers to operate on.
             instances: List of TPMI instance numbers to write to.
+            clusters: List of TPMI cluster numbers to write to.
             regname: Name of the register to write to.
-            bfname: Name of the bit-field to write to (if any).
+            bfname: Name of the bit field to write to (if any).
             value: Value to write.
         """
 
@@ -113,6 +115,7 @@ if typing.TYPE_CHECKING:
         addrs: list[str]
         packages: list[int]
         instances: list[int]
+        clusters: list[int]
         regname: str
         bfname: str
         value: int
@@ -121,7 +124,7 @@ _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
 def _get_ls_cmdline_args(args: argparse.Namespace) -> _LsCmdlineArgsTypedDict:
     """
-    Format 'pepc tpmi ls' command-line arguments into a typed dictionary.
+    Parse and format 'pepc tpmi ls' command-line arguments into a typed dictionary.
 
     Args:
         args: Command-line arguments namespace.
@@ -144,7 +147,7 @@ def _get_ls_cmdline_args(args: argparse.Namespace) -> _LsCmdlineArgsTypedDict:
 
 def _get_read_cmdline_args(args: argparse.Namespace) -> _ReadCmdlineArgsTypedDict:
     """
-    Format 'pepc tpmi read' command-line arguments into a typed dictionary.
+    Parse and format 'pepc tpmi read' command-line arguments into a typed dictionary.
 
     Args:
         args: Command-line arguments namespace.
@@ -174,6 +177,12 @@ def _get_read_cmdline_args(args: argparse.Namespace) -> _ReadCmdlineArgsTypedDic
     else:
         instances = []
 
+    if args.clusters:
+        clusters = Trivial.split_csv_line_int(args.clusters, dedup=True,
+                                               what="TPMI cluster numbers")
+    else:
+        clusters = []
+
     if args.registers:
         regnames = Trivial.split_csv_line(args.registers, dedup=True)
     else:
@@ -192,6 +201,7 @@ def _get_read_cmdline_args(args: argparse.Namespace) -> _ReadCmdlineArgsTypedDic
     cmdl["addrs"] = addrs
     cmdl["packages"] = packages
     cmdl["instances"] = instances
+    cmdl["clusters"] = clusters
     cmdl["regnames"] = regnames
     cmdl["bfnames"] = bfnames
     cmdl["no_bitfields"] = args.no_bitfields
@@ -201,7 +211,7 @@ def _get_read_cmdline_args(args: argparse.Namespace) -> _ReadCmdlineArgsTypedDic
 
 def _get_write_cmdline_args(args: argparse.Namespace) -> _WriteCmdlineArgsTypedDict:
     """
-    Format 'pepc tpmi write' command-line arguments into a typed dictionary.
+    Parse and format 'pepc tpmi write' command-line arguments into a typed dictionary.
 
     Args:
         args: Command-line arguments namespace.
@@ -226,6 +236,12 @@ def _get_write_cmdline_args(args: argparse.Namespace) -> _WriteCmdlineArgsTypedD
     else:
         instances = []
 
+    if args.clusters:
+        clusters = Trivial.split_csv_line_int(args.clusters, dedup=True,
+                                               what="TPMI cluster numbers")
+    else:
+        clusters = []
+
     value = Trivial.str_to_int(args.value, what="value to write")
 
     cmdl: _WriteCmdlineArgsTypedDict = {}
@@ -233,6 +249,7 @@ def _get_write_cmdline_args(args: argparse.Namespace) -> _WriteCmdlineArgsTypedD
     cmdl["addrs"] = addrs
     cmdl["packages"] = packages
     cmdl["instances"] = instances
+    cmdl["clusters"] = clusters
     cmdl["regname"] = args.regname
     cmdl["bfname"] = args.bfname
     cmdl["value"] = value
@@ -275,10 +292,7 @@ def _ls_topology(fname: str, tpmi: TPMI.TPMI, level: int = 0):
         level: The starting indentation level for formatting log output.
     """
 
-    # A dictionary with the info that will be printed.
-    #   * first level key - package number.
-    #   * second level key - PCI address.
-    #   * regval - instance numbers.
+    # Dictionary with the info to print: {package: {addr: {instances}}}.
     info: dict[int, dict[str, set[int]]] = {}
 
     for package, addr, instance in tpmi.iter_feature(fname):
@@ -324,29 +338,27 @@ def tpmi_ls_command(args: argparse.Namespace, pman: ProcessManagerType):
 
         sdicts = tpmi.get_known_features()
         if not sdicts:
-            _LOG.info("Not supported TPMI features found")
+            _LOG.info("No supported TPMI features found")
         else:
             _LOG.info("Supported TPMI features")
 
-            fnames: Iterable[str]
-            if cmdl["fnames"]:
-                fnames = cmdl["fnames"]
-            else:
-                fnames = sdicts
+            fnames = cmdl["fnames"] or sdicts
 
             for fname in fnames:
+                if fname not in sdicts:
+                    raise Error(f"TPMI feature '{fname}' does not exist")
+
                 sdict = sdicts[fname]
                 _LOG.info("- %s: %s", sdict["name"], sdict["desc"].strip())
                 if cmdl["topology"]:
                     _ls_topology(sdict["name"], tpmi, level=1)
 
         if cmdl["unknown"]:
-            if fnames and cmdl["unknown"]:
-                _LOG.info("Unknown TPMI features (available%s, but no spec file found)",
-                          pman.hostmsg)
-                fids = tpmi.get_unknown_features()
-                txt = ", ".join(hex(fid) for fid in fids)
-                _LOG.info(" - %s", txt)
+            _LOG.info("Unknown TPMI features (available%s, but no spec file found)",
+                      pman.hostmsg)
+            fids = tpmi.get_unknown_features()
+            txt = ", ".join(hex(fid) for fid in fids)
+            _LOG.info(" - %s", txt)
 
 def _print_registers(reginfos: dict[str, _RegInfoTypedDict],
                      fdict: dict[str, RegDictTypedDict],
@@ -377,13 +389,13 @@ def _print_tpmi_info(tpmi: TPMI.TPMI, info: _ReadInfoType):
     """
     Print the result of the 'tpmi read' command.
 
-    Iterate through the features, PCI addresses, instances, cluster, registers, and bitfields in the
-    'info' dictionary and print each element in a structured and indented format.
+    Iterate through the features, PCI addresses, instances, clusters, registers, and bit fields in
+    the 'info' dictionary and print each element in a structured and indented format.
 
     Args:
         tpmi: A 'TPMI.TPMI' object.
-        info: The 'pepc tpmi read' result dictionary containing TPMI read command output, organized
-              by feature, address, instance, and register.
+        info: A dictionary containing features, PCI addresses, instances, clusters, registers, and
+              bit fields.
     """
 
     for fname, feature_info in info.items():
@@ -398,21 +410,12 @@ def _print_tpmi_info(tpmi: TPMI.TPMI, info: _ReadInfoType):
                 _LOG.info("%sInstance: %d", _pfx_bullet(1), instance)
 
                 if fname != "ufs":
-                    _print_registers(instance_info, fdict, 2)
+                    _print_registers(instance_info[0], fdict, 2)
                     continue
 
-                # Only the control UFS registers are per-cluster, the header registers are
-                # per-instance.
-                hdr_names = TPMI.UFS_HEADER_REGNAMES
-                _info = {nm: inf for nm, inf in instance_info.items() if nm in hdr_names}
-                _print_registers(_info, fdict, 2)
-
-                for _, _, _, cluster in tpmi.iter_ufs_feature(packages=(addr_info["package"],),
-                                                              addrs=(addr,), instances=(instance,)):
+                for cluster, cluster_info in instance_info.items():
                     _LOG.info("%sCluster: %d", _pfx_bullet(2), cluster)
-
-                    _info = {nm: inf for nm, inf in instance_info.items() if nm not in hdr_names}
-                    _print_registers(_info, fdict, 3)
+                    _print_registers(cluster_info, fdict, 3)
 
 def tpmi_read_command(args: argparse.Namespace, pman: ProcessManagerType):
     """
@@ -430,45 +433,48 @@ def tpmi_read_command(args: argparse.Namespace, pman: ProcessManagerType):
 
         sdicts = tpmi.get_known_features()
 
-        fnames: Iterable[str]
-        if cmdl["fnames"]:
-            fnames = cmdl["fnames"]
-        else:
-            fnames = sdicts
+        fnames = cmdl["fnames"] or sdicts
 
         # Prepare all the information to print in the 'info' dictionary.
-        #  * first level key - feature name.
-        #  * second level key - PCI address.
-        #  * third level key - "package" or "instances".
+        # {fname: {addr: _PkgInstancesTypedDict}}.
         info: _ReadInfoType = {}
         for fname in fnames:
             info[fname] = {}
 
             fdict = tpmi.get_fdict(fname)
 
-            if cmdl["regnames"]:
-                regnames = cmdl["regnames"]
-            else:
-                # Read all registers except for the reserved ones.
-                regnames = [regname for regname in fdict if not regname.startswith("RESERVED")]
-
-            for package, addr, instance in tpmi.iter_feature(fname, packages=cmdl["packages"],
-                                                             addrs=cmdl["addrs"],
-                                                             instances=cmdl["instances"]):
+            regnames = cmdl["regnames"] or fdict
+            iterator = tpmi.iter_feature_cluster(fname, packages=cmdl["packages"],
+                                                 addrs=cmdl["addrs"], instances=cmdl["instances"],
+                                                 clusters=cmdl["clusters"])
+            for package, addr, instance, cluster in iterator:
                 if addr not in info[fname]:
                     info[fname][addr] = {"package": package, "instances": {}}
 
-                assert instance not in info[fname][addr]["instances"]
-                info[fname][addr]["instances"][instance] = {}
+                if instance not in info[fname][addr]["instances"]:
+                    info[fname][addr]["instances"][instance] = {}
+
+                instance_info = info[fname][addr]["instances"][instance]
 
                 for regname in regnames:
-                    regval = tpmi.read_register(fname, addr, instance, regname)
+                    if cluster != 0 and regname in TPMI.UFS_HEADER_REGNAMES:
+                        # Header registers are per-instance, not per-cluster. Represent them as
+                        # cluster 0 only for consistent and easy-to-read output.
+                        _cluster = 0
 
-                    assert regname not in info[fname][addr]["instances"][instance]
+                        if _cluster in instance_info and regname in instance_info[_cluster]:
+                            # Header register already read for this instance.
+                            continue
+                    else:
+                        _cluster = cluster
+
+                    instance_info.setdefault(_cluster, {})
+
+                    regval = tpmi.read_register_cluster(fname, addr, instance, _cluster, regname)
 
                     bfinfo: dict[str, int] = {}
                     reginfo: _RegInfoTypedDict = {"value": regval}
-                    info[fname][addr]["instances"][instance][regname] = reginfo
+                    instance_info[_cluster][regname] = reginfo
 
                     if cmdl["no_bitfields"]:
                         continue
@@ -481,16 +487,8 @@ def tpmi_read_command(args: argparse.Namespace, pman: ProcessManagerType):
                         bfnames = list(fdict[regname]["fields"])
 
                     for bfname in bfnames:
-                        if bfname.startswith("RESERVED"):
-                            continue
-
                         bfval = tpmi.get_bitfield(regval, fname, regname, bfname)
                         bfinfo[bfname] = bfval
-
-                    if not bfinfo:
-                        # No bit-fields information, probably all of them are reserved. Delete the
-                        # entire "fields" key so that it does not show up in the output.
-                        del reginfo["fields"]
 
         if not info:
             raise Error("BUG: No matches")
@@ -515,18 +513,22 @@ def tpmi_write_command(args: argparse.Namespace, pman: ProcessManagerType):
         tpmi = cpuinfo.get_tpmi()
 
         if cmdl["bfname"]:
-            bfname_str = f", bit-field '{cmdl['bfname']}'"
+            bfname_str = f", bit field '{cmdl['bfname']}'"
             val_str = f"{cmdl['value']}"
         else:
             bfname_str = ""
             val_str = f"{cmdl['value']:#x}"
 
-        for package, addr, instance in tpmi.iter_feature(cmdl["fname"], packages=cmdl["packages"],
-                                                         addrs=cmdl["addrs"],
-                                                         instances=cmdl["instances"]):
-            tpmi.write_register(cmdl["value"], cmdl["fname"], addr, instance, cmdl["regname"],
-                                bfname=cmdl["bfname"])
+        fname = cmdl["fname"]
+        iterator = tpmi.iter_feature_cluster(fname, packages=cmdl["packages"], addrs=cmdl["addrs"],
+                                             instances=cmdl["instances"], clusters=cmdl["clusters"])
 
-            _LOG.info("Wrote '%s' to TPMI register '%s'%s (feature '%s', device '%s', package %d, "
-                      "instance %d)",
-                      val_str, cmdl["regname"], bfname_str, cmdl["fname"], addr, package, instance)
+        for package, addr, instance, cluster in iterator:
+            tpmi.write_register_cluster(cmdl["value"], fname, addr, instance, cluster,
+                                        cmdl["regname"], bfname=cmdl["bfname"])
+
+            where = f"feature '{fname}', device '{addr}', package {package}, instance {instance}"
+            if fname == "ufs" or cmdl["clusters"]:
+                where += f", cluster {cluster}"
+            _LOG.info("Wrote '%s' to TPMI register '%s'%s (%s)",
+                      val_str, cmdl["regname"], bfname_str, where)

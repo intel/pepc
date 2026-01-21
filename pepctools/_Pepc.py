@@ -303,7 +303,7 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
 
     _add_target_cpus_arguments(subpars2, "List of %s to get information about.")
 
-    text = """Display output in YAML format."""
+    text = """Display information in YAML format."""
     subpars2.add_argument("--yaml", action="store_true", help=text)
 
     _add_info_subcommand_options(PStatesVars.PROPS, subpars2)
@@ -351,7 +351,7 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
 
     _add_target_cpus_arguments(subpars2, "List of %s to get information about.")
 
-    text = """Display output in YAML format."""
+    text = """Display information in YAML format."""
     subpars2.add_argument("--yaml", action="store_true", help=text)
 
     text = f"""Comma-separated list of C-states to get information about (all C-states by default).
@@ -410,7 +410,7 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
 
     _add_target_cpus_arguments(subpars2, "List of %s to get information about.")
 
-    text = """Display output in YAML format."""
+    text = """Display information in YAML format."""
     subpars2.add_argument("--yaml", action="store_true", help=text)
 
     _add_info_subcommand_options(UncoreVars.PROPS, subpars2)
@@ -641,7 +641,7 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     text = """Do not decode and display bit field values, just read and display register values."""
     subpars2.add_argument("-n", "--no-bitfields", action="store_true", help=text)
 
-    text = """Output information in YAML format."""
+    text = """Display information in YAML format."""
     subpars2.add_argument("--yaml", action="store_true", help=text)
 
     #
@@ -666,9 +666,13 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
               by default)."""
     subpars2.add_argument("--packages", help=text)
 
-    text = """Comma-separated list of integer TPMI instance numbers to write to (all instances by
+    text = """Comma-separated list of TPMI instance numbers to write to (all instances by
               default)."""
     subpars2.add_argument("-i", "--instances", help=text)
+
+    text = """Comma-separated list of cluster numbers to write to. This option is only
+              relevant for the 'ufs' TPMI feature (defaults to all clusters)."""
+    subpars2.add_argument("-c", "--clusters", help=text)
 
     text = """Name of the TPMI register to write to."""
     subpars2.add_argument("-R", "--register", dest="regname", help=text, required=True)

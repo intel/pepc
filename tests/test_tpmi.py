@@ -187,17 +187,21 @@ def test_iter_feature(params: _TestParamsTypedDict):
         addrs: dict[int, list[str]] = {}
         # Instances are per-address.
         instances: dict[str, list[int]] = {}
+        # Clusters are per-instance.
+        clusters: dict[int, list[int]] = {}
 
-        for package, addr, instance in tpmi.iter_feature(fname):
+        for package, addr, instance, cluster in tpmi.iter_feature_cluster(fname):
             assert isinstance(addr, str)
             assert isinstance(package, int)
             assert isinstance(instance, int)
+            assert isinstance(cluster, int)
 
             assert package in valid_packages
 
             packages.append(package)
             addrs.setdefault(package, []).append(addr)
             instances.setdefault(addr, []).append(instance)
+            clusters.setdefault(instance, []).append(cluster)
 
         assert len(packages) > 0
         for package in packages:
@@ -209,12 +213,18 @@ def test_iter_feature(params: _TestParamsTypedDict):
         packages_set = set([packages[0], packages[-1]])
         addrs_set: dict[int, set] = {}
         instances_set: dict[str, set] = {}
+        clusters_set: dict[int, set] = {}
 
         for package in packages_set:
             addrs_set[package] = set([addrs[package][0], addrs[package][-1]])
             for addr in addrs_set[package]:
                 assert addr in instances
                 instances_set[addr] = set([instances[addr][0], instances[addr][-1]])
+
+                for instance in instances_set[addr]:
+                    assert instance in clusters
+                    clusters_set[instance] = set([clusters[instance][0],
+                                                 clusters[instance][-1]])
 
         for package, addr, instance in tpmi.iter_feature(fname, packages=packages_set):
             assert package in packages_set
@@ -228,11 +238,25 @@ def test_iter_feature(params: _TestParamsTypedDict):
 
         for package in packages_set:
             for address in addrs_set[package]:
-                for pkg, addr, instance in tpmi.iter_feature(fname, addrs=(address,),
-                                                             instances=instances_set[address]):
+                iterator = tpmi.iter_feature_cluster(fname, addrs=(address,),
+                                                     instances=instances_set[address])
+                for pkg, addr, instance, cluster in iterator:
                     assert pkg in packages_set
                     assert addr in addrs_set[package]
                     assert instance in instances_set[address]
+                    assert cluster in clusters_set[instance]
+
+        for package in packages_set:
+            for address in addrs_set[package]:
+                for instance in instances_set[address]:
+                    iterator = tpmi.iter_feature_cluster(fname, addrs=(address,),
+                                                         instances=(instance,),
+                                                         clusters=clusters_set[instance])
+                    for pkg, addr, instance, cluster in iterator:
+                        assert pkg in packages_set
+                        assert addr in addrs_set[package]
+                        assert instance in instances_set[address]
+                        assert cluster in clusters_set[instance]
 
 def test_read_register(params: _TestParamsTypedDict):
     """
@@ -248,13 +272,16 @@ def test_read_register(params: _TestParamsTypedDict):
 
     for fname in sdicts:
         fdict = tpmi.get_fdict(fname)
-        for _, addr, instance in tpmi.iter_feature(fname):
+        for _, addr, instance, cluster in tpmi.iter_feature_cluster(fname):
             for regname in fdict:
-                regval = tpmi.read_register(fname, addr, instance, regname)
+                if cluster != 0 and regname in TPMI.UFS_HEADER_REGNAMES:
+                    continue
+                regval = tpmi.read_register_cluster(fname, addr, instance, cluster, regname)
                 assert isinstance(regval, int)
 
                 for bfname in fdict[regname]["fields"]:
-                    bfval = tpmi.read_register(fname, addr, instance, regname, bfname=bfname)
+                    bfval = tpmi.read_register_cluster(fname, addr, instance, cluster, regname,
+                                                       bfname=bfname)
                     assert isinstance(bfval, int)
 
                     # Validate 'get_bitfield()' method as well.
@@ -277,19 +304,21 @@ def test_write_register(params: _TestParamsTypedDict):
     fdict = tpmi.get_fdict(fname)
     bits = fdict[regname]["fields"][bfname]["bits"]
 
-    for _, addr, instance in tpmi.iter_feature(fname):
-        bfval = tpmi.read_register(fname, addr, instance, regname, bfname=bfname)
+    for _, addr, instance, cluster in tpmi.iter_feature_cluster(fname):
+        bfval = tpmi.read_register_cluster(fname, addr, instance, cluster, regname, bfname=bfname)
 
         new_bfval = (bfval - 1) % (1 << (bits[0] - bits[1] + 1))
 
-        tpmi.write_register(new_bfval, fname, addr, instance, regname, bfname=bfname)
-
-        resulting_bfval = tpmi.read_register(fname, addr, instance, regname, bfname=bfname)
+        tpmi.write_register_cluster(new_bfval, fname, addr, instance, cluster, regname,
+                                    bfname=bfname)
+        resulting_bfval = tpmi.read_register_cluster(fname, addr, instance, cluster, regname,
+                                                     bfname=bfname)
         assert resulting_bfval == new_bfval
 
-        tpmi.write_register(bfval, fname, addr, instance, regname, bfname=bfname)
-
-        resulting_bfval = tpmi.read_register(fname, addr, instance, regname, bfname=bfname)
+        tpmi.write_register_cluster(bfval, fname, addr, instance, cluster, regname,
+                                    bfname=bfname)
+        resulting_bfval = tpmi.read_register_cluster(fname, addr, instance, cluster, regname,
+                                                     bfname=bfname)
         assert resulting_bfval == bfval
 
 def test_specdirs(params: _TestParamsTypedDict):

@@ -758,11 +758,42 @@ TPMI registers are grouped into features. For example, the UFS (Uncore Frequency
 includes multiple features.
 
 There may be multiple copies of the same feature in a TPMI device, and these copies are referred to
-as instances. For example, on a Granite Rapids system, there may be up to 5 dies, each having its
-own UFS feature instance, resulting in 5 copies of UFS feature registers in the TPMI device, one
-per die. This allows software to manage uncore frequency scaling on a per-die basis.
+as instances.
 
-In other words: TPMI device -> features -> feature instances -> feature registers.
+For example, on a Granite Rapids system, there may be up to 5 dies, each having its own UFS feature
+instance, resulting in 5 copies of UFS feature registers in the TPMI device, one per die. This
+allows software to manage uncore frequency scaling on a per-die basis.
+
+For all TPMI features except UFS, there is only one copy of registers per instance. The hierarchy
+is:
+
+```
+TPMI devices
+└── Features
+    └── Instances
+        └── Registers
+```
+
+However, UFS is special. A UFS instance may consist of multiple clusters. UFS registers include 2
+read-only header registers (`UFS_HEADER` and `UFS_FABRIC_CLUSTER_OFFSET`) and several control
+registers (e.g., `UFS_STATUS`, `UFS_CONTROL`). There is always only one copy of header registers
+per UFS instance, but there may be multiple copies of control registers per UFS instance, one per
+cluster.
+
+On the Granite Rapids platform there is only one cluster per UFS instance. However, future
+platforms may include multiple clusters per UFS instance to support more complex uncore
+topologies.
+
+The UFS feature hierarchy is:
+
+```
+TPMI devices
+└── UFS feature
+    └── Instances
+        ├── Header registers (one copy)
+        └── Clusters
+            └── Control registers (one copy per cluster)
+```
 
 ### TPMI Drivers
 
@@ -807,8 +838,8 @@ mem_dump
 mem_write
 ```
 
-The 'mem_dump' file provides all 5 instances of the UFS feature in the TPMI device. Here is an example,
-snipped for brevity:
+The 'mem_dump' file contains all instances of the UFS feature. Here is an example, snipped for
+brevity:
 
 ```bash
 $ cat /sys/kernel/debug/tpmi-0000\:00\:03.1/tpmi-id-02/mem_dump
@@ -841,7 +872,7 @@ subdirectories.
 
 Here is the spec file for the UFS feature:
 ['pepcdata/tpmi/gnr/ufs.yml'](../pepcdata/tpmi/gnr/ufs.yml). It includes definitions for UFS
-registers and register bit-fields, including a description for each field.
+registers and register bit fields, including a description for each field.
 
 The TPMI spec file format is `pepc`-specific, invented by the `pepc` developers. This is not an
 official Intel format. These files are generated from Intel internal TPMI XML description
@@ -883,10 +914,10 @@ $ pepc tpmi ls
  ```
 
  The list is rather short because it is limited by the available TPMI spec files. Include the
- `--all` option to list all discovered TPMI features, even those without spec files.
+ `--unknown` option to list all discovered TPMI features, even those without spec files.
 
  ```bash
-$ pepc tpmi ls --all
+$ pepc tpmi ls --unknown
 Supported TPMI features
  - tpmi_info: TPMI Info Registers
  - rapl: Running Average Power Limit (RAPL) reporting and control
@@ -902,37 +933,65 @@ You can read all TPMI registers of every discovered feature by running `pepc tpm
 options. However, the output is very long.
 
 To limit the output, use one of the filtering options: '--features', '--addresses', '--packages',
-'--instances', '--registers', '--bitfields'.
+'--instances', '--clusters', '--registers', '--bitfields'.
+
+**Display TPMI Topology**
+
+To see how TPMI devices, packages, and instances are organized on your system, use the `--topology`
+option:
+
+```bash
+$ pepc tpmi ls --topology -F ufs
+- ufs: Processor uncore (fabric) monitoring and control
+  - PCI address: 0000:00:03.1
+    Package: 0
+    Instances: 0-4
+  - PCI address: 0000:80:03.1
+    Package: 1
+    Instances: 0-4
+```
+
+This shows the PCI addresses of TPMI devices, which packages they belong to, and the instance
+numbers for each device.
 
 **Read a TPMI Register**
 
-Here is an example of reading the 'UFS_STATUS' register of the UFS feature for package 0, instance 4
-on a Granite Rapids system.
+This example reads the 'UFS_STATUS' register of the UFS feature for package 0, instance 4 on a
+Granite Rapids system:
 
 ```bash
-$ pepc tpmi read -F ufs --register UFS_STATUS --package 0 --instance 4
+$ pepc tpmi read -F ufs --registers UFS_STATUS --packages 0 --instances 4
 - TPMI feature: ufs
   - PCI address: 0000:00:03.1
     Package: 0
     - Instance: 4
-      - UFS_STATUS: 0x279ff040ada88
-        - CURRENT_RATIO[6:0]: 8
-        - CURRENT_VOLTAGE[22:7]: 5557
-        - AGENT_TYPE_CORE[23:23]: 0
-        - AGENT_TYPE_CACHE[24:24]: 0
-        - AGENT_TYPE_MEMORY[25:25]: 0
-        - AGENT_TYPE_IO[26:26]: 1
-        - RSVD[31:27]: 0
-        - THROTTLE_COUNTER[63:32]: 162303
+      - Cluster: 0
+        - UFS_STATUS: 0x279ff040ada88
+          - CURRENT_RATIO[6:0]: 8
+          - CURRENT_VOLTAGE[22:7]: 5557
+          - AGENT_TYPE_CORE[23:23]: 0
+          - AGENT_TYPE_CACHE[24:24]: 0
+          - AGENT_TYPE_MEMORY[25:25]: 0
+          - AGENT_TYPE_IO[26:26]: 1
+          - RSVD[31:27]: 0
+          - THROTTLE_COUNTER[63:32]: 162303
 ```
 
-**Read TPMI Bit-Fields**
+Note that for UFS feature, the output includes cluster information. UFS is special because a UFS
+instance may consist of multiple clusters, each with its own copy of control registers (like
+`UFS_STATUS`). Header registers (`UFS_HEADER` and `UFS_FABRIC_CLUSTER_OFFSET`) are shown only once
+per instance under cluster 0.
 
-Here is an example of reading the 'TIME_WINDOW' and 'PWR_LIM_EN' bit-fields of the
-'SOCKET_RAPL_PL1_CONTROL' register of the RAPL feature.
+**Note:** On Granite Rapids, instance numbers typically correspond to die numbers (instance 0 = die
+0, instance 1 = die 1, etc.), but this mapping is platform-specific.
+
+**Read TPMI Bit Fields**
+
+This example reads the 'TIME_WINDOW' and 'PWR_LIM_EN' bit fields of the
+'SOCKET_RAPL_PL1_CONTROL' register:
 
 ```bash
-$ pepc tpmi read -F rapl --register SOCKET_RAPL_PL1_CONTROL --bitfields TIME_WINDOW,PWR_LIM_EN
+$ pepc tpmi read -F rapl --registers SOCKET_RAPL_PL1_CONTROL --bitfields TIME_WINDOW,PWR_LIM_EN
 - TPMI feature: rapl
   - PCI address: 0000:00:03.1
     Package: 0
@@ -950,21 +1009,84 @@ $ pepc tpmi read -F rapl --register SOCKET_RAPL_PL1_CONTROL --bitfields TIME_WIN
 
 Since packages and instances were not limited, the output includes all packages and instances.
 
-**Write a TPMI Bit-Field**
+**Write a TPMI Bit Field**
 
-Here is an example of changing the maximum uncore frequency ratio for package 0, die 2
-(instance 2) using the UFS TPMI feature on a Granite Rapids system.
+This example changes the maximum uncore frequency ratio for package 0, instance 2 (die 2) on a
+Granite Rapids system:
 
 ```bash
-$ pepc tpmi write ufs --package 0 --instance 2 --register UFS_CONTROL --bitfield MAX_RATIO -V 20
-Wrote '20' to TPMI register 'UFS_CONTROL', bit-field 'MAX_RATIO' (feature 'ufs', device '0000:00:03.1', package 0, instance 2)
+$ pepc tpmi write -F ufs --packages 0 --instances 2 --register UFS_CONTROL --bitfield MAX_RATIO -V 20
+Wrote '20' to TPMI register 'UFS_CONTROL', bit field 'MAX_RATIO' (feature 'ufs', device '0000:00:03.1', package 0, instance 2, cluster 0)
 ```
 
-**Note:** In this case, the value 20 corresponds to a 2.0GHz maximum uncore frequency (ratio × 100MHz
-bus clock).
-**Note:** The correspondence of instance 2 to die 2 is Granite Rapids-specific. On other platforms,
-the mapping may be different.
+Note that the write command includes cluster information in the output. For UFS, when no cluster is
+specified, the command writes to cluster 0 by default.
 
+**Note:** The value 20 corresponds to a 2.0GHz maximum uncore frequency (ratio × 100MHz bus clock).
+
+**Write to Multiple Instances**
+
+You can write to all instances of a package by omitting the `--instances` option:
+
+```bash
+$ pepc tpmi write -F ufs --packages 0 --register UFS_CONTROL --bitfield MAX_RATIO -V 20
+Wrote '20' to TPMI register 'UFS_CONTROL', bit field 'MAX_RATIO' (feature 'ufs', device '0000:00:03.1', package 0, instance 0, cluster 0)
+Wrote '20' to TPMI register 'UFS_CONTROL', bit field 'MAX_RATIO' (feature 'ufs', device '0000:00:03.1', package 0, instance 1, cluster 0)
+Wrote '20' to TPMI register 'UFS_CONTROL', bit field 'MAX_RATIO' (feature 'ufs', device '0000:00:03.1', package 0, instance 2, cluster 0)
+```
+
+**Write to Specific UFS Clusters**
+
+On Granite Rapids, there is only one cluster per UFS instance. However, future platforms may
+support multiple clusters per instance. On such platforms, you can write to specific clusters using
+the `--clusters` option:
+
+```bash
+# This would only work on platforms with multiple clusters per instance.
+$ pepc tpmi write -F ufs --packages 0 --instances 2 --clusters 1 --register UFS_CONTROL --bitfield MAX_RATIO -V 18
+Wrote '18' to TPMI register 'UFS_CONTROL', bit field 'MAX_RATIO' (feature 'ufs', device '0000:00:03.1', package 0, instance 2, cluster 1)
+```
+
+**YAML Output**
+
+For programmatic consumption or integration with other tools, TPMI information can be output in YAML
+format using the `--yaml` option:
+
+```bash
+$ pepc tpmi read -F ufs --registers UFS_STATUS --packages 0 --instances 4 --yaml
+ufs:
+  '0000:00:03.1':
+    package: 0
+    instances:
+      4:
+        0:
+          UFS_STATUS:
+            value: 0x279ff040ada88
+            fields:
+              CURRENT_RATIO: 8
+              CURRENT_VOLTAGE: 5557
+              AGENT_TYPE_CORE: 0
+              AGENT_TYPE_CACHE: 0
+              AGENT_TYPE_MEMORY: 0
+              AGENT_TYPE_IO: 1
+              RSVD: 0
+              THROTTLE_COUNTER: 162303
+```
+
+**Filtering with --no-bitfields**
+
+When you only need register values without decoding bit fields, use the `--no-bitfields` option to
+simplify the output:
+
+```bash
+$ pepc tpmi read -F ufs --registers UFS_STATUS --packages 0 --instances 4 --no-bitfields
+- TPMI feature: ufs
+  - PCI address: 0000:00:03.1
+    Package: 0
+    - Instance: 4
+      - Cluster: 0
+        - UFS_STATUS: 0x279ff040ada88
+```
 ## ASPM
 
 The `pepc aspm` command groups operations related to PCI Express Active State Power Management

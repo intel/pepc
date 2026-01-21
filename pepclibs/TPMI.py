@@ -33,7 +33,7 @@ Terminology:
                   supported feature has a spec file, which is also required to decode the feature's
                   PCIe VSEC table.
     * spec directory - Directory containing spec files. There is an 'index.yml' file in the spec
-                       spec-directory, and sub-directories containing spec files for specific
+                       directory, and sub-directories containing spec files for specific
                        platforms.
     * sdict - Spec file dictionary containing basic TPMI spec file information: feature name, ID,
               description, and spec file path. Sdicts are built by partially reading spec files
@@ -118,7 +118,7 @@ if typing.TYPE_CHECKING:
             offset: Offset of the register within the specification.
             width: Width of the register in bits.
             readonly: Whether the register is read-only.
-            fields: The bit field dictionaries (bfdicts), describing the bit-fields within the
+            fields: The bit field dictionaries (bfdicts), describing the bit fields within the
                     register.
         """
 
@@ -219,7 +219,7 @@ def _find_spec_dirs() -> list[Path]:
         else:
             specdirs.append(specdir)
 
-    # Find the standard spec-files.
+    # Find the standard spec files.
     specdir = ProjectFiles.find_project_data("pepc", "tpmi/index.yml",
                                              what="TPMI spec directory index file")
     specdirs.append(specdir.parent)
@@ -241,11 +241,11 @@ def _load_sdict(specpath: Path) -> SDictTypedDict:
         st = specpath.stat()
     except OSError as err:
         msg = Error(str(err)).indent(2)
-        raise Error(f"Failed to access spec file '{specpath}:\n{msg}") from err
+        raise Error(f"Failed to access spec file '{specpath}':\n{msg}") from err
 
     if st.st_size > _MAX_SPEC_FILE_BYTES:
         maxsize = Human.bytesize(_MAX_SPEC_FILE_BYTES)
-        raise Error(f"Too large spec file '{specpath}', maximum allow size is {maxsize}")
+        raise Error(f"Too large spec file '{specpath}', maximum allowed size is {maxsize}")
 
     if not stat.S_ISREG(st.st_mode):
         raise Error(f"'{specpath}' is not a regular file")
@@ -308,7 +308,7 @@ def _load_sdict(specpath: Path) -> SDictTypedDict:
 class TPMI(ClassHelpers.SimpleCloseContext):
     """
     Provide methods to read and write TPMI registers, query available features, and extract
-    bitfield values.
+    bit field values.
 
     Public Methods:
         get_known_features():
@@ -329,17 +329,29 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         iter_ufs_feature(fname, packages=(), addrs=(), instances=(), clusters=()):
             Iterate over TPMI devices, instances, and clusters for the UFS feature.
 
+        iter_feature_cluster(fname, packages=(), addrs=(), instances=(), clusters=()):
+            Iterate over TPMI devices, instances, and clusters for a given feature.
+
         read_register(fname, addr, instance, regname, bfname=None):
-            Read the value of a TPMI register or a specific bitfield.
+            Read the value of a TPMI register or a specific bit field.
 
         read_ufs_register(addr, instance, regname, cluster, bfname=None):
-            Read the value of a UFS TPMI register or a specific bitfield.
+            Read the value of a UFS TPMI register or a specific bit field.
+
+        read_register_cluster(fname, addr, instance, cluster, regname, bfname=None):
+            Read the value of a TPMI register or a specific bit field, specifying the cluster.
 
         write_register(value, fname, addr, instance, regname, bfname=None):
-            Write a value to a TPMI register or a specific bitfield.
+            Write a value to a TPMI register or a specific bit field.
+
+        write_ufs_register(value, addr, instance, regname, cluster, bfname=None):
+            Write a value to a UFS TPMI register or a specific bit field.
+
+        write_register_cluster(value, fname, addr, instance, cluster, regname, bfname=None):
+            Write a value to a TPMI register or a specific bit field, specifying the cluster.
 
         get_bitfield(regval, fname, regname, bfname):
-            Extract the value of a bitfield from a register value.
+            Extract the value of a bit field from a register value.
     """
 
     def __init__(self,
@@ -386,7 +398,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
             self.specdirs = _find_spec_dirs()
 
         # Keep absolute paths to spec directories - in case of an error a directory path like 'tpmi'
-        # may look confusing comparint to a path like '/my/path/tpmi'.
+        # may look confusing compared to a path like '/my/path/tpmi'.
         specdirs = self.specdirs
         self.specdirs = []
         for specdir in specdirs:
@@ -485,44 +497,6 @@ class TPMI(ClassHelpers.SimpleCloseContext):
 
         return path
 
-    def _verify_interface_version(self, version: int, fname: str, addr: str):
-        """
-        Verify that the TPMI interface version is supported.
-
-        Args:
-            version: The TPMI interface version number to verify.
-            fname: Name of the TPMI feature.
-            addr: PCI address of the TPMI device.
-        """
-
-        _major_version = _minor_version = -1
-
-        # Bits 7:5 contain major version number, bits 4:0 contain minor version number.
-        major_version = (version >> 5) & 0b111
-        minor_version = version & 0b11111
-
-        # Make sure that version is the same across all instances.
-        if _major_version == -1:
-            _major_version = major_version
-        elif _major_version != major_version:
-            raise Error(f"TPMI interface major version mismatch for feature '{fname}', address "
-                        f"{addr}{self._pman.hostmsg}: expected {_major_version}, "
-                        f"got {major_version}")
-
-        if _minor_version == -1:
-            _minor_version = minor_version
-        elif _minor_version != minor_version:
-            raise Error(f"TPMI interface minor version mismatch for feature '{fname}', address "
-                        f"{addr}{self._pman.hostmsg}: expected {_minor_version}, "
-                        f"got {minor_version}")
-
-        # TPMI interface versions up to version 0.3 are supported.
-        if _major_version != 0 or _minor_version > 3:
-            raise ErrorNotSupported(f"Unsupported TPMI interface version "
-                                    f"{_major_version}.{_minor_version} for feature "
-                                    f"'{fname}', address {addr}{self._pman.hostmsg}.\n"
-                                    f"Only TPMI up to version 0.3 is supported.")
-
     def _drop_dead_instances(self,
                               fname: str,
                               addr: str,
@@ -539,13 +513,17 @@ class TPMI(ClassHelpers.SimpleCloseContext):
             vals: Register values for all instances and offsets.
         """
 
-        verified = False
+        expected_major_version = -1
+        expected_minor_version = -1
+        version_reg_found = False
 
         fdict = self._get_fdict(fname)
         for regname, regdict in fdict.items():
             bfdicts: dict[str, BFDictTypedDict] = regdict.get("fields", {})
             if "INTERFACE_VERSION" not in bfdicts:
                 continue
+
+            version_reg_found = True
 
             for instance in list(mdmap):
                 _LOG.debug("Verifying version for TPMI feature '%s', address %s, instance %d%s",
@@ -566,15 +544,39 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                                "implemented (version %#x): dropping it",
                                 fname, addr, instance, self._pman.hostmsg, version)
                     del mdmap[instance]
+                    continue
+
+                # Verify version is supported and consistent across all instances.
+                # Bits 7:5 contain major version number, bits 4:0 contain minor version number.
+                major_version = (version >> 5) & 0b111
+                minor_version = version & 0b11111
+
+                # TPMI interface versions up to version 0.3 are supported.
+                if major_version != 0 or minor_version > 3:
+                    raise ErrorNotSupported(f"Unsupported TPMI interface version "
+                                            f"{major_version}.{minor_version} for feature "
+                                            f"'{fname}', address {addr}{self._pman.hostmsg}.\n"
+                                            f"Only TPMI up to version 0.3 is supported.")
+
+                # Verify version consistency across all instances.
+                if expected_major_version == -1:
+                    expected_major_version = major_version
+                    expected_minor_version = minor_version
                 else:
-                    self._verify_interface_version(version, fname, addr)
-                    verified = True
+                    if expected_major_version != major_version:
+                        raise Error(f"TPMI interface major version mismatch for feature '{fname}', "
+                                    f"address {addr}{self._pman.hostmsg}: expected "
+                                    f"{expected_major_version}, got {major_version}")
+                    if expected_minor_version != minor_version:
+                        raise Error(f"TPMI interface minor version mismatch for feature '{fname}', "
+                                    f"address {addr}{self._pman.hostmsg}: expected "
+                                    f"{expected_minor_version}, got {minor_version}")
 
         if not mdmap:
             raise ErrorNotFound(f"No instances or only dead instances found for TPMI feature "
                                 f"'{fname}', address {addr}{self._pman.hostmsg}")
 
-        if not verified:
+        if not version_reg_found:
             raise Error(f"TPMI interface version register not found for feature '{fname}'")
 
     def _build_mdmap(self, addr, fname) -> _MDMapType:
@@ -644,7 +646,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                             line_pos += 9
                             offs += 4
                     else:
-                        raise Error(f"Unexpected line in TPMI file '{path}:\n{line}")
+                        raise Error(f"Unexpected line in TPMI file '{path}':\n{line}")
 
                 pos += len(line) + 1
 
@@ -673,9 +675,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                     unknown_fids.append(fid)
                     continue
 
-                if fname not in fname2addrs:
-                    fname2addrs[fname] = []
-
+                fname2addrs.setdefault(fname, [])
                 addr = pci_path.name[len("tpmi-"):]
                 fname2addrs[fname].append(addr)
 
@@ -692,8 +692,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         fmaps: dict[str, dict[str, _AddrMDMapTypedDict]] = {"tpmi_info": {}}
 
         for fname, addrs in fname2addrs.items():
-            if fname not in fmaps:
-                fmaps[fname] = {}
+            fmaps.setdefault(fname, {})
 
             for addr in addrs:
                 if addr in fmaps[fname]:
@@ -881,7 +880,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
 
     def _load_and_format_fdict(self, fname: str, specpath: Path) -> dict[str, RegDictTypedDict]:
         """
-        Load and validate a TPMI spec file, then an return the fdict.
+        Load and validate a TPMI spec file, then return the fdict.
 
         Args:
             fname: Name of the TPMI feature whose spec file is being loaded.
@@ -1024,7 +1023,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
 
         if fname not in self._sdicts:
             known = ", ".join(self._sdicts)
-            raise Error(f"Unknown feature '{fname}'{self._pman.hostname}, known features are: "
+            raise Error(f"Unknown feature '{fname}'{self._pman.hostmsg}, known features are: "
                         f"{known}")
 
         return self._sdicts[fname]
@@ -1084,7 +1083,6 @@ class TPMI(ClassHelpers.SimpleCloseContext):
             fname: Name of the TPMI feature.
             addr: TPMI device PCI address.
             instance: Instance number to validate.
-            cluster: Cluster number (UFS-only).
             regname: Register name.
             offset: Register offset to validate.
             mdmap: Metadata map containing valid instances and offsets.
@@ -1115,7 +1113,6 @@ class TPMI(ClassHelpers.SimpleCloseContext):
             The adjusted register offset.
         """
 
-        # UFS-only: adjust the offset based on the cluster.
         coffset = self._cmaps[addr][instance][cluster]
 
         # UFS header registers are per-instance and not part of clusters. Cluster offsets point to
@@ -1138,7 +1135,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
             fname: Name of the TPMI feature.
             addr: TPMI device PCI address.
             instance: The instance number of the TPMI feature.
-            cluster: The cluster number (UFS-only).
+            cluster: The cluster number.
             regname: The name of the register to read.
             offset: The offset of the register within the feature.
             mdmap: The memory dump map (mdmap) for the TPMI feature.
@@ -1240,7 +1237,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
             addr: TPMI device address.
             instance: TPMI instance to read the register from.
             regname: Name of the TPMI register to read.
-            cluster: Cluster to read the register from (UFS-only).
+            cluster: Cluster to read the register from.
             bfname: Bit field name to extract (read the whole register by default).
             mdmap: Optional mdmap to use for register access.
 
@@ -1266,7 +1263,9 @@ class TPMI(ClassHelpers.SimpleCloseContext):
 
         if bfname:
             val = self._get_bitfield(val, fname, regname, bfname)
-            _LOG.debug("Value of TPMI register '%s', bit-field '%s' is %#x", regname, bfname, val)
+            _LOG.debug("Value of TPMI register '%s', bit field '%s' is %#x", regname, bfname, val)
+        else:
+            _LOG.debug("Value of TPMI register '%s' is %#x", regname, val)
 
         return val
 
@@ -1287,7 +1286,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
             addr: TPMI device address.
             instance: TPMI instance to write the register to.
             regname: Name of the TPMI register to write to.
-            cluster: Cluster to write the register to (UFS-only).
+            cluster: Cluster to write the register to.
             bfname: Name of the register bit field to write to. If not specified, writes to the
                     entire register.
         """
@@ -1385,7 +1384,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
 
     def _validate_fname(self, fname: str):
         """
-        Validate that the provided feature name.
+        Validate the provided feature name.
 
         Args:
             fname: The feature name to validate.
@@ -1407,12 +1406,12 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         """
 
         if not addr and package is None:
-            raise Error("BUG: at least one of 'addr' or 'package' must be specified")
+            raise Error("BUG: At least one of 'addr' or 'package' must be specified")
 
         if not addr:
             if package not in self._pkg2addrs:
                 packages = Trivial.rangify(self._pkg2addrs)
-                raise Error(f"Invalid package number '{package}'{self._pman.hostmsg}, valid"
+                raise Error(f"Invalid package number '{package}'{self._pman.hostmsg}, valid "
                             f"package numbers are: {packages}")
         else:
             if addr not in self._fmaps[fname]:
@@ -1424,7 +1423,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                 correct_pkg = self._fmaps[fname][addr]["package"]
                 if package != correct_pkg:
                     raise Error(f"Invalid package number '{package}' for TPMI device '{addr}', "
-                                f"correct package numbers is '{correct_pkg}'")
+                                f"correct package number is '{correct_pkg}'")
 
     def _validate_addrs(self, fname: str, addrs: Iterable[str], packages: Iterable[int] = ()):
         """
@@ -1595,8 +1594,8 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         instances by providing the corresponding arguments.
 
         Note, in case of UFS feature, each instance may contain multiple clusters of registers. Use
-        'iter_ufs_feature()' to iterate over a clusters. This method yields only cluster number 0
-        for each UFS instance.
+        'iter_ufs_feature()' or 'iter_feature_cluster()' to iterate over clusters. This method
+        yields only instance numbers, and cluster number is assumed to be 0.
 
         Args:
             fname: Name of the TPMI feature to iterate.
@@ -1662,7 +1661,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
 
         # Read the UFS cluster information from the TPMI registers.
         #
-        # The 8-bit 'LOCAL_FABRIC_CLUSTER_ID_MASK' bitfield tells which clusters exists: if a bit is
+        # The 8-bit 'LOCAL_FABRIC_CLUSTER_ID_MASK' bit field tells which clusters exist: if a bit is
         # set to 1, the corresponding cluster exists. There can be up to 8 clusters.
         clusters_mask = self._read_register("ufs", addr, instance, "UFS_HEADER",
                                             bfname="LOCAL_FABRIC_CLUSTER_ID_MASK")
@@ -1707,13 +1706,14 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                                                                     None, None]:
         """
         Iterate over TPMI UFS feature and yield tuples of '(addr, package, instance, cluster)'.
+
         Similar to 'TPMI.TPMI.iter_feature()', but with added support for UFS clusters.
 
-        The UFS TPMI feature is unique in that each instance can contain multiple clusters of
-        registers, unlike other TPMI features which have only one cluster per instance.
+        The UFS TPMI feature is unique in that each instance may contain multiple clusters of
+        registers, unlike other TPMI features which have no clusters (or one can think of it as
+        there is only cluster 0).
 
         Args:
-            fname: Name of the TPMI feature to iterate.
             packages: Package numbers to include.
             addrs: TPMI device PCI addresses to include.
             instances: Instance numbers to include.
@@ -1741,6 +1741,45 @@ class TPMI(ClassHelpers.SimpleCloseContext):
 
                 yield package, addr, instance, cluster
 
+    def iter_feature_cluster(self,
+                             fname: str,
+                             packages: Iterable[int] = (),
+                             addrs: Iterable[str] = (),
+                             instances: Iterable[int] = (),
+                             clusters: Iterable[int] = ()) -> Generator[tuple[int, str, int, int],
+                                                                        None, None]:
+        """
+        Iterate over a TPMI feature and yield tuples of '(addr, package, instance, cluster)'.
+
+        For UFS features, each instance may contain multiple clusters of registers. Other features
+        do not have clusters, or another way to think about it is that they have only cluster 0.
+        Therefore, for non-UFS features, cluster number 0 is yielded for each instance.
+
+        Args:
+            fname: Name of the TPMI feature to iterate.
+            packages: Package numbers to include.
+            addrs: TPMI device PCI addresses to include.
+            instances: Instance numbers to include.
+            clusters: Cluster numbers to include.
+
+        Yields:
+            Tuples of '(package, addr, instance, cluster)' for each matching TPMI instance and
+            cluster.
+        """
+
+        if fname == "ufs":
+            yield from self.iter_ufs_feature(packages=packages, addrs=addrs,
+                                            instances=instances, clusters=clusters)
+        else:
+            for cluster in clusters:
+                if cluster != 0:
+                    raise Error(f"Invalid cluster '{cluster}': TPMI feature '{fname}' does not "
+                                f"support clusters")
+            for package, addr, instance in self.iter_feature(fname, packages=packages,
+                                                             addrs=addrs,
+                                                             instances=instances):
+                yield package, addr, instance, 0
+
     def read_register(self,
                       fname: str,
                       addr: str,
@@ -1750,15 +1789,19 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         """
         Read a TPMI register or a bit field and return its value.
 
+        In case of the 'ufs' feature, use 'read_ufs_register()' or 'read_register_cluster()' to read
+        registers from specific clusters. This method assumes cluster number 0 for the 'ufs'
+        feature.
+
         Args:
             fname: Name of the TPMI feature to read.
-            addr: Optional TPM device PCI address.
+            addr: TPMI device PCI address.
             instance: TPMI instance number to read.
             regname: Name of the TPMI register to read.
             bfname: Name of the bit field to read. Read the entire register by default.
 
         Returns:
-            The value of the TPMI register or bit-field.
+            The value of the TPMI register or bit field.
         """
 
         self._validate_fname(fname)
@@ -1775,18 +1818,20 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                           regname: str,
                           bfname: str = "") -> int:
         """
-        Read a TPMI register or a bit field and return its value.
+        Read a TPMI UFS register or a bit field and return its value.
+
+        The special handling of UFS is because unlike other TPMI features, UFS may have multiple
+        clusters per instance.
 
         Args:
-            fname: Name of the TPMI feature to read.
-            addr: Optional TPM device PCI address.
+            addr: TPMI device PCI address.
             instance: TPMI instance number to read.
+            cluster: Cluster number to read.
             regname: Name of the TPMI register to read.
-            cluster: Cluster number to read (UFS-only).
             bfname: Name of the bit field to read. Read the entire register by default.
 
         Returns:
-            The value of the TPMI register or bit-field.
+            The value of the TPMI register or bit field.
         """
 
         self._validate_addr("ufs", addr)
@@ -1795,6 +1840,40 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         self._validate_cluster(addr, instance, cluster, regname)
 
         return self._read_register("ufs", addr, instance, regname, cluster=cluster, bfname=bfname)
+
+    def read_register_cluster(self,
+                              fname: str,
+                              addr: str,
+                              instance: int,
+                              cluster: int,
+                              regname: str,
+                              bfname: str = "") -> int:
+        """
+        Read a TPMI register or a bit field and return its value.
+
+        Only the 'ufs' feature has clusters. Other features do not have clusters, or another way to
+        think about it is that they have only cluster 0. Therefore, for non-'ufs' features, cluster
+        number must be 0.
+
+        Args:
+            fname: Name of the TPMI feature to read.
+            addr: TPMI device PCI address.
+            instance: TPMI instance number to read.
+            cluster: TPMI cluster number to read.
+            regname: Name of the TPMI register to read.
+            bfname: Name of the bit field to read. Read the entire register by default.
+
+        Returns:
+            The value of the TPMI register or bit field.
+        """
+
+        if fname == "ufs":
+            return self.read_ufs_register(addr, instance, cluster, regname, bfname=bfname)
+        else:
+            if cluster != 0:
+                raise Error(f"Invalid cluster '{cluster}': TPMI feature '{fname}' does not support "
+                            f"clusters other than 0")
+            return self.read_register(fname, addr, instance, regname, bfname=bfname)
 
     def get_bitfield(self, regval: int, fname: str, regname: str, bfname: str) -> int:
         """
@@ -1824,6 +1903,10 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         """
         Write a value to a TPMI register or its bit field.
 
+        In case of the 'ufs' feature, use 'write_ufs_register()' or 'write_register_cluster()' to
+        write registers to specific clusters. This method assumes cluster number 0 for the 'ufs'
+        feature.
+
         Args:
             value: Value to write to the register or bit field.
             fname: Name of the TPMI feature the register belongs to.
@@ -1850,11 +1933,14 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         """
         Write a value to a TPMI UFS register or its bit field.
 
+        The special handling of UFS is because unlike other TPMI features, UFS may have multiple
+        clusters per instance.
+
         Args:
             value: Value to write to the register or bit field.
             addr: TPMI device address.
             instance: TPMI instance to write the register to.
-            cluster: Cluster number to write the register to (UFS-only).
+            cluster: Cluster number to write the register to.
             regname: Name of the TPMI register to write to.
             bfname: Name of the bit field to write to. If not provided, write the entire register.
         """
@@ -1865,3 +1951,36 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         self._validate_cluster(addr, instance, cluster, regname)
 
         self._write_register(value, "ufs", addr, instance, regname, cluster=cluster, bfname=bfname)
+
+    def write_register_cluster(self,
+                               value: int,
+                               fname: str,
+                               addr: str,
+                               instance: int,
+                               cluster: int,
+                               regname: str,
+                               bfname: str = ""):
+        """
+        Write a value to a TPMI register or its bit field.
+
+        Only the 'ufs' feature has clusters. Other features do not have clusters, or another way to
+        think about it is that they have only cluster 0. Therefore, for non-'ufs' features, cluster
+        number must be 0.
+
+        Args:
+            value: Value to write to the register or bit field.
+            fname: Name of the TPMI feature the register belongs to.
+            addr: TPMI device address.
+            instance: TPMI instance to write the register to.
+            cluster: TPMI cluster number to write the register to.
+            regname: Name of the TPMI register to write to.
+            bfname: Name of the bit field to write to. If not provided, write the entire register.
+        """
+
+        if fname == "ufs":
+            self.write_ufs_register(value, addr, instance, cluster, regname, bfname=bfname)
+        else:
+            if cluster != 0:
+                raise Error(f"Invalid cluster '{cluster}': TPMI feature '{fname}' does not support "
+                            f"clusters")
+            self.write_register(value, fname, addr, instance, regname, bfname=bfname)
