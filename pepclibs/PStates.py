@@ -58,7 +58,7 @@ class PStates(_PropsClassBase.PropsClassBase):
 
         self._cpufreq_sysfs_obj: _CPUFreqSysfs.CPUFreqSysfs | None = None
         self._cppc_sysfs_obj: _CPPCSysfs.CPPCSysfs | None = None
-        self._hwp_msr_obj: _HWPMSR.HWPMSR | None= None
+        self._hwp_msr_obj: _HWPMSR.HWPMSR | None = None
 
         self._perf2freq: dict[int, int] = {}
 
@@ -274,10 +274,10 @@ class PStates(_PropsClassBase.PropsClassBase):
             mname: Mechanism name to use for retrieving EPP values.
 
         Yields:
-            Tuple of (cpu, val), where 'cpu' is th CPU number and 'val' is its EPP value.
+            Tuples of (cpu, val), where 'cpu' is the CPU number and 'val' is its EPP value.
 
         Notes:
-            - The reason why the yield EPP values are strings is because the corresponding sysfs
+            - The reason why the yielded EPP values are strings is because the corresponding sysfs
               file may contain a policy name, which is a string, or a numeric value, which is also
               yielded as a string for simplicity.
         """
@@ -296,7 +296,7 @@ class PStates(_PropsClassBase.PropsClassBase):
             mname: Mechanism name to use for retrieving EPB values.
 
         Yields:
-            Tuple of (cpu, val), where 'cpu' is the CPU number and 'val' is its EPB value.
+            Tuples of (cpu, val), where 'cpu' is the CPU number and 'val' is its EPB value.
         """
 
         for cpu, val, _ in self._get_epbobj().get_vals(cpus=cpus, mnames=(mname,)):
@@ -313,7 +313,7 @@ class PStates(_PropsClassBase.PropsClassBase):
             mname: Mechanism name to use for retrieving the HWP status.
 
         Yields:
-            Tuple of (cpu, status), where 'cpu' is the CPU number and 'status' is its HWP status.
+            Tuples of (cpu, status), where 'cpu' is the CPU number and 'status' is its HWP status.
         """
 
         if mname != "msr":
@@ -353,7 +353,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         elif pname == "base_freq":
             yield from cpufreq_obj.get_base_freq(cpus)
         else:
-            raise Error(f"BUG: Unexpected CPU frequency property {pname} for property {pname}'")
+            raise Error(f"BUG: Unexpected CPU frequency property '{pname}'")
 
     def _get_base_freq(self,
                        cpus: AbsNumsType,
@@ -366,7 +366,7 @@ class PStates(_PropsClassBase.PropsClassBase):
             mname: Name of the mechanism to use for retrieving the base frequency.
 
         Yields:
-            Tuple of (cpu, val), where 'cpu' is the CPU number and 'val' is its base frequency.
+            Tuples of (cpu, val), where 'cpu' is the CPU number and 'val' is its base frequency.
         """
 
         if mname != "sysfs":
@@ -386,7 +386,7 @@ class PStates(_PropsClassBase.PropsClassBase):
             mname: Name of the mechanism to use for retrieving the fixed base frequency.
 
         Yields:
-            Tuple of (cpu, val), where 'cpu' is the CPU number and 'val' is its fixed base
+            Tuples of (cpu, val), where 'cpu' is the CPU number and 'val' is its fixed base
             frequency.
         """
 
@@ -445,7 +445,7 @@ class PStates(_PropsClassBase.PropsClassBase):
             mname: Name of the mechanism to use for retrieving the frequency limits.
 
         Yields:
-            Tuple of (cpu, val), where 'cpu' is the CPU number and 'val' is its frequency limit in
+            Tuples of (cpu, val), where 'cpu' is the CPU number and 'val' is its frequency limit in
             Hz.
         """
 
@@ -577,6 +577,10 @@ class PStates(_PropsClassBase.PropsClassBase):
             cpus: CPU numbers to retrieve CPPC performance or frequency values for.
             mname: Name of the mechanism to use for retrieving CPPC performance or frequency values
                    (must be "sysfs").
+
+        Yields:
+            Tuples of (cpu, val), where 'cpu' is the CPU number and 'val' is its CPPC
+            performance or frequency value.
         """
 
         if mname != "sysfs":
@@ -603,6 +607,17 @@ class PStates(_PropsClassBase.PropsClassBase):
                       cpus: AbsNumsType,
                       mname: MechanismNameType) -> Generator[tuple[int, int], None, None]:
         """
+        Retrieve and yield HWP performance values for the specified CPUs.
+
+        Args:
+            pname: Name of the property to retrieve.
+            cpus: CPU numbers to retrieve HWP performance values for.
+            mname: Name of the mechanism to use for retrieving HWP performance values (must be
+                   "msr").
+
+        Yields:
+            Tuples of (cpu, val), where 'cpu' is the CPU number and 'val' is its HWP
+            performance value.
         """
 
         if mname != "msr":
@@ -900,8 +915,8 @@ class PStates(_PropsClassBase.PropsClassBase):
             cpus: CPU numbers to resolve the frequency for.
 
         Yields:
-            Tuple (cpu, val), where 'cpu' is the CPU number and 'val' is the resolved frequency in
-            Hz.
+            Tuples of (cpu, val), where 'cpu' is the CPU number and 'val' is the resolved frequency
+            in Hz.
         """
 
         if freq == "min":

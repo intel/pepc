@@ -337,11 +337,11 @@ def test_specdirs(params: _TestParamsTypedDict):
         TPMI.TPMI(cpuinfo.proc_cpuinfo, pman=pman, specdirs=[Path("/non/existent/dir")])
 
     # Create a TPMI object with valid specdirs.
-    tpmi = TPMI.TPMI(cpuinfo.proc_cpuinfo, pman=pman, specdirs=params["tpmi"].specdirs)
+    tpmi = TPMI.TPMI(cpuinfo.proc_cpuinfo, pman=pman, specdirs=params["tpmi"].sdds)
     tpmi.close()
 
     # Create a TPMI object with a mix of valid and non-existent specdirs.
-    specdirs = [Path("/non/existent/dir"), *params["tpmi"].specdirs]
+    specdirs = [Path("/non/existent/dir"), *params["tpmi"].sdds]
     tpmi = TPMI.TPMI(cpuinfo.proc_cpuinfo, pman=pman, specdirs=specdirs)
     tpmi.close()
 
@@ -392,11 +392,11 @@ def _prepare_specdir(params: _TestParamsTypedDict, tmp_path: Path) -> Path:
 
     pman = params["pman"]
     cpuinfo = params["cpuinfo"]
-    specdirs = params["tpmi"].specdirs
+    sdds = params["tpmi"].sdds
 
     ufs_specpath = Path()
 
-    for specdir in specdirs:
+    for specdir in sdds:
         try:
             with TPMI.TPMI(cpuinfo.proc_cpuinfo, pman=pman, specdirs=[specdir]) as tpmi:
                 for _, addr, instance in tpmi.iter_feature("ufs"):
@@ -445,9 +445,9 @@ def test_spec_file_override(params: _TestParamsTypedDict, tmp_path: Path):
     pman = params["pman"]
     cpuinfo = params["cpuinfo"]
 
-    specdirs = [tmpspecdir, *params["tpmi"].specdirs]
+    sdds = [tmpspecdir, *params["tpmi"].sdds]
 
-    with TPMI.TPMI(cpuinfo.proc_cpuinfo, pman=pman, specdirs=specdirs) as tpmi:
+    with TPMI.TPMI(cpuinfo.proc_cpuinfo, pman=pman, specdirs=sdds) as tpmi:
         # Verify that original spec file is overridden.
         for _, addr, instance in tpmi.iter_feature("ufs"):
             tpmi.read_register("ufs", addr, instance, "UFS_SOMETHING", bfname="SOME_FIELD")

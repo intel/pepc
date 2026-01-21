@@ -38,6 +38,8 @@ Terminology:
     * sdict - Spec file dictionary containing basic TPMI spec file information: feature name, ID,
               description, and spec file path. Sdicts are built by partially reading spec files
               during initial scanning.
+    * sdd - The spec directory dictionary. Describes a scanned and parsed spec directory, including
+            the index dictionary (idxdict), and the used VFM entry (vfm).
     * instance - Logical "areas" or "components" within TPMI features, represented by integer
                  instance numbers. Specify the instance when reading or writing TPMI registers.
     * cluster - An instance of UFS (Uncore Frequency Scaling) TPMI is further divided into multiple
@@ -134,7 +136,7 @@ if typing.TYPE_CHECKING:
         prefix indicates "scanned").
 
         Attributes:
-            fname: Name of the TPMI feature described by the spec file.
+            name: Name of the TPMI feature described by the spec file.
             desc: Description of the TPMI feature.
             feature_id: TPMI ID of the feature.
             path: Path to the spec file.
@@ -163,6 +165,45 @@ if typing.TYPE_CHECKING:
         mdmap: _MDMapType
 
     _SDictKeysType = Literal["name", "desc", "feature_id"]
+
+    class IdxDictVFMEntryTypedDict(TypedDict, total=False):
+        """
+        A typed dictionary for a VFM entry in the index dictionary (idxdict) parsed from the
+        'index.yml' file in a spec directory.
+
+        Attributes:
+            subdir: The sub-directory name containing spec files for the platform.
+            platform_name: The human-readable platform name.
+        """
+
+        subdir: str
+        platform_name: str
+
+    class IdxDictTypedDict(TypedDict, total=False):
+        """
+        A typed dictionary for the index dictionary (idxdict) parsed from the 'index.yml' file in
+        a spec directory.
+
+        Attributes:
+            version: The index file format version.
+            vfms: The VFM entries in the index file.
+        """
+
+        version: str
+        vfms: dict[int, IdxDictVFMEntryTypedDict]
+
+    class SDDTypedDict(TypedDict, total=False):
+        """
+        A typed dictionary for a scanned spec directory (sdd).
+
+        Attributes:
+            vfm: The used VFM entry from the index file (key in 'idxdict["vfms"]).
+            idxdict: The index dictionary parsed from the 'index.yml' file.
+        """
+
+        vfm: int
+        idxpath: Path
+        idxdict: IdxDictTypedDict
 
 # UFS header register names. These registers are per-instance rather than per-cluster. All other
 # registers are "control registers" and are per-cluster.
@@ -334,7 +375,7 @@ def _check_keys(check_keys: Iterable[str],
 
     return ""
 
-def _parse_index_file(specpath: Path, vfm: int = -1, subdir: str = "") -> Path:
+def _parse_index_file(specpath: Path, vfm: int = -1, subdir: str = "") -> SDDTypedDict:
     """
     Parse the 'index.yml' file in a spec directory and return path to the spec files
     sub-directory containing spec files for the current platform.
@@ -346,13 +387,12 @@ def _parse_index_file(specpath: Path, vfm: int = -1, subdir: str = "") -> Path:
                 match against sub-directory name.
 
     Returns:
-        Path to a sub-directory within the spec directory containing spec files for the
-        current platform
+        Path to a sub-directory within the spec directory containing spec files for the current
+        platform.
 
     Notes:
         Matches first against 'vfm', then against 'subdir'. If no matching entry is found, the
         first entry in the index file is used.
-
     """
 
     def _raise_exc(msg: str) -> NoReturn:
@@ -367,7 +407,13 @@ def _parse_index_file(specpath: Path, vfm: int = -1, subdir: str = "") -> Path:
         raise Error(f"{pfx}:\n{Error(msg).indent(2)}")
 
     idxpath = specpath / "index.yml"
-    idxdict: dict =  YAML.load(idxpath)
+
+    if typing.TYPE_CHECKING:
+        idxdict: IdxDictTypedDict = cast(IdxDictTypedDict, YAML.load(idxpath))
+    else:
+        idxdict = YAML.load(idxpath)
+
+    sdd: SDDTypedDict = {"vfm": -1, "idxpath": idxpath, "idxdict": idxdict}
 
     keys = {"version", "vfms"}
     where = "at the top level of the index file"
@@ -380,8 +426,9 @@ def _parse_index_file(specpath: Path, vfm: int = -1, subdir: str = "") -> Path:
         _raise_exc(f"Unsupported index format version '{version}': only version '1.0' is "
                    f"supported")
 
-    first_vfm = ""
-    vfms: dict[str, dict] = idxdict["vfms"]
+    first_vfm = -1
+    vfms: dict[int, IdxDictVFMEntryTypedDict] = idxdict["vfms"]
+
     for _vfm, info in vfms.items():
         keys = {"subdir", "platform_name"}
         where = f"in VFM={_vfm} definition"
@@ -390,11 +437,13 @@ def _parse_index_file(specpath: Path, vfm: int = -1, subdir: str = "") -> Path:
             _raise_exc(msg)
 
         if vfm != -1 and _vfm == vfm:
-            return specpath / info["subdir"]
+            sdd["vfm"] = _vfm
+            return sdd
         if subdir and info["subdir"] == subdir:
-            return specpath / info["subdir"]
+            sdd["vfm"] = _vfm
+            return sdd
 
-        if not first_vfm:
+        if first_vfm == -1:
             first_vfm = _vfm
 
     match_str = ""
@@ -412,14 +461,18 @@ def _parse_index_file(specpath: Path, vfm: int = -1, subdir: str = "") -> Path:
         _LOG.debug("No match criteria provided, using the first platform '%s' from TPMI spec "
                    "index file '%s'", vfms[first_vfm]["platform_name"], idxpath)
 
-    return specpath / vfms[first_vfm]["subdir"]
+    if first_vfm == -1:
+        _raise_exc("No VFM entries found in the index file")
 
-def get_features(specdirs: Sequence[Path] = (),
+    sdd["vfm"] = first_vfm
+    return sdd
+
+def get_features(specdirs: Iterable[Path] = (),
                  vfm: int = -1,
-                 subdir: str = "") -> tuple[dict[str, SDictTypedDict], list[Path]]:
+                 subdir: str = "") -> tuple[dict[str, SDictTypedDict], dict[Path, SDDTypedDict]]:
     """
     Retrieve a dictionary of sdicts (specification dictionaries) for all features described by
-    available TPMI spec files. Also return the list of spec directories that were scanned. Do not
+    available TPMI spec files. Also return the list of scanned spec directories. Do not
     verify whether the features are actually supported by the system, just scan the available spec
     files.
 
@@ -435,8 +488,8 @@ def get_features(specdirs: Sequence[Path] = (),
 
     Returns:
         A tuple containing:
-            * A dictionary mapping feature names to their spec file dictionaries (sdicts).
-            * A list of Path objects representing the spec directories that were scanned.
+            * A dictionary of spec dictionaries for all found TPMI features. Keys are feature names.
+            * A dictionary of scanned spec directories. Keys are spec directory paths.
 
     Notes:
         1. During the scanning process, only the headers of spec files are read. The entire YAML
@@ -460,6 +513,8 @@ def get_features(specdirs: Sequence[Path] = (),
     specdirs = _specdirs
 
     sdicts: dict[str, SDictTypedDict] = {}
+    sdds: dict[Path, SDDTypedDict] = {}
+
     for specdir in specdirs:
         spec_files_cnt = 0
         non_yaml_cnt = 0
@@ -468,11 +523,13 @@ def get_features(specdirs: Sequence[Path] = (),
         # Parse the index file and get path to the sub-directory containing spec files for the
         # current platform.
         try:
-            specsubdir = _parse_index_file(specdir, vfm=vfm, subdir=subdir)
+            sdd = _parse_index_file(specdir, vfm=vfm, subdir=subdir)
         except Error as err:
             _LOG.warning("Failed to parse TPMI spec index file in directory '%s':\n%s",
                          specdir, err.indent(2))
             continue
+
+        specsubdir = specdir / sdd["idxdict"]["vfms"][sdd["vfm"]]["subdir"]
 
         try:
             _lsdir = os.listdir(specsubdir)
@@ -513,13 +570,14 @@ def get_features(specdirs: Sequence[Path] = (),
                             f"spec files is {_MAX_SPEC_FILES}")
 
             sdicts[sdict["name"]] = sdict
+            sdds[specdir] = sdd
 
     if not sdicts:
         paths = "\n * ".join([str(path) for path in specdirs])
         raise ErrorNotSupported(f"No TPMI spec files found, checked the following paths:\n"
                                 f" * {paths}")
 
-    return sdicts, specdirs
+    return sdicts, sdds
 
 class TPMI(ClassHelpers.SimpleCloseContext):
     """
@@ -573,7 +631,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
     def __init__(self,
                  proc_cpuinfo: ProcCpuinfoTypedDict,
                  pman: ProcessManagerType | None = None,
-                 specdirs: Sequence[Path] = ()):
+                 specdirs: Iterable[Path] = ()):
         """
         Initialize a class instance.
 
@@ -618,16 +676,17 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         self._tpmi_pci_paths: list[Path] = []
         self._tpmi_pci_paths = self._get_debugfs_tpmi_dirs()
 
-        # Map feature name to the sdict, which is a partially loaded spec file dictionary:
-        # {feature_name: {"name": ..., "desc": ..., "feature_id": ..., "path": ...}}.
-        self._sdicts: dict[str, SDictTypedDict] = {}
+        # The spec file dictionaries (sdicts) for all known features.
+        self.sdicts: dict[str, SDictTypedDict] = {}
+        # The scanned spec directory dictionaries (sdds) for all spec directories.
+        self.sdds: dict[Path, SDDTypedDict] = {}
 
         # Scan the spec directories and build sdicts - partially loaded spec file dictionaries.
-        self._sdicts, self.specdirs = get_features(specdirs=specdirs, vfm=proc_cpuinfo["vfm"])
+        self.sdicts, self.sdds = get_features(specdirs=specdirs, vfm=proc_cpuinfo["vfm"])
 
         # The feature ID -> feature name dictionary (supported features only).
         self._fid2fname: dict[int, str] = {}
-        for fname, sdict in self._sdicts.items():
+        for fname, sdict in self.sdicts.items():
             self._fid2fname[sdict["feature_id"]] = fname
 
         # Feature maps: {feature_name: {addr: _AddrMDMapTypedDict}}.
@@ -889,7 +948,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                                     f"following paths:\n * {paths}")
 
         if "tpmi_info" not in fname2addrs:
-            dirs = "\n * ".join([str(path) for path in self.specdirs])
+            dirs = "\n * ".join([str(path) for path in self.sdds])
             raise Error(f"Spec file for the 'tpmi_info' TPMI feature was not found, checked in the "
                         f"following directories:\n * {dirs}")
 
@@ -1067,12 +1126,12 @@ class TPMI(ClassHelpers.SimpleCloseContext):
             _SDictTypedDict: The sdict associated with the given feature name.
         """
 
-        if fname not in self._sdicts:
-            known = ", ".join(self._sdicts)
+        if fname not in self.sdicts:
+            known = ", ".join(self.sdicts)
             raise Error(f"Unknown feature '{fname}'{self._pman.hostmsg}, known features are: "
                         f"{known}")
 
-        return self._sdicts[fname]
+        return self.sdicts[fname]
 
     def _get_fdict(self, fname: str) -> dict[str, RegDictTypedDict]:
         """
@@ -1564,18 +1623,19 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         """
         Retrieve a dictionary of sdicts (specification dictionaries) for all known features.
 
+        Returns:
+            Dictionary of sdicts for all known features.
+
         Note:
             The returned dictionaries should be treated as read-only and must not be modified.
 
-        Returns:
-            Dictionary of sdicts for all known features.
         """
 
         sdicts: dict[str, SDictTypedDict] = {}
         for fname in self._fmaps:
             # It would be safer to return deep copy of the dictionary, but for optimization
             # purposes, avoid the copying.
-            sdicts[fname] = self._sdicts[fname]
+            sdicts[fname] = self.sdicts[fname]
         return sdicts
 
     def get_unknown_features(self) -> list[int]:
@@ -1633,7 +1693,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                      addrs: Iterable[str] = (),
                      instances: Iterable[int] = ()) -> Generator[tuple[int, str, int], None, None]:
         """
-        Iterate over a TPMI feature and yield tuples of '(addr, package, instance)'.
+        Iterate over a TPMI feature and yield tuples of '(package, addr, instance)'.
 
         Yield all TPMI device PCI address, package numbers, and instance numbers for the specified
         TPMI feature. It is possible to restrict the iteration to specific addresses, packages, or
@@ -1650,8 +1710,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
             instances: Instance numbers to include.
 
         Yields:
-            Tuples of '(package, addr, instance)' for each matching TPMI instance of feature
-            registers.
+            Tuples of '(package, addr, instance)' for each matching TPMI instance of feature registers.
         """
 
         self._validate_fname(fname)
@@ -1751,7 +1810,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                          clusters: Iterable[int] = ()) -> Generator[tuple[int, str, int, int],
                                                                     None, None]:
         """
-        Iterate over TPMI UFS feature and yield tuples of '(addr, package, instance, cluster)'.
+        Iterate over TPMI UFS feature and yield tuples of '(package, addr, instance, cluster)'.
 
         Similar to 'TPMI.TPMI.iter_feature()', but with added support for UFS clusters.
 
@@ -1795,7 +1854,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                              clusters: Iterable[int] = ()) -> Generator[tuple[int, str, int, int],
                                                                         None, None]:
         """
-        Iterate over a TPMI feature and yield tuples of '(addr, package, instance, cluster)'.
+        Iterate over a TPMI feature and yield tuples of '(package, addr, instance, cluster)'.
 
         For UFS features, each instance may contain multiple clusters of registers. Other features
         do not have clusters, or another way to think about it is that they have only cluster 0.
@@ -1815,7 +1874,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
 
         if fname == "ufs":
             yield from self.iter_ufs_feature(packages=packages, addrs=addrs,
-                                            instances=instances, clusters=clusters)
+                                             instances=instances, clusters=clusters)
         else:
             for cluster in clusters:
                 if cluster != 0:
@@ -1915,11 +1974,12 @@ class TPMI(ClassHelpers.SimpleCloseContext):
 
         if fname == "ufs":
             return self.read_ufs_register(addr, instance, cluster, regname, bfname=bfname)
-        else:
-            if cluster != 0:
-                raise Error(f"Invalid cluster '{cluster}': TPMI feature '{fname}' does not support "
-                            f"clusters other than 0")
-            return self.read_register(fname, addr, instance, regname, bfname=bfname)
+
+        if cluster != 0:
+            raise Error(f"Invalid cluster '{cluster}': TPMI feature '{fname}' does not support "
+                        f"clusters other than 0")
+
+        return self.read_register(fname, addr, instance, regname, bfname=bfname)
 
     def get_bitfield(self, regval: int, fname: str, regname: str, bfname: str) -> int:
         """

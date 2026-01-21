@@ -264,8 +264,6 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     text = f"{TOOLNAME} - Power, Energy, and Performance Configuration tool for Linux."
     parser = ArgParse.ArgsParser(description=text, prog=TOOLNAME, ver=_VERSION)
 
-    ArgParse.add_options(parser, ArgParse.SSH_OPTIONS + [_DATASET_OPTION])
-
     subparsers = parser.add_subparsers(title="commands", dest="a command")
     subparsers.required = True
 
@@ -590,7 +588,10 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
 
     ArgParse.add_options(subpars2, ssh_options)
 
-    text = """Display TPMI topology (PCI addresses, instance numbers, etc.)"""
+    text = """Print information about TPMI spec files and exit."""
+    subpars2.add_argument("--list-specs", action="store_true", help=text)
+
+    text = """Display TPMI topology (PCI addresses, instance numbers, etc.)."""
     subpars2.add_argument("-t", "--topology", action="store_true", help=text)
 
     text = """Comma-separated list of TPMI feature names to display. Defaults to all supported
@@ -599,6 +600,9 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
 
     text = """Include TPMI features without spec files (unknown features)."""
     subpars2.add_argument("--unknown", action="store_true", help=text)
+
+    text = """Display information in YAML format."""
+    subpars2.add_argument("--yaml", action="store_true", help=text)
 
     #
     # Create parser for the 'tpmi read' command.
@@ -1142,6 +1146,8 @@ def do_main(pman: ProcessManagerType | None = None) -> int:
         for dspath in _get_next_dataset(dataset):
             with _get_emul_pman(dspath) as emul_pman:
                 args.func(args, emul_pman)
+    elif getattr(args, "no_pman", False):
+        args.func(args)
     else:
         # pylint: disable-next=import-outside-toplevel
         from pepclibs.helperlibs import ProcessManager

@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2025 Intel Corporation
+# Copyright (C) 2020-2026 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
-# Authors: Antti Laakso <antti.laakso@linux.intel.com>
-#          Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
+# Authors: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
+#          Antti Laakso <antti.laakso@linux.intel.com>
 
 """
 Base class for accessing Model-Specific Register (MSR) features.
@@ -515,8 +515,8 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
             cpus: CPU numbers to read from, or the special value "all" to select all CPUs.
 
         Yields:
-            tuple: A tuple (cpu, val), where 'cpu' is the CPU number and 'val' is the value of the
-                   feature read from that CPU.
+            Tuples of (cpu, val), where 'cpu' is the CPU number and 'val' is the value of the
+            feature read from that CPU.
         """
 
         self.validate_feature_supported(fname, cpus=cpus)
@@ -588,9 +588,9 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
             cpus: CPUs to check the feature on. Special value "all" selects all CPUs.
 
         Yields:
-            tuple: A tuple (cpu, enabled), where:
-                cpu: CPU number the feature was read from.
-                enabled: True if the feature is enabled, False otherwise.
+            Tuples of (cpu, enabled), where:
+            - cpu: CPU number the feature was read from.
+            - enabled: True if the feature is enabled, False otherwise.
         """
 
         self.validate_feature_supported(fname, cpus=cpus)
@@ -604,6 +604,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
         for cpu, val in self.read_feature(fname, cpus=cpus):
             enabled = val in {"on", "enabled"}
             yield cpu, enabled
+
     def is_cpu_feature_enabled(self, fname, cpu):
         """
         Check if a CPU feature is enabled for a CPU.
@@ -616,11 +617,10 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
             True if the feature is enabled for the specified CPU, False otherwise.
         """
 
-        enabled = None
         for _, enabled in self.is_feature_enabled(fname, cpus=(cpu,)):
-            pass
+            return enabled
 
-        return enabled
+        raise Error(f"Failed to check if feature '{fname}' is enabled on CPU {cpu}")
 
     def write_feature(self,
                       fname: str,
