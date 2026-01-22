@@ -1719,7 +1719,8 @@ class TPMI(ClassHelpers.SimpleCloseContext):
             instances: Instance numbers to include.
 
         Yields:
-            Tuples of '(package, addr, instance)' for each matching TPMI instance of feature registers.
+            Tuples of '(package, addr, instance)' for each matching TPMI instance of feature
+            registers.
         """
 
         self._validate_fname(fname)

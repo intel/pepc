@@ -379,7 +379,7 @@ def _list_specs(sdicts: dict[str, SDictTypedDict],
     _LOG.info("TPMI spec files:")
     for fname in sdicts:
         sdict = sdicts[fname]
-        _LOG.info("- %s (feature ID %d): %s", sdict["name"], sdict["feature_id"], sdict["desc"])
+        _LOG.info("- %s (%d): %s", sdict["name"], sdict["feature_id"], sdict["desc"])
         _LOG.info("  Spec file: %s", sdict["path"])
 
 def _get_ls_supported(cmdl: _LsCmdlineArgsTypedDict,
@@ -447,43 +447,6 @@ def _tpmi_ls_flat(cmdl: _LsCmdlineArgsTypedDict, tpmi: TPMI.TPMI):
         _LOG.info("TPMI features supported by the target platform, but no spec files found")
         _LOG.info(" - %s", ", ".join(hex(fid) for fid in info["unknown"]))
 
-def _ls_topology(fname: str, tpmi: TPMI.TPMI, level: int = 0):
-    """
-    Display TPMI topology for a feature.
-
-    Args:
-        fname: Name of the feature to display topology for.
-        tpmi: A 'TPMI.TPMI' object.
-        level: The starting indentation level for formatting log output.
-    """
-
-    # Dictionary with the info to print: {package: {addr: {instances}}}.
-    info: dict[int, dict[str, set[int]]] = {}
-
-    for package, addr, instance in tpmi.iter_feature(fname):
-        if package not in info:
-            info[package] = {}
-        if addr not in info[package]:
-            info[package][addr] = set()
-        info[package][addr].add(instance)
-
-    for package in sorted(info):
-        for addr in sorted(info[package]):
-            _LOG.info("%sPCI address: %s", _pfx_bullet(level), addr)
-
-            _LOG.info("%sPackage: %d", _pfx_blanks(level), package)
-
-            if fname != "ufs":
-                instances = Trivial.rangify(info[package][addr])
-                _LOG.info("%sInstances: %s", _pfx_blanks(level), instances)
-                continue
-
-            for instance in sorted(info[package][addr]):
-                _LOG.info("%sInstance: %d", _pfx_bullet(level + 1), instance)
-                for _, _, _, cluster in tpmi.iter_ufs_feature(packages=(package,), addrs=(addr,),
-                                                              instances=(instance,)):
-                    _LOG.info("%sCluster: %d", _pfx_bullet(level + 2), cluster)
-
 def _get_ls_topology(tpmi: TPMI.TPMI, fname: str) -> dict[str, _LsInfoTopologyAddrTypedDict]:
     """
     Get TPMI topology information for a feature.
@@ -534,7 +497,7 @@ def _tpmi_ls_topology(cmdl: _LsCmdlineArgsTypedDict, tpmi: TPMI.TPMI):
     _LOG.info("Supported TPMI features")
 
     for fname, finfo in info["supported"].items():
-        _LOG.info("- %s: %s", fname, finfo["desc"].strip())
+        _LOG.info("- %s (%d): %s", fname, finfo["feature_id"], finfo["desc"].strip())
 
         for addr, addr_info in topology[fname].items():
             _LOG.info("%sPCI address: %s", _pfx_bullet(1), addr)
