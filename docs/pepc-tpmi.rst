@@ -104,6 +104,12 @@ Subcommand *'ls'*
 
 Display supported TPMI features.
 
+**--list-specs**
+   Display information about TPMI spec files for the target system and exit. Show the detected
+   CPU model and available spec files for that model. Spec directories may contain files for
+   different CPU models. Select files matching the target system. Note that the target system
+   may not support all TPMI features described in the spec files.
+
 **-t**, **--topology**
    Display TPMI topology (PCI addresses, instance numbers, etc.).
 
@@ -113,6 +119,9 @@ Display supported TPMI features.
 
 **--unknown**
    Include TPMI features without spec files (unknown features).
+
+**--yaml**
+   Display information in YAML format.
 
 Subcommand *'read'*
 ===================
