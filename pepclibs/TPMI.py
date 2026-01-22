@@ -1415,16 +1415,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         offset = regdict["offset"]
         width = regdict["width"]
 
-        # Validate the value.
-        if value < 0:
-            raise Error(f"Bad value '{value}' for register '{regname}': should be a positive "
-                        f"{width}-bit integer")
-        max_value = (1 << width) - 1
-        if value > max_value:
-            raise Error(f"Too large value '{value}' for a {width}-bit register '{regname}'")
-
         mdmap = self._get_mdmap(fname, addr)
-
         self._validate_instance_offset(fname, addr, instance, regname, offset, mdmap)
 
         path = self._get_debugfs_feature_path(addr, fname)
@@ -1433,15 +1424,33 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         _LOG.debug("Writing %#x to '%s' register '%s', instance '%d' at offset %#x of TPMI "
                    "device '%s'", value, fname, regname, instance, offset, addr)
 
+        if value < 0:
+            raise Error(f"Bad value '{value}' for register '{regname}': should be a positive "
+                        f"{width}-bit integer")
+
         if bfname:
+            # Validate the value.
+            bfdict = self._get_bfdict(fname, regname, bfname)
+            bfwidth = bfdict["bits"][0] - bfdict["bits"][1] + 1
+            max_value = (1 << bfwidth) - 1
+            if value > max_value:
+                raise Error(f"Too large value '{value}' for a {bfwidth}-bit bit field '{bfname}' "
+                            f"of register '{regname}'")
+
             regval = self._read_register(fname, addr, instance, regname)
             value = self._set_bitfield(regval, value, fname, regname, bfname)
+        else:
+            # Validate the value.
+            max_value = (1 << width) - 1
+            if value > max_value:
+                raise Error(f"Too large value '{value}' for a {width}-bit register '{regname}'")
 
         if cluster > 0:
             offset = self._adjust_ufs_offset(addr, instance, cluster, offset)
 
         with self._pman.open(path, "r+") as fobj:
             while width > 0:
+                # TODO: Can 64-bit writes be done in one operation?
                 writeval = value & 0xffffffff
                 data = f"{instance},{offset},{writeval:#x}"
                 _LOG.debug("Writing '%s' to '%s'", data, path)

@@ -19,7 +19,7 @@ from pathlib import Path
 import pytest
 from tests import common
 from pepclibs import CPUInfo, TPMI
-from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorPermissionDenied
 
 if typing.TYPE_CHECKING:
     from typing import Generator, cast, Final
@@ -143,8 +143,8 @@ def test_get_fdict(params: _TestParamsTypedDict):
             assert "fields" in regdict
             assert isinstance(regdict["fields"], dict)
 
-            for fname, finfo in regdict["fields"].items():
-                assert isinstance(fname, str)
+            for bfname, finfo in regdict["fields"].items():
+                assert isinstance(bfname, str)
                 assert isinstance(finfo, dict)
 
                 assert "desc" in finfo
@@ -458,3 +458,255 @@ def test_spec_file_override(params: _TestParamsTypedDict, tmp_path: Path):
         # Verify that other spec files are still usable.
         for _, addr, instance in tpmi.iter_feature("rapl"):
             tpmi.read_register("rapl", addr, instance, "SOCKET_RAPL_DOMAIN_HEADER")
+
+def test_invalid_feature_name(params: _TestParamsTypedDict):
+    """
+    Test that invalid feature names raise appropriate errors.
+
+    Args:
+        params: A dictionary with test parameters.
+    """
+
+    tpmi = params["tpmi"]
+
+    # Test with non-existent feature name.
+    with pytest.raises(Error):
+        tpmi.get_fdict("non_existent_feature")
+
+    with pytest.raises(Error):
+        tpmi.get_sdict("non_existent_feature")
+
+    with pytest.raises(Error):
+        for _ in tpmi.iter_feature("non_existent_feature"):
+            pass
+
+def test_invalid_register_name(params: _TestParamsTypedDict):
+    """
+    Test that invalid register names raise appropriate errors.
+
+    Args:
+        params: A dictionary with test parameters.
+    """
+
+    tpmi = params["tpmi"]
+    sdicts = tpmi.get_known_features()
+
+    if not sdicts:
+        pytest.skip("No known features available")
+
+    fname = next(iter(sdicts))
+
+    for _, addr, instance in tpmi.iter_feature(fname):
+        # Test with non-existent register name.
+        with pytest.raises(Error):
+            tpmi.read_register(fname, addr, instance, "NON_EXISTENT_REGISTER")
+
+        with pytest.raises(Error):
+            tpmi.write_register(0, fname, addr, instance, "NON_EXISTENT_REGISTER")
+
+        break
+
+def test_invalid_bitfield_name(params: _TestParamsTypedDict):
+    """
+    Test that invalid bitfield names raise appropriate errors.
+
+    Args:
+        params: A dictionary with test parameters.
+    """
+
+    tpmi = params["tpmi"]
+    sdicts = tpmi.get_known_features()
+
+    if not sdicts:
+        pytest.skip("No known features available")
+
+    fname = next(iter(sdicts))
+    fdict = tpmi.get_fdict(fname)
+    regname = next(iter(fdict))
+
+    for _, addr, instance in tpmi.iter_feature(fname):
+        # Test with non-existent bitfield name.
+        with pytest.raises(Error):
+            tpmi.read_register(fname, addr, instance, regname, bfname="NON_EXISTENT_BITFIELD")
+
+        with pytest.raises(Error):
+            tpmi.write_register(0, fname, addr, instance, regname, bfname="NON_EXISTENT_BITFIELD")
+
+        # Test get_bitfield with invalid bitfield name.
+        regval = tpmi.read_register(fname, addr, instance, regname)
+        with pytest.raises(Error):
+            tpmi.get_bitfield(regval, fname, regname, "NON_EXISTENT_BITFIELD")
+        break
+
+def test_invalid_address(params: _TestParamsTypedDict):
+    """
+    Test that invalid PCI addresses raise appropriate errors.
+
+    Args:
+        params: A dictionary with test parameters.
+    """
+
+    tpmi = params["tpmi"]
+    sdicts = tpmi.get_known_features()
+
+    if not sdicts:
+        pytest.skip("No known features available")
+
+    fname = next(iter(sdicts))
+    fdict = tpmi.get_fdict(fname)
+    regname = next(iter(fdict))
+
+    # Test with non-existent address.
+    with pytest.raises(Error):
+        tpmi.read_register(fname, "ffff:ff:ff.f", 0, regname)
+
+    with pytest.raises(Error):
+        tpmi.write_register(0, fname, "ffff:ff:ff.f", 0, regname)
+
+def test_invalid_instance(params: _TestParamsTypedDict):
+    """
+    Test that invalid instance numbers raise appropriate errors.
+
+    Args:
+        params: A dictionary with test parameters.
+    """
+
+    tpmi = params["tpmi"]
+    sdicts = tpmi.get_known_features()
+
+    if not sdicts:
+        pytest.skip("No known features available")
+
+    fname = next(iter(sdicts))
+    fdict = tpmi.get_fdict(fname)
+    regname = next(iter(fdict))
+
+    for _, addr, _ in tpmi.iter_feature(fname):
+        # Test with very large instance number (unlikely to exist).
+        with pytest.raises(Error):
+            tpmi.read_register(fname, addr, 9999, regname)
+
+        with pytest.raises(Error):
+            tpmi.write_register(0, fname, addr, 9999, regname)
+        break
+
+def test_invalid_cluster(params: _TestParamsTypedDict):
+    """
+    Test that invalid cluster numbers raise appropriate errors for non-UFS features.
+
+    Args:
+        params: A dictionary with test parameters.
+    """
+
+    tpmi = params["tpmi"]
+    sdicts = tpmi.get_known_features()
+
+    # Find a non-UFS feature.
+    non_ufs_features = [fname for fname in sdicts if fname != "ufs"]
+
+    if not non_ufs_features:
+        pytest.skip("No non-UFS features available")
+
+    fname = non_ufs_features[0]
+    fdict = tpmi.get_fdict(fname)
+    regname = next(iter(fdict))
+
+    for _, addr, instance in tpmi.iter_feature(fname):
+        # Non-UFS features should not support cluster != 0.
+        with pytest.raises(Error):
+            tpmi.read_register_cluster(fname, addr, instance, 1, regname)
+
+        with pytest.raises(Error):
+            tpmi.write_register_cluster(0, fname, addr, instance, 1, regname)
+        break
+
+def test_readonly_register_write(params: _TestParamsTypedDict):
+    """
+    Test that attempting to write to read-only registers raises appropriate errors.
+
+    Args:
+        params: A dictionary with test parameters.
+    """
+
+    tpmi = params["tpmi"]
+    sdicts = tpmi.get_known_features()
+
+    if not sdicts:
+        pytest.skip("No known features available")
+
+    # Find a read-only register.
+    for fname in sdicts:
+        fdict = tpmi.get_fdict(fname)
+        for regname, regdict in fdict.items():
+            if regdict["readonly"]:
+                for _, addr, instance in tpmi.iter_feature(fname):
+                    # Attempting to write to a read-only register should fail.
+                    with pytest.raises(ErrorPermissionDenied):
+                        tpmi.write_register(0, fname, addr, instance, regname)
+                    return
+                break
+
+    pytest.skip("No read-only registers found")
+
+def test_readonly_bitfield_write(params: _TestParamsTypedDict):
+    """
+    Test that attempting to write to read-only bitfields raises appropriate errors.
+
+    Args:
+        params: A dictionary with test parameters.
+    """
+
+    tpmi = params["tpmi"]
+    sdicts = tpmi.get_known_features()
+
+    if not sdicts:
+        pytest.skip("No known features available")
+
+    # Find a read-only bitfield.
+    for fname in sdicts:
+        fdict = tpmi.get_fdict(fname)
+        for regname, regdict in fdict.items():
+            for bfname, bfdict in regdict["fields"].items():
+                if bfdict["readonly"]:
+                    for _, addr, instance in tpmi.iter_feature(fname):
+                        # Attempting to write to a read-only bitfield should fail.
+                        with pytest.raises(Error):
+                            tpmi.write_register(0, fname, addr, instance, regname, bfname=bfname)
+                        return
+                    break
+            break
+
+    pytest.skip("No read-only bitfields found")
+
+def test_bitfield_value_out_of_range(params: _TestParamsTypedDict):
+    """
+    Test that writing out-of-range values to bitfields raises appropriate errors.
+
+    Args:
+        params: A dictionary with test parameters.
+    """
+
+    tpmi = params["tpmi"]
+
+    fname = "ufs"
+    regname = "UFS_ADV_CONTROL_2"
+    bfname = "UTILIZATION_THRESHOLD"
+
+    try:
+        fdict = tpmi.get_fdict(fname)
+    except Error:
+        pytest.skip("UFS feature not available")
+
+    bits = fdict[regname]["fields"][bfname]["bits"]
+    max_value = (1 << (bits[0] - bits[1] + 1)) - 1
+
+    for _, addr, instance, cluster in tpmi.iter_feature_cluster(fname):
+        # Test with value exceeding bitfield capacity.
+        with pytest.raises(Error):
+            tpmi.write_register_cluster(max_value + 1, fname, addr, instance, cluster, regname,
+                                        bfname=bfname)
+
+        # Test with negative value.
+        with pytest.raises(Error):
+            tpmi.write_register_cluster(-1, fname, addr, instance, cluster, regname, bfname=bfname)
+        break
