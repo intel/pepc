@@ -347,6 +347,24 @@ def test_specdirs(params: _TestParamsTypedDict):
     tpmi = TPMI.TPMI(vfm, pman=pman, specdirs=specdirs)
     tpmi.close()
 
+def test_default_vfm(params: _TestParamsTypedDict):
+    """
+    Test the TPMI class constructor when vfm is not provided.
+
+    The constructor should use DEFAULT_VFM (Granite Rapids Xeon) as the default VFM value.
+
+    Args:
+        params: A dictionary with test parameters.
+    """
+
+    pman = params["pman"]
+
+    # Test with vfm not provided (defaults to -1).
+    with TPMI.TPMI(pman=pman, specdirs=params["tpmi"].sdds) as tpmi:
+        assert tpmi.vfm == TPMI.DEFAULT_VFM
+        # Should be able to use TPMI functionality with default VFM.
+        assert isinstance(tpmi.get_known_features(), dict)
+
 _TMP_UFS_SPEC_FILE_CONTENTS: Final[str] = r"""# Modified version of the UFS spec file for testing.
 name: "ufs"
 desc: >-

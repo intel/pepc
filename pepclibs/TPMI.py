@@ -8,9 +8,8 @@
 #          Tero Kristo <tero.kristo@linux.intel.com>
 
 """
-Provide a capability of reading and writing of TPMI registers on Intel CPUs. TPMI stands for
-"Topology Aware Register and PM Capsule Interface" - a memory-mapped interface for accessing power
-management features on Intel CPUs.
+Read and write TPMI registers on Intel CPUs. TPMI stands for "Topology Aware Register and PM Capsule
+Interface" - a memory-mapped interface for accessing power management features on Intel CPUs.
 
 Terminology:
     * feature - A group of TPMI registers exposed by the processor via PCIe VSEC (Vendor-Specific
@@ -206,6 +205,10 @@ if typing.TYPE_CHECKING:
         idxpath: Path
         idxdict: IdxDictTypedDict
 
+# The default VFM to use when the user does not provide one.
+DEFAULT_VFM: Final[int] = CPUModels.MODELS["GRANITERAPIDS_X"]["vfm"]
+DEFAULT_PLATFORM_NAME: Final[str] = CPUModels.MODELS["GRANITERAPIDS_X"]["codename"]
+
 # UFS header register names. These registers are per-instance rather than per-cluster. All other
 # registers are "control registers" and are per-cluster.
 UFS_HEADER_REGNAMES: Final[set[str]] = {
@@ -376,24 +379,18 @@ def _check_keys(check_keys: Iterable[str],
 
     return ""
 
-def _parse_index_file(specpath: Path, vfm: int = -1, subdir: str = "") -> SDDTypedDict:
+def _parse_index_file(specpath: Path, vfm: int) -> SDDTypedDict:
     """
     Parse the 'index.yml' file in a spec directory and return path to the spec files
     sub-directory containing spec files for the current platform.
 
     Args:
         specpath: Path to the spec directory to parse the index file for.
-        vfm: The VFM value to match against the index file entries. If -1, do not match against VFM.
-        subdir: The sub-directory name to match against the index file entries. If empty, do not
-                match against sub-directory name.
+        vfm: The VFM value to match against the index file entries.
 
     Returns:
         Path to a sub-directory within the spec directory containing spec files for the current
         platform.
-
-    Notes:
-        Matches first against 'vfm', then against 'subdir'. If no matching entry is found, the
-        first entry in the index file is used.
     """
 
     def _raise_exc(msg: str) -> NoReturn:
@@ -427,50 +424,25 @@ def _parse_index_file(specpath: Path, vfm: int = -1, subdir: str = "") -> SDDTyp
         _raise_exc(f"Unsupported index format version '{version}': only version '1.0' is "
                    f"supported")
 
-    first_vfm = -1
     vfms: dict[int, IdxDictVFMEntryTypedDict] = idxdict["vfms"]
 
     for _vfm, info in vfms.items():
         keys = {"subdir", "platform_name"}
-        where = f"in VFM={_vfm} definition"
+        where = f"in VFM={_vfm} spec definition"
         msg = _check_keys(info, keys, keys, where)
         if msg:
             _raise_exc(msg)
 
-        if vfm != -1 and _vfm == vfm:
-            sdd["vfm"] = _vfm
-            return sdd
-        if subdir and info["subdir"] == subdir:
+        if _vfm == vfm:
             sdd["vfm"] = _vfm
             return sdd
 
-        if first_vfm == -1:
-            first_vfm = _vfm
-
-    match_str = ""
-    if vfm != -1:
-        match_str += f"VFM {vfm:#x}"
-        if subdir:
-            match_str += " or"
-    if subdir:
-        match_str += f" subdir name '{subdir}'"
-
-    if match_str:
-        _LOG.notice("No matching platform for %s found in TPMI spec index file '%s', using "
-                    "spec files for '%s'", match_str, idxpath, vfms[first_vfm]["platform_name"])
-    else:
-        _LOG.debug("No match criteria provided, using the first platform '%s' from TPMI spec "
-                   "index file '%s'", vfms[first_vfm]["platform_name"], idxpath)
-
-    if first_vfm == -1:
-        _raise_exc("No VFM entries found in the index file")
-
-    sdd["vfm"] = first_vfm
-    return sdd
+    available_vfms = ", ".join(str(vfm) for vfm in vfms)
+    raise ErrorNotFound(f"No matching platform for VFM {vfm} found in {idxpath}, available VFMs "
+                        f"are: {available_vfms}")
 
 def get_features(specdirs: Iterable[Path] = (),
-                 vfm: int = -1,
-                 subdir: str = "") -> tuple[dict[str, SDictTypedDict], dict[Path, SDDTypedDict]]:
+                 vfm: int = -1) -> tuple[dict[str, SDictTypedDict], dict[Path, SDDTypedDict]]:
     """
     Retrieve a dictionary of sdicts (specification dictionaries) for all features described by
     available TPMI spec files. Also return the list of scanned spec directories. Do not
@@ -484,8 +456,6 @@ def get_features(specdirs: Iterable[Path] = (),
                   directories are auto-detected.
         vfm: The VFM value to match against specdir index file entries. If -1, do not match
              against VFM.
-        subdir: The sub-directory name to match against the index file entries. If empty, do not
-                match against sub-directory name.
 
     Returns:
         A tuple containing:
@@ -496,12 +466,13 @@ def get_features(specdirs: Iterable[Path] = (),
         1. During the scanning process, only the headers of spec files are read. The entire YAML
            file is not parsed, to avoid the overhead of loading complete spec files.
         2. Every spec directory must contain an 'index.yml' file, which is used to find the
-           sub-directory containing spec files for the current platform.
-        3. The 'vfm' and 'subdir' arguments are used to select the appropriate sub-directory from
-           the index file.
-        4. If neither 'vfm' nor 'subdir' match any entry in the index file, the first entry in the
-           index file is used.
+           sub-directory containing spec files for the current platform based on 'vfm'.
     """
+
+    if vfm == -1:
+        _LOG.debug("No VFM specified, using default VFM %d (%s)",
+                   DEFAULT_VFM, DEFAULT_PLATFORM_NAME)
+        vfm = DEFAULT_VFM
 
     if not specdirs:
         specdirs = _find_spec_dirs()
@@ -524,7 +495,7 @@ def get_features(specdirs: Iterable[Path] = (),
         # Parse the index file and get path to the sub-directory containing spec files for the
         # current platform.
         try:
-            sdd = _parse_index_file(specdir, vfm=vfm, subdir=subdir)
+            sdd = _parse_index_file(specdir, vfm=vfm)
         except Error as err:
             _LOG.warning("Failed to parse TPMI spec index file in directory '%s':\n%s",
                          specdir, err.indent(2))
@@ -629,23 +600,24 @@ class TPMI(ClassHelpers.SimpleCloseContext):
             Extract the value of a bit field from a register value.
     """
 
-    def __init__(self,
-                 vfm: int,
-                 pman: ProcessManagerType | None = None,
-                 specdirs: Iterable[Path] = ()):
+    def __init__(self, vfm: int = -1,
+                 specdirs: Iterable[Path] = (),
+                 pman: ProcessManagerType | None = None):
         """
         Initialize a class instance.
 
         Args:
-            vfm: The VFM (Vendor, Family, Model) value of the current platform.
-            pman: The Process manager object that defines the host to access TPMI registers on. If
-                  not provided, a local process manager will be used.
+            vfm: The VFM (Vendor, Family, Model) value of the current platform. Assume Granite
+                 Rapids Xeon by default.
             specdirs: Spec directory paths on the local host to search for spec files. If not
                       provided, directories are auto-detected.
+            pman: The Process manager object that defines the host to access TPMI registers on. If
+                  not provided, a local process manager will be used.
 
         Notes:
-            The 'vfm' argument is used to select the appropriate spec files from the available
-            spec directories.
+            TPMI is supposed to be forward-compatible. So if VFM is not provided, the first
+            generation of TPMI-capable platform is assumed (Granite Rapids Xeon, but it is fully
+            compatible with Sierra Forest Xeon as well).
         """
 
         self._close_pman = pman is None
@@ -656,6 +628,11 @@ class TPMI(ClassHelpers.SimpleCloseContext):
             from pepclibs.helperlibs import LocalProcessManager
 
             self._pman = LocalProcessManager.LocalProcessManager()
+
+        if vfm == -1:
+            _LOG.debug("No VFM specified, using default VFM %d (%s)",
+                       DEFAULT_VFM, DEFAULT_PLATFORM_NAME)
+            vfm = DEFAULT_VFM
 
         vendor, _, _ = CPUModels.split_vfm(vfm)
         if vendor != CPUModels.X86_VENDOR_INTEL:
