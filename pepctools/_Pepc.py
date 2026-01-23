@@ -1014,47 +1014,22 @@ def _aspm_config_command(args: argparse.Namespace, pman: ProcessManagerType):
 
     _PepcASPM.aspm_config_command(args, pman)
 
-def _get_next_dataset(dataset: str) -> Generator[Path, None, None]:
+def _get_dataset_path(dataset: str) -> Path:
     """
-    Parse the '-D' option and yield dataset paths for each specified dataset.
+    Parse the '-D' option and return the dataset path.
 
     Args:
-        dataset: The value of the '-D' option. Can be a directory path, the string "all", or a
-                 specific dataset name.
+        dataset: The value of the '-D' option. Can be a directory path or a dataset name.
 
-    Yields:
-        Path objects representing the locations of datasets found according to the input.
-
-    Notes:
-        - If 'dataset' is a directory, yield its path.
-        - If 'dataset' is "all", search for all available datasets except those named "common" and
-          yield their paths.
-        - If 'dataset' is a specific name, find and yield the corresponding dataset path.
+    Returns:
+        Path to the dataset directory.
     """
 
     if Path(dataset).is_dir():
-        yield Path(dataset)
-        return
+        return Path(dataset)
 
-    if dataset != "all":
-        path = ProjectFiles.find_project_data(TOOLNAME, f"tests/emul-data/{dataset}",
-                                              what=f"{TOOLNAME} dataset '{dataset}'")
-        yield path
-        return
-
-    datasets: dict[str, Path] = {}
-
-    for base in ProjectFiles.search_project_data("tests/emul-data", prjname=TOOLNAME,
-                                                 what=f"{TOOLNAME} dataset"):
-        for name in os.listdir(base):
-            if name == "common":
-                continue
-            if name in datasets:
-                raise Error(f"Multiple '{name}' datasets found, conflicting locations are:\n"
-                            f"  * {datasets[name]}\n  * {base}/{name}")
-            datasets[name] = base / name
-            _LOG.info("\n======= emulation:%s =======", name)
-            yield base / name
+    return ProjectFiles.find_project_data(TOOLNAME, f"tests/emul-data/{dataset}",
+                                          what=f"{TOOLNAME} dataset '{dataset}'")
 
 def _get_emul_pman(dspath: Path) -> EmulProcessManager.EmulProcessManager:
     """
@@ -1145,9 +1120,9 @@ def do_main(pman: ProcessManagerType | None = None) -> int:
     if pman:
         args.func(args, pman)
     elif dataset:
-        for dspath in _get_next_dataset(dataset):
-            with _get_emul_pman(dspath) as emul_pman:
-                args.func(args, emul_pman)
+        dspath = _get_dataset_path(dataset)
+        with _get_emul_pman(dspath) as emul_pman:
+            args.func(args, emul_pman)
     elif getattr(args, "no_pman", False):
         args.func(args)
     else:
