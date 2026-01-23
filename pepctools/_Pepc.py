@@ -61,9 +61,10 @@ _OVERRIDE_CPU_OPTION: Final[ArgTypedDict] = {
     "kwargs": {
         "metavar": "VFM",
         "dest": "override_cpu_model",
-        "help": f"""Override the target host CPU model and force {TOOLNAME} to treat the host as a
-                    specific CPU model. Format: '[<Vendor>:][<Family>:]<Model>'. For debugging and
-                    testing only."""
+        "help": f"""Override the target host CPU model and force {TOOLNAME} to treat the host as if
+                    it were a CPU with the specified VFM. Can be either an integer VFM code or a
+                    string in the '[<Vendor>:]<Family>:<Model>' format. For debugging and testing
+                    only."""
     },
 }
 
@@ -152,7 +153,7 @@ def _add_target_cpus_arguments(subpars: ArgParse.ArgsParser, fmt: str, exclude: 
 
 def _get_prop_info_subcommand_help_text(prop: PropertyTypedDict) -> str:
     """
-    Format and return help text for a "info" sub-command command-line option.
+    Format and return help text for an "info" sub-command command-line option.
 
     Args:
         prop: The description dictionary of the property to format the help text for.

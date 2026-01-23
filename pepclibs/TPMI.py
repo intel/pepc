@@ -624,7 +624,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
             vfm = DEFAULT_VFM
 
         vendor, _, _ = CPUModels.split_vfm(vfm)
-        if vendor != CPUModels.X86_VENDOR_INTEL:
+        if vendor != CPUModels.VENDOR_INTEL:
             raise ErrorNotSupported(f"Unsupported CPU vendor'{self._pman.hostmsg}: "
                                     f"Only Intel CPUs support TPMI")
 

@@ -14,7 +14,8 @@ Provide information about CPU models and their identification.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
-from pepclibs.helperlibs.Exceptions import ErrorNotSupported
+from pepclibs.helperlibs import Trivial
+from pepclibs.helperlibs.Exceptions import ErrorNotSupported, ErrorBadFormat
 
 if typing.TYPE_CHECKING:
     from typing import TypedDict, Final
@@ -39,12 +40,12 @@ if typing.TYPE_CHECKING:
         vfm: int
         codename: str
 
-X86_VENDOR_INTEL: Final[int] = 0
-X86_VENDOR_AMD: Final[int] = 2
+VENDOR_INTEL: Final[int] = 0
+VENDOR_AMD: Final[int] = 2
 
-X86_CPU_VENDOR_NAMES: Final[dict[str, int]] = {
-    "GenuineIntel": X86_VENDOR_INTEL,
-    "AuthenticAMD": X86_VENDOR_AMD,
+_VENDOR_NAMES: Final[dict[str, int]] = {
+    "GenuineIntel": VENDOR_INTEL,
+    "AuthenticAMD": VENDOR_AMD,
 }
 
 def _make_intel_vfm(family: int, model: int) -> int:
@@ -59,12 +60,12 @@ def _make_intel_vfm(family: int, model: int) -> int:
         The VFM code of the Intel CPU.
     """
 
-    return (X86_VENDOR_INTEL << 16) | (family << 8) | model
+    return (VENDOR_INTEL << 16) | (family << 8) | model
 
 MODELS: Final[dict[str, CPUModelTypedDict]] = {
     # Xeons.
     "DIAMONDRAPIDS_X": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 19,
         "model": 0x1,
@@ -72,7 +73,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Diamond Rapids Xeon",
     },
     "ATOM_DARKMONT_X": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0xDD,
@@ -80,7 +81,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Clearwater Forest Xeon",
     },
     "ATOM_CRESTMONT_X": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0xAF,
@@ -88,7 +89,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Sierra Forest Xeon",
     },
     "GRANITERAPIDS_X": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0xAD,
@@ -96,7 +97,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Granite Rapids Xeon",
     },
     "GRANITERAPIDS_D": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0xAE,
@@ -104,7 +105,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Granite Rapids Xeon D",
     },
     "EMERALDRAPIDS_X": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0xCF,
@@ -112,7 +113,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Emerald Rapids Xeon",
     },
     "SAPPHIRERAPIDS_X": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x8F,
@@ -120,7 +121,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Sapphire Rapids Xeon",
     },
     "ICELAKE_X": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x6A,
@@ -128,7 +129,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Ice Lake Xeon",
     },
     "ICELAKE_D": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x6C,
@@ -136,7 +137,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Ice Lake Xeon D",
     },
     "SKYLAKE_X": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x55,
@@ -144,7 +145,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Skylake, Cascade Lake, or Cooper Lake Xeon",
     },
     "BROADWELL_X": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x4F,
@@ -152,7 +153,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Broadwell Xeon",
     },
     "BROADWELL_G": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x47,
@@ -160,7 +161,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Broadwell Xeon with Graphics",
     },
     "BROADWELL_D": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x56,
@@ -168,7 +169,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Broadwell Xeon-D",
     },
     "HASWELL_X": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x3F,
@@ -176,7 +177,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Haswell Xeon",
     },
     "HASWELL_G": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x46,
@@ -184,7 +185,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Haswell Xeon with Graphics",
     },
     "IVYBRIDGE_X": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x3E,
@@ -192,7 +193,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Ivy Town Xeon",
     },
     "SANDYBRIDGE_X": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x2D,
@@ -200,7 +201,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "SandyBridge Xeon",
     },
     "WESTMERE_EP": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x2C,
@@ -208,7 +209,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Westmere 2S Xeon",
     },
     "WESTMERE_EX": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x2F,
@@ -216,7 +217,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Westmere 4S Xeon",
     },
     "NEHALEM_EP": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x1A,
@@ -224,7 +225,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Nehalem 2S Xeon",
     },
     "NEHALEM_EX": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x2E,
@@ -233,7 +234,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     # Clients.
     "PANTHERLAKE_L": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0xCC,
@@ -241,7 +242,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Panther Lake mobile",
     },
     "LUNARLAKE_M": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0xBD,
@@ -249,7 +250,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Lunar Lake mobile",
     },
     "ARROWLAKE": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0xC5,
@@ -257,7 +258,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Arrow Lake client",
     },
     "ARROWLAKE_H": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0xC6,
@@ -265,7 +266,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Arrow Lake mobile",
     },
     "ARROWLAKE_U": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0xB5,
@@ -273,7 +274,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Arrow Lake mobile",
     },
     "METEORLAKE": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0xAC,
@@ -281,7 +282,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Meteor Lake client",
     },
     "METEORLAKE_L": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0xAA,
@@ -289,7 +290,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Meteor Lake mobile",
     },
     "RAPTORLAKE_P": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0xBA,
@@ -297,7 +298,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Raptor Lake mobile",
     },
     "RAPTORLAKE_S": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0xBF,
@@ -305,7 +306,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Raptor Lake client",
     },
     "RAPTORLAKE": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0xB7,
@@ -313,7 +314,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Raptor Lake client",
     },
     "ALDERLAKE": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x97,
@@ -321,7 +322,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Alder Lake client",
     },
     "ALDERLAKE_L": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x9A,
@@ -329,7 +330,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Alder Lake mobile",
     },
     "ALDERLAKE_N": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0xBE,
@@ -337,7 +338,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Alder Lake mobile",
     },
     "ROCKETLAKE": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0xA7,
@@ -345,7 +346,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Rocket Lake client",
     },
     "TIGERLAKE": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x8D,
@@ -353,7 +354,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Tiger Lake client",
     },
     "TIGERLAKE_L": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x8C,
@@ -361,7 +362,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Tiger Lake mobile",
     },
     "LAKEFIELD": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x8A,
@@ -369,7 +370,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Lakefield client",
     },
     "COMETLAKE": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0xA5,
@@ -377,7 +378,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Comet Lake client",
     },
     "COMETLAKE_L": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0xA6,
@@ -385,7 +386,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Comet Lake mobile",
     },
     "KABYLAKE": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x9E,
@@ -393,7 +394,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Kaby Lake client",
     },
     "KABYLAKE_L": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x8E,
@@ -401,7 +402,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Kaby Lake mobile",
     },
     "ICELAKE": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x7D,
@@ -409,7 +410,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "IceLake client",
     },
     "ICELAKE_L": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x7E,
@@ -417,7 +418,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Ice Lake mobile",
     },
     "CANNONLAKE_L": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x66,
@@ -425,7 +426,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Cannonlake mobile",
     },
     "SKYLAKE": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x5E,
@@ -433,7 +434,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Skylake client",
     },
     "SKYLAKE_L": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x4E,
@@ -441,7 +442,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Skylake mobile",
     },
     "BROADWELL": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x3D,
@@ -449,7 +450,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Broadwell client",
     },
     "HASWELL": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x3C,
@@ -457,7 +458,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Haswell client",
     },
     "HASWELL_L": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x45,
@@ -465,7 +466,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Haswell mobile",
     },
     "IVYBRIDGE": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x3A,
@@ -473,7 +474,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "IvyBridge client",
     },
     "SANDYBRIDGE": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x2A,
@@ -481,7 +482,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "SandyBridge client",
     },
     "WESTMERE": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x25,
@@ -489,7 +490,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Westmere client",
     },
     "NEHALEM_G": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x1F,
@@ -497,7 +498,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Nehalem client with graphics (Auburndale, Havendale)",
     },
     "NEHALEM": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x1E,
@@ -505,7 +506,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Nehalem client",
     },
     "CORE2_MEROM": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x0F,
@@ -514,7 +515,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     # Atoms.
     "ATOM_TREMONT": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x96,
@@ -522,7 +523,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Elkhart Lake",
     },
     "ATOM_TREMONT_L": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x9C,
@@ -530,7 +531,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Jasper Lake",
     },
     "ATOM_GOLDMONT": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x5C,
@@ -538,7 +539,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Apollo Lake",
     },
     "ATOM_GOLDMONT_PLUS": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x7A,
@@ -546,7 +547,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Gemini Lake",
     },
     "ATOM_AIRMONT": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x4C,
@@ -554,7 +555,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Cherry Trail, Braswell",
     },
     "ATOM_SILVERMONT": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x37,
@@ -562,7 +563,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Bay Trail, Valleyview",
     },
     "ATOM_SILVERMONT_MID": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x4A,
@@ -570,7 +571,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Merriefield",
     },
     "ATOM_SILVERMONT_MID1": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x5A,
@@ -578,7 +579,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Moorefield",
     },
     "ATOM_SALTWELL": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x36,
@@ -586,7 +587,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Cedarview",
     },
     "ATOM_SALTWELL_MID": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x27,
@@ -594,7 +595,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Penwell",
     },
     "ATOM_SALTWELL_TABLET": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x35,
@@ -602,7 +603,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Cloverview",
     },
     "ATOM_BONNELL_MID": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x26,
@@ -610,7 +611,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Silverthorne, Lincroft",
     },
     "ATOM_BONNELL": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x1C,
@@ -619,7 +620,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     # Atom microservers.
     "ATOM_CRESTMONT": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0xB6,
@@ -627,7 +628,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Grand Ridge, Logansville",
     },
     "ATOM_TREMONT_D": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x86,
@@ -635,7 +636,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Snow Ridge, Jacobsville",
     },
     "ATOM_GOLDMONT_D": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x5F,
@@ -643,7 +644,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Denverton, Harrisonville",
     },
     "ATOM_SILVERMONT_D": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x4D,
@@ -652,7 +653,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     # Other.
     "ICELAKE_NNPI": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x9D,
@@ -660,7 +661,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Ice Lake Neural Network Processor",
     },
     "XEON_PHI_KNM": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x85,
@@ -668,7 +669,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Knights Mill",
     },
     "XEON_PHI_KNL": {
-        "vendor": X86_VENDOR_INTEL,
+        "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x57,
@@ -779,11 +780,35 @@ def vendor_name_to_id(vendor_name: str) -> int:
         ErrorNotSupported: If the CPU vendor is not supported.
     """
 
-    vendor_id = X86_CPU_VENDOR_NAMES.get(vendor_name, -1)
+    vendor_id = _VENDOR_NAMES.get(vendor_name, -1)
     if vendor_id == -1:
-        raise ErrorNotSupported(f"Unsupported CPU vendor '{vendor_name}'")
+        supported = ", ".join(_VENDOR_NAMES.keys())
+        raise ErrorNotSupported(f"Unsupported CPU vendor '{vendor_name}', supported vendors are:\n"
+                                f"{supported}")
 
     return vendor_id
+
+def vendor_id_to_name(vendor_id: int) -> str:
+    """
+    Convert the CPU vendor ID to its name.
+
+    Args:
+        vendor_id: The CPU vendor ID.
+
+    Returns:
+        The CPU vendor name.
+
+    Raises:
+        ErrorNotSupported: If the CPU vendor ID is not supported.
+    """
+
+    for vename, vid in _VENDOR_NAMES.items():
+        if vid == vendor_id:
+            return vename
+
+    supported = ", ".join(str(vid) for vid in _VENDOR_NAMES.values())
+    raise ErrorNotSupported(f"Unsupported CPU vendor ID '{vendor_id}', supported vendor IDs are:\n"
+                            f"{supported}")
 
 def is_intel(vendor: int | str) -> bool:
     """
@@ -800,7 +825,7 @@ def is_intel(vendor: int | str) -> bool:
     else:
         vendor_id = vendor
 
-    return vendor_id == X86_VENDOR_INTEL
+    return vendor_id == VENDOR_INTEL
 
 def make_vfm(vendor: int | str, family: int, model: int) -> int:
     """
@@ -852,3 +877,71 @@ def split_vfm(vfm: int) -> tuple[int, int, int]:
     model = vfm & 0xFF
 
     return (vendor, family, model)
+
+def get_model_dict_by_vfm(vfm: int) -> CPUModelTypedDict:
+    """
+    Get the CPU model dictionary by its VFM code.
+
+    Args:
+        vfm: The VFM code of the CPU.
+
+    Returns:
+        The CPU model dictionary.
+    """
+
+    for mdict in MODELS.values():
+        if mdict["vfm"] == vfm:
+            return mdict
+
+    raise ErrorNotSupported(f"Unsupported CPU VFM '{vfm:#x}'")
+
+def parse_user_vfm(user_vfm: str) -> CPUModelTypedDict:
+    """
+    Parse a user-provided CPU model specification and return the corresponding CPU model dictionary.
+
+    Args:
+        user_vfm: The user-provided CPU model specification. It can be either and integer VFM code
+                  or a string in the format '[<Vendor>]:<Family>:<Model>'.
+
+    Returns:
+        The CPU model dictionary.
+
+    Raises:
+        ErrorBadFormat: If the user-provided string is not in the correct format.
+        ErrorNotSupported: If the specified CPU model is not supported.
+    """
+
+    if Trivial.is_int(user_vfm):
+        # Assume this is already a VFM integer.
+        return get_model_dict_by_vfm(int(user_vfm))
+
+    # Assume that this is a CPU model in '[<Vendor>]:<Family>:<Model>' format.
+    split = user_vfm.split(":")
+    if len(split) > 3 or len(split) < 2:
+        raise ErrorBadFormat(f"Bad CPU model '{user_vfm}': should be in the form of "
+                             f"'[<Vendor>]:<Family>:<Model>'.")
+
+    if len(split) == 3:
+        # Vendor is specified. It can be either name or ID.
+        if Trivial.is_int(split[0]):
+            vendor = int(split[0])
+            vendor_name = vendor_id_to_name(vendor)
+        else:
+            vendor_name = split[0]
+            vendor = vendor_name_to_id(vendor_name)
+
+        family_str = split[1]
+        model_str = split[2]
+    else:
+        vendor_name = "GenuineIntel"
+        vendor = VENDOR_INTEL
+
+        family_str = split[0]
+        model_str = split[1]
+
+    family = Trivial.str_to_int(family_str, what="CPU family")
+    model = Trivial.str_to_int(model_str, what="CPU model")
+
+    vfm = make_vfm(vendor, family, model)
+
+    return get_model_dict_by_vfm(vfm)

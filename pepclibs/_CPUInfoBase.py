@@ -521,7 +521,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
         # Some pre-release Intel CPUs are labeled as "GENUINE INTEL", hence 'lower()' is used.
         vendor, _, _ = CPUModels.split_vfm(self.proc_cpuinfo["vfm"])
-        if vendor == CPUModels.X86_VENDOR_INTEL:
+        if vendor == CPUModels.VENDOR_INTEL:
             cpudescr = f"Intel processor model {self.proc_cpuinfo['model']:#x}"
 
             for info in CPUModels.MODELS.values():
