@@ -83,6 +83,7 @@ import typing
 import contextlib
 from pathlib import Path
 import yaml
+from pepclibs import CPUModels
 from pepclibs.helperlibs import Logging, YAML, ClassHelpers, FSHelpers, ProjectFiles, Trivial, Human
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
 from pepclibs.helperlibs.Exceptions import ErrorPermissionDenied
@@ -629,25 +630,25 @@ class TPMI(ClassHelpers.SimpleCloseContext):
     """
 
     def __init__(self,
-                 proc_cpuinfo: ProcCpuinfoTypedDict,
+                 vfm: int,
                  pman: ProcessManagerType | None = None,
                  specdirs: Iterable[Path] = ()):
         """
         Initialize a class instance.
 
         Args:
-            proc_cpuinfo: The CPU information dictionary.
+            vfm: The VFM (Vendor, Family, Model) value of the current platform.
             pman: The Process manager object that defines the host to access TPMI registers on. If
                   not provided, a local process manager will be used.
             specdirs: Spec directory paths on the local host to search for spec files. If not
                       provided, directories are auto-detected.
+
+        Notes:
+            The 'vfm' argument is used to select the appropriate spec files from the available
+            spec directories.
         """
 
         self._close_pman = pman is None
-
-        # Whether the TPMI interface is read-only.
-        self._readonly = False
-
         if pman:
             self._pman = pman
         else:
@@ -656,12 +657,15 @@ class TPMI(ClassHelpers.SimpleCloseContext):
 
             self._pman = LocalProcessManager.LocalProcessManager()
 
-        vendor = proc_cpuinfo["vendor"]
-        if vendor != "GenuineIntel":
-            raise ErrorNotSupported(f"Unsupported CPU vendor '{vendor}'{self._pman.hostmsg}: "
+        vendor, _, _ = CPUModels.split_vfm(vfm)
+        if vendor != CPUModels.X86_VENDOR_INTEL:
+            raise ErrorNotSupported(f"Unsupported CPU vendor'{self._pman.hostmsg}: "
                                     f"Only Intel CPUs support TPMI")
 
-        self.proc_cpuinfo = proc_cpuinfo
+        self.vfm = vfm
+
+        # Whether the TPMI interface is read-only.
+        self._readonly = False
 
         # The features dictionary, maps feature name to the fdict (feature dictionary).
         self._fdicts: dict[str, dict[str, RegDictTypedDict]] = {}
@@ -682,7 +686,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         self.sdds: dict[Path, SDDTypedDict] = {}
 
         # Scan the spec directories and build sdicts - partially loaded spec file dictionaries.
-        self.sdicts, self.sdds = get_features(specdirs=specdirs, vfm=proc_cpuinfo["vfm"])
+        self.sdicts, self.sdds = get_features(specdirs=specdirs, vfm=self.vfm)
 
         # The feature ID -> feature name dictionary (supported features only).
         self._fid2fname: dict[int, str] = {}
@@ -711,7 +715,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
             with contextlib.suppress(Error):
                 self._pman.run(f"unmount {self._debugfs_mnt}")
 
-        ClassHelpers.close(self, close_attrs=("_pman",), unref_attrs=("proc_cpuinfo",))
+        ClassHelpers.close(self, close_attrs=("_pman",))
 
     def _get_debugfs_tpmi_dirs(self) -> list[Path]:
         """

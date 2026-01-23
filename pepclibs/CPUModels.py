@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2025 Intel Corporation
+# Copyright (C) 2020-2026 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Authors: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 #          Niklas Neronin <niklas.neronin@intel.com>
 
 """
-Provide information about CPU topology and other CPU details.
+Provide information about CPU models and their identification.
 """
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
@@ -80,6 +80,23 @@ def make_intel_vfm(family: int, model: int) -> int:
     """
 
     return make_vfm(X86_VENDOR_INTEL, family, model)
+
+def split_vfm(vfm: int) -> tuple[int, int, int]:
+    """
+    Split the VFM (Vendor, Family, Model) code into its components.
+
+    Args:
+        vfm: The VFM code to split.
+
+    Returns:
+        A tuple of (vendor, family, model).
+    """
+
+    vendor = (vfm >> 16) & 0xFFFF
+    family = (vfm >> 8) & 0xFF
+    model = vfm & 0xFF
+
+    return (vendor, family, model)
 
 MODELS: Final[dict[str, CPUModelTypedDict]] = {
     # Xeons.
@@ -702,7 +719,9 @@ CPU_GROUPS: Final[dict[str, tuple[int, ...]]] = {
             MODELS["XEON_PHI_KNM"]["vfm"],),
 }
 
+#
 # CPU models that have dies but they are not enumerated via the CPUID instruction.
+#
 MODELS_WITH_HIDDEN_DIES: Final[tuple[int, ...]] = CPU_GROUPS["GNR"] + \
                                                   CPU_GROUPS["DARKMONT"] + \
                                                   CPU_GROUPS["CRESTMONT"]

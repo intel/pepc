@@ -100,10 +100,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         else:
             self._pman = LocalProcessManager.LocalProcessManager()
 
-        if self._tpmi:
-            self.proc_cpuinfo = self._tpmi.proc_cpuinfo
-        else:
-            self.proc_cpuinfo = ProcCpuinfo.get_proc_cpuinfo(pman=self._pman)
+        self.proc_cpuinfo = ProcCpuinfo.get_proc_cpuinfo(pman=self._pman)
 
         self.cpudescr = self._get_cpu_description()
 
@@ -137,7 +134,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
             from pepclibs import TPMI
 
             try:
-                self._tpmi = TPMI.TPMI(self.proc_cpuinfo, pman=self._pman)
+                self._tpmi = TPMI.TPMI(self.proc_cpuinfo["vfm"], pman=self._pman)
             except ErrorNotSupported as err:
                 _LOG.debug("TPMI not supported for %s%s:\n%s",
                            self.cpudescr, self._pman.hostmsg, err.indent(2))
@@ -523,7 +520,8 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         """
 
         # Some pre-release Intel CPUs are labeled as "GENUINE INTEL", hence 'lower()' is used.
-        if "genuine intel" in self.proc_cpuinfo["modelname"].lower():
+        vendor, _, _ = CPUModels.split_vfm(self.proc_cpuinfo["vfm"])
+        if vendor == CPUModels.X86_VENDOR_INTEL:
             cpudescr = f"Intel processor model {self.proc_cpuinfo['model']:#x}"
 
             for info in CPUModels.MODELS.values():
