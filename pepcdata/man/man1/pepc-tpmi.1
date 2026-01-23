@@ -121,13 +121,27 @@ make the manual pages available to the \[aq]man\[aq] tool.
 .SS Subcommand \f[I]\[aq]ls\[aq]\f[R]
 Display supported TPMI features.
 .TP
-\f[B]\-l\f[R], \f[B]\-\-long\f[R]
-Include details like TPMI device PCI addresses and instance numbers for
-more specific output.
+\f[B]\-\-list\-specs\f[R]
+Display information about TPMI spec files for the target system and
+exit.
+Show the detected CPU model and available spec files for that model.
+Spec directories may contain files for different CPU models.
+Select files matching the target system.
+Note that the target system may not support all TPMI features described
+in the spec files.
 .TP
-\f[B]\-\-all\f[R]
-Include IDs of TPMI features supported by the processor but lacking spec
-files for decoding.
+\f[B]\-t\f[R], \f[B]\-\-topology\f[R]
+Display TPMI topology (PCI addresses, instance numbers, etc.).
+.TP
+\f[B]\-F\f[R] \f[I][FEATURES]\f[R], \f[B]\-\-features\f[R] \f[I][FEATURES]\f[R]
+Comma\-separated list of TPMI feature names to include in the output.
+Defaults to all supported features.
+.TP
+\f[B]\-\-unknown\f[R]
+Include TPMI features without spec files (unknown features).
+.TP
+\f[B]\-\-yaml\f[R]
+Display information in YAML format.
 .SS Subcommand \f[I]\[aq]read\[aq]\f[R]
 Read one or more TPMI registers.
 .TP
@@ -148,16 +162,29 @@ Comma\-separated list of package numbers to read TPMI registers for
 Comma\-separated list of TPMI instance numbers to read registers from
 (defaults to all instances).
 .TP
+\f[B]\-c\f[R] \f[I][CLUSTERS]\f[R], \f[B]\-\-clusters\f[R] \f[I][CLUSTERS]\f[R]
+Comma\-separated list of cluster numbers to read registers from
+(defaults to all clusters).
+This option is only relevant for the \[aq]ufs\[aq] TPMI feature, because
+there may be multiple copies of UFS control registers within a TPMI
+instance, and the copies are referred to as clusters.
+All other TPMI features have only one cluster \- cluster 0.
+.TP
 \f[B]\-R\f[R] \f[I][REGISTERS]\f[R], \f[B]\-\-registers\f[R] \f[I][REGISTERS]\f[R]
 Comma\-separated list of TPMI register names to read.
 Defaults to all registers.
 .TP
 \f[B]\-b\f[R] \f[I][BFNAMES]\f[R], \f[B]\-\-bitfields\f[R] \f[I][BFNAMES]\f[R]
-Comma\-separated list of TPMI register bit field names to read.
-Defaults to all bit fields.
+Comma\-separated list of TPMI register bit field names to decode.
+Defaults to decoding all bit fields.
+.TP
+\f[B]\-n\f[R], \f[B]\-\-no\-bitfields\f[R]
+Do not decode and display TPMI register bit field values.
+When this option is specified, only register values will be displayed
+without decoding the individual bit fields within them.
 .TP
 \f[B]\-\-yaml\f[R]
-Output information in YAML format.
+Display information in YAML format.
 .SS Subcommand \f[I]\[aq]write\[aq]\f[R]
 Write a value to a TPMI register or its bit field.
 .TP
@@ -175,12 +202,23 @@ packages).
 Comma\-separated list of TPMI instance numbers to write to.
 Defaults to all instances.
 .TP
+\f[B]\-c\f[R] \f[I][CLUSTERS]\f[R], \f[B]\-\-clusters\f[R] \f[I][CLUSTERS]\f[R]
+Comma\-separated list of cluster numbers to write to (defaults to all
+clusters).
+This option is only relevant for the \[aq]ufs\[aq] TPMI feature, because
+there may be multiple copies of UFS control registers within a TPMI
+instance, and the copies are referred to as clusters.
+All other TPMI features have only one cluster \- cluster 0.
+.TP
 \f[B]\-R\f[R] \f[I]REGNAME\f[R], \f[B]\-\-register\f[R] \f[I]REGNAME\f[R]
 Name of the TPMI register to write.
 .TP
 \f[B]\-b\f[R] \f[I]BITFIELD\f[R], \f[B]\-\-bitfield\f[R] \f[I]BITFIELD\f[R]
-Name of the TPMI register bitfield to write.
-Defaults to writing to the entire register if not specified.
+Name of the TPMI register bit field to write to.
+If this option is not specified, the value will be written to the entire
+register.
+When specified, only the specified bit field within the register will be
+modified.
 .TP
 \f[B]\-V\f[R] \f[I]VALUE\f[R], \f[B]\-\-value\f[R] \f[I]VALUE\f[R]
 Value to write to the TPMI register or bit field.

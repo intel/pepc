@@ -6,8 +6,12 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
 ### Added
- - pepc tpmi ls --list-specs.
 ### Removed
+### Changed
+
+## [1.6.18] - 2026-01-23
+### Added
+ - pepc tpmi ls --list-specs.
 ### Changed
  - Improved tpmi command documentation.
 
