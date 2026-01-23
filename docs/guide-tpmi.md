@@ -246,7 +246,7 @@ $ pepc tpmi ls --list-specs
 TPMI spec directories information:
 - /home/dedekind/git/pepc/pepcdata/tpmi
   Format version: 1.0
-  Used VFM: 1709
+  VFM: 1709
   Platform Name: Granite Rapids Xeon
   Spec Sub-directory Path: /home/dedekind/git/pepc/pepcdata/tpmi/gnr
 TPMI spec files:

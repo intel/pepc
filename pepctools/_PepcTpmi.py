@@ -372,7 +372,7 @@ def _list_specs(sdicts: dict[str, SDictTypedDict],
 
         _LOG.info("- %s", specdir)
         _LOG.info("  Format version: %s", idxdict["version"])
-        _LOG.info("  Used VFM: %s", vfm)
+        _LOG.info("  VFM: %s", vfm)
         _LOG.info("  Platform Name: %s", idxdict["vfms"][vfm]["platform_name"])
         _LOG.info("  Spec Sub-directory Path: %s", specdir / idxdict["vfms"][vfm]["subdir"])
 
