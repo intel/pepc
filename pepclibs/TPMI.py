@@ -86,10 +86,10 @@ from pepclibs import CPUModels
 from pepclibs.helperlibs import Logging, YAML, ClassHelpers, FSHelpers, ProjectFiles, Trivial, Human
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
 from pepclibs.helperlibs.Exceptions import ErrorPermissionDenied
+from pepclibs.TPMIVars import DEFAULT_VFM, DEFAULT_PLATFORM_NAME, UFS_HEADER_REGNAMES
 
 if typing.TYPE_CHECKING:
     from typing import Final, TypedDict, Sequence, Iterable, NoReturn, Literal, cast, Generator
-    from pepclibs.ProcCpuinfo import ProcCpuinfoTypedDict
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
     class BFDictTypedDict(TypedDict, total=False):
@@ -204,17 +204,6 @@ if typing.TYPE_CHECKING:
         vfm: int
         idxpath: Path
         idxdict: IdxDictTypedDict
-
-# The default VFM to use when the user does not provide one.
-DEFAULT_VFM: Final[int] = CPUModels.MODELS["GRANITERAPIDS_X"]["vfm"]
-DEFAULT_PLATFORM_NAME: Final[str] = CPUModels.MODELS["GRANITERAPIDS_X"]["codename"]
-
-# UFS header register names. These registers are per-instance rather than per-cluster. All other
-# registers are "control registers" and are per-cluster.
-UFS_HEADER_REGNAMES: Final[set[str]] = {
-    "UFS_HEADER",
-    "UFS_FABRIC_CLUSTER_OFFSET",
-}
 
 # Size of the UFS header in bytes.
 _UFS_HEADER_SIZE: Final[int] = 16
