@@ -150,7 +150,7 @@ def _add_target_cpus_arguments(subpars: ArgParse.ArgsParser, fmt: str, exclude: 
                    refers to CPU 6."""
         subpars.add_argument("--module-siblings", help=text)
 
-def _get_info_subcommand_prop_help_text(prop: PropertyTypedDict) -> str:
+def _get_prop_info_subcommand_help_text(prop: PropertyTypedDict) -> str:
     """
     Format and return help text for a "info" sub-command command-line option.
 
@@ -166,7 +166,8 @@ def _get_info_subcommand_prop_help_text(prop: PropertyTypedDict) -> str:
 
     return text
 
-def _add_info_subcommand_options(props: dict[str, PropertyTypedDict], subpars: ArgParse.ArgsParser):
+def _add_prop_info_subcommand_options(props: dict[str, PropertyTypedDict],
+                                      subpars: ArgParse.ArgsParser):
     """
     Add "info" sub-command command-line options for each property in 'props'.
 
@@ -189,13 +190,13 @@ def _add_info_subcommand_options(props: dict[str, PropertyTypedDict], subpars: A
         kwargs: ArgKwargsTypedDict = {}
         kwargs["default"] = argparse.SUPPRESS
         kwargs["nargs"] = 0
-        kwargs["help"] = _get_info_subcommand_prop_help_text(prop)
+        kwargs["help"] = _get_prop_info_subcommand_help_text(prop)
         kwargs["action"] = ArgParse.OrderedArg
 
         option = f"--{pname.replace('_', '-')}"
         subpars.add_argument(option, **kwargs)
 
-def _get_config_subcommand_prop_help_text(prop: PropertyTypedDict) -> str:
+def _get_prop_config_subcommand_help_text(prop: PropertyTypedDict) -> str:
     """
     Format and return help text for a "config" sub-command command-line option.
 
@@ -211,8 +212,8 @@ def _get_config_subcommand_prop_help_text(prop: PropertyTypedDict) -> str:
 
     return text
 
-def _add_config_subcommand_options(props: dict[str, PropertyTypedDict],
-                                   subpars: ArgParse.ArgsParser):
+def _add_prop_config_subcommand_options(props: dict[str, PropertyTypedDict],
+                                        subpars: ArgParse.ArgsParser):
     """
     Add "config" sub-command command-line options for each property in 'props'.
 
@@ -228,7 +229,7 @@ def _add_config_subcommand_options(props: dict[str, PropertyTypedDict],
         kwargs: ArgKwargsTypedDict = {}
         kwargs["default"] = argparse.SUPPRESS
         kwargs["nargs"] = "?"
-        kwargs["help"] = _get_config_subcommand_prop_help_text(prop)
+        kwargs["help"] = _get_prop_config_subcommand_help_text(prop)
         kwargs["action"] = ArgParse.OrderedArg
 
         if prop["type"] == "bool":
@@ -304,7 +305,7 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     text = """Display information in YAML format."""
     subpars2.add_argument("--yaml", action="store_true", help=text)
 
-    _add_info_subcommand_options(PStatesVars.PROPS, subpars2)
+    _add_prop_info_subcommand_options(PStatesVars.PROPS, subpars2)
 
     #
     # Create parser for the 'pstates config' command.
@@ -320,7 +321,7 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
 
     _add_target_cpus_arguments(subpars2, "List of %s to configure P-states for.")
 
-    _add_config_subcommand_options(PStatesVars.PROPS, subpars2)
+    _add_prop_config_subcommand_options(PStatesVars.PROPS, subpars2)
 
     #
     # Create parser for the 'cstates' command.
@@ -357,7 +358,7 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     subpars2.add_argument("--cstates", dest="csnames", metavar="CSTATES", nargs="?", help=text,
                           default="default")
 
-    _add_info_subcommand_options(CStatesVars.PROPS, subpars2)
+    _add_prop_info_subcommand_options(CStatesVars.PROPS, subpars2)
 
     #
     # Create parser for the 'cstates config' command.
@@ -381,7 +382,7 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     subpars2.add_argument("--disable", metavar="CSTATES", action=ArgParse.OrderedArg, help=text,
                           nargs="?")
 
-    _add_config_subcommand_options(CStatesVars.PROPS, subpars2)
+    _add_prop_config_subcommand_options(CStatesVars.PROPS, subpars2)
 
     #
     # Create parser for the 'uncore' command.
@@ -411,7 +412,7 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     text = """Display information in YAML format."""
     subpars2.add_argument("--yaml", action="store_true", help=text)
 
-    _add_info_subcommand_options(UncoreVars.PROPS, subpars2)
+    _add_prop_info_subcommand_options(UncoreVars.PROPS, subpars2)
 
     #
     # Create parser for the 'uncore config' command.
@@ -427,7 +428,7 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
 
     _add_target_cpus_arguments(subpars2, "List of %s to configure uncore for.")
 
-    _add_config_subcommand_options(UncoreVars.PROPS, subpars2)
+    _add_prop_config_subcommand_options(UncoreVars.PROPS, subpars2)
 
     #
     # Create parser for the 'cpu-hotplug' command.
@@ -546,7 +547,7 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     text = """Display information in YAML format."""
     subpars2.add_argument("--yaml", action="store_true", help=text)
 
-    _add_info_subcommand_options(PMQoSVars.PROPS, subpars2)
+    _add_prop_info_subcommand_options(PMQoSVars.PROPS, subpars2)
 
     #
     # Create parser for the 'pmqos config' command.
@@ -562,7 +563,7 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
 
     _add_target_cpus_arguments(subpars2, "List of %s to configure PM QoS for.")
 
-    _add_config_subcommand_options(PMQoSVars.PROPS, subpars2)
+    _add_prop_config_subcommand_options(PMQoSVars.PROPS, subpars2)
 
     #
     # Create parser for the 'tpmi' command.
