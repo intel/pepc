@@ -25,6 +25,7 @@ if typing.TYPE_CHECKING:
 
         Attributes:
             vendor: The vendor of the CPU.
+            vendor_name: Name of the CPU vendor.
             family: The family of the CPU.
             model: The model number of the CPU.
             vfm: The VFM (Vendor, Family, Model) code of the CPU.
@@ -32,6 +33,7 @@ if typing.TYPE_CHECKING:
         """
 
         vendor: int
+        vendor_name: str
         family: int
         model: int
         vfm: int
@@ -63,6 +65,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     # Xeons.
     "DIAMONDRAPIDS_X": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 19,
         "model": 0x1,
         "vfm": _make_intel_vfm(19, 0x1),
@@ -70,6 +73,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "ATOM_DARKMONT_X": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0xDD,
         "vfm": _make_intel_vfm(6, 0xDD),
@@ -77,6 +81,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "ATOM_CRESTMONT_X": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0xAF,
         "vfm": _make_intel_vfm(6, 0xAF),
@@ -84,6 +89,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "GRANITERAPIDS_X": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0xAD,
         "vfm": _make_intel_vfm(6, 0xAD),
@@ -91,6 +97,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "GRANITERAPIDS_D": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0xAE,
         "vfm": _make_intel_vfm(6, 0xAE),
@@ -98,6 +105,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "EMERALDRAPIDS_X": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0xCF,
         "vfm": _make_intel_vfm(6, 0xCF),
@@ -105,6 +113,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "SAPPHIRERAPIDS_X": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x8F,
         "vfm": _make_intel_vfm(6, 0x8F),
@@ -112,6 +121,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "ICELAKE_X": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x6A,
         "vfm": _make_intel_vfm(6, 0x6A),
@@ -119,6 +129,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "ICELAKE_D": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x6C,
         "vfm": _make_intel_vfm(6, 0x6C),
@@ -126,6 +137,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "SKYLAKE_X": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x55,
         "vfm": _make_intel_vfm(6, 0x55),
@@ -133,6 +145,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "BROADWELL_X": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x4F,
         "vfm": _make_intel_vfm(6, 0x4F),
@@ -140,6 +153,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "BROADWELL_G": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x47,
         "vfm": _make_intel_vfm(6, 0x47),
@@ -147,6 +161,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "BROADWELL_D": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x56,
         "vfm": _make_intel_vfm(6, 0x56),
@@ -154,6 +169,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "HASWELL_X": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x3F,
         "vfm": _make_intel_vfm(6, 0x3F),
@@ -161,6 +177,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "HASWELL_G": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x46,
         "vfm": _make_intel_vfm(6, 0x46),
@@ -168,6 +185,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "IVYBRIDGE_X": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x3E,
         "vfm": _make_intel_vfm(6, 0x3E),
@@ -175,6 +193,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "SANDYBRIDGE_X": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x2D,
         "vfm": _make_intel_vfm(6, 0x2D),
@@ -182,6 +201,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "WESTMERE_EP": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x2C,
         "vfm": _make_intel_vfm(6, 0x2C),
@@ -189,6 +209,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "WESTMERE_EX": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x2F,
         "vfm": _make_intel_vfm(6, 0x2F),
@@ -196,6 +217,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "NEHALEM_EP": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x1A,
         "vfm": _make_intel_vfm(6, 0x1A),
@@ -203,6 +225,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "NEHALEM_EX": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x2E,
         "vfm": _make_intel_vfm(6, 0x2E),
@@ -211,6 +234,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     # Clients.
     "PANTHERLAKE_L": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0xCC,
         "vfm": _make_intel_vfm(6, 0xCC),
@@ -218,6 +242,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "LUNARLAKE_M": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0xBD,
         "vfm": _make_intel_vfm(6, 0xBD),
@@ -225,6 +250,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "ARROWLAKE": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0xC5,
         "vfm": _make_intel_vfm(6, 0xC5),
@@ -232,6 +258,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "ARROWLAKE_H": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0xC6,
         "vfm": _make_intel_vfm(6, 0xC6),
@@ -239,6 +266,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "ARROWLAKE_U": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0xB5,
         "vfm": _make_intel_vfm(6, 0xB5),
@@ -246,6 +274,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "METEORLAKE": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0xAC,
         "vfm": _make_intel_vfm(6, 0xAC),
@@ -253,6 +282,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "METEORLAKE_L": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0xAA,
         "vfm": _make_intel_vfm(6, 0xAA),
@@ -260,6 +290,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "RAPTORLAKE_P": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0xBA,
         "vfm": _make_intel_vfm(6, 0xBA),
@@ -267,6 +298,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "RAPTORLAKE_S": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0xBF,
         "vfm": _make_intel_vfm(6, 0xBF),
@@ -274,6 +306,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "RAPTORLAKE": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0xB7,
         "vfm": _make_intel_vfm(6, 0xB7),
@@ -281,6 +314,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "ALDERLAKE": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x97,
         "vfm": _make_intel_vfm(6, 0x97),
@@ -288,6 +322,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "ALDERLAKE_L": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x9A,
         "vfm": _make_intel_vfm(6, 0x9A),
@@ -295,6 +330,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "ALDERLAKE_N": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0xBE,
         "vfm": _make_intel_vfm(6, 0xBE),
@@ -302,6 +338,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "ROCKETLAKE": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0xA7,
         "vfm": _make_intel_vfm(6, 0xA7),
@@ -309,6 +346,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "TIGERLAKE": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x8D,
         "vfm": _make_intel_vfm(6, 0x8D),
@@ -316,6 +354,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "TIGERLAKE_L": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x8C,
         "vfm": _make_intel_vfm(6, 0x8C),
@@ -323,6 +362,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "LAKEFIELD": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x8A,
         "vfm": _make_intel_vfm(6, 0x8A),
@@ -330,6 +370,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "COMETLAKE": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0xA5,
         "vfm": _make_intel_vfm(6, 0xA5),
@@ -337,6 +378,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "COMETLAKE_L": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0xA6,
         "vfm": _make_intel_vfm(6, 0xA6),
@@ -344,6 +386,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "KABYLAKE": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x9E,
         "vfm": _make_intel_vfm(6, 0x9E),
@@ -351,6 +394,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "KABYLAKE_L": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x8E,
         "vfm": _make_intel_vfm(6, 0x8E),
@@ -358,6 +402,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "ICELAKE": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x7D,
         "vfm": _make_intel_vfm(6, 0x7D),
@@ -365,6 +410,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "ICELAKE_L": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x7E,
         "vfm": _make_intel_vfm(6, 0x7E),
@@ -372,6 +418,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "CANNONLAKE_L": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x66,
         "vfm": _make_intel_vfm(6, 0x66),
@@ -379,6 +426,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "SKYLAKE": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x5E,
         "vfm": _make_intel_vfm(6, 0x5E),
@@ -386,6 +434,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "SKYLAKE_L": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x4E,
         "vfm": _make_intel_vfm(6, 0x4E),
@@ -393,6 +442,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "BROADWELL": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x3D,
         "vfm": _make_intel_vfm(6, 0x3D),
@@ -400,6 +450,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "HASWELL": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x3C,
         "vfm": _make_intel_vfm(6, 0x3C),
@@ -407,6 +458,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "HASWELL_L": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x45,
         "vfm": _make_intel_vfm(6, 0x45),
@@ -414,6 +466,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "IVYBRIDGE": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x3A,
         "vfm": _make_intel_vfm(6, 0x3A),
@@ -421,6 +474,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "SANDYBRIDGE": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x2A,
         "vfm": _make_intel_vfm(6, 0x2A),
@@ -428,6 +482,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "WESTMERE": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x25,
         "vfm": _make_intel_vfm(6, 0x25),
@@ -435,6 +490,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "NEHALEM_G": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x1F,
         "vfm": _make_intel_vfm(6, 0x1F),
@@ -442,6 +498,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "NEHALEM": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x1E,
         "vfm": _make_intel_vfm(6, 0x1E),
@@ -449,6 +506,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "CORE2_MEROM": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x0F,
         "vfm": _make_intel_vfm(6, 0x0F),
@@ -457,6 +515,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     # Atoms.
     "ATOM_TREMONT": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x96,
         "vfm": _make_intel_vfm(6, 0x96),
@@ -464,6 +523,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "ATOM_TREMONT_L": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x9C,
         "vfm": _make_intel_vfm(6, 0x9C),
@@ -471,6 +531,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "ATOM_GOLDMONT": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x5C,
         "vfm": _make_intel_vfm(6, 0x5C),
@@ -478,6 +539,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "ATOM_GOLDMONT_PLUS": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x7A,
         "vfm": _make_intel_vfm(6, 0x7A),
@@ -485,6 +547,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "ATOM_AIRMONT": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x4C,
         "vfm": _make_intel_vfm(6, 0x4C),
@@ -492,6 +555,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "ATOM_SILVERMONT": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x37,
         "vfm": _make_intel_vfm(6, 0x37),
@@ -499,6 +563,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "ATOM_SILVERMONT_MID": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x4A,
         "vfm": _make_intel_vfm(6, 0x4A),
@@ -506,6 +571,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "ATOM_SILVERMONT_MID1": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x5A,
         "vfm": _make_intel_vfm(6, 0x5A),
@@ -513,6 +579,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "ATOM_SALTWELL": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x36,
         "vfm": _make_intel_vfm(6, 0x36),
@@ -520,6 +587,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "ATOM_SALTWELL_MID": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x27,
         "vfm": _make_intel_vfm(6, 0x27),
@@ -527,6 +595,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "ATOM_SALTWELL_TABLET": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x35,
         "vfm": _make_intel_vfm(6, 0x35),
@@ -534,6 +603,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "ATOM_BONNELL_MID": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x26,
         "vfm": _make_intel_vfm(6, 0x26),
@@ -541,6 +611,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "ATOM_BONNELL": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x1C,
         "vfm": _make_intel_vfm(6, 0x1C),
@@ -549,6 +620,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     # Atom microservers.
     "ATOM_CRESTMONT": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0xB6,
         "vfm": _make_intel_vfm(6, 0xB6),
@@ -556,6 +628,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "ATOM_TREMONT_D": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x86,
         "vfm": _make_intel_vfm(6, 0x86),
@@ -563,6 +636,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "ATOM_GOLDMONT_D": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x5F,
         "vfm": _make_intel_vfm(6, 0x5F),
@@ -570,6 +644,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "ATOM_SILVERMONT_D": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x4D,
         "vfm": _make_intel_vfm(6, 0x4D),
@@ -578,6 +653,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     # Other.
     "ICELAKE_NNPI": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x9D,
         "vfm": _make_intel_vfm(6, 0x9D),
@@ -585,6 +661,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "XEON_PHI_KNM": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x85,
         "vfm": _make_intel_vfm(6, 0x85),
@@ -592,6 +669,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
     },
     "XEON_PHI_KNL": {
         "vendor": X86_VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0x57,
         "vfm": _make_intel_vfm(6, 0x57),
