@@ -45,7 +45,7 @@ _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc").configure(prefix=TO
 
 _DATASET_OPTION: Final[ArgTypedDict] = {
     "short": "-D",
-    "long":  "--dataset",
+    "long": "--dataset",
     "argcomplete": None,
     "kwargs": {
         "dest": "dataset",
@@ -56,7 +56,7 @@ _DATASET_OPTION: Final[ArgTypedDict] = {
 
 _OVERRIDE_CPU_OPTION: Final[ArgTypedDict] = {
     "short": None,
-    "long":  "--override-cpu-model",
+    "long": "--override-cpu-model",
     "argcomplete": None,
     "kwargs": {
         "metavar": "VFM",
@@ -70,7 +70,7 @@ _OVERRIDE_CPU_OPTION: Final[ArgTypedDict] = {
 _MECHANISMS_OPTIONS: Final[list[ArgTypedDict]] = [
     {
         "short": None,
-        "long":  "--list-mechanisms",
+        "long": "--list-mechanisms",
         "argcomplete": None,
         "kwargs": {
             "dest": "list_mechanisms",
@@ -80,7 +80,7 @@ _MECHANISMS_OPTIONS: Final[list[ArgTypedDict]] = [
     },
     {
         "short": "-m",
-        "long":  "--mechanisms",
+        "long": "--mechanisms",
         "argcomplete": None,
         "kwargs": {
             "dest": "mechanisms",
