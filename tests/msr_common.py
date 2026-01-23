@@ -107,7 +107,7 @@ def get_params(hostspec: str,
             if typing.TYPE_CHECKING:
                 fmsr_class = cast(type[_FeaturedMSR.FeaturedMSR], fmsr_class)
 
-            if fmsr_class.vendor != cpuinfo.proc_cpuinfo["vendor"]:
+            if fmsr_class.vendor_name != cpuinfo.proc_cpuinfo["vendor_name"]:
                 continue
 
             try:

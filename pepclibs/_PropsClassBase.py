@@ -38,7 +38,7 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 import copy
 import typing
 
-from pepclibs import CPUInfo
+from pepclibs import CPUInfo, CPUModels
 from pepclibs.helperlibs import Logging, Trivial, Human, ClassHelpers, EmulProcessManager
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 
@@ -204,6 +204,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
             self._cpuinfo = cpuinfo
         else:
             self._cpuinfo = CPUInfo.CPUInfo(pman=self._pman)
+
+        self._is_intel = CPUModels.is_intel(self._cpuinfo.proc_cpuinfo["vendor"])
 
     def close(self):
         """Uninitialize the class object."""

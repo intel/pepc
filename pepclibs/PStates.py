@@ -214,7 +214,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         try:
             fsbfreq = self._get_fsbfreq()
         except ErrorNotSupported:
-            if self._cpuinfo.proc_cpuinfo["vendor"] != "GenuineIntel":
+            if not self._is_intel:
                 raise
             # Fall back to 100MHz bus clock speed.
             for cpu in cpus:
@@ -239,7 +239,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         try:
             self._get_fsbfreq()
         except ErrorNotSupported:
-            if self._cpuinfo.proc_cpuinfo["vendor"] != "GenuineIntel":
+            if not self._is_intel:
                 raise
             # Fall back to 100MHz bus clock speed.
             for package, pkg_dies in dies.items():
@@ -554,7 +554,7 @@ class PStates(_PropsClassBase.PropsClassBase):
             try:
                 self._get_fsbfreq()
             except ErrorNotSupported:
-                if self._cpuinfo.proc_cpuinfo["vendor"] != "GenuineIntel":
+                if not self._is_intel:
                     raise ErrorNotSupported(f"Unsupported CPU model '{self._cpuinfo.cpudescr}"
                                             f"{self._pman.hostmsg}") from None
                 for cpu in cpus:

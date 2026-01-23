@@ -40,10 +40,47 @@ if typing.TYPE_CHECKING:
 X86_VENDOR_INTEL: Final[int] = 0
 X86_VENDOR_AMD: Final[int] = 2
 
-X86_CPU_VENDORS: Final[dict[str, int]] = {
+X86_CPU_VENDOR_NAMES: Final[dict[str, int]] = {
     "GenuineIntel": X86_VENDOR_INTEL,
     "AuthenticAMD": X86_VENDOR_AMD,
 }
+
+def vendor_name_to_id(vendor_name: str) -> int:
+    """
+    Convert the CPU vendor name to its ID.
+
+    Args:
+        vendor_name: The CPU vendor name (e.g., "GenuineIntel").
+
+    Returns:
+        The CPU vendor ID.
+
+    Raises:
+        ErrorNotSupported: If the CPU vendor is not supported.
+    """
+
+    vendor_id = X86_CPU_VENDOR_NAMES.get(vendor_name, -1)
+    if vendor_id == -1:
+        raise ErrorNotSupported(f"Unsupported CPU vendor '{vendor_name}'")
+
+    return vendor_id
+
+def is_intel(vendor: int | str) -> bool:
+    """
+    Check if a CPU vendor ID or name corresponds to Intel.
+
+    Args:
+        vendor: The CPU vendor ID or name.
+    Returns:
+        True if the vendor is Intel, False otherwise.
+    """
+
+    if isinstance(vendor, str):
+        vendor_id = vendor_name_to_id(vendor)
+    else:
+        vendor_id = vendor
+
+    return vendor_id == X86_VENDOR_INTEL
 
 def make_vfm(vendor: int | str, family: int, model: int) -> int:
     """
@@ -59,13 +96,11 @@ def make_vfm(vendor: int | str, family: int, model: int) -> int:
     """
 
     if isinstance(vendor, str):
-        vendor_code = X86_CPU_VENDORS.get(vendor, -1)
-        if vendor_code == -1:
-            raise ErrorNotSupported(f"Unsupported CPU vendor '{vendor}'")
+        vendor_id = vendor_name_to_id(vendor)
     else:
-        vendor_code = vendor
+        vendor_id = vendor
 
-    return (vendor_code << 16) | (family << 8) | model
+    return (vendor_id << 16) | (family << 8) | model
 
 def make_intel_vfm(family: int, model: int) -> int:
     """

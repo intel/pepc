@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2021 Intel Corporation
+# Copyright (C) 2020-2026 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
@@ -10,7 +10,7 @@
 Common functions for pepc command-line tools.
 """
 
-from  __future__ import annotations # Remove when switching to Python 3.10+.
+from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
 from pepclibs import CPUInfo, CPUModels
@@ -52,7 +52,7 @@ def override_cpu_model(cpuinfo: CPUInfo.CPUInfo, vfmarg: str):
 
     Args:
         cpuinfo: The 'CPUInfo' object to modify CPU model in.
-        vfmarg: The CPU '[<Vendor>]:[<Family>]:<Model>' string to parse and override the the
+        vfmarg: The CPU '[<Vendor>]:[<Family>]:<Model>' string to parse and override the
                 'cpuinfo' object with. The <Model> part can be a decimal or hexadecimal number.
 
     Raises:
@@ -67,33 +67,41 @@ def override_cpu_model(cpuinfo: CPUInfo.CPUInfo, vfmarg: str):
                              f"'[<Vendor>]:[<Family>]:<Model>'.")
 
     if len(split) == 3:
-        vendor = split[0]
+        vendor = Trivial.str_to_int(split[0], what="CPU vendor")
+        for vename, vid in CPUModels.X86_CPU_VENDOR_NAMES.items():
+            if vid == vendor:
+                vendor_name = vename
+                break
+        else:
+            vendor_ids_str = ", ".join(str(vid) for vid in CPUModels.X86_CPU_VENDOR_NAMES.values())
+            raise ErrorNotSupported(f"Unsupported CPU vendor ID '{vendor}', supported vendor IDs "
+                                    f"are: {vendor_ids_str}")
         family_str = split[1]
         model_str = split[2]
     elif len(split) == 2:
-        vendor = cpuinfo.proc_cpuinfo["vendor"]
+        vendor_name = cpuinfo.proc_cpuinfo["vendor_name"]
         family_str = split[0]
         model_str = split[1]
     else:
-        vendor = cpuinfo.proc_cpuinfo["vendor"]
+        vendor_name = cpuinfo.proc_cpuinfo["vendor_name"]
         family_str = str(cpuinfo.proc_cpuinfo["family"])
         model_str = split[0]
 
-    if vendor not in CPUModels.X86_CPU_VENDORS:
-        raise ErrorNotSupported(f"Unsupported CPU vendor '{vendor}', supported vendors are: "
-                                f"{', '.join(CPUModels.X86_CPU_VENDORS)}")
-    if not Trivial.is_int(family_str):
-        raise ErrorBadFormat(f"Bad CPU family '{family_str}': Should be an integer")
-    if not Trivial.is_int(model_str):
-        raise ErrorBadFormat(f"Bad CPU model '{model_str}': Should be an integer")
+    vendor = Trivial.str_to_int(vendor_name, what="CPU vendor")
+    if vendor_name not in CPUModels.X86_CPU_VENDOR_NAMES:
+        vendor_ids_str = ", ".join(str(vid) for vid in CPUModels.X86_CPU_VENDOR_NAMES.values())
+        raise ErrorNotSupported(f"Unsupported CPU vendor ID '{vendor}', supported vendor IDs are: "
+                                f"{vendor_ids_str}")
 
     family = Trivial.str_to_int(family_str, what="CPU family")
     if family < 0 or family > 255:
         raise ErrorBadFormat(f"Bad CPU family '{family_str}': Should be in the range of 0-255")
+
     model = Trivial.str_to_int(model_str, what="CPU model")
     if model < 0 or model > 4095:
         raise ErrorBadFormat(f"Bad CPU model '{model_str}': Should be in the range of 0-4095")
 
+    cpuinfo.proc_cpuinfo["vendor_name"] = vendor_name
     cpuinfo.proc_cpuinfo["vendor"] = vendor
     cpuinfo.proc_cpuinfo["family"] = family
     cpuinfo.proc_cpuinfo["model"] = model
@@ -102,7 +110,7 @@ def override_cpu_model(cpuinfo: CPUInfo.CPUInfo, vfmarg: str):
     cpuinfo.cpudescr += f", overridden with {vfmarg}"
 
     _LOG.notice("Overriding CPU model with '%s', resulting VFM is '%s:%s:%s",
-                vfmarg, vendor, family, model)
+                vfmarg, vendor_name, family, model)
 
 def expand_subprops(pnames: Iterable[str], props: dict[str, PropertyTypedDict]) -> list[str]:
     """
@@ -164,7 +172,7 @@ def get_sname_and_nums(pobj: PropsClassType,
     Args:
         pobj: The properties object (e.g., 'PStates', 'CStates').
         pname: Name of the property to query.
-        optar: Operation target object containgin information about the target CPUs, dies, packages
+        optar: Operation target object containing information about the target CPUs, dies, packages
                for an ongoing operation on property 'pname'.
         override_sname: Optional scope name to use instead of the property's default scope.
 

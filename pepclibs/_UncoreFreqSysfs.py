@@ -35,7 +35,7 @@ import re
 import math
 import typing
 from pathlib import Path
-from pepclibs import _SysfsIO, _UncoreFreqBase
+from pepclibs import _SysfsIO, _UncoreFreqBase, CPUModels
 from pepclibs.msr import UncoreRatioLimit
 from pepclibs.helperlibs import Logging, ClassHelpers, KernelModule, FSHelpers
 from pepclibs.helperlibs import Trivial
@@ -150,8 +150,7 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
         else:
             self._sysfs_io = sysfs_io
 
-        vendor = self._cpuinfo.proc_cpuinfo["vendor"]
-        if vendor != "GenuineIntel":
+        if not CPUModels.is_intel(self._cpuinfo.proc_cpuinfo["vendor"]):
             raise ErrorNotSupported(f"Unsupported CPU model {self._cpuinfo.cpudescr}'"
                                     f"{self._pman.hostmsg}\nOnly Intel CPU uncore frequency "
                                     f"control is currently supported")

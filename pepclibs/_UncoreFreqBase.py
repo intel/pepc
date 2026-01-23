@@ -13,7 +13,7 @@ Provide the base class for uncore frequency management classes.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
-from pepclibs import CPUInfo
+from pepclibs import CPUInfo, CPUModels
 from pepclibs.helperlibs import LocalProcessManager, ClassHelpers, Human
 from pepclibs.helperlibs.Exceptions import ErrorNotSupported, ErrorOutOfRange, ErrorBadOrder, Error
 
@@ -120,8 +120,7 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
         else:
             self._pman = pman
 
-        vendor = self._cpuinfo.proc_cpuinfo["vendor"]
-        if vendor != "GenuineIntel":
+        if not CPUModels.is_intel(self._cpuinfo.proc_cpuinfo["vendor"]):
             raise ErrorNotSupported(f"Unsupported CPU model {self._cpuinfo.cpudescr}'"
                                     f"{self._pman.hostmsg}\nOnly Intel CPU uncore frequency "
                                     f"control is currently supported")

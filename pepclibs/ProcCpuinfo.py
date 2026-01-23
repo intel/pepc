@@ -7,9 +7,7 @@
 # Authors: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 #          Niklas Neronin <niklas.neronin@intel.com>
 
-"""
-Provide a capability of reading CPU information from the '/proc/cpuinfo'.
-"""
+"""Read CPU information from '/proc/cpuinfo'."""
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
@@ -27,7 +25,8 @@ if typing.TYPE_CHECKING:
         Type for the '/proc/cpuinfo' information dictionary.
 
         Attributes:
-            vendor: The CPU vendor (e.g., "GenuineIntel").
+            vendor_name: The CPU vendor name (e.g., "GenuineIntel").
+            vendor: The CPU vendor ID.
             family: The CPU family number.
             model: The CPU model number.
             modelname: The full name of the CPU model.
@@ -36,7 +35,8 @@ if typing.TYPE_CHECKING:
             topology: A dictionary representing the CPU topology ({package: {core: [CPUs]}).
         """
 
-        vendor: str
+        vendor_name: str
+        vendor: int
         family: int
         model: int
         modelname: str
@@ -80,7 +80,8 @@ def _parse_cpuinfo_block(block: str, info: ProcCpuinfoTypedDict):
             continue
 
         if key == "vendor_id":
-            info["vendor"] = val
+            info["vendor_name"] = val
+            info["vendor"] = CPUModels.vendor_name_to_id(val)
         elif key == "cpu family":
             info["family"] = Trivial.str_to_int(val, what=what)
         elif key == "model":
@@ -102,7 +103,7 @@ def _parse_cpuinfo_block(block: str, info: ProcCpuinfoTypedDict):
 
 def get_proc_cpuinfo(pman: ProcessManagerType | None = None) -> ProcCpuinfoTypedDict:
     """
-    Collect and return general CPU information such as model, and architecture.
+    Collect and return CPU information from '/proc/cpuinfo'.
 
     Args:
         pman: The process manager object for the target host. If not provided, a local process

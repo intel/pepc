@@ -37,8 +37,6 @@ if typing.TYPE_CHECKING:
     FeatureValueType = Union[int, float, bool, str]
 
     _FeatureValsType = Union[dict[int, int], dict[float, int], dict[bool, int], dict[str, int]]
-    _FeatureReversValsType = Union[dict[int, int], dict[int, float], dict[int, bool],
-                                   dict[int, str]]
 
     class FeatureTypedDict(TypedDict, total=False):
         """
@@ -180,7 +178,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
 
     regaddr: int = 0
     regname: str = "<UNDEFINED>"
-    vendor: str = "<UNDEFINED VENDOR>"
+    vendor_name: str = "<UNDEFINED VENDOR>"
 
     def __init__(self,
                  cpuinfo: CPUInfo.CPUInfo,
@@ -219,9 +217,9 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
         else:
             self._pman = LocalProcessManager.LocalProcessManager()
 
-        if self._cpuinfo.proc_cpuinfo["vendor"] != self.vendor:
+        if self._cpuinfo.proc_cpuinfo["vendor_name"] != self.vendor_name:
             raise ErrorNotSupported(f"Unsupported MSR {self.regaddr:#x} ({self.regname}), it is "
-                                    f"only available on {self.vendor} CPUs")
+                                    f"only available on {self.vendor_name} CPUs")
 
         if msr:
             self._msr = msr
