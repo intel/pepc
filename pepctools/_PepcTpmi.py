@@ -15,15 +15,17 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import sys
 import typing
+import contextlib
 from pathlib import Path
 
-from pepclibs import TPMI, CPUInfo
+from pepclibs import TPMI, CPUInfo, CPUModels
 from pepclibs.helperlibs import Logging, Trivial, YAML
 from pepclibs.helperlibs.Exceptions import Error
 
 if typing.TYPE_CHECKING:
     import argparse
-    from typing import TypedDict
+    from typing import TypedDict, Generator
+    from pepclibs.CPUModels import CPUModelTypedDict
     from pepclibs.TPMI import RegDictTypedDict, SDictTypedDict, SDDTypedDict
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
@@ -112,7 +114,20 @@ if typing.TYPE_CHECKING:
     # {feature_name: {pci_address: _ReadInfoInstancesTypedDict}}.
     _ReadInfoType = dict[str, dict[str, _ReadInfoInstancesTypedDict]]
 
-    class _LsCmdlineArgsTypedDict(TypedDict, total=False):
+    class _CommonCmdlineArgsTypedDict(TypedDict, total=False):
+        """
+        A typed dictionary for common command-line arguments of the 'pepc tpmi' subcommands.
+
+        Attributes:
+            base: Path to a copy of the TPMI debugfs contents (debugfs dump).
+            mdict: The CPU model dictionary describing the the CPU model the debugfs dump was
+                   captured from.
+        """
+
+        base: Path | None
+        mdict: CPUModelTypedDict
+
+    class _LsCmdlineArgsTypedDict(_CommonCmdlineArgsTypedDict, total=False):
         """
         A typed dictionary for command-line arguments of the 'pepc tpmi ls' command.
 
@@ -130,7 +145,7 @@ if typing.TYPE_CHECKING:
         unknown: bool
         yaml: bool
 
-    class _ReadCmdlineArgsTypedDict(TypedDict, total=False):
+    class _ReadCmdlineArgsTypedDict(_CommonCmdlineArgsTypedDict, total=False):
         """
         A typed dictionary for command-line arguments of the 'pepc tpmi read' command.
 
@@ -156,7 +171,7 @@ if typing.TYPE_CHECKING:
         no_bitfields: bool
         yaml: bool
 
-    class _WriteCmdlineArgsTypedDict(TypedDict, total=False):
+    class _WriteCmdlineArgsTypedDict(_CommonCmdlineArgsTypedDict, total=False):
         """
         A typed dictionary for command-line arguments of the 'pepc tpmi write' command.
 
@@ -182,6 +197,32 @@ if typing.TYPE_CHECKING:
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
+def _initialize_common_options(args: argparse.Namespace, cmdl: _CommonCmdlineArgsTypedDict):
+    """
+    Initialize common 'pepc tpmi' command-line options.
+
+    Args:
+        args: Command-line arguments namespace.
+        cmdl: Common command-line arguments dictionary to initialize.
+    """
+
+    base: Path | None
+    if args.base:
+        base = Path(args.base)
+    else:
+        base = None
+
+    if args.vfm:
+        mdict = CPUModels.parse_user_vfm(args.vfm)
+    else:
+        mdict = {}
+
+    if mdict and not base:
+        raise Error("'--vfm' requires '--base' to be specified")
+
+    cmdl["base"] = base
+    cmdl["mdict"] = mdict
+
 def _get_ls_cmdline_args(args: argparse.Namespace) -> _LsCmdlineArgsTypedDict:
     """
     Parse and format 'pepc tpmi ls' command-line arguments into a typed dictionary.
@@ -193,12 +234,14 @@ def _get_ls_cmdline_args(args: argparse.Namespace) -> _LsCmdlineArgsTypedDict:
         A dictionary containing the parsed command-line arguments.
     """
 
-    cmdl: _LsCmdlineArgsTypedDict = {}
-
     if args.fnames:
         fnames = Trivial.split_csv_line(args.fnames, dedup=True)
     else:
         fnames = []
+
+    cmdl: _LsCmdlineArgsTypedDict = {}
+
+    _initialize_common_options(args, cmdl)
 
     cmdl["list_specs"] = args.list_specs
     cmdl["topology"] = args.topology
@@ -260,6 +303,9 @@ def _get_read_cmdline_args(args: argparse.Namespace) -> _ReadCmdlineArgsTypedDic
         raise Error("'--bitfields' requires '--registers' to be specified")
 
     cmdl: _ReadCmdlineArgsTypedDict = {}
+
+    _initialize_common_options(args, cmdl)
+
     cmdl["fnames"] = fnames
     cmdl["addrs"] = addrs
     cmdl["packages"] = packages
@@ -308,6 +354,9 @@ def _get_write_cmdline_args(args: argparse.Namespace) -> _WriteCmdlineArgsTypedD
     value = Trivial.str_to_int(args.value, what="value to write")
 
     cmdl: _WriteCmdlineArgsTypedDict = {}
+
+    _initialize_common_options(args, cmdl)
+
     cmdl["fname"] = args.fname
     cmdl["addrs"] = addrs
     cmdl["packages"] = packages
@@ -514,7 +563,37 @@ def _tpmi_ls_topology(cmdl: _LsCmdlineArgsTypedDict, tpmi: TPMI.TPMI):
                 for cluster in addr_info["instances"][instance]:
                     _LOG.info("%sCluster: %d", _pfx_bullet(3), cluster)
 
-def tpmi_ls_command(args: argparse.Namespace, pman: ProcessManagerType):
+@contextlib.contextmanager
+def _get_tpmi(cmdl: _CommonCmdlineArgsTypedDict,
+              pman: ProcessManagerType | None) -> Generator[TPMI.TPMI, None, None]:
+    """
+    Create and yield a 'TPMI.TPMI' object based on common command-line arguments.
+
+    Args:
+        cmdl: Common command-line arguments dictionary.
+        pman: Process manager object for the target host (if available).
+
+    Yields:
+        A 'TPMI.TPMI' object.
+    """
+
+    if not cmdl["base"]:
+        assert pman is not None
+        with CPUInfo.CPUInfo(pman=pman) as cpuinfo:
+            yield cpuinfo.get_tpmi()
+    else:
+        assert pman is None
+
+        if cmdl["mdict"]:
+            vfm = cmdl["mdict"]["vfm"]
+        else:
+            vfm = TPMI.DEFAULT_VFM
+            _LOG.notice("No VFM provided, assuming VFM %d (%s) for decoding TPMI debugfs dump",
+                        vfm, TPMI.DEFAULT_PLATFORM_NAME)
+        with TPMI.TPMI(vfm=vfm, base=cmdl["base"]) as tpmi:
+            yield tpmi
+
+def tpmi_ls_command(args: argparse.Namespace, pman: ProcessManagerType | None):
     """
     Implement the 'tpmi ls' command.
 
@@ -528,9 +607,7 @@ def tpmi_ls_command(args: argparse.Namespace, pman: ProcessManagerType):
     if cmdl["unknown"] and cmdl["topology"]:
         raise Error("'--unknown' and '--topology' options cannot be used together")
 
-    with CPUInfo.CPUInfo(pman) as cpuinfo:
-        tpmi = cpuinfo.get_tpmi()
-
+    with _get_tpmi(cmdl, pman) as tpmi:
         if cmdl["list_specs"]:
             _list_specs(tpmi.sdicts, tpmi.sdds, cmdl["yaml"])
             return
@@ -598,7 +675,7 @@ def _print_tpmi_info(tpmi: TPMI.TPMI, info: _ReadInfoType):
                     _LOG.info("%sCluster: %d", _pfx_bullet(2), cluster)
                     _print_registers(cluster_info, fdict, 3)
 
-def tpmi_read_command(args: argparse.Namespace, pman: ProcessManagerType):
+def tpmi_read_command(args: argparse.Namespace, pman: ProcessManagerType | None):
     """
     Implement the 'tpmi read' command.
 
@@ -609,9 +686,7 @@ def tpmi_read_command(args: argparse.Namespace, pman: ProcessManagerType):
 
     cmdl = _get_read_cmdline_args(args)
 
-    with CPUInfo.CPUInfo(pman) as cpuinfo:
-        tpmi = cpuinfo.get_tpmi()
-
+    with _get_tpmi(cmdl, pman) as tpmi:
         sdicts = tpmi.get_known_features()
 
         fnames = cmdl["fnames"] or sdicts
@@ -640,10 +715,11 @@ def tpmi_read_command(args: argparse.Namespace, pman: ProcessManagerType):
                 for regname in regnames:
                     if cluster != 0 and regname in TPMI.UFS_HEADER_REGNAMES:
                         # Header registers are per-instance, not per-cluster. Represent them as
-                        # cluster 0 only for consistent and easy-to-read output.
+                        # cluster 0 only for consistent and easy-to-read output, avoiding
+                        # duplication.
                         _cluster = 0
 
-                        if _cluster in instance_info and regname in instance_info[_cluster]:
+                        if regname in instance_info.get(_cluster, {}):
                             # Header register already read for this instance.
                             continue
                     else:
@@ -672,14 +748,14 @@ def tpmi_read_command(args: argparse.Namespace, pman: ProcessManagerType):
                         bfinfo[bfname] = bfval
 
         if not info:
-            raise Error("BUG: No matches")
+            raise Error("BUG: no TPMI data collected, this should not happen")
 
         if cmdl["yaml"]:
             YAML.dump(info, sys.stdout, int_format="%#x")
         else:
             _print_tpmi_info(tpmi, info)
 
-def tpmi_write_command(args: argparse.Namespace, pman: ProcessManagerType):
+def tpmi_write_command(args: argparse.Namespace, pman: ProcessManagerType | None):
     """
     Implement the 'tpmi write' command.
 
@@ -690,9 +766,7 @@ def tpmi_write_command(args: argparse.Namespace, pman: ProcessManagerType):
 
     cmdl = _get_write_cmdline_args(args)
 
-    with CPUInfo.CPUInfo(pman) as cpuinfo:
-        tpmi = cpuinfo.get_tpmi()
-
+    with _get_tpmi(cmdl, pman) as tpmi:
         if cmdl["bfname"]:
             bfname_str = f", bit field '{cmdl['bfname']}'"
             val_str = f"{cmdl['value']}"

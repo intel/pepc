@@ -589,24 +589,32 @@ class TPMI(ClassHelpers.SimpleCloseContext):
             Extract the value of a bit field from a register value.
     """
 
-    def __init__(self, vfm: int = -1,
+    def __init__(self,
+                 vfm: int = -1,
                  specdirs: Iterable[Path] = (),
+                 base: Path | None = None,
                  pman: ProcessManagerType | None = None):
         """
         Initialize a class instance.
 
         Args:
-            vfm: The VFM (Vendor, Family, Model) value of the current platform. Assume Granite
-                 Rapids Xeon by default.
+            vfm: The VFM (Vendor, Family, Model) value of the current platform or when 'base' is
+                 provided, of the platform the debugfs dump was captured from. Defaults to Granite
+                 Rapids Xeon.
             specdirs: Spec directory paths on the local host to search for spec files. If not
                       provided, directories are auto-detected.
+            base: Path to a copy of the TPMI debugfs contents (debugfs dump), in case of decoding
+                  TPMI registers from a dump instead of the live system. If not provided, use the
+                  live system defined by 'pman'.
             pman: The Process manager object that defines the host to access TPMI registers on. If
                   not provided, a local process manager will be used.
 
         Notes:
-            TPMI is supposed to be forward-compatible. So if VFM is not provided, the first
-            generation of TPMI-capable platform is assumed (Granite Rapids Xeon, but it is fully
-            compatible with Sierra Forest Xeon as well).
+            1. TPMI is designed to be forward-compatible. If VFM is not provided, a default VFM
+               from an early TPMI-capable platform generation is used (Granite Rapids Xeon),
+               which is compatible with later generations like Sierra Forest Xeon.
+            2. When 'base' is provided, all TPMI accesses are done against the debugfs dump located
+               at 'base' instead of the live system defined by 'pman'.
         """
 
         self._close_pman = pman is None
@@ -625,10 +633,11 @@ class TPMI(ClassHelpers.SimpleCloseContext):
 
         vendor, _, _ = CPUModels.split_vfm(vfm)
         if vendor != CPUModels.VENDOR_INTEL:
-            raise ErrorNotSupported(f"Unsupported CPU vendor'{self._pman.hostmsg}: "
+            raise ErrorNotSupported(f"Unsupported CPU vendor {vendor}{self._pman.hostmsg}: "
                                     f"Only Intel CPUs support TPMI")
 
         self.vfm = vfm
+        self.base = base
 
         # Whether the TPMI interface is read-only.
         self._readonly = False
@@ -639,8 +648,14 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         # The debugfs mount point.
         self._debugfs_mnt: Path
         # Whether debugfs should be unmounted on 'close()'.
-        self._unmount_debugfs: bool = False
-        self._debugfs_mnt, self._unmount_debugfs = FSHelpers.mount_debugfs(pman=self._pman)
+        self._unmount_debugfs: bool
+
+        if not self.base:
+            self._debugfs_mnt, self._unmount_debugfs = FSHelpers.mount_debugfs(pman=self._pman)
+        else:
+            # The base path plays the role of debugfs mount point when accessing a debugfs dump.
+            self._debugfs_mnt = self.base
+            self._unmount_debugfs = False
 
         # TPMI-related sub-directories in 'self._debugfs_mnt' (one per TPMI PCI device).
         self._tpmi_pci_paths: list[Path] = []
@@ -695,22 +710,36 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                                supported on the system.
         """
 
+        # Verify the directory name matches the expected "tpmi-<PCI address>" format.
+        # PCI address format: DDDD:BB:DD.F (domain:bus:device.function in hex).
+        tpmi_dir_pattern = re.compile(r"^tpmi-[0-9a-f]{4}:[0-9a-f]{2}:[0-9a-f]{2}\.[0-9a-f]$")
+
         debugfs_tpmi_dirs: list[Path] = []
         for entry in self._pman.lsdir(self._debugfs_mnt):
-            if entry["name"].startswith("tpmi-"):
+            if tpmi_dir_pattern.match(entry["name"]):
                 debugfs_tpmi_dirs.append(entry["path"])
 
         if debugfs_tpmi_dirs:
             return debugfs_tpmi_dirs
 
-        raise ErrorNotSupported(f"No TPMI-related sub-directories found in '{self._debugfs_mnt}'"
-                                f"{self._pman.hostmsg}.\nTPMI does not appear to be supported"
-                                f"{self._pman.hostmsg}. Here are the possible reasons:\n"
-                                f"   1. Hardware does not support TPMI.\n"
-                                f"   2. The kernel is old and doesn't have the TPMI driver. TPMI "
-                                f" support was added in kernel version 6.6.\n"
-                                f"   3. The TPMI driver is not enabled. Try to compile the kernel "
-                                f"with 'CONFIG_INTEL_TPMI' enabled.")
+        expected_msg = ("Expected to find 'tpmi-<PCI address>' sub-directories "
+                        "(e.g., 'tpmi-0000:00:03.1'), but found none.")
+
+        if self.base:
+            raise ErrorNotSupported(
+                f"No TPMI-related sub-directories found in the debugfs dump at "
+                f"'{self._debugfs_mnt}'.\n{expected_msg} The dump does not appear to contain "
+                f"TPMI data.")
+
+        raise ErrorNotSupported(
+            f"No TPMI-related sub-directories found in '{self._debugfs_mnt}'.\n"
+            f"{expected_msg} TPMI does not appear to be supported{self._pman.hostmsg}. "
+            f"Possible reasons:\n"
+            f"   1. Hardware does not support TPMI.\n"
+            f"   2. The kernel is old and doesn't have the TPMI driver. TPMI support was added "
+            f"in kernel version 6.6.\n"
+            f"   3. The TPMI driver is not enabled. Try to compile the kernel with "
+            f"'CONFIG_INTEL_TPMI' enabled.")
 
     def _get_debugfs_feature_path(self, addr, fname) -> Path:
         """
@@ -895,9 +924,10 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         # List of unknown feature IDs.
         unknown_fids: list[int] = []
 
+        tpmi_dir_pattern = re.compile(r"^tpmi-id-([0-9a-f]+)$")
         for pci_path in self._tpmi_pci_paths:
             for entry in self._pman.lsdir(pci_path):
-                match = re.match(r"^tpmi-id-([0-9a-f]+)$", entry["name"])
+                match = re.match(tpmi_dir_pattern, entry["name"])
                 if not match:
                     continue
 
@@ -914,8 +944,14 @@ class TPMI(ClassHelpers.SimpleCloseContext):
 
         if not fname2addrs:
             paths = "\n * ".join([str(path) for path in self._tpmi_pci_paths])
-            raise ErrorNotSupported(f"No TPMI features found{self._pman.hostmsg}, checked the "
-                                    f"following paths:\n * {paths}")
+            if self.base:
+                raise ErrorNotSupported(
+                    f"No TPMI features found in the debugfs dump, checked the following "
+                    f"paths:\n * {paths}")
+
+            raise ErrorNotSupported(
+                f"No TPMI features found{self._pman.hostmsg}, checked the following "
+                f"paths:\n * {paths}")
 
         if "tpmi_info" not in fname2addrs:
             dirs = "\n * ".join([str(path) for path in self.sdds])
@@ -982,7 +1018,8 @@ class TPMI(ClassHelpers.SimpleCloseContext):
             _raise_exc("The 'registers' top-level key was not found")
 
         if "feature-id" in spec:
-            # pepc versions prior to 1.6.2 used "feature-id" instead of "feature_id".
+            # pepc versions prior to 1.6.2 used 'feature-id' (with hyphen) instead of
+            # 'feature_id' (with underscore).
             spec["feature_id"] = spec.pop("feature-id")
 
         # The allowed and the mandatory top-level key names.

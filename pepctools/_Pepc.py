@@ -13,7 +13,6 @@ pepc - Power, Energy, and Performance Configuration tool for Linux.
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
-import os
 import argparse
 from pathlib import Path
 
@@ -26,13 +25,13 @@ except ImportError:
 
 import typing
 from typing import cast
-from pepclibs import PMQoSVars, CStatesVars, PStatesVars, UncoreVars, CPUInfoVars
+from pepclibs import PMQoSVars, CStatesVars, PStatesVars, UncoreVars, CPUInfoVars, TPMIVars
 from pepclibs.helperlibs import ArgParse, Human, Logging, ProjectFiles
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs._PropsClassBase import MECHANISMS
 
 if typing.TYPE_CHECKING:
-    from typing import Sequence, Any, Generator, Final
+    from typing import Sequence, Any, Final, Iterable
     from pepclibs.helperlibs import EmulProcessManager
     from pepclibs.helperlibs.ArgParse import ArgTypedDict, ArgKwargsTypedDict
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
@@ -90,6 +89,33 @@ _MECHANISMS_OPTIONS: Final[list[ArgTypedDict]] = [
                        available mechanism is used.""",
         },
     },
+]
+
+_COMMON_TPMI_OPTIONS: Final[list[ArgTypedDict]] = [
+    {
+        "short": "-B",
+        "long": "--base",
+        "argcomplete": "DirectoriesCompleter",
+        "kwargs": {
+            "help": f"""Path to a copy of the TPMI debugfs contents. By default, {TOOLNAME}
+                        uses '{TPMIVars.DEFAULT_PLATFORM_NAME}' and searches for
+                        'tpmi-<PCI address>' subdirectories within it. This option replaces the
+                        default '{TPMIVars.DEFAULT_PLATFORM_NAME}' directory with a custom path.
+                        Intended for decoding TPMI debugfs dumps captured from a different
+                        system."""
+        },
+    },
+    {
+        "short": None,
+        "long": "--vfm",
+        "argcomplete": None,
+        "kwargs": {
+            "help": """VFM (Vendor, Family, Model) identifier of the target CPU as an integer or in
+                       '[Vendor:]Family:Model' format. Use this option with '--base' when decoding a
+                       TPMI debugfs dump to identify the CPU model of the system the dump was
+                       captured from.""",
+        },
+    }
 ]
 
 def _add_target_cpus_arguments(subpars: ArgParse.ArgsParser, fmt: str, exclude: set | None = None):
@@ -496,9 +522,9 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     # Create parser for the 'topology info' command.
     #
     text = "Print CPU topology."
-    descr = """Print CPU topology information. Note, the topology information for some offline CPUs
-               may be unavailable, in these cases the number will be substituted with "?". Refer to
-               'pepc-topology' manual page for more information."""
+    descr = """Print CPU topology information. Note that topology information for some offline
+               CPUs may be unavailable. In these cases the number will be substituted with "?".
+               Refer to 'pepc-topology' manual page for more information."""
     subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
     subpars2 = cast(ArgParse.ArgsParser, subpars2)
     subpars2.set_defaults(func=_topology_info_command)
@@ -590,6 +616,10 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
 
     ArgParse.add_options(subpars2, ssh_options)
 
+    ArgParse.add_options(subpars2, _COMMON_TPMI_OPTIONS)
+    # Do not create the process manager when '--base' or '--vfm' are used.
+    subpars2.set_defaults(no_pman_opts=("base", "vfm"))
+
     text = """Print information about TPMI spec files and exit."""
     subpars2.add_argument("--list-specs", action="store_true", help=text)
 
@@ -617,6 +647,10 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
 
     ArgParse.add_options(subpars2, ssh_options)
 
+    ArgParse.add_options(subpars2, _COMMON_TPMI_OPTIONS)
+    # Do not create the process manager when '--base' or '--vfm' are used.
+    subpars2.set_defaults(no_pman_opts=("base", "vfm"))
+
     text = """Comma-separated list of TPMI feature names to read the registers for. Defaults to all
               supported features."""
     subpars2.add_argument("-F", "--features", metavar="FEATURES", dest="fnames", help=text)
@@ -634,7 +668,7 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     subpars2.add_argument("-i", "--instances", help=text)
 
     text = """Comma-separated list of cluster numbers to read registers from. This option is only
-              relevant for the 'ufs' TPMI feature (defaults to all clusters)."""
+              relevant for the 'ufs' TPMI feature (all clusters by default)."""
     subpars2.add_argument("-c", "--clusters", help=text)
 
     text = """Comma-separated list of TPMI register names to read. Defaults to all registers."""
@@ -661,6 +695,10 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
 
     ArgParse.add_options(subpars2, ssh_options)
 
+    ArgParse.add_options(subpars2, _COMMON_TPMI_OPTIONS)
+    # Do not create the process manager when '--base' or '--vfm' are used.
+    subpars2.set_defaults(no_pman_opts=("base", "vfm"))
+
     text = "Name of the TPMI feature the register belongs to."
     subpars2.add_argument("-F", "--feature", metavar="FEATURE", dest="fname", help=text,
                           required=True)
@@ -677,7 +715,7 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     subpars2.add_argument("-i", "--instances", help=text)
 
     text = """Comma-separated list of cluster numbers to write to. This option is only
-              relevant for the 'ufs' TPMI feature (defaults to all clusters)."""
+              relevant for the 'ufs' TPMI feature (all clusters by default)."""
     subpars2.add_argument("-c", "--clusters", help=text)
 
     text = """Name of the TPMI register to write to."""
@@ -712,8 +750,8 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
 
     ArgParse.add_options(subpars2, ssh_options)
 
-    text = """Retrieve the current global PCI ASPM policy. The "default" policy indicates the
-              system's default."""
+    text = """Retrieve the current global PCI ASPM policy. When set to "default", the system's
+              default policy is used."""
     subpars2.add_argument("--policy", action=ArgParse.OrderedArg, nargs=0, help=text)
 
     text = """Retrieve the list of available PCI ASPM policies."""
@@ -944,7 +982,7 @@ def _pmqos_config_command(args: argparse.Namespace, pman: ProcessManagerType):
 
     _PepcPMQoS.pmqos_config_command(args, pman)
 
-def _tpmi_ls_command(args: argparse.Namespace, pman: ProcessManagerType):
+def _tpmi_ls_command(args: argparse.Namespace, pman: ProcessManagerType | None):
     """
     Implement the 'tpmi ls' command.
 
@@ -958,7 +996,7 @@ def _tpmi_ls_command(args: argparse.Namespace, pman: ProcessManagerType):
 
     _PepcTpmi.tpmi_ls_command(args, pman)
 
-def _tpmi_read_command(args: argparse.Namespace, pman: ProcessManagerType):
+def _tpmi_read_command(args: argparse.Namespace, pman: ProcessManagerType | None):
     """
     Implement the 'tpmi read' command.
 
@@ -972,7 +1010,7 @@ def _tpmi_read_command(args: argparse.Namespace, pman: ProcessManagerType):
 
     _PepcTpmi.tpmi_read_command(args, pman)
 
-def _tpmi_write_command(args: argparse.Namespace, pman: ProcessManagerType):
+def _tpmi_write_command(args: argparse.Namespace, pman: ProcessManagerType | None):
     """
     Implement the 'tpmi write' command.
 
@@ -1090,26 +1128,22 @@ def _list_mechanisms(args: argparse.Namespace):
 
     _LOG.info("* %s", "\n* ".join(info))
 
-def do_main(pman: ProcessManagerType | None = None) -> int:
+def do_main(pman: ProcessManagerType | None = None):
     """
     Implement the tool.
 
     Args:
         pman: Optional process manager object. If specified, the tool will use this process
               manager instead of creating its own. Used for testing purposes.
-    Returns:
-        int: The program exit code.
     """
 
     args = parse_arguments()
 
     if not getattr(args, "func", None):
-        _LOG.error("Please, run '%s -h' for help", TOOLNAME)
-        return -1
+        raise Error(f"Please, run '{TOOLNAME} -h' for help")
 
     if getattr(args, "list_mechanisms", None):
-        _list_mechanisms(args)
-        return 0
+        return _list_mechanisms(args)
 
     dataset: str | None = getattr(args, "dataset", None)
     cmdl = ArgParse.format_ssh_args(args)
@@ -1117,23 +1151,44 @@ def do_main(pman: ProcessManagerType | None = None) -> int:
     if cmdl["hostname"] != "localhost" and dataset:
         raise Error("The '--dataset' option cannot be used with '--host'")
 
+    # Handle the 'no_pman_opts' attribute: If any of the listed attributes (options) is set,
+    # then, do not create the process manager, mass 'None' to 'args.func' instead.
+    no_pman = False
+    if getattr(args, "no_pman_opts", False):
+        attrs: Iterable[str] = getattr(args, "no_pman_opts", ())
+        for attr in attrs:
+            if not getattr(args, attr, False):
+                continue
+            no_pman = True
+            optname = f"--{attr}"
+            if dataset:
+                raise Error(f"The '{optname}' option cannot be used with '--dataset'")
+            if cmdl["hostname"] != "localhost":
+                raise Error(f"The '{optname}' option cannot be used with '--host'")
+            if pman:
+                raise Error(f"The '{optname}' option cannot be used when a process manager is "
+                            f"provided externally")
+            break
+
     if pman:
         args.func(args, pman)
     elif dataset:
+        if no_pman:
+            return args.func(args, None)
         dspath = _get_dataset_path(dataset)
         with _get_emul_pman(dspath) as emul_pman:
-            args.func(args, emul_pman)
-    elif getattr(args, "no_pman", False):
-        args.func(args)
+            return args.func(args, emul_pman)
     else:
+        if no_pman:
+            return args.func(args, None)
+
         # pylint: disable-next=import-outside-toplevel
         from pepclibs.helperlibs import ProcessManager
 
         with ProcessManager.get_pman(cmdl["hostname"], username=cmdl["username"],
-                                     privkeypath=cmdl["privkey"], timeout=cmdl["timeout"]) as _pman:
-            args.func(args, _pman)
-
-    return 0
+                                     privkeypath=cmdl["privkey"],
+                                     timeout=cmdl["timeout"]) as _pman:
+            return args.func(args, _pman)
 
 def main() -> int:
     """
@@ -1143,15 +1198,14 @@ def main() -> int:
         int: The program exit code.
     """
 
-    exitcode = -1
     try:
-        return do_main()
+        do_main()
     except KeyboardInterrupt:
         _LOG.info("\nInterrupted, exiting")
     except Error as err:
         _LOG.error_out(err)
 
-    return exitcode
+    return 0
 
 if __name__ == "__main__":
     raise SystemExit(main())

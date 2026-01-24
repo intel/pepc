@@ -20,7 +20,7 @@ from pepclibs.helperlibs.Exceptions import ErrorNotSupported, ErrorBadFormat
 if typing.TYPE_CHECKING:
     from typing import TypedDict, Final
 
-    class CPUModelTypedDict(TypedDict):
+    class CPUModelTypedDict(TypedDict, total=False):
         """
         CPU model information.
 
