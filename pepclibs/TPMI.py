@@ -1736,9 +1736,9 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         fmap = self._fmaps[fname]
 
         if not addrs:
-            addrs = fmap
+            addrs = sorted(fmap)
         if not packages:
-            packages = self._pkg2addrs
+            packages = sorted(self._pkg2addrs)
 
         for addr in addrs:
             if addr not in fmap:
