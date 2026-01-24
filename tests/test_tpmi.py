@@ -8,7 +8,10 @@
 #
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
-"""Test the public methods of the 'TPMI.py' module."""
+"""
+Test the public methods of the 'TPMI.py' module. Covers only working with a live system
+(the 'base' argument of the TPMI class constructor is not used).
+"""
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
 

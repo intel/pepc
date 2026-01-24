@@ -3,11 +3,11 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2025 Intel Corporation
+# Copyright (C) 2020-2026 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
-# Author: Antti Laakso <antti.laakso@linux.intel.com>
-#         Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
+# Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
+#         Antti Laakso <antti.laakso@linux.intel.com>
 
 """Common functions for pepc tests."""
 
@@ -32,6 +32,22 @@ if typing.TYPE_CHECKING:
 
         hostname: str
         pman: ProcessManagerType
+
+def get_test_data_path(testpath: str) -> Path:
+    """
+    Get the path to the test data for the specified test.
+
+    Args:
+        testpath: Path to the test for which to retrieve the data path. The intention is that the
+                  caller passes __file__ as the argument.
+
+    Returns:
+        Path to the test data directory for the specified test.
+    """
+
+    path = Path(testpath).resolve()
+    # Test name is the file name without the '.py' suffix.
+    return path.parent / "test-data" / path.stem
 
 def _get_emul_data_path(dataset: str) -> Path:
     """
