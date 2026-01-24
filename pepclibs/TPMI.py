@@ -987,7 +987,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                 fmaps[fname][addr] = {"package": package, "mdmap": {}}
 
         self._fmaps = fmaps
-        self._unknown_fids = unknown_fids
+        self._unknown_fids = sorted(set(unknown_fids))
 
     def _load_and_format_fdict(self, fname: str, specpath: Path) -> dict[str, RegDictTypedDict]:
         """
