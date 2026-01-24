@@ -1856,10 +1856,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
 
             for cluster in clusters_iter:
                 if cluster not in cmap:
-                    all_clusters_str = ", ".join(str(c) for c in sorted(cmap))
-                    raise Error(f"Cluster {cluster} is not available in TPMI UFS instance "
-                                f"{instance} at address {addr}. Available clusters: "
-                                f"{all_clusters_str}.")
+                    continue
 
                 yield package, addr, instance, cluster
 
