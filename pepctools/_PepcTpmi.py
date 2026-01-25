@@ -421,7 +421,7 @@ def _list_specs(sdicts: dict[str, SDictTypedDict],
 
         _LOG.info("- %s", specdir)
         _LOG.info("  Format version: %s", idxdict["version"])
-        _LOG.info("  VFM: %s", vfm)
+        _LOG.info("  VFM: %#x", vfm)
         _LOG.info("  Platform Name: %s", idxdict["vfms"][vfm]["platform_name"])
         _LOG.info("  Spec Sub-directory Path: %s", specdir / idxdict["vfms"][vfm]["subdir"])
 
@@ -588,7 +588,7 @@ def _get_tpmi(cmdl: _CommonCmdlineArgsTypedDict,
             vfm = cmdl["mdict"]["vfm"]
         else:
             vfm = TPMI.DEFAULT_VFM
-            _LOG.notice("No VFM provided, assuming VFM %d (%s) for decoding TPMI debugfs dump",
+            _LOG.notice("No VFM provided, assuming VFM %#x (%s) for decoding TPMI debugfs dump",
                         vfm, TPMI.DEFAULT_PLATFORM_NAME)
         with TPMI.TPMI(vfm=vfm, base=cmdl["base"]) as tpmi:
             yield tpmi
