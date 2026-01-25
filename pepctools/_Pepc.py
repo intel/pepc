@@ -1143,7 +1143,8 @@ def do_main(pman: ProcessManagerType | None = None):
         raise Error(f"Please, run '{TOOLNAME} -h' for help")
 
     if getattr(args, "list_mechanisms", None):
-        return _list_mechanisms(args)
+        _list_mechanisms(args)
+        return
 
     dataset: str | None = getattr(args, "dataset", None)
     cmdl = ArgParse.format_ssh_args(args)
@@ -1174,13 +1175,16 @@ def do_main(pman: ProcessManagerType | None = None):
         args.func(args, pman)
     elif dataset:
         if no_pman:
-            return args.func(args, None)
+            args.func(args, None)
+            return
+
         dspath = _get_dataset_path(dataset)
         with _get_emul_pman(dspath) as emul_pman:
-            return args.func(args, emul_pman)
+            args.func(args, emul_pman)
     else:
         if no_pman:
-            return args.func(args, None)
+            args.func(args, None)
+            return
 
         # pylint: disable-next=import-outside-toplevel
         from pepclibs.helperlibs import ProcessManager
@@ -1188,7 +1192,7 @@ def do_main(pman: ProcessManagerType | None = None):
         with ProcessManager.get_pman(cmdl["hostname"], username=cmdl["username"],
                                      privkeypath=cmdl["privkey"],
                                      timeout=cmdl["timeout"]) as _pman:
-            return args.func(args, _pman)
+            args.func(args, _pman)
 
 def main() -> int:
     """
