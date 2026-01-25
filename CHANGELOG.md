@@ -6,9 +6,12 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
 ### Added
- - pepc tpmi * --base option support.
 ### Removed
 ### Changed
+
+## [1.6.19] - 2026-01-25
+### Added
+ - pepc tpmi * --base option support.
 
 ## [1.6.18] - 2026-01-23
 ### Added
