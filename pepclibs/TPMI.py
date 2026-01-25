@@ -805,7 +805,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                     _LOG.debug("TPMI feature '%s', address %s, instance %d%s is not "
                                "implemented (version %#x): dropping it",
                                 fname, addr, instance, self._pman.hostmsg, version)
-                    del mdmap[instance]
+                    mdmap[instance] = {}
                     continue
 
                 # Verify version is supported and consistent across all instances.
@@ -833,10 +833,6 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                         raise Error(f"TPMI interface minor version mismatch for feature '{fname}', "
                                     f"address {addr}{self._pman.hostmsg}: expected "
                                     f"{expected_minor_version}, got {minor_version}")
-
-        if not mdmap:
-            raise ErrorNotFound(f"No instances or only dead instances were found for TPMI feature "
-                                f"'{fname}', address {addr}{self._pman.hostmsg}")
 
         if not version_reg_found:
             raise Error(f"TPMI interface version register not found for feature '{fname}'")
@@ -1743,23 +1739,28 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         for addr in addrs:
             if addr not in fmap:
                 continue
+
+            try:
+                mdmap = self._get_mdmap(fname, addr)
+            except ErrorNotFound as err:
+                # No instances found for this feature on this device, skip it.
+                _LOG.debug(err)
+                continue
+
             for package in packages:
                 if fmap[addr]["package"] != package:
                     continue
 
                 if instances:
+                    _instances: list[int] = []
                     for instance in instances:
-                        self._validate_instance(fname, addr, instance)
-                    _instances = instances
+                        # Skip non-existing and dead instances.
+                        if instance not in mdmap or not mdmap[instance]:
+                            continue
+                        _instances.append(instance)
                 else:
-                    try:
-                        mdmap = self._get_mdmap(fname, addr)
-                    except ErrorNotFound as err:
-                        # No instances found for this feature on this device, skip it.
-                        _LOG.debug(err)
-                        continue
-
-                    _instances = mdmap
+                    # Skip dead instances (version was 0xFF).
+                    _instances = sorted(instance for instance in mdmap if mdmap[instance])
 
                 for instance in _instances:
                     yield (package, addr, instance)
