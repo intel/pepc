@@ -8,7 +8,7 @@ vim: ts=4 sw=4 tw=100 et ai si
 Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 -->
 
-- Author: Artem Bityutskiy <dedekind1@gmail.com>
+- Author: Artem Bityutskiy \<dedekind1@gmail.com\>
 
 # Table of Contents
 

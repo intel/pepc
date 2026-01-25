@@ -10,7 +10,7 @@ Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 # Intel CPU Base Frequency Explained: Definitions and Performance Scaling Fundamentals
 
-- Author: Artem Bityutskiy <dedekind1@gmail.com>
+- Author: Artem Bityutskiy \<dedekind1@gmail.com\>
 - Date: January, 2026
 
 ## Introduction

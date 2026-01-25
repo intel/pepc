@@ -10,7 +10,7 @@ Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 # Intel Xeon Uncore ELC (Efficiency Latency Control)
 
-- Author: Artem Bityutskiy <dedekind1@gmail.com>
+- Author: Artem Bityutskiy \<dedekind1@gmail.com\>
 - Date: Sep, 2025
 
 ## Table of Contents

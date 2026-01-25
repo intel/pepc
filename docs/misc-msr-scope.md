@@ -10,7 +10,7 @@ Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 # MSR Scope
 
-- Author: Artem Bityutskiy <dedekind1@gmail.com>
+- Author: Artem Bityutskiy \<dedekind1@gmail.com\>
 - Date: May, 2025
 
 ## Table of Contents

@@ -10,7 +10,7 @@ Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 # Measured CPU Frequency and C-states
 
-- Author: Artem Bityutskiy <dedekind1@gmail.com>
+- Author: Artem Bityutskiy \<dedekind1@gmail.com\>
 - Date: Aug, 2025
 
 ## Table of Contents
