@@ -79,7 +79,7 @@ class UncoreRatioLimit(_FeaturedMSR.FeaturedMSR):
 
     regaddr = MSR_UNCORE_RATIO_LIMIT
     regname = "MSR_UNCORE_RATIO_LIMIT"
-    vendor = "GenuineIntel"
+    vendor_name = "GenuineIntel"
 
     def __init__(self,
                  cpuinfo: CPUInfo.CPUInfo,

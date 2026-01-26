@@ -248,7 +248,7 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
 
     regaddr = MSR_PKG_CST_CONFIG_CONTROL
     regname = "MSR_PKG_CST_CONFIG_CONTROL"
-    vendor = "GenuineIntel"
+    vendor_name = "GenuineIntel"
 
     def __init__(self,
                  cpuinfo: CPUInfo.CPUInfo,

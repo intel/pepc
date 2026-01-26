@@ -115,7 +115,7 @@ class PlatformInfo(_FeaturedMSR.FeaturedMSR):
 
     regaddr = MSR_PLATFORM_INFO
     regname = "MSR_PLATFORM_INFO"
-    vendor = "GenuineIntel"
+    vendor_name = "GenuineIntel"
 
     def __init__(self,
                  cpuinfo: CPUInfo.CPUInfo,

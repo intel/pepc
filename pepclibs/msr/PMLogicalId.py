@@ -76,7 +76,7 @@ class PMLogicalId(_FeaturedMSR.FeaturedMSR):
 
     regaddr = MSR_PM_LOGICAL_ID
     regname = "MSR_PM_LOGICAL_ID"
-    vendor = "GenuineIntel"
+    vendor_name = "GenuineIntel"
 
     def __init__(self,
                  cpuinfo: CPUInfo.CPUInfo,

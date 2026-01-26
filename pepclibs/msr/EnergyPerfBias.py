@@ -57,7 +57,7 @@ class EnergyPerfBias(_FeaturedMSR.FeaturedMSR):
 
     regaddr = MSR_ENERGY_PERF_BIAS
     regname = "MSR_ENERGY_PERF_BIAS"
-    vendor = "GenuineIntel"
+    vendor_name = "GenuineIntel"
 
     def __init__(self,
                  cpuinfo: CPUInfo.CPUInfo,

@@ -126,7 +126,7 @@ class FSBFreq(_FeaturedMSR.FeaturedMSR):
 
     regaddr = MSR_FSB_FREQ
     regname = "MSR_FSB_FREQ"
-    vendor = "GenuineIntel"
+    vendor_name = "GenuineIntel"
 
     def __init__(self,
                  cpuinfo: CPUInfo.CPUInfo,

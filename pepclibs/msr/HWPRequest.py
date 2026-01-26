@@ -124,7 +124,7 @@ class HWPRequest(_FeaturedMSR.FeaturedMSR):
 
     regaddr = MSR_HWP_REQUEST
     regname = "MSR_HWP_REQUEST"
-    vendor = "GenuineIntel"
+    vendor_name = "GenuineIntel"
 
     def __init__(self,
                  cpuinfo: CPUInfo.CPUInfo,

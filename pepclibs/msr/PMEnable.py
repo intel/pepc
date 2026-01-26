@@ -51,7 +51,7 @@ class PMEnable(_FeaturedMSR.FeaturedMSR):
 
     regaddr = MSR_PM_ENABLE
     regname = "MSR_PM_ENABLE"
-    vendor = "GenuineIntel"
+    vendor_name = "GenuineIntel"
 
     def __init__(self,
                  cpuinfo: CPUInfo.CPUInfo,

@@ -80,7 +80,7 @@ class HWPCapabilities(_FeaturedMSR.FeaturedMSR):
 
     regaddr = MSR_HWP_CAPABILITIES
     regname = "MSR_HWP_CAPABILITIES"
-    vendor = "GenuineIntel"
+    vendor_name = "GenuineIntel"
 
     def __init__(self,
                  cpuinfo: CPUInfo.CPUInfo,

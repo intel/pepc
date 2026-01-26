@@ -94,7 +94,7 @@ class SwLTROvrd(_FeaturedMSR.FeaturedMSR):
 
     regaddr = MSR_SW_LTR_OVRD
     regname = "MSR_SW_LTR_OVRD"
-    vendor = "GenuineIntel"
+    vendor_name = "GenuineIntel"
 
     def __init__(self,
                  cpuinfo: CPUInfo.CPUInfo,
