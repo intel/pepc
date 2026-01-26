@@ -5,11 +5,14 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
- - pepc tpmi * --base: Do not fail when 'tpmi_info' feature (0x81) is missing.
- - pepc: Fix regression in 1.6.19: MSR modules did not work.
 ### Added
 ### Removed
 ### Changed
+
+## [1.6.20] - 2026-01-26
+### Fixed
+ - pepc tpmi * --base: Do not fail when 'tpmi_info' feature (0x81) is missing.
+ - pepc: Fix regression in 1.6.19: MSR modules did not work.
 
 ## [1.6.19] - 2026-01-25
 ### Added
