@@ -911,6 +911,48 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         self._drop_dead_instances(fname, addr, mdmap, vals)
         return mdmap
 
+    def get_dummy_tpmi_info(self, addr: str, addrs: set[str]) -> tuple[_MDMapType, int]:
+        """
+        Generate and return a dummy 'tpmi_info' mdmap and package number for a TPMI device.
+
+        This method covers the scenario when the 'tpmi_info' feature is missing from the debugfs
+        dump. Instead of failing, a dummy mdmap is created with all 'tpmi_info' instances marked as
+        dead (not implemented). A reasonable package number is assigned to the TPMI device based on
+        its PCI address.
+
+        Args:
+            addr: PCI address of the TPMI device.
+            addrs: Set of all PCI addresses of TPMI devices found in the debugfs dump.
+
+        Returns:
+            A tuple containing:
+                * A dummy 'tpmi_info' mdmap with all instances marked as dead.
+                * An assigned package number for the TPMI device.
+        """
+
+        _LOG.debug("Finding a reasonable dummy package number for TPMI device %s", addr)
+
+        # In case of GNR/SRF, there is one PCI address per package. In case of DMR, there are 2 PCI
+        # addresses per package.
+
+        if self.vfm == CPUModels.MODELS["DIAMONDRAPIDS_X"]:
+            # DMR case.
+            sorted_addrs = sorted(addrs)
+            addr_index = sorted_addrs.index(addr)
+            package = addr_index // 2
+        else:
+            # GNR/SRF case.
+            sorted_addrs = sorted(addrs)
+            package = sorted_addrs.index(addr)
+
+        # Pretend the 'tpmi_info' has only dead instances.
+        mdmap: _MDMapType = {0: {}}
+
+        _LOG.warning("The 'tpmi_info' feature was not found in the debugfs dump")
+        _LOG.notice("Using a dummy 'tpmi_info', assigning package number %d to TPMI device %s",
+                     package, addr)
+        return mdmap, package
+
     def _build_fmaps(self):
         """Build fmap for all TPMI features and save them in 'self._fmap'."""
 
@@ -919,6 +961,8 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         fname2addrs: dict[str, list[str]] = {}
         # List of unknown feature IDs.
         unknown_fids: list[int] = []
+        # Addresses of all TPMI devices.
+        addrs_set: set[str] = set()
 
         tpmi_dir_pattern = re.compile(r"^tpmi-id-([0-9a-f]+)$")
         for pci_path in self._tpmi_pci_paths:
@@ -937,6 +981,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                 fname2addrs.setdefault(fname, [])
                 addr = pci_path.name[len("tpmi-"):]
                 fname2addrs[fname].append(addr)
+                addrs_set.add(addr)
 
         if not fname2addrs:
             paths = "\n * ".join([str(path) for path in self._tpmi_pci_paths])
@@ -950,9 +995,13 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                 f"paths:\n * {paths}")
 
         if "tpmi_info" not in fname2addrs:
-            dirs = "\n * ".join([str(path) for path in self.sdds])
-            raise Error(f"Spec file for the 'tpmi_info' TPMI feature was not found, checked in the "
-                        f"following directories:\n * {dirs}")
+            # The 'tpmi_info' feature is mandatory, because it provides package information for all
+            # TPMI devices. However, for for the case of decoding a debugfs dump, it is handy to
+            # allow proceeding even if the 'tpmi_info' spec file is missing.
+            if not self.base:
+                dirs = "\n * ".join([str(path) for path in self.sdds])
+                raise Error(f"Spec file for the 'tpmi_info' TPMI feature was not found, checked in "
+                            f"the following directories:\n * {dirs}")
 
         fmaps: dict[str, dict[str, _AddrMDMapTypedDict]] = {"tpmi_info": {}}
 
@@ -966,9 +1015,14 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                 # The 'tpmi_info' feature is present in every TPMI device. Use it to read the
                 # package number associated with 'addr'.
                 if addr not in fmaps["tpmi_info"]:
-                    mdmap = self._build_mdmap(addr, "tpmi_info")
-                    package = self._read_register("tpmi_info", addr, 0, "TPMI_BUS_INFO",
-                                                  bfname="PACKAGE_ID", mdmap=mdmap)
+                    if "tpmi_info" not in fname2addrs:
+                        # Handle the case when 'tpmi_info' spec file is missing in the debugfs dump
+                        # scenario.
+                        mdmap, package = self.get_dummy_tpmi_info(addr, addrs_set)
+                    else:
+                        mdmap = self._build_mdmap(addr, "tpmi_info")
+                        package = self._read_register("tpmi_info", addr, 0, "TPMI_BUS_INFO",
+                                                    bfname="PACKAGE_ID", mdmap=mdmap)
                     fmaps["tpmi_info"][addr] = {"package": package, "mdmap": mdmap}
 
                     if package not in self._pkg2addrs:
