@@ -216,10 +216,10 @@ Here is how to list all available TPMI features on a Granite Rapids system.
 ```bash
 $ pepc tpmi ls
  Supported TPMI features
-- rapl (0): Running Average Power Limit (RAPL) reporting and control
-- ufs (2): Processor uncore (fabric) monitoring and control
-- sst (5): Intel Speed Select Technology (SST) control
-- tpmi_info (129): TPMI Info Registers
+- rapl (0x00): Running Average Power Limit (RAPL) reporting and control
+- ufs (0x02): Processor uncore (fabric) monitoring and control
+- sst (0x05): Intel Speed Select Technology (SST) control
+- tpmi_info (0x81): TPMI Info Registers
 ```
 
 Check the topology of TPMI devices:
@@ -227,14 +227,14 @@ Check the topology of TPMI devices:
 ```bash
 $ pepc tpmi ls --topology
 Supported TPMI features
-- rapl (0): Running Average Power Limit (RAPL) reporting and control
+- rapl (0x00): Running Average Power Limit (RAPL) reporting and control
   - PCI address: 0000:00:03.1
     Package: 0
     Instances: 0
   - PCI address: 0000:80:03.1
     Package: 1
     Instances: 0
-- ufs (2): Processor uncore (fabric) monitoring and control
+- ufs (0x02): Processor uncore (fabric) monitoring and control
   - PCI address: 0000:00:03.1
     Package: 0
     - Instance: 0
@@ -257,13 +257,13 @@ TPMI spec directories information:
   Platform Name: Granite Rapids Xeon
   Spec Sub-directory Path: /home/dedekind/git/pepc/pepcdata/tpmi/gnr
 TPMI spec files:
-- rapl (0): Running Average Power Limit (RAPL) reporting and control
+- rapl (0x00): Running Average Power Limit (RAPL) reporting and control
   Spec file: /home/dedekind/git/pepc/pepcdata/tpmi/gnr/rapl.yml
-- ufs (2): Processor uncore (fabric) monitoring and control
+- ufs (0x02): Processor uncore (fabric) monitoring and control
   Spec file: /home/dedekind/git/pepc/pepcdata/tpmi/gnr/ufs.yml
-- sst (5): Intel Speed Select Technology (SST) control
+- sst (0x05): Intel Speed Select Technology (SST) control
   Spec file: /home/dedekind/git/pepc/pepcdata/tpmi/gnr/sst.yml
-- tpmi_info (129): TPMI Info Registers
+- tpmi_info (0x81): TPMI Info Registers
   Spec file: /home/dedekind/git/pepc/pepcdata/tpmi/gnr/tpmi_info.yml
 ```
 
@@ -491,13 +491,13 @@ TPMI spec directories information:
   Platform Name: Granite Rapids Xeon
   Spec Sub-directory Path: /home/dedekind/git/pepc/pepcdata/tpmi/gnr
 TPMI spec files:
-- rapl (0): Running Average Power Limit (RAPL) reporting and control
+- rapl (0x00): Running Average Power Limit (RAPL) reporting and control
   Spec file: /home/dedekind/git/pepc/pepcdata/tpmi/gnr/rapl.yml
-- ufs (2): Processor uncore (fabric) monitoring and control
+- ufs (0x02): Processor uncore (fabric) monitoring and control
   Spec file: /home/dedekind/git/pepc/pepcdata/tpmi/gnr/ufs.yml
-- sst (5): Intel Speed Select Technology (SST) control
+- sst (0x05): Intel Speed Select Technology (SST) control
   Spec file: /home/dedekind/git/pepc/pepcdata/tpmi/gnr/sst.yml
-- tpmi_info (129): TPMI Info Registers
+- tpmi_info (0x81): TPMI Info Registers
   Spec file: /home/dedekind/git/pepc/pepcdata/tpmi/gnr/tpmi_info.yml
 ```
 
@@ -539,8 +539,8 @@ pepc: notice: No VFM provided, assuming VFM 0x6ad (Granite Rapids Xeon) for deco
 pepc: warning: The 'tpmi_info' feature was not found in the debugfs dump
 pepc: notice: Using a dummy 'tpmi_info', assigning package number 0 to TPMI device 0000:00:00.1
 Supported TPMI features
-- ufs (2): Processor uncore (fabric) monitoring and control
-- tpmi_info (129): TPMI Info Registers
+- ufs (0x02): Processor uncore (fabric) monitoring and control
+- tpmi_info (0x81): TPMI Info Registers
 ```
 
 **Note:** Since the 'tpmi_info' feature is missing in this case, `pepc` creates a dummy 'tpmi_info'

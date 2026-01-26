@@ -428,7 +428,7 @@ def _list_specs(sdicts: dict[str, SDictTypedDict],
     _LOG.info("TPMI spec files:")
     for fname in sdicts:
         sdict = sdicts[fname]
-        _LOG.info("- %s (%d): %s", sdict["name"], sdict["feature_id"], sdict["desc"])
+        _LOG.info("- %s (%#04x): %s", sdict["name"], sdict["feature_id"], sdict["desc"])
         _LOG.info("  Spec file: %s", sdict["path"])
 
 def _get_ls_supported(cmdl: _LsCmdlineArgsTypedDict,
@@ -490,7 +490,7 @@ def _tpmi_ls_flat(cmdl: _LsCmdlineArgsTypedDict, tpmi: TPMI.TPMI):
         _LOG.info("Supported TPMI features")
 
         for fname, finfo in info["supported"].items():
-            _LOG.info("- %s (%s): %s", fname, finfo["feature_id"], finfo["desc"])
+            _LOG.info("- %s (%#04x): %s", fname, finfo["feature_id"], finfo["desc"])
 
     if info.get("unknown"):
         _LOG.info("TPMI features supported by the target platform, but no spec files found")
@@ -546,7 +546,7 @@ def _tpmi_ls_topology(cmdl: _LsCmdlineArgsTypedDict, tpmi: TPMI.TPMI):
     _LOG.info("Supported TPMI features")
 
     for fname, finfo in info["supported"].items():
-        _LOG.info("- %s (%d): %s", fname, finfo["feature_id"], finfo["desc"].strip())
+        _LOG.info("- %s (%#04x): %s", fname, finfo["feature_id"], finfo["desc"].strip())
 
         for addr, addr_info in topology[fname].items():
             _LOG.info("%sPCI address: %s", _pfx_bullet(1), addr)
