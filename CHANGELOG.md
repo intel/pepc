@@ -5,6 +5,7 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
+ - pepc tpmi * --base: Do not fail when 'tpmi_info' feature (0x81) is missing.
 ### Added
 ### Removed
 ### Changed
