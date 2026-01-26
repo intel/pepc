@@ -208,6 +208,11 @@ if typing.TYPE_CHECKING:
 # Size of the UFS header in bytes.
 _UFS_HEADER_SIZE: Final[int] = 16
 
+# TPMI interface version constants.
+_TPMI_UNIMPLEMENTED_VERSION: Final[int] = 0xFF
+_TPMI_MAX_MAJOR_VERSION: Final[int] = 0
+_TPMI_MAX_MINOR_VERSION: Final[int] = 3
+
 # Users can define this environment variable to extend the default spec files.
 _SPECS_PATH_ENVVAR: Final[str] = "PEPC_TPMI_DATA_PATH"
 
@@ -816,7 +821,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
 
                 bfdict = bfdicts["INTERFACE_VERSION"]
                 version = (regval & bfdict["bitmask"]) >> bfdict["bitshift"]
-                if version == 0xFF:
+                if version == _TPMI_UNIMPLEMENTED_VERSION:
                     # Version 0xFF indicates that the instance of the feature is not
                     # implemented.
                     _LOG.debug("TPMI feature '%s', address %s, instance %d%s is not "
@@ -831,7 +836,8 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                 minor_version = version & 0b11111
 
                 # TPMI interface versions up to version 0.3 are supported.
-                if major_version != 0 or minor_version > 3:
+                if major_version != _TPMI_MAX_MAJOR_VERSION or \
+                   minor_version > _TPMI_MAX_MINOR_VERSION:
                     raise ErrorNotSupported(f"Unsupported TPMI interface version "
                                             f"{major_version}.{minor_version} for feature "
                                             f"'{fname}', address {addr}{self._pman.hostmsg}: "
@@ -1277,7 +1283,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         if instance not in mdmap:
             available = Trivial.rangify(mdmap)
             raise Error(f"Bad instance number '{instance}' for TPMI feature '{fname}' and "
-                        f"device '{addr}', available instances: {available}")
+                        f"device '{addr}'{self._pman.hostmsg}, available instances: {available}")
 
         if not mdmap[instance]:
             raise Error(f"TPMI feature '{fname}', device '{addr}', instance '{instance}' is not "
@@ -1286,8 +1292,8 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         if offset < 0 or offset % 4 != 0 or offset not in mdmap[instance]:
             max_offset = max(mdmap[instance])
             raise Error(f"Bad offset '{offset:#x}' for register '{regname}' of TPMI feature "
-                        f"'{fname}': Should be a positive integer aligned to 4 and not "
-                        f"exceeding '{max_offset}'")
+                        f"'{fname}'{self._pman.hostmsg}: Should be a positive integer aligned to 4 "
+                        f"and not exceeding '{max_offset}'")
 
     def _adjust_ufs_offset(self, addr: str, instance: int, cluster: int, offset: int) -> int:
         """
@@ -1664,8 +1670,9 @@ class TPMI(ClassHelpers.SimpleCloseContext):
 
         regdict = fdict[regname]
         if bfname and bfname not in regdict["fields"]:
+            available = ", ".join(regdict["fields"])
             raise Error(f"Bit field '{bfname}' does not exist in register '{regname}' of feature "
-                        f"'{fname}'")
+                        f"'{fname}', available bit fields: {available}")
 
     def _validate_instance(self, fname: str, addr: str, instance: int):
         """
@@ -1722,13 +1729,13 @@ class TPMI(ClassHelpers.SimpleCloseContext):
 
         Note:
             The returned dictionaries should be treated as read-only and must not be modified.
+            For performance reasons, references to internal dictionaries are returned rather than
+            deep copies.
 
         """
 
         sdicts: dict[str, SDictTypedDict] = {}
         for fname in self._fmaps:
-            # It would be safer to return deep copy of the dictionary, but for optimization
-            # purposes, avoid the copying.
             sdicts[fname] = self.sdicts[fname]
         return sdicts
 
@@ -1755,11 +1762,10 @@ class TPMI(ClassHelpers.SimpleCloseContext):
 
         Note:
             The returned dictionary should be treated as read-only and must not be modified. For
-            performance reasons, a deep copy is not returned.
+            performance reasons, a reference to the internal dictionary is returned rather than
+            a deep copy.
         """
 
-        # It would be safer to return deep copy of the dictionary, but for optimization purposes,
-        # avoid the copying.
         return self._get_sdict(fname)
 
     def get_fdict(self, fname: str) -> dict[str, RegDictTypedDict]:
@@ -1774,11 +1780,10 @@ class TPMI(ClassHelpers.SimpleCloseContext):
 
         Note:
             The returned dictionary should be treated as read-only and must not be modified. For
-            performance reasons, a deep copy is not returned.
+            performance reasons, a reference to the internal dictionary is returned rather than
+            a deep copy.
         """
 
-        # It would be safer to return deep copy of the dictionary, but for optimization purposes,
-        # avoid the copying.
         return self._get_fdict(fname)
 
     def iter_feature(self,
