@@ -27,7 +27,7 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [1.6.16] - 2026-01-14
 ### Fixed
- - pepc tpmi read: Do not read dead instances.
+ - pepc tpmi read: Do not read unimplemented instances.
 
 ## [1.6.15] - 2026-01-14
 ### Fixed

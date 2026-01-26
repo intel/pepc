@@ -759,14 +759,14 @@ class TPMI(ClassHelpers.SimpleCloseContext):
 
         return path
 
-    def _drop_dead_instances(self,
-                              fname: str,
-                              addr: str,
-                              mdmap: _MDMapType,
-                              vals: dict[int, dict[int, int]]):
+    def _drop_unimplemented_instances(self,
+                                      fname: str,
+                                      addr: str,
+                                      mdmap: _MDMapType,
+                                      vals: dict[int, dict[int, int]]):
         """
-        Drop dead (not implemented) instances from the memory dump map (mdmap) and verify that the
-        TPMI interface version is supported.
+        Drop unimplemented instances from the memory dump map (mdmap) and verify that the TPMI
+        interface version is supported.
 
         Args:
             fname: Name of the TPMI feature.
@@ -908,7 +908,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
 
                 pos += len(line) + 1
 
-        self._drop_dead_instances(fname, addr, mdmap, vals)
+        self._drop_unimplemented_instances(fname, addr, mdmap, vals)
         return mdmap
 
     def get_dummy_tpmi_info(self, addr: str, addrs: set[str]) -> tuple[_MDMapType, int]:
@@ -917,8 +917,8 @@ class TPMI(ClassHelpers.SimpleCloseContext):
 
         This method covers the scenario when the 'tpmi_info' feature is missing from the debugfs
         dump. Instead of failing, a dummy mdmap is created with all 'tpmi_info' instances marked as
-        dead (not implemented). A reasonable package number is assigned to the TPMI device based on
-        its PCI address.
+        unimplemented. A reasonable package number is assigned to the TPMI device based on its PCI
+        address.
 
         Args:
             addr: PCI address of the TPMI device.
@@ -926,7 +926,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
 
         Returns:
             A tuple containing:
-                * A dummy 'tpmi_info' mdmap with all instances marked as dead.
+                * A dummy 'tpmi_info' mdmap with all instances marked as unimplemented.
                 * An assigned package number for the TPMI device.
         """
 
@@ -945,7 +945,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
             sorted_addrs = sorted(addrs)
             package = sorted_addrs.index(addr)
 
-        # Pretend the 'tpmi_info' has only dead instances.
+        # Pretend the 'tpmi_info' has only unimplemented instances.
         mdmap: _MDMapType = {0: {}}
 
         _LOG.warning("The 'tpmi_info' feature was not found in the debugfs dump")
@@ -1808,12 +1808,12 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                 if instances:
                     _instances: list[int] = []
                     for instance in instances:
-                        # Skip non-existing and dead instances.
+                        # Skip non-existing and unimplemented instances.
                         if instance not in mdmap or not mdmap[instance]:
                             continue
                         _instances.append(instance)
                 else:
-                    # Skip dead instances (version was 0xFF).
+                    # Skip unimplemented instances (version was 0xFF).
                     _instances = sorted(instance for instance in mdmap if mdmap[instance])
 
                 for instance in _instances:
