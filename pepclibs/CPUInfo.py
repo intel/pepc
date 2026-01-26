@@ -423,7 +423,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
     def get_dies(self, order: ScopeNameType = "die",
                  compute_dies: bool = True,
-                 io_dies: bool = True) -> dict[int, list[int]]:
+                 io_dies: bool = False) -> dict[int, list[int]]:
         """
         Return a dictionary mapping package numbers to lists of die numbers.
 
@@ -451,7 +451,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
                          package: int = 0,
                          order: ScopeNameType = "die",
                          compute_dies: bool = True,
-                         io_dies: bool = True) -> list[int]:
+                         io_dies: bool = False) -> list[int]:
         """
         Return a list of die numbers in the specified package.
 
@@ -889,7 +889,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
         return len(self.get_modules())
 
-    def get_dies_count(self, compute_dies: bool = True, io_dies: bool = True) -> int:
+    def get_dies_count(self, compute_dies: bool = True, io_dies: bool = False) -> int:
         """
         Return the total number of dies in the system.
 
@@ -907,7 +907,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
     def get_package_dies_count(self,
                                package: int = 0,
                                compute_dies: bool = True,
-                               io_dies: bool = True) -> int:
+                               io_dies: bool = False) -> int:
         """
         Return the number of dies in the specified package.
 

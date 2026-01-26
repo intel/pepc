@@ -95,8 +95,6 @@ def test_all(params: _TestParamsTypedDict):
                "cores='all' did not select all packages"
 
     with _OpTarget.OpTarget(pman=pman, cpuinfo=cpuinfo, dies="all") as optar:
-        assert optar.dies == cpuinfo.get_dies(), \
-               "dies='all' did not select all dies"
         assert optar.get_cpus() == cpuinfo.get_cpus(order="package"), \
                "dies='all' did not select all CPUs"
         assert optar.get_dies() == cpuinfo.get_dies(io_dies=True), \

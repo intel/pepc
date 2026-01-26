@@ -589,7 +589,7 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
             for package in self.packages:
                 if package not in dies:
                     dies[package] = []
-                dies[package] += self._cpuinfo.get_package_dies(package=package)
+                dies[package] += self._cpuinfo.get_package_dies(package=package, io_dies=True)
 
         for package in dies:
             dies[package] = Trivial.list_dedup(dies[package])
