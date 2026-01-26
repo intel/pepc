@@ -72,8 +72,11 @@ Subcommand *'info'*
 
 Display CPU topology details.
 
-**Note**: The Linux kernel provides topology data only for online CPUs. For offline CPUs, unknown
+**Note 1**: The Linux kernel provides topology data only for online CPUs. For offline CPUs, unknown
 topology values (e.g., package number) are replaced with "?".
+
+**Note 2**: In case of non-compute dies (dies without any CPUs, for example I/O dies on Granite
+Rapids Xeon), CPU, core, and module numbers are shown as "-".
 
 **--cpus** *CPUS*
    The list can include individual CPU numbers and CPU number ranges. For example, '1-4,7,8,10-12'
