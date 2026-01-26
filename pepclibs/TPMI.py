@@ -84,7 +84,7 @@ from pathlib import Path
 import yaml
 from pepclibs import CPUModels
 from pepclibs.helperlibs import Logging, YAML, ClassHelpers, FSHelpers, ProjectFiles, Trivial, Human
-from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs.helperlibs.Exceptions import ErrorPermissionDenied
 from pepclibs.TPMIVars import DEFAULT_VFM, DEFAULT_PLATFORM_NAME, UFS_HEADER_REGNAMES
 
@@ -380,6 +380,10 @@ def _parse_index_file(specpath: Path, vfm: int) -> SDDTypedDict:
     Returns:
         Path to a sub-directory within the spec directory containing spec files for the current
         platform.
+
+    Raises:
+        ErrorNotSupported: If the index format version is not supported or if the platform (VFM)
+                           is not supported.
     """
 
     def _raise_exc(msg: str) -> NoReturn:
@@ -410,8 +414,8 @@ def _parse_index_file(specpath: Path, vfm: int) -> SDDTypedDict:
 
     version: str = idxdict["version"]
     if version != "1.0":
-        _raise_exc(f"Unsupported index format version '{version}': only version '1.0' is "
-                   f"supported")
+        raise ErrorNotSupported(f"Unsupported index format version '{version}' in "
+                                f"'{idxpath}': only version '1.0' is supported")
 
     vfms: dict[int, IdxDictVFMEntryTypedDict] = idxdict["vfms"]
 
@@ -427,8 +431,8 @@ def _parse_index_file(specpath: Path, vfm: int) -> SDDTypedDict:
             return sdd
 
     available_vfms = ", ".join(str(vfm) for vfm in vfms)
-    raise ErrorNotFound(f"No matching platform for VFM {vfm} found in {idxpath}, available VFMs "
-                        f"are: {available_vfms}")
+    raise ErrorNotSupported(f"Platform with VFM {vfm} is not supported, no spec files found in "
+                            f"{idxpath}. Available VFMs: {available_vfms}")
 
 def get_features(specdirs: Iterable[Path] = (),
                  vfm: int = -1) -> tuple[dict[str, SDictTypedDict], dict[Path, SDDTypedDict]]:
@@ -450,6 +454,11 @@ def get_features(specdirs: Iterable[Path] = (),
         A tuple containing:
             * A dictionary of spec dictionaries for all found TPMI features. Keys are feature names.
             * A dictionary of scanned spec directories. Keys are spec directory paths.
+
+    Raises:
+        ErrorNotSupported: If no TPMI spec files are found in the specified directories, if the
+                           index format version is not supported, or if the platform (VFM) is not
+                           supported.
 
     Notes:
         1. During the scanning process, only the headers of spec files are read. The entire YAML
@@ -608,6 +617,11 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                   live system defined by 'pman'.
             pman: The Process manager object that defines the host to access TPMI registers on. If
                   not provided, a local process manager will be used.
+
+        Raises:
+            ErrorNotSupported: If the CPU vendor is not Intel, if no TPMI spec files are found,
+                               if no TPMI-related sub-directories are found in debugfs, or if no
+                               TPMI features are found on the system.
 
         Notes:
             1. TPMI is designed to be forward-compatible. If VFM is not provided, a default VFM
@@ -773,6 +787,9 @@ class TPMI(ClassHelpers.SimpleCloseContext):
             addr: PCI address of the TPMI device.
             mdmap: The memory dump map (mdmap) for the feature.
             vals: Register values for all instances and offsets.
+
+        Raises:
+            ErrorNotSupported: If the TPMI interface version is not supported.
         """
 
         expected_major_version = -1
@@ -954,7 +971,12 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         return mdmap, package
 
     def _build_fmaps(self):
-        """Build fmap for all TPMI features and save them in 'self._fmap'."""
+        """
+        Build fmap for all TPMI features and save them in 'self._fmap'.
+
+        Raises:
+            ErrorNotSupported: If no TPMI features are found on the system or in the debugfs dump.
+        """
 
         # A dictionary mapping feature names to the list of TPMI device addresses that provide this
         # feature.
@@ -1227,7 +1249,9 @@ class TPMI(ClassHelpers.SimpleCloseContext):
 
         fdict = self._get_fdict(fname)
         if regname not in fdict:
-            raise Error(f"BUG: Bad register '{regname}' for feature {fname}")
+            available = ", ".join(fdict)
+            raise Error(f"Register '{regname}' does not exist for feature '{fname}', "
+                        f"available registers: {available}")
 
         return fdict[regname]
 
@@ -1794,12 +1818,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
             if addr not in fmap:
                 continue
 
-            try:
-                mdmap = self._get_mdmap(fname, addr)
-            except ErrorNotFound as err:
-                # No instances found for this feature on this device, skip it.
-                _LOG.debug(err)
-                continue
+            mdmap = self._get_mdmap(fname, addr)
 
             for package in packages:
                 if fmap[addr]["package"] != package:
