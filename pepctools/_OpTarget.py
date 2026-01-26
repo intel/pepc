@@ -195,6 +195,11 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
                  * it targets no packages
         """
 
+        _LOG.debug(f"Initializing the '{self.__class__.__name__}' class object, input arguments: "
+                   f"cpus={cpus!r}, cores={cores!r}, modules={modules!r}, dies={dies!r}, "
+                   f"packages={packages!r}, core_siblings={core_siblings!r}, "
+                   f"module_siblings={module_siblings!r}, offline_ok={offline_ok})")
+
         self._offline_ok = offline_ok
 
         self._close_pman = pman is None
