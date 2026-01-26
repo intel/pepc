@@ -71,7 +71,7 @@ def _get_scope_nums(sname: ScopeNameType,
     assert get_method, f"BUG: 'get_{sname}s()' does not exist"
 
     if sname == "die":
-        result = get_method(order=order, io_dies=False)
+        result = get_method(order=order, noncomp_dies=False)
     else:
         result = get_method(order=order)
 
@@ -267,8 +267,8 @@ def test_cpuinfo_get_count(params: CommonTestParamsTypedDict):
         for sname, nums in _get_snames_and_nums(cpuinfo):
             kwargs = {}
             if sname == "die":
-                # TODO: cover I/O dies too.
-                kwargs = {"io_dies" : False}
+                # TODO: cover non-compute dies too.
+                kwargs = {"noncomp_dies" : False}
             if sname in ("core", "die"):
                 if typing.TYPE_CHECKING:
                     nums_dict = cast(RelNumsType, nums)

@@ -81,7 +81,7 @@ def extend_params(params: CommonTestParamsTypedDict,
     for pkg in params["packages"]:
         params["cores"][pkg] = cpuinfo.get_package_cores(package=pkg)
         params["modules"][pkg] = cpuinfo.package_to_modules(package=pkg)
-        params["dies"][pkg] = cpuinfo.get_package_dies(package=pkg, io_dies=False)
+        params["dies"][pkg] = cpuinfo.get_package_dies(package=pkg, noncomp_dies=False)
 
     return params
 

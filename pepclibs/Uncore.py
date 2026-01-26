@@ -311,8 +311,8 @@ class Uncore(_PropsClassBase.PropsClassBase):
         _LOG.debug("Getting property '%s' using mechanism '%s', packages/dies: %s",
                    pname, mname, self._cpuinfo.dies_to_str(dies))
 
-        # In case of uncore properties, there may be I/O dies, which have no CPUs, so implement
-        # per-die access.
+        # In case of uncore properties, there may be non-compute dies, which have no CPUs, so
+        # implement per-die access.
         if pname in {"min_freq", "max_freq", "min_freq_limit", "max_freq_limit",
                      "elc_low_zone_min_freq", "elc_mid_zone_min_freq"}:
             yield from self._get_freq_dies(pname, dies, mname)

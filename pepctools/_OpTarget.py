@@ -44,8 +44,8 @@ class ErrorNoTarget(Error):
 
 class ErrorNoCPUTarget(Error):
     """
-    The operation target was specified, but it does not include any CPUs (e.g., only I/O dies were
-    specified).
+    The operation target was specified, but it does not include any CPUs (e.g., only non-compute
+    dies were specified).
     """
 
 class OpTarget(ClassHelpers.SimpleCloseContext):
@@ -140,8 +140,8 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
 
         Raises:
             ErrorNoTarget: If no operation target is specified or found.
-            ErrorNoCPUTarget: If the operation target does not include any CPUs (e.g., only I/O
-                             dies are specified).
+            ErrorNoCPUTarget: If the operation target does not include any CPUs (e.g., only
+                              non-compute dies are specified).
 
         Examples:
             Consider a hypothetical system with the following topology.
@@ -228,7 +228,7 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
 
         if not cpus and not cores and not modules and not dies and not packages:
             # No input topology numbers were provided. Select all CPUs, dies, and packages by
-            # default, ensuring I/O dies are included as well.
+            # default, ensuring non-compute dies are included as well.
             cpus = "all"
             dies = "all"
             packages = "all"
@@ -402,7 +402,8 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
                 pkg2nums[package] = self._cpuinfo.package_to_cores(package)
         else:
             for package in self._cpuinfo.get_packages():
-                pkg2nums[package] = self._cpuinfo.get_package_dies(package=package, io_dies=True)
+                pkg2nums[package] = self._cpuinfo.get_package_dies(package=package,
+                                                                   noncomp_dies=True)
 
         all_nums = set()
         for package, package_nums in pkg2nums.items():
@@ -459,7 +460,7 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
             ErrorNoTarget: If no CPUs, cores, modules, dies, or packages were specified,
                            indicating that there is no operation target at all.
             ErrorNoCPUTarget: If an operation target exists, but it does not include CPUs
-                              (e.g., only I/O dies were specified).
+                              (e.g., only non-compute dies were specified).
 
         Returns:
             List of target CPU numbers.
@@ -508,12 +509,12 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
 
         return self._cpuinfo.normalize_cpus(cpus, offline_ok=self._offline_ok)
 
-    def _only_io_dies(self) -> bool:
+    def _only_noncomp_dies(self) -> bool:
         """
-        Determine if the selection includes only I/O dies.
+        Determine if the selection includes only non-compute dies.
 
         Returns:
-            True if all target dies are I/O dies, False otherwise.
+            True if all target dies are non-compute dies, False otherwise.
         """
 
         dies = self.get_dies()
@@ -521,9 +522,9 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
             return False
 
         for package, pkg_dies in dies.items():
-            io_dies = self._cpuinfo.get_package_dies(package=package, compute_dies=False,
-                                                     io_dies=True)
-            if not set(pkg_dies).issubset(set(io_dies)):
+            noncomp_dies = self._cpuinfo.get_package_dies(package=package, compute_dies=False,
+                                                          noncomp_dies=True)
+            if not set(pkg_dies).issubset(set(noncomp_dies)):
                 return False
 
         return True
@@ -536,7 +537,7 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
             ErrorNoTarget: If no CPUs, cores, modules, dies, or packages were specified,
                            indicating that there is no operation target at all.
             ErrorNoCPUTarget: If an operation target exists, but it does not include CPUs
-                              (e.g., only I/O dies were specified).
+                              (e.g., only non-compute dies were specified).
 
         Returns:
             List of target CPU numbers.
@@ -551,14 +552,14 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
         if not self.dies:
             raise ErrorNoTarget("No CPU numbers were specified")
 
-        # It appears that only I/O dies were specified, and they do not have any CPUs. Confirm this
-        # assumption, and if correct, provide a clear error message.
-        if not self._only_io_dies():
+        # It appears that only non-compute dies were specified, and they do not have any CPUs.
+        # Confirm this assumption, and if correct, provide a clear error message.
+        if not self._only_noncomp_dies():
             raise ErrorNoTarget("BUG: Failed to figure out CPU numbers")
 
         dies_str = self._cpuinfo.dies_to_str(self.get_dies())
-        raise ErrorNoCPUTarget(f"No CPU numbers were specified.\n  The following I/O dies were "
-                               f"selected, but they do not have CPUs: {dies_str}.")
+        raise ErrorNoCPUTarget(f"No CPU numbers were specified.\n  The following non-compute dies "
+                               f"were selected, but they do not have CPUs: {dies_str}.")
 
     def get_dies(self, strict: bool = True) -> dict[int, list[int]]:
         """
@@ -595,11 +596,11 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
                 dies[package] += pkg_dies
         elif not self.cpus and not self.cores and not self.modules and self.packages:
             # One or more packages are targeted. No specific CPUs, cores, or modules are targeted.
-            # Assume this means that I/O dies are targeted too, so include them.
+            # Assume this means that non-compute dies are targeted too, so include them.
             for package in self.packages:
                 if package not in dies:
                     dies[package] = []
-                dies[package] += self._cpuinfo.get_package_dies(package=package, io_dies=True)
+                dies[package] += self._cpuinfo.get_package_dies(package=package, noncomp_dies=True)
 
         for package in dies:
             dies[package] = Trivial.list_dedup(dies[package])

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2025 Intel Corporation
+# Copyright (C) 2020-2026 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
@@ -21,12 +21,13 @@ if typing.TYPE_CHECKING:
 # Must be in the order from the smallest to the largest scope.
 SCOPE_NAMES: tuple[ScopeNameType, ...] = ("CPU", "core", "module", "die", "node", "package")
 
-# 'NA' is used as the CPU/core/module number for I/O dies, which lack CPUs, cores, or modules.
+# 'NA' is used as the CPU/core/module number for non-compute dies, which lack CPUs, cores, or
+# modules.
 NA = 0xFFFFFFFF
-# A helpful CPU/code/etc (all scopes) number that is guaranteed to never be used.
+# A helpful CPU/core/etc (all scopes) number that is guaranteed to never be used.
 INVALID = NA - 1
 
-# Thy hybrid CPU information dictionary.
+# The hybrid CPU information dictionary.
 HYBRID_TYPE_INFO: dict[HybridCPUKeyType, HybridCPUKeyInfoType] = {
         "pcore":   {"name": "P-core", "title": "Performance core"},
         "ecore":   {"name": "E-core", "title": "Efficiency core"},

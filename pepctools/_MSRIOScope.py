@@ -115,7 +115,7 @@ def _get_existing_snames(cpuinfo: CPUInfo.CPUInfo) -> list[ScopeNameType]:
                 # system.
                 continue
         if sname == "die":
-            if cpuinfo.get_dies_count(io_dies=True) == cpuinfo.get_packages_count():
+            if cpuinfo.get_dies_count(noncomp_dies=True) == cpuinfo.get_packages_count():
                 # There is one die per package, which means that dies do not exist on the target
                 # system.
                 continue

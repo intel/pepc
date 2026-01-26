@@ -318,7 +318,7 @@ def test_freq_methods_dies_good(params: _TestParamsTypedDict):
         params: The test parameters.
     """
 
-    all_dies = params["cpuinfo"].get_dies(io_dies=True)
+    all_dies = params["cpuinfo"].get_dies(noncomp_dies=True)
 
     for uncfreq_obj in _iter_uncore_freq_objects(params):
         _test_freq_methods_dies_good(uncfreq_obj, all_dies)
@@ -331,7 +331,7 @@ def test_freq_methods_dies_bad(params: _TestParamsTypedDict):
         params: The test parameters.
     """
 
-    all_dies = params["cpuinfo"].get_dies(io_dies=True)
+    all_dies = params["cpuinfo"].get_dies(noncomp_dies=True)
 
     for uncfreq_obj in _iter_uncore_freq_objects(params):
         _test_freq_methods_dies_bad(uncfreq_obj, all_dies)
@@ -555,7 +555,7 @@ def test_elc_threshold_methods_dies(params: _TestParamsTypedDict):
         params: The test parameters.
     """
 
-    all_dies = params["cpuinfo"].get_dies(io_dies=True)
+    all_dies = params["cpuinfo"].get_dies(noncomp_dies=True)
 
     for uncfreq_obj in _iter_uncore_freq_objects(params):
         if uncfreq_obj.mname != "tpmi":

@@ -78,10 +78,10 @@ def _filter_cpus(cpus, topology):
             new_topology.append(tline)
     return new_topology
 
-def _filter_io_dies(optar, topology, colnames):
+def _filter_noncomp_dies(optar, topology, colnames):
     """
-    If the system has I/O dies (dies withot CPUs), they will be present in the 'topology' topology
-    table. Exclude them if they should not be printed.
+    If the system has non-compute dies (dies withot CPUs), they will be present in the 'topology'
+    topology table. Exclude them if they should not be printed.
     """
 
     dies = {}
@@ -153,8 +153,8 @@ def topology_info_command(args, pman):
                                    core_siblings=args.core_siblings,
                                    module_siblings=args.module_siblings, offline_ok=offline_ok)
 
-        # Note, if there are I/O dies, the topology will include them. They will be filtered out
-        # separately in necessary.
+        # Note, if there are non-compute dies, the topology will include them. They will be filtered
+        # out separately in necessary.
         topology = cpuinfo.get_topology(snames=colnames, order=order)
 
         if show_hybrid is None and cpuinfo.is_hybrid:
@@ -185,7 +185,7 @@ def topology_info_command(args, pman):
         cpus = set(optar.get_cpus())
 
         topology = _filter_cpus(cpus, topology)
-        topology = _filter_io_dies(optar, topology, colnames)
+        topology = _filter_noncomp_dies(optar, topology, colnames)
 
         if offline_ok:
             topology = _add_offline_cpus(cpus, cpuinfo, topology, colnames)

@@ -79,7 +79,7 @@ def test_all(params: _TestParamsTypedDict):
                "cpus='all' did not select all CPUs"
         assert optar.get_cpus() == cpuinfo.get_cpus(), \
                "cpus='all' did not select all CPUs"
-        assert optar.get_dies() == cpuinfo.get_dies(io_dies=False), \
+        assert optar.get_dies() == cpuinfo.get_dies(noncomp_dies=False), \
                "cpus='all' did not select all dies"
         assert optar.get_packages() == cpuinfo.get_packages(), \
                "cpus='all' did not select all packages"
@@ -89,7 +89,7 @@ def test_all(params: _TestParamsTypedDict):
                "cores='all' did not select all cores"
         assert optar.get_cpus() == cpuinfo.get_cpus(order="package"), \
                "cores='all' did not select all CPUs"
-        assert optar.get_dies() == cpuinfo.get_dies(io_dies=False), \
+        assert optar.get_dies() == cpuinfo.get_dies(noncomp_dies=False), \
                "cores='all' did not select all dies"
         assert optar.get_packages() == cpuinfo.get_packages(), \
                "cores='all' did not select all packages"
@@ -97,7 +97,7 @@ def test_all(params: _TestParamsTypedDict):
     with _OpTarget.OpTarget(pman=pman, cpuinfo=cpuinfo, dies="all") as optar:
         assert optar.get_cpus() == cpuinfo.get_cpus(order="package"), \
                "dies='all' did not select all CPUs"
-        assert optar.get_dies() == cpuinfo.get_dies(io_dies=True), \
+        assert optar.get_dies() == cpuinfo.get_dies(noncomp_dies=True), \
                "dies='all' did not select all dies"
         assert optar.get_packages() == cpuinfo.get_packages(), \
                "dies='all' did not select all packages"
@@ -107,7 +107,7 @@ def test_all(params: _TestParamsTypedDict):
                "packages='all' did not select all packages"
         assert optar.get_cpus() == cpuinfo.get_cpus(), \
                "packages='all' did not select all CPUs"
-        assert optar.get_dies() == cpuinfo.get_dies(io_dies=True), \
+        assert optar.get_dies() == cpuinfo.get_dies(noncomp_dies=True), \
                "packages='all' did not select all dies"
         assert optar.get_packages() == cpuinfo.get_packages(), \
                "packages='all' did not select all packages"
@@ -118,13 +118,13 @@ def test_all(params: _TestParamsTypedDict):
                "*='all' did not select all CPUs"
         assert optar.cores == cpuinfo.get_cores(), \
                "*='all' did not select all cores"
-        assert optar.dies == cpuinfo.get_dies(io_dies=True), \
+        assert optar.dies == cpuinfo.get_dies(noncomp_dies=True), \
                "*='all' did not select all dies"
         assert optar.packages == cpuinfo.get_packages(), \
                "*='all' did not select all packages"
         assert optar.get_cpus() == cpuinfo.get_cpus(), \
                "*='all' did not select all CPUs"
-        assert optar.get_dies() == cpuinfo.get_dies(io_dies=True), \
+        assert optar.get_dies() == cpuinfo.get_dies(noncomp_dies=True), \
                "*='all' did not select all dies"
         assert optar.get_packages() == cpuinfo.get_packages(), \
                "*='all' did not select all packages"

@@ -69,9 +69,10 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         # Dictionary of P-core/E-core CPUs.
         self._hybrid_cpus: dict[HybridCPUKeyType, list[int]] = {}
 
-        # Per-package compute die numbers (dies with CPUs) and I/O die numbers (dies without CPUs).
+        # Per-package compute die numbers (dies with CPUs) and non-compute die numbers (dies without
+        # CPUs).
         self._compute_dies: dict[int, set[int]] = {}
-        self._io_dies: dict[int, set[int]] = {}
+        self._noncomp_dies: dict[int, set[int]] = {}
 
         # The topology dictionary.
         self._topology: dict[ScopeNameType, list[dict[ScopeNameType, int]]] = {}
@@ -248,8 +249,8 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
             package = cpu_tdict[cpu]["package"]
             if package not in self._compute_dies:
                 self._compute_dies[package] = set()
-                if package not in self._io_dies:
-                    self._io_dies[package] = set()
+                if package not in self._noncomp_dies:
+                    self._noncomp_dies[package] = set()
             self._compute_dies[package].add(die)
 
         if self.proc_cpuinfo["vfm"] not in CPUModels.MODELS_WITH_HIDDEN_DIES:
@@ -315,15 +316,15 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
                     with contextlib.suppress(KeyError):
                         cpu_tdict[cpu]["node"] = node
 
-    def _add_io_dies(self, tlines: list[dict[ScopeNameType, int]]):
+    def _add_noncomp_dies(self, tlines: list[dict[ScopeNameType, int]]):
         """
-        Add I/O dies to the topology table.
+        Add non-compute dies to the topology table.
 
-        I/O dies information is obtained from the uncore frequency driver. However, a better
+        Non-compute dies information is obtained from the uncore frequency driver. However, a better
         solution would be to read it from TPMI.
 
         Args:
-            tlines: The topology table (list of dictionaries) to which I/O dies should be added.
+            The topology table (list of dictionaries) to which non-compute dies should be added.
         """
 
         if self.proc_cpuinfo["vfm"] not in CPUModels.MODELS_WITH_HIDDEN_DIES:
@@ -331,10 +332,10 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
         tpmi = self._get_tpmi()
         if not tpmi:
-            _LOG.debug("TPMI is not supported, cannot read I/O dies information")
+            _LOG.debug("TPMI is not supported, cannot read non-compute dies information")
             return
 
-        _LOG.debug("Reading I/O dies information from uncore frequency driver")
+        _LOG.debug("Reading non-compute dies information from uncore frequency driver")
 
         for package, addr, die in tpmi.iter_feature("ufs"):
             if package not in self._compute_dies:
@@ -351,7 +352,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
             if val != 0:
                 continue
 
-            _LOG.debug("Adding I/O die %d for package %d", die, package)
+            _LOG.debug("Adding non-compute die %d for package %d", die, package)
 
             tline = {}
             for key in SCOPE_NAMES:
@@ -361,10 +362,10 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
             tline["die"] = die
             tlines.append(tline)
 
-            # Cache the I/O die number.
-            if package not in self._io_dies:
-                self._io_dies[package] = set()
-            self._io_dies[package].add(die)
+            # Cache the non-compute die number.
+            if package not in self._noncomp_dies:
+                self._noncomp_dies[package] = set()
+            self._noncomp_dies[package].add(die)
 
     def _sort_topology(self, tlines, order):
         """Sorts and save the topology list by 'order' in sorting map"""
@@ -427,12 +428,12 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         if "node" in snames_set:
             self._add_nodes(cpu_tdict)
 
-        # I/O dies do not have CPUs, so 'cpu_tdict' is not a suitable data structure for them. Use a
-        # list of topology lines (tlines) instead.
+        # Non-compute dies do not have CPUs, so 'cpu_tdict' is not a suitable data structure for
+        # them. Use a list of topology lines (tlines) instead.
         tlines = list(cpu_tdict.values()) + tlines_no_cpu
 
         if "die" in snames_set:
-            self._add_io_dies(tlines)
+            self._add_noncomp_dies(tlines)
 
         self._initialized_snames.update(snames_set)
         for level in self._initialized_snames:

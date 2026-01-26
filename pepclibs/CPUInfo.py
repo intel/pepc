@@ -140,18 +140,17 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
             order: Topology table sorting order. Defaults to "CPU".
 
         The topology table is a list of dictionaries, one dictionary per CPU (plus dictionaries for
-        I/O dies, which do not include CPUs).
+        non-compute dies, which do not include CPUs).
 
         Each dictionary may contains the following keys (depending on the 'snames' argument):
-            - CPU: Globally unique CPU number, or 'NA' for I/O dies.
-            - core: Core number within the package, or 'NA' for I/O dies. Numbers are not globally
-                    unique in older kernels (they are per-package), but globally unique in newer
-                    kernels. May contain gaps in the numbers.
-            - module: Globally unique module number, or 'NA' for I/O dies. Cores in a module share
-                      the L2 cache.
-            - die: Die number within the package, or 'NA' for I/O dies. Numbers may be per-package
-                   or globally unique depending on the system.
-            - node: Globally unique NUMA node number, or 'NA' for I/O dies.
+            - CPU: Globally unique CPU number, or 'NA' for non-compute dies.
+            - core: Core number within the package, or 'NA' for non-compute dies. Numbers are not
+                    globally unique and may contain gaps in the numbers.
+            - module: Globally unique module number, or 'NA' for non-compute dies. Cores in a module
+                      share the L2 cache.
+            - die: Die number within the package, or 'NA' for non-compute dies. Numbers may be
+                   per-package or globally unique depending on the system.
+            - node: Globally unique NUMA node number, or 'NA' for non-compute dies.
             - package: Globally unique package number.
 
         Returns:
@@ -423,7 +422,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
     def get_dies(self, order: ScopeNameType = "die",
                  compute_dies: bool = True,
-                 io_dies: bool = False) -> dict[int, list[int]]:
+                 noncomp_dies: bool = False) -> dict[int, list[int]]:
         """
         Return a dictionary mapping package numbers to lists of die numbers.
 
@@ -434,7 +433,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         Args:
             order: The sorting order for the resulting lists of die numbers.
             compute_dies: Include compute dies (dies with CPUs) if True.
-            io_dies: Include I/O dies (dies without CPUs) if True.
+            noncomp_dies: Include non-compute dies (dies without CPUs) if True.
 
         Returns:
             A dictionary where keys are package numbers and values are lists of die numbers present
@@ -444,14 +443,15 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         result: dict[int, list[int]] = {}
         for package in self.get_packages(order="package"):
             result[package] = self.get_package_dies(package=package, order=order,
-                                                    compute_dies=compute_dies, io_dies=io_dies)
+                                                    compute_dies=compute_dies,
+                                                    noncomp_dies=noncomp_dies)
         return result
 
     def get_package_dies(self,
                          package: int = 0,
                          order: ScopeNameType = "die",
                          compute_dies: bool = True,
-                         io_dies: bool = False) -> list[int]:
+                         noncomp_dies: bool = False) -> list[int]:
         """
         Return a list of die numbers in the specified package.
 
@@ -463,7 +463,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
             package: The package number to return die numbers for.
             order: The sorting order for the resulting list of die numbers.
             compute_dies: Include compute dies (dies with CPUs) if True.
-            io_dies: Include I/O dies (dies without CPUs) if True.
+            noncomp_dies: Include non-compute dies (dies without CPUs) if True.
 
         Returns:
             A list of die numbers in the given package, filtered and sorted according to the
@@ -471,7 +471,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         """
 
         dies = self._get_scope_nums("die", "package", (package,), order=order)
-        if compute_dies and io_dies:
+        if compute_dies and noncomp_dies:
             return dies
 
         if compute_dies:
@@ -481,11 +481,11 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
                     cdies.append(die)
             return cdies
 
-        iodies: list[int] = []
+        noncompdies: list[int] = []
         for die in dies:
-            if die in self._io_dies[package]:
-                iodies.append(die)
-        return iodies
+            if die in self._noncomp_dies[package]:
+                noncompdies.append(die)
+        return noncompdies
 
     def get_nodes(self, order: ScopeNameType = "node") -> list[int]:
         """
@@ -889,32 +889,32 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
         return len(self.get_modules())
 
-    def get_dies_count(self, compute_dies: bool = True, io_dies: bool = False) -> int:
+    def get_dies_count(self, compute_dies: bool = True, noncomp_dies: bool = False) -> int:
         """
         Return the total number of dies in the system.
 
         Args:
             compute_dies: Include compute dies (dies with CPUs) if True.
-            io_dies: Include I/O dies (dies without CPUs) if True.
+            noncomp_dies: Include non-compute dies (dies without CPUs) if True.
 
         Returns:
             Total number of dies in the system that contain at least one online CPU.
         """
 
-        dies = self.get_dies(compute_dies=compute_dies, io_dies=io_dies)
+        dies = self.get_dies(compute_dies=compute_dies, noncomp_dies=noncomp_dies)
         return sum(len(pkg_dies) for pkg_dies in dies.values())
 
     def get_package_dies_count(self,
                                package: int = 0,
                                compute_dies: bool = True,
-                               io_dies: bool = False) -> int:
+                               noncomp_dies: bool = False) -> int:
         """
         Return the number of dies in the specified package.
 
         Args:
             package: Package number to query.
             compute_dies: Include compute dies (dies with CPUs) if True.
-            io_dies: Include I/O dies (dies without CPUs) if True.
+            noncomp_dies: Include non-compute dies (dies without CPUs) if True.
 
         Returns:
             Number of dies in the package that contain at least one online CPU.
@@ -924,7 +924,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         """
 
         return len(self.get_package_dies(package=package, compute_dies=compute_dies,
-                                         io_dies=io_dies))
+                                         noncomp_dies=noncomp_dies))
 
     def get_packages_count(self) -> int:
         """
@@ -1124,7 +1124,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
         Notes:
             - Die numbers may be relative to package numbers, depending on the system.
-            - I/O dies (do not have CPUs) are skipped.
+            - Non-compute dies (do not have CPUs) are skipped.
             - The order of rem_cpus matches the input order.
 
         Example:
@@ -1152,8 +1152,8 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
         for pkg in self.get_packages():
             for die in self.package_to_dies(pkg):
-                if die in self._io_dies[pkg]:
-                    # Skip I/O dies, they have no CPUs.
+                if die in self._noncomp_dies[pkg]:
+                    # Skip non-compute dies, they have no CPUs.
                     continue
 
                 siblings_set = set(self.dies_to_cpus(dies=(die,), packages=(pkg,)))

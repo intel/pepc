@@ -539,7 +539,8 @@ Source: Linux sysfs file-system
 
 Notice that compute dies (0-2) and I/O dies (3,4) have different maximum uncore frequencies.
 
-The Raptor Lake client system has only one compute die and no I/O dies, and it does not support ELC.
+The Raptor Lake client system has only one compute die and no non-compute dies, and it does not
+support ELC.
 
 ```bash
 $ pepc uncore info
