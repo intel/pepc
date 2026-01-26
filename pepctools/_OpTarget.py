@@ -9,9 +9,6 @@
 """
 Provide the 'OpTarget' class which represents the target of a pepc operation, specifying which CPUs,
 cores, modules, dies, or packages are affected.
-
-The class  provides methods to retrieve targeted CPU numbers, die numbers, and package numbers,
-handling various input formats and resolving ambiguities in topology.
 """
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
@@ -85,7 +82,7 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
         relative numbering, as well as the special "all" value to target all available elements. If
         no topology arguments are provided, all CPUs, dies, and packages are selected by default.
 
-        If no cpu, core, module, die, package, core and module sibling indices were specified,
+        If no CPU, core, module, die, package, core and module sibling indices were specified,
         assume everything is targeted, i.e. the following is assumed:
         - cpus: "all"
         - packages: "all"
@@ -237,9 +234,9 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
             packages = "all"
 
         if not packages and (dies or cores):
-            # Input packages were not specified, but input cores or dies were specified. Core and
-            # die numbers can be relative to package numbers, explicit packages selection is
-            # required for them. But for convenience, if all cores and/or dies are requested
+            # Input packages were not specified, but input cores or dies were specified. Since core
+            # and die numbers can be relative to package numbers, explicit package selection is
+            # normally required. However, for convenience, if all cores and/or dies are requested
             # ("all"), and no packages are specified, assume all packages are targeted.
             if dies == "all" or cores == "all":
                 packages = "all"
@@ -274,42 +271,50 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
                     for pkg in pkgs:
                         self.cores[pkg] = self._cpuinfo.normalize_package_cores(nums, package=pkg)
             else:
+                if typing.TYPE_CHECKING:
+                    self_cores = cast(dict[int, list[int]], self.cores)
+                else:
+                    self_cores = self.cores
                 for pkg, pkg_cores in cores.items():
                     pkg = self._cpuinfo.normalize_package(pkg)
+                    if pkg not in self_cores:
+                        self_cores[pkg] = []
                     for core in pkg_cores:
                         core = self._cpuinfo.normalize_core(core, package=pkg)
-                        if pkg not in self.cores:
-                            self.cores[pkg] = []
-                        _pkg_cores: list[int] = []
-                        if core not in self.cores[pkg]:
-                            _pkg_cores.append(core)
-                        self.cores[pkg] = _pkg_cores
+                        self_cores[pkg].append(core)
+                for pkg in self_cores:
+                    self_cores[pkg] = Trivial.list_dedup(self_cores[pkg])
+                self.cores = self_cores
 
         # Handle input die numbers.
         if dies:
             self.dies = {}
             if not isinstance(dies, dict):
                 if typing.TYPE_CHECKING:
-                    _dies = cast(AbsNumsType | str, dies)
+                    input_dies = cast(AbsNumsType | str, dies)
                 else:
-                    _dies = dies
-                nums = self._parse_input_nums(_dies, what="die numbers")
+                    input_dies = dies
+                nums = self._parse_input_nums(input_dies, what="die numbers")
                 if not packages:
                     self.dies = self._build_package_indexed_dict(nums, "die")
                 else:
                     for pkg in pkgs:
                         self.dies[pkg] = self._cpuinfo.normalize_package_dies(nums, package=pkg)
             else:
+                if typing.TYPE_CHECKING:
+                    self_dies = cast(dict[int, list[int]], self.dies)
+                else:
+                    self_dies = self.dies
                 for pkg, pkg_dies in dies.items():
                     pkg = self._cpuinfo.normalize_package(pkg)
+                    if pkg not in self_dies:
+                        self_dies[pkg] = []
                     for die in pkg_dies:
                         die = self._cpuinfo.normalize_package_die(die, package=pkg)
-                        if pkg not in self.dies:
-                            self.dies[pkg] = []
-                        _pkg_dies: list[int] = []
-                        if die not in self.dies[pkg]:
-                            _pkg_dies.append(die)
-                        self.dies[pkg] = _pkg_dies
+                        self_dies[pkg].append(die)
+                for pkg in self_dies:
+                    self_dies[pkg] = Trivial.list_dedup(self_dies[pkg])
+                self.dies = self_dies
 
         _cpus = self._get_cpus()
         if core_siblings:
@@ -327,7 +332,7 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
                 _LOG.debug("Target CPUs: %s", Trivial.rangify(self.cpus))
             if self.cores:
                 for pkg, nums in self.cores.items():
-                    _LOG.debug("Target package %d cores: %s", pkg, Trivial.rangify(self.cores))
+                    _LOG.debug("Target package %d cores: %s", pkg, Trivial.rangify(nums))
             if self.modules:
                 _LOG.debug("Target modules: %s", Trivial.rangify(self.modules))
             if self.dies:
@@ -486,15 +491,15 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
 
         # Core and die numbers may be relative to package numbers (unlike globally unique CPU and
         # package numbers). Therefore, when cores or dies are specified, the packages list is
-        # interpreted as "packages for the specified cores or dies," rather than as independent
+        # interpreted as "packages for the specified cores or dies," rather than as standalone
         # input packages. If neither cores nor dies are specified, the packages list is treated
-        # independently as the set of targeted packages.
+        # as standalone, representing the full set of targeted packages.
         if in_packages and not (self.cores or self.dies):
             cpus += self._cpuinfo.packages_to_cpus(packages=in_packages)
 
         if in_core_siblings:
             cpus = self._cpuinfo.select_core_siblings(cpus, in_core_siblings)
-            # Handle the situation when both core an module siblings are targeted.
+            # Handle the situation when both core and module siblings are targeted.
             if in_module_siblings:
                 return self._cpuinfo.select_module_siblings(cpus, in_module_siblings)
 
@@ -505,10 +510,10 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
 
     def _only_io_dies(self) -> bool:
         """
-        Determine if only I/O dies are selected as target dies.
+        Determine if the selection includes only I/O dies.
 
         Returns:
-            True if all target dies are I/O dies
+            True if all target dies are I/O dies, False otherwise.
         """
 
         dies = self.get_dies()
