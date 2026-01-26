@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2023 Intel Corporation
+# Copyright (C) 2023-2026 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
@@ -467,8 +467,8 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
         in_core_siblings = self.core_siblings if "core" not in exclude else []
         in_modules = self.modules if "module" not in exclude else []
         in_module_siblings = self.module_siblings if "module" not in exclude else []
-        in_dies = self.dies if "module" not in exclude else {}
-        in_packages = self.packages if "module" not in exclude else []
+        in_dies = self.dies if "die" not in exclude else {}
+        in_packages = self.packages if "package" not in exclude else []
 
         if in_cpus:
             cpus += in_cpus
@@ -627,7 +627,7 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
         packages, rem_cpus = self._cpuinfo.cpus_div_packages(cpus)
         if strict and rem_cpus:
             human_cpus = Trivial.rangify(rem_cpus)
-            raise ErrorNoTarget(f"the following CPUs do not comprise a package: {human_cpus}",
+            raise ErrorNoTarget(f"The following CPUs do not comprise a package: {human_cpus}",
                                 cpus=rem_cpus)
 
         if self.packages:
