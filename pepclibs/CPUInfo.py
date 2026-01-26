@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2025 Intel Corporation
+# Copyright (C) 2020-2026 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Authors: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
@@ -142,7 +142,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         The topology table is a list of dictionaries, one dictionary per CPU (plus dictionaries for
         non-compute dies, which do not include CPUs).
 
-        Each dictionary may contains the following keys (depending on the 'snames' argument):
+        Each dictionary may contain the following keys (depending on the 'snames' argument):
             - CPU: Globally unique CPU number, or 'NA' for non-compute dies.
             - core: Core number within the package, or 'NA' for non-compute dies. Numbers are not
                     globally unique and may contain gaps in the numbers.
@@ -249,9 +249,9 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
         Args:
             sname: Scope name to retrieve the numbers for (e.g., "CPU", "core", "die").
-            parent_sname: Parent scope to retrieve to use for selecting scope numbers (e.g., "core",
+            parent_sname: Parent scope used for selecting scope numbers (e.g., "core",
                           "package").
-            nums: Iterable of parent scope numbers for selecting scope numbers, or "all" to or all
+            nums: Iterable of parent scope numbers for selecting scope numbers, or "all" for all
                   parent scope numbers.
             order: Scope name to sort the result by. Defaults to 'sname'.
 
@@ -316,7 +316,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
             if nums == "all" or tline[parent_sname] in nums_set:
                 result[tline[sname]] = None
 
-        if nums_set == "all":
+        if nums == "all":
             return list(result)
 
         # Validate the input numbers in 'nums'.
@@ -1136,8 +1136,8 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
                     - die 0 includes CPUs 4 and 5
                     - die 1 includes CPUs 6 and 7
 
-            1. cpus_div_dies([0, 1, 2, 3]) returns ({0:[0], 0:[1]}, []).
-            2. cpus_div_dies([4,5,6])      returns ({1:[1]},        [6]).
+            1. cpus_div_dies([0, 1, 2, 3]) returns ({0:[0, 1]}, []).
+            2. cpus_div_dies([4,5])        returns ({1:[0]},        []).
             3. cpus_div_dies([0,3])        returns ({},             [0,3]).
         """
 
@@ -1425,7 +1425,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
             List of normalized package numbers.
 
         Note:
-            Normalized die package are integers without duplicates, sorted in ascending order.
+            Normalized package numbers are integers without duplicates, sorted in ascending order.
         """
 
         allpkgs = self.get_packages()
@@ -1448,7 +1448,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
     def normalize_cpu(self, cpu: int) -> int:
         """
-        Validate single CPU number.
+        Validate a single CPU number.
 
         Args:
             cpu: CPU number to validate.

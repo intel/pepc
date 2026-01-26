@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2025 Intel Corporation
+# Copyright (C) 2020-2026 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Authors: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
@@ -263,10 +263,10 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
                 data = self._pman.read_file(base / "topology/die_id")
                 die = Trivial.str_to_int(data, what="die number")
                 siblings = self._read_range(base / "topology/die_cpus_list")
-                for _ in siblings:
+                for sibling in siblings:
                     # Suppress 'KeyError' in case the 'die_cpus_list' file included an offline CPU.
                     with contextlib.suppress(KeyError):
-                        _add_compute_die(cpu_tdict, cpu, die)
+                        _add_compute_die(cpu_tdict, sibling, die)
 
             return
 
@@ -291,13 +291,13 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
     def _add_nodes(self, cpu_tdict: dict[int, dict[ScopeNameType, int]]):
         """
-        Assign NUMA node numbers for specified CPUs in the CPU topology dictionary.
+        Add NUMA node numbers for CPUs in the CPU topology dictionary.
 
         NUMA node numbers are read from the sysfs files under
         '/sys/devices/system/node/node<node>/cpulist'.
 
         Args:
-            cpu_tdict: Dictionary mapping CPU identifiers to their attributes.
+            cpu_tdict: The CPU topology dictionary to update with NUMA node information.
         """
 
         _LOG.debug("Reading NUMA node information from sysfs")
@@ -318,13 +318,11 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
     def _add_noncomp_dies(self, tlines: list[dict[ScopeNameType, int]]):
         """
-        Add non-compute dies to the topology table.
-
-        Non-compute dies information is obtained from the uncore frequency driver. However, a better
-        solution would be to read it from TPMI.
+        Add non-compute dies to the topology table (obtained from TPMI).
 
         Args:
-            The topology table (list of dictionaries) to which non-compute dies should be added.
+            tlines: The topology table (list of dictionaries) to which non-compute dies should be
+                    added.
         """
 
         if self.proc_cpuinfo["vfm"] not in CPUModels.MODELS_WITH_HIDDEN_DIES:
@@ -368,23 +366,22 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
             self._noncomp_dies[package].add(die)
 
     def _sort_topology(self, tlines, order):
-        """Sorts and save the topology list by 'order' in sorting map"""
+        """Sort and save the topology list by 'order' in sorting map."""
 
         skeys = self._sorting_map[order]
         self._topology[order] = sorted(tlines, key=lambda tline: tuple(tline[s] for s in skeys))
 
     def _get_topology(self, snames: Iterable[ScopeNameType], order: ScopeNameType = "CPU"):
         """
-        Build and return the topology table for the specified scopes and sorted in the specified
-        order.
+        Build and return the topology table for the specified scopes, sorted in the specified order.
 
         Args:
-            scopes: Scope names to include to the topology table.
+            snames: Scope names to include in the topology table.
             order: Topology table sorting order. Defaults to "CPU".
 
         Returns:
             The topology table for the specified scopes and order. The topology table is a
-            a list of topology lines, which are dictionaries where keys are scope names and
+            list of topology lines, which are dictionaries where keys are scope names and
             values are the corresponding scope numbers (e.g., CPU numbers, core numbers, etc.).
         """
 
@@ -398,7 +395,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
         _LOG.debug("Building CPU topology for scopes %s, order '%s'", ", ".join(snames), order)
 
-        # A prelimitary CPU topology dictionary. They keys are CPU numbers, and the values are the
+        # A preliminary CPU topology dictionary. The keys are CPU numbers, and the values are the
         # topology lines.
         cpu_tdict: dict[int, dict[ScopeNameType, int]]
 
@@ -465,7 +462,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         Return a list of online CPU numbers.
 
         Returns:
-            A cst ontaining the online CPU numbers sorted in ascending order.
+            A list containing the online CPU numbers sorted in ascending order.
         """
 
         if not self._cpus:
@@ -577,7 +574,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         Build and return a dictionary mapping hybrid CPU types to their corresponding CPU numbers.
 
         Returns:
-            A dictionary where keys are hybrid CPU types (such as 'ecores' and 'pcores') and values
+            A dictionary where keys are hybrid CPU types (such as 'ecore' and 'pcore') and values
             are the corresponding CPU numbers.
         """
 
@@ -602,7 +599,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         Handle CPU hotplug events by resetting cached CPU and topology information.
         """
 
-        _LOG.debug("Clearing cashed CPU information")
+        _LOG.debug("Clearing cached CPU information")
 
         self._cpus = []
         self._cpus_set = set()
