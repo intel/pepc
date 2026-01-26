@@ -1279,6 +1279,10 @@ class TPMI(ClassHelpers.SimpleCloseContext):
             raise Error(f"Bad instance number '{instance}' for TPMI feature '{fname}' and "
                         f"device '{addr}', available instances: {available}")
 
+        if not mdmap[instance]:
+            raise Error(f"TPMI feature '{fname}', device '{addr}', instance '{instance}' is not "
+                        f"implemented")
+
         if offset < 0 or offset % 4 != 0 or offset not in mdmap[instance]:
             max_offset = max(mdmap[instance])
             raise Error(f"Bad offset '{offset:#x}' for register '{regname}' of TPMI feature "

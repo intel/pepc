@@ -24,9 +24,12 @@ The test also assumes specific values for various registers in the dump.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 from pathlib import Path
+import shutil
 
+import pytest
 from tests import common
 from pepclibs import TPMI
+from pepclibs.helperlibs.Exceptions import Error
 
 def _get_tpmi_instance() -> TPMI.TPMI:
     """
@@ -197,3 +200,35 @@ def test_read_bitfield():
     # instance 2.
     value = tpmi.read_register("ufs", "0000:00:02.1", 2, "UFS_STATUS", bfname="AGENT_TYPE_IO")
     assert value == 0x1, f"Unexpected AGENT_TYPE_IO bitfield value: {value:#x}"
+
+def test_no_tpmi_info(tmp_path: Path):
+    """
+    Test the special case: no 'tpmi_info' feature is present in the TPMI debugfs dump.
+
+    Args:
+        tmp_path: A temporary directory path for testing (provided by the pytest framework).
+    """
+
+    # Create a copy of the debugfs dump without the 'tpmi_info' feature.
+    debugfs_dump_path = common.get_test_data_path(__file__) / Path("debugfs-dump")
+    test_dump_path = tmp_path / Path("debugfs-dump-no-tpmi_info")
+
+    shutil.copytree(debugfs_dump_path, test_dump_path)
+    shutil.rmtree(test_dump_path / Path("tpmi-0000:00:02.1/tpmi-id-81"))
+    shutil.rmtree(test_dump_path / Path("tpmi-0001:00:02.1/tpmi-id-81"))
+
+    tpmi = TPMI.TPMI(base=test_dump_path)
+    sdicts = tpmi.get_known_features()
+
+    expected_fnames = {"ufs", "rapl", "tpmi_info"}
+    assert set(sdicts) == expected_fnames, \
+           f"Unexpected known feature names: {list(sdicts)}"
+
+    # Check that reading a register from existing features still works.
+    value = tpmi.read_register("ufs", "0000:00:02.1", 2, "UFS_STATUS")
+    assert value == 0xa52fc5f04092008, \
+           f"Unexpected UFS_STATUS register value: {value:#x}"
+
+    # Check that readint 'tpmi_info' feature raises an exception.
+    with pytest.raises(Error):
+        tpmi.read_register("tpmi_info", "0000:00:02.1", 0, "TPMI_INFO_HEADER")
