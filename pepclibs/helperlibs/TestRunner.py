@@ -49,7 +49,7 @@ def run_tool(tool: ModuleType,
     _LOG.debug("Running: %s", cmd)
     sys.argv = cmd.split()
     try:
-        ret = tool.do_main(pman=pman)
+        tool.do_main(pman=pman)
     except Exception as err: # pylint: disable=broad-except
         err_type = type(err)
         msg = f"Command '{toolname} {arguments}' raised the following exception:\n" \
@@ -71,5 +71,3 @@ def run_tool(tool: ModuleType,
     if exp_exc is not None:
         assert False, f"Command '{toolname} {arguments}' did not raise the following " \
                       f"exception type:\n- {exp_exc.__name__}"
-
-    return ret
