@@ -413,6 +413,8 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
                 else:
                     tlines_no_cpu.append(tline)
 
+        tlines = list(cpu_tdict.values()) + tlines_no_cpu
+
         if "CPU" not in self._initialized_snames or "core" not in self._initialized_snames or \
            "package" not in self._initialized_snames:
             self._add_cores_and_packages(cpu_tdict, cpus)
@@ -422,15 +424,11 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
             self._add_modules(cpu_tdict, cpus)
         if "die" in snames_set:
             self._add_compute_dies(cpu_tdict, cpus)
+            # Non-compute dies do not have CPUs, so 'cpu_tdict' is not a suitable data structure for
+            # them. Use a list of topology lines (tlines) instead.
+            self._add_noncomp_dies(tlines)
         if "node" in snames_set:
             self._add_nodes(cpu_tdict)
-
-        # Non-compute dies do not have CPUs, so 'cpu_tdict' is not a suitable data structure for
-        # them. Use a list of topology lines (tlines) instead.
-        tlines = list(cpu_tdict.values()) + tlines_no_cpu
-
-        if "die" in snames_set:
-            self._add_noncomp_dies(tlines)
 
         self._initialized_snames.update(snames_set)
         for level in self._initialized_snames:
