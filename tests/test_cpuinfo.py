@@ -17,13 +17,34 @@ import typing
 import random
 import pytest
 from tests import common
-from pepclibs import CPUModels, CPUInfo, CPUOnline
+from pepclibs import CPUInfo, CPUOnline
+from pepclibs.helperlibs import Trivial
 
 if typing.TYPE_CHECKING:
-    from typing import Generator, cast
+    from typing import Generator, cast, TypedDict
     from tests.common import CommonTestParamsTypedDict
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepclibs.CPUInfoTypes import AbsNumsType, RelNumsType, ScopeNameType
+
+    class _ExpectedTopology(TypedDict, total=False):
+        """
+        Typed dictionary for expected CPU topology structure used in tests.
+
+        Attributes:
+            cpus: List of g CPU numbers.
+            cores: Dictionary mapping package numbers to core numbers.
+            modules: List of g module numbers.
+            compute_dies: Dictionary mapping package numbers to compute die numbers.
+            noncomp_dies: Dictionary mapping package numbers to non-compute die numbers.
+            packages: List of g package numbers.
+        """
+
+        cpus: AbsNumsType
+        cores: RelNumsType
+        modules: AbsNumsType
+        compute_dies: RelNumsType
+        noncomp_dies: RelNumsType
+        packages: AbsNumsType
 
 # A unique object used in '_run_method()' for ignoring method's return value by default.
 _IGNORE = object()
@@ -92,43 +113,110 @@ def _get_snames_and_nums(cpuinfo: CPUInfo.CPUInfo) -> \
     for sname in CPUInfo.SCOPE_NAMES:
         yield (sname, _get_scope_nums(sname, cpuinfo))
 
-def _get_emulated_cpuinfos(pman: ProcessManagerType) -> Generator[CPUInfo.CPUInfo, None, None]:
+def _get_expected_topology(full_tlines: list[dict[ScopeNameType, int ]],
+                           offlined_cpus: set[int]) -> _ExpectedTopology:
     """
-    Yield CPUInfo objects with various emulated CPU online/offline patterns for testing.
-
-    This generator simulates different CPU online/offline scenarios using emulation data:
-        1. All CPUs online.
-        2. Odd-numbered CPUs offline.
-        3. All CPUs except the first one offline.
-        4. (If applicable) CPUInfo object with an unknown CPU Vendor/Family/Model (VFM).
+    Create and return expected topology after offlining certain CPUs.
 
     Args:
-        pman: Process manager instance used to control and query CPU state.
+        full_tlines: The full topology lines before offlining any CPUs.
+        offlined_cpus: CPU numbers that have been offlined.
 
-    Yields:
-        CPUInfo objects reflecting the current emulated CPU online/offline state.
+    Returns:
+        The expected CPU topology after offlining the specified CPUs.
     """
 
-    with CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
-         CPUOnline.CPUOnline(pman=pman, cpuinfo=cpuinfo) as cpuonline:
+    exp_topo: _ExpectedTopology = {}
 
-        # In the emulated environment, all CPUs are initially online by default.
-        yield cpuinfo
+    offlined_set = set(offlined_cpus)
 
-        for pattern in (lambda x: not(x % 2), lambda x: x == 0):
-            cpus = [cpu for cpu in cpuinfo.get_cpus() if not pattern(cpu)]
+    cpus: list[int] = []
+    cores: dict[int, list[int]] = {}
+    modules: list[int] = []
+    compute_dies: dict[int, list[int]] = {}
+    noncomp_dies: dict[int, list[int]] = {}
+    packages: list[int] = []
 
-            cpuonline.offline(cpus=cpus)
-            yield cpuinfo
-            cpuonline.online(cpus=cpus)
+    for tline in full_tlines:
+        if tline["CPU"] in offlined_set:
+            continue
 
-        if cpuinfo.proc_cpuinfo["vfm"] == CPUModels.MODELS["ICELAKE_X"]["vfm"]:
-            cpuinfo.proc_cpuinfo["vfm"] = 255
-            yield cpuinfo
+        die = tline["die"]
+        pkg = tline["package"]
+
+        packages.append(pkg)
+
+        cpu = tline["CPU"]
+        if cpu == CPUInfo.NA:
+            noncomp_dies.setdefault(pkg, []).append(die)
+        else:
+            cpus.append(cpu)
+            cores.setdefault(pkg, []).append(tline["core"])
+            modules.append(tline["module"])
+            compute_dies.setdefault(pkg, []).append(die)
+
+    cpus = Trivial.list_dedup(cpus)
+    for pkg in cores:
+        cores[pkg] = Trivial.list_dedup(cores[pkg])
+    modules = Trivial.list_dedup(modules)
+    for pkg in compute_dies:
+        compute_dies[pkg] = Trivial.list_dedup(compute_dies[pkg])
+    for pkg in noncomp_dies:
+        noncomp_dies[pkg] = Trivial.list_dedup(noncomp_dies[pkg])
+    packages = Trivial.list_dedup(packages)
+
+    exp_topo["cpus"] = cpus
+    exp_topo["cores"] = cores
+    exp_topo["modules"] = modules
+    exp_topo["compute_dies"] = compute_dies
+    exp_topo["noncomp_dies"] = noncomp_dies
+    exp_topo["packages"] = packages
+
+    return exp_topo
+
+def _validate_topo(cpuinfo: CPUInfo.CPUInfo, exp_topo: _ExpectedTopology):
+    """
+    Validate that the topology returned by the 'cpuinfo' object matches the expected topology.
+
+    Args:
+        cpuinfo: The 'CPUInfo' object under test.
+        exp_topo: The expected CPU topology.
+    """
+
+    cpus = cpuinfo.get_cpus()
+    assert sorted(cpus) == sorted(exp_topo["cpus"]), \
+           f"get_cpus() returned {cpus}, expected {exp_topo['cpus']}"
+
+    cores = cpuinfo.get_cores()
+    for pkg in exp_topo["cores"]:
+        assert sorted(cores[pkg]) == sorted(exp_topo["cores"][pkg]), \
+               f"get_cores() returned {cores[pkg]} for package {pkg}, expected " \
+               f"{exp_topo['cores'][pkg]}"
+
+    modules = cpuinfo.get_modules()
+    assert sorted(modules) == sorted(exp_topo["modules"]), \
+           f"get_modules() returned {modules}, expected {exp_topo['modules']}"
+
+    compute_dies = cpuinfo.get_dies(noncomp_dies=False)
+    for pkg in exp_topo["compute_dies"]:
+        assert sorted(compute_dies[pkg]) == sorted(exp_topo["compute_dies"][pkg]), \
+               f"get_dies(noncomp_dies=False) returned {compute_dies[pkg]} for package {pkg}, " \
+               f"expected {exp_topo['compute_dies'][pkg]}"
+
+    noncomp_dies = cpuinfo.get_dies(compute_dies=False, noncomp_dies=True)
+    for pkg in exp_topo["noncomp_dies"]:
+        assert sorted(noncomp_dies[pkg]) == sorted(exp_topo["noncomp_dies"][pkg]), \
+               f"get_dies(compute_dies=False, noncomp_dies=True) returned {noncomp_dies[pkg]} " \
+               f"for package {pkg}, expected {exp_topo['noncomp_dies'][pkg]}"
 
 def _get_cpuinfos(params: CommonTestParamsTypedDict) -> Generator[CPUInfo.CPUInfo, None, None]:
     """
     Yield 'CPUInfo' objects for testing based on the host type.
+
+    This generator yields CPUInfo objects with different CPU online/offline patterns:
+        1. All CPUs online (initial state)
+        2. Odd-numbered CPUs offline
+        3. Even-numbered CPUs offline (excluding CPU 0)
 
     Args:
         params: Dictionary containing test parameters.
@@ -138,11 +226,43 @@ def _get_cpuinfos(params: CommonTestParamsTypedDict) -> Generator[CPUInfo.CPUInf
     """
 
     pman = params["pman"]
-    if common.is_emulated(pman):
-        yield from _get_emulated_cpuinfos(pman)
-    else:
-        with CPUInfo.CPUInfo(pman=pman) as cpuinfo:
+
+    with CPUInfo.CPUInfo(pman=pman) as cpuinfo:
+        full_tlines = list(cpuinfo.get_topology())
+
+        # Ensure that all CPUs are online.
+        with CPUOnline.CPUOnline(pman=pman, cpuinfo=cpuinfo) as cpuonline:
+            cpuonline.online()
+
+    full_exp_topo = _get_expected_topology(full_tlines, set())
+
+    with CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
+         CPUOnline.CPUOnline(pman=pman, cpuinfo=cpuinfo) as cpuonline:
+        # Pattern 0: All CPUs online
+        yield cpuinfo
+        _validate_topo(cpuinfo, full_exp_topo)
+
+        # Pattern 1: Take odd-numbered CPUs offline.
+        all_cpus = cpuinfo.get_cpus()
+        odd_cpus = [cpu for cpu in all_cpus if cpu % 2 == 1]
+
+        if odd_cpus:
+            cpuonline.offline(cpus=odd_cpus)
             yield cpuinfo
+            _validate_topo(cpuinfo, _get_expected_topology(full_tlines, set(odd_cpus)))
+
+            cpuonline.online(cpus=odd_cpus)
+            _validate_topo(cpuinfo, full_exp_topo)
+
+        # Pattern 2: Take even-numbered CPUs offline, excluding CPU 0, which can't be offlined.
+        even_cpus = [cpu for cpu in all_cpus if cpu % 2 == 0 and cpu != 0]
+        if even_cpus:
+            cpuonline.offline(cpus=even_cpus)
+            yield cpuinfo
+            _validate_topo(cpuinfo, _get_expected_topology(full_tlines, set(even_cpus)))
+
+            cpuonline.online(cpus=even_cpus)
+            _validate_topo(cpuinfo, full_exp_topo)
 
 def _run_method(name: str,
                 cpuinfo: CPUInfo.CPUInfo,
@@ -608,7 +728,7 @@ def test_core_siblings(params: CommonTestParamsTypedDict):
 
 def test_delayed_init(params: CommonTestParamsTypedDict):
     """
-    In some scenarios certain pieces of 'CPUInfo' should not be ininitialized for optimization
+    In some scenarios certain pieces of 'CPUInfo' should not be initialized for optimization
     purposes. This test ensures that those cases.
 
     Args:
@@ -640,7 +760,8 @@ def test_delayed_init(params: CommonTestParamsTypedDict):
         assert cpuinfo._topology, "Topology should be initialized"
 
         # But 'module' and 'die' scopes remain uninitialized.
-        assert "module" not in cpuinfo._initialized_snames, "'module' scope should not be initialized"
+        assert "module" not in cpuinfo._initialized_snames, \
+               "'module' scope should not be initialized"
         assert "die" not in cpuinfo._initialized_snames, "'die' scope should not be initialized"
 
         # The 'get_modules()' initializes the 'module' scope.
