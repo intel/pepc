@@ -759,12 +759,24 @@ CPU_GROUPS: Final[dict[str, tuple[int, ...]]] = {
             MODELS["XEON_PHI_KNM"]["vfm"],),
 }
 
-#
-# CPU models that have dies but they are not enumerated via the CPUID instruction.
-#
+# CPU models that have dies but they are not enumerated via the CPUID instruction:
+# - Granite Rapids Xeon
+# - Sierra Forest Xeon
+# - Clearwater Forest Xeon
 MODELS_WITH_HIDDEN_DIES: Final[tuple[int, ...]] = CPU_GROUPS["GNR"] + \
                                                   CPU_GROUPS["DARKMONT"] + \
                                                   CPU_GROUPS["CRESTMONT"]
+
+#
+# CPU models that have non-compute dies.
+# - Diamond Rapids Xeon
+# - Granite Rapids Xeon
+# - Sierra Forest Xeon
+# - Clearwater Forest Xeon
+MODELS_WITH_NONCOMP_DIES: Final[tuple[int, ...]] = CPU_GROUPS["DMR"] + \
+                                                   CPU_GROUPS["GNR"] + \
+                                                   CPU_GROUPS["DARKMONT"] + \
+                                                   CPU_GROUPS["CRESTMONT"]
 
 def vendor_name_to_id(vendor_name: str) -> int:
     """
