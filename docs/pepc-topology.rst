@@ -75,7 +75,7 @@ Display CPU topology details.
 **Note 1**: The Linux kernel provides topology data only for online CPUs. For offline CPUs, unknown
 topology values (e.g., package number) are replaced with "?".
 
-**Note 2**: In case of non-compute dies (dies without any CPUs, for example I/O dies on Granite
+**Note 2**: For non-compute dies (dies without any CPUs, for example I/O dies on Granite
 Rapids Xeon), CPU, core, and module numbers are shown as "-".
 
 **--cpus** *CPUS*
@@ -86,13 +86,13 @@ Rapids Xeon), CPU, core, and module numbers are shown as "-".
 **--cores** *CORES*
    The list can include individual core numbers and core number ranges. For example, '1-4,7,8,10-12'
    would mean cores 1 to 4, cores 7, 8, and 10 to 12. Use the special keyword 'all' to specify all
-   cores. This option has to be used with the '--packages' option, because core numbers are
+   cores. this option has to be used with the '--packages' option, because core numbers are
    relative to the package.
 
 **--modules** *MODULES*
    The list can include individual module numbers and module number ranges. For example, '0,2-5'
    would mean module 0 and modules 2, 3, 4, and 5. Use the special keyword 'all' to specify all
-   modules. Note, unlike core and die numbers, module numbers are absolute.
+   modules. Note that unlike core and die numbers, module numbers are absolute.
 
 **--dies** *DIES*
    The list can include individual die numbers and die number ranges. For example, '0-3,5' would
@@ -117,7 +117,7 @@ Rapids Xeon), CPU, core, and module numbers are shown as "-".
    indices or index ranges. For example, if a module includes CPUs 4, 5, 6, and 7, index 0 would
    mean CPU 4, index 1 would mean CPU 5, index 2 would mean CPU 6, and index 3 would mean CPU 7.
    This option can only be used to reference online CPUs, because Linux does not provide topology
-   information for offline CPUs. In the example with CPUs 4, 5, 6, and 7, if CPU 5 was offline,
+   information for offline CPUs. In the example with CPUs 4, 5, 6, and 7, if CPU 5 were offline,
    then index 1 would mean CPU 6, index 2 would mean CPU 7, and index 3 would be invalid.
 
 **--order** *ORDER*
@@ -131,4 +131,4 @@ Rapids Xeon), CPU, core, and module numbers are shown as "-".
    Comma-separated list of topology columns to display. Available columns: CPU, core, module, die,
    node, package, hybrid. Example: --columns Package,Core,CPU. By default, all relevant columns for
    the platform are shown. Columns like "module" or "die" are omitted if not applicable. The "hybrid"
-   column is shown only for hybrid platforms.
+   column is shown by default on hybrid platforms.

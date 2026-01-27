@@ -28,11 +28,9 @@ if typing.TYPE_CHECKING:
 
         Attributes:
             cpuinfo: A 'CPUInfo.CPUInfo' object.
-            cpus: All CPU numbers in the system.
         """
 
         cpuinfo: CPUInfo.CPUInfo
-        cpus: list[int]
 
 @pytest.fixture(name="params", scope="module")
 def get_params(hostspec: str, username: str) -> Generator[_TestParamsTypedDict, None, None]:
@@ -58,8 +56,6 @@ def get_params(hostspec: str, username: str) -> Generator[_TestParamsTypedDict, 
             params = cast(_TestParamsTypedDict, params)
 
         params["cpuinfo"] = cpuinfo
-        params["cpus"] = cpuinfo.normalize_cpus("all", offline_ok=True)
-
         yield params
 
 def test_topology_info(params: _TestParamsTypedDict):
@@ -70,25 +66,26 @@ def test_topology_info(params: _TestParamsTypedDict):
         params: The test parameters.
     """
 
+    cpuinfo = params["cpuinfo"]
+    cpus = cpuinfo.get_cpus()
+
     good = ["",
             "--online-only",
-            f"--cpus 0-{params['cpus'][-1]} --cores all --packages all",
-            "--order cpu --columns CPU",
+            f"--cpus 0-{cpus[-1]} --cores all --packages all",
+            "--order cpu --columns CPU,Hybrid",
             "--order core --columns core",
             "--order node --columns node",
             "--order die --columns die",
-            "--order PaCkAgE"]
+            "--order PaCkAgE",
+            "--cpus all --core-siblings 0 --online-only"]
 
     bad = ["--order cpu,node",
            "--order Packages",
            "--order HELLO_WORLD",
            "--columns Alfredo"]
 
-    if common.is_emulated(params["pman"]):
-        good += ["--cpus all --core-siblings 0 --online-only"]
-
     try:
-        cpus_per_core = len(params["cpuinfo"].cores_to_cpus(cores=(1,), packages=(0,)))
+        cpus_per_core = len(cpuinfo.cores_to_cpus(cores=(1,), packages=(0,)))
         good += [f"--online-only --package 0 --core-siblings 0-{cpus_per_core - 1}"]
     except Error:
         # There might not be a core 1 on the system.

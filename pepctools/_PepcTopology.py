@@ -233,6 +233,8 @@ def topology_info_command(args: argparse.Namespace, pman: ProcessManagerType):
     with CPUInfo.CPUInfo(pman=pman) as cpuinfo:
         if not cmdl["columns"]:
             colnames = list(_get_default_colnames(cpuinfo))
+            if cpuinfo.is_hybrid:
+                show_hybrid = True
         else:
             colnames = []
             for colname in Trivial.split_csv_line(cmdl["columns"]):
@@ -241,15 +243,12 @@ def topology_info_command(args: argparse.Namespace, pman: ProcessManagerType):
                         colnames.append(key)
                         break
                 else:
-                    if colname == "hybrid":
+                    if colname.lower() == "hybrid":
                         show_hybrid = True
                     else:
                         columns = list(CPUInfo.SCOPE_NAMES) + ["hybrid"]
                         columns_str = ", ".join(columns)
                         raise Error(f"Invalid column name '{colname}', use one of: {columns_str}")
-
-        if show_hybrid and not cpuinfo.is_hybrid:
-            raise Error(f"No hybrid CPU found{pman.hostmsg}, found {cpuinfo.cpudescr}")
 
         order = cmdl["order"]
         for sname in CPUInfo.SCOPE_NAMES:
