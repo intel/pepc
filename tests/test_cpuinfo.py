@@ -480,8 +480,8 @@ def _test_cpuinfo_div(cpuinfo):
             else:
                 nums_list = nums
 
-        # Note! In the comments below we'll assume that 'sname' is packages, for simplicity.
-        # However, it may be anything else, like 'cores'.
+        # Note: In the comments below we'll assume that 'sname' is 'package', for simplicity.
+        # However, it may be anything else, like 'core'.
 
         # Resolving an empty CPUs list.
         exp_res = _test_div_create_exp_res(sname, [], [])
@@ -496,11 +496,11 @@ def _test_cpuinfo_div(cpuinfo):
         exp_res = _test_div_create_exp_res(sname, nums_list, [])
         _run_method(method_name, cpuinfo, args=(allcpus,), exp_res=exp_res)
 
-        # Get the list of CPUs in the first package.
+        # Get the list of CPUs in the first scope element.
         num0_cpus = _run_method(f"{sname}_to_cpus", cpuinfo, args=(nums_list[0],))
         if num0_cpus is None or len(num0_cpus) < 2:
             # The rest of the test-cases require the '<sname>_to_cpus()' method and more than one
-            # CPU per package.
+            # CPU per scope element.
             continue
 
         # Resolving all CPUs except for the very first one.
@@ -605,3 +605,49 @@ def test_core_siblings(params: CommonTestParamsTypedDict):
             if cpu in l2_set:
                 assert index == i, f"CPU {cpu} is not sibling index {index}, in core {core} "\
                                    f"package {pkg}"
+
+def test_delayed_init(params: CommonTestParamsTypedDict):
+    """
+    In some scenarios certain pieces of 'CPUInfo' should not be ininitialized for optimization
+    purposes. This test ensures that those cases.
+
+    Args:
+        params: The test parameters.
+    """
+
+    # pylint: disable=protected-access
+
+    for cpuinfo in _get_cpuinfos(params):
+        # A newly created 'CPUInfo' object should not have any topology initialized.
+        assert "CPU" not in cpuinfo._initialized_snames, "'CPU' scope should not be initialized"
+        assert "die" not in cpuinfo._initialized_snames, "'die' scope should not be initialized"
+        assert not cpuinfo._topology, "Topology should not be initialized"
+
+        # The 'get_cpus()' does not initialize topology either.
+        cpuinfo.get_cpus()
+        assert "CPU" not in cpuinfo._initialized_snames, "'CPU' scope should not be initialized"
+        assert "die" not in cpuinfo._initialized_snames, "'die' scope should not be initialized"
+        assert not cpuinfo._topology, "Topology should not be initialized"
+
+        # But it initializes the '_cpus' member.
+        assert cpuinfo._cpus, "'_cpus' member should be initialized"
+
+        # The 'get_cores()' initializes 'CPU', 'core', and 'package' scopes.
+        cpuinfo.get_cores()
+        assert "CPU" in cpuinfo._initialized_snames, "'CPU' scope should be initialized"
+        assert "core" in cpuinfo._initialized_snames, "'core' scope should be initialized"
+        assert "package" in cpuinfo._initialized_snames, "'package' scope should be initialized"
+        assert cpuinfo._topology, "Topology should be initialized"
+
+        # But 'module' and 'die' scopes remain uninitialized.
+        assert "module" not in cpuinfo._initialized_snames, "'module' scope should not be initialized"
+        assert "die" not in cpuinfo._initialized_snames, "'die' scope should not be initialized"
+
+        # The 'get_modules()' initializes the 'module' scope.
+        cpuinfo.get_modules()
+        assert "module" in cpuinfo._initialized_snames, "'module' scope should be initialized"
+        assert "die" not in cpuinfo._initialized_snames, "'die' scope should not be initialized"
+
+        # Finally, the 'get_dies()' initializes the 'die' scope.
+        cpuinfo.get_dies()
+        assert "die" in cpuinfo._initialized_snames, "'die' scope should be initialized"
