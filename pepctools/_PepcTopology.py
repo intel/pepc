@@ -228,19 +228,20 @@ def topology_info_command(args: argparse.Namespace, pman: ProcessManagerType):
 
     cmdl = _get_cmdline_args(args)
 
-    colnames: list[str]
+    snames: list[ScopeNameType]
     show_hybrid = False
+
     with CPUInfo.CPUInfo(pman=pman) as cpuinfo:
         if not cmdl["columns"]:
-            colnames = list(_get_default_colnames(cpuinfo))
+            snames = list(_get_default_colnames(cpuinfo))
             if cpuinfo.is_hybrid:
                 show_hybrid = True
         else:
-            colnames = []
+            snames = []
             for colname in Trivial.split_csv_line(cmdl["columns"]):
                 for key in CPUInfo.SCOPE_NAMES:
                     if colname.lower() == key.lower():
-                        colnames.append(key)
+                        snames.append(key)
                         break
                 else:
                     if colname.lower() == "hybrid":
@@ -261,11 +262,11 @@ def topology_info_command(args: argparse.Namespace, pman: ProcessManagerType):
         offline_ok = not cmdl["online_only"]
 
         # Create format string, example: '%7s    %3s    %4s    %4s    %3s'.
-        fmt = "    ".join([f"%{len(name)}s" for name in colnames])
+        fmt = "    ".join([f"%{len(name)}s" for name in snames])
 
         # Create list of scope names with the first letter capitalized. Example:
         # ["CPU", "Core", "Node", "Die", "Package"]
-        headers = [name[0].upper() + name[1:] for name in colnames]
+        headers = [name[0].upper() + name[1:] for name in snames]
 
         optar = _OpTarget.OpTarget(pman=pman, cpuinfo=cpuinfo, cpus=cmdl["cpus"],
                                    cores=cmdl["cores"], modules=cmdl["modules"], dies=cmdl["dies"],
@@ -274,10 +275,8 @@ def topology_info_command(args: argparse.Namespace, pman: ProcessManagerType):
 
         # Note, if there are non-compute dies, the topology will include them. They will be filtered
         # out separately if necessary.
-        topology = cpuinfo.get_topology(snames=colnames, order=order)
-
-        if show_hybrid is None and cpuinfo.is_hybrid:
-            show_hybrid = True
+        topology = cpuinfo.get_topology(snames=snames, order=order)
+        colnames: list[str] = list(snames)
 
         if show_hybrid:
             colnames.append("hybrid")
