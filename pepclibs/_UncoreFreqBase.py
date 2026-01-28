@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2025 Intel Corporation
+# Copyright (C) 2025-2026 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
@@ -86,7 +86,7 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
             - set_elc_low_threshold_dies()
             - set_elc_high_threshold_dies()
             - set_elc_high_threshold_status_dies()
-    3. Per-CPU, ELC threshold related methods.
+    4. Per-CPU, ELC threshold related methods.
         1. Retrieve ELC thresholds.
             - get_elc_low_threshold_cpus()
             - get_elc_high_threshold_cpus()
@@ -121,7 +121,7 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
             self._pman = pman
 
         if not CPUModels.is_intel(self._cpuinfo.proc_cpuinfo["vendor"]):
-            raise ErrorNotSupported(f"Unsupported CPU model {self._cpuinfo.cpudescr}'"
+            raise ErrorNotSupported(f"Unsupported CPU model '{self._cpuinfo.cpudescr}'"
                                     f"{self._pman.hostmsg}\nOnly Intel CPU uncore frequency "
                                     f"control is currently supported")
 
@@ -216,7 +216,7 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
                                 dies: RelNumsType) -> Generator[tuple[int, int, int], None, None]:
         """
         Retrieve and yield the minimum uncore frequency limit for each die in the provided
-        package->die mapping.
+        packages->dies mapping.
 
         Args:
             dies: Dictionary mapping package numbers to sequences of die numbers for which to yield
@@ -236,7 +236,7 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
                                 dies: RelNumsType) -> Generator[tuple[int, int, int], None, None]:
         """
         Retrieve and yield the maximum uncore frequency limit for each die in the provided
-        package->die mapping.
+        packages->dies mapping.
 
         Args:
             dies: Dictionary mapping package numbers to sequences of die numbers for which to yield
@@ -306,7 +306,7 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
                   the ELC middle zone minimum frequency.
 
         Yields:
-            Tuples of (package, die, frequency), where 'frequency' is the ELC low zone minimum
+            Tuples of (package, die, frequency), where 'frequency' is the ELC middle zone minimum
             frequency value for the specified die in the specified package.
 
         Raises:
@@ -628,8 +628,7 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
 
         Raises:
             ErrorOutOfRange: If the uncore frequency value is outside the allowed range.
-            ErrorBadOrder: If min. uncore frequency is greater than max. uncore frequency and vice
-                           versa.
+            ErrorBadOrder: If min. uncore frequency is greater than max. uncore frequency.
         """
 
         if freq < min_freq_limit or freq > max_freq_limit:
@@ -695,8 +694,7 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
         Raises:
             ErrorNotSupported: If the uncore frequency operation is not supported.
             ErrorOutOfRange: If the uncore frequency value is outside the allowed range.
-            ErrorBadOrder: If min. uncore frequency is greater than max. uncore frequency and vice
-                           versa.
+            ErrorBadOrder: If min. uncore frequency is greater than max. uncore frequency.
         """
 
         self._set_freq_cpus(freq, "min", cpus)
@@ -712,8 +710,7 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
         Raises:
             ErrorNotSupported: If the uncore frequency operation is not supported.
             ErrorOutOfRange: If the uncore frequency value is outside the allowed range.
-            ErrorBadOrder: If min. uncore frequency is greater than max. uncore frequency and vice
-                           versa.
+            ErrorBadOrder: If max. uncore frequency is less than min. uncore frequency.
         """
 
         self._set_freq_cpus(freq, "max", cpus)
@@ -846,7 +843,7 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
                                        dies: RelNumsType) -> Generator[tuple[int, int, bool],
                                                                        None, None]:
         """
-        Retrieve and yield ELC threshold enabled/disabled statues for each die in the provided
+        Retrieve and yield ELC threshold enabled/disabled statuses for each die in the provided
         packages->dies mapping.
 
         Args:
@@ -901,8 +898,7 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
 
         Raises:
             ErrorOutOfRange: If the ELC threshold value is outside the allowed range.
-            ErrorBadOrder: If min. ELC threshold is greater than max. ELC threshold and vice
-                           versa.
+            ErrorBadOrder: If ELC low threshold is greater than ELC high threshold.
         """
 
         if threshold < 0 or threshold > 100:
@@ -1167,8 +1163,7 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
         Raises:
             ErrorNotSupported: If the ELC low threshold operation is not supported.
             ErrorOutOfRange: If the ELC low threshold value is outside the allowed range.
-            ErrorBadOrder: If min. ELC low threshold is greater than ELC high threshold and vice
-                           versa.
+            ErrorBadOrder: If ELC low threshold is greater than ELC high threshold.
         """
 
         self._set_elc_threshold_cpus(threshold, "low", cpus)
@@ -1184,8 +1179,7 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
         Raises:
             ErrorNotSupported: If the ELC high threshold operation is not supported.
             ErrorOutOfRange: If the ELC high threshold value is outside the allowed range.
-            ErrorBadOrder: If min. ELC high threshold is greater than ELC high threshold and vice
-                           versa.
+            ErrorBadOrder: If ELC high threshold is less than ELC low threshold.
         """
 
         self._set_elc_threshold_cpus(threshold, "high", cpus)

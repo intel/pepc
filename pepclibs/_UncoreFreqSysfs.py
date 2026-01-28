@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2023-2025 Intel Corporation
+# Copyright (C) 2023-2026 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Authors: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
@@ -123,8 +123,8 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
         self._sysfs_base = Path("/sys/devices/system/cpu/intel_uncore_frequency")
         self._path_cache: _SysfsPathCacheType = {}
 
-        # The package -> die numbers map.
-        self._pkg2dies: dict[int, list[int]]= {}
+        # The packages->dies mapping.
+        self._pkg2dies: dict[int, list[int]] = {}
 
         # The dictionary that maps package and die numbers to their corresponding sysfs
         # sub-directory names. Example:
@@ -151,7 +151,7 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
             self._sysfs_io = sysfs_io
 
         if not CPUModels.is_intel(self._cpuinfo.proc_cpuinfo["vendor"]):
-            raise ErrorNotSupported(f"Unsupported CPU model {self._cpuinfo.cpudescr}'"
+            raise ErrorNotSupported(f"Unsupported CPU model '{self._cpuinfo.cpudescr}'"
                                     f"{self._pman.hostmsg}\nOnly Intel CPU uncore frequency "
                                     f"control is currently supported")
 
@@ -348,7 +348,7 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
             ftype: The uncore frequency value type (e.g., "min" for the minimum frequency).
             package: The package number.
             die: The die number within the package.
-            limit: if True, retrieve the path for a frequency limit file. If False,
+            limit: If True, retrieve the path for a frequency limit file. If False,
                    retrieve the path for a current frequency value file.
 
         Returns:
@@ -421,7 +421,7 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
         Check if the ELC feature is supported on the current system.
 
         Returns:
-            bool: True if ELC is supported, False otherwise.
+            True if ELC is supported, False otherwise.
         """
 
         if self._elc_supported is not None:
@@ -541,8 +541,7 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
 
         Raises:
             ErrorOutOfRange: If the uncore frequency value is outside the allowed range.
-            ErrorBadOrder: If min. uncore frequency is greater than max. uncore frequency and vice
-                           versa.
+            ErrorBadOrder: If min. uncore frequency is greater than max. uncore frequency.
         """
 
         if ztype:
@@ -674,7 +673,7 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
                                           thrtype: _ELCThresholdType,
                                           package: int,
                                           die: int,
-                                          suffix: Literal["percent", "enable"]= "percent") -> Path:
+                                          suffix: Literal["percent", "enable"] = "percent") -> Path:
         """
         Construct and return the sysfs file path for an ELC threshold read or write operation.
 

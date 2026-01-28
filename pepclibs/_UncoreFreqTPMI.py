@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2025 Intel Corporation
+# Copyright (C) 2025-2026 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
@@ -174,7 +174,7 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
     @staticmethod
     def _get_elc_zone_freq_regname(ztype: _ELCZoneType, ftype: _FreqValueType) -> tuple[str, str]:
         """
-        Return the TPMI register name and bit-field name for an the ELC zone frequency.
+        Return the TPMI register name and bit-field name for the ELC zone frequency.
 
         Args:
             ztype: The ELC zone type.
@@ -233,8 +233,7 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
 
         Raises:
             ErrorOutOfRange: If the uncore frequency value is outside the allowed range.
-            ErrorBadOrder: If min. uncore frequency is greater than max. uncore frequency and vice
-                           versa.
+            ErrorBadOrder: If max. uncore frequency is less than min. uncore frequency.
         """
 
         min_freq: int | None = None

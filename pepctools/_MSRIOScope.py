@@ -3,7 +3,7 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2023-2025 Intel Corporation
+# Copyright (C) 2023-2026 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Authors: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
@@ -104,7 +104,7 @@ def _get_existing_snames(cpuinfo: CPUInfo.CPUInfo) -> list[ScopeNameType]:
 
     snames: list[ScopeNameType] = []
 
-    # Ensure that the scopes are in the order from the largest to the smallest.
+    # Ensure that the scopes are in the order from the smallest to the largest.
     for sname in CPUInfo.SCOPE_NAMES:
         if sname == "node":
             # MSRs cannot have the "global" and "node" scopes.
@@ -139,9 +139,12 @@ def _is_sibling(snames: list[ScopeNameType],
 
     Args:
         snames: All MSR scope names on the target system, sorted from the smallest to the largest.
-        sname: The scope name to check the siblingness for.
+        sname: The scope name to check for sibling relationship.
         tline1: The first topology line.
         tline2: The second topology line.
+
+    Returns:
+        True if the two topology lines are siblings at the given scope, False otherwise.
     """
 
     # The scopes to check are the 'sname' and all the higher scopes.
@@ -165,8 +168,8 @@ def _check_ioscope(cpuinfo: CPUInfo.CPUInfo,
         snames: All MSR scope names on the target system, sorted from the smallest to the largest.
                 Scope names irrelevant to MSRs (e.g., "node") must not be included.
         sname: The scope name to check.
-        vals: A dictionary mapping CPU numbers to their MSR bits range values.
-        cpu: Value 'val' was written to on this CPU.
+        vals: A dictionary mapping CPU numbers to their MSR bit-range values.
+        cpu: The CPU on which the value 'val' was written.
         val: The value that was written to one of the CPUs.
 
     Returns:
@@ -192,12 +195,18 @@ def _detect_msr_bits_range_ioscope(cpuinfo: CPUInfo.CPUInfo,
                                    values: list[int],
                                    cpu: int) -> ScopeNameType:
     """
-    Detect I/O scope of a bits range of an MSR.
+    Detect the I/O scope of a bit range in an MSR.
 
     Args:
         cpuinfo: The target system CPU information object.
         msr: The target system MSR object.
-        cmdl: Command-line arguments.
+        addr: The MSR address.
+        bits: The bit range to test in the format [msb, lsb].
+        values: Two unique values to write for detecting I/O scope.
+        cpu: The CPU number to write to.
+
+    Returns:
+        The detected I/O scope name.
     """
 
     # Save the initial MSR values.
@@ -240,7 +249,7 @@ def _print_msr_bits_range_ioscope(cpuinfo: CPUInfo.CPUInfo,
                                   msr: MSR.MSR,
                                   cmdl: _CmdlineArgsTypedDict):
     """
-    Detect and print I/O scope of a bits range of an MSR.
+    Detect and print the I/O scope of a bit range in an MSR.
 
     Args:
         cpuinfo: The target system CPU information object.
@@ -293,6 +302,9 @@ def _check_feature_ok_to_test(fmsr: _FeaturedMSR.FeaturedMSR, fname: str) -> boo
     Args:
         fmsr: The featured MSR object.
         fname: The name of the feature to check.
+
+    Returns:
+        True if the feature can be tested, False otherwise.
     """
 
     if fmsr.regname == "MSR_PKG_CST_CONFIG_CONTROL" and fname == "pkg_cstate_limit":
@@ -322,6 +334,11 @@ def _get_featured_msrs(pman: ProcessManagerType,
     which have at least one writable and harmless feature. Harmless features are those that are not
     expected to affect system stability when modified.
 
+    Args:
+        pman: The process manager object for the target system.
+        cpuinfo: The target system CPU information object.
+        msr: The target system MSR object.
+
     Yields:
         A tuple of the featured MSR object and feature name.
     """
@@ -345,12 +362,12 @@ def _get_featured_msrs(pman: ProcessManagerType,
         for fname, finfo in fmsr.features.items():
             bits_str = ":".join([str(bit) for bit in finfo["bits"]])
             if not finfo["writable"]:
-                _LOG.debug("Skipping read-only feature '%s' (bits %s) in MSR '%s' (%#x) ",
+                _LOG.debug("Skipping read-only feature '%s' (bits %s) in MSR '%s' (%#x)",
                           fname, bits_str, fmsr_cls.regname, fmsr_cls.regaddr)
                 continue
 
             if not fmsr.is_feature_supported(fname, cpus="all"):
-                _LOG.info("Skipping unsupported feature '%s' (bits %s) in MSR '%s' (%#x) ",
+                _LOG.info("Skipping unsupported feature '%s' (bits %s) in MSR '%s' (%#x)",
                           fname, bits_str, fmsr_cls.regname, fmsr_cls.regaddr)
                 continue
 
@@ -473,7 +490,7 @@ def _parse_arguments() -> argparse.Namespace:
     Parse the command-line arguments.
 
     Returns:
-        argparse.Namespace: The parsed arguments.
+        The parsed arguments.
     """
 
     parser = _build_arguments_parser()
@@ -579,7 +596,7 @@ def main():
     The entry point of the tool.
 
     Returns:
-        int: The program exit code.
+        The program exit code.
     """
 
     try:
@@ -591,7 +608,7 @@ def main():
                                            privkeypath=cmdl["privkey"], timeout=cmdl["timeout"])
             stack.enter_context(pman)
 
-            cpuinfo= CPUInfo.CPUInfo(pman=pman)
+            cpuinfo = CPUInfo.CPUInfo(pman=pman)
             stack.enter_context(cpuinfo)
 
             msr = MSR.MSR(cpuinfo, pman=pman, enable_cache=False)
@@ -606,7 +623,6 @@ def main():
                 _print_ioscope_all(pman, cpuinfo, msr, cmdl)
             else:
                 _print_msr_bits_range_ioscope(cpuinfo, msr, cmdl)
-
     except KeyboardInterrupt:
         _LOG.info("\nInterrupted, exiting")
         return -1
