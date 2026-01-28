@@ -10,7 +10,7 @@
 
 """Test 'pepc uncore' command-line options."""
 
-from  __future__ import annotations # Remove when switching to Python 3.10+.
+from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
 from typing import cast

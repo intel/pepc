@@ -11,7 +11,7 @@
 
 """Common functions for pepc tests."""
 
-from  __future__ import annotations # Remove when switching to Python 3.10+.
+from __future__ import annotations # Remove when switching to Python 3.10+.
 
 from pathlib import Path
 import typing

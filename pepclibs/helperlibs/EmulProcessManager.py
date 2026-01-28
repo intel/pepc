@@ -23,7 +23,7 @@ Terminology:
       temporary directory on the local file-system.
 """
 
-from  __future__ import annotations # Remove when switching to Python 3.10+.
+from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
 import contextlib

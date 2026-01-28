@@ -11,7 +11,7 @@
 
 """Common functions for the C-state, P-state and uncore command-line option tets."""
 
-from  __future__ import annotations # Remove when switching to Python 3.10+.
+from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
 from pepclibs.helperlibs import Trivial, TestRunner

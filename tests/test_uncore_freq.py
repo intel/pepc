@@ -10,7 +10,7 @@
 Test the for the '_UncoreFreqSysfs' and '_UncoreFreqTPMI' modules.
 """
 
-from  __future__ import annotations # Remove when switching to Python 3.10+.
+from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
 import pytest

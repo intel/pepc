@@ -131,7 +131,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
     def get_topology(self,
                      snames: Iterable[ScopeNameType] | None = None,
-                     order: ScopeNameType = "CPU") -> list[dict[ScopeNameType, int ]]:
+                     order: ScopeNameType = "CPU") -> list[dict[ScopeNameType, int]]:
         """
         Return the CPU topology table sorted in the specified order, include the specified scopes.
 
@@ -236,6 +236,32 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         self._validate_sname(order, name="order")
         topology = self._get_topology(snames, order=order)
         return copy.deepcopy(topology)
+
+    def get_topology_new(self,
+                     snames: Iterable[ScopeNameType] | None = None,
+                     order: ScopeNameType = "CPU") -> list[dict[ScopeNameType, int]]:
+        """
+        TODO: this should replace 'get_topology()' method in the future. This one does not return
+        I/O dies information.
+        """
+
+        topology = self.get_topology(snames, order=order)
+        if not self._noncomp_dies:
+            return topology
+        if snames and "die" not in set(snames):
+            return topology
+
+        new_topology: list[dict[ScopeNameType, int]] = []
+        for tline in topology:
+            pkg = tline["package"]
+            die = tline["die"]
+
+            if pkg in self._noncomp_dies and die in self._noncomp_dies[pkg]:
+                continue
+
+            new_topology.append(tline)
+
+        return new_topology
 
     def _get_scope_nums(self,
                         sname: ScopeNameType,

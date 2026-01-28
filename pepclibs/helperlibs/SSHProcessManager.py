@@ -15,7 +15,7 @@ SECURITY NOTICE: this module and any part of it should only be used for debuggin
 purposes. No security audit had been done. Not for production use.
 """
 
-from  __future__ import annotations # Remove when switching to Python 3.10+.
+from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import os
 import re

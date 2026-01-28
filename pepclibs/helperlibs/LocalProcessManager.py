@@ -12,7 +12,7 @@ the 'ProcessManagerBase' API, with the idea of having a unified API for executin
 and remotely.
 """
 
-from  __future__ import annotations # Remove when switching to Python 3.10+.
+from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import os
 import time

@@ -11,7 +11,7 @@ Provide YAML file reading and writing capabilities with extended functionality. 
 support "include" statements and pre-rendering.
 """
 
-from  __future__ import annotations # Remove when switching to Python 3.10+.
+from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
 from pathlib import Path, PosixPath

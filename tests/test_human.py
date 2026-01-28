@@ -10,7 +10,7 @@
 Tests for the 'Human' module.
 """
 
-from  __future__ import annotations # Remove when switching to Python 3.10+.
+from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
 from pepclibs.helperlibs import Human

@@ -10,7 +10,7 @@
 Provide python API to the systemctl tool.
 """
 
-from  __future__ import annotations # Remove when switching to Python 3.10+.
+from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
 from typing import cast

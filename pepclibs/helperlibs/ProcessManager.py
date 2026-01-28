@@ -15,7 +15,7 @@ uniform manner. However, over time, the process manager grew file I/O-related op
 as if it was a local host.
 """
 
-from  __future__ import annotations # Remove when switching to Python 3.10+.
+from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
 import contextlib

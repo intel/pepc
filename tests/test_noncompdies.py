@@ -114,7 +114,8 @@ def test_get_noncomp_dies_info(params: _TestParamsTypedDict):
         for die, die_info in dies_info.items():
             dies.append(die)
             assert die_info["package"] == package, \
-                   f"The package number in the die info for package {package}, die {die} is incorrect"
+                   f"The package number in the die info for package {package}, die {die} is " \
+                   f"incorrect"
             assert die_info["die"] == die, \
                    f"The die number in the die info for package {package}, die {die} is incorrect"
 

@@ -10,7 +10,7 @@
 """This module contains helper functions for test runners."""
 
 # TODO: annotate and modernize this module.
-from  __future__ import annotations # Remove when switching to Python 3.10+.
+from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import sys
 import typing

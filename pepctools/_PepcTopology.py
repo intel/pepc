@@ -16,15 +16,16 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 import typing
 import contextlib
 
+from pepclibs import CPUInfo, NonCompDies
 from pepclibs.helperlibs import Logging, Trivial
 from pepclibs.helperlibs.Exceptions import Error
-from pepclibs import CPUInfo
+from pepctools._OpTarget import ErrorNoCPUTarget
 from pepctools import _OpTarget
 
 if typing.TYPE_CHECKING:
     import argparse
-    from typing import TypedDict, Sequence, cast
-    from pepclibs.CPUInfoTypes import ScopeNameType
+    from typing import TypedDict, Sequence, cast, Final
+    from pepclibs.CPUInfoTypes import ScopeNameType, HybridCPUKeyType
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
     class _CmdlineArgsTypedDict(TypedDict, total=False):
@@ -58,6 +59,13 @@ if typing.TYPE_CHECKING:
         module_siblings: str
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
+
+COLNAMES: Final[tuple[str, ...]] = tuple(list(CPUInfo.SCOPE_NAMES) + ["hybrid"])
+HEADERS: Final[tuple[str, ...]] = tuple([nm[0].upper() + nm[1:] for nm in COLNAMES])
+COLNAMES_HEADERS: Final[dict[str, str]] = dict(zip(COLNAMES, HEADERS))
+
+OFFLINE_MARKER: Final[str] = "?"
+NA_MARKER: Final[str] = "-"
 
 def _get_cmdline_args(args: argparse.Namespace) -> _CmdlineArgsTypedDict:
     """
@@ -130,33 +138,28 @@ def _get_default_colnames(cpuinfo: CPUInfo.CPUInfo) -> list[ScopeNameType]:
 
     return colnames
 
-def _add_offline_cpus(cpus: set[int],
+def _append_offline_cpus(cpus: set[int],
                       cpuinfo: CPUInfo.CPUInfo,
-                      topology: list[dict[ScopeNameType, int]],
-                      colnames: Sequence[ScopeNameType]) -> list[dict[ScopeNameType, int]]:
+                      topology: list[dict[str, int | str]],
+                      snames: Sequence[ScopeNameType]):
     """
-    Add offline CPUs to the topology table.
+    Append offline CPUs to the topology table.
 
     For offline CPUs, only the CPU number is known. All other topology information (core, die,
-    package, etc.) is marked with -1 as it cannot be determined for offline CPUs.
+    package, etc.) is marked with 'OFFLINE_MARKER' as it cannot be determined for offline CPUs.
 
     Args:
         cpus: Set of CPU numbers that should be included in the topology.
         cpuinfo: CPUInfo object for retrieving offline CPU information.
         topology: Topology table to which offline CPUs should be added.
-        colnames: Column names to include in the topology table entries.
-
-    Returns:
-        The updated topology table with offline CPUs added.
+        snames: Scope names included in the topology table.
     """
 
     for cpu in cpuinfo.get_offline_cpus():
         if cpu in cpus:
-            tline = {name: -1 for name in colnames}
+            tline: dict[str, int | str] = {name: OFFLINE_MARKER for name in snames}
             tline["CPU"] = cpu
             topology.append(tline)
-
-    return topology
 
 def _filter_cpus(cpus: set[int],
                  topology: list[dict[ScopeNameType, int]]) -> list[dict[ScopeNameType, int]]:
@@ -182,39 +185,80 @@ def _filter_cpus(cpus: set[int],
             new_topology.append(tline)
     return new_topology
 
-def _exclude_noncomp_dies(optar: _OpTarget.OpTarget,
-                          topology: list[dict[ScopeNameType, int]],
-                          colnames: Sequence[ScopeNameType]) -> list[dict[ScopeNameType, int]]:
+def _append_noncomp_dies(target_dies: dict[int, list[int]],
+                         noncomp_dies: dict[int, list[int]],
+                         topology: list[dict[str, int | str]],
+                         colnames: list[str]):
     """
-    Exclude non-compute dies from the topology table based on the operation target.
+    Append non-compute dies to the topology table.
 
     Args:
-        optar: Operation target object specifying which dies should be included.
-        topology: Topology table containing both compute and non-compute dies.
-        colnames: Sequence of column names to be displayed.
-
-    Returns:
-        A topology table with non-compute dies excluded if they are not in the operation target's
-        die selection.
+        target_dies: Dies to include in the topology table, indexed by package number.
+        noncomp_dies: Non-compute dies to append to the topology table, indexed by package number.
+        topology: Topology table to add non-compute dies to.
+        colnames: Column names in the topology table.
     """
 
-    dies: dict[int, list[int]] = {}
-    if "die" in colnames:
-        dies = optar.get_dies(strict=False)
+    if not noncomp_dies:
+        return topology
 
-    new_topology = []
+    for package, pkg_noncomp_dies in noncomp_dies.items():
+        if package not in target_dies:
+            continue
+        for noncomp_die in pkg_noncomp_dies:
+            if noncomp_die not in target_dies[package]:
+                continue
+
+            tline: dict[str, int | str] = {name: NA_MARKER for name in colnames}
+            tline["die"] = noncomp_die
+            tline["package"] = package
+
+            topology.append(tline)
+
+def _insert_hybrid(cpuinfo: CPUInfo.CPUInfo,
+                   colnames: list[str],
+                   topology: list[dict[str, int | str]]) -> list[dict[str, int | str]]:
+    """
+    Insert hybrid CPU type information into the topology table.
+
+    Args:
+        cpuinfo: CPUInfo object for retrieving hybrid CPU information.
+        colnames: Column names in the topology table.
+        topology: Topology table to insert hybrid CPU type information into.
+
+    Returns:
+        Updated topology table with hybrid CPU type information included.
+    """
+
+    new_topology: list[dict[str, int | str]] = []
+
+    cpu_type_lists = cpuinfo.get_hybrid_cpus()
+    cpu_type_sets: dict[HybridCPUKeyType, set[int]] = {}
+    for htype, cpus in cpu_type_lists.items():
+        cpu_type_sets[htype] = set(cpus)
+
     for tline in topology:
-        # Always include compute dies (lines with actual CPUs).
-        if tline["CPU"] != CPUInfo.NA:
-            new_topology.append(tline)
+        new_tline: dict[str, int | str] = {}
+        for colname in colnames:
+            if colname != "hybrid":
+                new_tline[colname] = tline[colname]
+            else:
+                new_tline["hybrid"] = NA_MARKER
+
+        cpu = tline["CPU"]
+        if cpu == NA_MARKER:
             continue
 
-        if tline["package"] not in dies:
-            continue
-        if tline["die"] not in dies[tline["package"]]:
-            continue
+        for htype, hcpus_set in cpu_type_sets.items():
+            if cpu in hcpus_set:
+                new_tline["hybrid"] = CPUInfo.HYBRID_TYPE_INFO[htype]["name"]
+                break
+        else:
+            _LOG.warn_once(f"Hybrid CPU '{cpu}' not found in hybrid CPUs information "
+                           f"dictionary")
+            new_tline["hybrid"] = "Unknown"
 
-        new_topology.append(tline)
+        new_topology.append(new_tline)
 
     return new_topology
 
@@ -229,31 +273,31 @@ def topology_info_command(args: argparse.Namespace, pman: ProcessManagerType):
 
     cmdl = _get_cmdline_args(args)
 
-    snames: list[ScopeNameType]
-    show_hybrid = False
+    colnames: list[str] = []
+    snames: list[ScopeNameType] = []
 
     with contextlib.ExitStack() as stack:
         cpuinfo = CPUInfo.CPUInfo(pman=pman)
         stack.enter_context(cpuinfo)
 
         if not cmdl["columns"]:
-            snames = list(_get_default_colnames(cpuinfo))
+            snames = _get_default_colnames(cpuinfo)
+            colnames = list(snames)
             if cpuinfo.is_hybrid:
-                show_hybrid = True
+                colnames.append("hybrid")
         else:
-            snames = []
             for colname in Trivial.split_csv_line(cmdl["columns"]):
-                for key in CPUInfo.SCOPE_NAMES:
-                    if colname.lower() == key.lower():
-                        snames.append(key)
+                for sname in CPUInfo.SCOPE_NAMES:
+                    if colname.lower() == sname.lower():
+                        snames.append(sname)
+                        colnames.append(sname)
                         break
                 else:
                     if colname.lower() == "hybrid":
-                        show_hybrid = True
+                        colnames.append("hybrid")
                     else:
-                        columns = list(CPUInfo.SCOPE_NAMES) + ["hybrid"]
-                        columns_str = ", ".join(columns)
-                        raise Error(f"Invalid column name '{colname}', use one of: {columns_str}")
+                        colnames_str = ", ".join(list(CPUInfo.SCOPE_NAMES) + ["hybrid"])
+                        raise Error(f"Invalid column name '{colname}', use one of: {colnames_str}")
 
         order = cmdl["order"]
         for sname in CPUInfo.SCOPE_NAMES:
@@ -265,67 +309,43 @@ def topology_info_command(args: argparse.Namespace, pman: ProcessManagerType):
 
         offline_ok = not cmdl["online_only"]
 
-        # Create format string, example: '%7s    %3s    %4s    %4s    %3s'.
-        fmt = "    ".join([f"%{len(name)}s" for name in snames])
-
-        # Create list of scope names with the first letter capitalized. Example:
-        # ["CPU", "Core", "Node", "Die", "Package"]
-        headers = [name[0].upper() + name[1:] for name in snames]
-
         optar = _OpTarget.OpTarget(pman=pman, cpuinfo=cpuinfo, cpus=cmdl["cpus"],
                                    cores=cmdl["cores"], modules=cmdl["modules"], dies=cmdl["dies"],
                                    packages=cmdl["packages"], core_siblings=cmdl["core_siblings"],
                                    module_siblings=cmdl["module_siblings"], offline_ok=offline_ok)
         stack.enter_context(optar)
 
-        cpus = set(optar.get_cpus())
+        try:
+            cpus = set(optar.get_cpus())
+        except ErrorNoCPUTarget:
+            # Presumably if only non-compute dies are requested.
+            cpus = set()
 
-        _topology = cpuinfo.get_topology(snames=snames, order=order)
+        colnames_set = set(colnames)
+
+        _topology = cpuinfo.get_topology_new(snames=snames, order=order)
         _topology = _filter_cpus(cpus, _topology)
-        _topology = _exclude_noncomp_dies(optar, _topology, snames)
-        if offline_ok:
-            _topology = _add_offline_cpus(cpus, cpuinfo, _topology, snames)
-
         if typing.TYPE_CHECKING:
             topology = cast(list[dict[str, int | str]], _topology)
         else:
             topology = _topology
 
-        colnames: list[str] = list(snames)
-        if show_hybrid:
-            colnames.append("hybrid")
-            headers.append("Hybrid")
-            fmt += "    %6s"
+        if offline_ok:
+            _append_offline_cpus(cpus, cpuinfo, topology, snames)
 
-            hybrid_cpus = cpuinfo.get_hybrid_cpus()
+        if "package" in colnames_set or "die" in colnames_set:
+            target_dies = optar.get_dies(strict=False)
+            with NonCompDies.NonCompDies(pman=pman) as ncompd:
+                noncomp_dies = ncompd.get_dies()
+            _append_noncomp_dies(target_dies, noncomp_dies, topology, colnames)
 
-            hybrid_cpu_sets = {}
-            for htype, hcpus in hybrid_cpus.items():
-                hybrid_cpu_sets[htype] = set(hcpus)
+        if "hybrid" in colnames:
+            topology = _insert_hybrid(cpuinfo, colnames, topology)
 
-            for tline in topology:
-                cpu = tline["CPU"]
-                for htype, hcpus_set in hybrid_cpu_sets.items():
-                    if cpu in hcpus_set:
-                        tline["hybrid"] = CPUInfo.HYBRID_TYPE_INFO[htype]["name"]
-                        break
-                else:
-                    _LOG.warn_once(f"Hybrid CPU '{cpu}' not found in hybrid CPUs information "
-                                   f"dictionary")
-                    tline["hybrid"] = "Unknown"
+    # Create format string, example: '%7s    %3s    %4s    %4s    %3s'.
+    fmt = "    ".join([f"%{len(name)}s" for name in colnames])
 
-    printed_tlines = set()
+    headers = [COLNAMES_HEADERS[name] for name in colnames]
     _LOG.info(fmt, *headers)
     for tline in topology:
-        for lvl, val in tline.items():
-            if val == CPUInfo.NA:
-                tline[lvl] = "-"
-            elif val == -1:
-                tline[lvl] = "?"
-
-        tline_str = fmt % tuple(str(tline[name]) for name in colnames)
-        if tline_str in printed_tlines:
-            continue
-
-        _LOG.info(tline_str)
-        printed_tlines.add(tline_str)
+        _LOG.info(fmt, *(str(tline[name]) for name in colnames))

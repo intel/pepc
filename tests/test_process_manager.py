@@ -10,7 +10,7 @@
 Tests for the 'ProcessManager', 'LocalProcessManager', and 'SSHProcessManager' modules.
 """
 
-from  __future__ import annotations # Remove when switching to Python 3.10+.
+from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import stat
 from pathlib import Path

@@ -11,6 +11,8 @@
 Provide the base class for the 'CPUInfo.CPUInfo' class.
 """
 
+# TODO: get_tpmi() should go away when switched to NonCompDies class.
+
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing

@@ -13,7 +13,7 @@
 # TODO: Add a test that --force-color works as expected.
 # TODO: Add test for KernelVersion module - it is not covered anywhere.
 
-from  __future__ import annotations # Remove when switching to Python 3.10+.
+from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
 import random

@@ -13,7 +13,7 @@ Common functions for class-level C-state, P-state, and uncore property tests ('C
 'PStates.PStates', 'Uncore.Uncore').
 """
 
-from  __future__ import annotations # Remove when switching to Python 3.10+.
+from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
 import contextlib

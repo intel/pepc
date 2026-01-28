@@ -56,7 +56,10 @@ class NonCompDies(ClassHelpers.SimpleCloseContext):
     Provide information about non-compute dies.
 
     Public methods overview.
-        - get_noncomp_dies() - return non-compute dies indexed by package number.
+        - get_dies() - return non-compute dies indexed by package number.
+        - get_dies_sets() - return non-compute dies as sets indexed by package number.
+        - get_dies_info() - return detailed information about non-compute dies.
+        - get_tpmi() - return or create an instance of the TPMI object.
     """
 
     def __init__(self, pman: ProcessManagerType | None = None, tpmi: TPMI.TPMI | None = None):
@@ -82,6 +85,7 @@ class NonCompDies(ClassHelpers.SimpleCloseContext):
 
         self._discovered = False
         self._noncomp_dies: dict[int, list[int]] = {}
+        self._noncomp_dies_sets: dict[int, set[int]] = {}
         self._noncomp_dies_info: dict[int, dict[int, NonCompDieInfoTypedDict]] = {}
 
     def close(self):
@@ -145,6 +149,7 @@ class NonCompDies(ClassHelpers.SimpleCloseContext):
 
             die = instance + cluster
             self._noncomp_dies.setdefault(package, []).append(die)
+            self._noncomp_dies_sets.setdefault(package, set()).add(die)
 
             agent_types = set()
             for agent_type in AGENT_TYPES:
@@ -193,6 +198,20 @@ class NonCompDies(ClassHelpers.SimpleCloseContext):
             self._discover_noncomp_dies()
 
         return self._noncomp_dies
+
+    def get_dies_sets(self) -> dict[int, set[int]]:
+        """
+        Return a dictionary mapping package numbers to sets of non-compute die numbers.
+
+        Returns:
+            The non-compute dies sets dictionary: {package: {die1, die2, ...}}. Packages and dies
+            are in the ascending order.
+        """
+
+        if not self._discovered:
+            self._discover_noncomp_dies()
+
+        return self._noncomp_dies_sets
 
     def get_dies_info(self) -> dict[int, dict[int, NonCompDieInfoTypedDict]]:
         """

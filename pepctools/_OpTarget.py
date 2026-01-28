@@ -418,13 +418,13 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
         # Verify that core/die numbers in 'in_nums' are valid: exist in at least one package.
         if not set(in_nums).issubset(all_nums):
             bad_nums = set(in_nums) - all_nums
-            bad_nums_str = ",".join(str(num) for num in sorted(bad_nums))
+            bad_nums_str = Trivial.rangify(sorted(list(bad_nums)))
             if len(pkg2nums) > 1:
                 pkg_str = " in any package"
             else:
                 pkg_str = ""
-            raise Error(f"The following {sname} number(s) do not exist{pkg_str}: "
-                        f"{bad_nums_str}")
+            raise Error(f"The following {sname} number(s) do not exist"
+                        f"{pkg_str}{self._pman.hostmsg}: {bad_nums_str}")
 
         num2pkg: dict[int, int] = {}
         result: dict[int, list[int]] = {}
