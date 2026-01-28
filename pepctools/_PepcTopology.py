@@ -97,7 +97,8 @@ def _get_cmdline_args(args: argparse.Namespace) -> _CmdlineArgsTypedDict:
 
     return cmdl
 
-def _get_default_colnames(cpuinfo: CPUInfo.CPUInfo) -> list[ScopeNameType]:
+def _get_default_colnames(cpuinfo: CPUInfo.CPUInfo,
+                          noncomp_dies: dict[int, list[int]]) -> list[ScopeNameType]:
     """
     Get the default column names for the topology table.
 
@@ -109,6 +110,7 @@ def _get_default_colnames(cpuinfo: CPUInfo.CPUInfo) -> list[ScopeNameType]:
 
     Args:
         cpuinfo: CPUInfo object for retrieving topology information.
+        noncomp_dies: Non-compute dies indexed by package number.
 
     Returns:
         List of scope names to display as columns in the topology table.
@@ -118,7 +120,7 @@ def _get_default_colnames(cpuinfo: CPUInfo.CPUInfo) -> list[ScopeNameType]:
 
     # Check if all modules have exactly one core. If so, the "module" column is redundant.
     module = -1
-    for tline in cpuinfo.get_topology(snames=("core", "module", "package"), order="module"):
+    for tline in cpuinfo.get_topology_new(snames=("core", "module", "package"), order="module"):
         if module != tline["module"]:
             module = tline["module"]
             core = tline["core"]
@@ -128,9 +130,13 @@ def _get_default_colnames(cpuinfo: CPUInfo.CPUInfo) -> list[ScopeNameType]:
     else:
         colnames.remove("module")
 
+    if noncomp_dies:
+        # There are non-compute dies, skip the "die" redundancy check.
+        return colnames
+
     # Check if all packages have exactly one die. If so, the "die" column is redundant.
     package = -1
-    for tline in cpuinfo.get_topology(snames=("die", "package"), order="package"):
+    for tline in cpuinfo.get_topology_new(snames=("die", "package"), order="package"):
         if package != tline["package"]:
             die = tline["die"]
             package = tline["package"]
@@ -312,7 +318,7 @@ def topology_info_command(args: argparse.Namespace, pman: ProcessManagerType):
         noncomp_dies_info = ncompd.get_dies_info()
 
         if not cmdl["columns"]:
-            snames = _get_default_colnames(cpuinfo)
+            snames = _get_default_colnames(cpuinfo, noncomp_dies)
             colnames = list(snames)
             if cpuinfo.is_hybrid:
                 colnames.append("hybrid")
@@ -377,7 +383,7 @@ def topology_info_command(args: argparse.Namespace, pman: ProcessManagerType):
         if offline_ok:
             _append_offline_cpus(cpus, cpuinfo, topology, snames)
 
-        if ("package" in colnames_set or "die" in colnames_set) and noncomp_dies:
+        if ("package" in colnames_set or "die" in colnames_set) and "dtype" in colnames_set:
             target_dies = optar.get_dies(strict=False)
             # The 'hybrid' column has not yet been inserted, skip it.
             colnames_no_hybrid = [name for name in colnames if name != "hybrid"]
