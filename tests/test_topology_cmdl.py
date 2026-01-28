@@ -87,12 +87,14 @@ def _check_columns(colnames: Sequence[str], caplog: pytest.LogCaptureFixture, cm
     header = list(header_args)
     assert len(header) == len(colnames), \
            f"Expected {len(colnames)} columns in the output, got {len(header)}\n" \
-           f"Command: pepc {cmd}\nOutput:{caplog.text}"
+           f"Command: pepc {cmd}\n" \
+           f"Output:\n{caplog.text}"
 
     headers = [_PepcTopology.COLNAMES_HEADERS[colname] for colname in colnames]
     assert header == headers, \
            f"Expected columns {headers}, got {header}\n" \
-           f"Command: pepc {cmd}\nOutput:{caplog.text}"
+           f"Command: pepc {cmd}\n" \
+           f"Output:\n{caplog.text}"
 
 def test_columns(params: _TestParamsTypedDict, caplog: pytest.LogCaptureFixture):
     """
@@ -120,8 +122,8 @@ def test_columns(params: _TestParamsTypedDict, caplog: pytest.LogCaptureFixture)
         _check_columns(colnames, caplog, cmd)
 
     # Test that capitalization is ignored.
-    headers = [_PepcTopology.COLNAMES_HEADERS[name] for name in colnames]
-    cmd = "topology info --columns " + ",".join(headers)
+    cap_colnames = [colname.upper() for colname in _PepcTopology.COLNAMES]
+    cmd = "topology info --columns " + ",".join(cap_colnames)
     props_cmdl_common.run_pepc(cmd, params["pman"])
 
 def test_invalid_columns(params: _TestParamsTypedDict):
@@ -139,6 +141,14 @@ def test_invalid_columns(params: _TestParamsTypedDict):
 
     # Test no column name.
     option = "--columns"
+    props_cmdl_common.run_pepc(f"topology info {option}", params["pman"], exp_exc=Error)
+
+    # Test that 'hybrid' column cannot be used without the 'CPU' column.
+    option = "--columns hybrid,package"
+    props_cmdl_common.run_pepc(f"topology info {option}", params["pman"], exp_exc=Error)
+
+    # Test that 'dtype' column cannot be used without the 'die' column.
+    option = "--columns dtype,cpu"
     props_cmdl_common.run_pepc(f"topology info {option}", params["pman"], exp_exc=Error)
 
 def _fetch_topology_from_output(caplog: pytest.LogCaptureFixture,
@@ -239,12 +249,14 @@ def _check_order(order: ScopeNameType, caplog: pytest.LogCaptureFixture, cmd: st
     if vals_rel:
         for pkg, pkg_vals in vals_rel.items():
             assert pkg_vals == sorted(pkg_vals), \
-                f"The '{order}' column is not sorted in ascending order for package {pkg}\n" \
-                f"Command: pepc {cmd}\nOutput:{caplog.text}"
+                   f"The '{order}' column is not sorted in ascending order for package {pkg}\n" \
+                   f"Command: pepc {cmd}\n" \
+                   f"Output:\n{caplog.text}"
     else:
         assert vals_abs == sorted(vals_abs), \
-            f"The '{order}' column is not sorted in ascending order\n" \
-            f"Command: pepc {cmd}\nOutput:{caplog.text}"
+               f"The '{order}' column is not sorted in ascending order\n" \
+               f"Command: pepc {cmd}\n" \
+               f"Output:\n{caplog.text}"
 
 def test_order(params: _TestParamsTypedDict, caplog: pytest.LogCaptureFixture):
     """
@@ -313,7 +325,9 @@ def _check_limited_target_cpus(caplog: pytest.LogCaptureFixture,
         output_cpus.append(tline["CPU"])
 
     assert output_cpus == target_cpus, \
-           f"Output CPUs do not match target CPUs\nCommand: pepc {cmd}\nOutput:{caplog.text}"
+           f"Output CPUs do not match target CPUs\n" \
+           f"Command: pepc {cmd}\n" \
+           f"Output:\n{caplog.text}"
 
 def test_limited_target_cpus(params: _TestParamsTypedDict, caplog: pytest.LogCaptureFixture):
     """
@@ -379,12 +393,15 @@ def _check_limited_target_cores(caplog: pytest.LogCaptureFixture,
 
     for pkg, cores in target_cores.items():
         assert pkg in output_cores, \
-               f"Package {pkg} not found in output\nCommand: pepc {cmd}\nOutput:{caplog.text}"
+               f"Package {pkg} not found in output\n" \
+               f"Command: pepc {cmd}\n" \
+               f"Output:\n{caplog.text}"
         # A core may appear multiple times in the output if there are multiple CPUs per core.
         output_cores_unique = sorted(set(output_cores[pkg]))
         assert output_cores_unique == cores, \
                f"Output cores for package {pkg} do not match target cores\n" \
-               f"Command: pepc {cmd}\nOutput:{caplog.text}"
+               f"Command: pepc {cmd}\n" \
+               f"Output:\n{caplog.text}"
 
 def _get_target_cores(all_cores: dict[int, list[int]],
                       cores_range: tuple[int, int]) -> dict[int, list[int]]:
@@ -506,14 +523,17 @@ def _check_limited_target_dies(caplog: pytest.LogCaptureFixture,
 
     for pkg, dies in target_dies.items():
         assert pkg in output_dies, \
-               f"Package {pkg} not found in output\nCommand: pepc {cmd}\nOutput:{caplog.text}"
+               f"Package {pkg} not found in output\n" \
+               f"Command: pepc {cmd}\n" \
+               f"Output:\n{caplog.text}"
         # A die may appear multiple times in the output if there are multiple CPUs per die.
         output_dies_unique = sorted(set(output_dies[pkg]))
         assert output_dies_unique == dies, \
                f"Output dies for package {pkg} do not match target dies\n" \
-               f"Command: pepc {cmd}\nOutput:{caplog.text}"
+               f"Command: pepc {cmd}\n" \
+               f"Output:\n{caplog.text}"
 
-def test_imited_target_dies(params: _TestParamsTypedDict, caplog: pytest.LogCaptureFixture):
+def test_limited_target_dies(params: _TestParamsTypedDict, caplog: pytest.LogCaptureFixture):
     """
     Test the 'pepc topology info' command with options that limit the target compute dies.
 
@@ -544,7 +564,7 @@ def test_imited_target_dies(params: _TestParamsTypedDict, caplog: pytest.LogCapt
     _check_limited_target_dies(caplog, {0: target_dies[0]}, cmd)
 
     # Use a custom columns list.
-    cmd += " --columns package,die,hybrid"
+    cmd += " --columns cpu,package,die,hybrid"
     caplog.clear()
     props_cmdl_common.run_pepc(cmd, params["pman"])
     _check_limited_target_dies(caplog, {0: target_dies[0]}, cmd)
@@ -584,31 +604,38 @@ def _check_offline_cpus(caplog: pytest.LogCaptureFixture,
     found_offline_cpus_set = set()
 
     for tline in topology:
+        has_offline = False
         for colname in tline:
-            if tline[colname] != _PepcTopology.OFFLINE_MARKER:
-                continue
+            if tline[colname] == _PepcTopology.OFFLINE_MARKER:
+                has_offline = True
+                break
+        if not has_offline:
+            continue
 
-            cpu = tline["CPU"]
-            assert isinstance(cpu, int), \
-                   f"Offline CPU line has non-integer CPU value\n" \
-                   f"Command: pepc {cmd}\nOutput:{caplog.text}"
+        cpu = tline["CPU"]
+        assert isinstance(cpu, int), \
+               f"Offline CPU line has non-integer CPU value\n" \
+               f"Command: pepc {cmd}\n" \
+               f"Output:\n{caplog.text}"
 
-            assert cpu in offline_cpus_set, \
-                   f"Found unexpected offline CPU {cpu}\n" \
-                   f"Command: pepc {cmd}\nOutput:{caplog.text}"
+        assert cpu in offline_cpus_set, \
+               f"Found unexpected offline CPU {cpu}\n" \
+               f"Command: pepc {cmd}\n" \
+               f"Output:\n{caplog.text}"
 
-            assert cpu not in found_offline_cpus_set, \
-                   f"Offline CPU {cpu} appears multiple times in the output\n" \
-                   f"Command: pepc {cmd}\nOutput:{caplog.text}"
+        assert cpu not in found_offline_cpus_set, \
+               f"Offline CPU {cpu} appears multiple times in the output\n" \
+               f"Command: pepc {cmd}\n" \
+               f"Output:\n{caplog.text}"
 
-            found_offline_cpus_set.add(cpu)
-            break
+        found_offline_cpus_set.add(cpu)
 
     assert found_offline_cpus_set == offline_cpus_set, \
            f"Not all offline CPUs were found in the output\n" \
            f"Expected offline CPUs: {sorted(offline_cpus_set)}\n" \
            f"Found offline CPUs: {sorted(found_offline_cpus_set)}\n" \
-           f"Command: pepc {cmd}\nOutput:{caplog.text}"
+           f"Command: pepc {cmd}\n" \
+           f"Output:\n{caplog.text}"
 
 def test_offline_cpus(params: _TestParamsTypedDict, caplog: pytest.LogCaptureFixture):
     """
@@ -658,7 +685,7 @@ def _check_noncomp_dies(caplog: pytest.LogCaptureFixture,
 
     Args:
         caplog: The pytest log capture fixture.
-        noncomp_dies: The expected non-compute dies mapped by package number.
+        noncomp_dies_sets: The expected non-compute dies mapped by package number.
         cmd: The command that was run.
     """
 
@@ -667,54 +694,67 @@ def _check_noncomp_dies(caplog: pytest.LogCaptureFixture,
     found_noncomp_dies_sets: dict[int, set[int]] = {}
 
     for tline in topology:
+        no_marker = True
         for colname in tline:
-            if tline[colname] != _PepcTopology.NA_MARKER:
+            if tline[colname] == _PepcTopology.NA_MARKER:
+                no_marker = False
+                break
+        if no_marker:
+            continue
+
+        package = tline["Package"]
+        die = tline["Die"]
+
+        assert isinstance(package, int), \
+               f"Non-compute die line has non-integer Package value\n" \
+               f"Command: pepc {cmd}\n" \
+               f"Output:\n{caplog.text}"
+        assert isinstance(die, int), \
+               f"Non-compute die line has non-integer Die value\n" \
+               f"Command: pepc {cmd}\n" \
+               f"Output:\n{caplog.text}"
+
+        # Make sure all columns except Package and core are marked as N/A.
+        for _colname in tline:
+            if _colname in ("Package", "Die", "DieType"):
                 continue
+            assert tline[_colname] == _PepcTopology.NA_MARKER, \
+                   f"Non-compute die column {_colname} is not marked as N/A for non-compute " \
+                   f"die {die} in package {package}\n" \
+                   f"Command: pepc {cmd}\n" \
+                   f"Output:\n{caplog.text}"
 
-            package = tline["Package"]
-            die = tline["Die"]
+        assert package in noncomp_dies_sets, \
+               f"Found unexpected non-compute die {die} in package {package}\n" \
+               f"Command: pepc {cmd}\n" \
+               f"Output:\n{caplog.text}"
+        assert die in noncomp_dies_sets[package], \
+               f"Found unexpected non-compute die {die} in package {package}\n" \
+               f"Command: pepc {cmd}\n" \
+               f"Output:\n{caplog.text}"
 
-            assert isinstance(package, int), \
-                   f"Non-compute die line has non-integer Package value\n" \
-                   f"Command: pepc {cmd}\nOutput:{caplog.text}"
-            assert isinstance(die, int), \
-                   f"Non-compute die line has non-integer Die value\n" \
-                   f"Command: pepc {cmd}\nOutput:{caplog.text}"
+        pkg_found_dies = found_noncomp_dies_sets.setdefault(package, set())
+        assert die not in pkg_found_dies, \
+                f"Non-compute die {die} in package {package} appears multiple times in " \
+                f"the output\n" \
+                f"Command: pepc {cmd}\n" \
+                f"Output:\n{caplog.text}"
 
-            # Make sure all columns except Package and core are marked as N/A.
-            for _colname in tline:
-                if _colname in ("Package", "Die"):
-                    continue
-                assert tline[_colname] == _PepcTopology.NA_MARKER, \
-                       f"Non-compute die column {_colname} is not marked as N/A for non-compute " \
-                       f"die {die} in package {package}\n" \
-                       f"Command: pepc {cmd}\nOutput:{caplog.text}"
-
-            assert package in noncomp_dies_sets, \
-                   f"Found unexpected non-compute die {die} in package {package}\n" \
-                   f"Command: pepc {cmd}\nOutput:{caplog.text}"
-            assert die in noncomp_dies_sets[package], \
-                   f"Found unexpected non-compute die {die} in package {package}\n" \
-                   f"Command: pepc {cmd}\nOutput:{caplog.text}"
-
-            pkg_found_dies = found_noncomp_dies_sets.setdefault(package, set())
-            assert die not in pkg_found_dies, \
-                   f"Non-compute die {die} in package {package} appears multiple times in " \
-                   f"the output\nCommand: pepc {cmd}\nOutput:{caplog.text}"
-
-            pkg_found_dies.add(die)
-            break
+        pkg_found_dies.add(die)
 
     for pkg, dies_set in noncomp_dies_sets.items():
         assert pkg in found_noncomp_dies_sets, \
                f"Package {pkg} with non-compute dies not found in output\n" \
-               f"Command: pepc {cmd}\nOutput:{caplog.text}"
+               f"Command: pepc {cmd}\n" \
+               f"Output:\n{caplog.text}"
         found_dies_set = found_noncomp_dies_sets[pkg]
         assert found_dies_set == dies_set, \
                f"Output non-compute dies for package {pkg} do not match expected non-compute " \
-               f"dies\nExpected non-compute dies: {sorted(dies_set)}\n" \
+               f"dies\n" \
+               f"Expected non-compute dies: {sorted(dies_set)}\n" \
                f"Found non-compute dies: {sorted(found_dies_set)}\n" \
-               f"Command: pepc {cmd}\nOutput:{caplog.text}"
+               f"Command: pepc {cmd}\n" \
+               f"Output:\n{caplog.text}"
 
 def _check_no_noncomp_dies(caplog: pytest.LogCaptureFixture, cmd: str):
     """
@@ -731,7 +771,8 @@ def _check_no_noncomp_dies(caplog: pytest.LogCaptureFixture, cmd: str):
         for colname in tline:
             assert tline[colname] != _PepcTopology.NA_MARKER, \
                    f"Found unexpected non-compute die line in the output\n" \
-                   f"Command: pepc {cmd}\nOutput:{caplog.text}"
+                   f"Command: pepc {cmd}\n" \
+                   f"Output:\n{caplog.text}"
 
 def test_noncomp_dies(params: _TestParamsTypedDict, caplog: pytest.LogCaptureFixture):
     """

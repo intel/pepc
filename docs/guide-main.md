@@ -468,12 +468,9 @@ Granite Rapids Xeon, `pepc` uses MSR 0x54 (MSR_PM_LOGICAL_ID) to figure out whic
 which compute die.
 
 Some dies do not include CPUs, but still have uncore frequency scaling capability. For example,
-on Granite Rapids Xeon there are "IO dies" that include uncore blocks related to PCIe and
-CXL. Such dies are not discoverable via CPUID or sysfs, so `pepc` uses the TPMI mechanism to enumerate
-non-compute dies and assign them unique die IDs.
-
-**Note:** `pepc` dies do not correspond to physical silicon dies. This is more of a logical
-concept used to group uncore frequency domains.
+on Granite Rapids Xeon there are "I/O dies" that include uncore blocks related to PCIe and
+CXL. Such dies are not discoverable via CPUID or sysfs, so `pepc` uses the TPMI mechanism to
+enumerate non-compute dies and assign them unique die IDs.
 
 Typically client CPUs (e.g., Raptor Lake, Alder Lake) have a single compute die and no non-compute
 dies. Many server CPUs (e.g., Ice Lake Xeon, Sapphire Rapids Xeon) have only a single compute die
@@ -481,39 +478,8 @@ and no non-compute dies as well. Some server CPUs (e.g., Cascade Lake-AP) have m
 and no non-compute dies. Finally, newer server CPUs (e.g., Granite Rapids Xeon and Sierra Forest
 Xeon) may have multiple compute dies and multiple non-compute dies.
 
-Use `pepc topology info` to discover die topology on your system. Here is a Granite
-Rapids example:
-
-```bash
-$ pepc topology info
-CPU    Core    Die    Node    Package
-  0       0      0       0          0
-  1       1      0       0          0
-  ... snip ...
- 42      42      0       0          0
- 43      64      1       0          0
- 44      65      1       0          0
-  ... snip ...
- 85     106      1       0          0
- 86     128      2       0          0
- 87     129      2       0          0
-  ... snip ...
-127     169      2       0          0
-128       0      0       1          1
-129       1      0       1          1
-... snip ...
-511     169      2       1          1
-  -       -      3       -          0
-  -       -      4       -          0
-  -       -      3       -          1
-  -       -      4       -          1
-```
-
-The Granite Rapids has 512 CPUs, and the output is very long, so it is snipped. The important part
-is to demonstrate that there are 3 compute dies per package (dies 0, 1, and 2), and there are also 2
-I/O dies per package (dies 3 and 4) that do not have any CPUs. Package 1 also has dies 0,1,2,3,4.
-In other words, die numbers are relative to the package, not globally unique. This follows the
-Linux kernel die numbering convention.
+Use `pepc topology info` to discover die topology on your system. Refer to the
+[CPU Topology](#cpu-topology) section for examples, including how to discover non-compute dies.
 
 ### Examples
 
@@ -663,23 +629,28 @@ CPU    Core    Module    Node    Package    Hybrid
 The table gives an idea about how CPU, core, NUMA node and package numbers are related to each
 other.
 
-**Discover Dies**
+**Discover Non-Compute Dies**
 
-To discover compute and I/O dies on a Granite Rapids system, run:
+Some systems, such as Granite Rapids Xeon, have non-compute dies (dies without CPUs). To discover
+such dies, use 'dtype' column (from 'die type'). For example, on a Granite Rapids system:
 
 ```bash
-$ pepc topology info --columns package,die,node --packages 0
-Package    Die    Node
-      0      0       0
-      0      1       0
-      0      2       0
-      0      3       -
-      0      4       -
+$ pepc topology info --columns package,die,dtype
+Package    Die    DieType
+      0      0    Compute
+      0      1    Compute
+      0      2    Compute
+      1      0    Compute
+      1      1    Compute
+      1      2    Compute
+      0      3      I/O
+      0      4      I/O
+      1      3      I/O
+      1      4      I/O
 ```
 
-The output is limited to package 0 for brevity. The '-' in the Node column indicates that dies 3 and 4
-do not have any CPUs, and therefore are not associated with any NUMA node and hence, they are not
-compute dies.
+Another option is to run `pepc topology info` without options, and the non-compute dies will be
+listed at the end of the output.
 
 ## PM QoS
 

@@ -39,13 +39,13 @@ if typing.TYPE_CHECKING:
             package: The package number the non-compute die belongs to.
             die: The non-compute die number.
             agent_types: A set of agent types present on the non-compute die.
-            descr: A short description of the non-compute die.
+            title: A short description of the non-compute die.
         """
 
         package: int
         die: int
         agent_types: set[AgentTypes]
-        descr: str
+        title: str
 
 AGENT_TYPES: list[AgentTypes] = ["core", "cache", "io", "memory"]
 
@@ -158,9 +158,9 @@ class NonCompDies(ClassHelpers.SimpleCloseContext):
                     agent_types.add(agent_type)
 
             # Format the description so that it would have a form of:
-            # - x die: if there is only one agent.
-            # - x and y die: if there are two agents.
-            # - x, y, and z die: if there are three or more agents.
+            # - x: if there is only one agent.
+            # - x and y: if there are two agents.
+            # - x, y, and z: if there are three or more agents.
             # Also, use "I/O" instead of "io".
             agents = []
             for agent_type in AGENT_TYPES:
@@ -172,18 +172,18 @@ class NonCompDies(ClassHelpers.SimpleCloseContext):
                     agents.append(agent_type)
 
             if len(agents) == 1:
-                descr = f"{agents[0]} die"
+                title = f"{agents[0]}"
             elif len(agents) == 2:
-                descr = f"{agents[0]} and {agents[1]} die"
+                title = f"{agents[0]} and {agents[1]}"
             else:
-                descr = ", ".join(agents[:-1]) + f", and {agents[-1]} die"
+                title = ", ".join(agents[:-1]) + f", and {agents[-1]}"
 
             pkg_info = self._noncomp_dies_info.setdefault(package, {})
             die_info = pkg_info.setdefault(die, {})
             die_info["package"] = package
             die_info["die"] = die
             die_info["agent_types"] = agent_types
-            die_info["descr"] = descr
+            die_info["title"] = title[0].upper() + title[1:]
 
     def get_dies(self) -> dict[int, list[int]]:
         """

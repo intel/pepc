@@ -86,7 +86,7 @@ Rapids Xeon), CPU, core, and module numbers are shown as "-".
 **--cores** *CORES*
    The list can include individual core numbers and core number ranges. For example, '1-4,7,8,10-12'
    would mean cores 1 to 4, cores 7, 8, and 10 to 12. Use the special keyword 'all' to specify all
-   cores. this option has to be used with the '--packages' option, because core numbers are
+   cores. This option has to be used with the '--packages' option, because core numbers are
    relative to the package.
 
 **--modules** *MODULES*
@@ -109,7 +109,7 @@ Rapids Xeon), CPU, core, and module numbers are shown as "-".
    indices or index ranges. For example, if a core includes CPUs 2 and 3, index 0 would mean CPU 2
    and index 1 would mean CPU 3. This option can only be used to reference online CPUs, because
    Linux does not provide topology information for offline CPUs. In the example with CPUs 2 and 3,
-   if CPU 2 was offline, then index 0 would mean CPU 3. On Intel processors with hyper-threading,
+   if CPU 2 were offline, then index 0 would mean CPU 3. On Intel processors with hyper-threading,
    this is typically used to offline hyperthreads.
 
 **--module-siblings** *MODULE_SIBLINGS*
@@ -129,6 +129,7 @@ Rapids Xeon), CPU, core, and module numbers are shown as "-".
 
 **--columns** *COLUMNS*
    Comma-separated list of topology columns to display. Available columns: CPU, core, module, die,
-   node, package, hybrid. Example: --columns Package,Core,CPU. By default, all relevant columns for
-   the platform are shown. Columns like "module" or "die" are omitted if not applicable. The "hybrid"
-   column is shown by default on hybrid platforms.
+   node, package, hybrid, dtype. Example: --columns Package,Core,CPU. By default, all relevant
+   columns for the platform are shown. The "hybrid" column shows the core type (e.g., E-core or
+   P-core) on hybrid platforms. The "dtype" column shows the die type for non-compute dies (e.g.,
+   I/O dies on Granite Rapids Xeon).
