@@ -178,7 +178,7 @@ def _check_ioscope(cpuinfo: CPUInfo.CPUInfo,
 
     tline = cpuinfo.get_tline_by_cpu(cpu)
 
-    for _tline in cpuinfo.get_topology():
+    for _tline in cpuinfo.get_topology_new():
         if _is_sibling(snames, sname, tline, _tline):
             if vals[_tline["CPU"]] != val:
                 return False
@@ -420,6 +420,8 @@ def _print_ioscope_all(pman: ProcessManagerType,
             values = [max_val // 2, max_val // 2 + 1]
 
         try:
+            _LOG.info("Running I/O scope detection for feature '%s' (bits %s) in MSR '%s' (%#x)",
+                      fname, bits_str, fmsr.regname, addr)
             sname = _detect_msr_bits_range_ioscope(cpuinfo, msr, addr, bits, values, cpu)
             if fmsr.regname not in info:
                 info[fmsr.regname] = {}
