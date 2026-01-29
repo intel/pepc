@@ -79,7 +79,7 @@ def test_get_dies(params: _TestParamsTypedDict):
 
     # Verify that all packages are present by comparing with cpuinfo. Test 'get_tpmi()' at the same
     # time.
-    with CPUInfo.CPUInfo(pman=params["pman"], tpmi=ncompd.get_tpmi()) as cpuinfo:
+    with CPUInfo.CPUInfo(pman=params["pman"], ncompd=ncompd) as cpuinfo:
         packages = cpuinfo.get_packages()
         assert set(noncomp_dies) == set(packages), \
                "Package numbers from 'get_dies()' don't match packages from CPUInfo"
@@ -92,10 +92,6 @@ def test_get_dies(params: _TestParamsTypedDict):
             overlap = compute_dies_set.intersection(noncomp_dies_set)
             assert not overlap, f"Non-compute die numbers overlap with compute die numbers " \
                                  f"in package {package}: {overlap}"
-
-        # Ensure that 'ncompd.get_tpmi()' returns the same TPMI instance as 'cpuinfo.get_tpmi()'.
-        assert ncompd.get_tpmi() is cpuinfo.get_tpmi(), \
-               "'get_tpmi()' did not return the same TPMI instance across objects"
 
 def test_get_noncomp_dies_info(params: _TestParamsTypedDict):
     """Test the 'get_dies_info()' method returns consistent information with 'get_dies()'."""

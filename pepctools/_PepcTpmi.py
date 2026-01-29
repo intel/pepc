@@ -18,7 +18,7 @@ import typing
 import contextlib
 from pathlib import Path
 
-from pepclibs import TPMI, CPUInfo, CPUModels
+from pepclibs import TPMI, CPUModels
 from pepclibs.helperlibs import Logging, Trivial, YAML
 from pepclibs.helperlibs.Exceptions import Error
 
@@ -579,8 +579,8 @@ def _get_tpmi(cmdl: _CommonCmdlineArgsTypedDict,
 
     if not cmdl["base"]:
         assert pman is not None
-        with CPUInfo.CPUInfo(pman=pman) as cpuinfo:
-            yield cpuinfo.get_tpmi()
+        with TPMI.TPMI(pman=pman) as tpmi:
+            yield tpmi
     else:
         assert pman is None
 

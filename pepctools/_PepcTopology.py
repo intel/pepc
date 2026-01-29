@@ -384,10 +384,11 @@ def topology_info_command(args: argparse.Namespace, pman: ProcessManagerType):
             _append_offline_cpus(cpus, cpuinfo, topology, snames)
 
         if ("package" in colnames_set or "die" in colnames_set) and "dtype" in colnames_set:
-            target_dies = optar.get_dies(strict=False)
             # The 'hybrid' column has not yet been inserted, skip it.
             colnames_no_hybrid = [name for name in colnames if name != "hybrid"]
             topology = _insert_noncomp_dies_type(topology, colnames_no_hybrid)
+
+            target_dies = optar.get_all_dies(strict=False)
             _append_noncomp_dies(target_dies, noncomp_dies, noncomp_dies_info,
                                  topology, colnames_no_hybrid)
 

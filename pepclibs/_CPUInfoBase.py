@@ -11,8 +11,6 @@
 Provide the base class for the 'CPUInfo.CPUInfo' class.
 """
 
-# TODO: get_tpmi() should go away when switched to NonCompDies class.
-
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
@@ -21,11 +19,10 @@ from pathlib import Path
 from pepclibs import CPUModels, ProcCpuinfo
 from pepclibs.helperlibs import Logging, LocalProcessManager, ClassHelpers, Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorNotFound
-from pepclibs.CPUInfoVars import SCOPE_NAMES, NA
 
 if typing.TYPE_CHECKING:
     from typing import Iterable
-    from pepclibs import TPMI
+    from pepclibs import NonCompDies
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepclibs.CPUInfoTypes import (ScopeNameType, AbsNumsType, HybridCPUKeyType,
                                        HybridCPUKeyInfoType)
@@ -38,14 +35,17 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
     the public API.
     """
 
-    def __init__(self, pman: ProcessManagerType | None = None, tpmi: TPMI.TPMI | None = None):
+    def __init__(self,
+                 pman: ProcessManagerType | None = None,
+                 ncompd: NonCompDies.NonCompDies | None = None):
         """
         Initialize a class instance.
 
         Args:
-            pman: The process manager object that defines the target host. If not provided, a local
+            pman: Process manager object that defines the target host. If not provided, a local
                   process manager is created.
-            tpmi: An instance of the TPMI class. If not provided, a new instance is created.
+            ncompd: An instance of the 'NonCompDies' class. If not provided, a new instance is
+                    created.
         """
 
         _LOG.debug("Initializing the '%s' class object", self.__class__.__name__)
@@ -54,10 +54,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         self.cpudescr = ""
 
         self._close_pman = pman is None
-        self._close_tpmi = tpmi is None
-
-        self._tpmi = tpmi
-        self._tpmi_errmsg = ""
+        self._close_ncompd = ncompd is None
 
         # Online CPU numbers sorted in ascending order.
         self._cpus: list[int] = []
@@ -75,11 +72,15 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         self._compute_dies: dict[int, set[int]] = {}
         self._noncomp_dies: dict[int, set[int]] = {}
 
+        self._noncomp_dies_discovered = False
+        self._ncompd = ncompd
+        self._ncompd_errmsg = ""
+
         # The topology dictionary.
         self._topology: dict[ScopeNameType, list[dict[ScopeNameType, int]]] = {}
 
         # Topology scopes that have been already initialized.
-        self._initialized_snames: set[str] = set()
+        self._initialized_snames: set[ScopeNameType] = set()
 
         # The topology dictionary is a dictionary of lists where keys are scope names. The values
         # are lists of topology lines (tlines) sorted in the key order (or more precisely, in the
@@ -116,47 +117,55 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
         _LOG.debug("Closing the '%s' class object", self.__class__.__name__)
 
-        ClassHelpers.close(self, close_attrs=("_tpmi", "_pman"))
+        ClassHelpers.close(self, close_attrs=("_ncompd", "_pman"))
 
-    def get_tpmi(self) -> TPMI.TPMI:
+    def get_ncompd(self) -> NonCompDies.NonCompDies:
         """
-        Return or create an instance of 'TPMI.TPMI' object.
+        Return or create an instance of 'NonCompDies.NonCompDies' object.
 
         Returns:
-            The 'TPMI.TPMI' object.
+            An instance of 'NonCompDies.NonCompDies' object.
 
         Raises:
-            ErrorNotSupported: if TPMI is not supported on the target system.
+            ErrorNotSupported: if TPMI is not supported on the target system, which also means that
+                               there are no non-compute dies.
         """
 
-        if self._tpmi:
-            return self._tpmi
+        if self._ncompd:
+            return self._ncompd
 
-        if self._tpmi_errmsg:
-            raise ErrorNotSupported(self._tpmi_errmsg)
+        if self._ncompd_errmsg:
+            raise ErrorNotSupported(self._ncompd_errmsg)
 
-        _LOG.debug("Creating an instance of 'TPMI.TPMI'")
+        _LOG.debug("Creating an instance of 'NonCompDies.NonCompDies'")
 
         # pylint: disable-next=import-outside-toplevel
-        from pepclibs import TPMI
+        from pepclibs import NonCompDies
 
         try:
-            self._tpmi = TPMI.TPMI(pman=self._pman)
+            self._ncompd = NonCompDies.NonCompDies(pman=self._pman)
         except Exception as err:
-            self._tpmi_errmsg = str(err)
-            _LOG.debug(self._tpmi_errmsg)
+            self._ncompd_errmsg = str(err)
+            _LOG.debug(self._ncompd_errmsg)
             raise
 
-        return self._tpmi
+        return self._ncompd
+
+    def _discover_noncomp_dies(self):
+        """Discover non-compute dies and build the internal data structures."""
+
+        ncompd = self.get_ncompd()
+        self._noncomp_dies = ncompd.get_dies_sets()
+        self._noncomp_dies_discovered = True
 
     def _add_cores_and_packages(self,
                                 cpu_tdict: dict[int, dict[ScopeNameType, int]],
                                 cpus: AbsNumsType):
         """
-        Add core and package numbers for the specified CPUs to the provided CPU topology dictionary.
+        Add core and package numbers for the specified CPUs to the CPU topology dictionary.
 
         Args:
-            cpu_tdict: The CPU topology dictionary to update with core and package information.
+            cpu_tdict: CPU topology dictionary to update with core and package information.
             cpus: CPU numbers for which to add core and package numbers.
         """
 
@@ -173,12 +182,13 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         """
         Add module numbers for the specified CPUs to the CPU topology dictionary.
 
-        Module numbers are read from the sysfs files under
-        '/sys/devices/system/cpu/cpu<cpu>/cache/index2/'.
-
         Args:
-            cpu_tdict: The CPU topology dictionary to update with module information.
+            cpu_tdict: CPU topology dictionary to update with module information.
             cpus: CPU numbers for which to add module numbers.
+
+        Notes:
+            - Module numbers are read from the sysfs files under
+              '/sys/devices/system/cpu/cpu<cpu>/cache/index2/'.
         """
 
         _LOG.debug("Reading CPU module information from sysfs")
@@ -216,12 +226,13 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         """
         Add compute die numbers for the specified CPUs to the CPU topology dictionary.
 
-        Compute die numbers are read from either 'MSR_PM_LOGICAL_ID' MSR or from the sysfs
-        files under '/sys/devices/system/cpu/cpu<cpu>/topology/'.
-
         Args:
-            cpu_tdict: The CPU topology dictionary to update with compute die information.
+            cpu_tdict: CPU topology dictionary to update with compute die information.
             cpus: CPU numbers for which to add compute die numbers.
+
+        Notes:
+            - Compute die numbers are read from either 'MSR_PM_LOGICAL_ID' MSR or from the sysfs
+              files under '/sys/devices/system/cpu/cpu<cpu>/topology/'.
         """
 
         def _add_compute_die(cpu_tdict: dict[int, dict[ScopeNameType, int]], cpu: int, die: int):
@@ -229,17 +240,15 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
             Add a compute die number to the CPU topology dictionary.
 
             Args:
-                cpu_tdict: The CPU topology dictionary to update.
-                cpu: The CPU number to which the die number should be added.
-                die: The compute die number to add.
+                cpu_tdict: CPU topology dictionary to update.
+                cpu: CPU number to which the die number should be added.
+                die: Compute die number to add.
             """
 
             cpu_tdict[cpu]["die"] = die
             package = cpu_tdict[cpu]["package"]
             if package not in self._compute_dies:
                 self._compute_dies[package] = set()
-                if package not in self._noncomp_dies:
-                    self._noncomp_dies[package] = set()
             self._compute_dies[package].add(die)
 
         if self.proc_cpuinfo["vfm"] not in CPUModels.MODELS_WITH_HIDDEN_DIES:
@@ -282,11 +291,12 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         """
         Add NUMA node numbers for CPUs in the CPU topology dictionary.
 
-        NUMA node numbers are read from the sysfs files under
-        '/sys/devices/system/node/node<node>/cpulist'.
-
         Args:
-            cpu_tdict: The CPU topology dictionary to update with NUMA node information.
+            cpu_tdict: CPU topology dictionary to update with NUMA node information.
+
+        Notes:
+            - NUMA node numbers are read from the sysfs files under
+              '/sys/devices/system/node/node<node>/cpulist'.
         """
 
         _LOG.debug("Reading NUMA node information from sysfs")
@@ -305,63 +315,15 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
                     with contextlib.suppress(KeyError):
                         cpu_tdict[cpu]["node"] = node
 
-    def _add_noncomp_dies(self, tlines: list[dict[ScopeNameType, int]]):
-        """
-        Add non-compute dies to the topology table (obtained from TPMI).
-
-        Args:
-            tlines: The topology table (list of dictionaries) to which non-compute dies should be
-                    added.
-        """
-
-        if self.proc_cpuinfo["vfm"] not in CPUModels.MODELS_WITH_HIDDEN_DIES:
-            return
-
-        try:
-            tpmi = self.get_tpmi()
-        except ErrorNotSupported:
-            _LOG.debug("TPMI is not supported, cannot read non-compute dies information")
-            return
-
-        _LOG.debug("Reading non-compute dies information from uncore frequency driver")
-
-        for package, addr, die in tpmi.iter_feature("ufs"):
-            if package not in self._compute_dies:
-                continue
-
-            if die in self._compute_dies[package]:
-                continue
-
-            # Check if the die has any cores via TPMI.
-            regname = "UFS_STATUS"
-            bfname = "AGENT_TYPE_CORE"
-
-            val = tpmi.read_register("ufs", addr, die, regname, bfname=bfname)
-            if val != 0:
-                continue
-
-            _LOG.debug("Adding non-compute die %d for package %d", die, package)
-
-            tline = {}
-            for key in SCOPE_NAMES:
-                tline[key] = NA
-
-            tline["package"] = package
-            tline["die"] = die
-            tlines.append(tline)
-
-            # Cache the non-compute die number.
-            if package not in self._noncomp_dies:
-                self._noncomp_dies[package] = set()
-            self._noncomp_dies[package].add(die)
-
-    def _sort_topology(self, tlines, order):
+    def _sort_topology(self, tlines: list[dict[ScopeNameType, int]], order: ScopeNameType):
         """Sort and save the topology list by 'order' in sorting map."""
 
         skeys = self._sorting_map[order]
         self._topology[order] = sorted(tlines, key=lambda tline: tuple(tline[s] for s in skeys))
 
-    def _get_topology(self, snames: Iterable[ScopeNameType], order: ScopeNameType = "CPU"):
+    def _get_topology(self,
+                      snames: Iterable[ScopeNameType],
+                      order: ScopeNameType = "CPU") -> list[dict[ScopeNameType, int]]:
         """
         Build and return the topology table for the specified scopes, sorted in the specified order.
 
@@ -370,9 +332,12 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
             order: Topology table sorting order. Defaults to "CPU".
 
         Returns:
-            The topology table for the specified scopes and order. The topology table is a
-            list of topology lines, which are dictionaries where keys are scope names and
-            values are the corresponding scope numbers (e.g., CPU numbers, core numbers, etc.).
+            The topology table for the specified scopes and order.
+
+        Notes:
+            - The topology table is a list of topology lines.
+            - Each topology line is a dictionary where keys are scope names and values are the
+              corresponding scope numbers (e.g., CPU numbers, core numbers, etc.).
         """
 
         snames_set = set(snames)
@@ -391,19 +356,14 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
         cpus = self._get_online_cpus()
 
-        tlines_no_cpu: list[dict[ScopeNameType, int]] = []
         if not self._topology:
             cpu_tdict = {cpu: {"CPU": cpu} for cpu in cpus}
         else:
             cpu_tdict = {}
             for tline in self._topology["CPU"]:
-                if tline["CPU"] != NA:
-                    # If the topology table already has some CPU lines, use them as a base.
-                    cpu_tdict[tline["CPU"]] = tline
-                else:
-                    tlines_no_cpu.append(tline)
+                cpu_tdict[tline["CPU"]] = tline
 
-        tlines = list(cpu_tdict.values()) + tlines_no_cpu
+        tlines = list(cpu_tdict.values())
 
         if "CPU" not in self._initialized_snames or "core" not in self._initialized_snames or \
            "package" not in self._initialized_snames:
@@ -414,9 +374,6 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
             self._add_modules(cpu_tdict, cpus)
         if "die" in snames_set:
             self._add_compute_dies(cpu_tdict, cpus)
-            # Non-compute dies do not have CPUs, so 'cpu_tdict' is not a suitable data structure for
-            # them. Use a list of topology lines (tlines) instead.
-            self._add_noncomp_dies(tlines)
         if "node" in snames_set:
             self._add_nodes(cpu_tdict)
 
@@ -435,7 +392,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
             path: Path to the file to read.
 
         Returns:
-            List of integers parsed from the file.
+            A list of integers parsed from the file.
         """
 
         str_of_ranges = self._pman.read_file(path).strip()
@@ -502,7 +459,10 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         Build and return a human-readable string describing the processor.
 
         Returns:
-            A string describing the processor, including codename for supported Intel CPUs.
+            A string describing the processor.
+
+        Notes:
+            - For supported Intel CPUs, includes the codename.
         """
 
         # Some pre-release Intel CPUs are labeled as "GENUINE INTEL", hence 'lower()' is used.
@@ -522,8 +482,9 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         """
         Look for LPE (Low Power Efficiency) cores on a hybrid system.
 
-        LPE cores are not necessarily enumerated in the sysfs. Find them using the fact that they do
-        not have the L3 cache.
+        Notes:
+            - LPE cores are not necessarily enumerated in the sysfs.
+            - They are identified by the fact that they do not have the L3 cache.
         """
 
         cpus = self._get_online_cpus_set()
@@ -562,8 +523,11 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         Build and return a dictionary mapping hybrid CPU types to their corresponding CPU numbers.
 
         Returns:
-            A dictionary where keys are hybrid CPU types (such as 'ecore' and 'pcore') and values
-            are the corresponding CPU numbers.
+            A dictionary mapping hybrid CPU types to CPU numbers.
+
+        Notes:
+            - Dictionary keys are hybrid CPU types (such as 'ecore' and 'pcore').
+            - Dictionary values are the corresponding CPU numbers.
         """
 
         if self._hybrid_cpus:
@@ -594,3 +558,4 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         self._hybrid_cpus = {}
         self._initialized_snames = set()
         self._topology = {}
+        self._compute_dies = {}

@@ -89,7 +89,10 @@ def _get_scope_nums(sname: ScopeNameType,
 
     assert get_method, f"BUG: 'get_{sname}s()' does not exist"
 
-    result = get_method(order=order)
+    if sname != "die":
+        result = get_method(order=order)
+    else:
+        result = get_method()
 
     return result
 
@@ -432,7 +435,6 @@ def test_cpuinfo_convert(params: CommonTestParamsTypedDict):
     Tests various conversion methods of the 'CPUInfo' class, for example:
         - packages_to_cpus()
         - package_to_cpus()
-        - package_to_cores()
         - dies_to_cpus()
         - cores_to_cpus()
 

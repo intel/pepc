@@ -14,6 +14,7 @@ cores, modules, dies, or packages are affected.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
+
 from pepclibs import CPUInfo
 from pepclibs.helperlibs import Logging, LocalProcessManager, ClassHelpers, Trivial
 from pepclibs.helperlibs.Exceptions import Error
@@ -27,14 +28,18 @@ if typing.TYPE_CHECKING:
         """
         Typed dictionary for the topology numbers cache.
 
-        Args:
+        Attributes:
             cpus: Cached target CPU numbers.
-            dies: Cached target die numbers.
+            compute_dies: Cached target compute die numbers.
+            noncomp_dies: Cached target non-compute die numbers.
+            all_dies: Cached target compute and non-compute die numbers.
             packages: Cached target package numbers.
         """
 
         cpus: list[int]
-        dies: dict[int, list[int]]
+        compute_dies: dict[int, list[int]]
+        noncomp_dies: dict[int, list[int]]
+        all_dies: dict[int, list[int]]
         packages: list[int]
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
@@ -59,7 +64,9 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
 
     Public Methods:
         - get_cpus() - return the target CPU numbers.
-        - get_dies() - return the target die numbers.
+        - get_dies() - return the target compute die numbers.
+        - get_noncomp_dies() - return the target non-compute die numbers.
+        - get_all_dies() - return all target die numbers (compute and non-compute).
         - get_packages() - return the target package numbers.
         - close() - uninitialize the class object.
     """
@@ -89,9 +96,9 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
         - dies: "all"
 
         Args:
-            pman: A process manager object representing the target host. If not provided, a local
+            pman: Process manager object representing the target host. If not provided, a local
                   process manager is used.
-            cpuinfo: A CPU information object. If not provided, a new CPUInfo instance is created.
+            cpuinfo: CPU information object. If not provided, a new CPUInfo instance is created.
             cpus: Target CPU numbers. Accept a sequence of integers, a comma-separated string of CPU
                   numbers, or "all" to target all CPUs.
             cores: Target core numbers. Accept a sequence of integers, a mapping of package-indexed
@@ -357,11 +364,11 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
         Parse an input topology argument (e.g., input CPUs).
 
         Args:
-            nums: An input topology argument to parse.
-            what: A string describing what 'nums' are (e.g., "CPU numbers"). Used in error messages.
+            nums: Input topology argument to parse.
+            what: String describing what 'nums' are (e.g., "CPU numbers"). Used in error messages.
 
         Returns:
-            A list of integer numbers, or "all" if all elements are requested ('nums' is "all").
+            List of integer numbers, or "all" if all elements are requested ('nums' is "all").
 
         Example:
             Parse "0,1,2" as [0, 1, 2].
@@ -399,7 +406,7 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
 
         if sname == "core":
             for package in self._cpuinfo.get_packages():
-                pkg2nums[package] = self._cpuinfo.package_to_cores(package)
+                pkg2nums[package] = self._cpuinfo.get_package_cores(package=package)
         else:
             for package in self._cpuinfo.get_packages():
                 pkg2nums[package] = self._cpuinfo.get_all_package_dies(package=package)
@@ -516,7 +523,7 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
             True if all target dies are non-compute dies, False otherwise.
         """
 
-        dies = self.get_dies()
+        dies = self.get_all_dies()
         if not dies:
             return False
 
@@ -555,16 +562,13 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
         if not self._only_noncomp_dies():
             raise ErrorNoTarget("BUG: Failed to figure out CPU numbers")
 
-        dies_str = self._cpuinfo.dies_to_str(self.get_dies())
+        dies_str = self._cpuinfo.dies_to_str(self.get_all_dies())
         raise ErrorNoCPUTarget(f"No CPU numbers were specified.\n  The following non-compute dies "
                                f"were selected, but they do not have CPUs: {dies_str}.")
 
     def get_dies(self, strict: bool = True) -> dict[int, list[int]]:
         """
-        Retrieve target die numbers.
-
-        In strict mode, ensure that only dies are targeted. Raise 'ErrorNoTarget' exception if any
-        CPUs do not comprise a full die. Otherwise, allow targeting of any level below "die".
+        Retrieve target compute die numbers.
 
         Args:
             strict: If True, require that only dies are targeted. If False, allow topology levels
@@ -575,13 +579,18 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
 
         Raises:
             ErrorNoTarget: If 'strict' is True and some CPUs do not comprise a full die.
+
+        Notes:
+            - In strict mode, ensure that only dies are targeted. Raise 'ErrorNoTarget' exception
+              if any CPUs do not comprise a full die.
+            - In non-strict mode, allow targeting of any level below "die".
         """
 
-        if "dies" in self._cache:
-            return self._cache["dies"]
+        if "compute_dies" in self._cache:
+            return self._cache["compute_dies"]
 
         cpus = self._get_cpus(exclude=["die"])
-        dies, rem_cpus = self._cpuinfo.cpus_div_dies(cpus)
+        compute_dies, rem_cpus = self._cpuinfo.cpus_div_dies(cpus)
         if strict and rem_cpus:
             human_cpus = Trivial.rangify(rem_cpus)
             raise ErrorNoTarget(f"The following CPUs do not comprise a die: {human_cpus}",
@@ -589,29 +598,106 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
 
         if self.dies:
             for package, pkg_dies in self.dies.items():
-                if package not in dies:
-                    dies[package] = []
-                dies[package] += pkg_dies
+                if package not in compute_dies:
+                    compute_dies[package] = []
+                # Input dies were specified, and they may include non-compute dies as well - filter them
+                # out.
+                pkg_noncomp_dies_set = set(self._cpuinfo.get_package_noncomp_dies(package=package))
+                pkg_dies = [die for die in pkg_dies if die not in pkg_noncomp_dies_set]
+                compute_dies[package] += pkg_dies
         elif not self.cpus and not self.cores and not self.modules and self.packages:
             # One or more packages are targeted. No specific CPUs, cores, or modules are targeted.
-            # Assume this means that non-compute dies are targeted too, so include them.
+            # This means that all compute dies in the packages are targeted too, so include them.
             for package in self.packages:
-                if package not in dies:
-                    dies[package] = []
-                dies[package] += self._cpuinfo.get_all_package_dies(package=package)
+                if package not in compute_dies:
+                    compute_dies[package] = []
+                compute_dies[package] += self._cpuinfo.get_package_dies(package=package)
 
-        for package in dies:
-            dies[package] = Trivial.list_dedup(dies[package])
+        for package in compute_dies:
+            compute_dies[package] = Trivial.list_dedup(compute_dies[package])
 
-        self._cache["dies"] = dies
-        return self._cache["dies"]
+        self._cache["compute_dies"] = compute_dies
+        return self._cache["compute_dies"]
+
+    def get_noncomp_dies(self) -> dict[int, list[int]]:
+        """
+        Retrieve target non-compute die numbers.
+
+        Returns:
+            Dictionary where keys are package numbers and values are lists of non-compute die
+            numbers.
+        """
+
+        if "noncomp_dies" in self._cache:
+            return self._cache["noncomp_dies"]
+
+        all_noncomp_dies = self._cpuinfo.get_noncomp_dies()
+        noncomp_dies: dict[int, list[int]] = {}
+
+        if self.dies:
+            for package, pkg_dies in self.dies.items():
+                if package not in all_noncomp_dies:
+                    continue
+
+                # 'package' and 'pkg_dies' represent the input. They may include compute dies as
+                # well - filter them out.
+                pkg_compute_dies_set = set(self._cpuinfo.get_package_dies(package=package))
+                for die in pkg_dies:
+                    if die in all_noncomp_dies[package] and die not in pkg_compute_dies_set:
+                        noncomp_dies.setdefault(package, []).append(die)
+        elif not self.cpus and not self.cores and not self.modules and self.packages:
+            # One or more packages are targeted. No specific CPUs, cores, or modules are targeted.
+            # This means that all non-compute dies in the packages are targeted too, so include
+            # them.
+            for package in self.packages:
+                if package not in all_noncomp_dies:
+                    continue
+                noncomp_dies.setdefault(package, []).extend(all_noncomp_dies[package])
+
+        for package in noncomp_dies:
+            noncomp_dies[package] = Trivial.list_dedup(noncomp_dies[package])
+
+        self._cache["noncomp_dies"] = noncomp_dies
+
+        return self._cache["noncomp_dies"]
+
+    def get_all_dies(self, strict: bool = True) -> dict[int, list[int]]:
+        """
+        Retrieve target die numbers (both compute and non-compute).
+
+        Args:
+            strict: If True, require that only dies are targeted. If False, allow topology levels
+                    below die.
+
+        Returns:
+            Dictionary where keys are package numbers and values are lists of die numbers.
+
+        Raises:
+            ErrorNoTarget: If 'strict' is True and some CPUs do not comprise a full die.
+
+        Notes:
+            - In strict mode, ensure that only dies are targeted. Raise 'ErrorNoTarget' exception
+              if any CPUs do not comprise a full die.
+            - In non-strict mode, allow targeting of any level below "die".
+        """
+
+        if "all_dies" in self._cache:
+            return self._cache["all_dies"]
+
+        dies = self.get_dies(strict=strict)
+        noncomp_dies = self.get_noncomp_dies()
+
+        for package, pkg_noncomp_dies in noncomp_dies.items():
+            if package not in dies:
+                dies[package] = []
+            dies[package] += pkg_noncomp_dies
+
+        assert self._cache["all_dies"] == dies
+        return self._cache["all_dies"]
 
     def get_packages(self, strict: bool = True) -> list[int]:
         """
         Retrieve target package numbers.
-
-        In strict mode, ensure that only full packages are targeted. If any CPUs do not comprise a
-        full package, raise 'ErrorNoTarget'.
 
         Args:
             strict: If True, require that the operation targets only full packages. If False, allow
@@ -622,6 +708,11 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
 
         Raises:
             ErrorNoTarget: If strict is True and some CPUs do not comprise a full package.
+
+        Notes:
+            - In strict mode, ensure that only full packages are targeted. If any CPUs do not
+              comprise a full package, raise 'ErrorNoTarget'.
+            - In non-strict mode, allow targeting any level below "package".
         """
 
         if "packages" in self._cache:

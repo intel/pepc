@@ -159,7 +159,7 @@ def get_sname_and_nums(pobj: PropsClassType,
 
     if sname == "die":
         try:
-            return "die", optar.get_dies()
+            return "die", optar.get_all_dies()
         except ErrorNoTarget:
             sname = "CPU"
 

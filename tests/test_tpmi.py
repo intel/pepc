@@ -63,11 +63,11 @@ def get_params(hostspec: str, username: str) -> Generator[_TestParamsTypedDict, 
 
         params["cpuinfo"] = cpuinfo
         try:
-            params["tpmi"] = cpuinfo.get_tpmi()
+            with TPMI.TPMI(cpuinfo.proc_cpuinfo["vfm"], pman=pman) as tpmi:
+                params["tpmi"] = tpmi
+                yield params
         except ErrorNotSupported:
             pytest.skip(f"TPMI is not supported by {hostspec}.")
-
-        yield params
 
 def test_get_unknown_features(params: _TestParamsTypedDict):
     """
