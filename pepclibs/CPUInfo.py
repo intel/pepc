@@ -68,10 +68,8 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
     4. Get packages/core/etc counts.
         - 'get_cpus_count()'
         - 'get_cores_count()'
-        - 'get_package_cores_count()'
         - 'get_modules_count()'
         - 'get_dies_count()'
-        - 'get_package_dies_count()'
         - 'get_packages_count()'
         - 'get_offline_cpus_count()'
     5. Normalize a list of packages/cores/etc.
@@ -951,20 +949,6 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         cores = self.get_cores()
         return sum(len(core_nums) for core_nums in cores.values())
 
-    def get_package_cores_count(self, package: int = 0) -> int:
-        """
-        Return the number of cores in the specified package. Count only cores that have at least one
-        online CPU.
-
-        Args:
-            package: The package number to query.
-
-        Returns:
-            Number of cores with at least one online CPU in the given package.
-        """
-
-        return len(self.get_package_cores(package=package))
-
     def get_modules_count(self) -> int:
         """
         Return the number of modules with at least one online CPU.
@@ -1013,28 +997,6 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
         dies = self.get_all_dies()
         return sum(len(pkg_dies) for pkg_dies in dies.values())
-
-    def get_package_dies_count(self,
-                               package: int = 0,
-                               compute_dies: bool = True,
-                               noncomp_dies: bool = False) -> int:
-        """
-        Return the number of dies in the specified package.
-
-        Args:
-            package: Package number to query.
-            compute_dies: Include compute dies (dies with CPUs) if True.
-            noncomp_dies: Include non-compute dies (dies without CPUs) if True.
-
-        Returns:
-            Number of dies in the package that contain at least one online CPU.
-
-        Note:
-            Only dies with at least one online CPU are counted.
-        """
-
-        return len(self.get_package_dies(package=package, compute_dies=compute_dies,
-                                         noncomp_dies=noncomp_dies))
 
     def get_packages_count(self) -> int:
         """

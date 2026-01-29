@@ -255,7 +255,8 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         # dies in all packages.
         all_dies_all_packages = True
         for pkg, dies in pkgs_dies.items():
-            if len(dies) != self._cpuinfo.get_package_dies_count(package=pkg, noncomp_dies=True):
+            all_pkg_dies = self._cpuinfo.get_all_package_dies(package=pkg)
+            if len(dies) != len(all_pkg_dies):
                 all_dies_all_packages = False
 
         packages_count = self._cpuinfo.get_packages_count()
@@ -269,7 +270,8 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         #   - die 1 of package 0, dies 0-3 of package 1.
         result = []
         for pkg, dies in pkgs_dies.items():
-            if len(dies) == self._cpuinfo.get_package_dies_count(package=pkg, noncomp_dies=True):
+            all_pkg_dies = self._cpuinfo.get_all_package_dies(package=pkg)
+            if len(dies) == len(all_pkg_dies):
                 dies_str = "all dies"
             else:
                 dies_str = Trivial.rangify(dies)
@@ -301,7 +303,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
             return self._fmt_packages(nums) # type: ignore[arg-type]
         if sname == "die":
             # Use package formatting if there is only one die per package.
-            if self._cpuinfo.get_package_dies_count(package=0, noncomp_dies=True) == 1:
+            if len(self._cpuinfo.get_all_package_dies(package=0)) == 1:
                 return self._fmt_packages(nums) # type: ignore[arg-type]
             return self._fmt_dies(nums) # type: ignore[arg-type]
 

@@ -402,8 +402,7 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
                 pkg2nums[package] = self._cpuinfo.package_to_cores(package)
         else:
             for package in self._cpuinfo.get_packages():
-                pkg2nums[package] = self._cpuinfo.get_package_dies(package=package,
-                                                                   noncomp_dies=True)
+                pkg2nums[package] = self._cpuinfo.get_all_package_dies(package=package)
 
         all_nums = set()
         for package, package_nums in pkg2nums.items():
@@ -522,8 +521,7 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
             return False
 
         for package, pkg_dies in dies.items():
-            noncomp_dies = self._cpuinfo.get_package_dies(package=package, compute_dies=False,
-                                                          noncomp_dies=True)
+            noncomp_dies = self._cpuinfo.get_package_noncomp_dies(package=package)
             if not set(pkg_dies).issubset(set(noncomp_dies)):
                 return False
 
@@ -600,7 +598,7 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
             for package in self.packages:
                 if package not in dies:
                     dies[package] = []
-                dies[package] += self._cpuinfo.get_package_dies(package=package, noncomp_dies=True)
+                dies[package] += self._cpuinfo.get_all_package_dies(package=package)
 
         for package in dies:
             dies[package] = Trivial.list_dedup(dies[package])
