@@ -3,19 +3,16 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2025 Intel Corporation
+# Copyright (C) 2020-2026 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
-# Author: Niklas Neronin <niklas.neronin@intel.com>
+# Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
-"""
-Test for the '_OpTarget' module.
-"""
+"""Test the public methods of the '_OpTarget' module."""
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
-import contextlib
 import pytest
 from tests import common
 from pepclibs import CPUInfo, CPUOnline
@@ -141,7 +138,7 @@ def test_core_siblings(params: _TestParamsTypedDict):
     pman = params["pman"]
 
     # Run the test for the first and the last cores.
-    tlines = cpuinfo.get_topology()
+    tlines = cpuinfo.get_topology_new()
     for tline in (tlines[0], tlines[cpuinfo.get_cpus_count() - 1]):
         core = tline["core"]
         package = tline["package"]
@@ -155,13 +152,13 @@ def test_core_siblings(params: _TestParamsTypedDict):
                                     cores=(core,), core_siblings=indices) as optar:
                 sib_cpus = [cpus[i] for i in indices]
                 assert optar.cores == {package: [core]}, \
-                    f"core_siblings={indices} did not select the specified core"
+                       f"core_siblings={indices} did not select the specified core"
                 assert optar.packages == [package], \
-                    f"core_siblings={indices} did not select the specified package"
-                assert optar.core_sib_cpus  == sib_cpus, \
-                    f"core_siblings={indices} did not select the specified CPU"
+                       f"core_siblings={indices} did not select the specified package"
+                assert optar.core_sib_cpus == sib_cpus, \
+                       f"core_siblings={indices} did not select the specified CPU"
                 assert optar.get_cpus() == sib_cpus, \
-                    f"core_siblings={indices} did not select the specified CPU"
+                       f"core_siblings={indices} did not select the specified CPU"
 
 def test_module_siblings(params: _TestParamsTypedDict):
     """
@@ -175,7 +172,7 @@ def test_module_siblings(params: _TestParamsTypedDict):
     pman = params["pman"]
 
     # Run the test for the first and the last modules.
-    tlines = cpuinfo.get_topology()
+    tlines = cpuinfo.get_topology_new()
     for tline in (tlines[0], tlines[cpuinfo.get_cpus_count() - 1]):
         module = tline["module"]
 
@@ -189,11 +186,11 @@ def test_module_siblings(params: _TestParamsTypedDict):
                                     module_siblings=module_indices) as optar:
                 module_sibling_cpus = [module_cpus[i] for i in module_indices]
                 assert optar.modules == [module], \
-                    f"module_siblings={module_indices} did not select the specified module"
-                assert optar.module_sib_cpus  == module_sibling_cpus, \
-                    f"module_siblings={module_indices} did not select the specified CPU"
+                       f"module_siblings={module_indices} did not select the specified module"
+                assert optar.module_sib_cpus == module_sibling_cpus, \
+                       f"module_siblings={module_indices} did not select the specified CPU"
                 assert optar.get_cpus() == module_sibling_cpus, \
-                    f"module_siblings={module_indices} did not select the specified CPU"
+                       f"module_siblings={module_indices} did not select the specified CPU"
 
             if module_cpus[-1] == 0:
                 continue # Cannot offline CPU 0.
@@ -211,15 +208,17 @@ def test_module_siblings(params: _TestParamsTypedDict):
                     try:
                         selected_cpus = optar.get_cpus()
                     except ErrorNoTarget:
+                        # Expected when all CPUs in selection are offline.
                         pass
                     else:
+                        # When some CPUs remain online, verify selection excludes offline CPUs.
                         cpus = [cpu for cpu in module_sibling_cpus if cpu != module_cpus[-1]]
                         assert selected_cpus == cpus, \
-                            f"module_siblings={module_indices} did not select the specified CPU"
+                               f"module_siblings={module_indices} did not select the specified CPU"
 
                 # Now specify target CPUs directly and check that an exception is raised when one of
                 # them is offline.
-                with contextlib.suppress(Error):
+                with pytest.raises(Error):
                     with _OpTarget.OpTarget(pman=pman, cpuinfo=cpuinfo, modules=(module,),
                                             module_siblings=module_indices,
                                             cpus=module_sibling_cpus, offline_ok=False) as optar:
