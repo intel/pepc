@@ -138,7 +138,7 @@ def test_core_siblings(params: _TestParamsTypedDict):
     pman = params["pman"]
 
     # Run the test for the first and the last cores.
-    tlines = cpuinfo.get_topology_new()
+    tlines = cpuinfo.get_topology(snames=("core", "package"), order="core")
     for tline in (tlines[0], tlines[cpuinfo.get_cpus_count() - 1]):
         core = tline["core"]
         package = tline["package"]
@@ -172,7 +172,7 @@ def test_module_siblings(params: _TestParamsTypedDict):
     pman = params["pman"]
 
     # Run the test for the first and the last modules.
-    tlines = cpuinfo.get_topology_new()
+    tlines = cpuinfo.get_topology(snames=("module",), order="module")
     for tline in (tlines[0], tlines[cpuinfo.get_cpus_count() - 1]):
         module = tline["module"]
 

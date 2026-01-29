@@ -120,7 +120,7 @@ def _get_default_colnames(cpuinfo: CPUInfo.CPUInfo,
 
     # Check if all modules have exactly one core. If so, the "module" column is redundant.
     module = -1
-    for tline in cpuinfo.get_topology_new(snames=("core", "module", "package"), order="module"):
+    for tline in cpuinfo.get_topology(snames=("core", "module", "package"), order="module"):
         if module != tline["module"]:
             module = tline["module"]
             core = tline["core"]
@@ -136,7 +136,7 @@ def _get_default_colnames(cpuinfo: CPUInfo.CPUInfo,
 
     # Check if all packages have exactly one die. If so, the "die" column is redundant.
     package = -1
-    for tline in cpuinfo.get_topology_new(snames=("die", "package"), order="package"):
+    for tline in cpuinfo.get_topology(snames=("die", "package"), order="package"):
         if package != tline["package"]:
             die = tline["die"]
             package = tline["package"]
@@ -372,7 +372,7 @@ def topology_info_command(args: argparse.Namespace, pman: ProcessManagerType):
 
         colnames_set = set(colnames)
 
-        _topology = cpuinfo.get_topology_new(snames=snames, order=order)
+        _topology = cpuinfo.get_topology(snames=snames, order=order)
         _topology = _filter_cpus(cpus, _topology)
 
         if typing.TYPE_CHECKING:

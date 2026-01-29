@@ -129,9 +129,9 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
             snames = ", ".join(SCOPE_NAMES)
             raise Error(f"Bad {name} name '{sname}', use: {snames}")
 
-    def get_topology(self,
-                     snames: Iterable[ScopeNameType] | None = None,
-                     order: ScopeNameType = "CPU") -> list[dict[ScopeNameType, int]]:
+    def _get_topology_old(self,
+                          snames: Iterable[ScopeNameType] | None = None,
+                          order: ScopeNameType = "CPU") -> list[dict[ScopeNameType, int]]:
         """
         Return the CPU topology table sorted in the specified order, include the specified scopes.
 
@@ -235,17 +235,20 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
         self._validate_sname(order, name="order")
         topology = self._get_topology(snames, order=order)
+        # TODO: probably it is more optimal without a copy.
         return copy.deepcopy(topology)
 
-    def get_topology_new(self,
+    def get_topology(self,
                      snames: Iterable[ScopeNameType] | None = None,
                      order: ScopeNameType = "CPU") -> list[dict[ScopeNameType, int]]:
         """
-        TODO: this should replace 'get_topology()' method in the future. This one does not return
-        I/O dies information.
+        TODO: This is temporary, while non-compute dies are being removed from CPUInfo. Later this
+        method should be removed and '_get_topology_old()' should be renamed to 'get_topology()',
+        because it won't include non-compute dies anymore. But for now, this method filters out
+        non-compute dies from the topology returned by '_get_topology_old()'.
         """
 
-        topology = self.get_topology(snames, order=order)
+        topology = self._get_topology_old(snames, order=order)
         if not self._noncomp_dies:
             return topology
         if snames and "die" not in set(snames):

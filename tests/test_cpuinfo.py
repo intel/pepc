@@ -210,7 +210,7 @@ def _get_cpuinfos(params: CommonTestParamsTypedDict) -> Generator[CPUInfo.CPUInf
     pman = params["pman"]
 
     with CPUInfo.CPUInfo(pman=pman) as cpuinfo:
-        full_tlines = list(cpuinfo.get_topology_new())
+        full_tlines = list(cpuinfo.get_topology())
 
         # Ensure that all CPUs are online.
         with CPUOnline.CPUOnline(pman=pman, cpuinfo=cpuinfo) as cpuonline:
@@ -664,7 +664,7 @@ def test_core_siblings(params: CommonTestParamsTypedDict):
     """
 
     for cpuinfo in _get_cpuinfos(params):
-        topology = cpuinfo.get_topology_new(order="core")
+        topology = cpuinfo.get_topology(order="core")
 
         # We get the CPU siblings count for the first core in the topology list. Depending on how
         # many CPUs the core has determines the index we use for testing.

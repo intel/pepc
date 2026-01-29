@@ -178,7 +178,7 @@ def _check_ioscope(cpuinfo: CPUInfo.CPUInfo,
 
     tline = cpuinfo.get_tline_by_cpu(cpu)
 
-    for _tline in cpuinfo.get_topology_new():
+    for _tline in cpuinfo.get_topology():
         if _is_sibling(snames, sname, tline, _tline):
             if vals[_tline["CPU"]] != val:
                 return False
