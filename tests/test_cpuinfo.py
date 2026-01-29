@@ -3,11 +3,11 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2022-2025 Intel Corporation
+# Copyright (C) 2022-2026 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
-# Authors: Antti Laakso <antti.laakso@linux.intel.com>
-#          Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
+# Authors: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
+#          Antti Laakso <antti.laakso@linux.intel.com>
 
 """Test the public methods of the 'CPUInfo' module."""
 
@@ -31,22 +31,20 @@ if typing.TYPE_CHECKING:
         Typed dictionary for expected CPU topology structure used in tests.
 
         Attributes:
-            cpus: List of g CPU numbers.
+            cpus: List of CPU numbers.
             cores: Dictionary mapping package numbers to core numbers.
-            modules: List of g module numbers.
-            compute_dies: Dictionary mapping package numbers to compute die numbers.
-            noncomp_dies: Dictionary mapping package numbers to non-compute die numbers.
-            packages: List of g package numbers.
+            modules: List of module numbers.
+            dies: Dictionary mapping package numbers to compute die numbers.
+            packages: List of package numbers.
         """
 
         cpus: AbsNumsType
         cores: RelNumsType
         modules: AbsNumsType
-        compute_dies: RelNumsType
-        noncomp_dies: RelNumsType
+        dies: RelNumsType
         packages: AbsNumsType
 
-# A unique object used in '_run_method()' for ignoring method's return value by default.
+# A unique object used in '_run_method()' for ignoring a method's return value by default.
 _IGNORE = object()
 
 @pytest.fixture(name="params", scope="module")
@@ -71,16 +69,16 @@ def _get_scope_nums(sname: ScopeNameType,
                     cpuinfo: CPUInfo.CPUInfo,
                     order: ScopeNameType | None = None) -> AbsNumsType | RelNumsType:
     """
-    Execute the 'get_<sname>s()' (e.g., 'get_cores()') method of the given return the result.
+    Execute the 'get_<sname>s()' (e.g., 'get_cores()') method and return the result.
 
     Args:
-        sname: Name of the Cscope (e.g., "package", "core", "die") to run the method for.
+        sname: Name of the CPU scope (e.g., "package", "core", "die") to run the method for.
         cpuinfo: The 'CPUInfo' object under test.
-        order: The order to pass down to the 'get_<sname>s()' method. Use the 'sname' value is used
+        order: The order to pass down to the 'get_<sname>s()' method. The 'sname' value is used
                as the order by default.
 
     Returns:
-        List of CPU/code/etc (<sname>) numbers as returned by the corresponding 'get_<sname>s()'
+        List of CPU/core/etc (<sname>) numbers as returned by the corresponding 'get_<sname>s()'
         method.
     """
 
@@ -91,10 +89,7 @@ def _get_scope_nums(sname: ScopeNameType,
 
     assert get_method, f"BUG: 'get_{sname}s()' does not exist"
 
-    if sname == "die":
-        result = get_method(order=order, noncomp_dies=False)
-    else:
-        result = get_method(order=order)
+    result = get_method(order=order)
 
     return result
 
@@ -133,8 +128,7 @@ def _get_expected_topology(full_tlines: list[dict[ScopeNameType, int ]],
     cpus: list[int] = []
     cores: dict[int, list[int]] = {}
     modules: list[int] = []
-    compute_dies: dict[int, list[int]] = {}
-    noncomp_dies: dict[int, list[int]] = {}
+    dies: dict[int, list[int]] = {}
     packages: list[int] = []
 
     for tline in full_tlines:
@@ -147,29 +141,23 @@ def _get_expected_topology(full_tlines: list[dict[ScopeNameType, int ]],
         packages.append(pkg)
 
         cpu = tline["CPU"]
-        if cpu == CPUInfo.NA:
-            noncomp_dies.setdefault(pkg, []).append(die)
-        else:
-            cpus.append(cpu)
-            cores.setdefault(pkg, []).append(tline["core"])
-            modules.append(tline["module"])
-            compute_dies.setdefault(pkg, []).append(die)
+        cpus.append(cpu)
+        cores.setdefault(pkg, []).append(tline["core"])
+        modules.append(tline["module"])
+        dies.setdefault(pkg, []).append(die)
 
     cpus = Trivial.list_dedup(cpus)
     for pkg in cores:
         cores[pkg] = Trivial.list_dedup(cores[pkg])
     modules = Trivial.list_dedup(modules)
-    for pkg in compute_dies:
-        compute_dies[pkg] = Trivial.list_dedup(compute_dies[pkg])
-    for pkg in noncomp_dies:
-        noncomp_dies[pkg] = Trivial.list_dedup(noncomp_dies[pkg])
+    for pkg in dies:
+        dies[pkg] = Trivial.list_dedup(dies[pkg])
     packages = Trivial.list_dedup(packages)
 
     exp_topo["cpus"] = cpus
     exp_topo["cores"] = cores
     exp_topo["modules"] = modules
-    exp_topo["compute_dies"] = compute_dies
-    exp_topo["noncomp_dies"] = noncomp_dies
+    exp_topo["dies"] = dies
     exp_topo["packages"] = packages
 
     return exp_topo
@@ -197,17 +185,11 @@ def _validate_topo(cpuinfo: CPUInfo.CPUInfo, exp_topo: _ExpectedTopology):
     assert sorted(modules) == sorted(exp_topo["modules"]), \
            f"get_modules() returned {modules}, expected {exp_topo['modules']}"
 
-    compute_dies = cpuinfo.get_dies(noncomp_dies=False)
-    for pkg in exp_topo["compute_dies"]:
-        assert sorted(compute_dies[pkg]) == sorted(exp_topo["compute_dies"][pkg]), \
-               f"get_dies(noncomp_dies=False) returned {compute_dies[pkg]} for package {pkg}, " \
-               f"expected {exp_topo['compute_dies'][pkg]}"
-
-    noncomp_dies = cpuinfo.get_dies(compute_dies=False, noncomp_dies=True)
-    for pkg in exp_topo["noncomp_dies"]:
-        assert sorted(noncomp_dies[pkg]) == sorted(exp_topo["noncomp_dies"][pkg]), \
-               f"get_dies(compute_dies=False, noncomp_dies=True) returned {noncomp_dies[pkg]} " \
-               f"for package {pkg}, expected {exp_topo['noncomp_dies'][pkg]}"
+    dies = cpuinfo.get_dies()
+    for pkg in exp_topo["dies"]:
+        assert sorted(dies[pkg]) == sorted(exp_topo["dies"][pkg]), \
+               f"get_dies() returned {dies[pkg]} for package {pkg}, " \
+               f"expected {exp_topo['dies'][pkg]}"
 
 def _get_cpuinfos(params: CommonTestParamsTypedDict) -> Generator[CPUInfo.CPUInfo, None, None]:
     """
@@ -228,7 +210,7 @@ def _get_cpuinfos(params: CommonTestParamsTypedDict) -> Generator[CPUInfo.CPUInf
     pman = params["pman"]
 
     with CPUInfo.CPUInfo(pman=pman) as cpuinfo:
-        full_tlines = list(cpuinfo.get_topology())
+        full_tlines = list(cpuinfo.get_topology_new())
 
         # Ensure that all CPUs are online.
         with CPUOnline.CPUOnline(pman=pman, cpuinfo=cpuinfo) as cpuonline:
@@ -329,7 +311,7 @@ def _test_get_good(cpuinfo: CPUInfo.CPUInfo):
     """
     Test the 'get_<sname>s()' methods of the 'cpuinfo' object.
 
-    This function iterates through all scope name and their corresponding numbers, verifying that:
+    This function iterates through all scope names and their corresponding numbers, verifying that:
         - The 'get_{sname}s()' methods return non-empty lists of the expected items.
         - The returned lists are consistent and sorted, regardless of the 'order' parameter.
         - The 'get_offline_cpus()' method can be called without error.
@@ -385,10 +367,6 @@ def test_cpuinfo_get_count(params: CommonTestParamsTypedDict):
 
     for cpuinfo in _get_cpuinfos(params):
         for sname, nums in _get_snames_and_nums(cpuinfo):
-            kwargs = {}
-            if sname == "die":
-                # TODO: cover non-compute dies too.
-                kwargs = {"noncomp_dies" : False}
             if sname in ("core", "die"):
                 if typing.TYPE_CHECKING:
                     nums_dict = cast(RelNumsType, nums)
@@ -397,7 +375,7 @@ def test_cpuinfo_get_count(params: CommonTestParamsTypedDict):
                 count = sum(len(pkg_nums) for pkg_nums in nums_dict.values())
             else:
                 count = len(nums)
-            _run_method(f"get_{sname}s_count", cpuinfo, kwargs=kwargs, exp_res=count)
+            _run_method(f"get_{sname}s_count", cpuinfo, exp_res=count)
 
         offline_cpus = cpuinfo.get_offline_cpus()
         _run_method("get_offline_cpus_count", cpuinfo, exp_res=len(offline_cpus))
@@ -437,7 +415,7 @@ def _test_convert_good(cpuinfo: CPUInfo.CPUInfo):
             multi_args.append((from_nums_list[-1], from_nums_list[0]))
 
         for to_sname, to_nums in _get_snames_and_nums(cpuinfo):
-            # Test normalize method of single value.
+            # Test conversion method for a single value.
             method_name = f"{from_sname}_to_{to_sname}s"
             for arg in single_args:
                 _run_method(method_name, cpuinfo, args=(arg,))
@@ -476,7 +454,7 @@ def _test_normalize_good(cpuinfo: CPUInfo.CPUInfo):
     # There are two types of normalize methods:
     #   1. Methods for a single value (e.g., normalize_package()), which accept a single integer
     #      as input and return an integer.
-    #   2. Methods for multiple values (e.g., normalize_packages()), which accept a list of a
+    #   2. Methods for multiple values (e.g., normalize_packages()), which accept a list or a
     #      dictionary and return a list of integers.
     multiple: list[tuple[AbsNumsType | RelNumsType, AbsNumsType | RelNumsType]]
     for sname, nums in _get_snames_and_nums(cpuinfo):
@@ -657,7 +635,7 @@ def _test_cpuinfo_div(cpuinfo):
             if cpu not in num0_cpus:
                 exp_cpus.append(cpu)
 
-        # Resolving all CPUs but for only for the first package.
+        # Resolving all CPUs but only for the first package.
         args = (allcpus,)
         kwargs = {"packages" : [nums_list[0]]}
         exp_res = _test_div_create_exp_res(sname, nums_list[0:1], exp_cpus)
@@ -665,7 +643,7 @@ def _test_cpuinfo_div(cpuinfo):
 
 def test_cpuinfo_div(params: CommonTestParamsTypedDict):
     """
-    Test the division method, for example:
+    Test the division methods, for example:
         - 'cpus_div_packages()'
         - 'cpus_div_dies()'
         - 'cpus_div_cores()'
@@ -686,10 +664,10 @@ def test_core_siblings(params: CommonTestParamsTypedDict):
     """
 
     for cpuinfo in _get_cpuinfos(params):
-        topology = cpuinfo.get_topology(order="core")
+        topology = cpuinfo.get_topology_new(order="core")
 
         # We get the CPU siblings count for the first core in the topology list. Depending on how
-        # many CPUs the core has, will determine the index we use for testing.
+        # many CPUs the core has determines the index we use for testing.
         index = 0
         for tline in topology[1:]:
             if tline["package"] != topology[0]["package"] or tline["core"] != topology[0]["core"]:
@@ -729,7 +707,7 @@ def test_core_siblings(params: CommonTestParamsTypedDict):
 def test_delayed_init(params: CommonTestParamsTypedDict):
     """
     In some scenarios certain pieces of 'CPUInfo' should not be initialized for optimization
-    purposes. This test ensures that those cases.
+    purposes. This test ensures that delayed initialization works correctly.
 
     Args:
         params: The test parameters.
