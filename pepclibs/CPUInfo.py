@@ -506,11 +506,11 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
                          compute_dies: bool = True,
                          noncomp_dies: bool = False) -> list[int]:
         """
-        Return a list of die numbers in the specified package.
+        Return a list of compute die numbers in the specified package.
 
         Only dies containing at least one online CPU are included, as Linux does not provide
         topology information for offline CPUs. Die numbers may be globally unique or relative to the
-        package, depending on the system.
+        package, depending on the system. Non-compute dies (dies without CPUs) are not included.
 
         Args:
             package: The package number to return die numbers for.
@@ -519,8 +519,9 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
             noncomp_dies: Include non-compute dies (dies without CPUs) if True.
 
         Returns:
-            A list of die numbers in the given package, filtered and sorted according to the
+            A list of compute die numbers in the given package, filtered and sorted according to the
             provided arguments.
+        TODO: the noncomp_dies argument should go away.
         """
 
         dies = self._get_scope_nums("die", "package", (package,), order=order)
@@ -539,6 +540,38 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
             if die in self._noncomp_dies[package]:
                 noncompdies.append(die)
         return noncompdies
+
+    def get_package_noncomp_dies(self, package: int = 0):
+        """
+        Return a list of non-compute die numbers in the specified package.
+
+        Args:
+            package: The package number to return die numbers for.
+
+        Returns:
+            A list of non-compute die numbers in the given package.
+        """
+
+        return self.get_package_dies(package=package, order="die", compute_dies=False,
+                                     noncomp_dies=True)
+
+    def get_all_package_dies(self, package: int = 0):
+        """
+        Return a list of compute and non-compute die numbers in the specified package.
+
+        Only compute dies containing at least one online CPU are included, as Linux does not provide
+        topology information for offline CPUs. Die numbers may be globally unique or relative to the
+        package, depending on the system.
+
+        Args:
+            package: The package number to return die numbers for.
+
+        Returns:
+            A list of compute and non-compute die numbers in the given package.
+        """
+
+        return self.get_package_dies(package=package, order="die", compute_dies=True,
+                                     noncomp_dies=True)
 
     def get_nodes(self, order: ScopeNameType = "node") -> list[int]:
         """

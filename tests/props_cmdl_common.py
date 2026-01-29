@@ -6,8 +6,8 @@
 # Copyright (C) 2020-2026 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
-# Authors: Niklas Neronin <niklas.neronin@intel.com>
-#          Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
+# Authors: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
+#          Niklas Neronin <niklas.neronin@intel.com>
 
 """Common functions for the C-state, P-state and uncore command-line option tets."""
 
@@ -81,7 +81,7 @@ def extend_params(params: CommonTestParamsTypedDict,
     for pkg in params["packages"]:
         params["cores"][pkg] = cpuinfo.get_package_cores(package=pkg)
         params["modules"][pkg] = cpuinfo.package_to_modules(package=pkg)
-        params["dies"][pkg] = cpuinfo.get_package_dies(package=pkg, noncomp_dies=False)
+        params["dies"][pkg] = cpuinfo.get_all_package_dies(package=pkg)
 
     return params
 
@@ -156,7 +156,6 @@ def get_good_optarget_opts(params: PropsCmdlTestParamsTypedDict,
             str: Package scope command-line option string for the specified package.
         """
 
-        pkg = params["packages"][0]
         opts = [f"--packages {pkg}",
                 f"--packages {pkg}-{params['packages'][-1]}"]
 
@@ -272,7 +271,7 @@ def get_bad_optarget_opts(params: PropsCmdlTestParamsTypedDict) -> Generator[str
         params: The test parameters dictionary.
 
     Yields:
-        Valid operation target command-line options.
+        Invalid operation target command-line options.
     """
 
     yield from [f"--cpus {params['cpus'][-1] + 1}",
