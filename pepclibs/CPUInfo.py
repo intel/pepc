@@ -45,6 +45,8 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         - 'get_package_cores()'
         - 'get_modules()'
         - 'get_dies()'
+        - 'get_noncomp_dies()'
+        - 'get_all_dies()'
         - 'get_package_dies()'
         - 'get_nodes()'
         - 'get_packages()'
@@ -453,11 +455,12 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
                  compute_dies: bool = True,
                  noncomp_dies: bool = False) -> dict[int, list[int]]:
         """
-        Return a dictionary mapping package numbers to lists of die numbers.
+        Return a dictionary mapping package numbers to lists of compute die numbers.
 
         Only packages and dies containing at least one online CPU are included, as Linux does not
         provide topology information for offline CPUs. Die numbers may be globally unique or
-        relative to the package, depending on the system.
+        relative to the package, depending on the system. Non-compute dies (dies without CPUs) are
+        not included.
 
         Args:
             order: The sorting order for the resulting lists of die numbers.
@@ -465,8 +468,9 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
             noncomp_dies: Include non-compute dies (dies without CPUs) if True.
 
         Returns:
-            A dictionary where keys are package numbers and values are lists of die numbers present
-            in the corresponding package, sorted according to the specified order.
+            A dictionary where keys are package numbers and values are lists of compute die numbers
+            present in the corresponding package, sorted according to the specified order.
+        TODO: the noncomp_dies argument should go away.
         """
 
         result: dict[int, list[int]] = {}
@@ -475,6 +479,26 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
                                                     compute_dies=compute_dies,
                                                     noncomp_dies=noncomp_dies)
         return result
+
+    def get_noncomp_dies(self) -> dict[int, list[int]]:
+        """
+        Similar to 'get_dies()', but returns only non-compute dies.
+
+        Returns:
+            The non-compute dies dictionary.
+        """
+
+        return self.get_dies(order="die", compute_dies=False, noncomp_dies=True)
+
+    def get_all_dies(self) -> dict[int, list[int]]:
+        """
+        Similar to 'get_dies()', but returns all dies (both compute and non-compute).
+
+        Returns:
+            The all dies dictionary.
+        """
+
+        return self.get_dies(order="die", compute_dies=True, noncomp_dies=True)
 
     def get_package_dies(self,
                          package: int = 0,
@@ -920,17 +944,41 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
     def get_dies_count(self, compute_dies: bool = True, noncomp_dies: bool = False) -> int:
         """
-        Return the total number of dies in the system.
+        Return the total number of compute dies in the system.
 
         Args:
             compute_dies: Include compute dies (dies with CPUs) if True.
             noncomp_dies: Include non-compute dies (dies without CPUs) if True.
 
         Returns:
-            Total number of dies in the system that contain at least one online CPU.
+            Total number of compute dies in the system that contain at least one online CPU.
+        TODO: the noncomp_dies argument should go away.
         """
 
         dies = self.get_dies(compute_dies=compute_dies, noncomp_dies=noncomp_dies)
+        return sum(len(pkg_dies) for pkg_dies in dies.values())
+
+    def get_noncomp_dies_count(self) -> int:
+        """
+        Return the total number of non-compute dies in the system.
+
+        Returns:
+            Total number of non-compute dies in the system that contain at least one online CPU.
+        """
+
+        noncomp_dies = self.get_noncomp_dies()
+        return sum(len(pkg_dies) for pkg_dies in noncomp_dies.values())
+
+    def get_all_dies_count(self) -> int:
+        """
+        Return the total number of compute dies in the system (compute and non-compute). In case of
+        compute dies, only dies with at least one online CPU are counted.
+
+        Returns:
+            Total number of dies in the system that contain at least one online CPU.
+        """
+
+        dies = self.get_all_dies()
         return sum(len(pkg_dies) for pkg_dies in dies.values())
 
     def get_package_dies_count(self,

@@ -1,14 +1,12 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2025 Intel Corporation
+# Copyright (C) 2025-2026 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
-"""
-Test the for the '_UncoreFreqSysfs' and '_UncoreFreqTPMI' modules.
-"""
+"""Test the public methods of the '_UncoreFreqSysfs' and '_UncoreFreqTPMI' modules."""
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
@@ -19,7 +17,7 @@ from pepclibs import CPUInfo, _UncoreFreqSysfs, _UncoreFreqTPMI
 from pepclibs.helperlibs.Exceptions import Error, ErrorBadOrder, ErrorNotSupported, ErrorOutOfRange
 
 if typing.TYPE_CHECKING:
-    from typing import Literal, Union, Generator, cast
+    from typing import Union, Generator, cast
     from tests.common import CommonTestParamsTypedDict
     from pepclibs.CPUInfoTypes import RelNumsType
 
@@ -31,15 +29,10 @@ if typing.TYPE_CHECKING:
 
         Attributes:
             cpuinfo: A 'CPUInfo.CPUInfo' object.
-            mechanism: The uncore frequency mechanism being tested.
-            uncfreq_obj: The uncore frequency object being tested.
-            cache_enabled: Whether the caching is enabled for 'uncfreq_obj'.
+            ncompd: A 'NonCompDies.NonCompDies' object.
         """
 
         cpuinfo: CPUInfo.CPUInfo
-        mechanism: Literal["sysfs", "tpmi"]
-        uncfreq_obj: _UncoreFreqObjType
-        cache_enabled: bool
 
 @pytest.fixture(name="params", scope="module")
 def get_params(hostspec: str, username: str) -> Generator[_TestParamsTypedDict, None, None]:
@@ -257,7 +250,7 @@ def _test_freq_methods_dies_bad(uncfreq_obj: _UncoreFreqObjType, all_dies: RelNu
         else:
             raise Error(f"Expected 'ErrorBadOrder', but no exception was raised\n{errmsg_suffix}")
 
-        # Try to set min uncore frequency to a value lower than the minimum allowed and higher than
+        # Try to set min uncore frequency to a value lower than the minimum allowed or higher than
         # the maximum allowed. This should fail.
         if limits_supported:
             *_, min_freq_limit = next(uncfreq_obj.get_min_freq_limit_dies({package: [die]}))
@@ -318,7 +311,7 @@ def test_freq_methods_dies_good(params: _TestParamsTypedDict):
         params: The test parameters.
     """
 
-    all_dies = params["cpuinfo"].get_dies(noncomp_dies=True)
+    all_dies = params["cpuinfo"].get_all_dies()
 
     for uncfreq_obj in _iter_uncore_freq_objects(params):
         _test_freq_methods_dies_good(uncfreq_obj, all_dies)
@@ -331,7 +324,7 @@ def test_freq_methods_dies_bad(params: _TestParamsTypedDict):
         params: The test parameters.
     """
 
-    all_dies = params["cpuinfo"].get_dies(noncomp_dies=True)
+    all_dies = params["cpuinfo"].get_all_dies()
 
     for uncfreq_obj in _iter_uncore_freq_objects(params):
         _test_freq_methods_dies_bad(uncfreq_obj, all_dies)
@@ -412,7 +405,7 @@ def _test_freq_methods_cpu_good(uncfreq_obj: _UncoreFreqObjType, cpu: int):
 
 def test_freq_methods_cpu_good(params: _TestParamsTypedDict):
     """
-    Test the per-CPU uncore frequency get/set methods.
+    Test the per-CPU uncore frequency get/set methods. Use good input.
 
     Args:
         params: The test parameters.
@@ -452,7 +445,7 @@ def _test_elc_threshold_methods_dies(uncfreq_obj: _UncoreFreqObjType, all_dies: 
             # Enable the high threshold.
             val = 25 + package + die
             uncfreq_obj.set_elc_high_threshold_status_dies(bool(val % 2), {package: [die]})
-            # In case high threshold happens to be lower than 'var', which would cause a failure,
+            # In case high threshold happens to be lower than 'val', which would cause a failure,
             # set it to 100% first.
             uncfreq_obj.set_elc_high_threshold_dies(100, {package: [die]})
             uncfreq_obj.set_elc_low_threshold_dies(val, {package: [die]})
@@ -511,7 +504,7 @@ def _test_elc_threshold_methods_dies(uncfreq_obj: _UncoreFreqObjType, all_dies: 
         except ErrorOutOfRange:
             pass
         else:
-            raise Error(f"Tried to ELC lo threshold to {lo_thresh}, expected "
+            raise Error(f"Tried to set ELC lo threshold to {lo_thresh}, expected "
                         f"'ErrorOutOfRange', but no exception was raised\n{errmsg_suffix}")
 
     # Test setting low/high thresholds to values that violate the ordering requirement.
@@ -545,7 +538,7 @@ def _test_elc_threshold_methods_dies(uncfreq_obj: _UncoreFreqObjType, all_dies: 
 def test_elc_threshold_methods_dies(params: _TestParamsTypedDict):
     """
     Test the per-die ELC threshold get/set methods for uncore frequency objects of different
-    mechanisms and configurations. The tested methods are:
+    mechanisms and configurations. Use good input. The tested methods are:
       - 'get_elc_low_threshold_dies()'
       - 'get_elc_high_threshold_dies()'
       - 'set_elc_low_threshold_dies()'
@@ -555,7 +548,7 @@ def test_elc_threshold_methods_dies(params: _TestParamsTypedDict):
         params: The test parameters.
     """
 
-    all_dies = params["cpuinfo"].get_dies(noncomp_dies=True)
+    all_dies = params["cpuinfo"].get_all_dies()
 
     for uncfreq_obj in _iter_uncore_freq_objects(params):
         if uncfreq_obj.mname != "tpmi":
@@ -597,7 +590,7 @@ def _test_elc_threshold_methods_cpu(uncfreq_obj: _UncoreFreqObjType, cpu: int):
 def test_elc_threshold_methods_cpu(params: _TestParamsTypedDict):
     """
     Test the per-CPU ELC threshold get/set methods for uncore frequency objects of different
-    mechanisms and configurations. The tested methods are:
+    mechanisms and configurations. Use good input. The tested methods are:
       - 'get_elc_low_threshold_cpus()'
       - 'get_elc_high_threshold_cpus()'
       - 'set_elc_low_threshold_cpus()'
