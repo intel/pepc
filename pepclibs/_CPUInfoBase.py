@@ -18,11 +18,12 @@ import contextlib
 from pathlib import Path
 from pepclibs import CPUModels, ProcCpuinfo
 from pepclibs.helperlibs import Logging, LocalProcessManager, ClassHelpers, Trivial
-from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorNotFound
+from pepclibs.helperlibs.Exceptions import ErrorNotSupported, ErrorNotFound
 
 if typing.TYPE_CHECKING:
     from typing import Iterable
-    from pepclibs import NonCompDies
+    from pepclibs import _DieInfo
+    from pepclibs.ProcCpuinfo import ProcCpuinfoTypedDict, ProcCpuinfoPerCPUTypedDict
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepclibs.CPUInfoTypes import (ScopeNameType, AbsNumsType, HybridCPUKeyType,
                                        HybridCPUKeyInfoType)
@@ -37,15 +38,15 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
     def __init__(self,
                  pman: ProcessManagerType | None = None,
-                 ncompd: NonCompDies.NonCompDies | None = None):
+                 dieinfo: _DieInfo.DieInfo | None = None):
         """
         Initialize a class instance.
 
         Args:
             pman: Process manager object that defines the target host. If not provided, a local
                   process manager is created.
-            ncompd: An instance of the 'NonCompDies' class. If not provided, a new instance is
-                    created.
+            dieinfo: An instance of the '_DieInfo' class. If not provided, a new instance is
+                     created.
         """
 
         _LOG.debug("Initializing the '%s' class object", self.__class__.__name__)
@@ -54,7 +55,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         self.cpudescr = ""
 
         self._close_pman = pman is None
-        self._close_ncompd = ncompd is None
+        self._close_dieinfo = dieinfo is None
 
         # Online CPU numbers sorted in ascending order.
         self._cpus: list[int] = []
@@ -67,14 +68,8 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         # Dictionary of P-core/E-core CPUs.
         self._hybrid_cpus: dict[HybridCPUKeyType, list[int]] = {}
 
-        # Per-package compute die numbers (dies with CPUs) and non-compute die numbers (dies without
-        # CPUs).
-        self._compute_dies: dict[int, set[int]] = {}
-        self._noncomp_dies: dict[int, set[int]] = {}
-
-        self._noncomp_dies_discovered = False
-        self._ncompd = ncompd
-        self._ncompd_errmsg = ""
+        self._dieinfo = dieinfo
+        self._dieinfo_errmsg = ""
 
         # The topology dictionary.
         self._topology: dict[ScopeNameType, list[dict[ScopeNameType, int]]] = {}
@@ -103,7 +98,8 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         else:
             self._pman = LocalProcessManager.LocalProcessManager()
 
-        self.proc_cpuinfo = ProcCpuinfo.get_proc_cpuinfo(pman=self._pman)
+        self._proc_cpuinfo: ProcCpuinfoTypedDict = {}
+        self._proc_percpuinfo: ProcCpuinfoPerCPUTypedDict = {}
 
         self.cpudescr = self._get_cpu_description()
 
@@ -117,46 +113,61 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
         _LOG.debug("Closing the '%s' class object", self.__class__.__name__)
 
-        ClassHelpers.close(self, close_attrs=("_ncompd", "_pman"))
+        ClassHelpers.close(self, close_attrs=("_dieinfo", "_pman"))
 
-    def get_ncompd(self) -> NonCompDies.NonCompDies:
+    def get_proc_cpuinfo(self) -> ProcCpuinfoTypedDict:
         """
-        Return or create an instance of 'NonCompDies.NonCompDies' object.
+        Return the general '/proc/cpuinfo' information dictionary.
 
         Returns:
-            An instance of 'NonCompDies.NonCompDies' object.
-
-        Raises:
-            ErrorNotSupported: if TPMI is not supported on the target system, which also means that
-                               there are no non-compute dies.
+            The general '/proc/cpuinfo' information dictionary.
         """
 
-        if self._ncompd:
-            return self._ncompd
+        if not self._proc_cpuinfo:
+            self._proc_cpuinfo = ProcCpuinfo.get_proc_cpuinfo(self._pman)
+        return self._proc_cpuinfo
 
-        if self._ncompd_errmsg:
-            raise ErrorNotSupported(self._ncompd_errmsg)
+    def get_proc_percpuinfo(self) -> ProcCpuinfoPerCPUTypedDict:
+        """
+        Return the per-CPU '/proc/cpuinfo' topology information dictionary.
 
-        _LOG.debug("Creating an instance of 'NonCompDies.NonCompDies'")
+        Returns:
+            The per-CPU '/proc/cpuinfo' topology information dictionary.
+        """
+
+        if not self._proc_percpuinfo:
+            self._proc_percpuinfo = ProcCpuinfo.get_proc_percpuinfo(self._pman)
+        return self._proc_percpuinfo
+
+    def get_dieinfo(self) -> _DieInfo.DieInfo:
+        """
+        Return or create an instance of '_DieInfo.DieInfo' object.
+
+        Returns:
+            An instance of '_DieInfo.DieInfo' object.
+        """
+
+        if self._dieinfo:
+            return self._dieinfo
+
+        if self._dieinfo_errmsg:
+            raise ErrorNotSupported(self._dieinfo_errmsg)
+
+        _LOG.debug("Creating an instance of '_DieInfo.DieInfo'")
 
         # pylint: disable-next=import-outside-toplevel
-        from pepclibs import NonCompDies
+        from pepclibs import _DieInfo
+
+        proc_cpuinfo = self.get_proc_cpuinfo()
 
         try:
-            self._ncompd = NonCompDies.NonCompDies(pman=self._pman)
+            self._dieinfo = _DieInfo.DieInfo(pman=self._pman, proc_cpuinfo=proc_cpuinfo)
         except Exception as err:
-            self._ncompd_errmsg = str(err)
-            _LOG.debug(self._ncompd_errmsg)
+            self._dieinfo_errmsg = str(err)
+            _LOG.debug(self._dieinfo_errmsg)
             raise
 
-        return self._ncompd
-
-    def _discover_noncomp_dies(self):
-        """Discover non-compute dies and build the internal data structures."""
-
-        ncompd = self.get_ncompd()
-        self._noncomp_dies = ncompd.get_dies_sets()
-        self._noncomp_dies_discovered = True
+        return self._dieinfo
 
     def _add_cores_and_packages(self,
                                 cpu_tdict: dict[int, dict[ScopeNameType, int]],
@@ -171,7 +182,8 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
         cpus_set = set(cpus)
 
-        for package, pkg_cores in self.proc_cpuinfo["topology"].items():
+        proc_percpuinfo = self.get_proc_percpuinfo()
+        for package, pkg_cores in proc_percpuinfo["topology"].items():
             for core, core_cpus in pkg_cores.items():
                 for cpu in core_cpus:
                     if cpu in cpus_set:
@@ -220,72 +232,23 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
                 with contextlib.suppress(KeyError):
                     cpu_tdict[sibling]["module"] = module
 
-    def _add_compute_dies(self,
-                          cpu_tdict: dict[int, dict[ScopeNameType, int]],
-                          cpus: AbsNumsType):
+    def _add_compute_dies(self, cpu_tdict: dict[int, dict[ScopeNameType, int]]):
         """
-        Add compute die numbers for the specified CPUs to the CPU topology dictionary.
+        Add compute die numbers for the CPUs in the CPU topology dictionary.
 
         Args:
             cpu_tdict: CPU topology dictionary to update with compute die information.
-            cpus: CPU numbers for which to add compute die numbers.
-
-        Notes:
-            - Compute die numbers are read from either 'MSR_PM_LOGICAL_ID' MSR or from the sysfs
-              files under '/sys/devices/system/cpu/cpu<cpu>/topology/'.
         """
 
-        def _add_compute_die(cpu_tdict: dict[int, dict[ScopeNameType, int]], cpu: int, die: int):
-            """
-            Add a compute die number to the CPU topology dictionary.
+        dieinfo = self.get_dieinfo()
+        proc_percpuinfo = self.get_proc_percpuinfo()
+        compute_dies_cpus = dieinfo.get_compute_dies_cpus(proc_percpuinfo)
 
-            Args:
-                cpu_tdict: CPU topology dictionary to update.
-                cpu: CPU number to which the die number should be added.
-                die: Compute die number to add.
-            """
-
-            cpu_tdict[cpu]["die"] = die
-            package = cpu_tdict[cpu]["package"]
-            if package not in self._compute_dies:
-                self._compute_dies[package] = set()
-            self._compute_dies[package].add(die)
-
-        if self.proc_cpuinfo["vfm"] not in CPUModels.MODELS_WITH_HIDDEN_DIES:
-            _LOG.debug("Reading compute die information from sysfs")
-            for cpu in cpus:
-                if "die" in cpu_tdict[cpu]:
-                    continue
-
-                base = Path(f"{self._cpu_sysfs_base}/cpu{cpu}")
-                data = self._pman.read_file(base / "topology/die_id")
-                die = Trivial.str_to_int(data, what="die number")
-                siblings = self._read_range(base / "topology/die_cpus_list")
-                for sibling in siblings:
-                    # Suppress 'KeyError' in case the 'die_cpus_list' file included an offline CPU.
-                    with contextlib.suppress(KeyError):
-                        _add_compute_die(cpu_tdict, sibling, die)
-
-            return
-
-        _LOG.debug("Reading compute die information from 'MSR_PM_LOGICAL_ID'")
-
-        # pylint: disable=import-outside-toplevel
-        from pepclibs.msr import _SimpleMSR
-
-        try:
-            msr = _SimpleMSR.SimpleMSR(pman=self._pman)
-        except Error as err:
-            _LOG.warning("Failed to read 'MSR_PM_LOGICAL_ID' MSR%s:\n%s",
-                         self._pman.hostmsg, err.indent(2))
-            _LOG.warning("Information about die numbers will not be available")
-            return
-
-        regaddr = 0x54
-
-        for cpu, regval in msr.cpus_read(regaddr, cpus):
-            die = (regval >> 11) & 0x3F
-            _add_compute_die(cpu_tdict, cpu, die)
+        for pkg_dies in compute_dies_cpus.values():
+            for die, die_cpus in pkg_dies.items():
+                for cpu in die_cpus:
+                    cpu_tdict.setdefault(cpu, {})
+                    cpu_tdict[cpu]["die"] = die
 
     def _add_nodes(self, cpu_tdict: dict[int, dict[ScopeNameType, int]]):
         """
@@ -373,7 +336,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         if "module" in snames_set:
             self._add_modules(cpu_tdict, cpus)
         if "die" in snames_set:
-            self._add_compute_dies(cpu_tdict, cpus)
+            self._add_compute_dies(cpu_tdict)
         if "node" in snames_set:
             self._add_nodes(cpu_tdict)
 
@@ -466,16 +429,16 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         """
 
         # Some pre-release Intel CPUs are labeled as "GENUINE INTEL", hence 'lower()' is used.
-        vendor, _, _ = CPUModels.split_vfm(self.proc_cpuinfo["vfm"])
+        proc_cpuinfo = self.get_proc_cpuinfo()
+        vendor, _, _ = CPUModels.split_vfm(proc_cpuinfo["vfm"])
         if vendor == CPUModels.VENDOR_INTEL:
-            cpudescr = f"Intel processor model {self.proc_cpuinfo['model']:#x}"
-
+            cpudescr = f"Intel processor model {proc_cpuinfo['model']:#x}"
             for info in CPUModels.MODELS.values():
-                if info["vfm"] == self.proc_cpuinfo["vfm"]:
+                if info["vfm"] == proc_cpuinfo["vfm"]:
                     cpudescr += f" (codename: {info['codename']})"
                     break
         else:
-            cpudescr = self.proc_cpuinfo["modelname"]
+            cpudescr = proc_cpuinfo["modelname"]
         return cpudescr
 
     def _probe_lpe_cores_l3(self):
@@ -546,16 +509,25 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
         return self._hybrid_cpus
 
-    def _cpus_hotplugged(self):
+    def cpus_hotplugged(self):
         """
-        Handle CPU hotplug events by resetting cached CPU and topology information.
+        Handle CPU hotplug events by updating internal state.
+
+        Call this method whenever a CPU is brought online or taken offline. This ensures that the
+        internal CPU information remains accurate after hotplug events.
+
+        Notes:
+            This is a coarse-grained implementation that clears all cached information. Ideally,
+            only the affected parts should be updated.
         """
 
         _LOG.debug("Clearing cached CPU information")
-
         self._cpus = []
         self._cpus_set = set()
         self._hybrid_cpus = {}
         self._initialized_snames = set()
         self._topology = {}
-        self._compute_dies = {}
+        self._proc_percpuinfo = {}
+
+        if self._dieinfo:
+            self._dieinfo.cpus_hotplugged()

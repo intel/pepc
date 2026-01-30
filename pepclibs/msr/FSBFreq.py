@@ -147,7 +147,8 @@ class FSBFreq(_FeaturedMSR.FeaturedMSR):
         """
 
         self._partial_features = copy.deepcopy(FEATURES)
-        vfm = cpuinfo.proc_cpuinfo["vfm"]
+        proc_cpuinfo = cpuinfo.get_proc_cpuinfo()
+        vfm = proc_cpuinfo["vfm"]
 
         sname: ScopeNameType
         if vfm in _MODULE_SCOPE_VFMS:
@@ -163,7 +164,8 @@ class FSBFreq(_FeaturedMSR.FeaturedMSR):
     def _init_features_dict_fsb(self):
         """Initialize the 'fsb' feature information in the 'self._features' dictionary."""
 
-        vfm = self._cpuinfo.proc_cpuinfo["vfm"]
+        proc_cpuinfo = self._cpuinfo.get_proc_cpuinfo()
+        vfm = proc_cpuinfo["vfm"]
         if vfm not in _FSB_CODES:
             return
 

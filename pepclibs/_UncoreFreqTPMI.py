@@ -97,7 +97,7 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
 
         super().__init__(cpuinfo, pman, enable_cache=False)
 
-        self._tpmi: TPMI.TPMI = cpuinfo.get_ncompd().get_tpmi()
+        self._tpmi: TPMI.TPMI = cpuinfo.get_dieinfo().get_tpmi()
 
         # The package number -> uncore TPMI PCI device address map.
         self._addrmap: dict[int, str] = {}

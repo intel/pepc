@@ -205,7 +205,8 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         else:
             self._cpuinfo = CPUInfo.CPUInfo(pman=self._pman)
 
-        self._is_intel = CPUModels.is_intel(self._cpuinfo.proc_cpuinfo["vendor"])
+        proc_cpuinfo = self._cpuinfo.get_proc_cpuinfo()
+        self._is_intel = CPUModels.is_intel(proc_cpuinfo["vendor"])
 
     def close(self):
         """Uninitialize the class object."""

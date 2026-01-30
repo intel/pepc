@@ -78,7 +78,9 @@ class EnergyPerfBias(_FeaturedMSR.FeaturedMSR):
         """
 
         self._partial_features = copy.deepcopy(FEATURES)
-        vfm = cpuinfo.proc_cpuinfo["vfm"]
+
+        proc_cpuinfo = cpuinfo.get_proc_cpuinfo()
+        vfm = proc_cpuinfo["vfm"]
 
         sname: ScopeNameType
         if vfm in _CORE_SCOPE_VFMS:

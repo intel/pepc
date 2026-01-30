@@ -62,8 +62,9 @@ def get_params(hostspec: str, username: str) -> Generator[_TestParamsTypedDict, 
             params = cast(_TestParamsTypedDict, params)
 
         params["cpuinfo"] = cpuinfo
+        proc_cpuinfo = cpuinfo.get_proc_cpuinfo()
         try:
-            with TPMI.TPMI(cpuinfo.proc_cpuinfo["vfm"], pman=pman) as tpmi:
+            with TPMI.TPMI(proc_cpuinfo["vfm"], pman=pman) as tpmi:
                 params["tpmi"] = tpmi
                 yield params
         except ErrorNotSupported:
@@ -332,7 +333,8 @@ def test_specdirs(params: _TestParamsTypedDict):
     pman = params["pman"]
     cpuinfo = params["cpuinfo"]
 
-    vfm = cpuinfo.proc_cpuinfo["vfm"]
+    proc_cpuinfo = cpuinfo.get_proc_cpuinfo()
+    vfm = proc_cpuinfo["vfm"]
 
     # Attempt to create a TPMI object with a non-existent specdir.
     with pytest.raises(Error):
@@ -414,7 +416,8 @@ def _prepare_specdir(params: _TestParamsTypedDict, tmp_path: Path) -> Path:
     cpuinfo = params["cpuinfo"]
     sdds = params["tpmi"].sdds
 
-    vfm = cpuinfo.proc_cpuinfo["vfm"]
+    proc_cpuinfo = cpuinfo.get_proc_cpuinfo()
+    vfm = proc_cpuinfo["vfm"]
     ufs_specpath = Path()
 
     for specdir in sdds:
@@ -467,7 +470,8 @@ def test_spec_file_override(params: _TestParamsTypedDict, tmp_path: Path):
     cpuinfo = params["cpuinfo"]
 
     sdds = [tmpspecdir, *params["tpmi"].sdds]
-    vfm = cpuinfo.proc_cpuinfo["vfm"]
+    proc_cpuinfo = cpuinfo.get_proc_cpuinfo()
+    vfm = proc_cpuinfo["vfm"]
 
     with TPMI.TPMI(vfm, pman=pman, specdirs=sdds) as tpmi:
         # Verify that original spec file is overridden.
@@ -711,8 +715,8 @@ def test_bitfield_value_out_of_range(params: _TestParamsTypedDict):
     tpmi = params["tpmi"]
 
     fname = "ufs"
-    regname = "UFS_ADV_CONTROL_2"
-    bfname = "UTILIZATION_THRESHOLD"
+    regname = "UFS_CONTROL"
+    bfname = "MAX_RATIO"
 
     try:
         fdict = tpmi.get_fdict(fname)

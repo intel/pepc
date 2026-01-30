@@ -85,7 +85,10 @@ def _get_scope_nums(sname: ScopeNameType,
     if order is None:
         order = sname
 
-    get_method = getattr(cpuinfo, f"get_{sname}s".lower(), None)
+    if sname != "die":
+        get_method = getattr(cpuinfo, f"get_{sname}s".lower(), None)
+    else:
+        get_method = getattr(cpuinfo, f"get_compute_{sname}s".lower(), None)
 
     assert get_method, f"BUG: 'get_{sname}s()' does not exist"
 
@@ -188,10 +191,10 @@ def _validate_topo(cpuinfo: CPUInfo.CPUInfo, exp_topo: _ExpectedTopology):
     assert sorted(modules) == sorted(exp_topo["modules"]), \
            f"get_modules() returned {modules}, expected {exp_topo['modules']}"
 
-    dies = cpuinfo.get_dies()
+    dies = cpuinfo.get_compute_dies()
     for pkg in exp_topo["dies"]:
         assert sorted(dies[pkg]) == sorted(exp_topo["dies"][pkg]), \
-               f"get_dies() returned {dies[pkg]} for package {pkg}, " \
+               f"get_compute_dies() returned {dies[pkg]} for package {pkg}, " \
                f"expected {exp_topo['dies'][pkg]}"
 
 def _get_cpuinfos(params: CommonTestParamsTypedDict) -> Generator[CPUInfo.CPUInfo, None, None]:
@@ -749,6 +752,6 @@ def test_delayed_init(params: CommonTestParamsTypedDict):
         assert "module" in cpuinfo._initialized_snames, "'module' scope should be initialized"
         assert "die" not in cpuinfo._initialized_snames, "'die' scope should not be initialized"
 
-        # Finally, the 'get_dies()' initializes the 'die' scope.
-        cpuinfo.get_dies()
+        # Finally, the 'get_compute_dies()' initializes the 'die' scope.
+        cpuinfo.get_compute_dies()
         assert "die" in cpuinfo._initialized_snames, "'die' scope should be initialized"

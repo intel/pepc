@@ -63,11 +63,12 @@ def override_cpu_model(cpuinfo: CPUInfo.CPUInfo, user_vfm: str):
 
     mdict = CPUModels.parse_user_vfm(user_vfm)
 
-    cpuinfo.proc_cpuinfo["vendor_name"] = mdict["vendor_name"]
-    cpuinfo.proc_cpuinfo["vendor"] = mdict["vendor"]
-    cpuinfo.proc_cpuinfo["family"] = mdict["family"]
-    cpuinfo.proc_cpuinfo["model"] = mdict["model"]
-    cpuinfo.proc_cpuinfo["vfm"] = CPUModels.make_vfm(mdict["vendor"], mdict["family"],
+    proc_cpuinfo = cpuinfo.get_proc_cpuinfo()
+    proc_cpuinfo["vendor_name"] = mdict["vendor_name"]
+    proc_cpuinfo["vendor"] = mdict["vendor"]
+    proc_cpuinfo["family"] = mdict["family"]
+    proc_cpuinfo["model"] = mdict["model"]
+    proc_cpuinfo["vfm"] = CPUModels.make_vfm(mdict["vendor"], mdict["family"],
                                                      mdict["model"])
     cpuinfo.cpudescr += f" (overridden with {user_vfm})"
 

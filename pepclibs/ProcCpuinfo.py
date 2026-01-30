@@ -4,8 +4,7 @@
 # Copyright (C) 2020-2026 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
-# Authors: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
-#          Niklas Neronin <niklas.neronin@intel.com>
+# Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """Read CPU information from '/proc/cpuinfo'."""
 
@@ -22,7 +21,8 @@ if typing.TYPE_CHECKING:
 
     class ProcCpuinfoTypedDict(TypedDict, total=False):
         """
-        Type for the '/proc/cpuinfo' information dictionary.
+        Type for the general '/proc/cpuinfo' information dictionary. Contains CPU
+        information that is the same for all CPUs and does not change.
 
         Attributes:
             vendor_name: The CPU vendor name (e.g., "GenuineIntel").
@@ -30,9 +30,7 @@ if typing.TYPE_CHECKING:
             family: The CPU family number.
             model: The CPU model number.
             modelname: The full name of the CPU model.
-            flags: A dictionary mapping CPU numbers to their flags.
             vfm: The vendor-family-model identifier for the CPU.
-            topology: A dictionary representing the CPU topology ({package: {core: [CPUs]}).
         """
 
         vendor_name: str
@@ -40,24 +38,38 @@ if typing.TYPE_CHECKING:
         family: int
         model: int
         modelname: str
-        flags: dict[int, set[str]]
         vfm: int
+
+    class ProcCpuinfoPerCPUTypedDict(TypedDict, total=False):
+        """
+        Type for the per-CPU '/proc/cpuinfo' topology information dictionary. Contains
+        CPU topology and flags that change when CPUs go online or offline.
+
+        Attributes:
+            flags: A dictionary mapping CPU numbers to their flags.
+            topology: A dictionary representing the CPU topology ({package: {core: [CPUs]}}).
+        """
+
+        flags: dict[int, set[str]]
         topology: dict[int, dict[int, list[int]]]
 
-def _parse_cpuinfo_block(block: str, info: ProcCpuinfoTypedDict):
+def _parse_cpuinfo_block(block: str,
+                         info: ProcCpuinfoTypedDict,
+                         percpu_info: ProcCpuinfoPerCPUTypedDict):
     """
     Parse a single CPU information block from '/proc/cpuinfo' and update the provided information
-    dictionary.
+    dictionaries.
 
     Args:
         block: The CPU information block to parse.
-        info: The dictionary to update with parsed CPU information.
+        info: The dictionary to update with general CPU information.
+        percpu_info: The dictionary to update with per-CPU information.
     """
 
     cpu = core = package = -1
     flags = set()
 
-    # General CPU information is the same for all CPUs, parse it only once.
+    # General (static) CPU information is the same for all CPUs, parse it only once.
     parse_general = "vendor" not in info
 
     for line in block.split("\n"):
@@ -93,33 +105,61 @@ def _parse_cpuinfo_block(block: str, info: ProcCpuinfoTypedDict):
         raise Error(f"Incomplete CPU information block in '/proc/cpuinfo': 'processor', 'core id', "
                     f"or 'physical id' is missing:\n{block}")
 
-    if package not in info["topology"]:
-        info["topology"][package] = {}
-    if core not in info["topology"][package]:
-        info["topology"][package][core] = []
-    info["topology"][package][core].append(cpu)
-
-    info["flags"][cpu] = flags
+    if package not in percpu_info["topology"]:
+        percpu_info["topology"][package] = {}
+    if core not in percpu_info["topology"][package]:
+        percpu_info["topology"][package][core] = []
+    percpu_info["topology"][package][core].append(cpu)
+    percpu_info["flags"][cpu] = flags
 
 def get_proc_cpuinfo(pman: ProcessManagerType | None = None) -> ProcCpuinfoTypedDict:
     """
-    Collect and return CPU information from '/proc/cpuinfo'.
+    Collect and return general CPU information from '/proc/cpuinfo'.
+
+    This function returns CPU information that is the same for all CPUs and does not change, such
+    as vendor, family, model, and VFM.
 
     Args:
         pman: The process manager object for the target host. If not provided, a local process
               manager is created.
 
     Returns:
-        ProcCpuinfoTypedDict: The '/proc/cpuinfo' information dictionary.
+        The general '/proc/cpuinfo' information dictionary.
     """
 
-    proc_cpuinfo: ProcCpuinfoTypedDict = {"topology": {}, "flags": {}}
+    proc_cpuinfo: ProcCpuinfoTypedDict = {}
+    proc_percpuinfo: ProcCpuinfoPerCPUTypedDict = {"flags": {}, "topology": {}}
 
     with ProcessManager.pman_or_local(pman) as wpman:
         for block in wpman.read_file("/proc/cpuinfo").strip().split("\n\n"):
-            _parse_cpuinfo_block(block, proc_cpuinfo)
+            _parse_cpuinfo_block(block, proc_cpuinfo, proc_percpuinfo)
+            # We only need general CPU information from one block.
+            break
 
     proc_cpuinfo["vfm"] = CPUModels.make_vfm(proc_cpuinfo["vendor"], proc_cpuinfo["family"],
                                              proc_cpuinfo["model"])
-
     return proc_cpuinfo
+
+def get_proc_percpuinfo(pman: ProcessManagerType | None = None) -> ProcCpuinfoPerCPUTypedDict:
+    """
+    Collect and return per-CPU information from '/proc/cpuinfo'.
+
+    This function returns CPU topology and flags that change when CPUs are hotplugged (go online
+    or offline).
+
+    Args:
+        pman: The process manager object for the target host. If not provided, a local process
+              manager is created.
+
+    Returns:
+        The per-CPU '/proc/cpuinfo' topology information dictionary.
+    """
+
+    proc_cpuinfo: ProcCpuinfoTypedDict = {}
+    proc_percpuinfo: ProcCpuinfoPerCPUTypedDict = {"flags": {}, "topology": {}}
+
+    with ProcessManager.pman_or_local(pman) as wpman:
+        for block in wpman.read_file("/proc/cpuinfo").strip().split("\n\n"):
+            _parse_cpuinfo_block(block, proc_cpuinfo, proc_percpuinfo)
+
+    return proc_percpuinfo

@@ -76,7 +76,7 @@ def test_all(params: _TestParamsTypedDict):
                "cpus='all' did not select all CPUs"
         assert optar.get_cpus() == cpuinfo.get_cpus(), \
                "cpus='all' did not select all CPUs"
-        assert optar.get_all_dies() == cpuinfo.get_dies(), \
+        assert optar.get_all_dies() == cpuinfo.get_compute_dies(), \
                "cpus='all' did not select all dies"
         assert optar.get_packages() == cpuinfo.get_packages(), \
                "cpus='all' did not select all packages"
@@ -86,7 +86,7 @@ def test_all(params: _TestParamsTypedDict):
                "cores='all' did not select all cores"
         assert optar.get_cpus() == cpuinfo.get_cpus(order="package"), \
                "cores='all' did not select all CPUs"
-        assert optar.get_all_dies() == cpuinfo.get_dies(), \
+        assert optar.get_all_dies() == cpuinfo.get_compute_dies(), \
                "cores='all' did not select all dies"
         assert optar.get_packages() == cpuinfo.get_packages(), \
                "cores='all' did not select all packages"

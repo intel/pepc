@@ -29,7 +29,6 @@ if typing.TYPE_CHECKING:
 
         Attributes:
             cpuinfo: A 'CPUInfo.CPUInfo' object.
-            ncompd: A 'NonCompDies.NonCompDies' object.
         """
 
         cpuinfo: CPUInfo.CPUInfo

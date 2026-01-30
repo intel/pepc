@@ -150,7 +150,8 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
         else:
             self._sysfs_io = sysfs_io
 
-        if not CPUModels.is_intel(self._cpuinfo.proc_cpuinfo["vendor"]):
+        proc_cpuinfo = self._cpuinfo.get_proc_cpuinfo()
+        if not CPUModels.is_intel(proc_cpuinfo["vendor"]):
             raise ErrorNotSupported(f"Unsupported CPU model '{self._cpuinfo.cpudescr}'"
                                     f"{self._pman.hostmsg}\nOnly Intel CPU uncore frequency "
                                     f"control is currently supported")
@@ -613,7 +614,8 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
         Attempt to determine and load the required kernel module for uncore frequency support.
         """
 
-        vfm = self._cpuinfo.proc_cpuinfo["vfm"]
+        proc_cpuinfo = self._cpuinfo.get_proc_cpuinfo()
+        vfm = proc_cpuinfo["vfm"]
         errmsg = ""
 
         # If the CPU supports MSR_UNCORE_RATIO_LIMIT, the uncore frequency driver is

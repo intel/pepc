@@ -23,7 +23,7 @@ from pepclibs.CPUInfoVars import SCOPE_NAMES, HYBRID_TYPE_INFO, INVALID
 
 if typing.TYPE_CHECKING:
     from typing import Iterable, Literal
-    from pepclibs import NonCompDies
+    from pepclibs import _DieInfo
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepclibs.CPUInfoTypes import HybridCPUKeyType, ScopeNameType, AbsNumsType, RelNumsType
 
@@ -37,6 +37,9 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
     1. Get various CPU information.
         - 'get_topology()' - CPU topology.
+        - 'get_proc_cpuinfo()' - General (static) '/proc/cpuinfo' information.
+        - 'get_proc_percpuinfo()' - Per-CPU '/proc/cpuinfo' information.
+        - 'get_dieinfo()' - '_DieInfo.DieInfo' object instance.
     2. Get list of packages/cores/etc.
         - 'get_cpus()'
         - 'get_cores()'
@@ -45,7 +48,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         - 'get_package_noncomp_dies()'
         - 'get_all_package_dies()'
         - 'get_modules()'
-        - 'get_dies()'
+        - 'get_compute_dies()'
         - 'get_noncomp_dies()'
         - 'get_all_dies()'
         - 'get_nodes()'
@@ -69,7 +72,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         - 'get_cpus_count()'
         - 'get_cores_count()'
         - 'get_modules_count()'
-        - 'get_dies_count()'
+        - 'get_compute_dies_count()'
         - 'get_nodes_count()'
         - 'get_noncomp_dies_count()'
         - 'get_all_dies_count()'
@@ -102,19 +105,20 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         - 'cpus_hotplugged()' - invalidate cached topology data after CPU hotplug.
     """
 
-    def __init__(self, pman: ProcessManagerType | None = None,
-                 ncompd: NonCompDies.NonCompDies | None = None):
+    def __init__(self,
+                 pman: ProcessManagerType | None = None,
+                 dieinfo: _DieInfo.DieInfo | None = None):
         """
         Initialize a class instance.
 
         Args:
             pman: Process manager object that defines the target host. If not provided, a local
                   process manager is created.
-            ncompd: An instance of the 'NonCompDies' class. If not provided, a new instance is
-                    created.
+            dieinfo: An instance of the '_DieInfo' class. If not provided, a new instance is
+                     created.
         """
 
-        super().__init__(pman=pman, ncompd=ncompd)
+        super().__init__(pman=pman, dieinfo=dieinfo)
 
         # Scope name to its index number.
         self._sname2idx: dict[ScopeNameType, int]
@@ -328,9 +332,9 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
             # If these are dies, account for non-compute dies as well. They do not have CPUs, so
             # just add them to the valid numbers set.
             if parent_sname == "die":
-                if not self._noncomp_dies_discovered:
-                    self._discover_noncomp_dies()
-                for dies in self._noncomp_dies.values():
+                dieinfo = self.get_dieinfo()
+                noncomp_dies = dieinfo.get_noncomp_dies()
+                for dies in noncomp_dies.values():
                     valid_nums.update(dies)
 
             if not nums_set.issubset(valid_nums):
@@ -366,7 +370,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         Return a list of offline CPU numbers.
 
         Returns:
-            List of offline CPU numbers sorted in ascending order.
+            List of offline CPU numbers, sorted in ascending order.
         """
 
         cpus = self._get_all_cpus()
@@ -427,8 +431,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
             package: Package number to return die numbers for.
 
         Returns:
-            A list of compute die numbers in the given package, filtered and sorted according to the
-            provided arguments.
+            A list of compute die numbers in the given package, sorted in ascending order.
 
         Notes:
             - Only dies containing at least one online CPU are included, as Linux does not provide
@@ -451,10 +454,9 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
             A list of non-compute die numbers in the given package.
         """
 
-        if not self._noncomp_dies_discovered:
-            self._discover_noncomp_dies()
-
-        return sorted(self._noncomp_dies.get(package, []))
+        dieinfo = self.get_dieinfo()
+        noncomp_dies = dieinfo.get_noncomp_dies()
+        return sorted(noncomp_dies.get(package, []))
 
     def get_all_package_dies(self, package: int = 0) -> list[int]:
         """
@@ -494,13 +496,13 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
         return self._get_scope_nums("module", "module", "all", order=order)
 
-    def get_dies(self) -> dict[int, list[int]]:
+    def get_compute_dies(self) -> dict[int, list[int]]:
         """
         Return a dictionary mapping package numbers to lists of compute die numbers.
 
         Returns:
             A dictionary where keys are package numbers and values are lists of compute die numbers
-            present in the corresponding package, sorted according to the specified order.
+            present in the corresponding package, sorted in ascending order.
 
         Notes:
             - Only packages and dies containing at least one online CPU are included, as Linux does
@@ -517,7 +519,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
     def get_noncomp_dies(self) -> dict[int, list[int]]:
         """
-        Similar to 'get_dies()', but returns only non-compute dies.
+        Similar to 'get_compute_dies()', but returns only non-compute dies.
 
         Returns:
             The non-compute dies dictionary.
@@ -533,13 +535,13 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
     def get_all_dies(self) -> dict[int, list[int]]:
         """
-        Similar to 'get_dies()', but returns all dies (both compute and non-compute).
+        Similar to 'get_compute_dies()', but returns all dies (both compute and non-compute).
 
         Returns:
             The all dies dictionary.
         """
 
-        dies = self.get_dies()
+        dies = self.get_compute_dies()
         noncomp_dies = self.get_noncomp_dies()
         for package, noncomp_pkg_dies in noncomp_dies.items():
             if package in dies:
@@ -558,7 +560,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
             order: Sorting order for the returned list of node numbers.
 
         Returns:
-            List of NUMA node numbers sorted according to the specified order.
+            List of NUMA node numbers sorted in the specified order.
 
         Notes:
             - Only NUMA nodes with at least one online CPU are included, as Linux does not provide
@@ -585,16 +587,6 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         """
 
         return self._get_scope_nums("package", "package", "all", order=order)
-
-    def cpus_hotplugged(self):
-        """
-        Handle CPU hotplug events by updating internal state.
-
-        Call this method whenever a CPU is brought online or taken offline. This ensures that the
-        internal CPU information remains accurate after hotplug events.
-        """
-
-        self._cpus_hotplugged()
 
     def get_tline_by_cpu(self,
                          cpu: int,
@@ -712,7 +704,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
             order: Sorting order of the returned CPU numbers list.
 
         Returns:
-            List of CPU numbers within the given package, sorted according to the specified order.
+            List of CPU numbers within the given package, sorted in the specified order.
         """
 
         return self._get_scope_nums("CPU", "package", (package,), order=order)
@@ -726,7 +718,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
             order: Sorting order for the returned list of module numbers.
 
         Returns:
-            List of module numbers present in the given package, sorted according to the specified
+            List of module numbers present in the given package, sorted in the specified
             order.
         """
 
@@ -741,7 +733,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
             order: Sorting order for the returned list of node numbers.
 
         Returns:
-            List of NUMA node numbers in the given package, sorted according to 'order'.
+            List of NUMA node numbers in the given package, sorted in the specified order.
         """
 
         return self._get_scope_nums("node", "package", (package,), order=order)
@@ -789,7 +781,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
             order: Sorting order of the returned CPU numbers list.
 
         Returns:
-            List of CPU numbers in the specified modules, sorted according to the given order.
+            List of CPU numbers in the specified modules, sorted in the given order.
 
         Notes:
             - Module numbers are globally unique.
@@ -811,7 +803,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
             order: Sorting order for the returned CPU numbers list.
 
         Returns:
-            List of CPU numbers belonging to the specified dies and packages, sorted according to
+            List of CPU numbers belonging to the specified dies and packages, sorted in
             the specified order.
 
         Notes:
@@ -860,7 +852,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
             order: Sorting order for the returned CPU numbers list.
 
         Returns:
-            List of CPU numbers in the specified packages, sorted according to the given order.
+            List of CPU numbers in the specified packages, sorted in the given order.
 
         Notes:
             - Package numbers are globally unique.
@@ -917,7 +909,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
         return len(self.get_modules())
 
-    def get_dies_count(self) -> int:
+    def get_compute_dies_count(self) -> int:
         """
         Return the total number of compute dies in the system.
 
@@ -929,7 +921,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
               provide topology information for offline CPUs.
         """
 
-        dies = self.get_dies()
+        dies = self.get_compute_dies()
         return sum(len(pkg_dies) for pkg_dies in dies.values())
 
     def get_nodes_count(self) -> int:
@@ -1267,7 +1259,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         return (pkgs, rem_cpus)
 
     def normalize_cpus(self,
-                       cpus: AbsNumsType | Literal["all"],
+                       cpus: Iterable[int]| Literal["all"],
                        offline_ok: bool = False) -> list[int]:
         """
         Validate and normalize a collection of CPU numbers.
@@ -1281,31 +1273,31 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
             List of validated and normalized CPU numbers.
 
         Notes:
-            - Normalized CPU numbers are integers without duplicates, sorted in ascending order.
+            - Normalized CPU numbers are integers without duplicates and sorted in ascending order.
         """
 
         if offline_ok:
-            allcpus = self._get_all_cpus_set()
+            all_cpus = self._get_all_cpus_set()
         else:
-            allcpus = self._get_online_cpus_set()
+            all_cpus = self._get_online_cpus_set()
 
         if cpus == "all":
-            return sorted(allcpus)
+            return sorted(all_cpus)
 
-        cpus = Trivial.list_dedup(cpus)
-        for cpu in cpus:
+        _cpus: list[int] = Trivial.list_dedup(cpus)
+        for cpu in _cpus:
             # The reason for not using isinstance() here is to avoid bool to be treated as int.
             # Indeed, isinstance(True, int) is True.
             # pylint: disable-next=unidiomatic-typecheck
             if type(cpu) is not int:
                 raise Error(f"'{cpu}' is not an integer, CPU numbers must be integers")
 
-            if cpu not in allcpus:
-                cpus_str = Trivial.rangify(allcpus)
+            if cpu not in all_cpus:
+                _cpus_str = Trivial.rangify(all_cpus)
                 raise Error(f"CPU {cpu} is not available{self._pman.hostmsg}, available CPUs are: "
-                            f"{cpus_str}")
+                            f"{_cpus_str}")
 
-        return cpus
+        return _cpus
 
     def normalize_cores(self, cores: RelNumsType | Literal["all"]) -> dict[int, list[int]]:
         """
@@ -1347,7 +1339,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
             List of normalized core numbers for the specified package.
 
         Notes:
-            - Normalized core numbers are integers without duplicates, sorted in ascending order.
+            - Normalized core numbers are integers without duplicates and sorted in ascending order.
         """
 
         pkg_cores = self.get_package_cores(package=package)
@@ -1379,7 +1371,8 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
             List of validated and normalized module numbers.
 
         Notes:
-            - Normalized module numbers are integers without duplicates, sorted in ascending order.
+            - Normalized module numbers are integers without duplicates and sorted in ascending
+              order.
         """
 
         all_modules = self.get_modules()
@@ -1441,7 +1434,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
             List of normalized die numbers for the specified package.
 
         Notes:
-            - Normalized die numbers are integers without duplicates, sorted in ascending order.
+            - Normalized die numbers are integers without duplicates and sorted in ascending order.
         """
 
         pkg_dies = self.get_all_package_dies(package=package)
@@ -1555,12 +1548,11 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         Return a dictionary with hybrid CPU information.
 
         Returns:
-            HybridCPUsTypeDict: The dictionary may contain up to 2 keys:
-                - "pcore": List of performance core CPU numbers.
-                - "ecore": List of efficiency core CPU numbers.
+            Dictionary mapping hybrid CPU types to lists of CPU numbers.
 
         Notes:
             - In case of a non-hybrid system, only the "pcore" key is present.
+            - See 'HybridCPUKeyType' for the supported keys.
         """
 
         if not self.is_hybrid:

@@ -13,7 +13,6 @@ Implement the 'pepc topology' command.
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
-from sys import modules
 import typing
 import contextlib
 
@@ -27,7 +26,7 @@ if typing.TYPE_CHECKING:
     import argparse
     from typing import TypedDict, Sequence, cast, Final
     from pepclibs.CPUInfoTypes import ScopeNameType, HybridCPUKeyType
-    from pepclibs.NonCompDies import NonCompDieInfoTypedDict
+    from pepclibs._DieInfo import DieInfoTypedDict
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
     class _CmdlineArgsTypedDict(TypedDict, total=False):
@@ -131,7 +130,7 @@ def _print_dies(die_type: str, dies: dict[int, list[int]]):
 def _display_dies_info(cmdl: _CmdlineArgsTypedDict,
                        pman: ProcessManagerType,
                        cpuinfo: CPUInfo.CPUInfo,
-                       noncomp_dies_info: dict[int, dict[int, NonCompDieInfoTypedDict]]):
+                       noncomp_dies_info: dict[int, dict[int, DieInfoTypedDict]]):
     """
     Display detailed non-compute die information and exit.
 
@@ -143,21 +142,21 @@ def _display_dies_info(cmdl: _CmdlineArgsTypedDict,
     """
 
     if cmdl["cpus"]:
-        raise Error("The '--cpus' option cannot be used with the '--noncomp-dies' option")
+        raise Error("The '--cpus' option cannot be used with the '--dies-info' option")
     if cmdl["cores"]:
-        raise Error("The '--cores' option cannot be used with the '--noncomp-dies' option")
+        raise Error("The '--cores' option cannot be used with the '--dies-info' option")
     if cmdl["modules"]:
-        raise Error("The '--modules' option cannot be used with the '--noncomp-dies' option")
+        raise Error("The '--modules' option cannot be used with the '--dies-info' option")
     if cmdl["core_siblings"]:
-        raise Error("The '--core-siblings' option cannot be used with the '--noncomp-dies' option")
+        raise Error("The '--core-siblings' option cannot be used with the '--dies-info' option")
     if cmdl["module_siblings"]:
-        raise Error("The '--module-siblings' option cannot be used with the '--noncomp-dies' option")
+        raise Error("The '--module-siblings' option cannot be used with the '--dies-info' option")
     if cmdl["online_only"]:
-        raise Error("The '--online-only' option cannot be used with the '--noncomp-dies' option")
+        raise Error("The '--online-only' option cannot be used with the '--dies-info' option")
 
     with _OpTarget.OpTarget(pman=pman, cpuinfo=cpuinfo, dies=cmdl["dies"],
                             packages=cmdl["packages"]) as optar:
-        target_compute_dies = optar.get_dies()
+        target_compute_dies = optar.get_compute_dies()
         target_noncomp_dies = optar.get_noncomp_dies()
 
     _print_dies("Compute", target_compute_dies)
@@ -208,7 +207,7 @@ def _get_default_colnames(cpuinfo: CPUInfo.CPUInfo) -> list[ScopeNameType]:
     if cpuinfo.get_nodes_count() == len(packages):
         colnames_set.remove("node")
 
-    if cpuinfo.get_dies_count() == len(packages):
+    if cpuinfo.get_compute_dies_count() == len(packages):
         colnames_set.remove("die")
 
     colnames: list[ScopeNameType] = []
@@ -290,7 +289,7 @@ def _insert_noncomp_dies_type(topology: list[dict[str, int | str]],
 
 def _append_noncomp_dies(target_dies: dict[int, list[int]],
                          noncomp_dies: dict[int, list[int]],
-                         noncomp_dies_info: dict[int, dict[int, NonCompDieInfoTypedDict]],
+                         noncomp_dies_info: dict[int, dict[int, DieInfoTypedDict]],
                          topology: list[dict[str, int | str]],
                          colnames: list[str]):
     """
@@ -383,9 +382,9 @@ def topology_info_command(args: argparse.Namespace, pman: ProcessManagerType):
         cpuinfo = CPUInfo.CPUInfo(pman=pman)
         stack.enter_context(cpuinfo)
 
-        ncompd = cpuinfo.get_ncompd()
-        noncomp_dies = ncompd.get_dies()
-        noncomp_dies_info = ncompd.get_dies_info()
+        dieinfo = cpuinfo.get_dieinfo()
+        noncomp_dies = dieinfo.get_noncomp_dies()
+        noncomp_dies_info = dieinfo.get_noncomp_dies_info()
 
         if cmdl["dies_info"]:
             _display_dies_info(cmdl, pman, cpuinfo, noncomp_dies_info)

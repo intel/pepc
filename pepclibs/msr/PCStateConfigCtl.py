@@ -270,7 +270,8 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
 
         self._partial_features = copy.deepcopy(FEATURES)
 
-        model = cpuinfo.proc_cpuinfo["vfm"]
+        proc_cpuinfo = cpuinfo.get_proc_cpuinfo()
+        model = proc_cpuinfo["vfm"]
 
         iosname: ScopeNameType
         if model in _MODULE_IO_SCOPE_VFMS:
@@ -303,7 +304,8 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
         platform-specific information.
         """
 
-        vfm = self._cpuinfo.proc_cpuinfo["vfm"]
+        proc_cpuinfo = self._cpuinfo.get_proc_cpuinfo()
+        vfm = proc_cpuinfo["vfm"]
         if vfm in _PKG_CST_LIMITS:
             limits = _PKG_CST_LIMITS[vfm]
         else:

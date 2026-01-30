@@ -15,7 +15,7 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 import typing
 import pytest
 
-from pepclibs import CPUInfo, CPUOnline, NonCompDies
+from pepclibs import CPUInfo, CPUOnline
 from pepclibs.helperlibs import Trivial
 from pepclibs.helperlibs.Exceptions import Error
 from pepctools import _PepcTopology
@@ -548,7 +548,7 @@ def test_limited_target_dies(params: _TestParamsTypedDict, caplog: pytest.LogCap
 
     # Ignore systems with a single die.
     cpuinfo = params["cpuinfo"]
-    dies = cpuinfo.get_dies()
+    dies = cpuinfo.get_compute_dies()
     if len(dies[0]) < 2:
         pytest.skip("The system has fewer than two dies, skipping the limited target dies tests")
 
@@ -789,12 +789,14 @@ def test_noncomp_dies(params: _TestParamsTypedDict, caplog: pytest.LogCaptureFix
         caplog: The pytest log capture fixture.
     """
 
-    with NonCompDies.NonCompDies(pman=params["pman"]) as ncompd:
-        noncomp_dies_sets = ncompd.get_dies_sets()
-
+    noncomp_dies = params["cpuinfo"].get_noncomp_dies()
     # Skip systems with no non-compute dies.
-    if not noncomp_dies_sets:
+    if not noncomp_dies:
         pytest.skip("The system has no non-compute dies, skipping the non-compute dies test")
+
+    noncomp_dies_sets: dict[int, set[int]] = {}
+    for pkg, dies in noncomp_dies.items():
+        noncomp_dies_sets[pkg] = set(dies)
 
     # Verify that non-compute dies are present in the output with proper markings.
     cmd = "topology info"

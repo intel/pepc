@@ -64,7 +64,7 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
 
     Public Methods:
         - get_cpus() - return the target CPU numbers.
-        - get_dies() - return the target compute die numbers.
+        - get_compute_dies() - return the target compute die numbers.
         - get_noncomp_dies() - return the target non-compute die numbers.
         - get_all_dies() - return all target die numbers (compute and non-compute).
         - get_packages() - return the target package numbers.
@@ -220,7 +220,7 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
         self.module_siblings: AbsNumsType = []
         self.module_sib_cpus: AbsNumsType = []
 
-        # The cached result of 'get_cpus()', 'get_dies()', and 'get_packages()'.
+        # The cached result of 'get_cpus()', 'get_compute_dies()', and 'get_packages()'.
         self._cache: _CacheTypedDict = {}
 
         if pman:
@@ -566,7 +566,7 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
         raise ErrorNoCPUTarget(f"No CPU numbers were specified.\n  The following non-compute dies "
                                f"were selected, but they do not have CPUs: {dies_str}.")
 
-    def get_dies(self, strict: bool = True) -> dict[int, list[int]]:
+    def get_compute_dies(self, strict: bool = True) -> dict[int, list[int]]:
         """
         Retrieve target compute die numbers.
 
@@ -600,8 +600,8 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
             for package, pkg_dies in self.dies.items():
                 if package not in compute_dies:
                     compute_dies[package] = []
-                # Input dies were specified, and they may include non-compute dies as well - filter them
-                # out.
+                # Input dies were specified, and they may include non-compute dies as well - filter
+                # them out.
                 pkg_noncomp_dies_set = set(self._cpuinfo.get_package_noncomp_dies(package=package))
                 pkg_dies = [die for die in pkg_dies if die not in pkg_noncomp_dies_set]
                 compute_dies[package] += pkg_dies
@@ -684,7 +684,7 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
         if "all_dies" in self._cache:
             return self._cache["all_dies"]
 
-        dies = self.get_dies(strict=strict)
+        dies = self.get_compute_dies(strict=strict)
         noncomp_dies = self.get_noncomp_dies()
 
         for package, pkg_noncomp_dies in noncomp_dies.items():
