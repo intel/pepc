@@ -5,6 +5,7 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
+ - Re-add accidentally removed 'pepc topology' documentation.
 ### Added
 ### Removed
 ### Changed
