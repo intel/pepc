@@ -692,7 +692,7 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
                 dies[package] = []
             dies[package] += pkg_noncomp_dies
 
-        assert self._cache["all_dies"] == dies
+        self._cache["all_dies"] = dies
         return self._cache["all_dies"]
 
     def get_packages(self, strict: bool = True) -> list[int]:

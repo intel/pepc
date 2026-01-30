@@ -546,6 +546,9 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
                Example: --columns Package,Core,CPU."""
     subpars2.add_argument("--columns", help=text)
 
+    text = """Display detailed non-compute dies information."""
+    subpars2.add_argument("--dies-info", action="store_true", help=text)
+
     #
     # Create parser for the 'pmqos' command.
     #

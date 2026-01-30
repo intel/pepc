@@ -13,10 +13,11 @@ Implement the 'pepc topology' command.
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
+from sys import modules
 import typing
 import contextlib
 
-from pepclibs import CPUInfo, NonCompDies
+from pepclibs import CPUInfo
 from pepclibs.helperlibs import Logging, Trivial
 from pepclibs.helperlibs.Exceptions import Error
 from pepctools._OpTarget import ErrorNoCPUTarget
@@ -38,6 +39,7 @@ if typing.TYPE_CHECKING:
             order: The scope name to order the topology by.
             online_only: Whether to include only online CPUs.
             columns: Comma-separated list of column names to display.
+            dies_info: Display detailed non-compute dies information.
             cpus: CPU numbers to operate on.
             cores: Core numbers to operate on.
             modules: Module numbers to operate on.
@@ -51,6 +53,7 @@ if typing.TYPE_CHECKING:
         order: str
         online_only: bool
         columns: str
+        dies_info: bool
         cpus: str
         cores: str
         modules: str
@@ -87,6 +90,7 @@ def _get_cmdline_args(args: argparse.Namespace) -> _CmdlineArgsTypedDict:
     cmdl["order"] = args.order
     cmdl["online_only"] = args.online_only
     cmdl["columns"] = args.columns
+    cmdl["dies_info"] = args.dies_info
     cmdl["cpus"] = args.cpus
     cmdl["cores"] = args.cores
     cmdl["modules"] = args.modules
@@ -97,54 +101,120 @@ def _get_cmdline_args(args: argparse.Namespace) -> _CmdlineArgsTypedDict:
 
     return cmdl
 
-def _get_default_colnames(cpuinfo: CPUInfo.CPUInfo,
-                          noncomp_dies: dict[int, list[int]]) -> list[ScopeNameType]:
+def _print_dies(die_type: str, dies: dict[int, list[int]]):
+    """
+    Print die numbers.
+
+    Args:
+        die_type: Type of dies being printed (e.g., "Compute" or "Non-Compute").
+        dies: Die numbers indexed by package number.
+    """
+
+    if not dies:
+        return
+    if not dies[list(dies)[0]]:
+        return
+
+    if len(dies) == 1:
+        pkg_dies = dies[list(dies)[0]]
+        if len(pkg_dies) == 1:
+            _LOG.info(f"{die_type} die: package {list(dies)[0]}, die {pkg_dies[0]}")
+        else:
+            dies_str = ", ".join(str(die) for die in pkg_dies)
+            _LOG.info(f"{die_type} dies: package {list(dies)[0]}, dies {dies_str}")
+    else:
+        _LOG.info(f"{die_type} dies:")
+        for package in sorted(dies):
+            dies_str = ", ".join(str(die) for die in dies[package])
+            _LOG.info(f"  - Package {package}, dies {dies_str}")
+
+def _display_dies_info(cmdl: _CmdlineArgsTypedDict,
+                       pman: ProcessManagerType,
+                       cpuinfo: CPUInfo.CPUInfo,
+                       noncomp_dies_info: dict[int, dict[int, NonCompDieInfoTypedDict]]):
+    """
+    Display detailed non-compute die information and exit.
+
+    Args:
+        cmdl: Parsed command-line arguments.
+        pman: Process manager object for target host.
+        cpuinfo: 'CPUInfo' object for retrieving CPU topology information.
+        noncomp_dies_info: Detailed information about non-compute dies.
+    """
+
+    if cmdl["cpus"]:
+        raise Error("The '--cpus' option cannot be used with the '--noncomp-dies' option")
+    if cmdl["cores"]:
+        raise Error("The '--cores' option cannot be used with the '--noncomp-dies' option")
+    if cmdl["modules"]:
+        raise Error("The '--modules' option cannot be used with the '--noncomp-dies' option")
+    if cmdl["core_siblings"]:
+        raise Error("The '--core-siblings' option cannot be used with the '--noncomp-dies' option")
+    if cmdl["module_siblings"]:
+        raise Error("The '--module-siblings' option cannot be used with the '--noncomp-dies' option")
+    if cmdl["online_only"]:
+        raise Error("The '--online-only' option cannot be used with the '--noncomp-dies' option")
+
+    with _OpTarget.OpTarget(pman=pman, cpuinfo=cpuinfo, dies=cmdl["dies"],
+                            packages=cmdl["packages"]) as optar:
+        target_compute_dies = optar.get_dies()
+        target_noncomp_dies = optar.get_noncomp_dies()
+
+    _print_dies("Compute", target_compute_dies)
+    _print_dies("Non-Compute", target_noncomp_dies)
+
+    if not noncomp_dies_info:
+        return
+
+    # Print detailed non-compute die information.
+    _LOG.info("Non-compute dies details:")
+    for package in sorted(noncomp_dies_info):
+        _LOG.info(f"  - Package {package}:")
+        for die in sorted(noncomp_dies_info[package]):
+            die_info = noncomp_dies_info[package][die]
+            _LOG.info(f"    - Die {die} ({die_info['title']}):")
+            _LOG.info(f"      TPMI Address: {die_info['addr']}")
+            _LOG.info(f"      TPMI Instance: {die_info['instance']}")
+            _LOG.info(f"      TPMI Cluster: {die_info['cluster']}")
+            _LOG.info(f"      TPMI Agent type(s): {', '.join(die_info['agent_types'])}")
+
+def _get_default_colnames(cpuinfo: CPUInfo.CPUInfo) -> list[ScopeNameType]:
     """
     Get the default column names for the topology table.
 
-    Returns all scope names from 'CPUInfo.SCOPE_NAMES' with the following optimizations:
-      - If every module has exactly one core, exclude "module" column.
-      - If every package has exactly one die, exclude "die" column.
-
-    This simplifies the output by hiding redundant topology levels.
-
     Args:
-        cpuinfo: CPUInfo object for retrieving topology information.
-        noncomp_dies: Non-compute dies indexed by package number.
+        cpuinfo: 'CPUInfo' object for retrieving topology information.
 
     Returns:
         List of scope names to display as columns in the topology table.
+
+    Notes:
+        Return all scope names from 'CPUInfo.SCOPE_NAMES' with the following optimizations:
+          - If there is only one core per module, skip the "Module" column.
+          - If there is only one die per package, skip the "Die" column.
+          - If there is only one package, skip the "Package" column.
+          - If there is only one NUMA node, skip the "Node" column.
     """
 
-    colnames = list(CPUInfo.SCOPE_NAMES)
+    colnames_set = list(CPUInfo.SCOPE_NAMES)
 
-    # Check if all modules have exactly one core. If so, the "module" column is redundant.
-    module = -1
-    for tline in cpuinfo.get_topology(snames=("core", "module", "package"), order="module"):
-        if module != tline["module"]:
-            module = tline["module"]
-            core = tline["core"]
-            package = tline["package"]
-        elif core != tline["core"] or package != tline["package"]:
-            break
-    else:
-        colnames.remove("module")
+    packages = cpuinfo.get_packages()
+    if len(packages) == 1:
+        colnames_set.remove("package")
 
-    if noncomp_dies:
-        # There are non-compute dies, skip the "die" redundancy check.
-        return colnames
+    if cpuinfo.get_cores_count() == len(cpuinfo.get_modules()):
+        colnames_set.remove("module")
 
-    # Check if all packages have exactly one die. If so, the "die" column is redundant.
-    package = -1
-    for tline in cpuinfo.get_topology(snames=("die", "package"), order="package"):
-        if package != tline["package"]:
-            die = tline["die"]
-            package = tline["package"]
-        elif die != tline["die"]:
-            break
-    else:
-        colnames.remove("die")
+    if cpuinfo.get_nodes_count() == len(packages):
+        colnames_set.remove("node")
 
+    if cpuinfo.get_dies_count() == len(packages):
+        colnames_set.remove("die")
+
+    colnames: list[ScopeNameType] = []
+    for colname in CPUInfo.SCOPE_NAMES:
+        if colname in colnames_set:
+            colnames.append(colname)
     return colnames
 
 def _append_offline_cpus(cpus: set[int],
@@ -154,14 +224,16 @@ def _append_offline_cpus(cpus: set[int],
     """
     Append offline CPUs to the topology table.
 
-    For offline CPUs, only the CPU number is known. All other topology information (core, die,
-    package, etc.) is marked with 'OFFLINE_MARKER' as it cannot be determined for offline CPUs.
-
     Args:
-        cpus: Set of CPU numbers that should be included in the topology.
-        cpuinfo: CPUInfo object for retrieving offline CPU information.
+        cpus: Set of CPU numbers that should be included in topology.
+        cpuinfo: 'CPUInfo' object for retrieving offline CPU information.
         topology: Topology table to which offline CPUs should be added.
-        snames: Scope names included in the topology table.
+        snames: Scope names included in topology table.
+
+    Notes:
+        - For offline CPUs, only the CPU number is known.
+        - All other topology information (core, die, package, etc.) is marked with 'OFFLINE_MARKER'
+          as it cannot be determined for offline CPUs.
     """
 
     for cpu in cpuinfo.get_offline_cpus():
@@ -173,14 +245,14 @@ def _append_offline_cpus(cpus: set[int],
 def _filter_cpus(cpus: set[int],
                  topology: list[dict[ScopeNameType, int]]) -> list[dict[ScopeNameType, int]]:
     """
-    Filter the topology table to include only the specified CPUs.
+    Filter topology table to include only specified CPUs.
 
     Args:
-        cpus: Set of CPU numbers to include in the filtered topology.
+        cpus: Set of CPU numbers to include in filtered topology.
         topology: Full topology table containing all CPUs and non-compute dies.
 
     Returns:
-        Filtered topology table containing only the specified CPUs and all non-compute dies.
+        Filtered topology table containing only specified CPUs and all non-compute dies.
     """
 
     new_topology = []
@@ -192,14 +264,14 @@ def _filter_cpus(cpus: set[int],
 def _insert_noncomp_dies_type(topology: list[dict[str, int | str]],
                               colnames: list[str]) -> list[dict[str, int | str]]:
     """
-    Insert the "dtype" column into the topology table.
+    Insert "dtype" column into topology table.
 
     Args:
-        topology: Topology table to insert the "dtype" column into.
-        colnames: Column names in the topology table.
+        topology: Topology table to insert "dtype" column into.
+        colnames: Column names in topology table.
 
     Returns:
-        Updated topology table with the "dtype" column included.
+        Updated topology table with "dtype" column included.
     """
 
     new_topology: list[dict[str, int | str]] = []
@@ -222,14 +294,14 @@ def _append_noncomp_dies(target_dies: dict[int, list[int]],
                          topology: list[dict[str, int | str]],
                          colnames: list[str]):
     """
-    Append non-compute dies to the topology table.
+    Append non-compute dies to topology table.
 
     Args:
-        target_dies: Dies to include in the topology table, indexed by package number.
-        noncomp_dies: Non-compute dies to append to the topology table, indexed by package number.
+        target_dies: Dies to include in topology table, indexed by package number.
+        noncomp_dies: Non-compute dies to append to topology table, indexed by package number.
         noncomp_dies_info: Detailed information about non-compute dies.
         topology: Topology table to add non-compute dies to.
-        colnames: Column names in the topology table.
+        colnames: Column names in topology table.
     """
 
     for package, pkg_noncomp_dies in noncomp_dies.items():
@@ -250,11 +322,11 @@ def _insert_hybrid(cpuinfo: CPUInfo.CPUInfo,
                    colnames: list[str],
                    topology: list[dict[str, int | str]]) -> list[dict[str, int | str]]:
     """
-    Insert hybrid CPU type information into the topology table.
+    Insert hybrid CPU type information into topology table.
 
     Args:
-        cpuinfo: CPUInfo object for retrieving hybrid CPU information.
-        colnames: Column names in the topology table.
+        cpuinfo: 'CPUInfo' object for retrieving hybrid CPU information.
+        colnames: Column names in topology table.
         topology: Topology table to insert hybrid CPU type information into.
 
     Returns:
@@ -295,11 +367,11 @@ def _insert_hybrid(cpuinfo: CPUInfo.CPUInfo,
 
 def topology_info_command(args: argparse.Namespace, pman: ProcessManagerType):
     """
-    Implement the 'topology info' command.
+    Implement 'topology info' command.
 
     Args:
         args: Parsed command-line arguments.
-        pman: Process manager object for the target host.
+        pman: Process manager object for target host.
     """
 
     cmdl = _get_cmdline_args(args)
@@ -311,14 +383,16 @@ def topology_info_command(args: argparse.Namespace, pman: ProcessManagerType):
         cpuinfo = CPUInfo.CPUInfo(pman=pman)
         stack.enter_context(cpuinfo)
 
-        ncompd = NonCompDies.NonCompDies(pman=pman)
-        stack.enter_context(ncompd)
-
+        ncompd = cpuinfo.get_ncompd()
         noncomp_dies = ncompd.get_dies()
         noncomp_dies_info = ncompd.get_dies_info()
 
+        if cmdl["dies_info"]:
+            _display_dies_info(cmdl, pman, cpuinfo, noncomp_dies_info)
+            return
+
         if not cmdl["columns"]:
-            snames = _get_default_colnames(cpuinfo, noncomp_dies)
+            snames = _get_default_colnames(cpuinfo)
             colnames = list(snames)
             if cpuinfo.is_hybrid:
                 colnames.append("hybrid")
@@ -396,8 +470,13 @@ def topology_info_command(args: argparse.Namespace, pman: ProcessManagerType):
             topology = _insert_hybrid(cpuinfo, colnames, topology)
 
     # Create format string, example: '%7s    %3s    %4s    %4s    %3s'.
-    fmt = "    ".join([f"%{len(name)}s" for name in colnames])
+    lens = {name: len(name) for name in colnames}
+    for tline in topology:
+        for name in colnames:
+            lens[name] = max(lens[name], len(str(tline[name])))
+    fmt = "    ".join([f"%{lens[name]}s" for name in colnames])
 
+    lens["hybrid"] = 8
     # Print the topology table, but avoid printing duplicate lines. This can happen, for example,
     # when only dies and packages are selected - all CPUs within the same die will have identical
     # die and package numbers, and hence identical lines in the output.

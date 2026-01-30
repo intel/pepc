@@ -40,12 +40,18 @@ if typing.TYPE_CHECKING:
             die: The non-compute die number.
             agent_types: A set of agent types present on the non-compute die.
             title: A short description of the non-compute die.
+            addr: The TPMI PCI device address.
+            inastance: The TPMI instance number.
+            cluster: The TPMI cluster number.
         """
 
         package: int
         die: int
         agent_types: set[AgentTypes]
         title: str
+        addr: str
+        instance: int
+        cluster: int
 
 AGENT_TYPES: list[AgentTypes] = ["core", "cache", "io", "memory"]
 
@@ -184,6 +190,9 @@ class NonCompDies(ClassHelpers.SimpleCloseContext):
             die_info["die"] = die
             die_info["agent_types"] = agent_types
             die_info["title"] = title[0].upper() + title[1:]
+            die_info["addr"] = addr
+            die_info["instance"] = instance
+            die_info["cluster"] = cluster
 
     def get_dies(self) -> dict[int, list[int]]:
         """

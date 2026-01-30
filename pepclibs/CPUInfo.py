@@ -70,6 +70,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         - 'get_cores_count()'
         - 'get_modules_count()'
         - 'get_dies_count()'
+        - 'get_nodes_count()'
         - 'get_noncomp_dies_count()'
         - 'get_all_dies_count()'
         - 'get_packages_count()'
@@ -930,6 +931,20 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
         dies = self.get_dies()
         return sum(len(pkg_dies) for pkg_dies in dies.values())
+
+    def get_nodes_count(self) -> int:
+        """
+        Return the number of NUMA nodes in the system.
+
+        Returns:
+            Total count of NUMA nodes in the system.
+
+        Notes:
+            - Only NUMA nodes containing at least one online CPU are counted, as Linux does not
+              provide topology information for offline CPUs.
+        """
+
+        return len(self.get_nodes())
 
     def get_noncomp_dies_count(self) -> int:
         """

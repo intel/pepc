@@ -386,7 +386,8 @@ def _check_limited_target_cores(caplog: pytest.LogCaptureFixture,
 
     output_cores: dict[int, list[int]] = {}
     for tline in topology:
-        pkg = tline["Package"]
+        # If there is only one package, the 'Package' column may be missing.
+        pkg = tline.get("Package", 0)
         core = tline["Core"]
         pkg_cores = output_cores.setdefault(pkg, [])
         pkg_cores.append(core)
@@ -694,6 +695,10 @@ def _check_noncomp_dies(caplog: pytest.LogCaptureFixture,
     found_noncomp_dies_sets: dict[int, set[int]] = {}
 
     for tline in topology:
+        if "Die" not in tline:
+            # No dies infomation, nothing to check.
+            return
+
         no_marker = True
         for colname in tline:
             if tline[colname] == _PepcTopology.NA_MARKER:
@@ -702,6 +707,7 @@ def _check_noncomp_dies(caplog: pytest.LogCaptureFixture,
         if no_marker:
             continue
 
+        # If there is only one package/die, the columns may be missing.
         package = tline["Package"]
         die = tline["Die"]
 
