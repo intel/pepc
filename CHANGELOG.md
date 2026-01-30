@@ -9,6 +9,10 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Removed
 ### Changed
 
+## [1.6.21] - 2026-01-30
+### Added
+ - pepc topology: Add --die-info option.
+
 ## [1.6.20] - 2026-01-26
 ### Fixed
  - pepc tpmi * --base: Do not fail when 'tpmi_info' feature (0x81) is missing.
