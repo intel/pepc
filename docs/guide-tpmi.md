@@ -18,14 +18,28 @@ Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 - [TPMI Overview](#tpmi-overview)
   - [TPMI Drivers](#tpmi-drivers)
   - [Debugfs Interface](#debugfs-interface)
-- [`pepc` TPMI Spec Files](#pepc-tpmi-spec-files)
-  - [Spec File Loading](#spec-file-loading)
-- [`pepc tpmi` Usage](#pepc-tpmi-usage)
-  - [Live System Usage](#live-system-usage)
-    - [Examples](#examples)
-  - [TPMI debugfs Dump Decoding](#tpmi-debugfs-dump-decoding)
+- [TPMI Spec Files](#tpmi-spec-files)
+  - [Custom Spec Files](#custom-spec-files)
+- [Usage Scenarios](#usage-scenarios)
+- [Live System Usage Scenario](#live-system-usage-scenario)
+  - [Examples](#examples)
+    - [List Available TPMI Features](#list-available-tpmi-features)
+    - [Display TPMI Topology](#display-tpmi-topology)
+    - [Find TPMI Spec Files](#find-tpmi-spec-files)
+    - [Read a TPMI Register](#read-a-tpmi-register)
+    - [Read TPMI Bit Fields](#read-tpmi-bit-fields)
+    - [Read All TPMI Registers](#read-all-tpmi-registers)
+    - [Write a TPMI Bit Field](#write-a-tpmi-bit-field)
+    - [Write to Multiple Instances](#write-to-multiple-instances)
+    - [Write to Specific UFS Clusters](#write-to-specific-ufs-clusters)
+    - [YAML Output](#yaml-output)
+    - [Simplified Register Output](#simplified-register-output)
+- [TPMI debugfs Dump Decoding](#tpmi-debugfs-dump-decoding)
+  - [Examples](#examples-1)
+    - [Check TPMI Spec Files](#check-tpmi-spec-files)
+    - [Read a TPMI Register from the Dump](#read-a-tpmi-register-from-the-dump)
+    - [Decode a single 'mem_dump' File](#decode-a-single-mem_dump-file)
     - [How To Construct VFM](#how-to-construct-vfm)
-    - [Examples](#examples-1)
 
 ## Introduction
 
@@ -53,7 +67,7 @@ TPMI registers are grouped into features. For example, the UFS (Uncore Frequency
 (feature ID 2) includes registers for managing uncore frequency scaling. A TPMI device typically
 contains multiple features.
 
-Multiple copies of the same feature may exist in a TPMI device; these copies are called instances.
+Multiple copies of the same feature may exist in a TPMI device, these copies are called instances.
 
 For example, a Granite Rapids system may have up to 5 dies, each with its own UFS instance. This
 results in 5 copies of UFS registers in the TPMI device (one per die), allowing software to manage
@@ -83,7 +97,7 @@ The UFS feature hierarchy is:
 TPMI devices
 └── UFS feature
     └── Instances
-        ├── Header registers (one copy)
+        ├── Header registers (one copy per instance)
         └── Clusters
             └── Control registers (one copy per cluster)
 ```
@@ -147,7 +161,7 @@ TPMI Instance:4 offset:0x900040c0
 The 'mem_write' file can be used to write to UFS registers. The writes are in the
 '<instance>,<offset>,<value>' format.
 
-## `pepc` TPMI Spec Files
+## TPMI Spec Files
 
 The Linux kernel exposes raw TPMI registers via debugfs. To interpret these registers, `pepc`
 needs the register layout: which register is at which offset, what each register bit means, etc.
@@ -172,7 +186,7 @@ the `tpmi-spec-files-generator` tool available in the `pepc` git repository.
 **Note:** The `pepc` git repository provides TPMI spec files only for selected features (e.g., UFS
 and SST). While the most important features are covered, not all TPMI features are supported.
 
-### Spec File Loading
+### Custom Spec Files
 
 When running `pepc tpmi` commands, `pepc` searches for TPMI spec files in standard installation
 locations where they are installed along with `pepc`.
@@ -189,27 +203,38 @@ $ export PEPC_TPMI_DATA_PATH=/home/user/tpmi-data
 This overrides only the standard 'ufs.yml' file with your custom version. Other spec
 files are not overridden, and `pepc` will use the standard spec files for other features.
 
-## `pepc tpmi` Usage
+## Usage Scenarios
 
 The `pepc tpmi` command supports two usage scenarios:
 1. Reading and writing TPMI registers on a live system.
 2. Decoding TPMI debugfs dumps captured from other systems.
 
-### Live System Usage
+Scenario 1 is the most common use case, where `pepc` interacts with the TPMI debugfs interface
+of the live system. Scenario 2 is useful for offline analysis of TPMI dumps from systems
+where `pepc` cannot be run directly (e.g., post-mortem analysis).
+
+From a command-line perspective, both scenarios are similar, but in scenario 2, you specify the
+debugfs dump directory path using the '--base' option, and optionally the VFM of the source system
+using the '--vfm' option.
+
+## Live System Usage Scenario
+
+When working with a live system, `pepc tpmi` interacts with the TPMI debugfs interface mounted at
+'/sys/kernel/debug'.
 
 The typical workflow for `pepc tpmi` is:
 1. Discover available TPMI features using `pepc tpmi ls`.
-  - Use `--topology` to see how TPMI devices and instances are organized.
-  - Use `--list-specs` to view available TPMI spec files.
-  - Use `--yaml` for machine-readable output.
+  - Use '--topology' to see how TPMI devices and instances are organized.
+  - Use '--list-specs' to view available TPMI spec files.
+  - Use '--yaml' for machine-readable output.
 2. Read TPMI registers using `pepc tpmi read`, filtering by feature, package, instance, cluster,
    register, or bit field as needed.
 3. Write TPMI registers using `pepc tpmi write`, specifying the target feature, package, instance,
    cluster, register, and bit field.
 
-#### Examples
+### Examples
 
-**List Available TPMI Features**
+#### List Available TPMI Features
 
 Here is how to list all available TPMI features on a Granite Rapids system.
 
@@ -222,7 +247,11 @@ $ pepc tpmi ls
 - tpmi_info (0x81): TPMI Info Registers
 ```
 
-Check the topology of TPMI devices:
+The output shows all discovered TPMI features along with their IDs and descriptions.
+
+#### Display TPMI Topology
+
+To see the topology of TPMI devices, packages, and instances, use the '--topology' option:
 
 ```bash
 $ pepc tpmi ls --topology
@@ -241,12 +270,31 @@ Supported TPMI features
       - Cluster: 0
     - Instance: 1
       - Cluster: 0
-... snip ...
+... snip ..
 ```
 
-**Find TPMI Spec Files**
+This output shows TPMI devices, their PCI addresses, associated packages, instances, and clusters
+(for UFS).
 
-To see which TPMI spec files are available for the target system, use the `--list-specs` option:
+You can also add the '--yaml' option for machine-readable output.
+
+To focus on a specific feature, use the `-F` option. For example, to see only UFS topology:
+
+```bash
+$ pepc tpmi ls --topology -F ufs
+- ufs: Processor uncore (fabric) monitoring and control
+  - PCI address: 0000:00:03.1
+    Package: 0
+    Instances: 0-4
+  - PCI address: 0000:80:03.1
+    Package: 1
+    Instances: 0-4
+```
+
+#### Find TPMI Spec Files
+
+To see which TPMI spec files are available for the target system, along with their paths, use the
+'--list-specs' option:
 
 ```bash
 $ pepc tpmi ls --list-specs
@@ -267,34 +315,9 @@ TPMI spec files:
   Spec file: /home/dedekind/git/pepc/pepcdata/tpmi/gnr/tpmi_info.yml
 ```
 
-**Read All TPMI Registers**
+#### Read a TPMI Register
 
-You can read all TPMI registers of every discovered feature by running `pepc tpmi read` without any
-options. However, the output is very long.
-
-To limit the output, use one of the filtering options: '--features', '--addresses', '--packages',
-'--instances', '--clusters', '--registers', '--bitfields'.
-
-**Display TPMI Topology**
-
-Use the `--topology` option to see how TPMI devices, packages, and instances are organized:
-
-```bash
-$ pepc tpmi ls --topology -F ufs
-- ufs: Processor uncore (fabric) monitoring and control
-  - PCI address: 0000:00:03.1
-    Package: 0
-    Instances: 0-4
-  - PCI address: 0000:80:03.1
-    Package: 1
-    Instances: 0-4
-```
-
-This displays PCI addresses of TPMI devices, their packages, and instance numbers.
-
-**Read a TPMI Register**
-
-This example reads the 'UFS_STATUS' register of the UFS feature for package 0, instance 4 on a
+This example reads the `UFS_STATUS` register of the UFS feature for package 0, instance 4 on a
 Granite Rapids system:
 
 ```bash
@@ -315,18 +338,13 @@ $ pepc tpmi read -F ufs --registers UFS_STATUS --packages 0 --instances 4
           - THROTTLE_COUNTER[63:32]: 162303
 ```
 
-The output includes cluster information for the UFS feature. UFS is special because instances may
-contain multiple clusters, each with its own copy of control registers (like `UFS_STATUS`). Header
-registers (`UFS_HEADER` and `UFS_FABRIC_CLUSTER_OFFSET`) appear only once per instance under
-cluster 0.
+The Granite Rapids system has only one cluster per UFS instance. But on future platforms with
+multiple clusters, this command will display all clusters for the specified instance.
 
-**Note:** On Granite Rapids, instance numbers typically correspond to die numbers (instance 0 = die
-0, instance 1 = die 1, etc.), but this mapping is platform-specific.
+#### Read TPMI Bit Fields
 
-**Read TPMI Bit Fields**
-
-This example reads the 'TIME_WINDOW' and 'PWR_LIM_EN' bit fields of the
-'SOCKET_RAPL_PL1_CONTROL' register:
+This example reads the `TIME_WINDOW` and `PWR_LIM_EN` bit fields of the
+`SOCKET_RAPL_PL1_CONTROL` register:
 
 ```bash
 $ pepc tpmi read -F rapl --registers SOCKET_RAPL_PL1_CONTROL --bitfields TIME_WINDOW,PWR_LIM_EN
@@ -347,7 +365,15 @@ $ pepc tpmi read -F rapl --registers SOCKET_RAPL_PL1_CONTROL --bitfields TIME_WI
 
 Since packages and instances were not limited, the output includes all packages and instances.
 
-**Write a TPMI Bit Field**
+#### Read All TPMI Registers
+
+You can read all TPMI registers of every discovered TPMI feature by running `pepc tpmi read` without
+any options. However, the output is very long.
+
+To limit the output, use one of the filtering options: '--features', '--addresses', '--packages',
+'--instances', '--clusters', '--registers', '--bitfields'.
+
+#### Write a TPMI Bit Field
 
 This example changes the maximum uncore frequency ratio for package 0, instance 2 (die 2) on a
 Granite Rapids system:
@@ -362,9 +388,9 @@ command defaults to cluster 0.
 
 **Note:** The value 20 corresponds to a 2.0GHz maximum uncore frequency (ratio × 100MHz bus clock).
 
-**Write to Multiple Instances**
+#### Write to Multiple Instances
 
-You can write to all instances of a package by omitting the `--instances` option:
+You can write to all instances of a package by omitting the '--instances' option:
 
 ```bash
 $ pepc tpmi write -F ufs --packages 0 --register UFS_CONTROL --bitfield MAX_RATIO -V 20
@@ -373,11 +399,11 @@ Wrote '20' to TPMI register 'UFS_CONTROL', bit field 'MAX_RATIO' (feature 'ufs',
 Wrote '20' to TPMI register 'UFS_CONTROL', bit field 'MAX_RATIO' (feature 'ufs', device '0000:00:03.1', package 0, instance 2, cluster 0)
 ```
 
-**Write to Specific UFS Clusters**
+#### Write to Specific UFS Clusters
 
 On Granite Rapids, there is only one cluster per UFS instance. However, future platforms may
 support multiple clusters per instance. On such platforms, you can write to specific clusters using
-the `--clusters` option:
+the '--clusters' option:
 
 ```bash
 # This would only work on platforms with multiple clusters per instance.
@@ -385,10 +411,10 @@ $ pepc tpmi write -F ufs --packages 0 --instances 2 --clusters 1 --register UFS_
 Wrote '18' to TPMI register 'UFS_CONTROL', bit field 'MAX_RATIO' (feature 'ufs', device '0000:00:03.1', package 0, instance 2, cluster 1)
 ```
 
-**YAML Output**
+#### YAML Output
 
 For programmatic consumption or integration with other tools, TPMI information can be output in YAML
-format using the `--yaml` option:
+format using the '--yaml' option:
 
 ```bash
 $ pepc tpmi read -F ufs --registers UFS_STATUS --packages 0 --instances 4 --yaml
@@ -410,10 +436,9 @@ ufs:
               RSVD: 0
               THROTTLE_COUNTER: 162303
 ```
+#### Simplified Register Output
 
-**Filtering with --no-bitfields**
-
-When you only need register values without decoding bit fields, use the `--no-bitfields` option to
+When you only need register values without decoding bit fields, use the '--no-bitfields' option to
 simplify the output:
 
 ```bash
@@ -426,29 +451,29 @@ $ pepc tpmi read -F ufs --registers UFS_STATUS --packages 0 --instances 4 --no-b
         - UFS_STATUS: 0x279ff040ada88
 ```
 
-### TPMI debugfs Dump Decoding
+## TPMI debugfs Dump Decoding
 
 `pepc tpmi` can decode TPMI debugfs dumps captured from other systems. Usage is similar to live
 systems, with two key differences:
 
-1. Use `--base` to specify the debugfs dump directory path instead of the default
+1. Use '--base' to specify the debugfs dump directory path instead of the default
    '/sys/kernel/debug'.
-2. Use `--vfm` to specify the VFM (Vendor, Family, Model) of the source system. This ensures `pepc`
-   uses the correct TPMI spec files. If `--vfm` is not provided, `pepc` assumes Granite Rapids Xeon
+2. Use '--vfm' to specify the VFM (Vendor, Family, Model) of the source system. This ensures `pepc`
+   uses the correct TPMI spec files. If '--vfm' is not provided, `pepc` assumes Granite Rapids Xeon
    (VFM 0x6AD).
 
 **Note:** Currently, only Granite Rapids TPMI spec files are available in the `pepc` git
 repository. These files also cover Sierra Forest Xeon, as both platforms share identical TPMI
-features and registers. Therefore, specifying `--vfm` is unnecessary unless you have custom spec
+features and registers. Therefore, specifying '--vfm' is unnecessary unless you have custom spec
 files for a different platform.
 
 The debugfs dump directory structure must match the standard TPMI debugfs layout described in the
 [Debugfs Interface](#debugfs-interface) section.
 
-All filtering options available for live systems (`--features`, `--packages`, `--instances`,
-`--clusters`, `--registers`, `--bitfields`) work the same way with debugfs dumps.
+All filtering options available for live systems ('--features', '--packages', '--instances',
+'--clusters', '--registers', '--bitfields') work the same way with debugfs dumps.
 
-#### Examples
+### Examples
 
 Suppose you have a partial TPMI debugfs dump, that includes only few features:
 
@@ -475,10 +500,10 @@ $ tree /home/dedekind/tmp/debugfs-dump/
         └── mem_dump
 ```
 
-***Check TPMI Spec Files***
+#### Check TPMI Spec Files
 
 It is always handy to first verify that you have the correct TPMI spec files for the target system.
-Use the `--list-specs` option along with `--base`. Optionally, use `--vfm` to specify the target
+Use the '--list-specs' option along with '--base'. Optionally, use '--vfm' to specify the target
 system VFM, but in this example, Granite Rapids Xeon TPMI spec files are OK for decoding.
 
 ```bash
@@ -501,7 +526,7 @@ TPMI spec files:
   Spec file: /home/dedekind/git/pepc/pepcdata/tpmi/gnr/tpmi_info.yml
 ```
 
-**Read a TPMI Register from the Dump**
+#### Read a TPMI Register from the Dump
 
 To read the 'UFS_STATUS' register of the UFS feature for package 0, instance 0 from the debugfs
 dump:
@@ -525,7 +550,7 @@ pepc: notice: No VFM provided, assuming VFM 0x6AD (Granite Rapids Xeon) for deco
           THROTTLE_COUNTER[63:32]: 25984788
 ```
 
-**Decode a single 'mem_dump' File**
+#### Decode a single 'mem_dump' File
 
 If you only have the 'mem_dump' file of a specific TPMI feature (e.g., someone sent it to you), you
 can decode it too, but you have to create a dummy debugfs dump directory structure first. For
@@ -582,7 +607,7 @@ Where:
 
 1. Intel CPU with family 6, model 0xAD (173 decimal):
    ```
-   VFM = (6 << 8) | 0xAD = 0x600 | 0xAD = 0x6AD
+   VFM = (0 << 16) | (6 << 8) | 0xAD = 0x600 | 0xAD = 0x6AD
    ```
 2. AMD CPU with family 19, model 0x1:
    ```

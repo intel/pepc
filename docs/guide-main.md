@@ -15,7 +15,7 @@ Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 ## Table of Contents
 
 - [Introduction](#introduction)
-  - [Topology Options](#topology-options)
+  - [Target CPU Options](#target-cpu-options)
   - [Debug Options](#debug-options)
   - [YAML Output](#yaml-output)
   - [Mechanisms](#mechanisms)
@@ -32,7 +32,6 @@ Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 - [CPU Hotplug](#cpu-hotplug)
   - [Examples](#examples)
 - [CPU Topology](#cpu-topology)
-  - [Examples](#examples)
 - [PM QoS](#pm-qos)
   - [Examples](#examples)
 - [TPMI](#tpmi)
@@ -46,10 +45,12 @@ commands are 'pstates', 'cstates', 'tpmi', and so on. Most commands have 'info' 
 and 'config' (change configuration) subcommands. However, some commands may have additional or
 different subcommands.
 
-### Topology Options
+### Target CPU Options
 
-Many subcommands support topology options, such as '--cpus', '--cores', '--packages', etc. These
-options select the target CPUs, cores, packages, or other topology elements for the operation.
+By default, most `pepc` commands and subcommands operate on all CPUs. But you can limit the
+operation target CPUs ('--cpus'), cores ('--cores'), modules ('--modules'), dies ('--dies'),
+packages ('--packages') or NUMA nodes ('--nodes'). You also can limit the operation to specific core
+siblings ('--core-siblings') or module siblings ('--module-siblings').
 
 ### Debug Options
 
@@ -85,11 +86,11 @@ For example, to read the minimum uncore frequency using the 'tpmi' mechanism, us
 pepc uncore info --min-freq --mechanisms tpmi
 ```
 
-The list of supported mechanisms for every option is documented in the corresponding manual page.
+The list of supported mechanisms for each option is documented in the corresponding manual page.
 
 Some options that sound similar but use different mechanisms are implemented as separate options.
 For example, '--cppc-guaranteed-perf' and '--hwp-guaranteed-perf' are implemented as 2 different
-options, instead of a single option with multiple mechanisms.
+options, instead of a single '--guaranteed-perf' option with multiple mechanisms.
 
 What is the criterion? The CPPC guaranteed performance and HWP guaranteed performance have similar
 names, but they do not have to have the same value. Therefore, they are 2 separate options. On the
@@ -392,7 +393,7 @@ C1 demotion: 'off' for CPUs 0-87 (all CPUs)
 
 **Toggle C-states**
 
-Disable all C-states but POLL on all CPUs.
+Disable all C-states except POLL on all CPUs.
 
 ```bash
 $ pepc cstates config --disable all --enable POLL
@@ -404,7 +405,7 @@ C6: set to 'off' for CPUs 0-87 (all CPUs)
 POLL: set to 'on' for CPUs 0-87 (all CPUs)
 ```
 
-Enable all C-states on all CPUs.
+Re-enable all C-states on all CPUs.
 
 ```bash
 $ pepc cstates config --enable all
@@ -460,16 +461,16 @@ In pepc, a "die" is considered to be a unit of uncore frequency scaling. In othe
 frequency is per-die.
 
 Dies that include CPU cores are referred to as compute dies. Some Intel CPUs enumerate compute dies
-via the 'CPUID' instruction, and Linux exposes this information via sysfs (e.g.,
+via the `CPUID` instruction, and Linux exposes this information via sysfs (e.g.,
 '/sys/devices/system/cpu/cpu179/topology/die_cpus_list'). Some Intel CPUs do not enumerate
-compute dies via CPUID, and so Linux does not expose any die-related information in sysfs. In such
-cases, `pepc` uses the platform-specific methods to figure out the die topology. For example, on
-Granite Rapids Xeon, `pepc` uses MSR 0x54 (MSR_PM_LOGICAL_ID) to figure out which CPUs belong to
+compute dies via `CPUID`, so Linux does not expose any die-related information in sysfs. In such
+cases, `pepc` uses platform-specific methods to figure out the die topology. For example, on
+Granite Rapids Xeon, `pepc` uses MSR 0x54 (`MSR_PM_LOGICAL_ID`) to figure out which CPUs belong to
 which compute die.
 
 Some dies do not include CPUs, but still have uncore frequency scaling capability. For example,
 on Granite Rapids Xeon there are "I/O dies" that include uncore blocks related to PCIe and
-CXL. Such dies are not discoverable via CPUID or sysfs, so `pepc` uses the TPMI mechanism to
+CXL. Such dies cannot be discovered via `CPUID` or sysfs, so `pepc` uses the TPMI mechanism to
 enumerate non-compute dies and assign them unique die IDs.
 
 Typically client CPUs (e.g., Raptor Lake, Alder Lake) have a single compute die and no non-compute
@@ -519,14 +520,15 @@ Source: Linux sysfs file-system
 
 **Additional Examples**
 
-For more examples related to uncore frequency scaling and ELC configuration, refer to the [Uncore ELC and Frequency Scaling](misc-uncore-elc.md) article.
+For more examples related to uncore frequency scaling and ELC configuration, refer to
+the [Uncore ELC and Frequency Scaling](misc-uncore-elc.md) article.
 
 ## CPU Hotplug
 
 The `pepc cpu-hotplug` command groups operations related to CPU hotplug functionality in Linux.
 Today, this includes onlining and offlining CPUs.
 
-What does CPU offline do in Linux? At high level, it migrates all tasks and interrupts away from the
+What does CPU offline do in Linux? At a high level, it migrates all tasks and interrupts away from the
 target CPU, removes the CPU from the scheduler's list of available CPUs, and then puts the CPU into
 the lowest C-state. The CPU ends up running a forever loop, where it requests the deepest C-state
 (e.g., C6 on Intel Xeon platforms). In the ideal case, it never wakes up again. But if there are
@@ -596,61 +598,9 @@ $ pepc cpu-hotplug offline --packages 1
 
 ## CPU Topology
 
-The `pepc topology` command groups operations related to CPU topology discovery. Currently, it
-supports only the 'info' subcommand that prints the CPU topology table.
-
-### Examples
-
-**Print the Topology Table**
-
-Here is an example of running `pepc topology info` on an Alder Lake system.
-
-```bash
-$ pepc topology info
-CPU    Core    Module    Node    Package    Hybrid
-  0       0         0       0          0    P-core
-  1       0         0       0          0    P-core
-  2       4         1       0          0    P-core
-  3       4         1       0          0    P-core
-  4       8         2       0          0    P-core
-  5       8         2       0          0    P-core
-  6      12         3       0          0    P-core
-  7      12         3       0          0    P-core
-  8      16         4       0          0    E-core
-  9      17         4       0          0    E-core
- 10      18         4       0          0    E-core
- 11      19         4       0          0    E-core
- 12      20         5       0          0    E-core
- 13      21         5       0          0    E-core
- 14      22         5       0          0    E-core
- 15      23         5       0          0    E-core
-```
-
-The table gives an idea about how CPU, core, NUMA node and package numbers are related to each
-other.
-
-**Discover Non-Compute Dies**
-
-Some systems, such as Granite Rapids Xeon, have non-compute dies (dies without CPUs). To discover
-such dies, use 'dtype' column (from 'die type'). For example, on a Granite Rapids system:
-
-```bash
-$ pepc topology info --columns package,die,dtype
-Package    Die    DieType
-      0      0    Compute
-      0      1    Compute
-      0      2    Compute
-      1      0    Compute
-      1      1    Compute
-      1      2    Compute
-      0      3      I/O
-      0      4      I/O
-      1      3      I/O
-      1      4      I/O
-```
-
-Another option is to run `pepc topology info` without options, and the non-compute dies will be
-listed at the end of the output.
+The `pepc topology` command groups operations related to CPU topology, including non-compute die
+details. This command is covered in a separate document: [Pepc User Guide:
+Topology](guide-topology.md).
 
 ## PM QoS
 
