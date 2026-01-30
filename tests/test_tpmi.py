@@ -301,16 +301,13 @@ def test_write_register(params: _TestParamsTypedDict):
     tpmi = params["tpmi"]
 
     fname = "ufs"
-    regname = "UFS_ADV_CONTROL_2"
-    bfname = "UTILIZATION_THRESHOLD"
-
-    fdict = tpmi.get_fdict(fname)
-    bits = fdict[regname]["fields"][bfname]["bits"]
+    regname = "UFS_CONTROL"
+    bfname = "MAX_RATIO"
 
     for _, addr, instance, cluster in tpmi.iter_feature_cluster(fname):
         bfval = tpmi.read_register_cluster(fname, addr, instance, cluster, regname, bfname=bfname)
 
-        new_bfval = (bfval - 1) % (1 << (bits[0] - bits[1] + 1))
+        new_bfval = bfval - 1
 
         tpmi.write_register_cluster(new_bfval, fname, addr, instance, cluster, regname,
                                     bfname=bfname)
@@ -352,7 +349,7 @@ def test_specdirs(params: _TestParamsTypedDict):
 
 def test_default_vfm(params: _TestParamsTypedDict):
     """
-    Test the TPMI class constructor when vfm is not provided.
+    Test the TPMI class constructor when VFM is not provided.
 
     The constructor should use DEFAULT_VFM (Granite Rapids Xeon) as the default VFM value.
 
@@ -397,11 +394,11 @@ registers:
 
 def _prepare_specdir(params: _TestParamsTypedDict, tmp_path: Path) -> Path:
     """
-    Prepare a temporary spec files directory with a modified "ufs" spec file.
+    Prepare a temporary spec files directory with a modified 'ufs' spec file.
 
-    Find the "ufs" spec file in one of the provided specdirs, copy the specdir to a temporary
-    location, modify the "ufs" spec file in the temporary location, and return the path to the
-    temporary specdir path.
+    Find the 'ufs' spec file in one of the provided specdirs, copy the specdir to a temporary
+    location, modify the 'ufs' spec file in the temporary location, and return the path to the
+    temporary specdir.
 
     Args:
         params: A dictionary with test parameters.
