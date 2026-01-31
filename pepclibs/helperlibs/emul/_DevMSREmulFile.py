@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2022-2025 Intel Corporation
+# Copyright (C) 2022-2026 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Authors: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
@@ -58,8 +58,8 @@ class DevMSREmulFile(_EmulFileBase.EmulFileBase):
             path: Path to the file to emulate.
             basepath: Path to the base directory (where the emulated files are stored).
             readonly: Whether the emulated file is read-only.
-            data: The initial data to populate the emulated file with. Create an empty file if "",
-                  do not create an empty file if None.
+            data: The initial data to populate the emulated file with. A dictionary mapping MSR
+                  addresses to their byte values.
         """
 
         super().__init__(path, basepath, readonly=readonly, data=None)
@@ -96,7 +96,7 @@ class DevMSREmulFile(_EmulFileBase.EmulFileBase):
                   'open()' function.
 
         Returns:
-            An emulated file object with a patched `seek()` method.
+            An emulated file object with a patched 'seek()' method.
         """
 
         fobj = super().open(mode)

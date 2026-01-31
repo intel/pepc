@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2022-2025 Intel Corporation
+# Copyright (C) 2022-2026 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Authors: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
@@ -55,7 +55,7 @@ class GeneralRWSysfsEmulFile(_EmulFileBase.EmulFileBase):
                   'open()' function.
 
         Returns:
-            An emulated file object with a patched `write()` method.
+            An emulated file object with a patched 'write()' method.
         """
 
         fobj = super().open(mode)

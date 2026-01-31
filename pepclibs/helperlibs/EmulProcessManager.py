@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2022-2024 Intel Corporation
+# Copyright (C) 2022-2026 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Authors: Antti Laakso <antti.laakso@linux.intel.com>
@@ -183,7 +183,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         - Filesystem-related methods (e.g., mkdir, lsdir, is_file) operate relative to the base
           directory (which is just a temporary directory), not the real local filesystem.
           So all file and directory operations are sandboxed within the base directory.
-        - The emulation data (emd) are intialized and populated from the test data.
+        - The emulation data (emd) are initialized and populated from the test data.
     """
 
     def __init__(self, hostname: str | None = None):
@@ -352,7 +352,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
         Args:
             info: MSR configuration dictionary.
-            dspath: The dataset path.
+            filepath: The dataset path.
         """
 
         filepath = filepath / info["dirname"] / info["filename"]
@@ -380,10 +380,6 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             data: dict[int, bytes] = {}
             for reg_val_pair in reg_val_pairs:
                 regaddr_str, regval_str = reg_val_pair.split(sep2)
-
-                if len(split) != 2:
-                    raise Error(f"Unexpected register-value format in file '{filepath}':\n  "
-                                f"Expected <regaddr>{sep2}<value>, received '{line}'")
 
                 regaddr = int(regaddr_str)
                 regval = int(regval_str, 16)
@@ -592,7 +588,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
         cmd = str(cmd)
 
-        _LOG.debug("running the following emulated command:\n%s", cmd)
+        _LOG.debug("Running the following emulated command:\n%s", cmd)
 
         try:
             stdout, stderr = self._get_predefined_result(cmd, join=join)
