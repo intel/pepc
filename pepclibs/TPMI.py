@@ -938,11 +938,6 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         """
         Generate and return a dummy 'tpmi_info' mdmap and package number for a TPMI device.
 
-        This method covers the scenario when the 'tpmi_info' feature is missing from the debugfs
-        dump. Instead of failing, a dummy mdmap is created with all 'tpmi_info' instances marked as
-        unimplemented. A reasonable package number is assigned to the TPMI device based on its PCI
-        address.
-
         Args:
             addr: PCI address of the TPMI device.
             addrs: Set of all PCI addresses of TPMI devices found in the debugfs dump.
@@ -951,6 +946,13 @@ class TPMI(ClassHelpers.SimpleCloseContext):
             A tuple containing:
                 * A dummy 'tpmi_info' mdmap with all instances marked as unimplemented.
                 * An assigned package number for the TPMI device.
+
+        Notes:
+            - This method handles the case when the 'tpmi_info' feature is missing from the debugfs
+              dump.
+            - Instead of failing, a dummy mdmap is created with all instances marked as
+              unimplemented.
+            - A reasonable package number is assigned based on the PCI address.
         """
 
         _LOG.debug("Finding a reasonable dummy package number for TPMI device %s", addr)
@@ -1786,33 +1788,24 @@ class TPMI(ClassHelpers.SimpleCloseContext):
 
         return self._get_fdict(fname)
 
-    def iter_feature(self,
-                     fname: str,
-                     packages: Iterable[int] = (),
-                     addrs: Iterable[str] = (),
-                     instances: Iterable[int] = (),
-                     unimplemented: bool = False) -> Generator[tuple[int, str, int], None, None]:
+    def _iter_feature(self,
+                      fname: str,
+                      packages: Iterable[int] = (),
+                      addrs: Iterable[str] = (),
+                      instances: Iterable[int] = ()) -> Generator[tuple[int, str, int, bool],
+                                                                  None, None]:
         """
-        Iterate over a TPMI feature and yield tuples of '(package, addr, instance)'.
-
-        Yield all TPMI device PCI address, package numbers, and instance numbers for the specified
-        TPMI feature. It is possible to restrict the iteration to specific addresses, packages, or
-        instances by providing the corresponding arguments.
-
-        Note, in case of UFS feature, each instance may contain multiple clusters of registers. Use
-        'iter_ufs_feature()' or 'iter_feature_cluster()' to iterate over clusters. This method
-        yields only instance numbers, and cluster number is assumed to be 0.
+        Iterate over a TPMI feature and yield tuples of '(package, addr, instance, unimplemented)'.
 
         Args:
             fname: Name of the TPMI feature to iterate.
             packages: Package numbers to include.
             addrs: TPMI device PCI addresses to include.
             instances: Instance numbers to include.
-            unimplemented: Whether to include unimplemented instances (where version is 0xFF).
 
         Yields:
-            Tuples of '(package, addr, instance)' for each matching TPMI instance of feature
-            registers.
+            Tuples of '(package, addr, instance, unimplemented)' for each matching TPMI instance of
+            feature registers.
         """
 
         self._validate_fname(fname)
@@ -1835,22 +1828,53 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                 if fmap[addr]["package"] != package:
                     continue
 
+                _instances: list[int] = []
                 if instances:
-                    _instances: list[int] = []
-                    for instance in instances:
-                        if instance not in mdmap:
-                            # A non-existing instance.
-                            continue
-                        if not mdmap[instance] and not unimplemented:
-                            # Skip unimplemented instances (version was 0xFF).
-                            continue
-                        _instances.append(instance)
+                    all_instances: Iterable[int] = instances
                 else:
-                    # Skip unimplemented instances (version was 0xFF).
-                    _instances = sorted(instance for instance in mdmap if mdmap[instance])
+                    all_instances = mdmap
+
+                for instance in all_instances:
+                    if instance not in mdmap:
+                        # A non-existing instance.
+                        continue
+                    _instances.append(instance)
 
                 for instance in _instances:
-                    yield (package, addr, instance)
+                    yield (package, addr, instance, not bool(mdmap[instance]))
+
+    def iter_feature(self,
+                     fname: str,
+                     packages: Iterable[int] = (),
+                     addrs: Iterable[str] = (),
+                     instances: Iterable[int] = (),
+                     unimplemented: bool = False) -> Generator[tuple[int, str, int], None, None]:
+        """
+        Iterate over a TPMI feature and yield tuples of '(package, addr, instance)'.
+
+        Args:
+            fname: Name of the TPMI feature to iterate.
+            packages: Package numbers to include.
+            addrs: TPMI device PCI addresses to include.
+            instances: Instance numbers to include.
+            unimplemented: Whether to include unimplemented instances (where version is 0xFF).
+
+        Yields:
+            Tuples of '(package, addr, instance)' for each matching TPMI instance of feature
+            registers.
+
+        Notes:
+            - For the UFS feature, each instance may contain multiple clusters of registers.
+            - This method yields only instance numbers and assumes cluster number 0.
+            - Use 'iter_ufs_feature()' or 'iter_feature_cluster()' to iterate over UFS clusters.
+        """
+
+        iterator = self._iter_feature(fname, packages=packages, addrs=addrs,
+                                      instances=instances)
+        for package, addr, instance, is_unimplemented in iterator:
+            if is_unimplemented and not unimplemented:
+                continue
+            yield (package, addr, instance)
 
     def _get_cmap(self, addr: str, instance: int) -> dict[int, int]:
         """
@@ -1912,30 +1936,40 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                          packages: Iterable[int] = (),
                          addrs: Iterable[str] = (),
                          instances: Iterable[int] = (),
-                         clusters: Iterable[int] = ()) -> Generator[tuple[int, str, int, int],
-                                                                    None, None]:
+                         clusters: Iterable[int] = (),
+                         unimplemented: bool = False) -> Generator[tuple[int, str, int, int],
+                                                                   None, None]:
         """
         Iterate over TPMI UFS feature and yield tuples of '(package, addr, instance, cluster)'.
-
         Similar to 'TPMI.TPMI.iter_feature()', but with added support for UFS clusters.
-
-        The UFS TPMI feature is unique in that each instance may contain multiple clusters of
-        registers, unlike other TPMI features which have no clusters (or one can think of it as
-        there is only cluster 0).
 
         Args:
             packages: Package numbers to include.
             addrs: TPMI device PCI addresses to include.
             instances: Instance numbers to include.
             clusters: Cluster numbers to include.
+            unimplemented: Whether to include unimplemented instances (where version is 0xFF).
 
         Yields:
             Tuples of '(package, addr, instance, cluster)' for each matching TPMI UFS instance and
             cluster.
+
+        Notes:
+            - The UFS TPMI feature is unique in that each instance may contain multiple clusters of
+              registers, unlike other TPMI features which have no clusters (or one can think of it
+              as there is only cluster 0).
+            - If no clusters are specified, all clusters for each instance are yielded.
+            - In case of an unimplemented instance, yielded cluster number is -1.
         """
 
-        for package, addr, instance in self.iter_feature("ufs", packages=packages, addrs=addrs,
-                                                         instances=instances):
+        iterator = self._iter_feature("ufs", packages=packages, addrs=addrs, instances=instances)
+
+        for package, addr, instance, is_unimplemented in iterator:
+            if is_unimplemented:
+                if unimplemented:
+                    yield package, addr, instance, -1
+                continue
+
             cmap = self._get_cmap(addr, instance)
             if not clusters:
                 clusters_iter: Iterable[int] = cmap
@@ -1953,14 +1987,11 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                              packages: Iterable[int] = (),
                              addrs: Iterable[str] = (),
                              instances: Iterable[int] = (),
-                             clusters: Iterable[int] = ()) -> Generator[tuple[int, str, int, int],
-                                                                        None, None]:
+                             clusters: Iterable[int] = (),
+                             unimplemented: bool = False) -> Generator[tuple[int, str, int, int],
+                                                                       None, None]:
         """
         Iterate over a TPMI feature and yield tuples of '(package, addr, instance, cluster)'.
-
-        For UFS features, each instance may contain multiple clusters of registers. Other features
-        do not have clusters, or another way to think about it is that they have only cluster 0.
-        Therefore, for non-UFS features, cluster number 0 is yielded for each instance.
 
         Args:
             fname: Name of the TPMI feature to iterate.
@@ -1968,23 +1999,39 @@ class TPMI(ClassHelpers.SimpleCloseContext):
             addrs: TPMI device PCI addresses to include.
             instances: Instance numbers to include.
             clusters: Cluster numbers to include.
+            unimplemented: Whether to include unimplemented instances (where version is 0xFF).
 
         Yields:
             Tuples of '(package, addr, instance, cluster)' for each matching TPMI instance and
             cluster.
+
+        Notes:
+            - For UFS features, each instance may contain multiple clusters of registers. Other
+              features do not have clusters, or another way to think about it is that they have only
+              cluster 0.  Therefore, for non-UFS features, cluster number 0 is yielded for each
+              instance.
+            - If no clusters are specified, all clusters for each instance are yielded.
+            - In case of an unimplemented instance, yielded cluster number is -1.
         """
 
         if fname == "ufs":
             yield from self.iter_ufs_feature(packages=packages, addrs=addrs,
-                                             instances=instances, clusters=clusters)
+                                             instances=instances, clusters=clusters,
+                                             unimplemented=unimplemented)
         else:
             for cluster in clusters:
                 if cluster != 0:
                     raise Error(f"Invalid cluster '{cluster}': TPMI feature '{fname}' does not "
                                 f"support clusters")
-            for package, addr, instance in self.iter_feature(fname, packages=packages,
-                                                             addrs=addrs,
-                                                             instances=instances):
+
+            iterator = self._iter_feature(fname, packages=packages, addrs=addrs,
+                                          instances=instances)
+
+            for package, addr, instance, is_unimplemented in iterator:
+                if is_unimplemented:
+                    if unimplemented:
+                        yield package, addr, instance, -1
+                    continue
                 yield package, addr, instance, 0
 
     def read_register(self,
@@ -1996,10 +2043,6 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         """
         Read a TPMI register or a bit field and return its value.
 
-        In case of the 'ufs' feature, use 'read_ufs_register()' or 'read_register_cluster()' to read
-        registers from specific clusters. This method assumes cluster number 0 for the 'ufs'
-        feature.
-
         Args:
             fname: Name of the TPMI feature to read.
             addr: TPMI device PCI address.
@@ -2009,6 +2052,11 @@ class TPMI(ClassHelpers.SimpleCloseContext):
 
         Returns:
             The value of the TPMI register or bit field.
+
+        Notes:
+            - For the 'ufs' feature, this method assumes cluster number 0.
+            - Use 'read_ufs_register()' or 'read_register_cluster()' to read registers from
+              specific UFS clusters.
         """
 
         self._validate_fname(fname)
@@ -2027,9 +2075,6 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         """
         Read a TPMI UFS register or a bit field and return its value.
 
-        The special handling of UFS is because unlike other TPMI features, UFS may have multiple
-        clusters per instance.
-
         Args:
             addr: TPMI device PCI address.
             instance: TPMI instance number to read.
@@ -2039,6 +2084,9 @@ class TPMI(ClassHelpers.SimpleCloseContext):
 
         Returns:
             The value of the TPMI register or bit field.
+
+        Notes:
+            - Unlike other TPMI features, UFS may have multiple clusters per instance.
         """
 
         self._validate_addr("ufs", addr)
@@ -2111,10 +2159,6 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         """
         Write a value to a TPMI register or its bit field.
 
-        In case of the 'ufs' feature, use 'write_ufs_register()' or 'write_register_cluster()' to
-        write registers to specific clusters. This method assumes cluster number 0 for the 'ufs'
-        feature.
-
         Args:
             value: Value to write to the register or bit field.
             fname: Name of the TPMI feature the register belongs to.
@@ -2122,6 +2166,11 @@ class TPMI(ClassHelpers.SimpleCloseContext):
             instance: TPMI instance to write the register to.
             regname: Name of the TPMI register to write to.
             bfname: Name of the bit field to write to. If not provided, write the entire register.
+
+        Notes:
+            - For the 'ufs' feature, this method assumes cluster number 0.
+            - Use 'write_ufs_register()' or 'write_register_cluster()' to write registers to
+              specific UFS clusters.
         """
 
         self._validate_fname(fname)
@@ -2141,9 +2190,6 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         """
         Write a value to a TPMI UFS register or its bit field.
 
-        The special handling of UFS is because unlike other TPMI features, UFS may have multiple
-        clusters per instance.
-
         Args:
             value: Value to write to the register or bit field.
             addr: TPMI device address.
@@ -2151,6 +2197,9 @@ class TPMI(ClassHelpers.SimpleCloseContext):
             cluster: Cluster number to write the register to.
             regname: Name of the TPMI register to write to.
             bfname: Name of the bit field to write to. If not provided, write the entire register.
+
+        Notes:
+            - Unlike other TPMI features, UFS may have multiple clusters per instance.
         """
 
         self._validate_addr("ufs", addr)
@@ -2171,10 +2220,6 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         """
         Write a value to a TPMI register or its bit field.
 
-        Only the 'ufs' feature has clusters. Other features do not have clusters, or another way to
-        think about it is that they have only cluster 0. Therefore, for non-'ufs' features, cluster
-        number must be 0.
-
         Args:
             value: Value to write to the register or bit field.
             fname: Name of the TPMI feature the register belongs to.
@@ -2183,6 +2228,10 @@ class TPMI(ClassHelpers.SimpleCloseContext):
             cluster: TPMI cluster number to write the register to.
             regname: Name of the TPMI register to write to.
             bfname: Name of the bit field to write to. If not provided, write the entire register.
+
+        Notes:
+            - Only the 'ufs' feature has multiple clusters.
+            - For non-'ufs' features, cluster number must be 0.
         """
 
         if fname == "ufs":

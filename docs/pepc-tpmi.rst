@@ -113,6 +113,12 @@ Display supported TPMI features.
 **-t**, **--topology**
    Display TPMI topology (PCI addresses, instance numbers, etc.).
 
+**--unimplemented**
+   Include unimplemented TPMI instances. Unimplemented instances have version number 0xFF and
+   represent "empty slots" in the instances table of a TPMI feature. For example, there instance 0
+   may be implemented, instance 1 may be unimplemented (version 0xFF), and instance 2 may be
+   implemented. By default, unimplemented instances are not shown in the output.
+
 **-F** *[FEATURES]*, **--features** *[FEATURES]*
    Comma-separated list of TPMI feature names to include in the output. Defaults to all supported
    features.

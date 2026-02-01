@@ -135,6 +135,8 @@ if typing.TYPE_CHECKING:
             list_specs: If 'True', list available TPMI spec files and exit.
             topology: Whether to output TPMI topology information.
             fnames: List of TPMI feature names to display.
+            unimplemented: Include unimplemented TPMI instances (version number is 0xFF) in the
+                           output.
             unknown: Include unknown TPMI features (without spec files) in the output.
             yaml: Whether to output results in YAML format.
         """
@@ -142,6 +144,7 @@ if typing.TYPE_CHECKING:
         list_specs: bool
         topology: bool
         fnames: list[str]
+        unimplemented: bool
         unknown: bool
         yaml: bool
 
@@ -246,6 +249,7 @@ def _get_ls_cmdline_args(args: argparse.Namespace) -> _LsCmdlineArgsTypedDict:
     cmdl["list_specs"] = args.list_specs
     cmdl["topology"] = args.topology
     cmdl["fnames"] = fnames
+    cmdl["unimplemented"] = args.unimplemented
     cmdl["unknown"] = args.unknown
     cmdl["yaml"] = args.yaml
 
@@ -496,21 +500,24 @@ def _tpmi_ls_flat(cmdl: _LsCmdlineArgsTypedDict, tpmi: TPMI.TPMI):
         _LOG.info("TPMI features supported by the target platform, but no spec files found")
         _LOG.info(" - %s", ", ".join(hex(fid) for fid in info["unknown"]))
 
-def _get_ls_topology(tpmi: TPMI.TPMI, fname: str) -> dict[str, _LsInfoTopologyAddrTypedDict]:
+def _get_ls_topology(tpmi: TPMI.TPMI,
+                     fname: str,
+                     unimplemented: bool) -> dict[str, _LsInfoTopologyAddrTypedDict]:
     """
     Get TPMI topology information for a feature.
 
     Args:
         tpmi: A 'TPMI.TPMI' object.
         fname: Name of the feature to get topology for.
-
+        unimplemented: Whether to include unimplemented TPMI instances (version number is 0xFF).
     Returns:
         A dictionary containing TPMI topology information for the feature.
     """
 
     info: dict[str, _LsInfoTopologyAddrTypedDict] = {}
 
-    for package, addr, instance, cluster in tpmi.iter_feature_cluster(fname):
+    iterator = tpmi.iter_feature_cluster(fname, unimplemented=unimplemented)
+    for package, addr, instance, cluster in iterator:
         info.setdefault(addr, {"package": package, "instances": {}})
         info[addr]["instances"].setdefault(instance, []).append(cluster)
 
@@ -537,7 +544,7 @@ def _tpmi_ls_topology(cmdl: _LsCmdlineArgsTypedDict, tpmi: TPMI.TPMI):
     info["supported"] = _get_ls_supported(cmdl, sdicts)
 
     for fname in info["supported"]:
-        topology[fname] = _get_ls_topology(tpmi, fname)
+        topology[fname] = _get_ls_topology(tpmi, fname, cmdl["unimplemented"])
 
     if cmdl["yaml"]:
         YAML.dump(info, sys.stdout)
@@ -561,6 +568,9 @@ def _tpmi_ls_topology(cmdl: _LsCmdlineArgsTypedDict, tpmi: TPMI.TPMI):
             for instance in addr_info["instances"]:
                 _LOG.info("%sInstance: %d", _pfx_bullet(2), instance)
                 for cluster in addr_info["instances"][instance]:
+                    if cluster == -1:
+                        _LOG.info("%sUnimplemented instance", _pfx_bullet(3))
+                        continue
                     _LOG.info("%sCluster: %d", _pfx_bullet(3), cluster)
 
 @contextlib.contextmanager
@@ -606,6 +616,8 @@ def tpmi_ls_command(args: argparse.Namespace, pman: ProcessManagerType | None):
 
     if cmdl["unknown"] and cmdl["topology"]:
         raise Error("'--unknown' and '--topology' options cannot be used together")
+    if cmdl["unimplemented"] and not cmdl["topology"]:
+        raise Error("'--unimplemented' can only be used with '--topology'")
 
     with _get_tpmi(cmdl, pman) as tpmi:
         if cmdl["list_specs"]:

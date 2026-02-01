@@ -629,6 +629,9 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     text = """Display TPMI topology (PCI addresses, instance numbers, etc.)."""
     subpars2.add_argument("-t", "--topology", action="store_true", help=text)
 
+    text = """Include unimplemented instances in the topology (instance version number is 0xFF)."""
+    subpars2.add_argument("--unimplemented", action="store_true", help=text)
+
     text = """Comma-separated list of TPMI feature names to display. Defaults to all supported
               features."""
     subpars2.add_argument("-F", "--features", metavar="FEATURES", dest="fnames", help=text)
