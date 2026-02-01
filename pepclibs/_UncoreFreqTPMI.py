@@ -28,6 +28,7 @@ if typing.TYPE_CHECKING:
     from pepclibs._UncoreFreqBase import ELCThresholdType as _ELCThresholdType
     from pepclibs._UncoreFreqBase import ELCZoneType as _ELCZoneType
     from pepclibs._UncoreFreqBase import FreqValueType as _FreqValueType
+    from pepclibs._UncoreFreqBase import UncoreDieInfoTypedDict
     from pepclibs.PropsTypes import MechanismNameType
     from pepclibs.CPUInfoTypes import RelNumsType
 
@@ -36,7 +37,7 @@ RATIO_MULTIPLIER: Final[int] = 100_000_000 # 100MHz
 
 # Unfortunately TPMI does not provide the limit values. The way the Linux kernel driver
 # works-around this is it assumes that the initial min/max values at the driver
-# initialization time (boot time) are the actual limits. But in theory, these my not be the
+# initialization time (boot time) are the actual limits. But in theory, these may not be the
 # actual limits, these may be the limits the BIOS configured or even mis-configured. So just
 # pick some reasonable numbers for the limits.
 MIN_FREQ_LIMIT: Final[int] = 100_000_000   # 100MHz
@@ -46,37 +47,6 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
     """
     Provide functionality for reading and modifying uncore frequency and other properties on Intel
     CPUs via TPMI.
-
-    Overview of public methods:
-
-    1. Get or set uncore frequency via the Linux TPMI debugfs interface:
-        * Per-die:
-            - get_min_freq_dies()
-            - get_max_freq_dies()
-            - set_min_freq_dies()
-            - set_max_freq_dies()
-            - get_cur_freq_dies()
-        * Per-CPU:
-            - get_min_freq_cpus()
-            - get_max_freq_cpus()
-            - set_min_freq_cpus()
-            - set_max_freq_cpus()
-            - get_cur_freq_cpus()
-    2. Get or set ELC threshold (percentage or enabled/disabled status).
-        * Per-die:
-            - get_elc_low_threshold_dies()
-            - get_elc_high_threshold_dies()
-            - get_elc_high_threshold_status_dies()
-            - set_elc_low_threshold_dies()
-            - set_elc_high_threshold_dies()
-            - set_elc_high_threshold_status_dies()
-        * Per-CPU:
-            - get_elc_low_threshold_cpus()
-            - get_elc_high_threshold_cpus()
-            - get_elc_high_threshold_status_cpus()
-            - set_elc_low_threshold_cpus()
-            - set_elc_high_threshold_cpus()
-            - set_elc_high_threshold_status_cpus()
 
     Note: Methods of this class do not validate the 'cpus' and 'dies' arguments. The caller is
     responsible for ensuring that the provided package, die, and CPU numbers exist and that CPUs are
@@ -99,34 +69,35 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
 
         self._tpmi: TPMI.TPMI = cpuinfo.get_dieinfo().get_tpmi()
 
-        # The package number -> uncore TPMI PCI device address map.
-        self._addrmap: dict[int, str] = {}
-
     def close(self):
         """Uninitialize the class object."""
 
         unref_attrs = ("_tpmi",)
         ClassHelpers.close(self, unref_attrs=unref_attrs)
 
-    def _get_pci_addr(self, package: int) -> str:
+    def _get_tpmi_addr(self, package: int, die: int) -> tuple[str, int, int]:
         """
-        Return the uncore TPMI device PCI address for a package.
+        Return the TPMI address, instance, and cluster for the given package and die.
 
         Args:
             package: The package number.
+            die: The die number.
 
         Returns:
-            The uncore TPMI device PCI address for the specified package.
+            Tuple containing:
+                - addr: The TPMI PCI device address.
+                - instance: The TPMI instance number.
+                - cluster: The TPMI cluster number.
         """
 
-        if self._addrmap:
-            return self._addrmap[package]
+        dies_info = self._cpuinfo.get_all_dies_info()
+        die_info = dies_info[package][die]
 
-        for pkg, addr, _ in self._tpmi.iter_feature("ufs"):
-            if pkg not in self._addrmap:
-                self._addrmap[pkg] = addr
+        addr = die_info["addr"]
+        instance = die_info["instance"]
+        cluster = die_info["cluster"]
 
-        return self._addrmap[package]
+        return addr, instance, cluster
 
     @staticmethod
     def _get_freq_regname(ftype: _FreqValueType) -> tuple[str, str]:
@@ -166,9 +137,10 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
         regname, bfname = self._get_freq_regname(ftype)
 
         for package, pkg_dies in dies.items():
-            addr = self._get_pci_addr(package)
             for die in pkg_dies:
-                ratio = self._tpmi.read_register("ufs", addr, die, regname, bfname=bfname)
+                addr, instance, cluster = self._get_tpmi_addr(package, die)
+                ratio = self._tpmi.read_ufs_register(addr, instance, cluster, regname,
+                                                     bfname=bfname)
                 yield (package, die, ratio * RATIO_MULTIPLIER)
 
     @staticmethod
@@ -209,9 +181,10 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
         regname, bfname = self._get_elc_zone_freq_regname(ztype, ftype)
 
         for package, pkg_dies in dies.items():
-            addr = self._get_pci_addr(package)
             for die in pkg_dies:
-                ratio = self._tpmi.read_register("ufs", addr, die, regname, bfname=bfname)
+                addr, instance, cluster = self._get_tpmi_addr(package, die)
+                ratio = self._tpmi.read_ufs_register(addr, instance, cluster, regname,
+                                                     bfname=bfname)
                 yield (package, die, ratio * RATIO_MULTIPLIER)
 
     def _validate_freq(self,
@@ -239,15 +212,15 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
         min_freq: int | None = None
         max_freq: int | None = None
 
-        addr = self._get_pci_addr(package)
+        addr, instance, cluster = self._get_tpmi_addr(package, die)
 
         if ftype == "min":
             regname, bfname = self._get_freq_regname("max")
-            ratio = self._tpmi.read_register("ufs", addr, die, regname, bfname=bfname)
+            ratio = self._tpmi.read_ufs_register(addr, instance, cluster, regname, bfname=bfname)
             max_freq = ratio * RATIO_MULTIPLIER
         else:
             regname, bfname = self._get_freq_regname("min")
-            ratio = self._tpmi.read_register("ufs", addr, die, regname, bfname=bfname)
+            ratio = self._tpmi.read_ufs_register(addr, instance, cluster, regname, bfname=bfname)
             min_freq = ratio * RATIO_MULTIPLIER
 
         if ztype:
@@ -264,10 +237,11 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
         regname, bfname = self._get_freq_regname(ftype)
 
         for package, pkg_dies in dies.items():
-            addr = self._get_pci_addr(package)
             for die in pkg_dies:
+                addr, instance, cluster = self._get_tpmi_addr(package, die)
                 self._validate_freq(freq, package, die, ftype)
-                self._tpmi.write_register(ratio, "ufs", addr, die, regname, bfname=bfname)
+                self._tpmi.write_ufs_register(ratio, addr, instance, cluster, regname,
+                                              bfname=bfname)
 
     def _set_elc_zone_freq_dies(self,
                                 freq: int,
@@ -280,10 +254,11 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
         regname, bfname = self._get_elc_zone_freq_regname(ztype, ftype)
 
         for package, pkg_dies in dies.items():
-            addr = self._get_pci_addr(package)
             for die in pkg_dies:
+                addr, instance, cluster = self._get_tpmi_addr(package, die)
                 self._validate_freq(freq, package, die, ftype, ztype=ztype)
-                self._tpmi.write_register(ratio, "ufs", addr, die, regname, bfname=bfname)
+                self._tpmi.write_ufs_register(ratio, addr, instance, cluster, regname,
+                                              bfname=bfname)
 
     @staticmethod
     def _get_elc_threshold_regname(thrtype: _ELCThresholdType,
@@ -357,9 +332,10 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
         regname, bfname = self._get_elc_threshold_regname(thrtype)
 
         for package, pkg_dies in dies.items():
-            addr = self._get_pci_addr(package)
             for die in pkg_dies:
-                threshold = self._tpmi.read_register("ufs", addr, die, regname, bfname=bfname)
+                addr, instance, cluster = self._get_tpmi_addr(package, die)
+                threshold = self._tpmi.read_ufs_register(addr, instance, cluster, regname,
+                                                         bfname=bfname)
                 yield (package, die, self._elc_threshold_raw2percent(threshold))
 
     def _get_elc_threshold_status_dies(self,
@@ -371,9 +347,10 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
         regname, bfname = self._get_elc_threshold_regname(thrtype, status=True)
 
         for package, pkg_dies in dies.items():
-            addr = self._get_pci_addr(package)
             for die in pkg_dies:
-                status = self._tpmi.read_register("ufs", addr, die, regname, bfname=bfname)
+                addr, instance, cluster = self._get_tpmi_addr(package, die)
+                status = self._tpmi.read_ufs_register(addr, instance, cluster, regname,
+                                                      bfname=bfname)
                 yield (package, die, bool(status))
 
     def _set_elc_threshold_dies(self,
@@ -385,12 +362,12 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
         regname, bfname = self._get_elc_threshold_regname(thrtype)
 
         for package, pkg_dies in dies.items():
-            addr = self._get_pci_addr(package)
             for die in pkg_dies:
+                addr, instance, cluster = self._get_tpmi_addr(package, die)
                 self._validate_elc_threshold(threshold, thrtype, package, die)
                 threshold_raw = self._elc_threshold_percent2raw(threshold)
-                self._tpmi.write_register(threshold_raw, "ufs", addr, die, regname,
-                                          bfname=bfname)
+                self._tpmi.write_ufs_register(threshold_raw, addr, instance, cluster, regname,
+                                              bfname=bfname)
 
     def _set_elc_threshold_status_dies(self,
                                        status: bool,
@@ -401,7 +378,7 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
         regname, bfname = self._get_elc_threshold_regname(thrtype, status=True)
 
         for package, pkg_dies in dies.items():
-            addr = self._get_pci_addr(package)
             for die in pkg_dies:
-                self._tpmi.write_register(int(status), "ufs", addr, die, regname,
-                                          bfname=bfname)
+                addr, instance, cluster = self._get_tpmi_addr(package, die)
+                self._tpmi.write_ufs_register(int(status), addr, instance, cluster, regname,
+                                              bfname=bfname)

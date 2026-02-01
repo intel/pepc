@@ -34,11 +34,9 @@ if typing.TYPE_CHECKING:
         A typed dictionary for command-line arguments of the 'pepc topology info' command.
 
         Attributes:
-            yaml: Whether to output results in YAML format.
             order: The scope name to order the topology by.
             online_only: Whether to include only online CPUs.
             columns: Comma-separated list of column names to display.
-            dies_info: Display detailed non-compute dies information.
             cpus: CPU numbers to operate on.
             cores: Core numbers to operate on.
             modules: Module numbers to operate on.
@@ -48,11 +46,9 @@ if typing.TYPE_CHECKING:
             module_siblings: Module sibling indices to operate on.
         """
 
-        yaml: bool
         order: str
         online_only: bool
         columns: str
-        dies_info: bool
         cpus: str
         cores: str
         modules: str
@@ -85,11 +81,9 @@ def _get_cmdline_args(args: argparse.Namespace) -> _CmdlineArgsTypedDict:
 
     cmdl: _CmdlineArgsTypedDict = {}
 
-    cmdl["yaml"] = getattr(args, "yaml", False)
     cmdl["order"] = args.order
     cmdl["online_only"] = args.online_only
     cmdl["columns"] = args.columns
-    cmdl["dies_info"] = args.dies_info
     cmdl["cpus"] = args.cpus
     cmdl["cores"] = args.cores
     cmdl["modules"] = args.modules
@@ -127,53 +121,6 @@ def _print_dies(die_type: str, dies: dict[int, list[int]]):
             dies_str = ", ".join(str(die) for die in dies[package])
             _LOG.info(f"  - Package {package}, dies {dies_str}")
 
-def _display_dies_info(cmdl: _CmdlineArgsTypedDict,
-                       pman: ProcessManagerType,
-                       cpuinfo: CPUInfo.CPUInfo):
-    """
-    Display detailed non-compute die information and exit.
-
-    Args:
-        cmdl: Parsed command-line arguments.
-        pman: Process manager object for target host.
-        cpuinfo: 'CPUInfo' object for retrieving CPU topology information.
-    """
-
-    if cmdl["cpus"]:
-        raise Error("The '--cpus' option cannot be used with the '--dies-info' option")
-    if cmdl["cores"]:
-        raise Error("The '--cores' option cannot be used with the '--dies-info' option")
-    if cmdl["modules"]:
-        raise Error("The '--modules' option cannot be used with the '--dies-info' option")
-    if cmdl["core_siblings"]:
-        raise Error("The '--core-siblings' option cannot be used with the '--dies-info' option")
-    if cmdl["module_siblings"]:
-        raise Error("The '--module-siblings' option cannot be used with the '--dies-info' option")
-    if cmdl["online_only"]:
-        raise Error("The '--online-only' option cannot be used with the '--dies-info' option")
-
-    with _OpTarget.OpTarget(pman=pman, cpuinfo=cpuinfo, dies=cmdl["dies"],
-                            packages=cmdl["packages"]) as optar:
-        target_dies = optar.get_all_dies()
-
-    dieinfo = cpuinfo.get_dieinfo()
-
-    proc_percpuinfo = cpuinfo.get_proc_percpuinfo()
-    dies_info = dieinfo.get_all_dies_info(proc_percpuinfo)
-
-    for package  in target_dies:
-        _LOG.info(f"Package {package}:")
-        for die in sorted(target_dies[package]):
-            die_info = dies_info[package][die]
-            _LOG.info(f"  - Die {die} ({die_info['title']}):")
-            if not die_info["addr"]:
-                continue
-            _LOG.info("    TPMI UFS:")
-            _LOG.info(f"    - Address: {die_info['addr']}")
-            _LOG.info(f"    - Instance: {die_info['instance']}")
-            _LOG.info(f"    - Cluster: {die_info['cluster']}")
-            _LOG.info(f"    - Agent type(s): {', '.join(die_info['agent_types'])}")
-
 def _get_default_colnames(cpuinfo: CPUInfo.CPUInfo) -> list[ScopeNameType]:
     """
     Get the default column names for the topology table.
@@ -204,7 +151,7 @@ def _get_default_colnames(cpuinfo: CPUInfo.CPUInfo) -> list[ScopeNameType]:
     if cpuinfo.get_nodes_count() == len(packages):
         colnames_set.remove("node")
 
-    if cpuinfo.get_compute_dies_count() == len(packages):
+    if cpuinfo.get_all_dies_count() == len(packages):
         colnames_set.remove("die")
 
     colnames: list[ScopeNameType] = []
@@ -379,13 +326,10 @@ def topology_info_command(args: argparse.Namespace, pman: ProcessManagerType):
         cpuinfo = CPUInfo.CPUInfo(pman=pman)
         stack.enter_context(cpuinfo)
 
-        if cmdl["dies_info"]:
-            _display_dies_info(cmdl, pman, cpuinfo)
-            return
-
         dieinfo = cpuinfo.get_dieinfo()
-        noncomp_dies = dieinfo.get_noncomp_dies()
-        noncomp_dies_info = dieinfo.get_noncomp_dies_info()
+        proc_percpuinfo = cpuinfo.get_proc_percpuinfo()
+        noncomp_dies = dieinfo.get_noncomp_dies(proc_percpuinfo)
+        noncomp_dies_info = dieinfo.get_noncomp_dies_info(proc_percpuinfo)
 
         if not cmdl["columns"]:
             snames = _get_default_colnames(cpuinfo)

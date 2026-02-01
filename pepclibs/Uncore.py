@@ -67,7 +67,7 @@ class Uncore(_PropsClassBase.PropsClassBase):
 
         super().close()
 
-    def _get_uncfreq_sysfs_obj(self) -> _UncoreFreqSysfs.UncoreFreqSysfs:
+    def get_uncfreq_sysfs_obj(self) -> _UncoreFreqSysfs.UncoreFreqSysfs:
         """
         Get an 'UncoreFreqSysfs' object.
 
@@ -94,7 +94,7 @@ class Uncore(_PropsClassBase.PropsClassBase):
 
         return self._uncfreq_sysfs_obj
 
-    def _get_uncfreq_tpmi_obj(self) -> _UncoreFreqTPMI.UncoreFreqTpmi:
+    def get_uncfreq_tpmi_obj(self) -> _UncoreFreqTPMI.UncoreFreqTpmi:
         """
         Get an 'UncoreFreqTpmi' object.
 
@@ -138,9 +138,9 @@ class Uncore(_PropsClassBase.PropsClassBase):
 
         uncfreq_obj: Union[_UncoreFreqSysfs.UncoreFreqSysfs, _UncoreFreqTPMI.UncoreFreqTpmi]
         if mname == "sysfs":
-            uncfreq_obj = self._get_uncfreq_sysfs_obj()
+            uncfreq_obj = self.get_uncfreq_sysfs_obj()
         elif mname == "tpmi":
-            uncfreq_obj = self._get_uncfreq_tpmi_obj()
+            uncfreq_obj = self.get_uncfreq_tpmi_obj()
         else:
             raise Error(f"BUG: Unexpected mechanism '{mname}'")
 
@@ -152,7 +152,7 @@ class Uncore(_PropsClassBase.PropsClassBase):
             return
 
         if mname == "sysfs":
-            uncfreq_sysfs_obj = self._get_uncfreq_sysfs_obj()
+            uncfreq_sysfs_obj = self.get_uncfreq_sysfs_obj()
             if pname == "min_freq_limit":
                 yield from uncfreq_sysfs_obj.get_min_freq_limit_cpus(cpus)
                 return
@@ -183,9 +183,9 @@ class Uncore(_PropsClassBase.PropsClassBase):
 
         uncfreq_obj: Union[_UncoreFreqSysfs.UncoreFreqSysfs, _UncoreFreqTPMI.UncoreFreqTpmi]
         if mname == "sysfs":
-            uncfreq_obj = self._get_uncfreq_sysfs_obj()
+            uncfreq_obj = self.get_uncfreq_sysfs_obj()
         elif mname == "tpmi":
-            uncfreq_obj = self._get_uncfreq_tpmi_obj()
+            uncfreq_obj = self.get_uncfreq_tpmi_obj()
         else:
             raise Error(f"BUG: Unexpected mechanism '{mname}'")
 
@@ -240,9 +240,9 @@ class Uncore(_PropsClassBase.PropsClassBase):
 
         uncfreq_obj: Union[_UncoreFreqSysfs.UncoreFreqSysfs, _UncoreFreqTPMI.UncoreFreqTpmi]
         if mname == "sysfs":
-            uncfreq_obj = self._get_uncfreq_sysfs_obj()
+            uncfreq_obj = self.get_uncfreq_sysfs_obj()
         elif mname == "tpmi":
-            uncfreq_obj = self._get_uncfreq_tpmi_obj()
+            uncfreq_obj = self.get_uncfreq_tpmi_obj()
         else:
             raise Error(f"BUG: Unexpected mechanism '{mname}'")
 
@@ -255,7 +255,7 @@ class Uncore(_PropsClassBase.PropsClassBase):
         elif pname == "elc_mid_zone_min_freq":
             yield from uncfreq_obj.get_elc_mid_zone_min_freq_dies(dies)
         elif mname == "sysfs":
-            uncfreq_sysfs_obj = self._get_uncfreq_sysfs_obj()
+            uncfreq_sysfs_obj = self.get_uncfreq_sysfs_obj()
             if pname == "min_freq_limit":
                 yield from uncfreq_sysfs_obj.get_min_freq_limit_dies(dies)
             elif pname == "max_freq_limit":
@@ -285,9 +285,9 @@ class Uncore(_PropsClassBase.PropsClassBase):
 
         uncfreq_obj: Union[_UncoreFreqSysfs.UncoreFreqSysfs, _UncoreFreqTPMI.UncoreFreqTpmi]
         if mname == "sysfs":
-            uncfreq_obj = self._get_uncfreq_sysfs_obj()
+            uncfreq_obj = self.get_uncfreq_sysfs_obj()
         elif mname == "tpmi":
-            uncfreq_obj = self._get_uncfreq_tpmi_obj()
+            uncfreq_obj = self.get_uncfreq_tpmi_obj()
         else:
             raise Error(f"BUG: Unexpected mechanism '{mname}'")
 
@@ -349,9 +349,9 @@ class Uncore(_PropsClassBase.PropsClassBase):
 
         uncfreq_obj: Union[_UncoreFreqSysfs.UncoreFreqSysfs, _UncoreFreqTPMI.UncoreFreqTpmi]
         if mname == "sysfs":
-            uncfreq_obj = self._get_uncfreq_sysfs_obj()
+            uncfreq_obj = self.get_uncfreq_sysfs_obj()
         elif mname == "tpmi":
-            uncfreq_obj = self._get_uncfreq_tpmi_obj()
+            uncfreq_obj = self.get_uncfreq_tpmi_obj()
         else:
             raise Error(f"BUG: Unexpected mechanism '{mname}'")
 
@@ -465,9 +465,9 @@ class Uncore(_PropsClassBase.PropsClassBase):
 
         uncfreq_obj: Union[_UncoreFreqSysfs.UncoreFreqSysfs, _UncoreFreqTPMI.UncoreFreqTpmi]
         if mname == "sysfs":
-            uncfreq_obj = self._get_uncfreq_sysfs_obj()
+            uncfreq_obj = self.get_uncfreq_sysfs_obj()
         elif mname == "tpmi":
-            uncfreq_obj = self._get_uncfreq_tpmi_obj()
+            uncfreq_obj = self.get_uncfreq_tpmi_obj()
         else:
             raise Error(f"BUG: Unexpected mechanism '{mname}'")
 

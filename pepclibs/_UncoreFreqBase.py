@@ -18,7 +18,8 @@ from pepclibs.helperlibs import LocalProcessManager, ClassHelpers, Human
 from pepclibs.helperlibs.Exceptions import ErrorNotSupported, ErrorOutOfRange, ErrorBadOrder, Error
 
 if typing.TYPE_CHECKING:
-    from typing import Literal, Generator
+    from pathlib import Path
+    from typing import Literal, Generator, TypedDict
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepclibs.CPUInfoTypes import AbsNumsType, RelNumsType
 
@@ -39,6 +40,24 @@ if typing.TYPE_CHECKING:
     #   - "mid": Middle utilization zone, aggregate die utilization is greater than or equal to the
     #            ELC low threshold value and less than the ELC high threshold value.
     ELCZoneType = Literal["low", "mid"]
+
+    class UncoreDieInfoTypedDict(TypedDict, total=False):
+        """
+        A typed dictionary representing information about a die.
+
+        Attributes:
+            title: A short description of the die.
+            path: The sysfs path of the the uncore frequency control interface for the die.
+            addr: The TPMI PCI device address.
+            instance: The TPMI instance number.
+            cluster: The TPMI cluster number.
+        """
+
+        title: str
+        path: Path | None
+        addr: str
+        instance: int
+        cluster: int
 
 class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
     """
@@ -95,6 +114,8 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
             - set_elc_low_threshold_cpus()
             - set_elc_high_threshold_cpus()
             - set_elc_high_threshold_status_cpus()
+    5. Get dies information:
+        - get_dies_info()
     """
 
     def __init__(self, cpuinfo: CPUInfo.CPUInfo, pman: ProcessManagerType | None = None,
@@ -1230,3 +1251,46 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
         """
 
         self._set_elc_threshold_status_cpus(status, "high", cpus)
+
+    def _fill_dies_info(self, dies_info: dict[int, dict[int, UncoreDieInfoTypedDict]]):
+        """
+        Fill in the dies information dictionary.
+
+        Args:
+            dies_info: The dies information dictionary to fill in.
+        """
+
+    def get_dies_info(self, dies: RelNumsType) -> dict[int, dict[int, UncoreDieInfoTypedDict]]:
+        """
+        Return information about the specified dies.
+
+        Args:
+            dies: Dictionary mapping package numbers to sequences of die numbers to retrieve
+                  information for.
+
+        Returns:
+            The dies information dictionary: {package: {die: DieInfoTypedDict}}.
+        """
+
+        all_dies_info = self._cpuinfo.get_all_dies_info()
+        dies_info: dict[int, dict[int, UncoreDieInfoTypedDict]] = {}
+
+        for package, pkg_dies in dies.items():
+            dies_info.setdefault(package, {})
+            for die in pkg_dies:
+                if package not in all_dies_info:
+                    raise Error(f"Package {package} does not exist{self._pman.hostmsg}")
+                if die not in all_dies_info[package]:
+                    raise Error(f"Package {package} die {die} does not exist{self._pman.hostmsg}")
+
+                info = all_dies_info[package][die]
+                dies_info[package][die] = {
+                    "title": info["title"],
+                    "path": None,
+                    "addr": info["addr"],
+                    "instance": info["instance"],
+                    "cluster": info["cluster"],
+                }
+
+        self._fill_dies_info(dies_info)
+        return dies_info

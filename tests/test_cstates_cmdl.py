@@ -3,7 +3,7 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2025 Intel Corporation
+# Copyright (C) 2020-2026 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Authors: Antti Laakso <antti.laakso@linux.intel.com>
@@ -156,11 +156,15 @@ def _get_good_config_opts(params: TestParamsTypedDict,
                 yield from [f"--pkg-cstate-limit {limit.upper()}",
                             f"--pkg-cstate-limit {limit.lower()}"]
     elif sname == "CPU":
-        if pobj.prop_is_supported_cpu("idle_driver", cpu):
-            yield from ["--enable all",
-                        "--enable all --disable POLL",
-                        "--disable all",
-                        "--disable all --enable POLL"]
+        yield from ["--enable all", "--disable all"]
+
+        try:
+            if pobj.get_cpu_prop("idle_driver", cpu)["val"] != "none":
+                yield from ["--enable all --disable POLL",
+                            "--disable all --enable POLL"]
+        except ErrorNotSupported:
+            # If the kernel is booted with 'cpuidle.off=1', there is no idle driver.
+            pass
     else:
         assert False, f"BUG: Bad scope name {sname}"
 
@@ -177,7 +181,7 @@ def _get_bad_config_opts():
                 "--cstate-prewake meh",
                 "--governor reardenmetal"]
 
-def test_ctates_config_good(params: TestParamsTypedDict):
+def test_cstates_config_good(params: TestParamsTypedDict):
     """
     Test valid 'pepc cstates config' command options.
 

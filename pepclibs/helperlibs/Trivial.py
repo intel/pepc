@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2025 Intel Corporation
+# Copyright (C) 2020-2026 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
@@ -135,11 +135,11 @@ def get_uid(username: str = "") -> int:
         return pwd.getpwnam(username).pw_uid
     except KeyError as err:
         errmsg = Error(str(err)).indent(2)
-        raise Error(f"Failed to get UID for user '{username}:\n{errmsg}") from None
+        raise Error(f"Failed to get UID for user '{username}':\n{errmsg}") from None
 
 def get_gid(groupname: str = ""):
     """
-    Return the group ID or a specified group name or for the current process's group.
+    Return the group ID for a specified group name or for the current process's group.
 
     Args:
         groupname: The name of the group to return the GID for. If empty, the current process's
@@ -180,7 +180,7 @@ def str_to_int(snum: str | int, base: int = 0, what: str = "") -> int:
         if not what:
             what = "value"
         try:
-            str_to_int(base)
+            base = int(str(base))
         except (ValueError, TypeError) as err:
             errmsg = Error(str(err)).indent(2)
             raise Error(f"BUG: Bad base value {base} when converting bad {what} '{snum}':\n"
@@ -350,11 +350,15 @@ def validate_range(minval: int | float, maxval: int | float, min_limit: int | fl
         if max_limit is not None:
             assert max_limit >= min_limit
         if minval < min_limit:
-            raise Error(f"{pfx}: Should be within '[{min_limit},{max_limit}]'")
+            if max_limit is not None:
+                raise Error(f"{pfx}: Should be within '[{min_limit},{max_limit}]'")
+            raise Error(f"{pfx}: Min. value should be at least {min_limit}")
 
     if max_limit is not None:
         if maxval > max_limit:
-            raise Error(f"{pfx}: Should be within '[{min_limit},{max_limit}]'")
+            if min_limit is not None:
+                raise Error(f"{pfx}: Should be within '[{min_limit},{max_limit}]'")
+            raise Error(f"{pfx}: Max. value should be at most {max_limit}")
 
 def is_iterable(value: str | Iterable) -> bool:
     """

@@ -65,9 +65,11 @@ def get_params(hostspec: str, username: str) -> Generator[_TestParamsTypedDict, 
 def test_get_noncomp_dies(params: _TestParamsTypedDict):
     """Test the 'get_noncomp_dies()' method returns properly sorted package and die numbers."""
 
+    pman = params["pman"]
     dieinfo = params["dieinfo"]
 
-    noncomp_dies = dieinfo.get_noncomp_dies()
+    proc_percpuinfo = ProcCpuinfo.get_proc_percpuinfo(pman)
+    noncomp_dies = dieinfo.get_noncomp_dies(proc_percpuinfo)
 
     # Ensure the ascending package and die numbers.
     assert list(noncomp_dies) == sorted(noncomp_dies), \
@@ -99,11 +101,13 @@ def test_get_noncomp_dies_info(params: _TestParamsTypedDict):
     'get_noncomp_dies()'.
     """
 
+    pman = params["pman"]
     dieinfo = params["dieinfo"]
 
     # Verify that the returned information is consistent with 'get_noncomp_dies()'.
-    noncomp_dies = dieinfo.get_noncomp_dies()
-    noncomp_dies_info = dieinfo.get_noncomp_dies_info()
+    proc_percpuinfo = ProcCpuinfo.get_proc_percpuinfo(pman)
+    noncomp_dies = dieinfo.get_noncomp_dies(proc_percpuinfo)
+    noncomp_dies_info = dieinfo.get_noncomp_dies_info(proc_percpuinfo)
 
     assert list(noncomp_dies) == list(noncomp_dies_info), \
            "The package numbers returned by 'get_noncomp_dies()' and 'get_noncomp_dies_info()' " \
@@ -111,13 +115,8 @@ def test_get_noncomp_dies_info(params: _TestParamsTypedDict):
 
     for package, dies_info in noncomp_dies_info.items():
         dies: list[int] = []
-        for die, die_info in dies_info.items():
+        for die in dies_info:
             dies.append(die)
-            assert die_info["package"] == package, \
-                   f"The package number in the die info for package {package}, die {die} is " \
-                   f"incorrect"
-            assert die_info["die"] == die, \
-                   f"The die number in the die info for package {package}, die {die} is incorrect"
 
         assert list(noncomp_dies[package]) == dies, \
                f"The die numbers for package {package} returned by 'get_noncomp_dies()' and " \

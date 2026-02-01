@@ -18,14 +18,17 @@ from pepclibs import _CPUInfoBase
 from pepclibs.helperlibs import Logging, Trivial
 from pepclibs.helperlibs.Exceptions import Error
 
-# pylint: disable-next=unused-import
+# pylint: disable=unused-import
 from pepclibs.CPUInfoVars import SCOPE_NAMES, HYBRID_TYPE_INFO, INVALID
+from pepclibs._DieInfo import AGENT_TYPES
+# pylint: enable=unused-import
 
 if typing.TYPE_CHECKING:
     from typing import Iterable, Literal
     from pepclibs import _DieInfo
-    from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepclibs.CPUInfoTypes import HybridCPUKeyType, ScopeNameType, AbsNumsType, RelNumsType
+    from pepclibs.CPUInfoTypes import DieInfoTypedDict, AgentTypes
+    from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
@@ -40,7 +43,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         - 'get_proc_cpuinfo()' - General (static) '/proc/cpuinfo' information.
         - 'get_proc_percpuinfo()' - Per-CPU '/proc/cpuinfo' information.
         - 'get_dieinfo()' - '_DieInfo.DieInfo' object instance.
-    2. Get list of packages/cores/etc.
+    2. Get packages/cores/etc.
         - 'get_cpus()'
         - 'get_cores()'
         - 'get_package_cores()'
@@ -51,13 +54,16 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         - 'get_compute_dies()'
         - 'get_noncomp_dies()'
         - 'get_all_dies()'
+        - 'get_compute_dies_info()'
+        - 'get_noncomp_dies_info()'
+        - 'get_all_dies_info()'
         - 'get_nodes()'
         - 'get_packages()'
         - 'get_offline_cpus()'
         - 'get_tline_by_cpu()'
         - 'get_cpu_siblings()'
         - 'get_hybrid_cpus()'
-    3. Get list of packages/cores/etc for a subset of CPUs/cores/etc.
+    3. Get packages/cores/etc for a subset of CPUs/cores/etc.
         - 'cpu_to_die()'
         - 'cpu_to_package()'
         - 'package_to_cpus()'
@@ -333,7 +339,8 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
             # just add them to the valid numbers set.
             if parent_sname == "die":
                 dieinfo = self.get_dieinfo()
-                noncomp_dies = dieinfo.get_noncomp_dies()
+                proc_percpuinfo = self.get_proc_percpuinfo()
+                noncomp_dies = dieinfo.get_noncomp_dies(proc_percpuinfo)
                 for dies in noncomp_dies.values():
                     valid_nums.update(dies)
 
@@ -455,7 +462,8 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         """
 
         dieinfo = self.get_dieinfo()
-        noncomp_dies = dieinfo.get_noncomp_dies()
+        proc_percpuinfo = self.get_proc_percpuinfo()
+        noncomp_dies = dieinfo.get_noncomp_dies(proc_percpuinfo)
         return sorted(noncomp_dies.get(package, []))
 
     def get_all_package_dies(self, package: int = 0) -> list[int]:
@@ -551,6 +559,45 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
                 dies[package] = noncomp_pkg_dies
 
         return dies
+
+    def get_compute_dies_info(self) -> dict[int, dict[int, DieInfoTypedDict]]:
+        """
+        Return information about compute dies.
+
+        Returns:
+            The compute dies information dictionary: {package: {die: DieInfoTypedDict, ...}}.
+            Packages and dies are sorted in ascending order.
+        """
+
+        proc_percpuinfo = self.get_proc_percpuinfo()
+        dieinfo = self.get_dieinfo()
+        return dieinfo.get_compute_dies_info(proc_percpuinfo)
+
+    def get_noncomp_dies_info(self) -> dict[int, dict[int, DieInfoTypedDict]]:
+        """
+        Return information about non-compute dies.
+
+        Returns:
+            The non-compute dies information dictionary: {package: {die: DieInfoTypedDict, ...}}.
+            Packages and dies are sorted in ascending order.
+        """
+
+        proc_percpuinfo = self.get_proc_percpuinfo()
+        dieinfo = self.get_dieinfo()
+        return dieinfo.get_noncomp_dies_info(proc_percpuinfo)
+
+    def get_all_dies_info(self) -> dict[int, dict[int, DieInfoTypedDict]]:
+        """
+        Return information about all dies (compute and non-compute).
+
+        Returns:
+            The all dies information dictionary: {package: {die: DieInfoTypedDict, ...}}.
+            Packages and dies are sorted in ascending order.
+        """
+
+        proc_percpuinfo = self.get_proc_percpuinfo()
+        dieinfo = self.get_dieinfo()
+        return dieinfo.get_all_dies_info(proc_percpuinfo)
 
     def get_nodes(self, order: ScopeNameType = "node") -> list[int]:
         """

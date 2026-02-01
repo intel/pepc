@@ -119,8 +119,8 @@ def _cpu_online_emul_file_read(self: IO[str]) -> str:
 class CPUOnlineEmulFile(_EmulFileBase.EmulFileBase):
     """
     Emulate files containing per-CPU information, such as '/proc/cpuinfo' and
-    '/sys/devices/system/cpu/online' file. The problem with these files is that when a CPU goes online
-    or offline, the contents of these files change.
+    '/sys/devices/system/cpu/online' file. The problem with these files is that when a CPU goes
+    online or offline, the contents of these files change.
     """
 
     def __init__(self,

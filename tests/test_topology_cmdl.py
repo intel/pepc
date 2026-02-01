@@ -168,8 +168,7 @@ def _fetch_topology_from_output(caplog: pytest.LogCaptureFixture,
     header_args = caplog.records[0].args
     assert header_args is not None, "No output captured from 'pepc topology info' command"
 
-    header = list([str(hdr) for hdr in header_args])
-
+    header = [str(hdr) for hdr in header_args]
     topology: list[dict[str, int | str]] = []
 
     for record in caplog.records[1:]:
@@ -517,7 +516,7 @@ def _check_limited_target_dies(caplog: pytest.LogCaptureFixture,
 
     output_dies: dict[int, list[int]] = {}
     for tline in topology:
-        pkg = tline["Package"]
+        pkg = tline.get("Package", 0)
         die = tline["Die"]
         pkg_dies = output_dies.setdefault(pkg, [])
         pkg_dies.append(die)
@@ -708,8 +707,8 @@ def _check_noncomp_dies(caplog: pytest.LogCaptureFixture,
             continue
 
         # If there is only one package/die, the columns may be missing.
-        package = tline["Package"]
-        die = tline["Die"]
+        package = tline.get("Package", 0)
+        die = tline.get("Die", 0)
 
         assert isinstance(package, int), \
                f"Non-compute die line has non-integer Package value\n" \

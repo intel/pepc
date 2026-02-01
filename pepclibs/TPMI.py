@@ -404,10 +404,18 @@ def _parse_index_file(specpath: Path, vfm: int) -> SDDTypedDict:
 
     idxpath = specpath / "index.yml"
 
+    _LOG.debug("Looking for VFM %d in TPMI spec index file '%s'", vfm, idxpath)
+
     if typing.TYPE_CHECKING:
         idxdict: IdxDictTypedDict = cast(IdxDictTypedDict, YAML.load(idxpath))
     else:
         idxdict = YAML.load(idxpath)
+
+    if _LOG.getEffectiveLevel() == Logging.DEBUG:
+        # pylint: disable-next=import-outside-toplevel
+        import pprint
+        _LOG.debug("Index file '%s' contents:\n%s",
+                   idxpath, pprint.pformat(idxdict, sort_dicts=True))
 
     sdd: SDDTypedDict = {"vfm": -1, "idxpath": idxpath, "idxdict": idxdict}
 
@@ -433,6 +441,7 @@ def _parse_index_file(specpath: Path, vfm: int) -> SDDTypedDict:
 
         if _vfm == vfm:
             sdd["vfm"] = _vfm
+            _LOG.debug("Found matching VFM %d in index file '%s'", vfm, idxpath)
             return sdd
 
     available_vfms = ", ".join(str(vfm) for vfm in vfms)
@@ -480,6 +489,11 @@ def get_features(specdirs: Iterable[Path] = (),
     if not specdirs:
         specdirs = _find_spec_dirs()
 
+        if _LOG.getEffectiveLevel() == Logging.DEBUG:
+            _LOG.debug("Found spec directories:")
+            for path in specdirs:
+                _LOG.debug("- %s", path)
+
     # Keep absolute paths to spec directories - in case of an error a directory path like 'tpmi'
     # may look confusing compared to a path like '/my/path/tpmi'.
     _specdirs: list[Path] = []
@@ -495,6 +509,8 @@ def get_features(specdirs: Iterable[Path] = (),
         non_yaml_cnt = 0
         load_errors_cnt = 0
 
+        _LOG.debug("Processing TPMI spec directory '%s'", specdir)
+
         # Parse the index file and get path to the sub-directory containing spec files for the
         # current platform.
         try:
@@ -505,6 +521,7 @@ def get_features(specdirs: Iterable[Path] = (),
             continue
 
         specsubdir = specdir / sdd["idxdict"]["vfms"][sdd["vfm"]]["subdir"]
+        _LOG.debug("Using TPMI spec files sub-directory '%s'", specsubdir)
 
         try:
             _lsdir = os.listdir(specsubdir)
@@ -521,10 +538,13 @@ def get_features(specdirs: Iterable[Path] = (),
                                 f"count is {_MAX_NON_YAML}")
                 continue
 
+            specpath = specsubdir / specname
+            _LOG.debug("Loading TPMI spec file '%s'", specpath)
+
             try:
-                specpath = specsubdir / specname
                 sdict = _load_sdict(specpath)
             except Error as err:
+                _LOG.debug("Failed to load TPMI spec file '%s':\n%s", specpath, err.indent(2))
                 load_errors_cnt += 1
                 if load_errors_cnt > _MAX_SCAN_LOAD_ERRORS:
                     raise Error(f"Failed to load spec file '{specpath}':\n{err.indent(2)}\n"
@@ -551,6 +571,12 @@ def get_features(specdirs: Iterable[Path] = (),
         paths = "\n * ".join([str(path) for path in specdirs])
         raise ErrorNotSupported(f"No TPMI spec files found, checked the following paths:\n"
                                 f" * {paths}")
+
+    if _LOG.getEffectiveLevel() == Logging.DEBUG:
+        # pylint: disable-next=import-outside-toplevel
+        import pprint
+        _LOG.debug("Loaded TPMI spec files for the following features:\n%s",
+                   pprint.pformat(sdicts, sort_dicts=True))
 
     return sdicts, sdds
 
@@ -680,6 +706,11 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         self._tpmi_pci_paths: list[Path] = []
         self._tpmi_pci_paths = self._get_debugfs_tpmi_dirs()
 
+        if _LOG.getEffectiveLevel() == Logging.DEBUG:
+            _LOG.debug("Found TPMI-related debugfs directories:")
+            for path in self._tpmi_pci_paths:
+                _LOG.debug("- %s", path)
+
         # The spec file dictionaries (sdicts) for all known features.
         self.sdicts: dict[str, SDictTypedDict] = {}
         # The scanned spec directory dictionaries (sdds) for all spec directories.
@@ -687,6 +718,11 @@ class TPMI(ClassHelpers.SimpleCloseContext):
 
         # Scan the spec directories and build sdicts - partially loaded spec file dictionaries.
         self.sdicts, self.sdds = get_features(specdirs=specdirs, vfm=self.vfm)
+
+        if _LOG.getEffectiveLevel() == Logging.DEBUG:
+            _LOG.debug("Found TPMI spec files for the following features:")
+            for fname, sdict in self.sdicts.items():
+                _LOG.debug("- %s (ID: 0x%02x) from '%s'", fname, sdict["feature_id"], sdict["path"])
 
         # The feature ID -> feature name dictionary (supported features only).
         self._fid2fname: dict[int, str] = {}
@@ -1530,7 +1566,8 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                 raise Error(f"Too large value '{value}' for a {bfwidth}-bit bit field '{bfname}' "
                             f"of register '{regname}'")
 
-            regval = self._read_register(fname, addr, instance, regname)
+            regval = self._read_register(fname, addr, instance, regname, cluster=cluster,
+                                         mdmap=mdmap)
             value = self._set_bitfield(regval, value, fname, regname, bfname)
         else:
             # Validate the value.
@@ -1893,19 +1930,20 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         if instance in self._cmaps[addr]:
             return self._cmaps[addr][instance]
 
+        cmap = self._cmaps[addr][instance] = {}
+        mdmap = self._get_mdmap("ufs", addr)
+
         # Read the UFS cluster information from the TPMI registers.
         #
         # The 8-bit 'LOCAL_FABRIC_CLUSTER_ID_MASK' bit field tells which clusters exist: if a bit is
         # set to 1, the corresponding cluster exists. There can be up to 8 clusters.
         clusters_mask = self._read_register("ufs", addr, instance, "UFS_HEADER",
-                                            bfname="LOCAL_FABRIC_CLUSTER_ID_MASK")
+                                            bfname="LOCAL_FABRIC_CLUSTER_ID_MASK", mdmap=mdmap)
 
         # The 'UFS_FABRIC_CLUSTER_OFFSET' register contains the offsets of all 8 possible clusters
         # in groups of 8 bits.
-        clusters_offsets = self._read_register("ufs", addr, instance, "UFS_FABRIC_CLUSTER_OFFSET")
-
-        cmap = self._cmaps[addr][instance] = {}
-        mdmap = self._get_mdmap("ufs", addr)
+        clusters_offsets = self._read_register("ufs", addr, instance, "UFS_FABRIC_CLUSTER_OFFSET",
+                                               mdmap=mdmap)
 
         _LOG.debug("Building UFS cluster map for TPMI device '%s', instance '%d': "
                    "clusters_mask=%#x, clusters_offsets=%#x",

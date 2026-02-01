@@ -100,7 +100,7 @@ def _represent_posixpath(dumper: yaml.Dumper, value: PosixPath) -> yaml.ScalarNo
 
     return dumper.represent_scalar("tag:yaml.org,2002:str", str(value))
 
-def dump(data: Mapping[str, Any],
+def dump(data: Mapping[Any, Any],
          path: Path | IO[str],
          float_format: str = "",
          int_format: str = "",

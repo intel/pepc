@@ -14,6 +14,9 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 
 from typing import TypedDict, Literal, Sequence, Mapping
 
+# pylint: disable-next=unused-import
+from pepclibs._DieInfo import DieInfoTypedDict, AgentTypes
+
 # The type for absolute topology numbers: CPU, module, node, package numbers.
 AbsNumsType = Sequence[int]
 # The type for topology numbers that are relative to the package: core and die numbers.

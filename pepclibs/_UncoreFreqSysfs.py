@@ -24,9 +24,15 @@ and the Linux kernel provides the 'intel_uncore_frequency_tpmi' driver. The TPMI
 the legacy and a new sysfs interfaces. The legacy interface is limited, so this module uses the new
 interface when available.
 
-The new sysfs interface operates in terms of "uncore frequency domains". On current Intel server
-platforms the uncore domain IDs correspond to die IDs, and this project refers to uncore domains as
-"dies".
+On even newer Intel server platforms, that do not support the uncore MSR, the legacy sysfs interface
+is not available.
+
+The new sysfs interface uses 'uncoreXX' directories, where XX is a sequence number starting from 0.
+The kernel driver assigns these numbers as it enumerates TPMI UFS devices in order of PCI addresses
+(lowest to highest), and within each PCI device, it enumerates all UFS feature instances and
+clusters. This module maps 'uncoreXX' directories to dies by relying on this enumeration order,
+which matches the order of dies from die information (see '_build_dies_info()' for the mapping
+implementation).
 """
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
@@ -35,21 +41,22 @@ import re
 import math
 import typing
 from pathlib import Path
-from pepclibs import _SysfsIO, _UncoreFreqBase, CPUModels
+
+from pepclibs import _SysfsIO, _UncoreFreqBase, CPUModels, CPUInfo
 from pepclibs.msr import UncoreRatioLimit
 from pepclibs.helperlibs import Logging, ClassHelpers, KernelModule, FSHelpers
 from pepclibs.helperlibs import Trivial
-from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
 
 if typing.TYPE_CHECKING:
-    from typing import Generator, Literal
-    from pepclibs import CPUInfo
+    from typing import Generator, Literal, Sequence
     from pepclibs.PropsTypes import MechanismNameType
     from pepclibs._UncoreFreqBase import ELCThresholdType as _ELCThresholdType
     from pepclibs._UncoreFreqBase import ELCZoneType as _ELCZoneType
     from pepclibs._UncoreFreqBase import FreqValueType as _FreqValueType
+    from pepclibs._UncoreFreqBase import UncoreDieInfoTypedDict
+    from pepclibs.CPUInfoTypes import RelNumsType, DieInfoTypedDict
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
-    from pepclibs.CPUInfoTypes import RelNumsType, AbsNumsType
 
     # Type for the uncore frequency driver sysfs paths cache. The indexing goes as follows.
     #
@@ -87,7 +94,6 @@ _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
     """
     Provide functionality for reading and modifying uncore frequency on Intel CPUs via sysfs.
-
 
     Note: Methods of this class do not validate the 'cpus' and 'dies' arguments. The caller is
     responsible for ensuring that the provided package, die, and CPU numbers exist and that CPUs are
@@ -135,9 +141,11 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
         # List of directory names in 'self._sysfs_base'.
         self._lsdir_sysfs_base_cache: list[str] = []
 
-        # The new sysfs API is available if 'True', 'False' if it is not, and 'None' if it is
-        # unknown.
+        # The new/legacy sysfs APIs are available if 'True', 'False' if they are not, and 'None' if
+        # it is unknown
         self._has_sysfs_new_api: bool | None = None
+        self._has_sysfs_legacy_api: bool | None = None
+
         # 'True' if the uncore frequency was "unlocked" via the legacy sysfs API before starting to
         # use the new sysfs API.
         self._new_sysfs_api_unlocked = False
@@ -206,13 +214,17 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
             return self._has_sysfs_new_api
 
         self._has_sysfs_new_api = False
+        self._has_sysfs_legacy_api = False
+
         for dirname in self._lsdir_sysfs_base():
             if dirname.startswith("uncore"):
                 self._has_sysfs_new_api = True
-                break
+            if dirname.startswith("package_"):
+                self._has_sysfs_legacy_api = True
 
-        _LOG.debug("Using the %s uncore frequency sysfs interface",
-                   "new" if self._has_sysfs_new_api else "old")
+        _LOG.debug("New sysfs API available: %s, legacy sysfs API available: %s",
+                   self._has_sysfs_new_api, self._has_sysfs_legacy_api)
+
         return self._has_sysfs_new_api
 
     def _add_die(self, package: int, die: int, dirname: str):
@@ -234,6 +246,33 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
             self._dirmap[package] = {}
         self._dirmap[package][die] = dirname
 
+    def _read_agent_types(self, path: Path) -> Sequence[str]:
+        """
+        Read the agent types supported by the die corresponding to the provided uncore frequency
+        sysfs sub-directory.
+
+        Args:
+            path: The uncore frequency sysfs sub-directory path.
+
+        Returns:
+            A collection of agent types supported by the die.
+
+        Raises:
+            ErrorNotFound: If the 'agent_types' sysfs file does not exist.
+        """
+
+        path = path / "agent_types"
+        with self._pman.open(path, "r") as fobj:
+            agent_types_str: str = fobj.read()
+            agent_types = [atype.strip() for atype in agent_types_str.strip().split(" ")]
+            for agent_type in agent_types:
+                if agent_type not in CPUInfo.AGENT_TYPES:
+                    raise Error(f"Unexpected agent type '{agent_type}' read from {path}"
+                                f"{self._pman.hostmsg}, expected one of: "
+                                f"{', '.join(CPUInfo.AGENT_TYPES)}")
+
+        return agent_types
+
     def _build_dies_info(self):
         """
         Build the dies information dictionary that maps package and die numbers to corresponding
@@ -243,27 +282,110 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
         self._dirmap = {}
         sysfs_base_lsdir = self._lsdir_sysfs_base()
 
-        if self._use_new_sysfs_api():
-            for dirname in sysfs_base_lsdir:
-                match = re.match(r"^uncore(\d+)$", dirname)
-                if not match:
-                    continue
-
-                path = self._sysfs_base / dirname
-                with self._pman.open(path / "package_id", "r") as fobj:
-                    package = Trivial.str_to_int(fobj.read(), what="package ID")
-
-                with self._pman.open(path / "domain_id", "r") as fobj:
-                    die = Trivial.str_to_int(fobj.read(), what="uncore frequency domain ID")
-
-                self._add_die(package, die, dirname)
-        else:
+        if not self._use_new_sysfs_api():
             for dirname in sysfs_base_lsdir:
                 match = re.match(r"package_(\d+)_die_(\d+)", dirname)
                 if match:
                     package = int(match.group(1))
                     die = int(match.group(2))
                     self._add_die(package, die, dirname)
+            return
+
+        dies_info = self._cpuinfo.get_all_dies_info()
+
+        # Build sorted dictionary for die TPMI information:
+        # {addr, {instance: {cluster: tuple[package, die]}}}
+        topo_unsorted: dict[str, dict[int, dict[int, tuple[int, int]]]] = {}
+
+        for package, pkg_dies in dies_info.items():
+            for die, die_info in pkg_dies.items():
+                addr = die_info["addr"]
+                instance = die_info["instance"]
+                cluster = die_info["cluster"]
+                if not addr:
+                    raise Error(f"BUG: The new sysfs API is in use{self._pman.hostmsg}, but die "
+                                f"{die} in package {package} has no TPMI information")
+                topo_unsorted.setdefault(addr, {}).setdefault(instance, {})
+                topo_unsorted[addr][instance][cluster] = (package, die)
+
+        # Sort the topology information.
+        topo_sorted = {addr: topo_unsorted[addr] for addr in sorted(topo_unsorted)}
+        for addr, insts in topo_sorted.items():
+            topo_sorted[addr] = {inst: insts[inst] for inst in sorted(insts)}
+            for inst, clusters in topo_sorted[addr].items():
+                topo_sorted[addr][inst] = {clust: clusters[clust] for clust in sorted(clusters)}
+
+        # Use the fact that the driver enumerates the TPMI devices in the order of TPMI device PCI
+        # addresses, which start from package 0 / TPMI partition 0 (see 'tpmi_info', the 'PARTITION'
+        # field), then package 0 / TPMI partition 1, etc. Therefore, the order of the 'uncoreXX'
+        # directories corresponds to package and die numbers.
+
+        # {dirname: tuple[package, die, die_info]}
+        dirname2die_info: dict[str, tuple[int, int, DieInfoTypedDict]] = {}
+
+        dirname_seqnum = 0
+        for addr, insts in topo_sorted.items():
+            for inst, clusters in insts.items():
+                for cluster, (package, die) in clusters.items():
+                    die_info = dies_info[package][die]
+                    dirname = f"uncore{dirname_seqnum:02d}"
+                    dirname2die_info[dirname] = (package, die, die_info)
+                    dirname_seqnum += 1
+
+        if _LOG.getEffectiveLevel() == Logging.DEBUG:
+            # pylint: disable-next=import-outside-toplevel
+            import pprint
+
+            _LOG.debug("The sorted topology:\n%s", pprint.pformat(topo_sorted, sort_dicts=False))
+            _LOG.debug("The directory to die info mapping:\n%s",
+                       pprint.pformat(dirname2die_info, sort_dicts=False))
+
+        index = -1
+        for dirname in sorted(sysfs_base_lsdir):
+            match = re.match(r"^uncore(\d+)$", dirname)
+            if not match:
+                continue
+
+            idx = Trivial.str_to_int(match.group(1), base=10,
+                                     what=f"'{dirname}' uncore directory index")
+
+            path = self._sysfs_base / dirname
+
+            if idx != index + 1:
+                raise Error(f"Unexpected uncore frequency sysfs directory '{path}' found"
+                            f"{self._pman.hostmsg}:\nExpected index {index + 1}, got {idx}")
+            index = idx
+
+            if dirname not in dirname2die_info:
+                raise Error(f"Unexpected uncore frequency sysfs directory '{path}' found"
+                            f"{self._pman.hostmsg}")
+
+            with self._pman.open(path / "package_id", "r") as fobj:
+                pkg_sysfs_str = fobj.read().strip()
+                pkg_sysfs = Trivial.str_to_int(pkg_sysfs_str, base=10,
+                                               what=f"package ID from '{dirname}'")
+
+            package, die , die_info = dirname2die_info[dirname]
+            if package != pkg_sysfs:
+                raise Error(f"Package ID {pkg_sysfs} read from '{path}/package_id' does not match "
+                            f"the expected package ID {package}{self._pman.hostmsg}")
+
+            # Detect die type corresponding to this uncore directory.
+            try:
+                agent_types_sysfs = self._read_agent_types(path)
+            except ErrorNotFound:
+                # The kernel is probably old and does not provide the 'agent_types' sysfs file.
+                # Skip this sanity check.
+                pass
+            else:
+                agent_types = die_info["agent_types"]
+                if set(agent_types_sysfs) != set(agent_types):
+                    raise Error(f"Agent types read from '{path}/agent_types' do not match the "
+                                f"expected agent types for package {package} die {die}"
+                                f"{self._pman.hostmsg}:\nExpected: {', '.join(agent_types)}\n"
+                                f"Got: {', '.join(agent_types_sysfs)}")
+
+            self._add_die(package, die, dirname)
 
     def _get_dies_info(self) -> RelNumsType:
         """
@@ -482,6 +604,8 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
             ErrorNotSupported: If the uncore frequency sysfs files do not exist.
         """
 
+        if not self._has_sysfs_legacy_api:
+            return
         if self._new_sysfs_api_unlocked:
             return
 
@@ -769,3 +893,16 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
                 _LOG.debug("Setting package %d die %d %s to %s via file '%s'",
                            package, die, what, status, path)
                 self._sysfs_io.write_int(path, int(status), what=what)
+
+    def _fill_dies_info(self, dies_info: dict[int, dict[int, UncoreDieInfoTypedDict]]):
+        """
+        Fill in the dies information dictionary.
+
+        Args:
+            dies_info: The dies information dictionary to fill in.
+        """
+
+        for package, pkg_dies in dies_info.items():
+            for die, die_info in pkg_dies.items():
+                path = self._sysfs_base / self._get_dirmap()[package][die]
+                die_info["path"] = path

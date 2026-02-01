@@ -530,7 +530,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
                    fname, self.msr_bits_str(fname), self._cpuinfo.cpus_to_str(cpus))
 
         if read_method:
-            # pylint: disable=not-callable
+            # pylint: disable-next=not-callable
             for cpu, val in read_method(cpus=cpus):
                 yield cpu, val
         else:
@@ -652,7 +652,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
         set_method_name = f"_set_{fname}"
         set_method: _WriteFeatureMethodType | None = getattr(self, set_method_name, None)
         if set_method:
-            # pylint: disable=not-callable
+            # pylint: disable-next=not-callable
             set_method(val, cpus=cpus)
         else:
             self._msr.write_bits(self.regaddr, finfo["bits"], val, cpus=cpus,

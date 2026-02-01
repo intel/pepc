@@ -3,7 +3,7 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2025 Intel Corporation
+# Copyright (C) 2020-2026 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Authors: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
@@ -86,7 +86,7 @@ def _get_set_and_verify_data(params: PropsTestParamsTypedDict,
 
 def test_cstates_set_and_verify(params: PropsTestParamsTypedDict):
     """
-    Test setting and C-state properties.
+    Test setting and verifying C-state properties.
 
     Args:
         params: The test parameters.
@@ -134,6 +134,9 @@ def test_req_cstates(params: PropsTestParamsTypedDict):
         driver = pobj.get_cpu_prop("idle_driver", cpu)["val"]
     except ErrorNotSupported:
         return
+
+    if driver == "none":
+        pytest.skip("Idle driver is 'none', skipping the test.")
 
     csinfo = pobj.get_cpu_cstates_info(cpu)
     if driver == "intel_idle":

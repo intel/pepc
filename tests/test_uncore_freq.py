@@ -460,15 +460,16 @@ def _test_elc_threshold_methods_dies(uncfreq_obj: _UncoreFreqObjType, all_dies: 
         expected_lo_thresh = val
         expected_hi_thresh = val + 1
         expected_status = bool(val % 2)
+        errmsg_suffix1 = f"Package: {package}, Die: {die}, {errmsg_suffix}"
         assert lo_thresh == expected_lo_thresh, \
                f"Expected ELC low threshold {expected_lo_thresh}%, but got {lo_thresh}%\n" \
-               f"{errmsg_suffix}"
+               f"{errmsg_suffix1}"
         assert hi_thresh == expected_hi_thresh, \
                f"Expected ELC high threshold {expected_hi_thresh}%, but got {hi_thresh}%\n" \
-               f"{errmsg_suffix}"
+               f"{errmsg_suffix1}"
         assert status == expected_status, \
                f"Expected ELC high threshold status {expected_status}, but got {status}\n" \
-               f"{errmsg_suffix}"
+               f"{errmsg_suffix1}"
 
     # Test setting and getting various threshold values.
     for package, dies in all_dies.items():
@@ -480,15 +481,17 @@ def _test_elc_threshold_methods_dies(uncfreq_obj: _UncoreFreqObjType, all_dies: 
 
                 read_pkg, read_die, read_lo_thresh = \
                                     next(uncfreq_obj.get_elc_low_threshold_dies({package: [die]}))
+
+                errmsg_suffix1 = f"Package: {package}, Die: {die}, {errmsg_suffix}"
                 assert read_pkg == package and read_die == die and read_lo_thresh == lo_thresh, \
                     f"Expected ({package}, {die}, {lo_thresh}), " \
-                    f"but got ({read_pkg}, {read_die}, {read_lo_thresh})\n{errmsg_suffix}"
+                    f"but got ({read_pkg}, {read_die}, {read_lo_thresh})\n{errmsg_suffix1}"
 
                 read_pkg, read_die, read_hi_thresh = \
                     next(uncfreq_obj.get_elc_high_threshold_dies({package: [die]}))
                 assert read_pkg == package and read_die == die and read_hi_thresh == hi_thresh, \
                     f"Expected ({package}, {die}, {hi_thresh}), " \
-                    f"but got ({read_pkg}, {read_die}, {read_hi_thresh})\n{errmsg_suffix}"
+                    f"but got ({read_pkg}, {read_die}, {read_hi_thresh})\n{errmsg_suffix1}"
 
     # Pick the first die.
     package = die = 0
@@ -550,10 +553,10 @@ def test_elc_threshold_methods_dies(params: _TestParamsTypedDict):
     all_dies = params["cpuinfo"].get_all_dies()
 
     for uncfreq_obj in _iter_uncore_freq_objects(params):
-        if uncfreq_obj.mname != "tpmi":
-            continue
-
-        _test_elc_threshold_methods_dies(uncfreq_obj, all_dies)
+        try:
+            _test_elc_threshold_methods_dies(uncfreq_obj, all_dies)
+        except ErrorNotSupported:
+            pass
 
 def _test_elc_threshold_methods_cpu(uncfreq_obj: _UncoreFreqObjType, cpu: int):
     """
@@ -602,7 +605,87 @@ def test_elc_threshold_methods_cpu(params: _TestParamsTypedDict):
     cpu = params["cpuinfo"].get_cpus()[-1]
 
     for uncfreq_obj in _iter_uncore_freq_objects(params):
-        if uncfreq_obj.mname != "tpmi":
-            continue
+        try:
+            _test_elc_threshold_methods_cpu(uncfreq_obj, cpu)
+        except ErrorNotSupported:
+            pass
 
-        _test_elc_threshold_methods_cpu(uncfreq_obj, cpu)
+def _get_cross_mechanisms_uncore_freq_objects(params: _TestParamsTypedDict) -> \
+                            Generator[tuple[_UncoreFreqObjType, _UncoreFreqObjType], None, None]:
+    """
+    Yield two uncore frequency objects with different mechanisms or configurations to test the
+    cross- mechanism functionality.
+
+    Args:
+        params: The test parameters.
+
+    Yields:
+
+    """
+
+    try:
+        with _UncoreFreqSysfs.UncoreFreqSysfs(pman=params["pman"],
+                                              cpuinfo=params["cpuinfo"]) as uncfreq_obj0:
+            with _UncoreFreqTPMI.UncoreFreqTpmi(pman=params["pman"],
+                                                cpuinfo=params["cpuinfo"]) as uncfreq_obj1:
+                yield uncfreq_obj0, uncfreq_obj1
+    except ErrorNotSupported:
+        pytest.skip("Less than two uncore frequency mechanisms are supported, skipping the "
+                    "cross-mechanism test")
+
+def test_freq_cross_mechanisms(params: _TestParamsTypedDict):
+    """
+    Test that uncore frequency settings made via one mechanism are visible via another mechanism.
+
+    Args:
+        params: The test parameters.
+    """
+
+    all_dies = params["cpuinfo"].get_all_dies()
+
+    uncfreq_objs: tuple[_UncoreFreqObjType, _UncoreFreqObjType]
+    for uncfreq_objs in _get_cross_mechanisms_uncore_freq_objects(params):
+        # Run the test for every package and die.
+        for package, dies in all_dies.items():
+            for die in dies:
+                # Get the min and max frequency limits using the first mechanism.
+                uncfreq_obj0 = uncfreq_objs[0]
+                try:
+                    for _, _, min_freq in uncfreq_obj0.get_min_freq_limit_dies({package: [die]}):
+                        pass
+                    for _, _, max_freq in uncfreq_obj0.get_max_freq_limit_dies({package: [die]}):
+                        pass
+                except ErrorNotSupported:
+                    # The frequency limits are not supported, use the actual frequencies instead.
+                    for _, _, min_freq in uncfreq_obj0.get_min_freq_dies({package: [die]}):
+                        pass
+                    for _, _, max_freq in uncfreq_obj0.get_max_freq_dies({package: [die]}):
+                        pass
+
+                mid_freq = _get_mid_freq(min_freq, max_freq)
+
+                # Set min and max frequencies to known values using the first mechanism.
+                uncfreq_obj0.set_min_freq_dies(min_freq, {package: [die]})
+                uncfreq_obj0.set_max_freq_dies(max_freq, {package: [die]})
+
+                # Set the min uncore frequency to the middle value using the first mechanism.
+                uncfreq_obj0.set_min_freq_dies(mid_freq, {package: [die]})
+
+                uncfreq_obj1 = uncfreq_objs[0]
+                # Read the min uncore frequency using the second mechanism and check it.
+                rd_pkg, rd_die, rd_freq = next(uncfreq_obj1.get_min_freq_dies({package: [die]}))
+                assert rd_pkg == package and rd_die == die, \
+                       f"Expected package {package} and die {die}, but got package {rd_pkg} " \
+                       f"and die {rd_die}"
+                assert rd_freq == mid_freq, \
+                       f"Set min. uncore frequency to {mid_freq} for ({package}, {die}) via " \
+                       f"{uncfreq_obj0.mname} but got {rd_freq} via {uncfreq_obj1.mname}"
+
+                # Set the min uncore frequency to the original value using the second mechanism.
+                uncfreq_obj1.set_min_freq_dies(min_freq, {package: [die]})
+
+                # Verify that the original value is restored using the first mechanism.
+                _, _, rd_freq = next(uncfreq_obj0.get_min_freq_dies({package: [die]}))
+                assert rd_freq == min_freq, \
+                       f"Set min. uncore frequency to {min_freq} for ({package}, {die}) via " \
+                       f"{uncfreq_obj1.mname} but got {rd_freq} via {uncfreq_obj0.mname}"

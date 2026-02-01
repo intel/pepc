@@ -329,10 +329,10 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
 
     _add_target_cpus_arguments(subpars2, "List of %s to get information about.")
 
+    _add_prop_info_subcommand_options(PStatesVars.PROPS, subpars2)
+
     text = """Display information in YAML format."""
     subpars2.add_argument("--yaml", action="store_true", help=text)
-
-    _add_prop_info_subcommand_options(PStatesVars.PROPS, subpars2)
 
     #
     # Create parser for the 'pstates config' command.
@@ -377,13 +377,13 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
 
     _add_target_cpus_arguments(subpars2, "List of %s to get information about.")
 
-    text = """Display information in YAML format."""
-    subpars2.add_argument("--yaml", action="store_true", help=text)
-
     text = f"""Comma-separated list of C-states to get information about (all C-states by default).
                {cst_list_text}"""
     subpars2.add_argument("--cstates", dest="csnames", metavar="CSTATES", nargs="?", help=text,
                           default="default")
+
+    text = """Display information in YAML format."""
+    subpars2.add_argument("--yaml", action="store_true", help=text)
 
     _add_prop_info_subcommand_options(CStatesVars.PROPS, subpars2)
 
@@ -435,6 +435,9 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     ArgParse.add_options(subpars2, all_options)
 
     _add_target_cpus_arguments(subpars2, "List of %s to get information about.")
+
+    text = """Display detailed non-compute dies information."""
+    subpars2.add_argument("--dies-info", action="store_true", help=text)
 
     text = """Display information in YAML format."""
     subpars2.add_argument("--yaml", action="store_true", help=text)
@@ -546,9 +549,6 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
                Example: --columns Package,Core,CPU."""
     subpars2.add_argument("--columns", help=text)
 
-    text = """Display detailed non-compute dies information."""
-    subpars2.add_argument("--dies-info", action="store_true", help=text)
-
     #
     # Create parser for the 'pmqos' command.
     #
@@ -574,10 +574,10 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
 
     _add_target_cpus_arguments(subpars2, "List of %s to get information about.")
 
+    _add_prop_info_subcommand_options(PMQoSVars.PROPS, subpars2)
+
     text = """Display information in YAML format."""
     subpars2.add_argument("--yaml", action="store_true", help=text)
-
-    _add_prop_info_subcommand_options(PMQoSVars.PROPS, subpars2)
 
     #
     # Create parser for the 'pmqos config' command.

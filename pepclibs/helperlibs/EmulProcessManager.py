@@ -32,10 +32,11 @@ from typing import NamedTuple
 from pepclibs.helperlibs import Logging, LocalProcessManager, Trivial, YAML
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs.helperlibs.emul import _EmulFile
+from pepclibs.helperlibs._ProcessManagerBase import ProcWaitResultType
 
 if typing.TYPE_CHECKING:
     from typing import Generator, TypedDict, Sequence, IO, cast
-    from pepclibs.helperlibs._ProcessManagerBase import ProcWaitResultType, LsdirTypedDict
+    from pepclibs.helperlibs._ProcessManagerBase import LsdirTypedDict
 
     class _TestDataInlineDirsTypedDict(TypedDict, total=False):
         """
