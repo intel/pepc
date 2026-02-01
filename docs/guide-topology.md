@@ -143,32 +143,38 @@ Here is an example of how to get detailed non-compute dies information on a Gran
 system. The output is limited to package 1 only.
 
 ```bash
-$ ./pepc topology info --dies-info --package 1 -D gnr0
-Compute dies: package 1, dies 0, 1, 2
-Non-Compute dies: package 1, dies 3, 4
-Non-compute dies details:
-  - Package 0:
-    - Die 3 (I/O):
-      TPMI Address: 0000:00:03.1
-      TPMI Instance: 3
-      TPMI Cluster: 0
-      TPMI Agent type(s): io
-    - Die 4 (I/O):
-      TPMI Address: 0000:00:03.1
-      TPMI Instance: 4
-      TPMI Cluster: 0
-      TPMI Agent type(s): io
+$ pepc topology info --dies-info --package 1
   - Package 1:
+    - Die 0 (Compute):
+      TPMI UFS:
+      - Address: 0000:80:03.1
+      - Instance: 0
+      - Cluster: 0
+      - Agent type(s): memory, core, cache
+    - Die 1 (Compute):
+      TPMI UFS:
+      - Address: 0000:80:03.1
+      - Instance: 1
+      - Cluster: 0
+      - Agent type(s): memory, core, cache
+    - Die 2 (Compute):
+      TPMI UFS:
+      - Address: 0000:80:03.1
+      - Instance: 2
+      - Cluster: 0
+      - Agent type(s): memory, core, cache
     - Die 3 (I/O):
-      TPMI Address: 0000:80:03.1
-      TPMI Instance: 3
-      TPMI Cluster: 0
-      TPMI Agent type(s): io
+      TPMI UFS:
+      - Address: 0000:80:03.1
+      - Instance: 3
+      - Cluster: 0
+      - Agent type(s): io
     - Die 4 (I/O):
-      TPMI Address: 0000:80:03.1
-      TPMI Instance: 4
-      TPMI Cluster: 0
-      TPMI Agent type(s): io
+      TPMI UFS:
+      - Address: 0000:80:03.1
+      - Instance: 4
+      - Cluster: 0
+      - Agent type(s): io
 ```
 
 This gives detailed information about each non-compute die, including its type, TPMI address, instance,
@@ -177,8 +183,9 @@ and cluster.
 On Granite Rapids Xeon there are 2 I/O dies per package. However, future Intel platforms may have
 more die types, for example a memory die.
 
-Compute dies contain CPUs and are enumerated by the hardware via the `CPUID` instruction or via
-MSR 0x54 (`MSR_PM_LOGICAL_ID`). Compute die IDs are assigned by the hardware.
+Compute dies contain CPUs and are enumerated by the hardware via the `CPUID` instruction. But on
+some platforms, like Granite Rapids Xeon, compute dies are not visible via `CPUID`. In this case,
+they are enumerated via MSR 0x54 (`MSR_PM_LOGICAL_ID`), and "domain ID" from the MSR is used ad the
+die ID.
 
-Non-compute dies do not contain CPUs. The `pepc` tool enumerates them via TPMI and assigns die IDs,
-so die IDs come from `pepc`, not from hardware.
+Non-compute dies do not contain CPUs. The `pepc` tool enumerates them via TPMI and assigns die IDs.

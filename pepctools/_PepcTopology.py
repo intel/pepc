@@ -129,8 +129,7 @@ def _print_dies(die_type: str, dies: dict[int, list[int]]):
 
 def _display_dies_info(cmdl: _CmdlineArgsTypedDict,
                        pman: ProcessManagerType,
-                       cpuinfo: CPUInfo.CPUInfo,
-                       noncomp_dies_info: dict[int, dict[int, DieInfoTypedDict]]):
+                       cpuinfo: CPUInfo.CPUInfo):
     """
     Display detailed non-compute die information and exit.
 
@@ -138,7 +137,6 @@ def _display_dies_info(cmdl: _CmdlineArgsTypedDict,
         cmdl: Parsed command-line arguments.
         pman: Process manager object for target host.
         cpuinfo: 'CPUInfo' object for retrieving CPU topology information.
-        noncomp_dies_info: Detailed information about non-compute dies.
     """
 
     if cmdl["cpus"]:
@@ -156,26 +154,25 @@ def _display_dies_info(cmdl: _CmdlineArgsTypedDict,
 
     with _OpTarget.OpTarget(pman=pman, cpuinfo=cpuinfo, dies=cmdl["dies"],
                             packages=cmdl["packages"]) as optar:
-        target_compute_dies = optar.get_compute_dies()
-        target_noncomp_dies = optar.get_noncomp_dies()
+        target_dies = optar.get_all_dies()
 
-    _print_dies("Compute", target_compute_dies)
-    _print_dies("Non-Compute", target_noncomp_dies)
+    dieinfo = cpuinfo.get_dieinfo()
 
-    if not noncomp_dies_info:
-        return
+    proc_percpuinfo = cpuinfo.get_proc_percpuinfo()
+    dies_info = dieinfo.get_all_dies_info(proc_percpuinfo)
 
-    # Print detailed non-compute die information.
-    _LOG.info("Non-compute dies details:")
-    for package in sorted(noncomp_dies_info):
-        _LOG.info(f"  - Package {package}:")
-        for die in sorted(noncomp_dies_info[package]):
-            die_info = noncomp_dies_info[package][die]
-            _LOG.info(f"    - Die {die} ({die_info['title']}):")
-            _LOG.info(f"      TPMI Address: {die_info['addr']}")
-            _LOG.info(f"      TPMI Instance: {die_info['instance']}")
-            _LOG.info(f"      TPMI Cluster: {die_info['cluster']}")
-            _LOG.info(f"      TPMI Agent type(s): {', '.join(die_info['agent_types'])}")
+    for package  in target_dies:
+        _LOG.info(f"Package {package}:")
+        for die in sorted(target_dies[package]):
+            die_info = dies_info[package][die]
+            _LOG.info(f"  - Die {die} ({die_info['title']}):")
+            if not die_info["addr"]:
+                continue
+            _LOG.info("    TPMI UFS:")
+            _LOG.info(f"    - Address: {die_info['addr']}")
+            _LOG.info(f"    - Instance: {die_info['instance']}")
+            _LOG.info(f"    - Cluster: {die_info['cluster']}")
+            _LOG.info(f"    - Agent type(s): {', '.join(die_info['agent_types'])}")
 
 def _get_default_colnames(cpuinfo: CPUInfo.CPUInfo) -> list[ScopeNameType]:
     """
@@ -260,8 +257,8 @@ def _filter_cpus(cpus: set[int],
             new_topology.append(tline)
     return new_topology
 
-def _insert_noncomp_dies_type(topology: list[dict[str, int | str]],
-                              colnames: list[str]) -> list[dict[str, int | str]]:
+def _insert_dies_type(topology: list[dict[str, int | str]],
+                      colnames: list[str]) -> list[dict[str, int | str]]:
     """
     Insert "dtype" column into topology table.
 
@@ -382,13 +379,13 @@ def topology_info_command(args: argparse.Namespace, pman: ProcessManagerType):
         cpuinfo = CPUInfo.CPUInfo(pman=pman)
         stack.enter_context(cpuinfo)
 
+        if cmdl["dies_info"]:
+            _display_dies_info(cmdl, pman, cpuinfo)
+            return
+
         dieinfo = cpuinfo.get_dieinfo()
         noncomp_dies = dieinfo.get_noncomp_dies()
         noncomp_dies_info = dieinfo.get_noncomp_dies_info()
-
-        if cmdl["dies_info"]:
-            _display_dies_info(cmdl, pman, cpuinfo, noncomp_dies_info)
-            return
 
         if not cmdl["columns"]:
             snames = _get_default_colnames(cpuinfo)
@@ -459,7 +456,7 @@ def topology_info_command(args: argparse.Namespace, pman: ProcessManagerType):
         if ("package" in colnames_set or "die" in colnames_set) and "dtype" in colnames_set:
             # The 'hybrid' column has not yet been inserted, skip it.
             colnames_no_hybrid = [name for name in colnames if name != "hybrid"]
-            topology = _insert_noncomp_dies_type(topology, colnames_no_hybrid)
+            topology = _insert_dies_type(topology, colnames_no_hybrid)
 
             target_dies = optar.get_all_dies(strict=False)
             _append_noncomp_dies(target_dies, noncomp_dies, noncomp_dies_info,
