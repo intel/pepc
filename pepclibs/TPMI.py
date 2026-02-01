@@ -1790,7 +1790,8 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                      fname: str,
                      packages: Iterable[int] = (),
                      addrs: Iterable[str] = (),
-                     instances: Iterable[int] = ()) -> Generator[tuple[int, str, int], None, None]:
+                     instances: Iterable[int] = (),
+                     unimplemented: bool = False) -> Generator[tuple[int, str, int], None, None]:
         """
         Iterate over a TPMI feature and yield tuples of '(package, addr, instance)'.
 
@@ -1807,6 +1808,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
             packages: Package numbers to include.
             addrs: TPMI device PCI addresses to include.
             instances: Instance numbers to include.
+            unimplemented: Whether to include unimplemented instances (where version is 0xFF).
 
         Yields:
             Tuples of '(package, addr, instance)' for each matching TPMI instance of feature
@@ -1836,8 +1838,11 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                 if instances:
                     _instances: list[int] = []
                     for instance in instances:
-                        # Skip non-existing and unimplemented instances.
-                        if instance not in mdmap or not mdmap[instance]:
+                        if instance not in mdmap:
+                            # A non-existing instance.
+                            continue
+                        if not mdmap[instance] and not unimplemented:
+                            # Skip unimplemented instances (version was 0xFF).
                             continue
                         _instances.append(instance)
                 else:
