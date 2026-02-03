@@ -58,6 +58,11 @@ any CPU can read and write TPMI registers of any uncore domain. In contrast, MSR
 'RDMSR' or 'WRMSR' instructions on a CPU belonging to the target uncore domain, which is impossible
 for non-compute dies that have no CPUs.
 
+**Note:** For managing uncore frequency scaling (the UFS feature), use the `pepc uncore` command
+rather than `pepc tpmi`. The `pepc uncore` command provides a higher-level interface specifically
+designed for uncore frequency management. See [Pepc User Guide: Uncore](guide-uncore.md) for details.
+The `pepc tpmi` command is useful for low-level TPMI register access and debugging.
+
 TPMI uses PCIe MMIO: Intel processors expose one or more TPMI PCIe devices that are enumerable by
 Linux. These devices expose hardware registers using the standard PCIe VSEC (Vendor Specific
 Extended Capability) mechanism, which provides a standard way to include vendor-specific data in

@@ -15,17 +15,17 @@ Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 ## Table of Contents
 
 - [Introduction](#introduction)
+- [Die Topology and Die IDs](#die-topology-and-die-ids)
 - [Examples](#examples)
   - [Display CPU Topology](#display-cpu-topology)
   - [Display Topology for Specific Package](#display-topology-for-specific-package)
   - [Select Specific Columns](#select-specific-columns)
   - [Customize Column Order](#customize-column-order)
-  - [Display Non-Compute Dies Details](#display-non-compute-dies-details)
 
 ## Introduction
 
-The `pepc topology` provides operations to discover and display CPU topology information, including
-non-compute die details.
+The `pepc topology` command provides operations to discover and display CPU topology information,
+including non-compute die details.
 
 There is only one subcommand available: `info` - it displays the CPU topology table. By default, the
 table includes all scopes relevant to the system. For example:
@@ -34,9 +34,9 @@ table includes all scopes relevant to the system. For example:
 - On a hybrid system, the output will also include the "hybrid" column to distinguish between core
   types (E-core, P-core, etc.).
 - On a multi-package Granite Rapids Xeon system, the output will also include package and
-  die scopes. It will also include the "DieType" column to distinguish between compute and non-compute
-  dies (there are I/O dies on Granite Rapids, which do not have CPUs, but have PCIe controllers and
-  frequency control knobs).
+  die scopes. It will also include the "DieType" column to distinguish between compute and
+  non-compute dies (I/O dies on Granite Rapids Xeon do not have CPUs, but have PCIe controllers and
+  uncore control).
 
 But you can customize the output by specifying which scopes to include or exclude using the
 '--columns' option.
@@ -47,6 +47,54 @@ displayed at the end of the table. Use the '--order' option to change the order 
 
 Additionally, you can limit the output to certain CPUs, cores, modules, dies, packages, and
 NUMA nodes using one of the target scope selection options: '--cpus', '--cores', etc.
+
+## Die Topology and Die IDs
+
+In pepc, a "die" is a unit of uncore control. It does not necessarily correspond to a physical die
+on the CPU package.
+
+### Compute Dies
+
+Dies that include CPU cores are called compute dies. Intel CPUs may enumerate compute dies using
+different methods:
+- `CPUID` instruction: Some Intel CPUs expose die information via the `CPUID` instruction.
+  Linux provides this information in sysfs (e.g.,
+  '/sys/devices/system/cpu/cpu0/topology/die_cpus_list').
+- MSR: Some Intel CPUs (e.g., Granite Rapids Xeon) do not expose die
+  information via `CPUID`. In such cases, `pepc` uses MSR 0x54 (`MSR_PM_LOGICAL_ID`) to determine
+  which CPUs belong to which compute die. The "domain ID" field from this MSR is used as the die ID.
+
+In both cases, compute die IDs come from hardware and have specific hardware meaning.
+
+### Non-Compute Dies
+
+Some dies do not include CPU cores but still have uncore frequency control. For example:
+- I/O dies: On Granite Rapids and Sierra Forest Xeon, I/O dies include PCIe and CXL controllers
+  and have their own uncore frequency control.
+- Future Intel platforms may include memory dies or other specialized die types with uncore
+  control.
+
+Non-compute dies cannot be discovered via `CPUID` or standard Linux sysfs interfaces because they
+have no CPUs. Instead, `pepc` uses TPMI (Topology Aware Register and PM Capsule Interface) to
+enumerate them. For more information about TPMI, see the [Pepc User Guide: TPMI](guide-tpmi.md).
+
+Non-compute die IDs are sequential numbers (starting from the highest compute die ID + 1) assigned
+by `pepc` for identification purposes. These IDs have no special hardware meaning - they are simply
+used within `pepc` to uniquely identify non-compute dies. Under the hood, `pepc` maps them to TPMI
+device addresses and uncore frequency control sysfs paths.
+
+### Die Topology Examples
+
+Typical die configurations on Intel CPUs:
+- Client CPUs (e.g., Raptor Lake, Alder Lake): Single compute die, no non-compute dies.
+- Single-die server CPUs (e.g., Ice Lake Xeon, Sapphire Rapids Xeon): Single compute die, no
+  non-compute dies.
+- Multi-die server CPUs without I/O dies (e.g., Cascade Lake-AP): Multiple compute dies, no
+  non-compute dies.
+- Multi-die server CPUs with I/O dies (e.g., Granite Rapids Xeon, Sierra Forest Xeon): Multiple
+  compute dies and multiple non-compute dies (I/O dies).
+
+The examples below demonstrate how `pepc topology info` displays these different configurations.
 
 ## Examples
 
@@ -75,7 +123,8 @@ CPU    Core    Module    Hybrid
  15      23         5    E-core
 ```
 
-The table gives an idea about how CPUs, cores, NUMA nodes and packages are related to each other.
+This table shows how CPUs, cores, and modules are organized on a hybrid system with both P-cores
+and E-cores.
 
 ### Display Topology for Specific Package
 
@@ -136,56 +185,3 @@ Module    CPU    Hybrid
      8      6    LPE-core
      8      7    LPE-core
 ```
-
-### Display Non-Compute Dies Details
-
-Here is an example of how to get detailed non-compute dies information on a Granite Rapids Xeon
-system. The output is limited to package 1 only.
-
-```bash
-$ pepc topology info --dies-info --package 1
-  - Package 1:
-    - Die 0 (Compute):
-      TPMI UFS:
-      - Address: 0000:80:03.1
-      - Instance: 0
-      - Cluster: 0
-      - Agent type(s): memory, core, cache
-    - Die 1 (Compute):
-      TPMI UFS:
-      - Address: 0000:80:03.1
-      - Instance: 1
-      - Cluster: 0
-      - Agent type(s): memory, core, cache
-    - Die 2 (Compute):
-      TPMI UFS:
-      - Address: 0000:80:03.1
-      - Instance: 2
-      - Cluster: 0
-      - Agent type(s): memory, core, cache
-    - Die 3 (I/O):
-      TPMI UFS:
-      - Address: 0000:80:03.1
-      - Instance: 3
-      - Cluster: 0
-      - Agent type(s): io
-    - Die 4 (I/O):
-      TPMI UFS:
-      - Address: 0000:80:03.1
-      - Instance: 4
-      - Cluster: 0
-      - Agent type(s): io
-```
-
-This gives detailed information about each non-compute die, including its type, TPMI address, instance,
-and cluster.
-
-On Granite Rapids Xeon there are 2 I/O dies per package. However, future Intel platforms may have
-more die types, for example a memory die.
-
-Compute dies contain CPUs and are enumerated by the hardware via the `CPUID` instruction. But on
-some platforms, like Granite Rapids Xeon, compute dies are not visible via `CPUID`. In this case,
-they are enumerated via MSR 0x54 (`MSR_PM_LOGICAL_ID`), and "domain ID" from the MSR is used ad the
-die ID.
-
-Non-compute dies do not contain CPUs. The `pepc` tool enumerates them via TPMI and assigns die IDs.

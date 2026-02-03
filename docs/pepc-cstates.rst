@@ -131,9 +131,6 @@ Subcommand *'info'*
 Retrieve C-state information for specified CPUs. By default, display all details for all CPUs. Use
 target CPU specification options to define a subset of CPUs, cores, dies, or packages.
 
-**--yaml**
-   Display output in YAML format.
-
 **-m** *MECHANISMS*, **--mechanisms** *MECHANISMS*
    A comma-separated list of mechanisms for retrieving information. Use '--list-mechanisms' to
    view available mechanisms. Many options support only one mechanism (e.g., 'sysfs'), while
@@ -188,6 +185,9 @@ target CPU specification options to define a subset of CPUs, cores, dies, or pac
    Retrieve the list of available idle governors, which determine the C-state to request for an
    idle CPU. Different governors implement various selection policies. Read from
    '/sys/devices/system/cpu/cpuidle/available_governors'.
+
+**--yaml**
+   Display output in YAML format.
 
 Subcommand *'config'*
 =====================

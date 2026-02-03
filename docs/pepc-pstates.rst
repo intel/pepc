@@ -131,9 +131,6 @@ Subcommand *'info'*
 Retrieve CPU P-states information for specified CPUs. By default, display all details for all CPUs.
 Use target CPU specification options to define a subset of CPUs, cores, dies, or packages.
 
-**--yaml**
-   Display output in YAML format.
-
 **-m** *MECHANISMS*, **--mechanisms** *MECHANISMS*
    A comma-separated list of mechanisms for retrieving information. Use '--list-mechanisms' to
    view available mechanisms. Many options support only one mechanism (e.g., 'sysfs'), while
@@ -265,6 +262,9 @@ Use target CPU specification options to define a subset of CPUs, cores, dies, or
 **--hwp-highest-perf**
    Retrieve the HWP highest performance level for specified CPUs. Reads MSR_HWP_CAPABILITIES (0x771),
    bits 7:0.
+
+**--yaml**
+   Display output in YAML format.
 
 Subcommand *'config'*
 =====================

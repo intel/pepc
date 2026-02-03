@@ -129,9 +129,6 @@ Subcommand *'info'*
 Retrieve uncore information for specified dies. By default, display all details for all dies. Use
 target domain specification options to define a subset of CPUs, cores, dies, or packages.
 
-**--yaml**
-   Display output in YAML format.
-
 **-m** *MECHANISMS*, **--mechanisms** *MECHANISMS*
    A comma-separated list of mechanisms for retrieving information. Use '--list-mechanisms' to
    view available mechanisms. Many options support only one mechanism (e.g., 'sysfs'), while
@@ -228,6 +225,13 @@ target domain specification options to define a subset of CPUs, cores, dies, or 
    Supported mechanisms are: 'sysfs', 'tpmi'. The 'sysfs' mechanism reads the
    '/sys/devices/system/cpu/intel_uncore_frequency/uncore<NUMBER>/elc_high_threshold_enable'. The
    TPMI reads the same debugfs files as '--max-freq'.
+
+**--yaml**
+   Display output in YAML format.
+
+**--dies-info**
+   Display detailed information about dies and how they map to uncore frequency driver sysfs paths
+   and TPMI UFS feature addresses.
 
 Subcommand *'config'*
 =====================

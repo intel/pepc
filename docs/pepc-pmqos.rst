@@ -121,9 +121,6 @@ Retrieve PM QoS (Power Management Quality of Service) information for specified 
 display all details for all CPUs. Use target CPU specification options to define a subset of CPUs,
 cores, dies, or packages.
 
-**--yaml**
-   Display information in YAML format.
-
 **--latency-limit**
    Retrieve the per-CPU Linux PM QoS limit. This limit affects C-state selection by restricting the
    kernel from using C-states with latencies exceeding the specified limit. For example, a 50us
@@ -133,6 +130,9 @@ cores, dies, or packages.
 **--global-latency-limit**
    Retrieve the global Linux PM QoS limit. This limit, unlike the per-CPU latency limit, applies
    globally. It is read from the '/dev/cpu_dma_latency' device node.
+
+**--yaml**
+   Display information in YAML format.
 
 Subcommand *'config'*
 =====================
