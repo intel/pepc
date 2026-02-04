@@ -5,9 +5,12 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
+ - Fix sysfs uncore directores matching to die IDs.
 ### Added
 ### Removed
 ### Changed
+ - Move '--dies-info' option to 'pepc uncore info'.
+ - Improve users guide.
 
 ## [1.6.22] - 2026-01-30
 ### Fixed
