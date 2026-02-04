@@ -140,9 +140,6 @@ By default, display all details for all CPUs.
 Use target CPU specification options to define a subset of CPUs, cores,
 dies, or packages.
 .TP
-\f[B]\-\-yaml\f[R]
-Display information in YAML format.
-.TP
 \f[B]\-\-latency\-limit\f[R]
 Retrieve the per\-CPU Linux PM QoS limit.
 This limit affects C\-state selection by restricting the kernel from
@@ -156,6 +153,9 @@ The limit is read from
 Retrieve the global Linux PM QoS limit.
 This limit, unlike the per\-CPU latency limit, applies globally.
 It is read from the \[aq]/dev/cpu_dma_latency\[aq] device node.
+.TP
+\f[B]\-\-yaml\f[R]
+Display information in YAML format.
 .SS Subcommand \f[I]\[aq]config\[aq]\f[R]
 Configure PM QoS (Power Management Quality of Service) for specified
 CPUs.

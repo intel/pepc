@@ -153,9 +153,6 @@ By default, display all details for all CPUs.
 Use target CPU specification options to define a subset of CPUs, cores,
 dies, or packages.
 .TP
-\f[B]\-\-yaml\f[R]
-Display output in YAML format.
-.TP
 \f[B]\-m\f[R] \f[I]MECHANISMS\f[R], \f[B]\-\-mechanisms\f[R] \f[I]MECHANISMS\f[R]
 A comma\-separated list of mechanisms for retrieving information.
 Use \[aq]\-\-list\-mechanisms\[aq] to view available mechanisms.
@@ -230,6 +227,9 @@ Retrieve the list of available idle governors, which determine the
 C\-state to request for an idle CPU.
 Different governors implement various selection policies.
 Read from \[aq]/sys/devices/system/cpu/cpuidle/available_governors\[aq].
+.TP
+\f[B]\-\-yaml\f[R]
+Display output in YAML format.
 .SS Subcommand \f[I]\[aq]config\[aq]\f[R]
 Configure C\-states for specified CPUs.
 If no parameter is provided, the current value(s) will be displayed.

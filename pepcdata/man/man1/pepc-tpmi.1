@@ -133,6 +133,14 @@ in the spec files.
 \f[B]\-t\f[R], \f[B]\-\-topology\f[R]
 Display TPMI topology (PCI addresses, instance numbers, etc.).
 .TP
+\f[B]\-\-unimplemented\f[R]
+Include unimplemented TPMI instances.
+Unimplemented instances have version number 0xFF and represent
+\[dq]empty slots\[dq] in the instances table of a TPMI feature.
+For example, there instance 0 may be implemented, instance 1 may be
+unimplemented (version 0xFF), and instance 2 may be implemented.
+By default, unimplemented instances are not shown in the output.
+.TP
 \f[B]\-F\f[R] \f[I][FEATURES]\f[R], \f[B]\-\-features\f[R] \f[I][FEATURES]\f[R]
 Comma\-separated list of TPMI feature names to include in the output.
 Defaults to all supported features.

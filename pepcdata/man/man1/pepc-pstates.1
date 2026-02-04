@@ -153,9 +153,6 @@ By default, display all details for all CPUs.
 Use target CPU specification options to define a subset of CPUs, cores,
 dies, or packages.
 .TP
-\f[B]\-\-yaml\f[R]
-Display output in YAML format.
-.TP
 \f[B]\-m\f[R] \f[I]MECHANISMS\f[R], \f[B]\-\-mechanisms\f[R] \f[I]MECHANISMS\f[R]
 A comma\-separated list of mechanisms for retrieving information.
 Use \[aq]\-\-list\-mechanisms\[aq] to view available mechanisms.
@@ -325,6 +322,9 @@ Reads MSR_HWP_CAPABILITIES (0x771), bits 15:8.
 \f[B]\-\-hwp\-highest\-perf\f[R]
 Retrieve the HWP highest performance level for specified CPUs.
 Reads MSR_HWP_CAPABILITIES (0x771), bits 7:0.
+.TP
+\f[B]\-\-yaml\f[R]
+Display output in YAML format.
 .SS Subcommand \f[I]\[aq]config\[aq]\f[R]
 Configure CPU P\-states for specified CPUs.
 If no parameter is provided, the current value(s) will be displayed.

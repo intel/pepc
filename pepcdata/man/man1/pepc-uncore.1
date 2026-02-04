@@ -153,9 +153,6 @@ By default, display all details for all dies.
 Use target domain specification options to define a subset of CPUs,
 cores, dies, or packages.
 .TP
-\f[B]\-\-yaml\f[R]
-Display output in YAML format.
-.TP
 \f[B]\-m\f[R] \f[I]MECHANISMS\f[R], \f[B]\-\-mechanisms\f[R] \f[I]MECHANISMS\f[R]
 A comma\-separated list of mechanisms for retrieving information.
 Use \[aq]\-\-list\-mechanisms\[aq] to view available mechanisms.
@@ -299,6 +296,13 @@ The \[aq]sysfs\[aq] mechanism reads the
 \[aq]/sys/devices/system/cpu/intel_uncore_frequency/uncore<NUMBER>/elc_high_threshold_enable\[aq].
 The TPMI reads the same debugfs files as \[aq]\-\-max\-freq\[aq].
 .RE
+.TP
+\f[B]\-\-yaml\f[R]
+Display output in YAML format.
+.TP
+\f[B]\-\-dies\-info\f[R]
+Display detailed information about dies and how they map to uncore
+frequency driver sysfs paths and TPMI UFS feature addresses.
 .SS Subcommand \f[I]\[aq]config\[aq]\f[R]
 Configure uncore properties for specified dies.
 If no parameter is provided, the current value(s) will be displayed.
