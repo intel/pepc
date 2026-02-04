@@ -23,20 +23,16 @@ Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
   - [Remote Usage Model](#remote-usage-model)
   - [SUT Emulation](#sut-emulation)
 - [P-states](#p-states)
-  - [Examples](#examples)
 - [C-states](#c-states)
-  - [Examples](#examples)
 - [Uncore](#uncore)
-  - [Uncore Frequency and Dies](#uncore-frequency-and-dies)
-  - [Examples](#examples)
 - [CPU Hotplug](#cpu-hotplug)
-  - [Examples](#examples)
+  - [Examples](#examples-3)
 - [CPU Topology](#cpu-topology)
 - [PM QoS](#pm-qos)
-  - [Examples](#examples)
+  - [Examples](#examples-4)
 - [TPMI](#tpmi)
 - [ASPM](#aspm)
-  - [Examples](#examples)
+  - [Examples](#examples-5)
 
 ## Introduction
 
