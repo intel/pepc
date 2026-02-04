@@ -1354,48 +1354,6 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         # subtract 16 bytes to get the correct offset within the cluster.
         return offset + coffset - _UFS_HEADER_SIZE
 
-    def _read(self,
-              fname: str,
-              addr: str,
-              instance: int,
-              cluster: int,
-              regname: str,
-              offset: int,
-              mdmap: _MDMapType) -> int:
-        """
-        Read a TPMI register value from the TPMI debugfs 'mem_dump' file.
-
-        Args:
-            fname: Name of the TPMI feature.
-            addr: TPMI device PCI address.
-            instance: The instance number of the TPMI feature.
-            cluster: The cluster number.
-            regname: The name of the register to read.
-            offset: The offset of the register within the feature.
-            mdmap: The memory dump map (mdmap) for the TPMI feature.
-
-        Returns:
-            The integer value of the TPMI register.
-        """
-
-        self._validate_instance_offset(fname, addr, instance, regname, offset, mdmap)
-
-        path = self._get_debugfs_feature_path(addr, fname)
-        path = path / "mem_dump"
-
-        if cluster > 0:
-            offset = self._adjust_ufs_offset(addr, instance, cluster, offset)
-
-        with self._pman.open(path, "r") as fobj:
-            fobj.seek(mdmap[instance][offset])
-            val = fobj.read(8)
-
-        _LOG.debug("Read 0x%s: feature '%s', register '%s', offset '%#x', file: %s, file offset %d",
-                   val, fname, regname, offset, path, mdmap[instance][offset])
-
-        what = f"value of register '{regname}' (offset '{offset:#x}') of TPMI feature '{fname}'"
-        return Trivial.str_to_int(val, base=16, what=what)
-
     def _get_bfdict(self, fname: str, regname: str, bfname: str) -> BFDictTypedDict:
         """
         Retrieve the bit field definition for a specified TPMI register.
@@ -1455,6 +1413,99 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         regval ^= regval & bfdict["bitmask"]
         return regval | (bitval << bfdict["bitshift"])
 
+    def _read32(self,
+                fname: str,
+                addr: str,
+                instance: int,
+                cluster: int,
+                regname: str,
+                offset: int,
+                mdmap: _MDMapType) -> int:
+        """
+        Read a 32-bit TPMI register value from the TPMI debugfs 'mem_dump' file.
+
+        Args:
+            fname: Name of the TPMI feature.
+            addr: TPMI device PCI address.
+            instance: The instance number of the TPMI feature.
+            cluster: The cluster number.
+            regname: The name of the register to read.
+            offset: The offset of the register within the feature.
+            mdmap: The memory dump map (mdmap) for the TPMI feature.
+
+        Returns:
+            The integer value of the TPMI register.
+        """
+
+        self._validate_instance_offset(fname, addr, instance, regname, offset, mdmap)
+
+        path = self._get_debugfs_feature_path(addr, fname)
+        path = path / "mem_dump"
+
+        if cluster > 0:
+            offset = self._adjust_ufs_offset(addr, instance, cluster, offset)
+
+        with self._pman.open(path, "r") as fobj:
+            fobj.seek(mdmap[instance][offset])
+            val = fobj.read(8)
+
+        what = f"value of '{fname}' register '{regname}' (offset '{offset:#x}')"
+        return Trivial.str_to_int(val, base=16, what=what)
+
+    def _read64(self,
+                fname: str,
+                addr: str,
+                instance: int,
+                cluster: int,
+                regname: str,
+                offset: int,
+                mdmap: _MDMapType) -> int:
+        """
+        Read a 64-bit TPMI register value from the TPMI debugfs 'mem_dump' file.
+
+        Args:
+            fname: Name of the TPMI feature.
+            addr: TPMI device PCI address.
+            instance: The instance number of the TPMI feature.
+            cluster: The cluster number.
+            regname: The name of the register to read.
+            offset: The offset of the register within the feature.
+            mdmap: The memory dump map (mdmap) for the TPMI feature.
+
+        Returns:
+            The integer value of the TPMI register.
+        """
+
+        self._validate_instance_offset(fname, addr, instance, regname, offset, mdmap)
+
+        path = self._get_debugfs_feature_path(addr, fname)
+        path = path / "mem_dump"
+
+        if cluster > 0:
+            offset = self._adjust_ufs_offset(addr, instance, cluster, offset)
+
+        file_offset0 = mdmap[instance][offset]
+        file_offset1 = mdmap[instance][offset + 4]
+        read_len = file_offset1 - file_offset0 + 8
+
+        if read_len < 16:
+            raise Error(f"BUG: invalid read length '{read_len}' for 64-bit register '{regname}' "
+                        f"(offset '{offset:#x}') of TPMI feature '{fname}'")
+
+        with self._pman.open(path, "r") as fobj:
+            fobj.seek(file_offset0)
+            val_str = fobj.read(read_len)
+
+        # The 'val_str' contains two 32-bit hex values, 8 characters each. The first value at the
+        # beginning, and the second value at the end.
+        what = f"lower 32 bits of '{fname}' register '{regname}' (offset '{offset:#x}')"
+        val_low = Trivial.str_to_int(val_str[:8], base=16, what=what)
+        what = f"upper 32 bits of '{fname}' register '{regname}' (offset '{offset + 4:#x}')"
+        val_high = Trivial.str_to_int(val_str[-8:], base=16, what=what)
+        val = val_low + (val_high << 32)
+
+        return val
+
     def _read_register(self,
                        fname: str,
                        addr: str,
@@ -1485,15 +1536,15 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         width = regdict["width"]
 
         if not mdmap:
-            _mdmap = self._get_mdmap(fname, addr)
-        else:
-            _mdmap = mdmap
+            mdmap = self._get_mdmap(fname, addr)
 
-        # TODO: Make one read operation for 64-bit registers.
-        val = self._read(fname, addr, instance, cluster, regname, offset, _mdmap)
-        if width > 32:
-            val_high = self._read(fname, addr, instance, cluster, regname, offset + 4, _mdmap) << 32
-            val += val_high
+        if width == 32:
+            val = self._read32(fname, addr, instance, cluster, regname, offset, mdmap)
+        elif width == 64:
+            val = self._read64(fname, addr, instance, cluster, regname, offset, mdmap)
+        else:
+            raise Error(f"Unsupported TPMI register width '{width}' for register '{regname}' "
+                        f"in feature '{fname}'{self._pman.hostmsg}")
 
         if bfname:
             val = self._get_bitfield(val, fname, regname, bfname)
