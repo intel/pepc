@@ -17,12 +17,13 @@ import typing
 import random
 import pytest
 from tests import common
-from pepclibs import CPUInfo, CPUOnline
+from pepclibs import CPUInfoVars
 from pepclibs.helperlibs import Trivial
 
 if typing.TYPE_CHECKING:
     from typing import Generator, cast, TypedDict
     from tests.common import CommonTestParamsTypedDict
+    from pepclibs import CPUInfo
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepclibs.CPUInfoTypes import AbsNumsType, RelNumsType, ScopeNameType
 
@@ -111,7 +112,7 @@ def _get_snames_and_nums(cpuinfo: CPUInfo.CPUInfo) -> \
         A tuple containing the scope name and the result of '_get_scope_nums()' for that scope name.
     """
 
-    for sname in CPUInfo.SCOPE_NAMES:
+    for sname in CPUInfoVars.SCOPE_NAMES:
         yield (sname, _get_scope_nums(sname, cpuinfo))
 
 def _get_expected_topology(full_tlines: list[dict[ScopeNameType, int ]],
@@ -197,61 +198,6 @@ def _validate_topo(cpuinfo: CPUInfo.CPUInfo, exp_topo: _ExpectedTopology):
                f"get_compute_dies() returned {dies[pkg]} for package {pkg}, " \
                f"expected {exp_topo['dies'][pkg]}"
 
-def _get_cpuinfos(params: CommonTestParamsTypedDict) -> Generator[CPUInfo.CPUInfo, None, None]:
-    """
-    Yield 'CPUInfo' objects for testing based on the host type.
-
-    This generator yields CPUInfo objects with different CPU online/offline patterns:
-        1. All CPUs online (initial state)
-        2. Odd-numbered CPUs offline
-        3. Even-numbered CPUs offline (excluding CPU 0)
-
-    Args:
-        params: Dictionary containing test parameters.
-
-    Yields:
-        'CPUInfo' objects configured according to the host type for use in tests.
-    """
-
-    pman = params["pman"]
-
-    with CPUInfo.CPUInfo(pman=pman) as cpuinfo:
-        full_tlines = list(cpuinfo.get_topology())
-
-        # Ensure that all CPUs are online.
-        with CPUOnline.CPUOnline(pman=pman, cpuinfo=cpuinfo) as cpuonline:
-            cpuonline.online()
-
-    full_exp_topo = _get_expected_topology(full_tlines, set())
-
-    with CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
-         CPUOnline.CPUOnline(pman=pman, cpuinfo=cpuinfo) as cpuonline:
-        # Pattern 0: All CPUs online
-        yield cpuinfo
-        _validate_topo(cpuinfo, full_exp_topo)
-
-        # Pattern 1: Take odd-numbered CPUs offline.
-        all_cpus = cpuinfo.get_cpus()
-        odd_cpus = [cpu for cpu in all_cpus if cpu % 2 == 1]
-
-        if odd_cpus:
-            cpuonline.offline(cpus=odd_cpus)
-            yield cpuinfo
-            _validate_topo(cpuinfo, _get_expected_topology(full_tlines, set(odd_cpus)))
-
-            cpuonline.online(cpus=odd_cpus)
-            _validate_topo(cpuinfo, full_exp_topo)
-
-        # Pattern 2: Take even-numbered CPUs offline, excluding CPU 0, which can't be offlined.
-        even_cpus = [cpu for cpu in all_cpus if cpu % 2 == 0 and cpu != 0]
-        if even_cpus:
-            cpuonline.offline(cpus=even_cpus)
-            yield cpuinfo
-            _validate_topo(cpuinfo, _get_expected_topology(full_tlines, set(even_cpus)))
-
-            cpuonline.online(cpus=even_cpus)
-            _validate_topo(cpuinfo, full_exp_topo)
-
 def _run_method(name: str,
                 cpuinfo: CPUInfo.CPUInfo,
                 args: list | tuple | None = None,
@@ -330,7 +276,7 @@ def _test_get_good(cpuinfo: CPUInfo.CPUInfo):
         assert ref_nums, \
                f"'get_{sname}s()' is expected to return list of {sname}s, got: '{ref_nums}'"
 
-        for order in CPUInfo.SCOPE_NAMES:
+        for order in CPUInfoVars.SCOPE_NAMES:
             nums = _get_scope_nums(sname, cpuinfo, order=order)
             if sname in ("die", "core"):
                 # For dies and cores, the numbers are relative to the package numbers.
@@ -360,7 +306,7 @@ def test_cpuinfo_get(params: CommonTestParamsTypedDict):
         params: The test parameters.
     """
 
-    for cpuinfo in _get_cpuinfos(params):
+    for cpuinfo in common.get_cpuinfos(params["pman"]):
         _test_get_good(cpuinfo)
 
 def test_cpuinfo_get_count(params: CommonTestParamsTypedDict):
@@ -371,7 +317,7 @@ def test_cpuinfo_get_count(params: CommonTestParamsTypedDict):
         params: The test parameters.
     """
 
-    for cpuinfo in _get_cpuinfos(params):
+    for cpuinfo in common.get_cpuinfos(params["pman"]):
         for sname, nums in _get_snames_and_nums(cpuinfo):
             if sname in ("core", "die"):
                 if typing.TYPE_CHECKING:
@@ -445,7 +391,7 @@ def test_cpuinfo_convert(params: CommonTestParamsTypedDict):
         params: The test parameters.
     """
 
-    for cpuinfo in _get_cpuinfos(params):
+    for cpuinfo in common.get_cpuinfos(params["pman"]):
         _test_convert_good(cpuinfo)
 
 def _test_normalize_good(cpuinfo: CPUInfo.CPUInfo):
@@ -512,7 +458,7 @@ def test_cpuinfo_normalize(params: CommonTestParamsTypedDict):
         params: The test parameters.
     """
 
-    for cpuinfo in _get_cpuinfos(params):
+    for cpuinfo in common.get_cpuinfos(params["pman"]):
         _test_normalize_good(cpuinfo)
 
 def _is_globally_numbered(sname: ScopeNameType) -> bool:
@@ -657,7 +603,7 @@ def test_cpuinfo_div(params: CommonTestParamsTypedDict):
         params: The test parameters.
     """
 
-    for cpuinfo in _get_cpuinfos(params):
+    for cpuinfo in common.get_cpuinfos(params["pman"]):
         _test_cpuinfo_div(cpuinfo)
 
 def test_core_siblings(params: CommonTestParamsTypedDict):
@@ -668,7 +614,7 @@ def test_core_siblings(params: CommonTestParamsTypedDict):
         params: The test parameters.
     """
 
-    for cpuinfo in _get_cpuinfos(params):
+    for cpuinfo in common.get_cpuinfos(params["pman"]):
         topology = cpuinfo.get_topology(order="core")
 
         # We get the CPU siblings count for the first core in the topology list. Depending on how
@@ -720,7 +666,7 @@ def test_delayed_init(params: CommonTestParamsTypedDict):
 
     # pylint: disable=protected-access
 
-    for cpuinfo in _get_cpuinfos(params):
+    for cpuinfo in common.get_cpuinfos(params["pman"]):
         # A newly created 'CPUInfo' object should not have any topology initialized.
         assert "CPU" not in cpuinfo._initialized_snames, "'CPU' scope should not be initialized"
         assert "die" not in cpuinfo._initialized_snames, "'die' scope should not be initialized"

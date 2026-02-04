@@ -15,10 +15,11 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 
 from pathlib import Path
 import typing
+from pepclibs import CPUInfo, CPUOnline
 from pepclibs.helperlibs import ProcessManager, EmulProcessManager
 
 if typing.TYPE_CHECKING:
-    from typing import TypedDict, cast
+    from typing import TypedDict, cast, Generator
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
     class CommonTestParamsTypedDict(TypedDict):
@@ -120,3 +121,71 @@ def build_params(pman: ProcessManagerType) -> CommonTestParamsTypedDict:
     """
 
     return {"hostname": pman.hostname, "pman": pman}
+
+# TODO: Most if not all tests should use this, to stress-test the online/offline handling.
+def get_cpuinfos(pman: ProcessManagerType) -> Generator[CPUInfo.CPUInfo, None, None]:
+    """
+    Yield 'CPUInfo' objects for testing based on the host type.
+
+    Args:
+        pman: Process manager object that defines the target host.
+
+    Yields:
+        'CPUInfo' objects configured according to the host type for use in tests.
+    """
+
+    # Ensure that all CPUs are online.
+    with CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
+         CPUOnline.CPUOnline(pman=pman, cpuinfo=cpuinfo) as cpuonline:
+        cpuonline.online()
+
+        # Pattern 0: All CPUs online
+        yield cpuinfo
+
+        # Pattern 1: Take odd-numbered CPUs offline.
+        all_cpus = cpuinfo.get_cpus()
+        odd_cpus = [cpu for cpu in all_cpus if cpu % 2 == 1]
+
+        if odd_cpus:
+            cpuonline.offline(cpus=odd_cpus)
+            yield cpuinfo
+            cpuonline.online(cpus=odd_cpus)
+
+        # Pattern 2: Take even-numbered CPUs offline, excluding CPU 0, which can't be offlined.
+        even_cpus = [cpu for cpu in all_cpus if cpu % 2 == 0 and cpu != 0]
+        if even_cpus:
+            cpuonline.offline(cpus=even_cpus)
+            yield cpuinfo
+            cpuonline.online(cpus=even_cpus)
+
+        # Pattern 3: Take the second core offline.
+        cores = cpuinfo.get_package_cores(package=0)
+        if len(cores) > 1:
+            cpus = cpuinfo.cores_to_cpus(cores=(cores[1],), packages=(0,))
+            cpuonline.offline(cpus=cpus)
+            yield cpuinfo
+            cpuonline.online(cpus=cpus)
+
+        # Pattern 4: Take the second module offline.
+        modules = cpuinfo.get_modules()
+        if len(modules) > 1:
+            cpus = cpuinfo.modules_to_cpus(modules=(modules[1],))
+            cpuonline.offline(cpus=cpus)
+            yield cpuinfo
+            cpuonline.online(cpus=cpus)
+
+        # Pattern 4: Take the second die offline.
+        dies = cpuinfo.get_package_dies(package=0)
+        if len(dies) > 1:
+            cpus = cpuinfo.dies_to_cpus(dies=(dies[1],), packages=(0,))
+            cpuonline.offline(cpus=cpus)
+            yield cpuinfo
+            cpuonline.online(cpus=cpus)
+
+        # Pattern 5: Take the second package offline.
+        packages = cpuinfo.get_packages()
+        if len(packages) > 1:
+            cpus = cpuinfo.packages_to_cpus(packages=(packages[1],))
+            cpuonline.offline(cpus=cpus)
+            yield cpuinfo
+            cpuonline.online(cpus=cpus)

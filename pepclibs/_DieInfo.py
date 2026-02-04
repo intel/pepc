@@ -674,8 +674,9 @@ class DieInfo(ClassHelpers.SimpleCloseContext):
         # Self-check: verify that non-compute die IDs do not overlap with compute die IDs.
         for package, pkg_dies in self._noncomp_dies.items():
             if package not in self._compute_dies:
-                # All packages must have compute dies.
-                raise Error(f"BUG: Package {package} has non-compute dies but no compute dies")
+                # All CPUs from this package could be offline, so there are no compute dies.
+                _LOG.debug("Package %d has no compute dies, skipping overlap check", package)
+                continue
             compute_dies_set = set(self._compute_dies[package])
             for die in pkg_dies:
                 if die in compute_dies_set:
