@@ -88,7 +88,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             sysfs_io: A '_SysfsIO.SysfsIO' object for sysfs access. Will be created if not provided.
             enable_cache: Enable or disable caching for sysfs access, used only when 'sysfs_io' is
                           not provided. If 'sysfs_io' is provided, this argument is ignored.
-            verify: Enable verification of values writted to sysfs files. The file contents are
+            verify: Enable verification of values written to sysfs files. The file contents are
                     verified by reading the file back and comparing the values.
         """
 
@@ -178,10 +178,15 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
                      "E-cores disabled.\nKernel versions prior to 6.5 have a bug: sysfs CPU "
                      "frequency files have incorrect numbers on systems like this.\nThe fix is in "
                      "Linux kernel commit '0fcfc9e51990246a9813475716746ff5eb98c6aa'.",
-                     {self._pman.hostmsg}, {self._kver})
+                     self._pman.hostmsg, self._kver)
 
     def _get_msr(self) -> MSR.MSR:
-        """Return an instance of 'MSR.MSR'."""
+        """
+        Return an instance of 'MSR.MSR'.
+
+        Returns:
+            An instance of 'MSR.MSR'.
+        """
 
         if not self._msr:
             # pylint: disable-next=import-outside-toplevel
@@ -192,7 +197,12 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
         return self._msr
 
     def _get_hwp_msr_obj(self) -> _HWPMSR.HWPMSR:
-        """Return an instance of 'HWPMSR' class."""
+        """
+        Return an instance of 'HWPMSR' class.
+
+        Returns:
+            An instance of 'HWPMSR' class.
+        """
 
         if not self._hwp_msr_obj:
             # pylint: disable-next=import-outside-toplevel
@@ -400,7 +410,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
                 freq_str = Human.num2si(freq, unit="Hz", decp=4)
                 max_freq_str = Human.num2si(max_freq, unit="Hz", decp=4)
                 raise ErrorBadOrder(f"{name} value of '{freq_str}' is greater than the currently "
-                                    f"configured max frequency of {max_freq_str}")
+                                    f"configured maximum frequency of {max_freq_str}")
         else:
             path = self._get_cpu_freq_sysfs_path("min", cpu)
             min_freq = self._sysfs_io.read_int(path, what=f"min frequency for CPU {cpu}") * 1000
@@ -410,7 +420,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
                 freq_str = Human.num2si(freq, unit="Hz", decp=4)
                 min_freq_str = Human.num2si(min_freq, unit="Hz", decp=4)
                 raise ErrorBadOrder(f"{name} value of '{freq_str}' is less than the currently "
-                                    f"configured min frequency of {min_freq_str}")
+                                    f"configured minimum frequency of {min_freq_str}")
 
     def _set_freq_sysfs(self, freq: int, ftype: _SysfsFileType, cpus: AbsNumsType):
         """
@@ -501,7 +511,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
                                   cpus: AbsNumsType) -> Generator[tuple[int, list[int]],
                                                                   None, None]:
         """
-        Yield available CPU frequencies specified CPUs. Frequencies are read from the
+        Yield available CPU frequencies for specified CPUs. Frequencies are read from the
         'scaling_available_frequencies' sysfs file, which is typically provided by the
         'acpi-cpufreq' driver.
 
@@ -589,20 +599,25 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             ErrorNotSupported: If the base frequency sysfs files do not exist.
         """
 
+        # Try intel_pstate method first, fall back to bios_limit if not supported.
         yielded_cpus = set()
+        err1 = None
+
         try:
             for cpu, val in self._get_base_freq_intel_pstate(cpus):
                 yielded_cpus.add(cpu)
                 yield cpu, val
-        except ErrorNotSupported as err1:
-            left_cpus = []
-            for cpu in cpus:
-                if cpu not in yielded_cpus:
-                    left_cpus.append(cpu)
-            try:
+        except ErrorNotSupported as exc:
+            err1 = exc
+
+        # If some CPUs weren't handled by intel_pstate, try bios_limit for the rest.
+        if err1 is not None:
+            left_cpus = [cpu for cpu in cpus if cpu not in yielded_cpus]
+            if left_cpus:
                 yield from self._get_base_freq_bios_limit(left_cpus)
-            except ErrorNotSupported as err2:
-                raise ErrorNotSupported(f"{err1}\n{err2}") from err2
+            elif not yielded_cpus:
+                # No CPUs were handled successfully, re-raise the original error.
+                raise ErrorNotSupported(str(err1))
 
     def get_driver(self, cpus: AbsNumsType) -> Generator[tuple[int, str], None, None]:
         """
@@ -625,17 +640,17 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             path = self._sysfs_base / "cpufreq" / f"policy{cpu}" / "scaling_driver"
             try:
                 name = self._sysfs_io.read(path, what=what)
-            except ErrorNotSupported:
-                # The 'intel_pstate' driver may be in the 'off' mode, in which case the
-                # 'scaling_driver' sysfs file does not exist. So just check if the 'intel_pstate'
-                # sysfs directory exists.
+            except ErrorNotSupported as err:
+                # The 'intel_pstate' driver may be in 'off' mode, in which case the
+                # 'scaling_driver' sysfs file does not exist. Check if the 'intel_pstate'
+                # sysfs directory exists to confirm the driver is present.
                 if not self._pman.exists(self._sysfs_base / "intel_pstate"):
-                    raise
+                    raise ErrorNotSupported(str(err)) from err
                 name = "intel_pstate"
             else:
-                # The 'intel_pstate' driver calls itself 'intel_pstate' when it is in active mode,
-                # and 'intel_cpufreq' when it is in passive mode. But we always report the
-                # 'intel_pstate' name, because reporting 'intel_cpufreq' is confusing for users.
+                # The 'intel_pstate' driver reports itself as 'intel_pstate' in active mode
+                # and 'intel_cpufreq' in passive mode. We always return 'intel_pstate' to
+                # avoid user confusion.
                 if name == "intel_cpufreq":
                     name = "intel_pstate"
 
@@ -699,31 +714,22 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
                                         f"CPU {cpu}{self._pman.hostmsg}: current driver is "
                                         f"'{driver}'")
 
+            if mode == curmode:
+                continue
+
+            if mode == "off":
+                # Setting 'intel_pstate' driver mode to "off" is only possible in non-HWP (legacy)
+                # mode. Check for this situation and try to provide a helpful error message.
+                hwp_msr_obj = self._get_hwp_msr_obj()
+                _, hwp = next(hwp_msr_obj.get_hwp((cpu,)))
+                if hwp:
+                    raise ErrorNotSupported("'intel_pstate' driver does not support \"off\" mode "
+                                            "when hardware power management (HWP) is enabled")
             try:
                 self._sysfs_io.write(path, mode, what=what)
             except Error as err:
-                if mode != "off":
-                    raise
-
-                if curmode == "off":
-                    # When 'intel_pstate' driver is 'off', writing 'off' again errors out. Ignore
-                    # the error.
-                    continue
-
-                # Setting 'intel_pstate' driver mode to "off" is only possible in non-HWP (legacy)
-                # mode. Check for this situation and try to provide a helpful error message.
-                try:
-                    hwp_msr_obj = self._get_hwp_msr_obj()
-                    _, hwp = next(hwp_msr_obj.get_hwp((cpu,)))
-                except Error as exc:
-                    # Failed to provide additional help, just raise the original exception.
-                    raise type(err)(str(err)) from exc
-
-                if hwp:
-                    raise ErrorNotSupported(f"'intel_pstate' driver does not support \"off\" mode "
-                                            f"when hardware power management (HWP) is enabled:\n"
-                                            f"{err.indent(2)}") from err
-                raise
+                raise Error(f"Failed to set 'intel_pstate' driver mode to '{mode}' for CPU {cpu}"
+                            f"{self._pman.hostmsg}:\n{err.indent(2)}") from err
 
     def get_turbo(self, cpus: AbsNumsType) -> Generator[tuple[int, str], None, None]:
         """
@@ -752,9 +758,14 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
                     disabled = self._sysfs_io.read_int(path_intel_pstate, what=what)
                 except Error as err:
                     try:
-                        _, mode = next(self.get_intel_pstate_mode((cpu,)))
-                    except (StopIteration, Error) as exc:
+                        mode = ""
+                        for _, mode in self.get_intel_pstate_mode((cpu,)):
+                            break
+                    except Error as exc:
                         raise Error(str(err)) from exc
+
+                    if mode == "":
+                        raise Error("BUG: failed to get 'intel_pstate' driver mode") from err
 
                     if mode != "off":
                         raise
@@ -802,9 +813,14 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
                     self._sysfs_io.write(path_intel_pstate, sysfs_val, what=what)
                 except Error as err:
                     try:
-                        _, mode = next(self.get_intel_pstate_mode((cpu,)))
-                    except (StopIteration, Error) as exc:
+                        mode = ""
+                        for _, mode in self.get_intel_pstate_mode((cpu,)):
+                            break
+                    except Error as exc:
                         raise Error(str(err)) from exc
+
+                    if mode == "":
+                        raise Error("BUG: failed to get 'intel_pstate' driver mode") from err
 
                     if mode != "off":
                         raise
@@ -885,6 +901,9 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
         Args:
             governor: Name of the governor to set.
             cpus: CPU numbers to set the governor for.
+
+        Raises:
+            ErrorNotSupported: If the CPU governors sysfs files do not exist.
         """
 
         what = "CPU frequency governor"

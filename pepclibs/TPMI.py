@@ -745,7 +745,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         self._build_fmaps()
 
     def close(self):
-        """Uninitialize the class object."""
+        """Uninitialize the class instance."""
 
         if self._unmount_debugfs:
             with contextlib.suppress(Error):

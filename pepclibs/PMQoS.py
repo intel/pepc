@@ -48,7 +48,7 @@ class PMQoS(_PropsClassBase.PropsClassBase):
         self._init_props_dict(PROPS)
 
     def close(self):
-        """Uninitialize the class object."""
+        """Uninitialize the class instance."""
 
         close_attrs = ("_linux_pmqos_obj",)
         ClassHelpers.close(self, close_attrs=close_attrs)

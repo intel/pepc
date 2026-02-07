@@ -50,7 +50,7 @@ class PerCPUCache:
         self._cache: dict[Hashable, dict[int, Any]] = {}
 
     def close(self):
-        """Uninitialize the class object."""
+        """Uninitialize the class instance."""
 
         ClassHelpers.close(self, unref_attrs=("_cpuinfo",))
 

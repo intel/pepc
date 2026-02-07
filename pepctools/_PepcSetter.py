@@ -62,8 +62,8 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
         Args:
             pman: Process manager object for the target host.
             pobj: The properties object (e.g., 'PStates') to print the properties for.
-            cpuinfo: The 'CPUInfo' object for to the host from which properties are read.
-            pprinter: The property printer object for and printing properties after they are set.
+            cpuinfo: The 'CPUInfo' object for the host from which properties are read.
+            pprinter: The property printer object for printing properties after they are set.
             msr: Optional MSR object for an MSR transaction.
             sysfs_io: Optional SysfsIO object for a file I/O transaction.
         """
@@ -116,10 +116,13 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
         if typing.TYPE_CHECKING:
             nums = cast(AbsNumsType, nums)
 
-        if sname == "CPU":
-            return self._pobj.set_prop_cpus(pname, val, nums, mnames=mnames)
+        if sname == "global":
+            return self._pobj.set_prop_global(pname, val, mnames=mnames)
 
-        return self._pobj.set_prop_packages(pname, val, nums, mnames=mnames)
+        if sname == "package":
+            return self._pobj.set_prop_packages(pname, val, nums, mnames=mnames)
+
+        return self._pobj.set_prop_cpus(pname, val, nums, mnames=mnames)
 
     def _set_prop_sname(self,
                         spinfo: dict[str, PropSetInfoTypedDict],
@@ -135,10 +138,10 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
                     set.
             pname: The name of the property to set.
             optar: The operation target object defining the processor topology entities (CPUs,
-                   cores, etc) to set property for.
+                   cores, etc) to set the property for.
             mnames: Mechanism names allowed for setting the property. An empty sequence (default)
                     means that all mechanisms are allowed.
-            mname_info: A dictionary where the mechanism used for setting the property is stored.
+            mnames_info: A dictionary to store the mechanism used for setting the property.
         """
 
         if pname not in spinfo:
@@ -161,31 +164,32 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
             pobj: The properties object that manages properties and provides methods for setting
                   them.
             pname: The name of the property to set.
-            sname: The scope name where to set the property (e.g., "CPU", "die", package)".
+            sname: The scope where the property should be set (e.g., "CPU", "die", "package").
             val: The value to assign to the property.
             nums: The identifiers (absolute or relative) specifying the targets within the scope.
         """
 
-        if sname == "CPU":
-            if typing.TYPE_CHECKING:
-                nums = cast(AbsNumsType, nums)
-            pobj.set_prop_cpus(pname, val, nums)
-        elif sname == "die":
+        if sname == "die":
             if typing.TYPE_CHECKING:
                 nums = cast(RelNumsType, nums)
-            pobj.set_prop_dies(pname, val, cast(RelNumsType, nums))
-        elif sname == "package":
+            pobj.set_prop_dies(pname, val, nums)
+        else:
             if typing.TYPE_CHECKING:
                 nums = cast(AbsNumsType, nums)
-            pobj.set_prop_packages(pname, val, nums)
-        else:
-            raise Error(f"BUG: Unsupported scope name '{sname}' for property '{pname}'")
+            if sname == "global":
+                pobj.set_prop_global(pname, val)
+            elif sname == "package":
+                pobj.set_prop_packages(pname, val, nums)
+            elif sname == "CPU":
+                pobj.set_prop_cpus(pname, val, nums)
+            else:
+                raise Error(f"BUG: Unsupported scope name '{sname}' for property '{pname}'")
 
     def set_props(self,
                   spinfo: dict[str, PropSetInfoTypedDict],
                   optar: _OpTarget.OpTarget):
         """
-        Set properties specified CPUs, cores, modules, or other targets.
+        Set properties for specified CPUs, cores, modules, or other targets.
 
         Args:
             spinfo: Dictionary mapping property names to their information, such as the value to
@@ -197,7 +201,7 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
         # Remember the mechanism used for every option.
         mnames_info: dict[str, MechanismNameType] = {}
 
-        # '_set_props()' needs to modify the 'spinfo' dictionary, so create a copy.
+        # '_set_prop_sname()' modifies the 'spinfo' dictionary, so create a copy.
         spinfo_copy = spinfo.copy()
 
         # Translate values without unit to the default units.
@@ -257,7 +261,7 @@ class _PStatesUncoreSetter(_PropsSetter):
                         mnames: Sequence[MechanismNameType],
                         mnames_info: dict[str, MechanismNameType]):
         """
-        Set property the property and handle frequency properties ordering.
+        Set the property and handle frequency property ordering.
 
         The arguments are the same as in '_PropsSetter._set_prop_sname()'.
         """
@@ -290,11 +294,11 @@ class _PStatesUncoreSetter(_PropsSetter):
             # changed, attempt to set them in the correct order to satisfy the constraints.
 
             if "min_" in pname:
-                # Trying to set minimum frequency to a value higher than currently configured
+                # Trying to set minimum frequency to a value higher than the currently configured
                 # maximum frequency.
                 other_pname = pname.replace("min_", "max_")
             elif "low_" in pname:
-                # Trying to set ELC low threshold to a value higher than currently configured
+                # Trying to set ELC low threshold to a value higher than the currently configured
                 # high threshold.
                 other_pname = pname.replace("low_", "high_")
             elif "max_" in pname:
@@ -302,7 +306,7 @@ class _PStatesUncoreSetter(_PropsSetter):
             elif "high_" in pname:
                 other_pname = pname.replace("high_", "low_")
             else:
-                raise Error(f"BUG: Unexpected property {pname}") from err
+                raise Error(f"BUG: Unexpected property '{pname}'") from err
 
             if other_pname not in spinfo:
                 raise

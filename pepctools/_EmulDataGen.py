@@ -294,19 +294,19 @@ PStatesTDCollectInfo: _TDCollectTypedDict = {
         "pepc uncore config --min-freq min --max-freq max --cpus all",
         "pepc cstates config --enable all --cpus all"],
     "inlinefiles" : [
-        {"command": r"grep -H --directories=skip '.*' "
-                    r"/sys/devices/system/cpu/cpufreq/policy[0-9]*/*",
+        {"command": r"grep -H --directories=recurse '.*' "
+                    r"/sys/devices/system/cpu/cpufreq",
          "separator": ":",
          "readonly": False,
          "dirname": "pstates",
          "filename": "pstates.txt"},
-        {"command" : r"grep -H --directories=skip '.*' "
-                     r"/sys/devices/system/cpu/intel_pstate/*",
+        {"command" : r"grep -H --directories=recurse '.*' "
+                     r"/sys/devices/system/cpu/intel_pstate",
          "separator": ":",
          "readonly": False,
          "dirname": "pstates",
          "filename": "intel_pstates.txt"},
-        {"command" : r"grep -H --directories=skip '.*' "
+        {"command" : r"grep -H --directories=recurse '.*' "
                      r"/sys/devices/system/cpu/intel_uncore_frequency/*/*",
          "separator": ":",
          "readonly": False,

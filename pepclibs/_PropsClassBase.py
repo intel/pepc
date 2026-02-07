@@ -209,7 +209,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         self._is_intel = CPUModels.is_intel(proc_cpuinfo["vendor"])
 
     def close(self):
-        """Uninitialize the class object."""
+        """Uninitialize the class instance."""
 
         close_attrs = ("_sysfs_io", "_msr", "_cpuinfo", "_pman")
         ClassHelpers.close(self, close_attrs=close_attrs)
@@ -650,7 +650,12 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         return {"package": package, "pname": pname, "val": val, "mname": mname}
 
     def _get_msr(self) -> MSR.MSR:
-        """Return an instance of 'MSR.MSR'."""
+        """
+        Return an instance of 'MSR.MSR'.
+
+        Returns:
+            An instance of 'MSR.MSR'.
+        """
 
         if not self._msr:
             # pylint: disable-next=import-outside-toplevel
@@ -661,7 +666,12 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         return self._msr
 
     def _get_sysfs_io(self) -> _SysfsIO.SysfsIO:
-        """Return an instance of '_SysfsIO.SysfsIO'."""
+        """
+        Return an instance of '_SysfsIO.SysfsIO'.
+
+        Returns:
+            An instance of '_SysfsIO.SysfsIO'.
+        """
 
         if not self._sysfs_io:
             # pylint: disable-next=import-outside-toplevel
@@ -995,13 +1005,13 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         self._validate_pname(pname)
         mnames = self._normalize_mnames(mnames, pname=pname, allow_readonly=True)
 
-        cpuz = self._cpuinfo.normalize_cpus(cpus)
-        if len(cpuz) == 0:
+        _cpus = self._cpuinfo.normalize_cpus(cpus)
+        if len(_cpus) == 0:
             return
 
         self._set_sname(pname)
 
-        yield from self._get_prop_pvinfo_cpus(pname, cpuz, mnames)
+        yield from self._get_prop_pvinfo_cpus(pname, _cpus, mnames)
 
     def get_prop_cpus_int(self,
                           pname: str,
@@ -1599,6 +1609,48 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         return self.get_package_prop(pname, package)["val"] is not None
 
+    def get_prop_global(self,
+                        pname: str,
+                        cpus: AbsNumsType | Literal["all"] = "all",
+                        mnames: Sequence[MechanismNameType] = ()) -> Generator[PVInfoTypedDict,
+                                                                               None, None]:
+        """
+        Read a global property 'pname' and for every CPU yield the property value dictionary.
+
+        Args:
+            pname: Name of the property to read and yield the values for. The property will be read
+                   once, but yielded for every CPU in 'cpus'.
+            cpus: Collection of integer CPU numbers. Special value 'all' means "all CPUs".
+            mnames: Mechanisms to use for property retrieval. The mechanisms will be tried in the
+                    order specified in 'mnames'. By default, all mechanisms supported by the 'pname'
+                    property will be tried.
+
+        Yields:
+            PVInfoTypedDict: A property value dictionary for every CPU in 'cpus'.
+
+        Raises:
+            ErrorNotSupported: If none of the specified mechanisms are supported.
+
+        Notes:
+            Properties of "bool" type use the following values:
+               * "on" if the feature is enabled.
+               * "off" if the feature is disabled.
+        """
+
+        self._validate_pname(pname)
+        mnames = self._normalize_mnames(mnames, pname=pname, allow_readonly=True)
+
+        _cpus = self._cpuinfo.normalize_cpus(cpus)
+        if len(_cpus) == 0:
+            return
+
+        self._set_sname(pname)
+
+        for pvinfo in self._get_prop_pvinfo_cpus(pname, _cpus, mnames):
+            for cpu in _cpus:
+                yield self._construct_cpu_pvinfo(pname, cpu, pvinfo["mname"], pvinfo["val"])
+            break
+
     def _normalize_bool_type_value(self, pname: str, val: PropertyValueType) -> bool:
         """
         Normalize and validate a boolean-type property value.
@@ -2194,6 +2246,40 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         """
 
         return self.set_prop_packages(pname, val, (package,), mnames=mnames)
+
+    def set_prop_global(self,
+                        pname: str,
+                        val: PropertyValueType,
+                        mnames: Sequence[MechanismNameType] = ()) -> MechanismNameType:
+        """
+        Set a global property using specified mechanisms.
+
+        For boolean properties, use True/"on"/"enable" to enable and False/"off"/"disable" to
+        disable.
+
+        Args:
+            pname: Name of the property to set.
+            val: Value to set the property to.
+            mnames: Mechanisms to use for setting the property. The mechanisms will be tried in the
+                    order specified in 'mnames'. By default, all mechanisms supported by the 'pname'
+                    property will be tried.
+
+        Returns:
+            Name of the mechanism used to set the property.
+
+        Raises:
+            ErrorNotSupported: If the property is not supported for the specified mechanisms.
+            ErrorTryAnotherMechanism: If the property is not supported by the specified mechanisms,
+                                      but may be supported by other mechanisms.
+        """
+
+        mnames = self._normalize_mnames(mnames, pname=pname, allow_readonly=False)
+        val = self._normalize_inprop(pname, val)
+
+        self._set_sname(pname)
+
+        cpu = self._cpuinfo.get_cpus()[0]
+        return self._set_prop_cpus_mnames(pname, val, (cpu,), mnames)
 
     def _init_props_dict(self, props: dict[str, PropertyTypedDict]):
         """

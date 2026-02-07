@@ -148,7 +148,7 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
                                     f"control is currently supported")
 
     def close(self):
-        """Uninitialize the class object."""
+        """Uninitialize the class instance."""
 
         close_attrs = ("_pman",)
         unref_attrs = ("_cpuinfo",)

@@ -141,7 +141,7 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
         self._cache = _PerCPUCache.PerCPUCache(self._cpuinfo, enable_cache=self._enable_cache)
 
     def close(self):
-        """Uninitialize the class object."""
+        """Uninitialize the class instance."""
 
         ClassHelpers.close(self, close_attrs=("_cache", "_cpuinfo", "_pman"))
 

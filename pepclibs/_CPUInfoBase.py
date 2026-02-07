@@ -109,7 +109,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
             self.is_hybrid = False
 
     def close(self):
-        """Uninitialize the class object."""
+        """Uninitialize the class instance."""
 
         _LOG.debug("Closing the '%s' class object", self.__class__.__name__)
 

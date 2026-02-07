@@ -170,7 +170,7 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
             self._probe_driver()
 
     def close(self):
-        """Uninitialize the class object."""
+        """Uninitialize the class instance."""
 
         if self._unload_drv:
             assert self._drv is not None

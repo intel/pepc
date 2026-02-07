@@ -140,7 +140,7 @@ class DieInfo(ClassHelpers.SimpleCloseContext):
         self._die_ids_are_domain_ids: bool | None = None
 
     def close(self):
-        """Uninitialize the class object."""
+        """Uninitialize the class instance."""
 
         _LOG.debug("Closing the '%s' class object", self.__class__.__name__)
         ClassHelpers.close(self, close_attrs=("_tpmi", "_pman"), unref_attrs=("_proc_cpuinfo",))

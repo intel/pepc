@@ -63,7 +63,7 @@ class CPUOnline(ClassHelpers.SimpleCloseContext):
         self._sysfs_base = Path("/sys/devices/system/cpu")
 
     def close(self):
-        """Uninitialize the class object."""
+        """Uninitialize the class instance."""
 
         ClassHelpers.close(self, close_attrs=("_cpuinfo", "_pman",))
 

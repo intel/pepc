@@ -56,7 +56,7 @@ def override_cpu_model(cpuinfo: CPUInfo.CPUInfo, user_vfm: str):
                   or a string in the format '[<Vendor>]:<Family>:<Model>'.
 
     Raises:
-        ErrorBadFormat: If the provided 'vfmarg' string is not in the correct format or contains
+        ErrorBadFormat: If the provided 'user_vfm' string is not in the correct format or contains
                         invalid values.
         ErrorNotSupported: If the specified CPU vendor is not supported.
     """
@@ -151,6 +151,9 @@ def get_sname_and_nums(pobj: PropsClassType,
             sname = "CPU"
     else:
         sname = override_sname
+
+    if sname == "global":
+        return "global", optar.get_cpus()
 
     if sname == "package":
         try:

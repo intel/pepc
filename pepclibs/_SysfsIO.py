@@ -97,7 +97,7 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
         self._in_transaction = False
 
     def close(self):
-        """Uninitialize the class object."""
+        """Uninitialize the class instance."""
 
         close_attrs = ("_pman",)
         ClassHelpers.close(self, close_attrs=close_attrs)
@@ -261,7 +261,6 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
             val = str(val)
             if len(val) > 24:
                 val = f"{val[:23]}...snip..."
-            # TODO: Why ErrorNotSupported here, not ErrorNotFound?
             raise ErrorNotSupported(f"Failed to write value '{val}' to{what} sysfs file '{path}'"
                                     f"{self._pman.hostmsg}:\n{err.indent(2)}") from err
 
@@ -390,7 +389,6 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
         except ErrorNotFound as err:
             if what:
                 what = f" {what}"
-            # TODO: Why ErrorNotSupported here, not ErrorNotFound?
             raise ErrorNotSupported(f"Failed to read{what} from '{path}'{self._pman.hostmsg}\n"
                                     f"{err.indent(2)}") from err
 

@@ -712,10 +712,12 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
             else:
                 if typing.TYPE_CHECKING:
                     nums = cast(AbsNumsType, nums)
-                if sname == "CPU":
-                    yield from self._pobj.get_prop_cpus(pname, nums, mnames=mnames)
-                else:
+                if sname == "global":
+                    yield from self._pobj.get_prop_global(pname, nums, mnames=mnames)
+                elif sname == "package":
                     yield from self._pobj.get_prop_packages(pname, nums, mnames=mnames)
+                else:
+                    yield from self._pobj.get_prop_cpus(pname, nums, mnames=mnames)
         except ErrorNotSupported as err:
             _LOG.debug(f"Property '{pname}' is not supported:\n{err.indent(2)}")
             _LOG.debug_print_stacktrace()

@@ -70,7 +70,7 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
         self._tpmi: TPMI.TPMI = cpuinfo.get_dieinfo().get_tpmi()
 
     def close(self):
-        """Uninitialize the class object."""
+        """Uninitialize the class instance."""
 
         unref_attrs = ("_tpmi",)
         ClassHelpers.close(self, unref_attrs=unref_attrs)
