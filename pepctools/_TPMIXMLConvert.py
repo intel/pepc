@@ -255,7 +255,7 @@ class TPMIXMLConvert(ClassHelpers.SimpleCloseContext):
         self._all_feature_names_set: set[str] = set(self._all_feature_names)
 
     def close(self):
-        """Uninitialize the class object."""
+        """Uninitialize the class instance."""
 
     def _get_xml_file_paths(self) -> _XMLFilePathsTypedDict:
         """

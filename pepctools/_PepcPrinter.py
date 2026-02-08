@@ -155,7 +155,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
             raise Error(f"Unsupported format '{self._fmt}', supported formats are: {formats}")
 
     def close(self):
-        """Uninitialize the class object."""
+        """Uninitialize the class instance."""
 
         ClassHelpers.close(self, unref_attrs=("_fobj", "_cpuinfo", "_pobj"))
 

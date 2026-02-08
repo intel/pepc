@@ -353,7 +353,7 @@ class OpTarget(ClassHelpers.SimpleCloseContext):
                 _LOG.debug("Target module sibling CPUs: %s", Trivial.rangify(self.module_sib_cpus))
 
     def close(self):
-        """Uninitialize the class object."""
+        """Uninitialize the class instance."""
 
         close_attrs = ("_cpuinfo", "_pman")
         ClassHelpers.close(self, close_attrs=close_attrs)

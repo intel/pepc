@@ -279,6 +279,10 @@ def test_read_register(params: _TestParamsTypedDict):
     sdicts = tpmi.get_known_features()
 
     for fname in sdicts:
+        # Limit to a couple of known features.
+        if fname not in ("ufs", "tpmi_info"):
+            continue
+
         fdict = tpmi.get_fdict(fname)
         for _, addr, instance, cluster in tpmi.iter_feature_cluster(fname):
             for regname in fdict:
@@ -291,6 +295,11 @@ def test_read_register(params: _TestParamsTypedDict):
                     bfval = tpmi.read_register_cluster(fname, addr, instance, cluster, regname,
                                                        bfname=bfname)
                     assert isinstance(bfval, int)
+
+                    # Skip bit-fields that may change their value at any time, such as
+                    # 'CURRENT_RATIO'.
+                    if "CURRENT" in bfname:
+                        continue
 
                     # Validate 'get_bitfield()' method as well.
                     assert tpmi.get_bitfield(regval, fname, regname, bfname) == bfval

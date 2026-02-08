@@ -76,7 +76,7 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
         self._sysfs_io = sysfs_io
 
     def close(self):
-        """Uninitialize the class object."""
+        """Uninitialize the class instance."""
 
         ClassHelpers.close(self, unref_attrs=("_sysfs_io", "_msr", "_pprinter", "_cpuinfo", "_pobj",
                                               "_pman"))

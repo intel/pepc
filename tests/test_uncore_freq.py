@@ -624,8 +624,8 @@ def _get_cross_mechanisms_uncore_freq_objects(params: _TestParamsTypedDict) -> \
     """
 
     try:
-        with _UncoreFreqSysfs.UncoreFreqSysfs(pman=params["pman"],
-                                              cpuinfo=params["cpuinfo"]) as uncfreq_obj0:
+        with _UncoreFreqSysfs.UncoreFreqSysfs(pman=params["pman"], cpuinfo=params["cpuinfo"],
+                                              enable_cache=False) as uncfreq_obj0:
             with _UncoreFreqTPMI.UncoreFreqTpmi(pman=params["pman"],
                                                 cpuinfo=params["cpuinfo"]) as uncfreq_obj1:
                 yield uncfreq_obj0, uncfreq_obj1
@@ -673,24 +673,34 @@ def test_freq_cross_mechanisms(params: _TestParamsTypedDict):
                 uncfreq_obj0.set_min_freq_dies(min_freq, {package: [die]})
                 uncfreq_obj0.set_max_freq_dies(max_freq, {package: [die]})
 
+                # Verify that the set values are visible using the second mechanism.
+                for _, _, freq in uncfreq_objs[1].get_min_freq_dies({package: [die]}):
+                    assert freq == min_freq, \
+                           f"Set min. uncore frequency to {min_freq} for ({package}, {die}) via " \
+                           f"{uncfreq_obj0.mname} but got {freq} via {uncfreq_obj1.mname}"
+                for _, _, freq in uncfreq_objs[1].get_max_freq_dies({package: [die]}):
+                    assert freq == max_freq, \
+                           f"Set max. uncore frequency to {max_freq} for ({package}, {die}) via " \
+                           f"{uncfreq_obj0.mname} but got {freq} via {uncfreq_obj1.mname}"
+
                 # Set the min uncore frequency to the middle value using the second mechanism.
                 uncfreq_obj1 = uncfreq_objs[1]
                 uncfreq_obj1.set_min_freq_dies(mid_freq, {package: [die]})
 
                 # Read the min uncore frequency using the first mechanism and check it.
-                rd_pkg, rd_die, rd_freq = next(uncfreq_obj0.get_min_freq_dies({package: [die]}))
-                assert rd_pkg == package and rd_die == die, \
-                       f"Expected package {package} and die {die}, but got package {rd_pkg} " \
-                       f"and die {rd_die}"
-                assert rd_freq == mid_freq, \
-                       f"Set min. uncore frequency to {mid_freq} for ({package}, {die}) via " \
-                       f"{uncfreq_obj1.mname} but got {rd_freq} via {uncfreq_obj0.mname}"
+                for rd_pkg, rd_die, rd_freq in uncfreq_obj0.get_min_freq_dies({package: [die]}):
+                    assert rd_pkg == package and rd_die == die, \
+                           f"Expected package {package} and die {die}, but got package {rd_pkg} " \
+                           f"and die {rd_die}"
+                    assert rd_freq == mid_freq, \
+                           f"Set min. uncore frequency to {mid_freq} for ({package}, {die}) via " \
+                           f"{uncfreq_obj1.mname} but got {rd_freq} via {uncfreq_obj0.mname}"
 
                 # Set the min uncore frequency to the original value using the first mechanism.
                 uncfreq_obj0.set_min_freq_dies(min_freq, {package: [die]})
 
                 # Verify that the original value is restored using the second mechanism.
-                _, _, rd_freq = next(uncfreq_obj1.get_min_freq_dies({package: [die]}))
-                assert rd_freq == min_freq, \
-                       f"Set min. uncore frequency to {min_freq} for ({package}, {die}) via " \
-                       f"{uncfreq_obj0.mname} but got {rd_freq} via {uncfreq_obj1.mname}"
+                for rd_pkg, rd_die, rd_freq in uncfreq_obj1.get_min_freq_dies({package: [die]}):
+                    assert rd_freq == min_freq, \
+                           f"Set min. uncore frequency to {min_freq} for ({package}, {die}) via " \
+                           f"{uncfreq_obj0.mname} but got {rd_freq} via {uncfreq_obj1.mname}"
