@@ -70,6 +70,8 @@ def test_get_noncomp_dies(params: _TestParamsTypedDict):
 
     proc_percpuinfo = ProcCpuinfo.get_proc_percpuinfo(pman)
     noncomp_dies = dieinfo.get_noncomp_dies(proc_percpuinfo)
+    if not noncomp_dies:
+        pytest.skip("No non-compute dies found, cannot test 'get_noncomp_dies()'")
 
     # Ensure the ascending package and die numbers.
     assert list(noncomp_dies) == sorted(noncomp_dies), \
