@@ -17,6 +17,9 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
 import contextlib
+
+from git import TYPE_CHECKING
+from pepclibs import PStates
 from pepclibs.helperlibs.Exceptions import ErrorNotSupported
 
 if typing.TYPE_CHECKING:
@@ -74,6 +77,40 @@ def extend_params(params: CommonTestParamsTypedDict,
 
     return params
 
+def _resolve_min_max(pobj: PropsClassType,
+                     cpu: int,
+                     val: PropertyValueType) -> PropertyValueType:
+    """
+    Resolve "min" and "max" property values to the actual minimum and maximum values.
+
+    Args:
+        pobj: The property object.
+        cpu: CPU number to get the property value for if 'val' is "min" or "max".
+        val: The value to resolve. If it is not "min" or "max", it is returned as is.
+
+    Returns:
+        The resolved value if 'val' is "min" or "max", or 'val' itself otherwise.
+    """
+
+    if isinstance(pobj, PStates.PStates) and val == "max":
+        driver = pobj.get_cpu_prop("driver", cpu)["val"]
+        if driver != "intel_pstate":
+            # In case on AMD CPUs with 'amd_pstate' driver, the 'available_frequencies' file is
+            # present and contains the maximum frequency. The 'cpuinfo_max_freq' file is also
+            # present, but the value from that file cannot be written to 'scaling_max_freq' - kernel
+            # returns an error.
+            freqs = pobj.get_cpu_prop("frequencies", cpu)["val"]
+            if TYPE_CHECKING:
+                freqs = cast(list[int], freqs)
+            return freqs[-1]
+
+    if val == "min":
+        return pobj.get_cpu_prop(f"{val}_freq_limit", cpu)["val"]
+    elif val == "max":
+        return pobj.get_cpu_prop(f"{val}_freq_limit", cpu)["val"]
+
+    return val
+
 def _verify_after_set_per_cpu(pobj: PropsClassType,
                               pname: str,
                               val: PropertyValueType,
@@ -94,9 +131,8 @@ def _verify_after_set_per_cpu(pobj: PropsClassType,
     for pvinfo in pobj.get_prop_cpus(pname, cpus=cpus):
         val = orig_val
 
-        if val in ("min", "max") and "freq" in pname:
-            limit_pname = f"{val}_freq_limit"
-            val = pobj.get_cpu_prop(limit_pname, pvinfo["cpu"])["val"]
+        if "freq" in pname and val in ("min", "max"):
+            val = _resolve_min_max(pobj, pvinfo["cpu"], val)
 
         if pvinfo["val"] != val:
             cpus_str = ", ".join([str(cpu) for cpu in cpus])

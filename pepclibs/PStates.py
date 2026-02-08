@@ -902,13 +902,13 @@ class PStates(_PropsClassBase.PropsClassBase):
         err.msg = msg
         raise err
 
-    def _get_numeric_cpu_freq(self,
+    def _resolve_set_cpu_freq(self,
                               freq: str | int,
                               cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
         Convert the user-provided frequency value to a numeric frequency in Hz. If the user-provided
         value is a special string (e.g., "max", "min", "base"), resolve it to the corresponding
-        numeric frequency.
+        numeric frequency which can then be used for setting the CPU frequency.
 
         Args:
             freq: Frequency value or special string (e.g., "max", "min", "base").
@@ -922,7 +922,25 @@ class PStates(_PropsClassBase.PropsClassBase):
         if freq == "min":
             yield from self._get_prop_cpus_mnames_int("min_freq_limit", cpus, ("sysfs",))
         elif freq == "max":
-            yield from self._get_prop_cpus_mnames_int("max_freq_limit", cpus, ("sysfs",))
+            # In case of the 'intel_pstate' driver, the maximum frequency limit value can be used
+            # for setting 'max_freq'. However, in case of 'amd_pstate' driver, the maximum frequency
+            # limit (comes from 'cpuinfo_max_freq') cannot be used for setting 'max_freq' (written
+            # to 'scaling_max_freq') - kernel returns an error. Therefore, in case of a
+            # non-'intel_pstate' driver pick the maximum frequency from the list of available
+            # frequencies.
+            driver = ""
+            try:
+                for cpu, driver in self._get_driver(cpus, "sysfs"):
+                    break
+            except ErrorNotSupported:
+                yield from self._get_prop_cpus_mnames_int("max_freq_limit", cpus, ("sysfs",))
+            else:
+                if driver == "intel_pstate":
+                    yield from self._get_prop_cpus_mnames_int("max_freq_limit", cpus, ("sysfs",))
+                else:
+                    cpufreq_obj = self._get_cpufreq_sysfs_obj()
+                    for cpu, freqs in cpufreq_obj.get_available_frequencies(cpus):
+                        yield cpu, freqs[-1]
         elif freq in {"base", "hfm"}:
             yield from self._get_prop_cpus_mnames_int("base_freq", cpus, ("sysfs",))
         else:
@@ -952,7 +970,7 @@ class PStates(_PropsClassBase.PropsClassBase):
 
         freq2cpus: dict[int, list[int]] = {}
 
-        for (cpu, new_freq) in self._get_numeric_cpu_freq(val, cpus):
+        for (cpu, new_freq) in self._resolve_set_cpu_freq(val, cpus):
             if new_freq not in freq2cpus:
                 freq2cpus[new_freq] = []
             freq2cpus[new_freq].append(cpu)

@@ -278,6 +278,7 @@ def _insert_hybrid(cpuinfo: CPUInfo.CPUInfo,
 
     new_topology: list[dict[str, int | str]] = []
 
+    offline_cpus_set = set(cpuinfo.get_offline_cpus())
     cpu_type_lists = cpuinfo.get_hybrid_cpus()
     cpu_type_sets: dict[HybridCPUKeyType, set[int]] = {}
     for htype, cpus in cpu_type_lists.items():
@@ -291,8 +292,14 @@ def _insert_hybrid(cpuinfo: CPUInfo.CPUInfo,
             else:
                 new_tline["hybrid"] = NA_MARKER
 
+        new_topology.append(new_tline)
+
         cpu = tline["CPU"]
         if cpu == NA_MARKER:
+            continue
+
+        if cpu in offline_cpus_set:
+            new_tline["hybrid"] = OFFLINE_MARKER
             continue
 
         for htype, hcpus_set in cpu_type_sets.items():
@@ -303,8 +310,6 @@ def _insert_hybrid(cpuinfo: CPUInfo.CPUInfo,
             _LOG.warn_once(f"Hybrid CPU '{cpu}' not found in hybrid CPUs information "
                            f"dictionary")
             new_tline["hybrid"] = "Unknown"
-
-        new_topology.append(new_tline)
 
     return new_topology
 
