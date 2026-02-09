@@ -28,6 +28,7 @@ except ImportError:
     # We can live without argcomplete, we only lose tab completions.
     _ARGCOMPLETE_AVAILABLE = False
 
+from pepclibs import ProcCpuinfo, CPUModels
 from pepclibs.msr import EnergyPerfBias, FSBFreq, HWPRequest, HWPRequestPkg
 from pepclibs.msr import PlatformInfo, PowerCtl, PCStateConfigCtl, PMEnable, TurboRatioLimit
 from pepclibs.msr import TurboRatioLimit1, SwLTROvrd, PMLogicalId, HWPCapabilities
@@ -534,6 +535,12 @@ def _collect_msrs(pman: ProcessManagerType, msrinfo: _TDCollectMSRsTypedDict, ba
         basedir: Path to the base output directory.
     """
 
+    proc_cpuinfo = ProcCpuinfo.get_proc_cpuinfo(pman)
+    if proc_cpuinfo["vendor"] != CPUModels.VENDOR_INTEL:
+        _LOG.notice("The SUT CPU vendor is '%s', not Intel, skipping MSR collection",
+                    proc_cpuinfo["vendor_name"])
+        return
+
     lines, _ = pman.run_verify_nojoin("lscpu -p=cpu --")
 
     cpus = []
@@ -566,9 +573,8 @@ def _collect_msrs(pman: ProcessManagerType, msrinfo: _TDCollectMSRsTypedDict, ba
                     line += f"{addr}{msrinfo['separator2']}{value} "
 
                 fobj.write(line + "\n")
-    except OSError as err:
-        errmsg = Error(str(err)).indent(2)
-        raise Error(f"Failed to perform I/O on file '{path}':\n{errmsg}") from err
+    except Error as err:
+        raise Error(f"Failed to perform I/O on file '{path}':\n{err.indent(2)}") from err
 
 def _copy_file(pman: ProcessManagerType, src: Path, outdir: Path):
     """
@@ -689,7 +695,8 @@ def __main():
 
             if "msrs" in tdcinfo:
                 _collect_msrs(pman, tdcinfo["msrs"], datapath)
-                tdcinfo["msrs"]["dirname"] = f"{modname}/{tdcinfo['msrs']['dirname']}"
+                if tdcinfo["msrs"]:
+                    tdcinfo["msrs"]["dirname"] = f"{modname}/{tdcinfo['msrs']['dirname']}"
 
             if tdcinfo:
                 _generate_config_file(modname, tdcinfo, cmdl["outdir"])
