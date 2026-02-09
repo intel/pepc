@@ -356,8 +356,11 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             filepath: The dataset path.
         """
 
-        filepath = filepath / info["dirname"] / info["filename"]
+        dirpath = filepath / info["dirname"]
+        if not dirpath.exists():
+            return
 
+        filepath = dirpath / info["filename"]
         try:
             with open(filepath, "r", encoding="utf-8") as fobj:
                 lines = fobj.readlines()

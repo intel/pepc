@@ -283,7 +283,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         """
 
         for cpu, val, _ in self._get_eppobj().get_vals(cpus=cpus, mnames=(mname,)):
-            yield cpu, val
+            yield cpu, str(val)
 
     def _get_epb(self,
                  cpus: AbsNumsType,
@@ -300,7 +300,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         """
 
         for cpu, val, _ in self._get_epbobj().get_vals(cpus=cpus, mnames=(mname,)):
-            yield cpu, val
+            yield cpu, int(val)
 
     def _get_hwp(self,
                  cpus: AbsNumsType,
@@ -1044,15 +1044,23 @@ class PStates(_PropsClassBase.PropsClassBase):
                    pname, val, mname, self._cpuinfo.cpus_to_str(cpus))
 
         if pname == "epp":
+            if typing.TYPE_CHECKING:
+                _epp_val = cast(bool, val)
+            else:
+                _epp_val = val
             try:
-                self._get_eppobj().set_vals(val, cpus=cpus, mnames=(mname,))
+                self._get_eppobj().set_vals(_epp_val, cpus=cpus, mnames=(mname,))
             except Error as err:
                 msg = self._handle_epp_set_exception(str(val), mname, err)
                 if msg is None:
                     raise
                 raise type(err)(msg) from err
         elif pname == "epb":
-            self._get_epbobj().set_vals(val, cpus=cpus, mnames=(mname,))
+            if typing.TYPE_CHECKING:
+                _epb_val = cast(bool, val)
+            else:
+                _epb_val = val
+            self._get_epbobj().set_vals(_epb_val, cpus=cpus, mnames=(mname,))
         elif pname == "turbo":
             if typing.TYPE_CHECKING:
                 _turbo_val = cast(bool, val)

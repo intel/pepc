@@ -16,7 +16,7 @@ import typing
 from pathlib import Path
 from pepclibs.helperlibs import ClassHelpers, Trivial
 from pepclibs.helperlibs import Logging, LocalProcessManager, KernelModule, FSHelpers
-from pepclibs.helperlibs.Exceptions import Error
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorPermissionDenied
 
 if typing.TYPE_CHECKING:
     from typing import Literal, Generator, Sequence
@@ -53,7 +53,14 @@ class SimpleMSR(ClassHelpers.SimpleCloseContext):
 
         self._msr_drv: KernelModule.KernelModule | None = None
 
-        self._ensure_dev_msr()
+        try:
+            self._ensure_dev_msr()
+        except ErrorPermissionDenied as err:
+            raise ErrorPermissionDenied(f"No permissions to access MSRs{self._pman.hostmsg}:\n"
+                                        f"{err.indent(2)}") from err
+        except Error as err:
+            raise ErrorNotSupported(f"MSR access is not supported{self._pman.hostmsg}:\n"
+                                    f"{err.indent(2)}") from err
 
     def close(self):
         """Uninitialize the class object."""

@@ -23,7 +23,7 @@ if typing.TYPE_CHECKING:
     from tests.common import CommonTestParamsTypedDict
     from pepclibs.CPUInfoTypes import ScopeNameType
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
-    from pepclibs.helperlibs.Exceptions import ExceptionType
+    from pepclibs.helperlibs.Exceptions import ExceptionTypeType
     from pepclibs.PropsTypes import PropsClassType
 
     class PropsCmdlTestParamsTypedDict(CommonTestParamsTypedDict, total=False):
@@ -87,8 +87,8 @@ def extend_params(params: CommonTestParamsTypedDict,
 
 def run_pepc(arguments: str,
              pman: ProcessManagerType,
-             exp_exc: ExceptionType | None = None,
-             ignore: Mapping[ExceptionType, str] | None = None):
+             exp_exc: ExceptionTypeType | None = None,
+             ignore: Mapping[ExceptionTypeType, str] | None = None):
     """
     Execute the 'pepc' command and validate its outcome.
 

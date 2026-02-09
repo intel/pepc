@@ -83,6 +83,9 @@ def _get_set_and_verify_data(params: PropsTestParamsTypedDict,
     yield "epp", "1"
     yield "epp", "254"
 
+    yield "epp", "balance_performance"
+    yield "epp", "performance"
+
     yield "epb", 0
     yield "epb", 15
 

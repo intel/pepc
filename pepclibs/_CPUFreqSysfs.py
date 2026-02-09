@@ -182,7 +182,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
     def _get_msr(self) -> MSR.MSR:
         """
-        Return an instance of 'MSR.MSR'.
+        Get an 'MSR' object.
 
         Returns:
             An instance of 'MSR.MSR'.
@@ -198,10 +198,10 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
     def _get_hwp_msr_obj(self) -> _HWPMSR.HWPMSR:
         """
-        Return an instance of 'HWPMSR' class.
+        Get an 'HWPMSR' object.
 
         Returns:
-            An instance of 'HWPMSR' class.
+            An instance of '_HWPMSR.HWPMSR'.
         """
 
         if not self._hwp_msr_obj:

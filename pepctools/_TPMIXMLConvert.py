@@ -426,6 +426,17 @@ class TPMIXMLConvert(ClassHelpers.SimpleCloseContext):
                              regname: str,
                              instpath: Path) -> int | None:
         """
+        Get and validate the 'Data' attribute of an 'Extension' XML element with a specific 'Key'.
+
+        Args:
+            xmldata: The 'Extension' XML element.
+            keyname: The expected value of the 'Key' attribute.
+            regname: The name of the TPMI register being processed (for logging purposes).
+            instpath: The path to the TPMI instance XML file being processed (for logging purposes).
+
+        Returns:
+            The integer value of the 'Data' attribute if it is valid, or None if the 'Data'
+            attribute is missing or empty.
         """
 
         if "Data" not in xmldata.attrib:

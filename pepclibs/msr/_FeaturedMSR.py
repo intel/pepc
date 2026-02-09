@@ -220,8 +220,9 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
 
         proc_cpuinfo = self._cpuinfo.get_proc_cpuinfo()
         if proc_cpuinfo["vendor_name"] != self.vendor_name:
-            raise ErrorNotSupported(f"Unsupported MSR {self.regaddr:#x} ({self.regname}), it is "
-                                    f"only available on {self.vendor_name} CPUs")
+            raise ErrorNotSupported(f"CPU '{self._cpuinfo.cpudescr}' does not support MSR "
+                                    f"{self.regaddr:#x} ({self.regname}), which is only supported "
+                                    f"by '{self.vendor_name}' CPUs")
 
         if msr:
             self._msr = msr
@@ -579,6 +580,17 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
             return val
 
         raise Error(f"Failed to read feature '{fname}' from CPU {cpu}")
+
+    def read_cpu_feature_int(self, fname: str, cpu: int) -> int:
+        """
+        Same as 'read_cpu_feature()', but ensures that the returned value is of type 'int'.
+        """
+
+        finfo = self._features[fname]
+        if finfo["type"] != "int":
+            raise Error(f"BUG: Feature '{fname}' is not of integer type")
+
+        return int(self.read_cpu_feature(fname, cpu))
 
     def is_feature_enabled(self, fname: str, cpus: Sequence[int] | Literal["all"] = "all") -> \
                                                             Generator[tuple[int, bool], None, None]:

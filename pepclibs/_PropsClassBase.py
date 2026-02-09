@@ -719,7 +719,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         what = Human.uncapitalize(self._props[pname]["name"])
         msg = f"Cannot {action} {what} {mnames_str} for {nums_str}{errmsgs}"
         if exceptions:
-            raise ErrorNotSupported(msg)
+            raise ErrorNotSupported(msg) from exceptions[0]
         _LOG.debug(msg)
 
     def _prop_not_supported_cpus(self,

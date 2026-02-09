@@ -5,6 +5,7 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
+ - pepc pstates: Support --epp option on AMD CPUs.
 ### Added
 ### Removed
 ### Changed

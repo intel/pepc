@@ -20,7 +20,7 @@ from pepclibs.helperlibs.Exceptions import Error, ErrorPermissionDenied
 
 if typing.TYPE_CHECKING:
     from typing import Generator
-    from pepclibs.helperlibs.Exceptions import ExceptionType
+    from pepclibs.helperlibs.Exceptions import ExceptionTypeType
     from tests.common import CommonTestParamsTypedDict
 
 @pytest.fixture(name="params", scope="module")
@@ -75,7 +75,7 @@ def test_aspm_config(params):
         "--policy powersave",
         "--policy powersupersave"]
 
-    ignore: dict[ExceptionType, str] | None = None
+    ignore: dict[ExceptionTypeType, str] | None = None
     pman = params["pman"]
 
     if pman.is_remote:

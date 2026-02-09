@@ -14,7 +14,8 @@
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
-from typing import cast
+import contextlib
+
 import pytest
 from tests import common, props_cmdl_common
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
@@ -23,15 +24,16 @@ from pepclibs import CPUInfo, PStates
 from pepclibs.PStates import ErrorTryAnotherMechanism
 
 if typing.TYPE_CHECKING:
+    from typing import cast
     from typing import Final, Generator
     from tests.props_cmdl_common import PropsCmdlTestParamsTypedDict
-    from pepclibs.helperlibs.Exceptions import ExceptionType
+    from pepclibs.helperlibs.Exceptions import ExceptionTypeType
     from pepclibs.CPUInfoTypes import ScopeNameType
 
 # If the '--mechanism' option is present, the command may fail because the mechanism may not be
 # supported. Ignore these failures.
-_IGNORE: Final[dict[ExceptionType, str]] = {ErrorNotSupported: "--mechanism",
-                                            ErrorTryAnotherMechanism: "--mechanism"}
+_IGNORE: Final[dict[ExceptionTypeType, str]] = {ErrorNotSupported: "",
+                                                ErrorTryAnotherMechanism: "--mechanism"}
 
 @pytest.fixture(name="params", scope="module")
 def get_params(hostspec: str, username: str) -> Generator[PropsCmdlTestParamsTypedDict, None, None]:
@@ -105,8 +107,7 @@ def test_pstates_info(params: PropsCmdlTestParamsTypedDict):
     # Cover '--list-mechanisms'.
     props_cmdl_common.run_pepc("pstates info --list-mechanisms", pman)
 
-def _get_good_config_freq_opts(params: PropsCmdlTestParamsTypedDict,
-                               sname: ScopeNameType = "CPU") -> Generator[str, None, None]:
+def _get_good_config_freq_opts(sname: ScopeNameType = "CPU") -> Generator[str, None, None]:
     """
     Yield valid frequency configuration options for testing the 'pepc pstates config' command.
 
@@ -118,24 +119,19 @@ def _get_good_config_freq_opts(params: PropsCmdlTestParamsTypedDict,
         Command-line option strings suitable for the specified scope.
     """
 
-    cpu = 0
-    pobj = params["pobj"]
-
     if sname == "CPU":
-        if pobj.prop_is_supported_cpu("min_freq", cpu):
-            yield from ["--min-freq",
-                        "--max-freq",
-                        "--min-freq --max-freq",
-                        "--min-freq min",
-                        "--max-freq min",
-                        "--max-freq max",
-                        "--min-freq min --max-freq max",
-                        "--max-freq max --min-freq min"]
-            if pobj.prop_is_supported_cpu("base_freq", cpu):
-                yield from ["--max-freq base",
-                            "--max-freq hfm",
-                            "--min-freq base",
-                            "--min-freq hfm"]
+        yield from ["--min-freq",
+                    "--max-freq",
+                    "--min-freq --max-freq",
+                    "--min-freq min",
+                    "--max-freq min",
+                    "--max-freq max",
+                    "--min-freq min --max-freq max",
+                    "--max-freq max --min-freq min",
+                    "--max-freq base",
+                    "--max-freq hfm",
+                    "--min-freq base",
+                    "--min-freq hfm"]
     else:
         assert False, f"BUG: Bad scope name {sname}"
 
@@ -149,7 +145,7 @@ def test_pstates_config_freq_good(params: PropsCmdlTestParamsTypedDict):
 
     pman = params["pman"]
 
-    for opt in _get_good_config_freq_opts(params, sname="CPU"):
+    for opt in _get_good_config_freq_opts(sname="CPU"):
         for mopt in props_cmdl_common.get_mechanism_opts(params, allow_readonly=True):
             cmd = f"pstates config {opt} {mopt}"
             props_cmdl_common.run_pepc(cmd, pman, ignore=_IGNORE)
@@ -184,7 +180,7 @@ def test_pstates_config_freq_bad(params: PropsCmdlTestParamsTypedDict):
     for opt in _get_bad_config_freq_opts():
         props_cmdl_common.run_pepc(f"pstates config {opt}", pman, exp_exc=Error)
 
-    for opt in _get_good_config_freq_opts(params):
+    for opt in _get_good_config_freq_opts():
         for cpu_opt in props_cmdl_common.get_bad_optarget_opts(params):
             props_cmdl_common.run_pepc(f"pstates config {opt} {cpu_opt}", pman, exp_exc=Error)
 
@@ -205,41 +201,37 @@ def _get_good_config_non_freq_opts(params: PropsCmdlTestParamsTypedDict,
     pobj = params["pobj"]
 
     if sname == "global":
-        if pobj.prop_is_supported_cpu("intel_pstate_mode", cpu) and \
-           pobj.prop_is_supported_cpu("hwp", cpu):
-            # The "off" mode is not supported when HWP is enabled.
+        with contextlib.suppress(ErrorNotSupported):
             if pobj.get_cpu_prop("hwp", cpu)["val"] == "off":
+                # The "off" mode is not supported when HWP is enabled.
                 yield "--intel-pstate-mode off"
 
-            # Note, the last mode is intentionally something else but "off", because in "off" mode
-            # many options do not work. For example, switching turbo on/off does not work in the
-            # "off" mode.
-            yield from ["--intel-pstate-mode",
-                        "--intel-pstate-mode passive"]
+        # Note, the last mode is intentionally something else but "off", because in "off" mode
+        # many options do not work. For example, switching turbo on/off does not work in the
+        # "off" mode.
+        yield from ["--intel-pstate-mode",
+                    "--intel-pstate-mode passive",
+                    "--turbo",
+                    "--turbo enable",
+                    "--turbo OFF"]
 
-        if pobj.prop_is_supported_cpu("turbo", cpu):
-            yield from ["--turbo",
-                        "--turbo enable",
-                        "--turbo OFF"]
-
-    if pobj.prop_is_supported_cpu("governor", cpu) and \
-       pobj.prop_is_supported_cpu("governors", cpu):
         yield "--governor"
+
+    with contextlib.suppress(ErrorNotSupported):
         governors = pobj.get_cpu_prop("governors", cpu)["val"]
-        for governor in cast(list[str], governors):
+        if typing.TYPE_CHECKING:
+            assert isinstance(governors, list)
+        for governor in governors:
             yield f"--governor {governor}"
 
-    if pobj.prop_is_supported_cpu("epp", cpu):
-        yield from ["--epp",
-                    "--epp 0",
-                    "--epp 128",
-                    "--epp performance"]
-
-    if pobj.prop_is_supported_cpu("epb", cpu):
-        yield from ["--epb",
-                    "--epb 0",
-                    "--epb 15",
-                    "--epb performance"]
+    yield from ["--epp",
+                "--epp 0",
+                "--epp 128",
+                "--epp performance",
+                "--epb",
+                "--epb 0",
+                "--epb 15",
+                "--epb performance"]
 
 def test_pstates_config_non_freq_good(params: PropsCmdlTestParamsTypedDict):
     """
@@ -262,8 +254,7 @@ def test_pstates_config_non_freq_good(params: PropsCmdlTestParamsTypedDict):
             cmd = f"pstates config {opt} {cpu_opt}"
             props_cmdl_common.run_pepc(cmd, pman, ignore=_IGNORE)
 
-def _get_bad_config_non_freq_opts(params: PropsCmdlTestParamsTypedDict,
-                                  sname: ScopeNameType = "package") -> Generator[str, None, None]:
+def _get_bad_config_non_freq_opts(sname: ScopeNameType = "package") -> Generator[str, None, None]:
     """
     Generate invalid non-frequency configuration options for 'pepc pstates config' command.
 
@@ -275,25 +266,13 @@ def _get_bad_config_non_freq_opts(params: PropsCmdlTestParamsTypedDict,
         Invalid command-line option for 'pepc pstates config'.
     """
 
-    cpu = 0
-    pobj = params["pobj"]
-
     if sname == "global":
-        if pobj.prop_is_supported_cpu("intel_pstate_mode", cpu):
-            yield "--intel-pstate-mode Dagny"
-
-        if pobj.prop_is_supported_cpu("turbo", cpu):
-            yield "--turbo 1"
-
-    if pobj.prop_is_supported_cpu("governor", cpu):
-        yield "--governor savepower"
-
-    if pobj.prop_is_supported_cpu("epp", cpu):
-        yield from ["--epp 256",
-                    "--epp green_tree"]
-
-    if pobj.prop_is_supported_cpu("epb", cpu):
-        yield from ["--epb 16",
+        yield from ["--intel-pstate-mode Dagny",
+                    "--turbo 1",
+                    "--governor savepower",
+                    "--epp 256",
+                    "--epp green_tree",
+                    "--epb 16",
                     "--epb green_tree"]
 
 def test_pstates_config_non_freq_bad(params: PropsCmdlTestParamsTypedDict):
@@ -306,10 +285,10 @@ def test_pstates_config_non_freq_bad(params: PropsCmdlTestParamsTypedDict):
 
     pman = params["pman"]
 
-    for opt in _get_bad_config_non_freq_opts(params, sname="package"):
+    for opt in _get_bad_config_non_freq_opts(sname="package"):
         props_cmdl_common.run_pepc(f"pstates config {opt}", pman, exp_exc=Error)
 
-    for opt in _get_bad_config_non_freq_opts(params, sname="global"):
+    for opt in _get_bad_config_non_freq_opts(sname="global"):
         props_cmdl_common.run_pepc(f"pstates config {opt}", pman, exp_exc=Error)
 
 def _set_freq_pairs(params: PropsCmdlTestParamsTypedDict, min_pname: str, max_pname: str):
@@ -331,7 +310,9 @@ def _set_freq_pairs(params: PropsCmdlTestParamsTypedDict, min_pname: str, max_pn
     except ErrorNotSupported:
         return
 
-    frequencies = cast(list[int], pvinfo["val"])
+    frequencies = pvinfo["val"]
+    if typing.TYPE_CHECKING:
+        assert isinstance(frequencies, list)
     if len(frequencies) < 2:
         return
 

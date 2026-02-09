@@ -23,7 +23,7 @@ from pepclibs.CStates import ErrorTryAnotherMechanism
 if typing.TYPE_CHECKING:
     from typing import Final, Generator, cast
     from tests.props_cmdl_common import PropsCmdlTestParamsTypedDict
-    from pepclibs.helperlibs.Exceptions import ExceptionType
+    from pepclibs.helperlibs.Exceptions import ExceptionTypeType
     from pepclibs.CPUInfoTypes import ScopeNameType
 
     class TestParamsTypedDict(PropsCmdlTestParamsTypedDict, total=False):
@@ -39,7 +39,7 @@ if typing.TYPE_CHECKING:
 
 # If the '--mechanism' option is present, the command may fail because the mechanism may not be
 # supported. Ignore these failures.
-_IGNORE: Final[dict[ExceptionType, str]] = {ErrorNotSupported: "--mechanism",
+_IGNORE: Final[dict[ExceptionTypeType, str]] = {ErrorNotSupported: "--mechanism",
                                             ErrorTryAnotherMechanism: "--mechanism"}
 
 @pytest.fixture(name="params", scope="module")

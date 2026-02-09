@@ -24,10 +24,10 @@ from pepclibs.Uncore import ErrorTryAnotherMechanism
 if typing.TYPE_CHECKING:
     from typing import Final, Generator
     from tests.props_cmdl_common import PropsCmdlTestParamsTypedDict
-    from pepclibs.helperlibs.Exceptions import ExceptionType
+    from pepclibs.helperlibs.Exceptions import ExceptionTypeType
     from pepclibs.CPUInfoTypes import ScopeNameType
 
-_IGNORE: Final[dict[ExceptionType, str]] = {ErrorNotSupported: "",
+_IGNORE: Final[dict[ExceptionTypeType, str]] = {ErrorNotSupported: "",
                                             ErrorTryAnotherMechanism: ""}
 
 @pytest.fixture(name="params", scope="module")

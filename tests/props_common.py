@@ -18,7 +18,6 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 import typing
 import contextlib
 
-from git import TYPE_CHECKING
 from pepclibs import PStates
 from pepclibs.helperlibs.Exceptions import ErrorNotSupported
 
@@ -100,13 +99,13 @@ def _resolve_min_max(pobj: PropsClassType,
             # present, but the value from that file cannot be written to 'scaling_max_freq' - kernel
             # returns an error.
             freqs = pobj.get_cpu_prop("frequencies", cpu)["val"]
-            if TYPE_CHECKING:
+            if typing.TYPE_CHECKING:
                 freqs = cast(list[int], freqs)
             return freqs[-1]
 
     if val == "min":
         return pobj.get_cpu_prop(f"{val}_freq_limit", cpu)["val"]
-    elif val == "max":
+    if val == "max":
         return pobj.get_cpu_prop(f"{val}_freq_limit", cpu)["val"]
 
     return val

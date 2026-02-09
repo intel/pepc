@@ -98,7 +98,7 @@ class ErrorNotSupported(Error):
     """Feature/option/etc is not supported."""
 
 class ErrorPermissionDenied(Error):
-    """Something was not found."""
+    """Permission denied."""
 
 class ErrorBadFormat(Error):
     """Bad format of something, e.g., file contents."""
@@ -167,7 +167,8 @@ class ErrorBadOrder(Error):
     """
 
 if typing.TYPE_CHECKING:
-    ExceptionType = Union[type[Error], type[ErrorTimeOut], type[ErrorExists], type[ErrorNotFound],
-                        type[ErrorNotSupported], type[ErrorPermissionDenied], type[ErrorBadFormat],
-                        type[ErrorVerifyFailed], type[ErrorConnect], type[ErrorOutOfRange],
-                        type[ErrorBadOrder]]
+    ExceptionTypeType = Union[type[Error], type[ErrorTimeOut], type[ErrorExists],
+                              type[ErrorNotFound], type[ErrorNotSupported],
+                              type[ErrorPermissionDenied], type[ErrorBadFormat],
+                              type[ErrorVerifyFailed], type[ErrorConnect],
+                              type[ErrorOutOfRange], type[ErrorBadOrder]]

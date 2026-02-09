@@ -189,9 +189,10 @@ Use target CPU specification options to define a subset of CPUs, cores, dies, or
 
 **--epp**
    Retrieve EPP (Energy Performance Preference) using 'sysfs' (preferred) or 'msr' mechanisms. EPP
-   is a hint to the CPU on energy efficiency vs performance. The value ranges from 0-255 (maximum
-   energy efficiency to maximum performance) or can be a policy name (supported by 'sysfs' only).
-   The 'sysfs' mechanism reads
+   is a hint to the CPU on energy efficiency versus performance. On Intel CPUs, both 'msr' and
+   'sysfs' mechanisms are supported with values ranging from 0-255 (maximum energy efficiency to
+   maximum performance) or policy names ('sysfs' mechanism only). On AMD CPUs, only 'sysfs' is
+   supported with policy names only. The 'sysfs' mechanism reads
    '/sys/devices/system/cpu/cpufreq/policy<NUMBER>/energy_performance_preference', while the 'msr'
    mechanism reads MSR_HWP_REQUEST (0x774), bits 31:24.
 

@@ -652,8 +652,10 @@ def test_freq_cross_mechanisms(params: _TestParamsTypedDict):
         # Run the test for every package and die.
         for package, dies in all_dies.items():
             for die in dies:
-                # Get the min and max frequency limits using the first mechanism.
                 uncfreq_obj0 = uncfreq_objs[0]
+                uncfreq_obj1 = uncfreq_objs[1]
+
+                # Get the min and max frequency limits using the first mechanism.
                 try:
                     for _, _, min_freq in uncfreq_obj0.get_min_freq_limit_dies({package: [die]}):
                         pass
@@ -684,7 +686,6 @@ def test_freq_cross_mechanisms(params: _TestParamsTypedDict):
                            f"{uncfreq_obj0.mname} but got {freq} via {uncfreq_obj1.mname}"
 
                 # Set the min uncore frequency to the middle value using the second mechanism.
-                uncfreq_obj1 = uncfreq_objs[1]
                 uncfreq_obj1.set_min_freq_dies(mid_freq, {package: [die]})
 
                 # Read the min uncore frequency using the first mechanism and check it.
