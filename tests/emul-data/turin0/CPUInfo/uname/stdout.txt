@@ -1,0 +1,1 @@
+Linux turin0 6.18.4-100.fc42.x86_64 #1 SMP PREEMPT_DYNAMIC Thu Jan  8 18:43:17 UTC 2026 x86_64 GNU/Linux

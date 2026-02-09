@@ -1,0 +1,1 @@
+BOOT_IMAGE=http://powerlab/pxelinux/node/turin0/fedora42/kernel initrd=http://powerlab/pxelinux/node/turin0/fedora42/initramfs.img root=UUID=88f00a6c-8461-4c94-9a9c-cf9ab37eb58f ro console=ttyS0,115200 msr.allow_writes=on
