@@ -35,7 +35,7 @@ from pathlib import Path
 
 from pepclibs import CPUModels
 from pepclibs.helperlibs import Logging, ClassHelpers, LocalProcessManager, Trivial
-from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorPermissionDenied
 
 if typing.TYPE_CHECKING:
     from typing import TypedDict, Literal, Final
@@ -634,14 +634,16 @@ class DieInfo(ClassHelpers.SimpleCloseContext):
 
         try:
             self.get_tpmi()
-        except ErrorNotSupported:
-            _LOG.debug("TPMI is not supported, using basic compute die information")
+        except ErrorNotSupported as err:
+            _LOG.debug("Skip building compute die information via TPMI:\n%s", err.indent(2))
             self._compute_dies_info = self._build_compute_dies_info_no_tpmi()
-            return
-
-        _LOG.debug("Building compute dies info via TPMI")
-        if not self._compute_dies_info:
-            self._init_die_info_tpmi()
+        except ErrorPermissionDenied as err:
+            _LOG.debug("Skip building compute die information via TPMI:\n%s", err.indent(2))
+            self._compute_dies_info = self._build_compute_dies_info_no_tpmi()
+        else:
+            _LOG.debug("Building compute dies info via TPMI")
+            if not self._compute_dies_info:
+                self._init_die_info_tpmi()
 
     def _discover_noncomp_dies(self, proc_percpuinfo: ProcCpuinfoPerCPUTypedDict):
         """
