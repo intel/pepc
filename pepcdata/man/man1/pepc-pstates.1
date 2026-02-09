@@ -228,10 +228,11 @@ The setting has global scope.
 \f[B]\-\-epp\f[R]
 Retrieve EPP (Energy Performance Preference) using \[aq]sysfs\[aq]
 (preferred) or \[aq]msr\[aq] mechanisms.
-EPP is a hint to the CPU on energy efficiency vs performance.
-The value ranges from 0\-255 (maximum energy efficiency to maximum
-performance) or can be a policy name (supported by \[aq]sysfs\[aq]
-only).
+EPP is a hint to the CPU on energy efficiency versus performance.
+On Intel CPUs, both \[aq]msr\[aq] and \[aq]sysfs\[aq] mechanisms are
+supported with values ranging from 0\-255 (maximum energy efficiency to
+maximum performance) or policy names (\[aq]sysfs\[aq] mechanism only).
+On AMD CPUs, only \[aq]sysfs\[aq] is supported with policy names only.
 The \[aq]sysfs\[aq] mechanism reads
 \[aq]/sys/devices/system/cpu/cpufreq/policy<NUMBER>/energy_performance_preference\[aq],
 while the \[aq]msr\[aq] mechanism reads MSR_HWP_REQUEST (0x774), bits
