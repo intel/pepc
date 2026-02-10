@@ -42,7 +42,8 @@ This article explores TSC, APERF, and MPERF - three important counters in Intel 
 clarify their operation and practical applications in Linux power management and performance tools.
 
 The following counters are covered:
-- TSC (Time Stamp Counter), accessible via the 'RDTSC' instruction
+
+- TSC (Time Stamp Counter), accessible via the RDTSC instruction
 - APERF: MSR 0xe8 (IA32_MSR_APERF)
 - MPERF: MSR 0xe7 (IA32_MSR_MPERF)
 
@@ -82,7 +83,7 @@ value. The actual bus clock frequency may vary slightly due to spread spectrum t
 
 ## TSC
 
-The TSC is a 64-bit counter accessible via the 'RDTSC' instruction. It provides a monotonically
+The TSC is a 64-bit counter accessible via the RDTSC instruction. It provides a monotonically
 increasing timestamp that software uses for performance measurement and timekeeping. TSC effectively
 measures elapsed time at a constant frequency.
 
@@ -122,26 +123,27 @@ for TSC.
 
 The Intel Software Developer's Manual provides the following formula for TSC:
 
-```
+```text
 TSC = P × ART + K
 ```
 
 Where:
+
 - P: Ratio between TSC rate and crystal clock rate
-- ART: Always Running Timer value  
+- ART: Always Running Timer value
 - K: Combined offset: IA32_TSC_ADJUST + VMX TSC offset
 
 ### TSC Frequency
 
 Many modern Intel platforms expose the TSC frequency through CPUID.15H:
 
-```
+```text
 TSC_frequency = ECX × (EBX/EAX)
 ```
 
 If CPUID.15H is not supported, TSC frequency can be measured using HPET as a reference:
 
-```
+```text
 TSC_frequency = (TSC_end - TSC_start) / time_elapsed.
 ```
 
@@ -151,6 +153,7 @@ APERF and MPERF are Model-Specific Registers (MSRs) that provide insights into C
 frequency behavior.
 
 A helpful mnemonic for remembering their roles:
+
 - **APERF**: Actual Performance: Scales with actual CPU frequency.
 - **MPERF**: Marketing Performance: Increments at a constant frequency, usually the same as the
   "marketing" (base) CPU frequency.
@@ -162,6 +165,7 @@ to easily distinguish between the two counters.
 
 Here is how the Intel Software Developer's Manual describes the APERF and MPERF counters as of
 November 2025.
+
 > - The IA32_MPERF MSR (0xE7) increments in proportion to a fixed frequency, which is configured when
 >   the processor is booted.
 > - The IA32_APERF MSR (0xE8) increments in proportion to actual performance, while accounting for
@@ -172,15 +176,16 @@ November 2025.
 >   meaning to the content of the individual bits of the IA32_APERF or IA32_MPERF MSRs.
 
 And this one is mentioned separately:
+
 > - By default, the IA32_MPERF counter counts during forced idle periods as if the logical processor
 >   was active. The IA32_APERF counter does not count during forced idle state. This counting
 >   convention allows the OS to compute the average effective frequency of the Logical Processor
 >   between the last MWAIT exit and the next MWAIT entry (OS visible C0) by ΔACNT/ΔMCNT * TSC
 >   Frequency.
 
-**Summary**
+**Summary**: Here is my interpretation of the key points about APERF and MPERF counters from Intel
+SDM:
 
-Here is my interpretation of the key points about APERF and MPERF counters from Intel SDM:
 - APERF and MPERF are 64-bit counters, per-logical CPU.
 - APERF and MPERF are incrementing in C0 state only.
   - If a logical CPU runs HLT or requests a C-state via MWAIT, both APERF and MPERF stop
@@ -243,11 +248,12 @@ from the open-source Linux `turbostat` tool developed by Len Brown.
 Turbostat's "Busy%" metric indicates the percentage of time the CPU spent in C0 state. It is
 calculated as:
 
-```
+```text
 Busy% = (ΔMPERF / ΔTSC) × 100%
 ```
 
 Where:
+
 - ΔMPERF = Change in MPERF counter over the measurement interval
 - ΔTSC = Change in TSC counter over the measurement interval
 
@@ -271,11 +277,12 @@ CPU_CLK_UNHALTED.REF_TSC performance counter instead of MPERF.
 Turbostat's "AvgMHz" metric represents the average CPU frequency over the measurement interval. It is
 calculated as:
 
-```
+```text
 AvgMHz = ΔAPERF / (Interval_in_seconds × 1,000,000)
 ```
 
 Where:
+
 - ΔAPERF: Change in APERF counter over the measurement interval
 - Interval_in_seconds: The measurement interval in seconds (default is 1 second)
 - 1,000,000: Conversion factor from Hz to MHz
@@ -292,11 +299,12 @@ empirical observation rather than official specification.
 Turbostat's "BzyMHz" metric represents the average CPU frequency while the processor is active (in
 C0 state). It is calculated as:
 
-```
+```text
 BzyMHz = BaseFreqMHz × (ΔAPERF / ΔMPERF)
 ```
 
 Where:
+
 - BaseFreqMHz: Base frequency in MHz
 - ΔAPERF: Change in APERF counter over the measurement interval
 - ΔMPERF: Change in MPERF counter over the measurement interval
@@ -305,6 +313,7 @@ BaseFreqMHz is obtained either via CPUID.16H or calculated as 'ΔTSC / Interval_
 latter assumes that TSC frequency approximates the base frequency.
 
 The calculation works as follows:
+
 - ΔAPERF / ΔMPERF provides the ratio of actual frequency to base frequency during the C0 state.
 - Multiplying this ratio by the base frequency yields the average CPU frequency while in the C0 state.
 

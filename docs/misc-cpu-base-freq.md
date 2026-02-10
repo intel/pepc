@@ -20,6 +20,7 @@ Intel CPUs. It simply meant the maximum frequency all processors could sustain i
 normal cooling conditions.
 
 Today, however, the situation has become more complex:
+
 - Intel no longer uses this term consistently in CPU specifications and marketing materials
 - The base frequency referenced in the Intel SDM differs from what the Linux kernel reports in the
   `base_frequency` sysfs file
@@ -45,7 +46,7 @@ This is not a comprehensive guide, but rather an introduction to Intel CPU perfo
 Linux, focusing on terminology and key concepts, with particular attention to disambiguating "base
 frequency".
 
-# Table of Contents
+## Table of Contents
 
 - [Introduction](#introduction)
 - [Disclaimer](#disclaimer)
@@ -106,6 +107,7 @@ And make sure to keep the date of the document in mind. The knowledge cutoff is 
 
 This document begins with background sections covering concepts necessary to understand base
 frequency:
+
 - **ACPI**: P-states and key ACPI CPPC performance levels
 - **Linux Kernel**: CPU frequency sysfs ABI and the `intel_pstate` driver
 - **Intel CPU**: SpeedStep and HWP interfaces, performance level to frequency mapping, and HWP vs
@@ -212,6 +214,7 @@ and under specific conditions.
 #### Lowest Performance
 
 ACPI CPPC defines two lowest performance levels:
+
 - **Lowest Performance**: The absolute lowest performance level of the platform.
 - **Lowest Nonlinear Performance**: The lowest performance level at which nonlinear power savings
   are achieved (per the ACPI specification).
@@ -223,11 +226,13 @@ should typically be reserved for emergency situations (e.g., thermal throttling)
 ### Key Takeaways
 
 Legacy vs. Modern ACPI CPU Performance Scaling Interfaces:
+
 - **Legacy P-states** are directly bound to CPU frequencies in MHz.
 - **CPPC** uses unitless performance levels instead of frequencies.
 - Modern Linux on modern Intel platforms uses CPPC by default.
 
 Key CPPC Performance Levels:
+
 - **Lowest Performance**: Absolute minimum performance level.
 - **Lowest Nonlinear Performance**: Energy-efficient minimum (boundary for normal operation).
 - **Guaranteed Performance**: Optional, maximum sustainable in current conditions.
@@ -327,6 +332,7 @@ scaling registers rather than invoking ACPI methods. In other words, the driver
 
 This section discusses Intel CPU power management features relevant to CPU performance scaling in
 Linux:
+
 - Intel CPU performance scaling interfaces
 - Performance levels and their mapping to CPU frequency
 - Key HWP performance levels
@@ -362,10 +368,12 @@ Instead, the OS only sets the minimum and maximum performance levels, and the CP
 selects the actual performance level based on workload and other factors (e.g., thermal conditions).
 
 The key difference:
+
 - **SpeedStep**: "Use this exact performance level."
 - **HWP**: "Here are the constraints, you choose the optimal performance level."
 
 **Enumeration and Control:**
+
 - **Enumeration**: CPUID.06H.EAX[7] indicates HWP support.
 - **Enable/Disable**: IA32_PM_ENABLE[0] (MSR 0x770) enables HWP globally.
 
@@ -403,6 +411,7 @@ The situation is more complex for hybrid client CPUs. Note that all modern Intel
 Alder Lake, Raptor Lake, Meteor Lake, Arrow Lake, Lunar Lake, and Panther Lake.
 
 These hybrid CPUs integrate different core types, though not all platforms include all three types:
+
 - **P-cores** (Performance cores): Optimized for performance and latency-sensitive workloads.
 - **E-cores** (Efficient cores): Optimized for power efficiency.
 - **LPE-cores** (Low Power Efficient cores): Optimized for low power (e.g., background tasks).
@@ -417,6 +426,7 @@ frequencies and vice versa. Fortunately, the mapping remains linear (or nearly l
 Intel hybrid client CPUs, though the scaling factors differ between core types.
 
 For example, on **Meteor Lake**:
+
 - **P-cores**: Performance level × 80000 = Frequency (in kHz)
 - **E-cores**: Performance level × 100000 = Frequency (in kHz)
 - **LPE-cores**: Performance level × 100000 = Frequency (in kHz)
@@ -428,6 +438,7 @@ calculates the scaling factors based on ACPI CPPC nominal performance level and 
 Scaling Factor = Nominal Frequency / Nominal Performance Level
 
 This scaling factor enables bidirectional conversion:
+
 - CPU Frequency = Performance Level × Scaling Factor
 - Performance Level = CPU Frequency / Scaling Factor
 
@@ -536,6 +547,7 @@ Intel marketing material typically advertises the base frequency, maximum turbo 
 all-core turbo frequency for server processors. For example, the
 [Intel Xeon 6788P](https://www.intel.com/content/www/us/en/products/sku/241837/intel-xeon-6788p-processor-336m-cache-2-00-ghz/specifications.html)
 specifications list:
+
 - Base Frequency: 2.0 GHz
 - Max Turbo Frequency: 3.8 GHz
 - All-Core Turbo Frequency: 3.2 GHz
@@ -552,6 +564,7 @@ cooling.
 
 Over time, Intel client CPUs evolved such that the traditional concept of base frequency became
 harder to apply. Here are some reasons:
+
 1. **Variable cooling**: Ultrabooks and mobile devices have limited cooling that varies with power
    mode (plugged vs. battery, silent vs. performance). This makes "indefinitely sustainable"
    frequency context-dependent.
@@ -605,6 +618,7 @@ This trend adds to the reasons why base frequency is becoming less useful for mo
 For modern Intel client CPUs, it is best to avoid using the "base frequency" term altogether.
 However, if the term must be used, be sure to clarify which definition is meant. There are two
 "base frequencies":
+
 - CPUID.16H.EBX[15:0] or MSR_PLATFORM_INFO base frequency (Intel SDM, referred to as
   fixed base frequency in this document)
 - `/sys/devices/system/cpu/cpuN/cpufreq/base_frequency` (Linux kernel definition, referred to as
@@ -616,6 +630,7 @@ hybrid Intel client CPUs.
 ### Fixed Base Frequency (Intel SDM)
 
 Intel SDM specifies two ways to get base frequency:
+
 - **CPUID.16H**: Returns processor base frequency in MHz
 - **MSR 0xCE (MSR_PLATFORM_INFO)** bits 15:8: Maximum Non-Turbo Ratio
 
@@ -706,6 +721,7 @@ $ kill %1
 ```
 
 Calculating the rates:
+
 - TSC rate: (0x8ffa1b97579b - 0x88cf7ee1d14b) / 3600.0 ≈ 2188.8 MHz
 - MPERF rate: (0x765f634f828 - 0x3634e64b38) / 3600.0 ≈ 2194.9 MHz
 
@@ -731,6 +747,7 @@ performance level instead. If there is no ACPI CPPC data at all, it uses the HWP
 performance level.
 
 In other words, the algorithm to determine sysfs base frequency is as follows:
+
 1. If ACPI CPPC guaranteed performance level is available:
    - Sysfs base frequency = Guaranteed Performance Level × Scaling Factor
 2. Else if ACPI CPPC nominal performance level is available:
@@ -778,6 +795,7 @@ cores.
 
 These are two completely different values, both referred to as "base frequency". The following
 distinction helps avoid confusion:
+
 - **Fixed Base Frequency**: CPUID.16H or MSR_PLATFORM_INFO definition, it is simply the default
   MPERF counter rate, same for all core types, static. Does not represent sustainable frequency.
   Most probably not very useful for software.
@@ -817,6 +835,7 @@ CPU cores could sustain indefinitely with adequate cooling) to a complex and amb
 requiring careful clarification.
 
 Challenges:
+
 - **Two distinct definitions**: Fixed base frequency (SDM) and sysfs base frequency (Linux kernel),
   which differ significantly on hybrid CPUs. In general, sysfs base frequency seems to be more
   useful than fixed base frequency, although the base frequency concept's overall usefulness is
@@ -826,6 +845,7 @@ Challenges:
   base frequency from mobile client CPU specifications and branding strings since Alder Lake (2021).
 
 **Recommendations**:
+
 - For modern Intel CPUs, avoid using "base frequency" when possible, especially for hybrid CPUs.
 - When the term must be used, always clarify which definition is meant and whether it represents a
   maximum sustainable frequency in the discussion context.
