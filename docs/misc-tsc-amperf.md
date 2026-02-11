@@ -209,8 +209,9 @@ TSC and MPERF frequencies can be easily measured in Linux by sampling counters o
 interval. For example, this `perf` command takes samples every second on CPU 0:
 
 ```bash
-# Sample every second while running a busy loop on CPU 0 to prevent idle states
-perf stat -I 1000 -C 0 -A -e 'msr/tsc/,msr/mperf/' -- taskset -c 0 sh -c 'while true; do :; done'
+# Sample every second while running a busy loop on CPU 0 to prevent idle states. Use counters
+# grouping ("{}") to ensure that TSC and MPERF are sampled in a single system call.
+perf stat -I 1000 -C 0 -A -e '{msr/tsc/,msr/mperf/}' -- taskset -c 0 sh -c 'while true; do :; done'
 ```
 
 In practice, the measured MPERF frequency is very close to TSC frequency on all platforms I have
