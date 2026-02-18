@@ -69,11 +69,13 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
 
     text = "Path to the input directory with TPMI XML files."
     arg = parser.add_argument("-i", "--input-dir", type=Path, help=text)
-    setattr(arg, "completer", getattr(argcomplete.completers, "DirectoriesCompleter"))
+    if _ARGCOMPLETE_AVAILABLE:
+        setattr(arg, "completer", getattr(argcomplete.completers, "DirectoriesCompleter"))
 
     text = "Path to the output directory for the generated pepc TPMI spec files."
     arg = parser.add_argument("-o", "--output-dir", type=Path, help=text)
-    setattr(arg, "completer", getattr(argcomplete.completers, "DirectoriesCompleter"))
+    if _ARGCOMPLETE_AVAILABLE:
+        setattr(arg, "completer", getattr(argcomplete.completers, "DirectoriesCompleter"))
 
     text = "Comma-separated list of TPMI features to include (all features by default)."
     parser.add_argument("--include-features", type=str, help=text, default="")
