@@ -800,7 +800,7 @@ distinction helps avoid confusion:
   MPERF counter rate, same for all core types, static. Does not represent sustainable frequency.
   Most probably not very useful for software.
 - **Sysfs Base Frequency**: Linux kernel definition, derived from ACPI CPPC or HWP guaranteed
-  performance level, differs between core types, dynamic. Represents platform best estimate of
+  performance level, differs between core types, dynamic. Represents platform's best estimate of
   sustainable frequency, but not guaranteed. Depending on thermal and power conditions, the
   workload, other components activity (e.g., GPU), may or may not be sustainable.
 
@@ -855,66 +855,69 @@ Challenges:
 This appendix compares Intel HWP and ACPI CPPC performance levels across several hybrid Intel
 client platforms.
 
-**Table Format Notes**:
-
-- CPPC columns show "Nominal / Guaranteed" (e.g., "26 / 27" or "15" when both values are the same).
-- HWP columns show only the Guaranteed performance level.
-- All values are unitless performance levels.
+Table formatting note: Values are shown as "CPPC / HWP" when they differ (e.g., "18 / 21"), or as a
+single number when identical (e.g., "1").
 
 ### Alder Lake
 
-| Performance Level                 | P-core CPPC | P-core HWP | E-core CPPC | E-core HWP |
-|-----------------------------------|-------------|------------|-------------|------------|
-| Lowest                            | 1           | 1          | 1           | 1          |
-| Lowest Nonlinear / Most Efficient | 18          | 21         | 13          | 16         |
-| Nominal / Guaranteed              | 26 / 27     | 27         | 15          | 15         |
-| Highest                           | 60          | 60         | 34          | 34         |
+| Performance Level                           | P-core  | E-core  |
+|---------------------------------------------|---------|---------|
+| CPPC / HWP Lowest                           | 1       | 1       |
+| CPPC Lowest Nonlinear / HWP Most Efficient  | 18 / 21 | 13 / 16 |
+| CPPC Nominal / HWP Guaranteed               | 26 / 27 | 15      |
+| CPPC / HWP Highest                          | 60      | 34      |
 
 Note: Alder Lake does not have LPE-cores.
 
 ### Raptor Lake
 
-| Performance Level                 | P-core CPPC | P-core HWP | E-core CPPC | E-core HWP |
-|-----------------------------------|-------------|------------|-------------|------------|
-| Lowest                            | 1           | 1          | 1           | 1          |
-| Lowest Nonlinear / Most Efficient | 22          | 20         | 16          | 15         |
-| Nominal / Guaranteed              | 24 / 25     | 25         | 19 / 14     | 14         |
-| Highest                           | 59          | 59         | 34          | 34         |
+| Performance Level                           | P-core  | E-core  |
+|---------------------------------------------|---------|---------|
+| CPPC / HWP Lowest                           | 1       | 1       |
+| CPPC Lowest Nonlinear / HWP Most Efficient  | 22 / 20 | 16 / 15 |
+| CPPC Nominal / HWP Guaranteed               | 24 / 25 | 19 / 14 |
+| CPPC / HWP Highest                          | 59      | 34      |
 
 ### Meteor Lake
 
-| Performance Level                 | P-core CPPC | P-core HWP | E-core CPPC | E-core HWP | LPE-core CPPC | LPE-core HWP |
-|-----------------------------------|-------------|------------|-------------|------------|---------------|--------------|
-| Lowest                            | 1           | 1          | 1           | 1          | 1             | 1            |
-| Lowest Nonlinear / Most Efficient | 15          | 15         | 14          | 14         | 11            | 11           |
-| Nominal / Guaranteed              | 13 / 14     | 14         | 38 / 7      | 7          | 21 / 4        | 4            |
-| Highest                           | 60          | 60         | 38          | 38         | 21            | 21           |
+| Performance Level                           | P-core  | E-core | LPE-core |
+|---------------------------------------------|---------|--------|----------|
+| CPPC / HWP Lowest                           | 1       | 1      | 1        |
+| CPPC Lowest Nonlinear / HWP Most Efficient  | 15      | 14     | 11       |
+| CPPC Nominal / HWP Guaranteed               | 13 / 14 | 38 / 7 | 21 / 4   |
+| CPPC / HWP Highest                          | 60      | 38     | 21       |
 
 ### Arrow Lake
 
-| Performance Level                 | P-core CPPC | P-core HWP | E-core CPPC | E-core HWP | LPE-core CPPC | LPE-core HWP |
-|-----------------------------------|-------------|------------|-------------|------------|---------------|--------------|
-| Lowest                            | 1           | 1          | 1           | 1          | 1             | 1            |
-| Lowest Nonlinear / Most Efficient | 23          | 23         | 16          | 17         | 10            | 9            |
-| Nominal / Guaranteed              | 36 / 37     | 37         | 21          | 21         | 7             | 7            |
-| Highest                           | 72          | 72         | 55          | 55         | 25            | 25           |
+| Performance Level                           | P-core  | E-core  | LPE-core |
+|---------------------------------------------|---------|---------|----------|
+| CPPC / HWP Lowest                           | 1       | 1       | 1        |
+| CPPC Lowest Nonlinear / HWP Most Efficient  | 23      | 16 / 17 | 10 / 9   |
+| CPPC Nominal / HWP Guaranteed               | 36 / 37 | 21      | 7        |
+| CPPC / HWP Highest                          | 72      | 55      | 25       |
 
 ### Lunar Lake
 
-| Performance Level                 | P-core CPPC | P-core HWP | LPE-core CPPC | LPE-core HWP |
-|-----------------------------------|-------------|------------|---------------|--------------|
-| Lowest                            | 1           | 1          | 1             | 1            |
-| Lowest Nonlinear / Most Efficient | 19          | 15         | 11            | 17           |
-| Nominal / Guaranteed              | 25 / 26     | 26         | 22            | 22           |
-| Highest                           | 57          | 57         | 37            | 37           |
+| Performance Level                           | P-core  | LPE-core |
+|---------------------------------------------|---------|----------|
+| CPPC / HWP Lowest                           | 1       | 1        |
+| CPPC Lowest Nonlinear / HWP Most Efficient  | 18 / 15 | 11 / 17  |
+| CPPC Nominal / HWP Guaranteed               | 25 / 26 | 22       |
+| CPPC / HWP Highest                          | 57      | 37       |
 
 Note: Lunar Lake does not have E-cores.
 
 ### Panther Lake
 
-| Performance Level                 | P-core CPPC | P-core HWP | E-core CPPC | E-core HWP | LPE-core CPPC | LPE-core HWP |
-|-----------------------------------|-------------|------------|-------------|------------|---------------|--------------|
-| Lowest                            | 1           | 1          | 1           | 1          | 1             | 1            |
-| Lowest Nonlinear / Most Efficient | 17          | 17         | 15          | 15         | 15            | 9            |
-| Nominal / Guaranteed              | 22 / 23     | 23         | 16          | 16         | 16            | 16           |
-| Highest                           | 36          | 36         | 24          | 24         | 24            | 24           |
+| Performance Level                           | P-core  | E-core | LPE-core |
+|---------------------------------------------|---------|--------|----------|
+| CPPC / HWP Lowest                           | 1       | 1      | 1        |
+| CPPC Lowest Nonlinear / HWP Most Efficient  | 17      | 15     | 15 / 9   |
+| CPPC Nominal / HWP Guaranteed               | 22 / 23 | 16     | 16       |
+| CPPC / HWP Highest                          | 36      | 24     | 24       |
+
+Note: On Panther Lake, E-cores and LPE-cores have identical CPPC and HWP performance levels, except
+for HWP Most Efficient. The CPPC Lowest Nonlinear level is 15 for CPUs 2-9 (E-cores and LPE-cores),
+and 17 for CPUs 0-1 (P-cores). However, HWP Most Efficient shows significant per-CPU variation: 17
+for CPUs 0-1 (P-cores), 15 for CPUs 2-5 (E-cores), 12 for CPU 6, 10 for CPU 7, and 9 for CPUs 8-9
+(LPE-cores). The table shows 17 for P-cores, 15 for E-cores, and 9 for LPE-cores.
