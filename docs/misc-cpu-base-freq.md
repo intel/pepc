@@ -852,11 +852,14 @@ Challenges:
 
 ## Appendix: CPPC vs HWP Performance Levels
 
-This appendix provides detailed data comparing Intel HWP and ACPI CPPC performance levels on
-several hybrid Intel client platforms.
+This appendix compares Intel HWP and ACPI CPPC performance levels across several hybrid Intel
+client platforms.
 
-**Note**: When ACPI CPPC provides both Nominal and Guaranteed performance levels, they are shown as
-"Nominal / Guaranteed" in the tables below.
+**Table Format Notes**:
+
+- CPPC columns show "Nominal / Guaranteed" (e.g., "26 / 27" or "15" when both values are the same).
+- HWP columns show only the Guaranteed performance level.
+- All values are unitless performance levels.
 
 ### Alder Lake
 
@@ -864,7 +867,7 @@ several hybrid Intel client platforms.
 |-----------------------------------|-------------|------------|-------------|------------|
 | Lowest                            | 1           | 1          | 1           | 1          |
 | Lowest Nonlinear / Most Efficient | 18          | 21         | 13          | 16         |
-| Nominal                           | 26          | 27         | 15          | 15         |
+| Nominal / Guaranteed              | 26 / 27     | 27         | 15          | 15         |
 | Highest                           | 60          | 60         | 34          | 34         |
 
 Note: Alder Lake does not have LPE-cores.
@@ -893,7 +896,7 @@ Note: Alder Lake does not have LPE-cores.
 |-----------------------------------|-------------|------------|-------------|------------|---------------|--------------|
 | Lowest                            | 1           | 1          | 1           | 1          | 1             | 1            |
 | Lowest Nonlinear / Most Efficient | 23          | 23         | 16          | 17         | 10            | 9            |
-| Nominal / Guaranteed              | 36 / 37     | 37         | 21 / 21     | 21         | 7 / 7         | 7            |
+| Nominal / Guaranteed              | 36 / 37     | 37         | 21          | 21         | 7             | 7            |
 | Highest                           | 72          | 72         | 55          | 55         | 25            | 25           |
 
 ### Lunar Lake
@@ -901,9 +904,9 @@ Note: Alder Lake does not have LPE-cores.
 | Performance Level                 | P-core CPPC | P-core HWP | LPE-core CPPC | LPE-core HWP |
 |-----------------------------------|-------------|------------|---------------|--------------|
 | Lowest                            | 1           | 1          | 1             | 1            |
-| Lowest Nonlinear / Most Efficient | 19          | 19         | 14            | 19           |
-| Nominal / Guaranteed              | 25 / 26     | 26         | 22 / 22       | 22           |
-| Highest                           | 55          | 55         | 37            | 37           |
+| Lowest Nonlinear / Most Efficient | 19          | 15         | 11            | 17           |
+| Nominal / Guaranteed              | 25 / 26     | 26         | 22            | 22           |
+| Highest                           | 57          | 57         | 37            | 37           |
 
 Note: Lunar Lake does not have E-cores.
 
@@ -912,6 +915,6 @@ Note: Lunar Lake does not have E-cores.
 | Performance Level                 | P-core CPPC | P-core HWP | E-core CPPC | E-core HWP | LPE-core CPPC | LPE-core HWP |
 |-----------------------------------|-------------|------------|-------------|------------|---------------|--------------|
 | Lowest                            | 1           | 1          | 1           | 1          | 1             | 1            |
-| Lowest Nonlinear / Most Efficient | 16          | 17         | 15          | 15         | 15            | 9            |
-| Nominal                           | 22          | 23         | 16          | 16         | 16            | 16           |
+| Lowest Nonlinear / Most Efficient | 17          | 17         | 15          | 15         | 15            | 9            |
+| Nominal / Guaranteed              | 22 / 23     | 23         | 16          | 16         | 16            | 16           |
 | Highest                           | 36          | 36         | 24          | 24         | 24            | 24           |
