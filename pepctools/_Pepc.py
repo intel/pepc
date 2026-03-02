@@ -21,6 +21,7 @@ try:
     _ARGCOMPLETE_AVAILABLE = True
 except ImportError:
     # We can live without argcomplete, we only lose tab completions.
+    argcomplete = object()
     _ARGCOMPLETE_AVAILABLE = False
 
 import typing
@@ -791,7 +792,7 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
                           help=text)
 
     if _ARGCOMPLETE_AVAILABLE:
-        argcomplete.autocomplete(parser)
+        getattr(argcomplete, "autocomplete")(parser)
 
     return parser
 
@@ -1212,8 +1213,8 @@ def main() -> int:
         do_main()
     except KeyboardInterrupt:
         _LOG.info("\nInterrupted, exiting")
-    except Error as err:
-        _LOG.error_out(err)
+    except Error as _err:
+        _LOG.error_out(str(_err))
 
     return 0
 

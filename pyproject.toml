@@ -59,3 +59,7 @@ skip-checking-raises = true
 
 [tool.mypy]
 check_untyped_defs = true
+
+[tool.pyright]
+# Disable the warning that makes it very hard working with typed dicts.
+reportTypedDictNotRequiredAccess = false
