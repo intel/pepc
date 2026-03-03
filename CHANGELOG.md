@@ -5,6 +5,7 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
+ - pepc installation: Fix TMPI spec files installation issue.
 ### Added
 ### Removed
 ### Changed
