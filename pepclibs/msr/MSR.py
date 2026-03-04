@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2025 Intel Corporation
+# Copyright (C) 2020-2026 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Authors: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
@@ -14,6 +14,7 @@ and transactions support.
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
+import os
 import typing
 import pprint
 from pathlib import Path
@@ -67,14 +68,14 @@ class MSR(_SimpleMSR.SimpleMSR):
 
     1. Multi-CPU I/O.
         - 'read()' - read an MSR.
-        - 'read_bits()'  - read an MSR bits range.
-        - 'write()' - write to the an MSR.
-        - 'write_bits()'  - write MSR bits range.
+        - 'read_bits()' - read an MSR bits range.
+        - 'write()' - write to an MSR.
+        - 'write_bits()' - write MSR bits range.
     2. Single-CPU I/O.
         - 'read_cpu()' - read an MSR.
-        - 'read_cpu_bits()'  - read an MSR bits range.
-        - 'write_cpu()' - write to the an MSR.
-        - 'write_cpu_bits()'  - write MSR bits range.
+        - 'read_cpu_bits()' - read an MSR bits range.
+        - 'write_cpu()' - write to an MSR.
+        - 'write_cpu_bits()' - write MSR bits range.
     3. Transactions support.
         - 'start_transaction()' - start a transaction.
         - 'flush_transaction()' - flush the transaction buffer.
@@ -101,7 +102,7 @@ class MSR(_SimpleMSR.SimpleMSR):
                   process manager will be used.
             enable_cache: If True, enable caching of MSR values. The first read fetches from
                           hardware, subsequent reads return the cached value. Writes update the
-                          cache and and propagate to hardware immediately (write-through policy). If
+                          cache and propagate to hardware immediately (write-through policy). If
                           False, caching is disabled, and every read/write operation accesses the
                           hardware directly.
         """
@@ -117,12 +118,10 @@ class MSR(_SimpleMSR.SimpleMSR):
             # make sure writes go to all CPUs, not just one CPU in the scope.
             self._enable_scope = False
 
+        # The write-through per-CPU MSR values cache.
         self._cache = _PerCPUCache.PerCPUCache(cpuinfo, enable_cache=self._enable_cache,
                                                enable_scope=self._enable_scope)
-        self._cache._cpuinfo = cpuinfo
 
-        # The write-through per-CPU MSR values cache.
-        self._cache = _PerCPUCache.PerCPUCache(cpuinfo, enable_cache=self._enable_cache)
         # The transaction buffer. This is a dictionary of dictionaries, where the first key is the
         # CPU number, and the second key is the MSR address. The value is a dictionary with
         # transaction value and additional information.
@@ -139,7 +138,7 @@ class MSR(_SimpleMSR.SimpleMSR):
 
         super().close()
 
-    def _add_for_transation(self,
+    def _add_for_transaction(self,
                             regaddr: int,
                             regval: int,
                             cpu: int,
@@ -157,9 +156,6 @@ class MSR(_SimpleMSR.SimpleMSR):
             iosname: The I/O scope name associated with the MSR.
         """
 
-        if not self._enable_cache:
-            raise Error("Transactions support requires caching to be enabled")
-
         if cpu not in self._transaction_buffer:
             self._transaction_buffer[cpu] = {}
 
@@ -171,7 +167,7 @@ class MSR(_SimpleMSR.SimpleMSR):
                             f"  old: {tinfo['iosname']}, new: {iosname}")
             if "verify" in tinfo and tinfo["verify"] != verify:
                 raise Error(f"BUG: Inconsistent verification flag value for MSR {regaddr:#x}:\n"
-                            f"  old: {tinfo['iosname']}, new: {iosname}")
+                            f"  old: {tinfo['verify']}, new: {verify}")
         else:
             tinfo = self._transaction_buffer[cpu][regaddr] = {}
 
@@ -186,7 +182,7 @@ class MSR(_SimpleMSR.SimpleMSR):
         When a transaction is active, all writes to MSRs are buffered and only written to hardware
         upon calling 'commit_transaction()' or 'flush_transaction()'. Writes to the same MSR are
         merged into a single operation to minimize I/O overhead. Transactions do not provide
-        atomicity or rollback; they are intended solely for optimizing I/O by batching and merging
+        atomicity or rollback. They are intended solely for optimizing I/O by batching and merging
         writes.
         """
 
@@ -226,26 +222,25 @@ class MSR(_SimpleMSR.SimpleMSR):
                                         f"{self._pman.hostmsg}:\n  Wrote '{regval:#x}', read back "
                                         f"'{new_val:#x}'", cpu=cpu, expected=regval, actual=new_val)
 
-    def _transaction_write(self):
-        """Write the contents of the transaction buffer to MSRs."""
+    def _transaction_write_local(self):
+        """Write MSR transactions on a local host."""
 
         for cpu, cpus_info in self._transaction_buffer.items():
-            # Write all the dirty data.
             path = Path(f"/dev/cpu/{cpu}/msr")
-            with self._pman.open(path, "r+b") as fobj:
+            fd = os.open(path, os.O_RDWR)
+            try:
                 for regaddr, regval_info in cpus_info.items():
                     regval = regval_info["regval"]
                     try:
-                        fobj.seek(regaddr)
                         regval_bytes = regval.to_bytes(self.regbytes, byteorder=_CPU_BYTEORDER)
-                        fobj.write(regval_bytes)
-                        fobj.flush()
-                        _LOG.debug("CPU%d: Commit MSR 0x%x: Wrote 0x%x%s",
-                                   cpu, regaddr, regval, self._pman.hostmsg)
-                    except Error as err:
+                        os.pwrite(fd, regval_bytes, regaddr)
+                    except OSError as err:
                         raise Error(f"Failed to write '{regval:#x}' to MSR '{regaddr:#x}' of CPU "
-                                    f"{cpu}{self._pman.hostmsg} (file '{path}'):\n"
-                                    f"{err.indent(2)}") from err
+                                    f"{cpu}{self._pman.hostmsg} (file '{path}'): {err}") from err
+                    _LOG.debug("CPU%d: Commit MSR 0x%x: Wrote 0x%x%s",
+                               cpu, regaddr, regval, self._pman.hostmsg)
+            finally:
+                os.close(fd)
 
     def _transaction_write_remote(self):
         """
@@ -265,19 +260,41 @@ class MSR(_SimpleMSR.SimpleMSR):
         transaction_buffer_str = transaction_buffer_str.replace("'", "\"")
 
         cmd = f"""{python_path} -c '
+import os
 transaction_buffer = {transaction_buffer_str}
 for cpu, cpus_info in transaction_buffer.items():
     path = "/dev/cpu/%d/msr" % cpu
-    with open(path, "r+b") as fobj:
+    fd = os.open(path, os.O_RDWR)
+    try:
         for regaddr, regval_info in cpus_info.items():
             regval = regval_info["regval"]
-            fobj.seek(regaddr)
             regval_bytes = regval.to_bytes({self.regbytes}, byteorder="{_CPU_BYTEORDER}")
-            fobj.write(regval_bytes)
-            fobj.flush()
+            os.pwrite(fd, regval_bytes, regaddr)
+    finally:
+        os.close(fd)
 '"""
 
         self._pman.run_verify(cmd)
+
+    def _transaction_write_emulation(self):
+        """Write MSR transactions on an emulated host."""
+
+        for cpu, cpus_info in self._transaction_buffer.items():
+            path = Path(f"/dev/cpu/{cpu}/msr")
+            with self._pman.open(path, "r+b") as fobj:
+                for regaddr, regval_info in cpus_info.items():
+                    regval = regval_info["regval"]
+                    try:
+                        fobj.seek(regaddr)
+                        regval_bytes = regval.to_bytes(self.regbytes, byteorder=_CPU_BYTEORDER)
+                        fobj.write(regval_bytes)
+                        fobj.flush()
+                    except Error as err:
+                        raise Error(f"Failed to write '{regval:#x}' to MSR '{regaddr:#x}' of CPU "
+                                    f"{cpu}{self._pman.hostmsg} (file '{path}'):\n"
+                                    f"{err.indent(2)}") from err
+                    _LOG.debug("CPU%d: Commit MSR 0x%x: Wrote 0x%x%s",
+                               cpu, regaddr, regval, self._pman.hostmsg)
 
     def flush_transaction(self) -> bool:
         """
@@ -303,8 +320,10 @@ for cpu, cpus_info in transaction_buffer.items():
 
         if self._pman.is_remote:
             self._transaction_write_remote()
+        elif isinstance(self._pman, EmulProcessManager.EmulProcessManager):
+            self._transaction_write_emulation()
         else:
-            self._transaction_write()
+            self._transaction_write_local()
 
         # Form a temporary dictionary for verifying the contents of the MSRs written to by the
         # transaction.
@@ -336,7 +355,7 @@ for cpu, cpus_info in transaction_buffer.items():
         Commit the current MSR transaction by flushing all buffered data to the MSRs and closing the
         transaction.
 
-        This method does not provide atomicity guarantees; it is intended as an optimization to
+        This method does not provide atomicity guarantees. It is intended as an optimization to
         reduce the number of MSR I/O operations.
         """
 
@@ -374,10 +393,9 @@ for cpu, cpus_info in transaction_buffer.items():
             yield from super()._cpus_read_remote(regaddr, cpus)
             return
 
-
         # CPU numbers to read the MSR for (subset of 'cpus').
         do_read = []
-        # CPU numbers the MSR should not be read for. Instead, the MSR values for these CPU numbres
+        # CPU numbers the MSR should not be read for. Instead, the MSR values for these CPU numbers
         # are available from the cache, or will be available from the cache when a sibling CPU from
         # 'do_read' is read.
         dont_read = set()
@@ -394,8 +412,7 @@ for cpu, cpus_info in transaction_buffer.items():
                 do_read.append(cpu)
                 continue
 
-            # Read the MSR only for 'iosname' sibling CPU, because MSR value should be the same
-            # for the siblings.
+            # Read only one CPU per 'iosname' scope, because sibling CPUs share the same MSR value.
             for sibling in self._cpuinfo.get_cpu_siblings(cpu, iosname):
                 if sibling == cpu:
                     do_read.append(sibling)
@@ -457,7 +474,7 @@ for cpu, cpus_info in transaction_buffer.items():
         cpus = self._cpuinfo.normalize_cpus(cpus)
         yield from self._read(regaddr, cpus, iosname)
 
-    def read_cpu(self, regaddr, cpu, iosname="CPU"):
+    def read_cpu(self, regaddr: int, cpu: int, iosname: ScopeNameType = "CPU") -> int:
         """
         Read an MSR value from a specific CPU.
 
@@ -470,11 +487,10 @@ for cpu, cpus_info in transaction_buffer.items():
             The value read from the specified MSR on the given CPU.
         """
 
-        regval = None
         for _, regval in self.read(regaddr, cpus=(cpu,), iosname=iosname):
-            pass
+            return regval
 
-        return regval
+        raise Error(f"Failed to read MSR 0x{regaddr:x} from CPU {cpu}{self._pman.hostmsg}")
 
     def read_bits(self,
                   regaddr: int,
@@ -487,8 +503,8 @@ for cpu, cpus_info in transaction_buffer.items():
         Args:
             regaddr: Address of the MSR to read bits from.
             bits: A tuple or list of two integers (msb, lsb) specifying the bit range to extract
-                  from the MSR; msb is the most significant bit and lsb is the least significant
-                  bit.
+                  from the MSR, where msb is the most significant bit and lsb is the least
+                  significant bit.
             cpus: CPU numbers to read the MSR from. Special value 'all' means "all CPUs".
             iosname: Scope name for the MSR (e.g. "package", "core"). This is used for
                      optimizing the read operation by skipping unnecessary reads of sibling CPUs.
@@ -500,10 +516,10 @@ for cpu, cpus_info in transaction_buffer.items():
         """
 
         for cpu, regval in self.read(regaddr, cpus, iosname=iosname):
+            val = self.get_bits(regval, bits)
             _LOG.debug("CPU%d: MSR 0x%x: Bits %s: Read 0x%x%s", cpu, regaddr,
-                       ":".join([str(bit) for bit in bits]), self.get_bits(regval, bits),
-                       self._pman.hostmsg)
-            yield (cpu, self.get_bits(regval, bits))
+                       ":".join([str(bit) for bit in bits]), val, self._pman.hostmsg)
+            yield cpu, val
 
     def read_cpu_bits(self,
                       regaddr: int,
@@ -516,8 +532,8 @@ for cpu, cpus_info in transaction_buffer.items():
         Args:
             regaddr: Address of the MSR to read from.
             bits: A tuple or list of two integers (msb, lsb) specifying the bit range to extract
-                  from the MSR; msb is the most significant bit and lsb is the least significant
-                  bit.
+                  from the MSR, where msb is the most significant bit and lsb is the least
+                  significant bit.
             cpu: CPU number to read the MSR from.
             iosname: Scope name for the MSR (e.g. "package", "core").
 
@@ -578,8 +594,7 @@ for cpu, cpus_info in transaction_buffer.items():
                 do_write.append(cpu)
                 continue
 
-            # Write the MSR only on 'iosname' sibling CPU, because MSR value should be the same
-            # for the siblings.
+            # Write only one CPU per 'iosname' scope, because sibling CPUs share the same MSR value.
             for sibling in self._cpuinfo.get_cpu_siblings(cpu, iosname):
                 if sibling == cpu:
                     do_write.append(sibling)
@@ -627,12 +642,11 @@ for cpu, cpus_info in transaction_buffer.items():
             if not self._in_transaction:
                 super().cpu_write(regaddr, regval, cpu)
             else:
-                self._add_for_transation(regaddr, regval, cpu, verify, iosname)
+                self._add_for_transaction(regaddr, regval, cpu, verify, iosname)
 
-            # Note, below 'add()' call is scope-aware. It will cache 'regval' not only for CPU
-            # number 'cpu', but also for all the 'iosname' siblings. For example, if 'iosname' is
-            # "package", 'regval' will be cached for all CPUs in the package that contains CPU
-            # number 'cpu'.
+            # The '_cache.add()' call below is scope-aware: it caches 'regval' not only for CPU
+            # 'cpu', but also for all its 'iosname' siblings. For example, if 'iosname' is
+            # "package", 'regval' is cached for all CPUs in the package containing CPU 'cpu'.
             self._cache.add(regaddr, cpu, regval, sname=iosname)
 
         # In case of an ongoing transaction, skip the verification, it'll be done at the end of the
@@ -702,8 +716,8 @@ for cpu, cpus_info in transaction_buffer.items():
 
         Args:
             regaddr: The address of the MSR to write to.
-            bits: A tuple or list of two integers (msb, lsb) specifying the bit range to to write
-                  to; msb is the most significant bit and lsb is the least significant bit.
+            bits: A tuple or list of two integers (msb, lsb) specifying the bit range to write to;
+                  msb is the most significant bit and lsb is the least significant bit.
             val: The value to write to the specified bits range.
             cpus: CPU numbers to write the MSR on. Special value 'all' means "all CPUs".
             iosname: I/O scope name for the MSR address (e.g., "package", "core"). Used for
@@ -755,8 +769,8 @@ for cpu, cpus_info in transaction_buffer.items():
 
         Args:
             regaddr: The address of the MSR to write to.
-            bits: A tuple or list of two integers (msb, lsb) specifying the bit range to to write
-                  to; msb is the most significant bit and lsb is the least significant bit.
+            bits: A tuple or list of two integers (msb, lsb) specifying the bit range to write to;
+                  msb is the most significant bit and lsb is the least significant bit.
             val: The value to write to the specified bits range.
             cpu: CPU number to write the MSR on.
             iosname: I/O scope name for the MSR address (e.g., "package", "core"). Used for

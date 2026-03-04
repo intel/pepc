@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2025 Intel Corporation
+# Copyright (C) 2020-2026 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
@@ -12,10 +12,11 @@ Provide a capability to read and write CPU Model Specific Registers.
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
+import os
 import typing
 from pathlib import Path
-from pepclibs.helperlibs import ClassHelpers, Trivial
-from pepclibs.helperlibs import Logging, LocalProcessManager, KernelModule, FSHelpers
+from pepclibs.helperlibs import ClassHelpers, FSHelpers, Trivial
+from pepclibs.helperlibs import Logging, LocalProcessManager, EmulProcessManager, KernelModule
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorPermissionDenied
 
 if typing.TYPE_CHECKING:
@@ -162,11 +163,40 @@ class SimpleMSR(ClassHelpers.SimpleCloseContext):
         mask = (1 << bits_cnt) - 1
         return (regval >> bits[1]) & mask
 
+    def _cpus_read_local(self,
+                         regaddr: int,
+                         cpus: Sequence[int]) -> Generator[tuple[int, int], None, None]:
+        """
+        Read an MSR from specified CPUs on a local host.
+
+        Args:
+            regaddr: The address of the MSR to read.
+            cpus: CPU numbers to read the MSR from.
+
+        Yields:
+            Tuples of (cpu, regval), where 'cpu' is the CPU number and 'regval' is the value read
+            from the MSR.
+        """
+
+        for cpu in cpus:
+            path = f"/dev/cpu/{cpu}/msr"
+            fd = os.open(path, os.O_RDONLY)
+            try:
+                regval_bytes = os.pread(fd, self.regbytes, regaddr)
+            except OSError as err:
+                raise Error(f"Failed to read MSR '{regaddr:#x}' from file '{path}'"
+                            f"{self._pman.hostmsg}: {err}") from err
+            finally:
+                os.close(fd)
+            regval = int.from_bytes(regval_bytes, byteorder=_CPU_BYTEORDER)
+            _LOG.debug("CPU%d: MSR 0x%x: Read 0x%x%s", cpu, regaddr, regval, self._pman.hostmsg)
+            yield cpu, regval
+
     def _cpus_read_remote(self,
                           regaddr: int,
                           cpus: Sequence[int]) -> Generator[tuple[int, int], None, None]:
         """
-        Read an MSR from a remote host.
+        Read an MSR from specified CPUs on a remote host.
 
         Generate and execute a small Python script on the remote host to read the specified MSR for
         a set of CPUs.
@@ -183,14 +213,17 @@ class SimpleMSR(ClassHelpers.SimpleCloseContext):
         python_path = self._pman.get_python_path()
         cpus_str = ",".join([str(cpu) for cpu in cpus])
         cmd = f"""{python_path} -c '
+import os
 cpus = [{cpus_str}]
 for cpu in cpus:
     path = "/dev/cpu/%d/msr" % cpu
-    with open(path, "rb") as fobj:
-        fobj.seek({regaddr:#x})
-        regval = fobj.read({self.regbytes})
+    fd = os.open(path, os.O_RDONLY)
+    try:
+        regval = os.pread(fd, {self.regbytes}, {regaddr:#x})
         regval = int.from_bytes(regval, byteorder="{_CPU_BYTEORDER}")
         print("%d,%d" % (cpu, regval))
+    finally:
+        os.close(fd)
 '"""
 
         try:
@@ -203,11 +236,39 @@ for cpu in cpus:
         for line in stdout:
             split = Trivial.split_csv_line(line.strip())
             if len(split) != 2:
-                raise Error("BUG: bad MSR read script line '{line}'")
+                raise Error(f"BUG: bad MSR read script line '{line}'")
 
             cpu = Trivial.str_to_int(split[0], what="CPU number")
             regval = Trivial.str_to_int(split[1], what=f"MSR {regaddr:#x} value on CPU {cpu}")
 
+            _LOG.debug("CPU%d: MSR 0x%x: Read 0x%x%s", cpu, regaddr, regval, self._pman.hostmsg)
+            yield cpu, regval
+
+    def _cpus_read_emulation(self,
+                             regaddr: int,
+                             cpus: Sequence[int]) -> Generator[tuple[int, int], None, None]:
+        """
+        Read an MSR from specified CPUs on an emulated host.
+
+        Args:
+            regaddr: The address of the MSR to read.
+            cpus: CPU numbers to read the MSR from.
+
+        Yields:
+            Tuples of (cpu, regval), where 'cpu' is the CPU number and 'regval' is the value read
+            from the MSR.
+        """
+
+        for cpu in cpus:
+            path = Path(f"/dev/cpu/{cpu}/msr")
+            try:
+                with self._pman.open(path, "rb") as fobj:
+                    fobj.seek(regaddr)
+                    regval_bytes = fobj.read(self.regbytes)
+            except Error as err:
+                raise type(err)(f"Failed to read MSR '{regaddr:#x}' from file '{path}'"
+                                f"{self._pman.hostmsg}:\n{err.indent(2)}") from err
+            regval = int.from_bytes(regval_bytes, byteorder=_CPU_BYTEORDER)
             _LOG.debug("CPU%d: MSR 0x%x: Read 0x%x%s", cpu, regaddr, regval, self._pman.hostmsg)
             yield cpu, regval
 
@@ -230,10 +291,10 @@ for cpu in cpus:
 
         if self._pman.is_remote:
             yield from self._cpus_read_remote(regaddr, cpus)
+        elif isinstance(self._pman, EmulProcessManager.EmulProcessManager):
+            yield from self._cpus_read_emulation(regaddr, cpus)
         else:
-            for cpu in cpus:
-                regval = self.cpu_read(regaddr, cpu)
-                yield cpu, regval
+            yield from self._cpus_read_local(regaddr, cpus)
 
     def cpu_read(self, regaddr: int, cpu: int) -> int:
         """
@@ -248,19 +309,10 @@ for cpu in cpus:
             The value of the MSR as an integer.
         """
 
-        path = Path(f"/dev/cpu/{cpu}/msr")
-        try:
-            with self._pman.open(path, "rb") as fobj:
-                fobj.seek(regaddr)
-                regval = fobj.read(self.regbytes)
-        except Error as err:
-            raise type(err)(f"Failed to read MSR '{regaddr:#x}' from file '{path}'"
-                            f"{self._pman.hostmsg}:\n{err.indent(2)}") from err
+        for _, regval in self.cpus_read(regaddr, (cpu,)):
+            return regval
 
-        regval = int.from_bytes(regval, byteorder=_CPU_BYTEORDER)
-        _LOG.debug("CPU%d: MSR 0x%x: Read 0x%x%s", cpu, regaddr, regval, self._pman.hostmsg)
-
-        return regval
+        raise Error(f"Failed to read MSR '{regaddr:#x}' from CPU {cpu}{self._pman.hostmsg}")
 
     def set_bits(self, regval: int, bits: tuple[int, int] | list[int], val: int) -> int:
         """
@@ -288,22 +340,40 @@ for cpu in cpus:
         set_mask = val << bits[1]
         return (regval & ~clear_mask) | set_mask
 
-    def cpu_write_remote(self, regaddr: int, regval: int, cpu: int):
+    def _cpus_write_local(self,
+                           regaddr: int,
+                           regval: int,
+                           cpus: Sequence[int]):
         """
-        Write a value to an MSR for a specific CPU.
+        Write a value to an MSR on specified CPUs on a local host.
 
         Args:
             regaddr: The address of the MSR to write to.
             regval: The value to write to the MSR.
-            cpu: CPU number to write the MSR on.
+            cpus: CPU numbers to write the MSR on. The numbers have to be validated and normalized
+                  by the caller.
         """
+
+        regval_bytes = regval.to_bytes(self.regbytes, byteorder=_CPU_BYTEORDER)
+
+        for cpu in cpus:
+            path = f"/dev/cpu/{cpu}/msr"
+            fd = os.open(path, os.O_RDWR)
+            try:
+                os.pwrite(fd, regval_bytes, regaddr)
+            except OSError as err:
+                raise Error(f"Failed to write '{regval:#x}' to MSR '{regaddr:#x}' of CPU "
+                            f"{cpu}{self._pman.hostmsg} (file '{path}'): {err}") from err
+            finally:
+                os.close(fd)
+            _LOG.debug("CPU%d: MSR 0x%x: Wrote 0x%x", cpu, regaddr, regval)
 
     def _cpus_write_remote(self,
                            regaddr: int,
                            regval: int,
                            cpus: Sequence[int]):
         """
-        Write a value to an MSR for a specific CPU on a remote host.
+        Write a value to an MSR on specified CPUs on a remote host.
 
         Generate and execute a small Python script on the remote host to write the specified MSR for
         a set of CPUs.
@@ -319,15 +389,17 @@ for cpu in cpus:
         cpus_str = ",".join([str(cpu) for cpu in cpus])
 
         cmd = f"""{python_path} -c '
+import os
 cpus = [{cpus_str}]
 regval = {regval:#x}
+regval_bytes = regval.to_bytes({self.regbytes}, byteorder="{_CPU_BYTEORDER}")
 for cpu in cpus:
     path = "/dev/cpu/%d/msr" % cpu
-    with open(path, "r+b") as fobj:
-        fobj.seek({regaddr:#x})
-        regval_bytes = regval.to_bytes({self.regbytes}, byteorder="{_CPU_BYTEORDER}")
-        fobj.write(regval_bytes)
-        fobj.flush()
+    fd = os.open(path, os.O_RDWR)
+    try:
+        os.pwrite(fd, regval_bytes, {regaddr:#x})
+    finally:
+        os.close(fd)
 '"""
 
         try:
@@ -337,9 +409,38 @@ for cpu in cpus:
             raise type(err)(f"Failed to write '{regval:#x}' to MSR '{regaddr:#x}' on CPUs "
                             f"{cpus_str}{self._pman.hostmsg}:\n{errmsg}") from err
 
+    def _cpus_write_emulation(self,
+                              regaddr: int,
+                              regval: int,
+                              cpus: Sequence[int]):
+        """
+        Write a value to an MSR on specified CPUs on an emulated host.
+
+        Args:
+            regaddr: The address of the MSR to write to.
+            regval: The value to write to the MSR.
+            cpus: CPU numbers to write the MSR on. The numbers have to be validated and normalized
+                  by the caller.
+        """
+
+        regval_bytes = regval.to_bytes(self.regbytes, byteorder=_CPU_BYTEORDER)
+
+        for cpu in cpus:
+            path = Path(f"/dev/cpu/{cpu}/msr")
+            with self._pman.open(path, "r+b") as fobj:
+                try:
+                    fobj.seek(regaddr)
+                    fobj.write(regval_bytes)
+                    fobj.flush()
+                    _LOG.debug("CPU%d: MSR 0x%x: Wrote 0x%x", cpu, regaddr, regval)
+                except Error as err:
+                    raise type(err)(f"Failed to write '{regval:#x}' to MSR '{regaddr:#x}' of CPU "
+                                    f"{cpu}{self._pman.hostmsg} (file '{path}'):\n"
+                                    f"{err.indent(2)}") from err
+
     def cpus_write(self, regaddr: int, regval: int, cpus: Sequence[int]):
         """
-        Write a value to an MSR for a specific CPU.
+        Write a value to an MSR on specified CPUs.
 
         Args:
             regaddr: The address of the MSR to write to.
@@ -350,9 +451,10 @@ for cpu in cpus:
 
         if self._pman.is_remote:
             self._cpus_write_remote(regaddr, regval, cpus)
+        elif isinstance(self._pman, EmulProcessManager.EmulProcessManager):
+            self._cpus_write_emulation(regaddr, regval, cpus)
         else:
-            for cpu in cpus:
-                self.cpu_write(regaddr, regval, cpu)
+            self._cpus_write_local(regaddr, regval, cpus)
 
     def cpu_write(self, regaddr: int, regval: int, cpu: int):
         """
@@ -364,16 +466,4 @@ for cpu in cpus:
             cpu: CPU number to write the MSR on.
         """
 
-        regval_bytes = regval.to_bytes(self.regbytes, byteorder=_CPU_BYTEORDER)
-
-        path = Path(f"/dev/cpu/{cpu}/msr")
-        with self._pman.open(path, "r+b") as fobj:
-            try:
-                fobj.seek(regaddr)
-                fobj.write(regval_bytes)
-                fobj.flush()
-                _LOG.debug("CPU%d: MSR 0x%x: Wrote 0x%x", cpu, regaddr, regval)
-            except Error as err:
-                raise type(err)(f"Failed to write '{regval:#x}' to MSR '{regaddr:#x}' of CPU "
-                                f"{cpu}{self._pman.hostmsg} (file '{path}'):\n"
-                                f"{err.indent(2)}") from err
+        self.cpus_write(regaddr, regval, (cpu,))
