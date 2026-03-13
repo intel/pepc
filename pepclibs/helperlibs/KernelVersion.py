@@ -18,12 +18,11 @@ from pepclibs.helperlibs import ProcessManager
 # The resource owner information namedtuple "type".
 SplitKver = namedtuple("SplitKver", ["major", "minor", "stable", "rc", "localver"])
 
-def split_kver(kver, numerical=False):
+def split_kver(kver):
     """
     Split the kernel version string on the components: major, minor, stable, rc, localver. For
     example, '4.18.1-build0' would be ('4', '18', '1', None, '-build0'), and '5.0-rc2' would be
-    ('5', '0', 0, '2', ''). By default the numeric parts of the version are returned as strings, but
-    if the 'numerical' argument is 'True', they are returned as integers.
+    ('5', '0', 0, '2', '').
     """
 
     def _fetch_rc(localver):
@@ -42,12 +41,11 @@ def split_kver(kver, numerical=False):
     if stable is None:
         stable = 0
     rc, localver = _fetch_rc(localver)
-    if numerical:
-        major = int(major)
-        minor = int(minor)
-        stable = int(stable)
-        if rc is not None:
-            rc = int(rc)
+    major = int(major)
+    minor = int(minor)
+    stable = int(stable)
+    if rc is not None:
+        rc = int(rc)
 
     return SplitKver(major, minor, stable, rc, localver)
 
@@ -64,8 +62,8 @@ def kver_lt(kver1, kver2):
             return True
         return a < b
 
-    major1, minor1, stable1, rc1, localver1 = split_kver(kver1, numerical=True)
-    major2, minor2, stable2, rc2, localver2 = split_kver(kver2, numerical=True)
+    major1, minor1, stable1, rc1, localver1 = split_kver(kver1)
+    major2, minor2, stable2, rc2, localver2 = split_kver(kver2)
 
     if major1 != major2:
         return major1 < major2
