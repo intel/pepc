@@ -16,7 +16,6 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import time
 import typing
-import contextlib
 from pathlib import Path
 from pepclibs.helperlibs import Logging, LocalProcessManager, ClassHelpers, Trivial
 from pepclibs.helperlibs.Exceptions import ErrorNotSupported, ErrorBadFormat
@@ -58,7 +57,6 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
         * 'write()' - write a string.
         * 'write_verify()' - write a string and verify.
     2. Cache operations.
-        * cache_get() - get data from the cache.
         * cache_add() - add data to the cache.
         * cache_remove() - remove data from the cache.
     3. Transactions support.
@@ -101,29 +99,6 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
 
         close_attrs = ("_pman",)
         ClassHelpers.close(self, close_attrs=close_attrs)
-
-    def cache_get(self, path: Path) -> str:
-        """
-        Retrieve the cached value for a given sysfs file path.
-
-        Args:
-            path: Path to the sysfs file whose cached value should be retrieved.
-
-        Returns:
-            The cached value as a string.
-
-        Raises:
-            ErrorNotFound: If caching is disabled or if there is no cached value for the specified
-                           path.
-        """
-
-        if not self._enable_cache:
-            raise ErrorNotFound("Caching is disabled")
-
-        try:
-            return self._cache[path]
-        except KeyError:
-            raise ErrorNotFound(f"sysfs file '{path}' is not cached") from None
 
     def cache_add(self, path: Path, val: str) -> str:
         """
@@ -374,8 +349,8 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
             ErrorNotSupported: If the file does not exist.
         """
 
-        with contextlib.suppress(ErrorNotFound):
-            return self.cache_get(path)
+        if path in self._cache:
+            return self._cache[path]
 
         try:
             with self._pman.open(path, "r") as fobj:
