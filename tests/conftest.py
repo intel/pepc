@@ -23,9 +23,11 @@ if typing.TYPE_CHECKING:
 
 # The test modules that are host-agnostic.
 _NOHOST_MODULES: Final[set[str]] = {"tests.test_human",
+                                    "tests.test_kernel_version",
+                                    "tests.test_tpmi_nohost",
                                     "tests.test_wrap_exceptions",
-                                    "tests.test_yaml",
-                                    "tests.test_tpmi_nohost"}
+                                    "tests.test_yaml"}
+
 # The test modules that work only on the local host or a remote host, but not emulation.
 _NOEMULATION_MODULES: Final[set[str]] = {"tests.test_process_manager"}
 

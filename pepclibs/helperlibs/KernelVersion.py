@@ -1,41 +1,93 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2023 Intel Corporation
+# Copyright (C) 2020-2026 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
-This module contains helper functions for dealing with Linux kernel version numbers.
+Provide functions for obtaining, splittng and comparing Linux kernel version numbers.
 """
 
+from __future__ import annotations # Remove when switching to Python 3.10+.
+
 import re
-from collections import namedtuple
+import typing
+from pathlib import Path
+from typing import TypedDict
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs.helperlibs import ProcessManager
 
-# The resource owner information namedtuple "type".
-SplitKver = namedtuple("SplitKver", ["major", "minor", "stable", "rc", "localver"])
+if typing.TYPE_CHECKING:
+    from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
-def split_kver(kver):
+class SplitKernelVersionTypedDict(TypedDict):
     """
-    Split the kernel version string on the components: major, minor, stable, rc, localver. For
-    example, '4.18.1-build0' would be ('4', '18', '1', None, '-build0'), and '5.0-rc2' would be
-    ('5', '0', 0, '2', '').
+    Split kernel version components.
+    
+    Attributes:
+        major: Major version number (e.g., 4 in "4.18.1").
+        minor: Minor version number (e.g., 18 in "4.18.1").
+        stable: Stable version number (e.g., 1 in "4.18.1"). If not present, it is 0.
+        rc: Release candidate version number (e.g., 2 in "5.0-rc2"). If not present, it is 0.
+        localver: Local version string (e.g., "-build0" in "4.18.1-build0"). An empty string if not
+                  present.
+    """
+    major: int
+    minor: int
+    stable: int
+    rc: int
+    localver: str
+
+def _fetch_rc(localver: str) -> tuple[int, str]:
+    """
+    Extract the release candidate version from local version string.
+
+    Args:
+        localver: The local version string to parse (e.g., "-rc2-custom" or "-build0").
+
+    Returns:
+        A tuple containing:
+            - rc: The RC number (0 if not found).
+            - remaining_localver: The localver string with RC pattern removed.
+
+    Examples:
+        >>> _fetch_rc("-rc2-custom")
+        (2, "-custom")
+        >>> _fetch_rc("-build0")
+        (0, "-build0")
+        >>> _fetch_rc("")
+        (0, "")
     """
 
-    def _fetch_rc(localver):
-        """Fetch the release candidate version number from the local version."""
+    matchobj = re.match(r"-rc(\d+)(.*)", localver)
+    if matchobj:
+        return int(matchobj.group(1)), matchobj.group(2)
+    return 0, localver
 
-        matchobj = re.match(r"-rc(\d+)(.*)", localver)
-        if matchobj:
-            return matchobj.group(1, 2)
-        return (None, localver)
+def split_kver(kver: str) -> SplitKernelVersionTypedDict:
+    """
+    Split a kernel version string into its components.
+
+    Args:
+        kver: The kernel version string to parse (e.g., "5.10.1-rc2-custom").
+
+    Returns:
+        The split kernel version components as a SplitKernelVersionTypedDict.
+
+    Examples:
+        >>> split_kver("4.18.1-build0")
+        {"major": 4, "minor": 18, "stable": 1, "rc": 0, "localver": "-build0"}
+        >>> split_kver("5.0-rc2")
+        {"major": 5, "minor": 0, "stable": 0, "rc": 2, "localver": ""}
+        >>> split_kver("6.1")
+        {"major": 6, "minor": 1, "stable": 0, "rc": 0, "localver": ""}
+    """
 
     matchobj = re.match(r"^(\d+)\.(\d+)(?:(?:\.(\d+)){0,1}(.*)){0,1}", kver)
     if not matchobj:
-        raise Error(f"failed to parse kernel version string '{kver}'")
+        raise Error(f"Failed to parse kernel version string '{kver}'")
 
     major, minor, stable, localver = matchobj.group(1, 2, 3, 4)
     if stable is None:
@@ -44,66 +96,146 @@ def split_kver(kver):
     major = int(major)
     minor = int(minor)
     stable = int(stable)
-    if rc is not None:
-        rc = int(rc)
 
-    return SplitKver(major, minor, stable, rc, localver)
+    return {"major": major,
+            "minor": minor,
+            "stable": stable,
+            "rc": rc,
+            "localver": localver}
 
-def kver_lt(kver1, kver2):
+
+def _lt_rc(rc1: int, rc2: int) -> bool:
     """
-    Return 'True' if kernel version string 'kver1' is smaller than kernel version string 'kver2'
-    (kernel version 'kver1' is older than kernel version 'kver2').
+    Compares two RC numbers. RC value 0 indicates a final release (no RC), which is considered newer
+    than any RC version.
+
+    Args:
+        rc1: First RC number (0 for final release, positive integer for RC).
+        rc2: Second RC number (0 for final release, positive integer for RC).
+
+    Returns:
+        bool: True if 'rc1' is older than 'rc2'.
+
+    Examples:
+        >>> _lt_rc(1, 2)
+        True
+        >>> _lt_rc(1, 0)
+        True
     """
 
-    def _lt(a, b):
-        if a is None:
-            return False
-        if b is None:
-            return True
-        return a < b
+    if rc1 == 0 and rc2 == 0:
+        # Both are final releases, equal.
+        return False
+    if rc1 == 0:
+        # rc1 is final (newer), rc2 is RC (older)
+        return False
+    if rc2 == 0:
+        # rc1 is RC (older), rc2 is final (newer)
+        return True
 
-    major1, minor1, stable1, rc1, localver1 = split_kver(kver1)
-    major2, minor2, stable2, rc2, localver2 = split_kver(kver2)
+    return rc1 < rc2
 
-    if major1 != major2:
-        return major1 < major2
-    if minor1 != minor2:
-        return minor1 < minor2
-    if stable1 != stable2:
-        return stable1 < stable2
-    if rc1 != rc2:
-        return _lt(rc1, rc2)
-    return localver1 < localver2
-
-def kver_ge(kver1, kver2):
+def kver_lt(kver1: str, kver2: str) -> bool:
     """
-    Return 'True' if kernel version string 'kver1' is greater or equal to kernel version string
-    'kver2' (kernel version 'kver1' is newer or equal to kernel version 'kver2').
+    Compare two kernel version strings for less-than relationship.
+
+    Args:
+        kver1: First kernel version string to compare (e.g., "5.10.1").
+        kver2: Second kernel version string to compare (e.g., "5.10.2").
+
+    Returns:
+        bool: True if kver1 is older than kver2, False otherwise.
+
+    Examples:
+        >>> kver_lt("5.10.1", "5.10.2")
+        True
+        >>> kver_lt("5.10.2", "5.10.1")
+        False
+        >>> kver_lt("5.10-rc1", "5.10.0")
+        True
+        >>> kver_lt("5.10.0", "5.10-rc1")
+        False
+    """
+
+    kver1_split = split_kver(kver1)
+    kver2_split = split_kver(kver2)
+
+    if kver1_split["major"] != kver2_split["major"]:
+        return kver1_split["major"] < kver2_split["major"]
+    if kver1_split["minor"] != kver2_split["minor"]:
+        return kver1_split["minor"] < kver2_split["minor"]
+    if kver1_split["stable"] != kver2_split["stable"]:
+        return kver1_split["stable"] < kver2_split["stable"]
+    if kver1_split["rc"] != kver2_split["rc"]:
+        return _lt_rc(kver1_split["rc"], kver2_split["rc"])
+    return kver1_split["localver"] < kver2_split["localver"]
+
+def kver_ge(kver1: str, kver2: str) -> bool:
+    """
+    Compare two kernel version strings for greater-than-or-equal relationship.
+
+    Args:
+        kver1: First kernel version string to compare (e.g., "5.10.1").
+        kver2: Second kernel version string to compare (e.g., "5.10.2").
+
+    Returns:
+        bool: True if kver1 is newer than or equal to kver2, False otherwise.
+
+    Examples:
+        >>> kver_ge("5.10.2", "5.10.1")
+        True
+        >>> kver_ge("5.10.1", "5.10.2")
+        False
+        >>> kver_ge("5.10.0", "5.10-rc1")
+        True
+        >>> kver_ge("5.10-rc1", "5.10.0")
+        False
+        >>> kver_ge("5.10.1", "5.10.1")
+        True
     """
 
     return not kver_lt(kver1, kver2)
 
-def get_kver(pman=None):
+def get_kver(pman: ProcessManagerType | None) -> str:
     """
-    Return version of the kernel running on the host associated with the 'pman' object (local host
-    by default).
+    Retrieve the kernel version string from the currently running kernel on the host associated with
+    'pman'.
 
-    By default this function returns the kernel version string (e.g., "4.18.1-build0").
+    Args:
+        pman: A process manager object for the target host. If not provided, a local process manager
+              will be used.
+
+    Returns:
+        str: Kernel version string (e.g., "5.10.1-build0", "6.1.0-rc2").
+
+    Examples:
+        >>> get_kver()  # Local host
+        "5.15.0-76-generic"
+        >>> get_kver(remote_pman)  # Remote host
+        "6.1.0-rc1"
     """
 
     with ProcessManager.pman_or_local(pman) as wpman:
         kver = wpman.run_verify_join("uname -r")[0].strip()
         return kver
 
-def get_kver_ktree(ktree, pman=None, makecmd=None):
+def get_kver_ktree(ktree: Path,
+                   pman: ProcessManagerType | None = None,
+                   makecmd: str = "") -> str:
     """
-    Get version of the kernel in the kernel sources directory 'ktree'. The 'ktree' directory must
-    contain an already configured kernel or it should be path to the kernel build directory if the
-    kernel was compiled out of tree (make O=<ktree>).
+    Retrieve the kernel version from a configured kernel source tree or build directory. The kernel
+    sources must be already configured (e.g., '.config' file must exist). Supports both in-tree and
+    out-of-tree builds.
 
-    By default this function runs the 'make -C <ktree> --quiet -- kernelrelease' command to get the
-    kernel version. However, you can use the 'makecmd' argument to override the 'make -C <ktree>'
-    part of it.
+    Args:
+        ktree: Path to the kernel source directory or build directory (for out-of-tree builds
+               created with 'make O=<ktree>').
+        pman: A process manager object for the target host. If not provided, a local process manager
+              will be used.
+        makecmd: Custom make command prefix to use instead of 'make -C <ktree>'.
+
+    Returns:
+        str: Kernel version string (e.g., '5.10.1-custom', '6.1.0-rc2').
     """
 
     with ProcessManager.pman_or_local(pman) as wpman:
@@ -114,14 +246,22 @@ def get_kver_ktree(ktree, pman=None, makecmd=None):
         try:
             kver = wpman.run_verify_join(cmd)[0].strip()
         except Error as err:
-            raise Error(f"cannot detect kernel version in '{ktree}':\n{err}\nMake sure kernel "
-                        f"sources are configured.") from err
+            raise Error(f"Cannot detect kernel version in '{ktree}':\n{err.indent(2)}\nMake sure "
+                        f"kernel sources are configured.") from err
 
     return kver
 
-def get_kver_bin(path, pman=None):
+def get_kver_bin(path: Path, pman: ProcessManagerType | None = None) -> str:
     """
-    Get version of a kernel binary at 'path'.
+    Extract the kernel version from a compiled kernel binary (e.g., vmlinux, bzImage) by using the
+    'file' command and parsing its output. The binary must be a valid Linux kernel executable.
+
+    Args:
+        path: Path object pointing to the kernel binary file.
+        pman: Process manager for the target host. If None, uses the local host.
+
+    Returns:
+        str: Kernel version string extracted from the binary (e.g., '5.10.1', '6.1.0-rc2').
     """
 
     cmd = f"file -- {path}"
@@ -133,11 +273,11 @@ def get_kver_bin(path, pman=None):
 
         matchobj = re.match(r".* Linux kernel.* executable[ ,].*", stdout)
         if not matchobj:
-            raise Error(f"file at '{path}'{wpman.hostmsg} is not a Linux kernel binary file\n{msg}")
+            raise Error(f"File at '{path}'{wpman.hostmsg} is not a Linux kernel binary file\n{msg}")
 
     matchobj = re.match(r".* version ([^ ]+) .*", stdout)
     if not matchobj:
-        raise Error(f"{msg}\nFailed to find kernel version in the output.")
+        raise Error(f"{msg}\nFailed to find kernel version in the output")
 
     kver = matchobj.group(1)
     return kver
