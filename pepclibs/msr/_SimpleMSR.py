@@ -20,12 +20,15 @@ from pepclibs.helperlibs import Logging, LocalProcessManager, EmulProcessManager
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorPermissionDenied
 
 if typing.TYPE_CHECKING:
-    from typing import Literal, Generator, Sequence
+    from typing import Literal, Generator, Sequence, Final
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
-_CPU_BYTEORDER: Literal["little", "big"] = "little"
+_CPU_BYTEORDER: Final[Literal["little", "big"]] = "little"
+
+# A debug option to disable I/O optimizations.
+DISABLE_IO_OPTIMIZATIONS: bool = False
 
 class SimpleMSR(ClassHelpers.SimpleCloseContext):
     """
@@ -244,11 +247,11 @@ for cpu in cpus:
             _LOG.debug("CPU%d: MSR 0x%x: Read 0x%x%s", cpu, regaddr, regval, self._pman.hostmsg)
             yield cpu, regval
 
-    def _cpus_read_emulation(self,
-                             regaddr: int,
-                             cpus: Sequence[int]) -> Generator[tuple[int, int], None, None]:
+    def _cpus_read_pman(self,
+                        regaddr: int,
+                        cpus: Sequence[int]) -> Generator[tuple[int, int], None, None]:
         """
-        Read an MSR from specified CPUs on an emulated host.
+        Read an MSR from specified CPUs using the process manager object.
 
         Args:
             regaddr: The address of the MSR to read.
@@ -289,10 +292,11 @@ for cpu in cpus:
                 regval: Value read from the MSR.
         """
 
-        if self._pman.is_remote:
+        if DISABLE_IO_OPTIMIZATIONS or \
+           isinstance(self._pman, EmulProcessManager.EmulProcessManager):
+            yield from self._cpus_read_pman(regaddr, cpus)
+        elif self._pman.is_remote:
             yield from self._cpus_read_remote(regaddr, cpus)
-        elif isinstance(self._pman, EmulProcessManager.EmulProcessManager):
-            yield from self._cpus_read_emulation(regaddr, cpus)
         else:
             yield from self._cpus_read_local(regaddr, cpus)
 
@@ -409,12 +413,9 @@ for cpu in cpus:
             raise type(err)(f"Failed to write '{regval:#x}' to MSR '{regaddr:#x}' on CPUs "
                             f"{cpus_str}{self._pman.hostmsg}:\n{errmsg}") from err
 
-    def _cpus_write_emulation(self,
-                              regaddr: int,
-                              regval: int,
-                              cpus: Sequence[int]):
+    def _cpus_write_pman(self, regaddr: int, regval: int, cpus: Sequence[int]):
         """
-        Write a value to an MSR on specified CPUs on an emulated host.
+        Write a value to an MSR on specified CPUs using the process manager object.
 
         Args:
             regaddr: The address of the MSR to write to.
@@ -449,10 +450,11 @@ for cpu in cpus:
                   by the caller.
         """
 
-        if self._pman.is_remote:
+        if DISABLE_IO_OPTIMIZATIONS or \
+           isinstance(self._pman, EmulProcessManager.EmulProcessManager):
+            self._cpus_write_pman(regaddr, regval, cpus)
+        elif self._pman.is_remote:
             self._cpus_write_remote(regaddr, regval, cpus)
-        elif isinstance(self._pman, EmulProcessManager.EmulProcessManager):
-            self._cpus_write_emulation(regaddr, regval, cpus)
         else:
             self._cpus_write_local(regaddr, regval, cpus)
 
