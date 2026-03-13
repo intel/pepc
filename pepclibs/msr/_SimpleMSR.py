@@ -8,6 +8,12 @@
 
 """
 Provide a capability to read and write CPU Model Specific Registers.
+
+MSR I/O Performance Note:
+    Using Python's built-in 'open()' followed by 'seek()' and 'read()'/'write()' is ~130 times
+    slower than using 'os.open()' with 'os.pread()'/'os.pwrite()' for MSR operations. The exact
+    reason is not fully understood, but is likely related to how the MSR kernel driver handles
+    these operations. This module uses 'os.pread()'/'os.pwrite()' for optimal performance.
 """
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
