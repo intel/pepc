@@ -18,11 +18,11 @@ import argparse
 from pathlib import Path
 
 try:
+    argcomplete: types.ModuleType | None
     import argcomplete
-    _ARGCOMPLETE_AVAILABLE = True
 except ImportError:
     # We can live without argcomplete, we only lose tab completions.
-    _ARGCOMPLETE_AVAILABLE = False
+    argcomplete = None
 
 from pepclibs.helperlibs import DamerauLevenshtein, Trivial, Logging
 from pepclibs.helperlibs.Exceptions import Error
@@ -174,7 +174,7 @@ def add_options(parser: argparse.ArgumentParser | ArgsParser, options: Iterable[
             args = (opt["short"], opt["long"])
 
         arg = parser.add_argument(*args, **opt["kwargs"])
-        if opt["argcomplete"] and _ARGCOMPLETE_AVAILABLE:
+        if opt["argcomplete"] and argcomplete is not None:
             setattr(arg, "completer", getattr(argcomplete.completers, opt["argcomplete"]))
 
 def add_ssh_options(parser: argparse.ArgumentParser | ArgsParser):
