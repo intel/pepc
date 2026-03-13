@@ -752,6 +752,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         # Location of the turbo knob in sysfs depends on the CPU frequency driver. So get the driver
         # name first.
+        val = ""
         for cpu, driver in self.get_driver(cpus):
             if driver == "intel_pstate":
                 try:
@@ -783,6 +784,9 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
             # The driver and turbo status are global, so it is enough to read only once.
             break
+
+        if not val:
+            raise Error("Failed to determine turbo status: no CPUs were processed")
 
         for cpu in cpus:
             yield cpu, val
