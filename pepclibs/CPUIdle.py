@@ -283,12 +283,8 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
             # Ensure the desired keys order.
             csinfo[csname] = {}
             csinfo[csname]["index"] = cstate["index"]
-            for _key in _CST_SYSFS_FNAMES:
-                if typing.TYPE_CHECKING:
-                    key = cast(ReqCStateInfoKeysType, _key)
-                else:
-                    key = _key
-                csinfo[csname][key] = cstate[key]
+            for key in _CST_SYSFS_FNAMES:
+                csinfo[csname][key] = cstate[key] # type: ignore
 
         try:
             fpaths, values = self._read_fpaths_and_values(cpus)
@@ -304,7 +300,7 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
         # This is a temporary dictionary where we'll collect all data for a single C-state.
         cstate: ReqCStateInfoTypedDict = {}
 
-        prev_index = prev_cpu = -1
+        prev_index = cpu = prev_cpu = -1
         fpath_regex = re.compile(r".+/cpu([0-9]+)/cpuidle/state([0-9]+)/(.+)")
 
         # Build the C-states information dictionary out of sysfs file names and and values.
@@ -365,11 +361,16 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
                 if fname == "disable":
                     cstate[fname] = bool(int(val))
                 else:
-                    cstate[fname] = int(val)
+                    cstate[fname] = int(val) # type: ignore
             else:
-                cstate[fname] = val
+                cstate[fname] = val # type: ignore
 
         _add_cstate(csinfo, cstate)
+
+        if cpu == -1:
+            raise Error(f"Failed to parse CPU number from the list of C-state file names "
+                        f"{self._pman.hostmsg}:\n  {fpaths}")
+
         yield cpu, csinfo
 
     def _get_cstates_info(self,
