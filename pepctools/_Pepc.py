@@ -13,18 +13,18 @@ pepc - Power, Energy, and Performance Configuration tool for Linux.
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
+import types
+import typing
 import argparse
 from pathlib import Path
 
 try:
+    argcomplete: types.ModuleType | None
     import argcomplete
-    _ARGCOMPLETE_AVAILABLE = True
 except ImportError:
     # We can live without argcomplete, we only lose tab completions.
-    argcomplete = object()
-    _ARGCOMPLETE_AVAILABLE = False
+    argcomplete = None
 
-import typing
 from typing import cast
 from pepclibs import PMQoSVars, CStatesVars, PStatesVars, UncoreVars, CPUInfoVars, TPMIVars
 from pepclibs.helperlibs import ArgParse, Human, Logging, ProjectFiles
@@ -791,7 +791,7 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     subpars2.add_argument("--l1-aspm", metavar="on/off", action=ArgParse.OrderedArg, nargs="?",
                           help=text)
 
-    if _ARGCOMPLETE_AVAILABLE:
+    if argcomplete is not None:
         getattr(argcomplete, "autocomplete")(parser)
 
     return parser
