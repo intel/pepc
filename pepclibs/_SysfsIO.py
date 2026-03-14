@@ -1,28 +1,29 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2023-2025 Intel Corporation
+# Copyright (C) 2023-2026 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
-# Authors: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
-#          Antti Laakso <antti.laakso@linux.intel.com>
-#          Niklas Neronin <niklas.neronin@intel.com>
+# Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
-Provide API for reading and writing sysfs files. Implement caching.
+Provide API for reading and writing sysfs files. Implement transactions, caching and optimized I/O
+operations for remote hosts.
 """
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
+import re
 import time
 import typing
 from pathlib import Path
-from pepclibs.helperlibs import Logging, LocalProcessManager, ClassHelpers, Trivial
+from pepclibs.helperlibs import Logging, LocalProcessManager, EmulProcessManager, ClassHelpers
+from pepclibs.helperlibs import Trivial
 from pepclibs.helperlibs.Exceptions import ErrorNotSupported, ErrorBadFormat
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorVerifyFailed
 
 if typing.TYPE_CHECKING:
-    from typing import TypedDict
+    from typing import TypedDict, Generator, Iterable
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
     class _TransactionItemTypedDict(TypedDict, total=False):
@@ -45,26 +46,45 @@ if typing.TYPE_CHECKING:
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
+# A debug option to disable I/O optimizations.
+DISABLE_IO_OPTIMIZATIONS: bool = False
+# A debug option for self-verifying I/O optimizations.
+VERIFY_IO_OPTIMIZATIONS: bool = False
+
+# The maximum total length of file paths for the optimized I/O operations.
+_MAX_PATHS_LEN = 3192
+
 class SysfsIO(ClassHelpers.SimpleCloseContext):
     """
-    Provide API for reading and writing sysfs files. Implement caching.
+    Provide API for reading and writing sysfs files. Implement transactions, caching and optimized
+    I/O operations for remote hosts.
 
     Public methods overview.
 
-    1. Read / write to a file.
+    1. Read / write a single file.
         * 'read()' - read a string.
         * 'read_int()' - read an integer.
         * 'write()' - write a string.
+        * 'write_int()' - write an integer.
         * 'write_verify()' - write a string and verify.
-    2. Cache operations.
-        * cache_add() - add data to the cache.
-        * cache_remove() - remove data from the cache.
-    3. Transactions support.
+        * 'write_verify_int()' - write an integer and verify.
+    2. Read multiple files.
+        * 'read_paths()' - read multiple files, return strings.
+        * 'read_paths_int()' - read multiple files, return integers.
+    3. Write multiple files.
+        * 'write_paths()' - write a string to multiple files.
+        * 'write_paths_int()' - write an integer to multiple files.
+        * 'write_paths_verify()' - write a string to multiple files and verify.
+        * 'write_paths_verify_int()' - write an integer to multiple files and verify.
+    4. Cache operations.
+        * 'cache_add()' - add data to the cache.
+        * 'cache_remove()' - remove data from the cache.
+    5. Transactions support.
         * 'start_transaction()' - start a transaction.
         * 'flush_transaction()' - flush the transaction buffer.
         * 'commit_transaction()' - commit the transaction.
 
-    Note, the method of this class do not normalize the input path, and the user is supposed to do
+    Note, the methods of this class do not normalize the input path, and the user is supposed to do
     it for caching to work efficiently (the cache is indexed by file path).
     """
 
@@ -87,9 +107,23 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
         else:
             self._pman = pman
 
+        if DISABLE_IO_OPTIMIZATIONS and VERIFY_IO_OPTIMIZATIONS:
+            _LOG.warning("I/O optimizations are disabled, but their verification is enabled")
+
+        if isinstance(self._pman, EmulProcessManager.EmulProcessManager):
+            self._optimize_io = False
+        else:
+            if DISABLE_IO_OPTIMIZATIONS:
+                self._optimize_io = False
+            elif VERIFY_IO_OPTIMIZATIONS:
+                # Run optimized I/O even for local hosts when verification is enabled.
+                self._optimize_io = True
+            else:
+                self._optimize_io = self._pman.is_remote
+
         # The write-through data cache, indexed by the file path.
         self._cache: dict[Path, str] = {}
-        # Stores new MSR values to be written when 'commit_transaction()' is called.
+        # Stores new values to be written when 'commit_transaction()' is called.
         self._transaction_buffer: dict[Path, _TransactionItemTypedDict] = {}
         # Whether there is an ongoing transaction.
         self._in_transaction = False
@@ -214,8 +248,7 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
         """
 
         if _LOG.getEffectiveLevel() == Logging.DEBUG:
-            if what:
-                what = f" {what}"
+            what = "" if not what else f" {what}"
             _LOG.debug("Writing value '%s' to%s sysfs file '%s'%s",
                        val, what, path, self._pman.hostmsg)
 
@@ -224,15 +257,14 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
                 try:
                     fobj.write(val)
                 except Error as err:
-                    what = "" if what is None else f" {what}"
+                    what = "" if not what else f" {what}"
                     val = str(val)
                     if len(val) > 24:
                         val = f"{val[:23]}...snip..."
                     raise Error(f"Failed to write value '{val}' to{what} sysfs file '{path}'"
                                 f"{self._pman.hostmsg}:\n{err.indent(2)}") from err
         except ErrorNotFound as err:
-            if what:
-                what = f" {what}"
+            what = "" if not what else f" {what}"
             val = str(val)
             if len(val) > 24:
                 val = f"{val[:23]}...snip..."
@@ -280,14 +312,175 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
 
             time.sleep(sleep)
 
-        if what:
-            what = f" {what}"
+        what = "" if not what else f" {what}"
         val_str = str(val)
         if len(val_str) > 24:
-            val_str = f"{val[:23]}...snip..."
+            val_str = f"{val_str[:23]}...snip..."
         raise ErrorVerifyFailed(f"Failed to write value '{val_str}' to{what} sysfs file '{path}'"
-                                f"{self._pman.hostmsg}:\n  wrote '{val}', but read '{new_val}' "
+                                f"{self._pman.hostmsg}:\n  Wrote '{val}', but read '{new_val}' "
                                 f"back", expected=val, actual=new_val, path=path)
+
+    def _write_paths_vals_optimized_helper(self, batch_info, winfo):
+        """
+        Write multiple paths and values with I/O optimizations for remote hosts.
+        
+        Args:
+            batch_info: The batch write information dictionary.
+            winfo: The formatted string of write operations for the Python script.
+
+        Raises:
+            ErrorVerifyFailed: If verification of any write operation fails.
+        """
+
+        python_path = self._pman.get_python_path()
+
+        cmd = f"""{python_path} -c '
+import time
+winfo = {{{winfo}}}
+for path, (val, verify, retries, sleep) in winfo.items():
+    try:
+        with open(path, "w") as fobj:
+            fobj.write(val)
+    except Exception as err:
+        print("ERROR: Write: '%s': '%s'" % (path, err))
+        raise SystemExit(0)
+
+    if not verify:
+        continue
+
+    while True:
+        try:
+            with open(path, "r") as fobj:
+                new_val = fobj.read().strip()
+        except Exception as err:
+            print("ERROR: Read: '%s': '%s'" % (path, err))
+            raise SystemExit(0)
+
+        if val == new_val:
+            break
+
+        retries -= 1
+        if retries < 0:
+            print("ERROR: Verify: '%s': Expected '%s': Got '%s'" % (path, val, new_val))
+            raise SystemExit(0)
+
+        time.sleep(sleep)
+'"""
+
+        try:
+            stdout, stderr = self._pman.run_verify_join(cmd)
+        except Error as err:
+            errmsg = err.indent(2)
+            raise type(err)(f"Failed to write sysfs files{self._pman.hostmsg}:\n"
+                            f"{errmsg}") from err
+
+        if stderr:
+            # Nothing is expected on stderr, if there is any output, treat it as an error.
+            raise Error(f"Failed to write sysfs files{self._pman.hostmsg}:\n"
+                        f"Unexpected output on stderr:\n{stderr}")
+
+        if not stdout:
+            # All files flushed and verified successfully.
+            return
+
+        generic_errmsg = f"Failed to write sysfs files{self._pman.hostmsg}:\n{stdout}"
+
+        if not stdout.startswith("ERROR: "):
+            raise Error(generic_errmsg)
+
+        # Only one line of output is expected, if there are multiple lines, something is wrong with
+        # the output format.
+        stdout_lines = stdout.splitlines()
+        if len(stdout_lines) != 1:
+            raise Error(generic_errmsg)
+
+        stdout = stdout_lines[0].strip()
+        stdout_tokens = stdout.split()
+        if len(stdout_tokens) < 4:
+            raise Error(generic_errmsg)
+
+        # The second line token is the error type, e.g. "Write", "Read", or "Verify".
+        error_type = stdout_tokens[1]
+        if not error_type.endswith(":"):
+            raise Error(generic_errmsg)
+        error_type = error_type[:-1]
+
+        if error_type == "Write":
+            regex = r"ERROR: Write: '(.+)': '(.+)'"
+        elif error_type == "Read":
+            regex = r"ERROR: Read: '(.+)': '(.+)'"
+        elif error_type == "Verify":
+            regex = r"ERROR: Verify: '(.+)': Expected '(.+)': Got '(.+)'"
+        else:
+            raise Error(generic_errmsg)
+
+        mobj = re.match(regex, stdout)
+        if not mobj:
+            raise Error(generic_errmsg)
+
+        _path = mobj.group(1)
+        if _path not in batch_info:
+            raise Error(f"Unexpected path '{_path}' in the error message:\n{stdout}")
+
+        path = Path(_path)
+        val_info = batch_info[path]
+        val = val_info["val"]
+        what = val_info["what"]
+        what = "" if not what else f" {what}"
+
+        if error_type == "Write":
+            raise Error(f"Failed to write value '{val}' to{what} sysfs file '{path}'"
+                        f"{self._pman.hostmsg}:\n{stdout}")
+        if error_type == "Read":
+            raise Error(f"Failed to read back value from{what} sysfs file '{path}'"
+                        f"{self._pman.hostmsg}:\n{stdout}")
+        if error_type == "Verify":
+            expected_val = mobj.group(2)
+            actual_val = mobj.group(3)
+            raise ErrorVerifyFailed(f"Failed to write value '{val}' to{what} sysfs file '{path}'"
+                                    f"{self._pman.hostmsg}:\n  Wrote '{expected_val}', but read "
+                                    f"'{actual_val}' back",
+                                    expected=expected_val, actual=actual_val, path=path)
+
+    def _write_paths_vals_optimized(self, batch_info: dict[Path, _TransactionItemTypedDict]):
+        """
+        Write multiple paths and values with I/O optimizations for remote hosts.
+
+        The input argument is the batch write information dictionary in the same format as the
+        transaction buffer.
+        
+        Args:
+            batch_info: The batch write information dictionary.
+            
+        Raises:
+            ErrorVerifyFailed: If verification of any write operation fails.
+        """
+
+        # Format a dictionary of write operations as a string for the Python script: winfo, which
+        # stands for "write information".
+        winfo = ""
+        for path, val_info in batch_info.items():
+            val = val_info["val"]
+            verify = val_info["verify"]
+            retries = val_info["retries"]
+            sleep = val_info["sleep"]
+
+            val_quoted = val.replace("'", "\'").replace('"', '\"')
+            winfo_line = f"\"{str(path)}\": (\"{val_quoted}\", {verify}, {retries}, {sleep})"
+
+            if len(winfo_line) > _MAX_PATHS_LEN:
+                raise Error(f"Write line '{winfo_line}' is too long for optimized writing (length "
+                            f"{len(winfo_line)}: It exceeds the limit of {_MAX_PATHS_LEN} "
+                            f"characters)")
+
+            if len(winfo) + len(winfo_line) < _MAX_PATHS_LEN:
+                winfo += f"{winfo_line},\n"
+                continue
+
+            self._write_paths_vals_optimized_helper(batch_info, winfo)
+            winfo = f"{winfo_line},\n"
+
+        self._write_paths_vals_optimized_helper(batch_info, winfo)
 
     def flush_transaction(self):
         """
@@ -302,20 +495,25 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
         if self._transaction_buffer:
             _LOG.debug("Flushing SysfsIO transaction buffer")
 
-        for path, val_info in self._transaction_buffer.items():
-            val = val_info["val"]
-            what = val_info["what"]
-            verify = val_info["verify"]
-
+        for path in self._transaction_buffer:
             self.cache_remove(path)
 
-            self._write(path, val, what)
-            if verify:
-                retries = val_info["retries"]
-                sleep = val_info["sleep"]
-                self._verify(path, val, what, retries=retries, sleep=sleep)
+        if self._optimize_io:
+            self._write_paths_vals_optimized(self._transaction_buffer)
+        else:
+            for path, val_info in self._transaction_buffer.items():
+                val = val_info["val"]
 
-            self.cache_add(path, val)
+                self._write(path, val, val_info["what"])
+
+                if val_info["verify"]:
+                    what = val_info["what"]
+                    retries = val_info["retries"]
+                    sleep = val_info["sleep"]
+                    self._verify(path, val, what, retries=retries, sleep=sleep)
+
+        for path, val_info in self._transaction_buffer.items():
+            self.cache_add(path, val_info["val"])
 
         self._transaction_buffer.clear()
 
@@ -334,13 +532,15 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
         self._in_transaction = False
         _LOG.debug("Transaction in SysfsIO has been committed")
 
-    def read(self, path: Path, what: str = "") -> str:
+    def read(self, path: Path, what: str = "", val_if_not_found: str | None = None) -> str:
         """
         Read the contents of a sysfs file at the specified path.
 
         Args:
             path: Path to the sysfs file to read.
             what: Optional short description of what is being read, included in exception messages.
+            val_if_not_found: Value to return if the file is not found instead of raising an
+                              exception.
 
         Returns:
             The contents of the file as a string.
@@ -357,25 +557,27 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
                 try:
                     val = fobj.read().strip()
                 except Error as err:
-                    if what:
-                        what = f" {what}"
+                    what = "" if not what else f" {what}"
                     raise Error(f"Failed to read{what} from '{path}'{self._pman.hostmsg}\n"
                                 f"{err.indent(2)}") from err
         except ErrorNotFound as err:
-            if what:
-                what = f" {what}"
+            if val_if_not_found is not None:
+                return val_if_not_found
+            what = "" if not what else f" {what}"
             raise ErrorNotSupported(f"Failed to read{what} from '{path}'{self._pman.hostmsg}\n"
                                     f"{err.indent(2)}") from err
 
         return self.cache_add(path, val)
 
-    def read_int(self, path: Path, what: str = "") -> int:
+    def read_int(self, path: Path, what: str = "", val_if_not_found: str | None = None) -> int:
         """
         Read a sysfs file and return its contents as an integer.
 
         Args:
             path: Path to the sysfs file to read.
             what: Optional short description of what is being read, included in exception messages.
+            val_if_not_found: Value to return if the file is not found instead of raising an
+                              exception.
 
         Returns:
             The integer value read from the file.
@@ -385,22 +587,224 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
             ErrorBadFormat: If the file contents cannot be parsed as an integer.
         """
 
-        val = self.read(path, what=what)
+        val = self.read(path, what=what, val_if_not_found=val_if_not_found)
 
         try:
             return Trivial.str_to_int(val, what=what)
         except Error as err:
-            if what:
-                what = f" {what}"
+            what = "" if not what else f" {what}"
             raise ErrorBadFormat(f"Bad contents of{what} sysfs file '{path}'{self._pman.hostmsg}\n"
                                  f"{err.indent(2)}") from err
+
+    def _read_paths_optimized_helper(self,
+                                     paths: list[Path],
+                                     what: str = "",
+                                     val_if_not_found: str | None = None) -> \
+                                                            Generator[tuple[Path, str], None, None]:
+        """
+        Read the specified list of paths in a single SSH command. The arguments are the same as for
+        'read_paths()'.
+        """
+
+        _file_not_found_val = "pepc_file_not_found"
+        python_path = self._pman.get_python_path()
+
+        read_paths = [path for path in paths if path not in self._cache]
+
+        if read_paths:
+            paths_str = ",\n".join(f"\"{str(path)}\"" for path in read_paths)
+
+            cmd = f"""{python_path} -c '
+paths = [{paths_str}]
+for path in paths:
+    try:
+        with open(path, "r") as fobj:
+            val = fobj.read().strip()
+    except FileNotFoundError:
+        val = "{_file_not_found_val}"
+    except Exception as err:
+        print("ERROR: Failed to read file '%s': %s" % (path, err))
+        raise SystemExit(1)
+    print(val)
+'"""
+
+            try:
+                stdout, stderr = self._pman.run_verify_nojoin(cmd)
+            except Error as err:
+                errmsg = err.indent(2)
+                raise type(err)(f"Failed to read sysfs files{self._pman.hostmsg}:\n"
+                                f"{errmsg}") from err
+
+            if stderr:
+                raise Error(f"Unexpected output on stderr while reading sysfs files"
+                            f"{self._pman.hostmsg}:\n{stderr}")
+
+            if len(read_paths) != len(stdout):
+                raise Error(f"BUG: Unexpected number of lines from the optimized read command:\n"
+                            f"- Expected: {len(read_paths)}\n"
+                            f"- Actual: {len(stdout)}")
+
+            read_results = {}
+            for path, val in zip(read_paths, stdout):
+                val = val.strip()
+                if val == _file_not_found_val:
+                    if val_if_not_found is not None:
+                        read_results[path] = val_if_not_found
+                    else:
+                        what = "" if not what else f" {what}"
+                        raise ErrorNotSupported(f"Failed to read{what} from '{path}'"
+                                                f"{self._pman.hostmsg}")
+                else:
+                    if val.startswith("ERROR: Failed to read file "):
+                        raise Error(f"Failed to read{what}'{self._pman.hostmsg}:\n  {val}")
+                    self.cache_add(path, val)
+                    read_results[path] = val
+        else:
+            read_results = {}
+
+        # Yield all paths in order, from read_results or cache.
+        for path in paths:
+            if path in read_results:
+                yield path, read_results[path]
+            else:
+                yield path, self._cache[path]
+
+    def _read_paths_optimized(self,
+                              paths: Iterable[Path],
+                              what: str = "",
+                              val_if_not_found: str | None = None) -> \
+                                                            Generator[tuple[Path, str], None, None]:
+        """
+        Implement 'read_paths()' with I/O optimizations for remote hosts. The arguments are the same
+        as for 'read_paths()'.
+
+        In case of a remote host, reading each sysfs file involves a separate SSH command, which can
+        be very slow. To optimize this, we read multiple files in a single SSH command by running a
+        Python script on the remote host that reads all the specified files and prints their
+        contents.
+        """
+
+        _LOG.debug("Reading multiple sysfs files with I/O optimizations")
+
+        read_paths: list[Path] = []
+        read_paths_len = 0
+
+        for path in paths:
+            if path in self._cache:
+                read_paths.append(path)
+                continue
+
+            path_len = len(str(path))
+            if path_len > _MAX_PATHS_LEN:
+                raise Error(f"Path '{path}' is too long for optimized reading (length {path_len}: "
+                            f"It exceeds the limit of {_MAX_PATHS_LEN} characters)")
+
+            if read_paths_len + path_len < _MAX_PATHS_LEN:
+                read_paths_len += path_len
+                read_paths.append(path)
+                continue
+
+            yield from self._read_paths_optimized_helper(read_paths, what=what,
+                                                         val_if_not_found=val_if_not_found)
+
+            read_paths = [path]
+            read_paths_len = path_len
+
+        if read_paths:
+            yield from self._read_paths_optimized_helper(read_paths, what=what,
+                                                         val_if_not_found=val_if_not_found)
+
+    def _read_paths(self,
+                    paths: Iterable[Path],
+                    what: str = "",
+                    val_if_not_found: str | None = None) -> Generator[tuple[Path, str], None, None]:
+        """
+        Implement 'read_paths()' without I/O optimizations for remote hosts. The arguments are the
+        same as for 'read_paths()'.
+        """
+
+        for path in paths:
+            val = self.read(path, what=what, val_if_not_found=val_if_not_found)
+            yield path, val
+
+    def read_paths(self,
+                   paths: Iterable[Path],
+                   what: str = "",
+                   val_if_not_found: str | None = None) -> Generator[tuple[Path, str], None, None]:
+        """
+        Read multiple sysfs files and yield their paths and contents.
+
+        Args:
+            paths: Paths to the sysfs files to read.
+            what: Optional short description of what is being read, included in exception messages.
+            val_if_not_found: Value to return for missing files instead of raising an exception.
+
+        Yields:
+            Tuples of (path, value) for each file read.
+
+        Raises:
+            ErrorNotSupported: If the file does not exist.
+        """
+
+        if self._optimize_io:
+            if not VERIFY_IO_OPTIMIZATIONS:
+                yield from self._read_paths_optimized(paths, what=what,
+                                                      val_if_not_found=val_if_not_found)
+            else:
+                # Materialize paths list since we need to iterate it twice for verification.
+                paths_list = list(paths)
+                iterator1 = self._read_paths(paths_list, what=what,
+                                             val_if_not_found=val_if_not_found)
+                iterator2 = self._read_paths_optimized(paths_list, what=what,
+                                                       val_if_not_found=val_if_not_found)
+
+                for (path1, val1), (path2, val2) in zip(iterator1, iterator2):
+                    if path1 != path2 or val1 != val2:
+                        raise Error(f"BUG: I/O optimization verification failed!\n"
+                                    f"- Unoptimized path: '{path1}'\n"
+                                    f"- Unoptimized value: '{val1}'\n"
+                                    f"- Optimized path: '{path2}'\n"
+                                    f"- Optimized value: '{val2}'")
+                    yield path1, val1
+        else:
+            yield from self._read_paths(paths, what=what, val_if_not_found=val_if_not_found)
+
+    def read_paths_int(self,
+                       paths: Iterable[Path],
+                       what: str = "",
+                       val_if_not_found: str | None = None) -> \
+                                                        Generator[tuple[Path, int], None, None]:
+        """
+        Read multiple sysfs files and yield their paths and contents as integers.
+        
+        Args:
+            paths: Paths to the sysfs files to read.
+            what: Optional short description of what is being read, included in exception messages.
+            val_if_not_found: Value to return for missing files instead of raising an exception.
+        
+        Yields:
+            Tuples of (path, value) for each file read, where value is an integer.
+
+        Raises:
+            ErrorNotSupported: If the file does not exist.
+            ErrorBadFormat: If the file contents cannot be parsed as an integer.
+        """
+
+        for path, val in self.read_paths(paths, what=what, val_if_not_found=val_if_not_found):
+            try:
+                intval = Trivial.str_to_int(val, what=what)
+            except Error as err:
+                what = "" if not what else f" {what}"
+                raise ErrorBadFormat(f"Bad contents of{what} sysfs file '{path}'"
+                                     f"{self._pman.hostmsg}\n{err.indent(2)}") from err
+            yield path, intval
 
     def write(self, path: Path, val: str, what: str = ""):
         """
         Write a value to a sysfs file and update the cache.
 
         If a transaction is in progress, the write operation is queued for the transaction,
-        otherwise, the value is written immediately. The cache is updated after the write operation.
+        otherwise, the value is written immediately.
 
         Args:
             path: Path to the sysfs file to write to.
@@ -445,8 +849,8 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
         """
         Write a value to a sysfs file and verify that the kernel accepted it.
 
-        Write the specified value to the sysfs file, then read the it back to ensure it matches what
-        was written.If the verification fails, it retry the operation.
+        Write the specified value to the sysfs file, then read it back to ensure it matches what
+        was written. If the verification fails, retry the operation.
 
         Args:
             path: Path to the sysfs file to write to.
@@ -495,10 +899,250 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
             try:
                 self._verify(path, val, what, retries, sleep)
             except ErrorVerifyFailed as err:
-                # Make sure the expected and actual values are of an integer time.
+                # Make sure the expected and actual values are of an integer type.
                 setattr(err, "expected", intval)
                 if hasattr(err, "actual") and Trivial.is_int(str(err.actual)):
                     err.actual = int(str(err.actual))
                 raise err
 
         self.cache_add(path, val)
+
+    def _write_paths_optimized_helper(self,
+                                      paths: list[Path],
+                                      val: str,
+                                      what: str = ""):
+        """
+        Write a value to multiple sysfs files with I/O optimizations for remote hosts.
+
+        Args:
+            paths: List of file paths to write to.
+            val: The value to write to the files.
+            what: Optional short description of what is being written, included in exception
+                  messages.
+        """
+
+        python_path = self._pman.get_python_path()
+
+        paths_str = ",\n".join(f"\"{str(path)}\"" for path in paths)
+        cmd = f"""{python_path} -c '
+paths = [{paths_str}]
+for path in paths:
+    try:
+        with open(path, "w") as fobj:
+            fobj.write("{val}")
+    except Exception as err:
+        print("ERROR: Write: '%s': '%s'" % (path, err))
+        break
+'"""
+
+        try:
+            stdout, stderr = self._pman.run_verify_join(cmd)
+        except Error as err:
+            what = "" if not what else f" {what}"
+            errmsg = err.indent(2)
+            raise type(err)(f"Failed to write to{what} sysfs file(s){self._pman.hostmsg}:\n"
+                            f"{errmsg}") from err
+
+        if stderr:
+            # Nothing is expected on stderr, if there is any output, treat it as an error.
+            what = "" if not what else f" {what}"
+            raise Error(f"Failed to write to{what} sysfs file(s){self._pman.hostmsg}:\nUnexpected "
+                        f"output on stderr:\n{stderr}")
+
+        if not stdout:
+            # All files written successfully.
+            return
+
+        generic_errmsg = f"Failed to flush transaction for sysfs files{self._pman.hostmsg}:\n" \
+                         f"{stdout}"
+
+        if not stdout.startswith("ERROR: Write: "):
+            raise Error(generic_errmsg)
+
+        # Only one line of output is expected, if there are multiple lines, something is wrong with
+        # the output format.
+        stdout_lines = stdout.splitlines()
+        if len(stdout_lines) != 1:
+            raise Error(generic_errmsg)
+        stdout = stdout_lines[0].strip()
+
+        regex = r"ERROR: Write: '(.+)': '(.+)'"
+        mobj = re.match(regex, stdout)
+        if not mobj:
+            raise Error(generic_errmsg)
+
+        path = Path(mobj.group(1))
+        if path not in paths:
+            raise Error(f"Unexpected path '{path}' in the error message:\n{stdout}")
+
+        what = "" if not what else f" {what}"
+        raise Error(f"Failed to write value '{val}' to{what} sysfs file '{path}'"
+                    f"{self._pman.hostmsg}:\n{stdout}")
+
+    def _write_paths_optimized(self, paths: Iterable[Path], val: str, what: str = ""):
+        """
+        Implement 'write_paths()' with I/O optimizations for remote hosts. The arguments are the
+        same as for 'write_paths()'.
+
+        In case of a remote host, writing to each sysfs file involves a separate SSH command, which
+        can be very slow. To optimize this, we write to multiple files in a single SSH command by
+        running a Python script on the remote host.
+        """
+
+        _LOG.debug("Writing to multiple sysfs files with I/O optimizations")
+
+        write_paths: list[Path] = []
+        paths_len = 0
+
+        for path in paths:
+            path_len = len(str(path))
+            if path_len > _MAX_PATHS_LEN:
+                raise Error(f"Path '{path}' is too long for optimized writing (length {path_len}: "
+                            f"It exceeds the limit of {_MAX_PATHS_LEN} characters)")
+
+            if paths_len + path_len < _MAX_PATHS_LEN:
+                write_paths.append(path)
+                paths_len += path_len
+                continue
+
+            self._write_paths_optimized_helper(write_paths, val, what=what)
+            write_paths = [path]
+            paths_len = path_len
+
+        self._write_paths_optimized_helper(write_paths, val, what=what)
+
+    def write_paths(self, paths: Iterable[Path], val: str, what: str = ""):
+        """
+        Write a value to multiple sysfs files and update the cache.
+
+        If a transaction is in progress, the write operations are queued for the transaction,
+        otherwise, the value is written immediately.
+
+        Args:
+            paths: Paths to the sysfs files to write to.
+            val: The value to write to the files.
+            what: Optional short description of what is being written, included in exception
+                  messages.
+        """
+
+        paths_list = list(paths)
+
+        for path in paths_list:
+            self.cache_remove(path)
+
+        if self._in_transaction:
+            for path in paths_list:
+                self._add_for_transaction(path, val, what)
+        elif self._optimize_io:
+            if not VERIFY_IO_OPTIMIZATIONS:
+                self._write_paths_optimized(paths_list, val, what=what)
+            else:
+                self._write_paths_optimized(paths_list, val, what=what)
+                for path in paths_list:
+                    self._verify(path, val, what=what)
+        else:
+            for path in paths_list:
+                self._write(path, val, what=what)
+
+        for path in paths_list:
+            self.cache_add(path, val)
+
+    def write_paths_int(self, paths: Iterable[Path], val: str | int, what: str = ""):
+        """
+        Write an integer value to multiple sysfs files.
+
+        If a transaction is in progress, the write operations are queued for the transaction,
+        otherwise, the value is written immediately.
+
+        Args:
+            paths: Paths to the sysfs files to write to.
+            val: The integer value to write to the files.
+            what: Optional short description of what is being written, included in exception
+                  messages.
+        """
+
+        intval = Trivial.str_to_int(val, what=what)
+        self.write_paths(paths, str(intval), what=what)
+
+    def write_paths_verify(self,
+                           paths: Iterable[Path],
+                           val: str,
+                           what: str = "",
+                           retries: int = 0,
+                           sleep: int | float = 0):
+        """
+        Write a value to multiple sysfs files and verify that the kernel accepted it.
+
+        Write the specified value to the sysfs files, then read them back to ensure they match what
+        was written. If the verification fails, retry the operation.
+
+        If a transaction is in progress, the write operations are queued for the transaction,
+        otherwise, the value is written immediately.
+
+        Args:
+            paths: Paths to the sysfs files to write to.
+            val: The value to write to the files.
+            what: Optional short description of what is being written, included in exception
+                  messages.
+            retries: Number of times to retry verification if it fails.
+            sleep: Number of seconds to sleep between verification retries.
+        """
+
+        paths_list = list(paths)
+
+        if self._in_transaction:
+            for path in paths_list:
+                self.cache_remove(path)
+                self._add_for_transaction(path, val, what, verify=True, retries=retries,
+                                          sleep=sleep)
+                self.cache_add(path, val)
+        else:
+            for path in paths_list:
+                self.cache_remove(path)
+
+            if self._optimize_io:
+                # Prepare the batch buffer.
+                batch_info: dict[Path, _TransactionItemTypedDict] = {}
+                for path in paths_list:
+                    batch_info[path] = {
+                        "val": val,
+                        "what": what,
+                        "verify": True,
+                        "retries": retries,
+                        "sleep": sleep
+                    }
+                self._write_paths_vals_optimized(batch_info)
+            else:
+                for path in paths_list:
+                    self._write(path, val, what=what)
+                    self._verify(path, val, what, retries, sleep)
+
+            for path in paths_list:
+                self.cache_add(path, val)
+
+    def write_paths_verify_int(self,
+                               paths: Iterable[Path],
+                               val: str | int,
+                               what: str = "",
+                               retries: int = 0,
+                               sleep: int | float = 0):
+        """
+        Write an integer value to multiple sysfs files and verify that the kernel accepted it.
+
+        Write the specified integer value to the sysfs files, then read them back to ensure they
+        match what was written. If the verification fails, retry the operation.
+
+        If a transaction is in progress, the write operations are queued for the transaction,
+        otherwise, the value is written immediately.
+
+        Args:
+            paths: Paths to the sysfs files to write to.
+            val: The integer value to write to the files.
+            what: Optional short description of what is being written, included in exception
+                  messages.
+            retries: Number of times to retry verification if it fails.
+            sleep: Number of seconds to sleep between verification retries.
+        """
+
+        intval = Trivial.str_to_int(val, what=what)
+        self.write_paths_verify(paths, str(intval), what=what, retries=retries, sleep=sleep)

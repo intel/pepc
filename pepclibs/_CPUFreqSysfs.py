@@ -280,10 +280,14 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         self._warn_no_ecores_bug()
 
-        for cpu in cpus:
-            path = self._get_cpu_freq_sysfs_path(ftype, cpu, limit=limit)
-            freq = self._sysfs_io.read_int(path, what=f"{ftype} frequency for CPU {cpu}")
-            # The frequency value is in kHz in sysfs.
+        paths_iter = (self._get_cpu_freq_sysfs_path(ftype, cpu, limit=limit) for cpu in cpus)
+
+        for path, freq in self._sysfs_io.read_paths_int(paths_iter, what=f"{ftype} frequency"):
+            # Extract CPU number from path (e.g., /sys/.../policy42/... -> 42).
+            policy_dir = path.parent.name  # e.g., "policy42"
+            cpu = int(policy_dir.replace("policy", ""))
+
+            # The frequency value is in kHz in sysfs, convert to Hz.
             yield cpu, freq * 1000
 
     def get_min_freq(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
@@ -371,56 +375,64 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         yield from self._get_freq_sysfs("max", cpus, limit=True)
 
-    def _validate_freq(self, freq: int, ftype: _SysfsFileType, cpu: int):
+    def _validate_freq(self, freq: int, ftype: _SysfsFileType, cpus: AbsNumsType):
         """
         Validate that a CPU frequency value is within the acceptable range.
 
         Args:
             freq: The CPU frequency value to validate, in Hz.
             ftype: The CPU frequency sysfs file type.
-            cpu: CPU number to validate the frequency for.
+            cpus: CPU numbers to validate the frequency for.
 
         Raises:
             ErrorOutOfRange: If the CPU frequency value is outside the allowed range.
             ErrorBadOrder: If min. CPU frequency is greater than max. CPU frequency and vice versa.
         """
 
-        path = self._get_cpu_freq_sysfs_path("min", cpu, limit=True)
-        min_freq_limit = self._sysfs_io.read_int(path, what=f"min frequency limit for CPU {cpu}")
-        min_freq_limit *= 1000
-
-        path = self._get_cpu_freq_sysfs_path("max", cpu, limit=True)
-        max_freq_limit = self._sysfs_io.read_int(path, what=f"max frequency limit for CPU {cpu}")
-        max_freq_limit *= 1000
-
-        if freq < min_freq_limit or freq > max_freq_limit:
-            name = f"{ftype} CPU {cpu} frequency"
-            freq_str = Human.num2si(freq, unit="Hz", decp=4)
-            min_limit_str = Human.num2si(min_freq_limit, unit="Hz", decp=4)
-            max_limit_str = Human.num2si(max_freq_limit, unit="Hz", decp=4)
-            raise ErrorOutOfRange(f"{name} value of '{freq_str}' is out of range, must be within "
-                                  f"[{min_limit_str},{max_limit_str}]")
+        # Generate paths for all required reads.
+        min_paths_iter = (self._get_cpu_freq_sysfs_path("min", cpu, limit=True) for cpu in cpus)
+        max_paths_iter = (self._get_cpu_freq_sysfs_path("max", cpu, limit=True) for cpu in cpus)
 
         if ftype == "min":
-            path = self._get_cpu_freq_sysfs_path("max", cpu)
-            max_freq = self._sysfs_io.read_int(path, what=f"max frequency for CPU {cpu}") * 1000
-
-            if freq > max_freq:
-                name = f"{ftype} CPU {cpu} frequency"
-                freq_str = Human.num2si(freq, unit="Hz", decp=4)
-                max_freq_str = Human.num2si(max_freq, unit="Hz", decp=4)
-                raise ErrorBadOrder(f"{name} value of '{freq_str}' is greater than the currently "
-                                    f"configured maximum frequency of {max_freq_str}")
+            cur_paths_iter = (self._get_cpu_freq_sysfs_path("max", cpu) for cpu in cpus)
+            cur_what = "max frequency"
         else:
-            path = self._get_cpu_freq_sysfs_path("min", cpu)
-            min_freq = self._sysfs_io.read_int(path, what=f"min frequency for CPU {cpu}") * 1000
+            cur_paths_iter = (self._get_cpu_freq_sysfs_path("min", cpu) for cpu in cpus)
+            cur_what = "min frequency"
 
-            if freq < min_freq:
+        min_limits_iter = self._sysfs_io.read_paths_int(min_paths_iter, what="min frequency limit")
+        max_limits_iter = self._sysfs_io.read_paths_int(max_paths_iter, what="max frequency limit")
+        cur_freqs_iter = self._sysfs_io.read_paths_int(cur_paths_iter, what=cur_what)
+        zipped_iter = zip(cpus, min_limits_iter, max_limits_iter, cur_freqs_iter)
+
+        for cpu, (_, min_limit), (_, max_limit), (_, cur_freq) in zipped_iter:
+            # Convert from kHz to Hz.
+            min_freq_limit = min_limit * 1000
+            max_freq_limit = max_limit * 1000
+            current_freq = cur_freq * 1000
+
+            if freq < min_freq_limit or freq > max_freq_limit:
                 name = f"{ftype} CPU {cpu} frequency"
                 freq_str = Human.num2si(freq, unit="Hz", decp=4)
-                min_freq_str = Human.num2si(min_freq, unit="Hz", decp=4)
-                raise ErrorBadOrder(f"{name} value of '{freq_str}' is less than the currently "
-                                    f"configured minimum frequency of {min_freq_str}")
+                min_limit_str = Human.num2si(min_freq_limit, unit="Hz", decp=4)
+                max_limit_str = Human.num2si(max_freq_limit, unit="Hz", decp=4)
+                raise ErrorOutOfRange(f"{name} value of '{freq_str}' is out of range, must be "
+                                      f"within [{min_limit_str},{max_limit_str}]")
+
+            if ftype == "min":
+                if freq > current_freq:
+                    name = f"{ftype} CPU {cpu} frequency"
+                    freq_str = Human.num2si(freq, unit="Hz", decp=4)
+                    max_freq_str = Human.num2si(current_freq, unit="Hz", decp=4)
+                    raise ErrorBadOrder(f"{name} value of '{freq_str}' is greater than the "
+                                        f"currently configured maximum frequency of {max_freq_str}")
+            else:
+                if freq < current_freq:
+                    name = f"{ftype} CPU {cpu} frequency"
+                    freq_str = Human.num2si(freq, unit="Hz", decp=4)
+                    min_freq_str = Human.num2si(current_freq, unit="Hz", decp=4)
+                    raise ErrorBadOrder(f"{name} value of '{freq_str}' is less than the "
+                                        f"currently configured minimum frequency of {min_freq_str}")
 
     def _set_freq_sysfs(self, freq: int, ftype: _SysfsFileType, cpus: AbsNumsType):
         """
@@ -448,20 +460,26 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
         retries = 2
         sleep = 0.1
 
-        for cpu in cpus:
-            self._validate_freq(freq, ftype, cpu)
+        self._validate_freq(freq, ftype, cpus)
 
-            path = self._get_cpu_freq_sysfs_path(ftype, cpu)
+        paths_iter = (self._get_cpu_freq_sysfs_path(ftype, cpu) for cpu in cpus)
 
-            try:
-                if not self._verify:
-                    self._sysfs_io.write_int(path, freq // 1000, what=what)
-                else:
-                    self._sysfs_io.write_verify_int(path, freq // 1000, what=what, retries=retries,
-                                                    sleep=sleep)
-            except ErrorVerifyFailed as err:
-                setattr(err, "cpu", cpu)
-                raise err
+        try:
+            if not self._verify:
+                self._sysfs_io.write_paths_int(paths_iter, freq // 1000, what=what)
+            else:
+                self._sysfs_io.write_paths_verify_int(paths_iter, freq // 1000, what=what,
+                                                       retries=retries, sleep=sleep)
+        except ErrorVerifyFailed as err:
+            # Extract CPU number from path (e.g., /sys/.../policy42/... -> 42).
+            if not hasattr(err, "path"):
+                raise
+
+            path: Path = getattr(err, "path")
+            policy_dir = path.parent.name  # e.g., "policy42"
+            cpu = int(policy_dir.replace("policy", ""))
+            setattr(err, "cpu", cpu)
+            raise err
 
     def set_min_freq(self, freq: int, cpus: AbsNumsType):
         """
@@ -526,9 +544,13 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             ErrorNotSupported: If the frequencies sysfs file is not present.
         """
 
-        for cpu in cpus:
-            path = self._get_policy_sysfs_path(cpu, "scaling_available_frequencies")
-            val = self._sysfs_io.read(path, what="available CPU frequencies")
+        fname = "scaling_available_frequencies"
+        paths_iter = (self._get_policy_sysfs_path(cpu, fname) for cpu in cpus)
+
+        for path, val in self._sysfs_io.read_paths(paths_iter, what="available CPU frequencies"):
+            # Extract CPU number from path (e.g., /sys/.../policy42/... -> 42).
+            policy_dir = path.parent.name  # e.g., "policy42"
+            cpu = int(policy_dir.replace("policy", ""))
 
             freqs: list[int] = []
             for freq_str in val.split():
@@ -554,10 +576,14 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             frequency in Hz.
         """
 
-        for cpu in cpus:
-            path = self._get_policy_sysfs_path(cpu, "base_frequency")
-            freq = self._sysfs_io.read_int(path, what=f"base frequency for CPU {cpu}")
-            # The frequency value is in kHz in sysfs.
+        paths_iter = (self._get_policy_sysfs_path(cpu, "base_frequency") for cpu in cpus)
+
+        for path, freq in self._sysfs_io.read_paths_int(paths_iter, what="base frequency"):
+            # Extract CPU number from path (e.g., /sys/.../policy42/... -> 42).
+            policy_dir = path.parent.name  # e.g., "policy42"
+            cpu = int(policy_dir.replace("policy", ""))
+
+            # The frequency value is in kHz in sysfs, convert to Hz.
             yield cpu, freq * 1000
 
     def _get_base_freq_bios_limit(self,
@@ -573,15 +599,20 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             frequency in Hz.
         """
 
-        for cpu in cpus:
-            path = self._sysfs_base / f"cpu{cpu}/cpufreq/bios_limit"
-            freq = self._sysfs_io.read_int(path, what=f"base frequency for CPU {cpu}")
+        paths_iter = (self._sysfs_base / f"cpu{cpu}/cpufreq/bios_limit" for cpu in cpus)
+
+        for path, freq in self._sysfs_io.read_paths_int(paths_iter, what="base frequency"):
+            # Extract CPU number from path (e.g., /sys/.../cpu42/cpufreq/bios_limit -> 42).
+            cpu_dir = path.parent.parent.name  # e.g., "cpu42"
+            cpu = int(cpu_dir.replace("cpu", ""))
+
             # On Intel systems that support turbo, the 'bios_limit' file includes the turbo
             # activation frequency, which is base frequency + 1MHz. So we need to subtract 1MHz from
             # the value read from the 'bios_limit' file to get the actual base frequency.
             if freq % 10000:
                 freq -= 1000
-            # The frequency value is in kHz in sysfs.
+
+            # The frequency value is in kHz in sysfs, convert to Hz.
             yield cpu, freq * 1000
 
     def get_base_freq(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
@@ -636,23 +667,33 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         what = "CPU frequency driver name"
 
-        for cpu in cpus:
-            path = self._sysfs_base / "cpufreq" / f"policy{cpu}" / "scaling_driver"
-            try:
-                name = self._sysfs_io.read(path, what=what)
-            except ErrorNotSupported as err:
+        intel_pstate_exists: bool | None = None
+
+        fname = "scaling_driver"
+        paths_iter = (self._get_policy_sysfs_path(cpu, fname) for cpu in cpus)
+
+        for path, name in self._sysfs_io.read_paths(paths_iter, what=what, val_if_not_found=""):
+            # Extract CPU number from path (e.g., /sys/.../policy42/... -> 42).
+            policy_dir = path.parent.name  # e.g., "policy42"
+            cpu = int(policy_dir.replace("policy", ""))
+
+            if not name:
                 # The 'intel_pstate' driver may be in 'off' mode, in which case the
                 # 'scaling_driver' sysfs file does not exist. Check if the 'intel_pstate'
                 # sysfs directory exists to confirm the driver is present.
-                if not self._pman.exists(self._sysfs_base / "intel_pstate"):
-                    raise ErrorNotSupported(str(err)) from err
-                name = "intel_pstate"
-            else:
+                if intel_pstate_exists is None:
+                    intel_pstate_exists = self._pman.exists(self._sysfs_base / "intel_pstate")
+
+                if intel_pstate_exists:
+                    name = "intel_pstate"
+                else:
+                    raise ErrorNotSupported(f"Failed to read {what} from '{path}'"
+                                            f"{self._pman.hostmsg}: File does not exist")
+            elif name == "intel_cpufreq":
                 # The 'intel_pstate' driver reports itself as 'intel_pstate' in active mode
                 # and 'intel_cpufreq' in passive mode. We always return 'intel_pstate' to
                 # avoid user confusion.
-                if name == "intel_cpufreq":
-                    name = "intel_pstate"
+                name = "intel_pstate"
 
             yield cpu, name
 
@@ -675,11 +716,16 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
         what = "'intel_pstate' driver mode"
         path = self._sysfs_base / "intel_pstate" / "status"
 
+        # Mode is global, read it once when needed.
+        mode: str | None = None
+
         for cpu, driver in self.get_driver(cpus):
             if driver != "intel_pstate":
                 raise ErrorNotSupported(f"Failed to get 'intel_pstate' driver mode for CPU "
-                                        f"{cpu}{self._pman.hostmsg}: current driver is '{driver}'")
-            mode = self._sysfs_io.read(path, what=what)
+                                        f"{cpu}{self._pman.hostmsg}: Current driver is '{driver}'")
+            if mode is None:
+                mode = self._sysfs_io.read(path, what=what)
+
             yield cpu, mode
 
     def set_intel_pstate_mode(self, mode: str, cpus: AbsNumsType):
@@ -700,36 +746,32 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
         modes = ("active", "passive", "off")
         if mode not in modes:
             modes_str = ", ".join(modes)
-            raise Error(f"bad 'intel_pstate' mode '{mode}', use one of: {modes_str}")
+            raise Error(f"Bad 'intel_pstate' mode '{mode}', use one of: {modes_str}")
 
         what = "'intel_pstate' driver mode"
         path = self._sysfs_base / "intel_pstate" / "status"
+        cpus_to_check = []
 
-        driver_iter = self.get_driver(cpus)
-        mode_iter = self.get_intel_pstate_mode(cpus)
+        for cpu, curmode in self.get_intel_pstate_mode(cpus):
+            if mode != curmode:
+                cpus_to_check.append(cpu)
 
-        for (cpu, driver), (_, curmode) in zip(driver_iter, mode_iter):
-            if driver != "intel_pstate":
-                raise ErrorNotSupported(f"Failed to set 'intel_pstate' driver mode to '{mode}' for "
-                                        f"CPU {cpu}{self._pman.hostmsg}: current driver is "
-                                        f"'{driver}'")
+        if not cpus_to_check:
+            return
 
-            if mode == curmode:
-                continue
-
-            if mode == "off":
-                # Setting 'intel_pstate' driver mode to "off" is only possible in non-HWP (legacy)
-                # mode. Check for this situation and try to provide a helpful error message.
-                hwp_msr_obj = self._get_hwp_msr_obj()
-                _, hwp = next(hwp_msr_obj.get_hwp((cpu,)))
+        # If switching to "off", check HWP for all CPUs needing change (batch operation).
+        if mode == "off":
+            hwp_msr_obj = self._get_hwp_msr_obj()
+            for cpu, hwp in hwp_msr_obj.get_hwp(cpus_to_check):
                 if hwp:
                     raise ErrorNotSupported("'intel_pstate' driver does not support \"off\" mode "
                                             "when hardware power management (HWP) is enabled")
-            try:
-                self._sysfs_io.write(path, mode, what=what)
-            except Error as err:
-                raise Error(f"Failed to set 'intel_pstate' driver mode to '{mode}' for CPU {cpu}"
-                            f"{self._pman.hostmsg}:\n{err.indent(2)}") from err
+
+        try:
+            self._sysfs_io.write(path, mode, what=what)
+        except Error as err:
+            raise Error(f"Failed to set 'intel_pstate' driver mode to '{mode}'"
+                        f"{self._pman.hostmsg}:\n{err.indent(2)}") from err
 
     def get_turbo(self, cpus: AbsNumsType) -> Generator[tuple[int, str], None, None]:
         """
@@ -750,43 +792,47 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
         path_intel_pstate = self._sysfs_base / "intel_pstate" / "no_turbo"
         path_acpi_cpufreq = self._sysfs_base / "cpufreq" / "boost"
 
-        # Location of the turbo knob in sysfs depends on the CPU frequency driver. So get the driver
-        # name first.
-        val = ""
-        for cpu, driver in self.get_driver(cpus):
-            if driver == "intel_pstate":
-                try:
-                    disabled = self._sysfs_io.read_int(path_intel_pstate, what=what)
-                except Error as err:
-                    try:
-                        mode = ""
-                        for _, mode in self.get_intel_pstate_mode((cpu,)):
-                            break
-                    except Error as exc:
-                        raise Error(str(err)) from exc
-
-                    if mode == "":
-                        raise Error("BUG: failed to get 'intel_pstate' driver mode") from err
-
-                    if mode != "off":
-                        raise
-
-                    raise ErrorNotSupported(f"Turbo is not supported when the 'intel_pstate' "
-                                            f"driver is in 'off' mode:\n{err.indent(2)}") from err
-                val = "off" if disabled else "on"
-            elif driver == "acpi-cpufreq":
-                enabled = self._sysfs_io.read_int(path_acpi_cpufreq, what=what)
-                val = "on" if enabled else "off"
-            else:
-                raise ErrorNotSupported(f"Can't check if turbo is enabled for CPU {cpu}"
-                                        f"{self._pman.hostmsg}: unsupported CPU frequency driver "
-                                        f"'{driver}'")
-
-            # The driver and turbo status are global, so it is enough to read only once.
+        # Location of the turbo knob in sysfs depends on the CPU frequency driver. Get the driver
+        # name for the first CPU only, since turbo status is global.
+        cpu = -1
+        for cpu in cpus:
             break
+        if cpu == -1:
+            raise Error("Failed to determine turbo status: No CPUs were provided")
 
-        if not val:
-            raise Error("Failed to determine turbo status: no CPUs were processed")
+        driver = ""
+        for _, driver in self.get_driver((cpu,)):
+            break
+        if not driver:
+            raise Error(f"Failed to get driver for CPU {cpu}")
+
+        if driver == "intel_pstate":
+            try:
+                disabled = self._sysfs_io.read_int(path_intel_pstate, what=what)
+            except Error as err:
+                try:
+                    mode = ""
+                    for _, mode in self.get_intel_pstate_mode((cpu,)):
+                        break
+                except Error as exc:
+                    raise Error(str(err)) from exc
+
+                if mode == "":
+                    raise Error("BUG: Failed to get 'intel_pstate' driver mode") from err
+
+                if mode != "off":
+                    raise
+
+                raise ErrorNotSupported(f"Turbo is not supported when the 'intel_pstate' "
+                                        f"driver is in 'off' mode:\n{err.indent(2)}") from err
+            val = "off" if disabled else "on"
+        elif driver == "acpi-cpufreq":
+            enabled = self._sysfs_io.read_int(path_acpi_cpufreq, what=what)
+            val = "on" if enabled else "off"
+        else:
+            raise ErrorNotSupported(f"Can't check if turbo is enabled for CPU {cpu}"
+                                    f"{self._pman.hostmsg}: Unsupported CPU frequency driver "
+                                    f"'{driver}'")
 
         for cpu in cpus:
             yield cpu, val
@@ -808,40 +854,48 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
         path_intel_pstate = self._sysfs_base / "intel_pstate" / "no_turbo"
         path_acpi_cpufreq = self._sysfs_base / "cpufreq" / "boost"
 
-        # Location of the turbo knob in sysfs depends on the CPU frequency driver. So get the driver
-        # name first.
-        for cpu, driver in self.get_driver(cpus):
-            if driver == "intel_pstate":
-                sysfs_val = str(int(not enable))
-                try:
-                    self._sysfs_io.write(path_intel_pstate, sysfs_val, what=what)
-                except Error as err:
-                    try:
-                        mode = ""
-                        for _, mode in self.get_intel_pstate_mode((cpu,)):
-                            break
-                    except Error as exc:
-                        raise Error(str(err)) from exc
-
-                    if mode == "":
-                        raise Error("BUG: failed to get 'intel_pstate' driver mode") from err
-
-                    if mode != "off":
-                        raise
-
-                    raise ErrorNotSupported(f"Turbo is not supported when the 'intel_pstate' "
-                                            f"driver is in 'off' mode:\n{err.indent(2)}") from err
-            elif driver == "acpi-cpufreq":
-                sysfs_val = str(int(enable))
-                self._sysfs_io.write(path_acpi_cpufreq, sysfs_val, what=what)
-            else:
-                status = "on" if enable else "off"
-                raise ErrorNotSupported(f"Failed to switch turbo {status} for CPU {cpu}"
-                                        f"{self._pman.hostmsg}: Unsupported CPU frequency driver "
-                                        f"'{driver}'")
-
-            # The driver and turbo status are global, so it is enough to write only once.
+        # Location of the turbo knob in sysfs depends on the CPU frequency driver. Get the driver
+        # name for the first CPU only, since turbo status is global.
+        cpu = -1
+        for cpu in cpus:
             break
+        if cpu == -1:
+            raise Error("Failed to set turbo: No CPUs were provided")
+
+        driver = ""
+        for _, driver in self.get_driver((cpu,)):
+            break
+        if not driver:
+            raise Error(f"Failed to get driver for CPU {cpu}")
+
+        if driver == "intel_pstate":
+            sysfs_val = str(int(not enable))
+            try:
+                self._sysfs_io.write(path_intel_pstate, sysfs_val, what=what)
+            except Error as err:
+                try:
+                    mode = ""
+                    for _, mode in self.get_intel_pstate_mode((cpu,)):
+                        break
+                except Error as exc:
+                    raise Error(str(err)) from exc
+
+                if mode == "":
+                    raise Error("BUG: Failed to get 'intel_pstate' driver mode") from err
+
+                if mode != "off":
+                    raise
+
+                raise ErrorNotSupported(f"Turbo is not supported when the 'intel_pstate' "
+                                        f"driver is in 'off' mode:\n{err.indent(2)}") from err
+        elif driver == "acpi-cpufreq":
+            sysfs_val = str(int(enable))
+            self._sysfs_io.write(path_acpi_cpufreq, sysfs_val, what=what)
+        else:
+            status = "on" if enable else "off"
+            raise ErrorNotSupported(f"Failed to switch turbo {status} for CPU {cpu}"
+                                    f"{self._pman.hostmsg}: Unsupported CPU frequency driver "
+                                    f"'{driver}'")
 
         # Flush any pending sysfs writes to ensure that the turbo setting takes effect. This is
         # important because the turbo setting may affect the max. frequency limit.
@@ -870,9 +924,14 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         what = "CPU frequency governor"
 
-        for cpu in cpus:
-            path = self._sysfs_base / "cpufreq" / f"policy{cpu}" / "scaling_governor"
-            name = self._sysfs_io.read(path, what=what)
+        fname = "scaling_governor"
+        paths_iter = (self._get_policy_sysfs_path(cpu, fname) for cpu in cpus)
+
+        for path, name in self._sysfs_io.read_paths(paths_iter, what=what):
+            # Extract CPU number from path (e.g., /sys/.../policy42/... -> 42).
+            policy_dir = path.parent.name  # e.g., "policy42"
+            cpu = int(policy_dir.replace("policy", ""))
+
             yield cpu, name
 
     def get_available_governors(self, cpus: AbsNumsType) -> \
@@ -893,9 +952,14 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         what = "available CPU frequency governors"
 
-        for cpu in cpus:
-            path = self._sysfs_base / "cpufreq" / f"policy{cpu}" / "scaling_available_governors"
-            names = self._sysfs_io.read(path, what=what)
+        fname = "scaling_available_governors"
+        paths_iter = (self._get_policy_sysfs_path(cpu, fname) for cpu in cpus)
+
+        for path, names in self._sysfs_io.read_paths(paths_iter, what=what):
+            # Extract CPU number from path (e.g., /sys/.../policy42/... -> 42).
+            policy_dir = path.parent.name  # e.g., "policy42"
+            cpu = int(policy_dir.replace("policy", ""))
+
             yield cpu, Trivial.split_csv_line(names, sep=" ")
 
     def set_governor(self, governor: str, cpus: AbsNumsType):
@@ -911,7 +975,9 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
         """
 
         what = "CPU frequency governor"
+        paths_to_write = []
 
+        # Validate governor for all CPUs and collect paths.
         for cpu, governors in self.get_available_governors(cpus):
             if governor not in governors:
                 governors_str = ", ".join(governors)
@@ -919,4 +985,8 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
                             f"use one of: {governors_str}")
 
             path = self._sysfs_base / "cpufreq" / f"policy{cpu}" / "scaling_governor"
-            self._sysfs_io.write(path, governor, what=what)
+            paths_to_write.append(path)
+
+        # Write to all governor files in one batch operation.
+        if paths_to_write:
+            self._sysfs_io.write_paths(paths_to_write, governor, what=what)

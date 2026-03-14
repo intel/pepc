@@ -54,7 +54,7 @@ _DATASET_OPTION: Final[ArgTypedDict] = {
     },
 }
 
-_SUPPORTED_OPTIMIZATIONS: Final[set[str]] = {"MSR:IO"}
+_SUPPORTED_OPTIMIZATIONS: Final[set[str]] = {"MSR:IO", "sysfs:IO"}
 
 _DISABLE_OPTIMIZATIONS_OPTION: Final[ArgTypedDict] = {
     "short": None,
@@ -1177,6 +1177,11 @@ def _disable_optimizations(args: argparse.Namespace):
             from pepclibs.msr import _SimpleMSR
 
             _SimpleMSR.DISABLE_IO_OPTIMIZATIONS = True
+        elif opt == "sysfs:IO":
+            # pylint: disable-next=import-outside-toplevel
+            from pepclibs import _SysfsIO
+
+            _SysfsIO.DISABLE_IO_OPTIMIZATIONS = True
         else:
             raise Error(f"Unknown optimization '{opt}' in '--disable-optimizations' option")
 
