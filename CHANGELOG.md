@@ -5,9 +5,11 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
+ - Handle HWP systems without EPP support more gracefully.
 ### Added
 ### Removed
 ### Changed
+ - Improve speed in case of remote systems.
 
 ## [1.6.26] - 2026-03-04
 ### Changed
