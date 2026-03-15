@@ -118,7 +118,7 @@ class EPB(_EPBase.EPBase):
     def _read_from_msr(self, cpu: int) -> int:
         """Refer to '_EPBase._read_from_msr()'."""
 
-        return self._get_epbmsr_obj().read_cpu_feature("epb", cpu)
+        return self._get_epbmsr_obj().read_cpu_feature_int("epb", cpu)
 
     def _write_to_msr(self, val: str | int, cpu: int):
         """Refer to '_EPBase._write_to_msr()'."""

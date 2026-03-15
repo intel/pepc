@@ -76,6 +76,9 @@ class EPBase(ClassHelpers.SimpleCloseContext):
         else:
             self._cpuinfo = cpuinfo
 
+        # Whether the platform supports EPP/EPB for each CPU.
+        self._supported: dict[int, bool] = self._build_supported_dict()
+
         # The per-CPU cache for read-only data, such as policies list. MSR implements its own
         # caching.
         self._pcache = _PropsCache.PropsCache(cpuinfo=self._cpuinfo, pman=self._pman,
@@ -86,6 +89,24 @@ class EPBase(ClassHelpers.SimpleCloseContext):
 
         close_attrs = ("_msr", "_cpuinfo", "_pman", "_pcache")
         ClassHelpers.close(self, close_attrs=close_attrs)
+
+    def _build_supported_dict(self) -> dict[int, bool]:
+        """"
+        Build the per-CPU dictionary with boolean values indicating whether EPP/EPB is supported for
+        each CPU.
+
+        Returns:
+            Dictionary with CPU numbers as keys and boolean values indicating whether EPP/EPB is
+            supported for each CPU.
+        """
+
+        if self._what == "EPB":
+            return {cpu: True for cpu in self._cpuinfo.get_cpus()}
+        if self._what == "EPP":
+            pcinfo = self._cpuinfo.get_proc_percpuinfo()
+            return {cpu: "hwp_epp" in pcinfo["flags"][cpu] for cpu in self._cpuinfo.get_cpus()}
+
+        raise Error(f"BUG: unknown self._what='{self._what}'")
 
     def _get_msr(self) -> MSR.MSR:
         """
@@ -250,6 +271,11 @@ class EPBase(ClassHelpers.SimpleCloseContext):
         errors: list[Error] = []
         yielded = 0
 
+        for cpu in cpus:
+            if not self._supported.get(cpu, False):
+                raise ErrorNotSupported(f"{self._what} is not supported for CPU {cpu}"
+                                        f"{self._pman.hostmsg}")
+
         for mname in mnames:
             func: Callable[[int], str | int]
             if mname == "sysfs":
@@ -272,7 +298,7 @@ class EPBase(ClassHelpers.SimpleCloseContext):
 
         self._raise_getset_exception(cpus, mnames, "get", errors)
 
-    def _set_epb_or_epb(self,
+    def _set_epp_or_epb(self,
                         val: str | int,
                         cpus: Iterable[int] | Literal["all"],
                         mnames: Sequence[str]) -> str:
@@ -299,6 +325,11 @@ class EPBase(ClassHelpers.SimpleCloseContext):
         cpus = self._cpuinfo.normalize_cpus(cpus)
         errors: list[Error] = []
         set_cpus = 0
+
+        for cpu in cpus:
+            if not self._supported.get(cpu, False):
+                raise ErrorNotSupported(f"{self._what} is not supported for CPU {cpu}"
+                                        f"{self._pman.hostmsg}")
 
         for mname in mnames:
             if mname == "sysfs":
@@ -381,7 +412,7 @@ class EPBase(ClassHelpers.SimpleCloseContext):
             ErrorNotSupported: If the platform does not support EPP/EPB.
         """
 
-        return self._set_epb_or_epb(val, cpus=cpus, mnames=mnames)
+        return self._set_epp_or_epb(val, cpus=cpus, mnames=mnames)
 
     def set_cpu_val(self,
                     val: str | int,
@@ -405,4 +436,4 @@ class EPBase(ClassHelpers.SimpleCloseContext):
             ErrorNotSupported: If the platform does not support EPP/EPB.
         """
 
-        return self._set_epb_or_epb(val, cpus=(cpu,), mnames=mnames)
+        return self._set_epp_or_epb(val, cpus=(cpu,), mnames=mnames)

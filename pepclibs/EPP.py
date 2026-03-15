@@ -20,7 +20,6 @@ from pepclibs import CPUModels
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
 from pepclibs.helperlibs import Trivial, ClassHelpers
 from pepclibs import _EPBase
-from pepclibs.helperlibs.emul._EPBEmulFile import _EPB_POLICIES
 
 if typing.TYPE_CHECKING:
     from typing import Final, Union
@@ -217,9 +216,11 @@ class EPP(_EPBase.EPBase):
                     proc_cpuinfo = self._cpuinfo.get_proc_cpuinfo()
                     if proc_cpuinfo["vendor"] == CPUModels.VENDOR_AMD and Trivial.is_int(val_str):
                         # AMD CPUs support only policy names. Raise a tailored error message.
-                        errmsg = f"Numeric EPB values are not supported " \
-                                 f"'{self._cpuinfo.cpudescr}'\nUse one of the following EPB " \
-                                 f"policies: {', '.join(_EPB_POLICIES)}"
+                        policies = self._get_available_policies(cpu)
+                        policies_str = ", ".join(policies) if policies else "(unknown)"
+                        errmsg = f"Numeric EPP values are not supported " \
+                                 f"'{self._cpuinfo.cpudescr}'\nUse one of the following EPP " \
+                                 f"policies: {policies_str}"
                         raise ErrorNotSupported(f"{errmsg}\n{err.indent(2)}") from err
 
                     if proc_cpuinfo["vendor"] != CPUModels.VENDOR_INTEL:
