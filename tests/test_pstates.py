@@ -86,8 +86,8 @@ def _get_set_and_verify_data(params: PropsTestParamsTypedDict,
     yield "epp", "balance_performance"
     yield "epp", "performance"
 
-    yield "epb", 0
-    yield "epb", 15
+    yield "epb", "0"
+    yield "epb", "15"
 
     with contextlib.suppress(ErrorNotSupported):
         pvinfo = pobj.get_cpu_prop("governors", cpu)

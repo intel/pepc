@@ -15,21 +15,23 @@ Provide a capability of reading and changing EPP (Energy Performance Preference)
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
-import contextlib
+from pathlib import Path
 from pepclibs import CPUModels
-from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
-from pepclibs.helperlibs import Trivial, ClassHelpers
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
+from pepclibs.helperlibs import Trivial, ClassHelpers, KernelVersion, Logging, EmulProcessManager
 from pepclibs import _EPBase
 
 if typing.TYPE_CHECKING:
-    from typing import Final, Union
-    from pepclibs import CPUInfo
+    from typing import Final, Union, Generator, Sequence
+    from pepclibs import CPUInfo, _SysfsIO
     from pepclibs.msr import MSR, HWPRequest, HWPRequestPkg
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
 # The minimum and maximum EPP values.
 _EPP_MIN: Final[int] = 0
 _EPP_MAX: Final[int] = 0xFF
+
+_LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
 class EPP(_EPBase.EPBase):
     """
@@ -47,6 +49,7 @@ class EPP(_EPBase.EPBase):
                  pman: ProcessManagerType | None = None,
                  cpuinfo: CPUInfo.CPUInfo | None = None,
                  msr: MSR.MSR | None = None,
+                 sysfs_io: _SysfsIO.SysfsIO | None = None,
                  enable_cache: bool = True):
         """
         Initialize class instance.
@@ -57,10 +60,13 @@ class EPP(_EPBase.EPBase):
                      provided.
             msr: An 'MSR.MSR' object, used only in some error cases to provide additional details in
                  error messages. Will be created on demand if not provided.
+            sysfs_io: A '_SysfsIO.SysfsIO' object for sysfs access. Will be created on demand if not
+                      provided.
             enable_cache: Whether to enable caching.
         """
 
-        super().__init__("EPP", pman=pman, cpuinfo=cpuinfo, msr=msr, enable_cache=enable_cache)
+        super().__init__("EPP", pman=pman, cpuinfo=cpuinfo, msr=msr, sysfs_io=sysfs_io,
+                         enable_cache=enable_cache)
 
         self._hwpreq: HWPRequest.HWPRequest | None = None
         self._hwpreq_pkg: HWPRequestPkg.HWPRequestPkg | None = None
@@ -71,6 +77,9 @@ class EPP(_EPBase.EPBase):
 
         # List of available EPP policies according to sysfs.
         self._epp_policies: list[str] = []
+
+        # Kernel version on the target host.
+        self._kver: str = ""
 
     def close(self):
         """Uninitialize the class instance."""
@@ -154,93 +163,189 @@ class EPP(_EPBase.EPBase):
                                         f"{policies_str}, or integer within "
                                         f"[{_EPP_MIN},{_EPP_MAX}]")
 
-    def _read_from_msr(self, cpu: int) -> int:
-        """Refer to '_EPBase._read_from_msr()'."""
+    def _fetch_from_msr_remote(self, cpus: Sequence[int]) -> Generator[tuple[int, int], None, None]:
+        """
+        Implement '_fetch_from_msr()' for a remote host, where it is more optimal to read MSRs in
+        bulk, rather than one by one. Refer to '_EPBase._fetch_from_msr()' for details.
+        """
+
+        hwpreq = self._get_hwpreq()
+
+        # Separate CPUs into package-controlled and per-CPU controlled.
+        cpus_list: list[int] = []
+        pkg_controlled_cpus: list[int] = []
+        percpu_controlled_cpus: list[int] = []
+
+        for cpu, pkg_controlled in hwpreq.is_feature_pkg_controlled("epp", cpus=cpus):
+            cpus_list.append(cpu)
+            if pkg_controlled:
+                pkg_controlled_cpus.append(cpu)
+            else:
+                percpu_controlled_cpus.append(cpu)
+
+        # Read EPP from per-CPU MSR for CPUs not controlled by package MSR.
+        epp_vals: dict[int, int] = {}
+        if percpu_controlled_cpus:
+            for cpu, vals in hwpreq.read_features_nonorm(["epp"], cpus=percpu_controlled_cpus):
+                epp_vals[cpu] = int(vals["epp"])
+
+        # Read EPP from package MSR for CPUs controlled by package MSR.
+        if pkg_controlled_cpus:
+            hwpreq_pkg = self._get_hwpreq_pkg()
+            for cpu, vals in hwpreq_pkg.read_features_nonorm(["epp"], cpus=pkg_controlled_cpus):
+                epp_vals[cpu] = int(vals["epp"])
+
+        # Yield in the order of input cpus.
+        for cpu in cpus_list:
+            yield cpu, epp_vals[cpu]
+
+    def _read_cpu_msr(self, cpu: int) -> int:
+        """
+        Read EPP for a specific CPU from MSR.
+
+        Args:
+            cpu: CPU number to read EPP for (already normalized).
+
+        Returns:
+            EPP value for the specified CPU.
+        """
 
         # Find out if EPP should be read from 'MSR_HWP_REQUEST' or 'MSR_HWP_REQUEST_PKG'.
         hwpreq_union: Union[HWPRequest.HWPRequest, HWPRequestPkg.HWPRequestPkg]
         hwpreq_union = hwpreq = self._get_hwpreq()
 
-        if hwpreq.is_cpu_feature_pkg_controlled("epp", cpu):
+        if hwpreq.is_cpu_feature_pkg_controlled_nonorm("epp", cpu):
             hwpreq_union = self._get_hwpreq_pkg()
 
-        return hwpreq_union.read_cpu_feature_int("epp", cpu)
+        return hwpreq_union.read_cpu_feature_int_nonorm("epp", cpu)
 
-    def _write_to_msr(self, val: str | int, cpu: int):
-        """Refer to '_EPBase._write_to_msr()'."""
+    def _fetch_from_msr(self, cpus: Sequence[int]) -> Generator[tuple[int, int], None, None]:
+        """Refer to '_EPBase._fetch_from_msr()'."""
+
+        # The remote host implementation is not so optimal for a local host, because it has to read
+        # multiple MSRs, collect results for all CPUs and then yield them in the order of input
+        # CPUs, while the local host implementation reads MSRs one by one, yielding results
+        # immediately, which is more efficient for a local host
+
+        if self._pman.is_remote:
+            yield from self._fetch_from_msr_remote(cpus)
+        else:
+            for cpu in cpus:
+                yield cpu, self._read_cpu_msr(cpu)
+
+    def _write_to_msr_remote(self, val: str | int, cpus: Sequence[int]):
+        """
+        Implement '_write_to_msr()' for a remote host, where it is more optimal to write MSRs in
+        bulk, rather than one by one. Refer to '_EPBase._write_to_msr()' for details.
+        """
 
         hwpreq = self._get_hwpreq()
-        hwpreq.disable_cpu_feature_pkg_control("epp", cpu)
+
+        if not Trivial.is_int(val):
+            raise Error(f"Cannot set EPP to '{val}' using MSR mechanism, because it is not an "
+                        f"integer value")
+
+        # Disable package control for all CPUs.
+        hwpreq.disable_feature_pkg_control("epp", cpus=cpus)
+
+        try:
+            hwpreq.write_feature("epp", val, cpus=cpus)
+        except Error as err:
+            raise type(err)(f"Failed to set EPP{self._pman.hostmsg}:\n{err.indent(2)}") from err
+
+    def _write_cpu_msr(self, val: str | int, cpu: int):
+        """
+        Write EPP for a specific CPU to MSR.
+
+        Args:
+            val: EPP value to write.
+            cpu: CPU number to write EPP for (already normalized).
+        """
+
+        hwpreq = self._get_hwpreq()
+        hwpreq.disable_cpu_feature_pkg_control_nonorm("epp", cpu)
 
         if not Trivial.is_int(val):
             raise Error(f"Cannot set EPP to '{val}' using MSR mechanism, because it is not an "
                         f"integer value")
 
         try:
-            hwpreq.write_cpu_feature("epp", val, cpu)
+            hwpreq.write_cpu_feature_nonorm("epp", val, cpu)
         except Error as err:
             raise type(err)(f"Failed to set EPP{self._pman.hostmsg}:\n{err.indent(2)}") from err
 
-    def _read_from_sysfs(self, cpu: int) -> str | int:
-        """Refer to '_EPBase._read_from_sysfs()'."""
+    def _write_to_msr(self, val: str | int, cpus: Sequence[int]):
+        """Refer to '_EPBase._write_to_msr()'."""
 
-        with contextlib.suppress(ErrorNotFound):
-            return self._pcache.get("epp", cpu, "sysfs")
+        # There are 2 separate implementations for local and remote hosts, for the same reasons as
+        # describe in '_fetch_from_msr()'.
+        if self._pman.is_remote:
+            self._write_to_msr_remote(val, cpus)
+        else:
+            for cpu in cpus:
+                self._write_cpu_msr(val, cpu)
 
-        path = self._sysfs_epp_path % cpu
-        try:
-            with self._pman.open(path, "r") as fobj:
-                val_str: str = fobj.read()
-                val_str = val_str.strip()
-        except ErrorNotFound as err:
-            raise ErrorNotSupported(f"EPP sysfs entry not found for CPU {cpu}"
-                                    f"{self._pman.hostmsg}:\n{err.indent(2)}") from err
+    def _fetch_from_sysfs(self,
+                          cpus: Sequence[int]) -> Generator[tuple[int, str | int], None, None]:
+        """Refer to '_EPBase._fetch_from_sysfs()'."""
 
-        if Trivial.is_int(val_str):
-            val = int(val_str)
-            return self._pcache.add("epp", cpu, val, "sysfs")
+        sysfs_io = self._get_sysfs_io()
+        paths_iter = (Path(self._sysfs_epp_path % cpu) for cpu in cpus)
 
-        return self._pcache.add("epp", cpu, val_str, "sysfs")
+        for cpu, (_, val) in zip(cpus, sysfs_io.read_paths(paths_iter, what="EPP")):
+            _val: str | int = val
+            if Trivial.is_int(val):
+                _val = int(val)
+            yield cpu, _val
 
-    def _write_to_sysfs(self, val: str | int, cpu: int):
+    def _has_write_bug(self) -> bool:
+        """
+        Check if the target system has the EPP sysfs write bug. The bug is that write fails if the
+        new value is the same as the current value. It was fixed in v6.5 in this commit:
+            03f44ffb3d5be (cpufreq: intel_pstate: Fix energy_performance_preference for passive)
+
+        Returns:
+            True if the bug is present, False otherwise.
+        """
+
+        if isinstance(self._pman, EmulProcessManager.EmulProcessManager):
+            # The bug is not present in the emulator, so skip the check.
+            return False
+
+        if not self._kver:
+            self._kver = KernelVersion.get_kver(self._pman)
+
+        if KernelVersion.kver_ge(self._kver, "6.5.0"):
+            return False
+        return True
+
+    def _write_to_sysfs(self, val: str | int, cpus: Sequence[int]):
         """Refer to '_EPBase._write_to_sysfs()'."""
 
-        self._pcache.remove("epp", cpu, "sysfs")
         val_str = str(val).strip()
 
-        try:
-            with self._pman.open(self._sysfs_epp_path % cpu, "r+") as fobj:
-                try:
-                    fobj.write(val_str)
-                except Error as err:
-                    proc_cpuinfo = self._cpuinfo.get_proc_cpuinfo()
-                    if proc_cpuinfo["vendor"] == CPUModels.VENDOR_AMD and Trivial.is_int(val_str):
-                        # AMD CPUs support only policy names. Raise a tailored error message.
-                        policies = self._get_available_policies(cpu)
-                        policies_str = ", ".join(policies) if policies else "(unknown)"
-                        errmsg = f"Numeric EPP values are not supported " \
-                                 f"'{self._cpuinfo.cpudescr}'\nUse one of the following EPP " \
-                                 f"policies: {policies_str}"
-                        raise ErrorNotSupported(f"{errmsg}\n{err.indent(2)}") from err
+        # AMD CPUs support only policy names, not numeric EPP values. Check upfront.
+        proc_cpuinfo = self._cpuinfo.get_proc_cpuinfo()
+        if proc_cpuinfo["vendor"] == CPUModels.VENDOR_AMD and Trivial.is_int(val_str):
+            policies = self._get_available_policies(cpus[0])
+            policies_str = ", ".join(policies) if policies else "(unknown)"
+            raise ErrorNotSupported(f"Numeric EPP values are not supported "
+                                    f"'{self._cpuinfo.cpudescr}'\n"
+                                    f"Use one of the following EPP policies: {policies_str}")
 
-                    if proc_cpuinfo["vendor"] != CPUModels.VENDOR_INTEL:
-                        raise
+        # Check if workaround for write bug is needed. The bug causes writes to fail when the new
+        # value matches the current value. If the bug is present, filter out CPUs that already
+        # have the target value.
+        cpus_to_write: Sequence[int] = cpus
+        if self._has_write_bug():
+            _LOG.debug("Kernel version %s detected, applying EPP write bug workaround", self._kver)
+            current_vals: dict[int, str] = {}
+            for cpu, cur_val in self._fetch_from_sysfs(cpus):
+                current_vals[cpu] = str(cur_val).strip()
 
-                    # This is a workaround for a kernel bug, which has been fixed in v6.5:
-                    #   03f44ffb3d5be cpufreq: intel_pstate: Fix energy_performance_preference for
-                    #                 passive
-                    # The bug is that write fails is the new value is the same as the current value.
-                    fobj.seek(0)
-                    val_str1: str = fobj.read()
-                    val_str1 = val_str1.strip()
-                    if val_str != val_str1:
-                        raise
-        except Error as err:
-            if isinstance(err, ErrorNotFound):
-                err = ErrorNotSupported(str(err))
-            err1 = type(err)(f"Failed to set EPP for CPU {cpu} to {val_str}{self._pman.hostmsg}:\n"
-                             f"{err.indent(2)}")
-            setattr(err1, "cpu", cpu)
-            raise err1 from err
+            cpus_to_write = [cpu for cpu in cpus if current_vals.get(cpu) != val_str]
 
-        self._pcache.add("epp", cpu, val_str, "sysfs")
+        if cpus_to_write:
+            sysfs_io = self._get_sysfs_io()
+            paths_iter = (Path(self._sysfs_epp_path % cpu) for cpu in cpus_to_write)
+            sysfs_io.write_paths(paths_iter, val_str, what="EPP")

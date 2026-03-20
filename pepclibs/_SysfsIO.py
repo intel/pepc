@@ -52,7 +52,7 @@ DISABLE_IO_OPTIMIZATIONS: bool = False
 VERIFY_IO_OPTIMIZATIONS: bool = False
 
 # The maximum total length of file paths for the optimized I/O operations.
-_MAX_PATHS_LEN = 3192
+_MAX_PATHS_LEN = 16000
 
 class SysfsIO(ClassHelpers.SimpleCloseContext):
     """
@@ -323,7 +323,7 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
     def _write_paths_vals_optimized_helper(self, batch_info, winfo):
         """
         Write multiple paths and values with I/O optimizations for remote hosts.
-        
+
         Args:
             batch_info: The batch write information dictionary.
             winfo: The formatted string of write operations for the Python script.
@@ -776,12 +776,12 @@ for path in paths:
                                                         Generator[tuple[Path, int], None, None]:
         """
         Read multiple sysfs files and yield their paths and contents as integers.
-        
+
         Args:
             paths: Paths to the sysfs files to read.
             what: Optional short description of what is being read, included in exception messages.
             val_if_not_found: Value to return for missing files instead of raising an exception.
-        
+
         Yields:
             Tuples of (path, value) for each file read, where value is an integer.
 

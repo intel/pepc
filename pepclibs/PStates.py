@@ -287,7 +287,7 @@ class PStates(_PropsClassBase.PropsClassBase):
 
     def _get_epb(self,
                  cpus: AbsNumsType,
-                 mname: MechanismNameType) -> Generator[tuple[int, int], None, None]:
+                 mname: MechanismNameType) -> Generator[tuple[int, str], None, None]:
         """
         Retrieve and yield EPB values for the specified CPUs using the specified mechanism.
 
@@ -300,7 +300,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         """
 
         for cpu, val, _ in self._get_epbobj().get_vals(cpus=cpus, mnames=(mname,)):
-            yield cpu, int(val)
+            yield cpu, str(val)
 
     def _get_hwp(self,
                  cpus: AbsNumsType,

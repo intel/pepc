@@ -7,7 +7,7 @@
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
-Provide functions for obtaining, splittng and comparing Linux kernel version numbers.
+Provide functions for obtaining, splitting and comparing Linux kernel version numbers.
 """
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
@@ -25,7 +25,7 @@ if typing.TYPE_CHECKING:
 class SplitKernelVersionTypedDict(TypedDict):
     """
     Split kernel version components.
-    
+
     Attributes:
         major: Major version number (e.g., 4 in "4.18.1").
         minor: Minor version number (e.g., 18 in "4.18.1").

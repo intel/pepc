@@ -26,7 +26,7 @@ from pepclibs.helperlibs import Logging, LocalProcessManager, EmulProcessManager
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorPermissionDenied
 
 if typing.TYPE_CHECKING:
-    from typing import Literal, Generator, Sequence, Final
+    from typing import Literal, Generator, Final, Iterable
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
@@ -174,7 +174,7 @@ class SimpleMSR(ClassHelpers.SimpleCloseContext):
 
     def _cpus_read_local(self,
                          regaddr: int,
-                         cpus: Sequence[int]) -> Generator[tuple[int, int], None, None]:
+                         cpus: Iterable[int]) -> Generator[tuple[int, int], None, None]:
         """
         Read an MSR from specified CPUs on a local host.
 
@@ -203,7 +203,7 @@ class SimpleMSR(ClassHelpers.SimpleCloseContext):
 
     def _cpus_read_remote(self,
                           regaddr: int,
-                          cpus: Sequence[int]) -> Generator[tuple[int, int], None, None]:
+                          cpus: Iterable[int]) -> Generator[tuple[int, int], None, None]:
         """
         Read an MSR from specified CPUs on a remote host.
 
@@ -255,7 +255,7 @@ for cpu in cpus:
 
     def _cpus_read_pman(self,
                         regaddr: int,
-                        cpus: Sequence[int]) -> Generator[tuple[int, int], None, None]:
+                        cpus: Iterable[int]) -> Generator[tuple[int, int], None, None]:
         """
         Read an MSR from specified CPUs using the process manager object.
 
@@ -283,7 +283,7 @@ for cpu in cpus:
 
     def cpus_read(self,
                   regaddr: int,
-                  cpus: Sequence[int]) -> Generator[tuple[int, int], None, None]:
+                  cpus: Iterable[int]) -> Generator[tuple[int, int], None, None]:
         """
         Read the specified MSR from specified CPUs and yield the result.
 
@@ -353,15 +353,14 @@ for cpu in cpus:
     def _cpus_write_local(self,
                            regaddr: int,
                            regval: int,
-                           cpus: Sequence[int]):
+                           cpus: Iterable[int]):
         """
         Write a value to an MSR on specified CPUs on a local host.
 
         Args:
             regaddr: The address of the MSR to write to.
             regval: The value to write to the MSR.
-            cpus: CPU numbers to write the MSR on. The numbers have to be validated and normalized
-                  by the caller.
+            cpus: CPU numbers to write the MSR on.
         """
 
         regval_bytes = regval.to_bytes(self.regbytes, byteorder=_CPU_BYTEORDER)
@@ -381,7 +380,7 @@ for cpu in cpus:
     def _cpus_write_remote(self,
                            regaddr: int,
                            regval: int,
-                           cpus: Sequence[int]):
+                           cpus: Iterable[int]):
         """
         Write a value to an MSR on specified CPUs on a remote host.
 
@@ -391,8 +390,7 @@ for cpu in cpus:
         Args:
             regaddr: The address of the MSR to write to.
             regval: The value to write to the MSR.
-            cpus: CPU numbers to write the MSR on. The numbers have to be validated and normalized
-                  by the caller.
+            cpus: CPU numbers to write the MSR on.
         """
 
         python_path = self._pman.get_python_path()
@@ -419,15 +417,14 @@ for cpu in cpus:
             raise type(err)(f"Failed to write '{regval:#x}' to MSR '{regaddr:#x}' on CPUs "
                             f"{cpus_str}{self._pman.hostmsg}:\n{errmsg}") from err
 
-    def _cpus_write_pman(self, regaddr: int, regval: int, cpus: Sequence[int]):
+    def _cpus_write_pman(self, regaddr: int, regval: int, cpus: Iterable[int]):
         """
         Write a value to an MSR on specified CPUs using the process manager object.
 
         Args:
             regaddr: The address of the MSR to write to.
             regval: The value to write to the MSR.
-            cpus: CPU numbers to write the MSR on. The numbers have to be validated and normalized
-                  by the caller.
+            cpus: CPU numbers to write the MSR on.
         """
 
         regval_bytes = regval.to_bytes(self.regbytes, byteorder=_CPU_BYTEORDER)
@@ -445,7 +442,7 @@ for cpu in cpus:
                                     f"{cpu}{self._pman.hostmsg} (file '{path}'):\n"
                                     f"{err.indent(2)}") from err
 
-    def cpus_write(self, regaddr: int, regval: int, cpus: Sequence[int]):
+    def cpus_write(self, regaddr: int, regval: int, cpus: Iterable[int]):
         """
         Write a value to an MSR on specified CPUs.
 

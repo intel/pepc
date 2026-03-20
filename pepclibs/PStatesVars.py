@@ -119,7 +119,7 @@ PROPS: Final[dict[str, PropertyTypedDict]] = {
     },
     "epb": {
         "name": "EPB",
-        "type": "int",
+        "type": "str",
         "sname": None,
         "mnames": ("sysfs", "msr"),
         "writable": True,

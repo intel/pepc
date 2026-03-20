@@ -16,11 +16,12 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
 from pepclibs.helperlibs import LocalProcessManager, ClassHelpers, Trivial
-from pepclibs import CPUInfo, _PropsCache
+from pepclibs import CPUInfo
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 
 if typing.TYPE_CHECKING:
     from typing import Final, NoReturn, Callable, Generator, Sequence, Iterable, Literal
+    from pepclibs import _SysfsIO
     from pepclibs.msr import MSR
     from pepclibs.CPUInfoTypes import ScopeNameType
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
@@ -39,6 +40,7 @@ class EPBase(ClassHelpers.SimpleCloseContext):
                  pman: ProcessManagerType | None = None,
                  cpuinfo: CPUInfo.CPUInfo | None = None,
                  msr: MSR.MSR | None = None,
+                 sysfs_io: _SysfsIO.SysfsIO | None = None,
                  enable_cache: bool = True):
         """
         Initialize class instance.
@@ -50,6 +52,8 @@ class EPBase(ClassHelpers.SimpleCloseContext):
                      provided.
             msr: An 'MSR.MSR' object which should be used for accessing MSR registers. Will be
                  created on demand if not provided.
+            sysfs_io: A '_SysfsIO.SysfsIO' object for sysfs access. Will be created on demand if not
+                      provided.
             enable_cache: Whether to enable caching.
         """
 
@@ -57,6 +61,7 @@ class EPBase(ClassHelpers.SimpleCloseContext):
         self._pman: ProcessManagerType
         self._cpuinfo: CPUInfo.CPUInfo
         self._msr: MSR.MSR | None = msr
+        self._sysfs_io: _SysfsIO.SysfsIO | None = sysfs_io
         self._enable_cache = enable_cache
 
         # EPP/EPB scope name.
@@ -65,6 +70,7 @@ class EPBase(ClassHelpers.SimpleCloseContext):
         self._close_pman = pman is None
         self._close_cpuinfo = cpuinfo is None
         self._close_msr = msr is None
+        self._close_sysfs_io = sysfs_io is None
 
         if not pman:
             self._pman = LocalProcessManager.LocalProcessManager()
@@ -79,15 +85,10 @@ class EPBase(ClassHelpers.SimpleCloseContext):
         # Whether the platform supports EPP/EPB for each CPU.
         self._supported: dict[int, bool] = self._build_supported_dict()
 
-        # The per-CPU cache for read-only data, such as policies list. MSR implements its own
-        # caching.
-        self._pcache = _PropsCache.PropsCache(cpuinfo=self._cpuinfo, pman=self._pman,
-                                              enable_cache=enable_cache)
-
     def close(self):
         """Uninitialize the class instance."""
 
-        close_attrs = ("_msr", "_cpuinfo", "_pman", "_pcache")
+        close_attrs = ("_msr", "_cpuinfo", "_pman", "_sysfs_io")
         ClassHelpers.close(self, close_attrs=close_attrs)
 
     def _build_supported_dict(self) -> dict[int, bool]:
@@ -122,6 +123,22 @@ class EPBase(ClassHelpers.SimpleCloseContext):
 
             self._msr = MSR.MSR(self._cpuinfo, pman=self._pman, enable_cache=self._enable_cache)
         return self._msr
+
+    def _get_sysfs_io(self) -> _SysfsIO.SysfsIO:
+        """
+        Return an instance of '_SysfsIO.SysfsIO'.
+
+        Returns:
+            An instance of '_SysfsIO.SysfsIO'.
+        """
+
+        if not self._sysfs_io:
+            # pylint: disable-next=import-outside-toplevel
+            from pepclibs import _SysfsIO
+
+            self._sysfs_io = _SysfsIO.SysfsIO(self._pman, enable_cache=self._enable_cache)
+
+        return self._sysfs_io
 
     @staticmethod
     def _normalize_mnames(mnames: Sequence[str]) -> list[str]:
@@ -181,72 +198,69 @@ class EPBase(ClassHelpers.SimpleCloseContext):
 
     def _validate_value(self, val: str | int, policy_ok: bool = False):
         """
-        Validate EPP value.
+        Validate EPP/EPB value.
 
         Args:
-            val: EPP value to validate.
+            val: EPP/EPB value to validate.
             policy_ok: If True, allow policy names in addition to numeric values.
         """
 
         raise NotImplementedError("BUG: '_validate_value()' method is not implemented in the child "
                                   "class")
 
-    def _read_from_msr(self, cpu: int) -> int:
+    def _fetch_from_msr(self, cpus: Sequence[int]) -> Generator[tuple[int, int], None, None]:
         """
-        Read EPP for CPU 'cpu' from MSR.
+        Fetch EPB or EPP for CPUs in 'cpus' from MSR.
 
         Args:
-            cpu: CPU number.
+            cpus: Collection of integer CPU numbers (already normalized).
 
-        Returns:
-            EPP value for the CPU.
+        Yields:
+            Tuple of (cpu, value) for each CPU.
 
         Raises:
-            ErrorNotSupported: If EPP MSR is not supported or disabled.
+            ErrorNotSupported: If EPP/EPB MSR is not supported or disabled.
         """
 
-        raise NotImplementedError("BUG: '_read_from_msr()' method is not implemented in the child "
+        raise NotImplementedError("BUG: '_fetch_from_msr()' method is not implemented in the child "
                                   "class")
-
-    def _write_to_msr(self, val: str | int, cpu: int):
+    def _write_to_msr(self, val: str | int, cpus: Sequence[int]):
         """
-        Write EPP 'epp' for CPU 'cpu' to MSR.
+        Write EPB or EPP for CPUs in 'cpus' to MSR.
 
         Args:
-            val: EPP value to write.
-            cpu: CPU number.
+            val: The EPB/EPP value to write.
+            cpus: Collection of integer CPU numbers (already normalized).
         """
 
         raise NotImplementedError("BUG: '_write_to_msr()' method is not implemented in the child "
                                   "class")
 
-    def _read_from_sysfs(self, cpu: int) -> str | int:
+    def _fetch_from_sysfs(self,
+                          cpus: Sequence[int]) -> Generator[tuple[int, str | int], None, None]:
         """
-        Read EPP for CPU 'cpu' from sysfs.
+        Fetch EPB or EPP for CPUs in 'cpus' from sysfs.
 
         Args:
-            cpu: CPU number.
+            cpus: Collection of integer CPU numbers (already normalized).
 
-        Returns:
-            EPP value for the CPU.
+        Yields:
+            Tuple of (cpu, value) for each CPU.
 
         Raises:
-            ErrorNotSupported: If EPP sysfs entry is not found.
+            ErrorNotSupported: If EPP/EPB sysfs entry is not found for any of the CPUs.
         """
 
-        raise NotImplementedError("BUG: '_read_from_sysfs()' method is not implemented in the "
+        raise NotImplementedError("BUG: '_fetch_from_sysfs()' method is not implemented in the "
                                   "child class")
 
-    def _write_to_sysfs(self, val: str | int, cpu: int):
+    def _write_to_sysfs(self, val: str | int, cpus: Sequence[int]):
         """
-        Write EPP 'epp' for CPU 'cpu' to sysfs.
+        Write EPB or EPP for CPUs in 'cpus' to sysfs.
 
         Args:
-            val: EPP value to write.
-            cpu: CPU number.
-
-        Returns:
-            The cached EPP value after writing.
+            val: The EPB/EPP value to write.
+            cpus: Collection of integer CPU numbers (already normalized).
         """
 
         raise NotImplementedError("BUG: '_write_to_sysfs()' method is not implemented in the child "
@@ -277,15 +291,14 @@ class EPBase(ClassHelpers.SimpleCloseContext):
                                         f"{self._pman.hostmsg}")
 
         for mname in mnames:
-            func: Callable[[int], str | int]
+            func: Callable[[Sequence[int]], Generator[tuple[int, str | int], None, None]]
             if mname == "sysfs":
-                func = self._read_from_sysfs
+                func = self._fetch_from_sysfs
             else:
-                func = self._read_from_msr
+                func = self._fetch_from_msr
 
             try:
-                for cpu in cpus:
-                    val = func(cpu)
+                for cpu, val in func(cpus):
                     yield (cpu, val, mname)
                     yielded += 1
             except ErrorNotSupported as err:
@@ -324,7 +337,6 @@ class EPBase(ClassHelpers.SimpleCloseContext):
         mnames = self._normalize_mnames(mnames)
         cpus = self._cpuinfo.normalize_cpus(cpus)
         errors: list[Error] = []
-        set_cpus = 0
 
         for cpu in cpus:
             if not self._supported.get(cpu, False):
@@ -332,6 +344,7 @@ class EPBase(ClassHelpers.SimpleCloseContext):
                                         f"{self._pman.hostmsg}")
 
         for mname in mnames:
+            func: Callable[[str | int, Sequence[int]], None]
             if mname == "sysfs":
                 func = self._write_to_sysfs
                 policy_ok = True
@@ -339,17 +352,12 @@ class EPBase(ClassHelpers.SimpleCloseContext):
                 func = self._write_to_msr
                 policy_ok = False
 
-            cpu = 0
             try:
                 self._validate_value(val, policy_ok=policy_ok)
-                for cpu in cpus:
-                    func(str(val), cpu)
-                    set_cpus += 1
+                func(val, cpus)
             except ErrorNotSupported as err:
-                if not set_cpus:
-                    errors.append(err)
-                    continue
-                raise
+                errors.append(err)
+                continue
 
             return mname
 

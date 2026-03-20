@@ -1608,7 +1608,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         return self._get_hybrid_cpus()
 
     @staticmethod
-    def cpus_to_str(cpus: AbsNumsType | Literal["all"]) -> str:
+    def cpus_to_str(cpus: Iterable[int] | Literal["all"]) -> str:
         """
         Convert a collection of CPU numbers to a human-readable string representation.
 
@@ -1620,7 +1620,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         """
 
         if cpus == "all":
-            return cpus
+            return "all"
 
         return Trivial.rangify(cpus)
 
@@ -1637,7 +1637,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         """
 
         if dies == "all":
-            return dies
+            return "all"
 
         if not dies:
             return "no dies"

@@ -161,7 +161,18 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
                  msr: MSR.MSR | None = None,
                  sysfs_io: _SysfsIO.SysfsIO | None = None,
                  enable_cache: bool = True):
-        """Refer to 'PropsClassBase.__init__()'."""
+        """
+        The class constructor.
+
+        Args:
+            pman: Process manager for the target host. The local host will be used if not provided.
+            cpuinfo: The CPU information object for the target system. Will be created if not
+                     provided.
+            msr: An 'MSR.MSR' object which should be used for accessing MSR registers. Will be
+                 created on demand if not provided.
+            sysfs_io: A '_SysfsIO.SysfsIO' object for sysfs access. Will be created if not provided.
+            enable_cache: Whether to enable caching.
+        """
 
         self._msr = msr
         self._sysfs_io = sysfs_io
