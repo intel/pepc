@@ -114,3 +114,26 @@ When calling this method only for CPU 0, use a tuple for the `cpus` argument:
     for cpu, val in self.read(regaddr=0x4E70, cpus=(0,), verify=True):
         ...
 ```
+
+### Avoid None as Default Value
+
+When defining optional parameters with default values, avoid using `None` as the default value if
+it is possible to use a special value of the same type as the parameter.
+
+**Guidelines:**
+
+- For strings: use `""` (empty string) as the default value
+- For integers: use an unused number, such as `-1`
+- For sequences: use an empty tuple `()`
+
+**Example:**
+
+```python
+    def process_data(self, name: str = "", count: int = -1, cpus: Sequence[int] = ()):
+        if not name:
+            name = "default"
+        if count == -1:
+            count = 10
+        if not cpus:
+            cpus = self.get_all_cpus()
+```

@@ -17,7 +17,7 @@ from pepclibs import CPUInfo
 from pepclibs.helperlibs import Logging, LocalProcessManager, ClassHelpers
 
 if typing.TYPE_CHECKING:
-    from typing import Generator, Literal, Sequence, Iterable
+    from typing import Generator, Literal, Sequence
     from pepclibs.msr import MSR, PMEnable, HWPCapabilities
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
@@ -45,8 +45,8 @@ class HWPMSR(ClassHelpers.SimpleCloseContext):
         - get_hwp(cpus): Yield (cpu, value) pairs indicating HWP enabled status.
 
     Notes:
-        All public methods accept a 'cpus' argument which can be an iterable of CPU numbers or the
-        special value "all" to select all CPUs. CPU numbers are validated and normalized internally.
+        Methods do not validate the 'cpus' argument. Ensure that provided CPU numbers are valid and
+        online.
     """
 
     def __init__(self,
@@ -169,15 +169,13 @@ class HWPMSR(ClassHelpers.SimpleCloseContext):
         hwpcap = self._get_hwpcap()
         yield from hwpcap.read_feature_int(fname, cpus=cpus)
 
-    def get_lowest_perf(self,
-                        cpus: Iterable[int] | Literal["all"] = "all") -> \
-                                                Generator[tuple[int, int], None, None]:
+    def get_lowest_perf(self, cpus: Sequence[int]) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the lowest performance level value for specified CPUs.
 
         Args:
-            cpus: CPU numbers to get the lowest performance level value for, or special value "all"
-                  to select all CPUs.
+            cpus: CPU numbers to get the lowest performance level value for (the caller must
+                  validate CPU numbers).
 
         Yields:
             Tuple (cpu, value), where 'cpu' is the CPU number and 'value' is the lowest performance
@@ -187,18 +185,15 @@ class HWPMSR(ClassHelpers.SimpleCloseContext):
             ErrorNotSupported: If the HWP is not supported or disabled.
         """
 
-        cpus = self._cpuinfo.normalize_cpus(cpus)
         yield from self._get_perf_level("lowest", cpus)
 
-    def get_efficient_perf(self,
-                           cpus: Iterable[int] | Literal["all"] = "all") -> \
-                                                Generator[tuple[int, int], None, None]:
+    def get_efficient_perf(self, cpus: Sequence[int]) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the most efficient performance level value for specified CPUs.
 
         Args:
-            cpus: CPU numbers to get the most efficient performance level value for, or special
-                  value "all" to select all CPUs.
+            cpus: CPU numbers to get the most efficient performance level value for (the caller must
+                  validate CPU numbers).
 
         Yields:
             Tuple (cpu, value), where 'cpu' is the CPU number and 'value' is the most efficient
@@ -208,18 +203,15 @@ class HWPMSR(ClassHelpers.SimpleCloseContext):
             ErrorNotSupported: If the HWP is not supported or disabled.
         """
 
-        cpus = self._cpuinfo.normalize_cpus(cpus)
         yield from self._get_perf_level("efficient", cpus)
 
-    def get_guaranteed_perf(self,
-                            cpus: Iterable[int] | Literal["all"] = "all") -> \
-                                                Generator[tuple[int, int], None, None]:
+    def get_guaranteed_perf(self, cpus: Sequence[int]) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the guaranteed performance level value for specified CPUs.
 
         Args:
-            cpus: CPU numbers to get the guaranteed performance level value for, or special value
-                  "all" to select all CPUs.
+            cpus: CPU numbers to get the guaranteed performance level value for (the caller must
+                  validate CPU numbers).
 
         Yields:
             Tuple (cpu, value), where 'cpu' is the CPU number and 'value' is the guaranteed
@@ -229,18 +221,15 @@ class HWPMSR(ClassHelpers.SimpleCloseContext):
             ErrorNotSupported: If the HWP is not supported or disabled.
         """
 
-        cpus = self._cpuinfo.normalize_cpus(cpus)
         yield from self._get_perf_level("guaranteed", cpus)
 
-    def get_highest_perf(self,
-                         cpus: Iterable[int] | Literal["all"] = "all") -> \
-                                                Generator[tuple[int, int], None, None]:
+    def get_highest_perf(self, cpus: Sequence[int]) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the highest performance level value for specified CPUs.
 
         Args:
-            cpus: CPU numbers to get the highest performance level value for, or special value
-                  "all" to select all CPUs.
+            cpus: CPU numbers to get the highest performance level value for (the caller must
+                  validate CPU numbers).
 
         Yields:
             Tuple (cpu, value), where 'cpu' is the CPU number and 'value' is the highest performance
@@ -250,17 +239,14 @@ class HWPMSR(ClassHelpers.SimpleCloseContext):
             ErrorNotSupported: If the HWP is not supported or disabled.
         """
 
-        cpus = self._cpuinfo.normalize_cpus(cpus)
         yield from self._get_perf_level("highest", cpus)
 
-    def get_hwp(self,
-                cpus: Iterable[int] | Literal["all"] = "all") -> \
-                                                Generator[tuple[int, bool], None, None]:
+    def get_hwp(self, cpus: Sequence[int]) -> Generator[tuple[int, bool], None, None]:
         """
         Yield the hardware power management (HWP) status for specified CPUs.
 
         Args:
-            cpus: CPU numbers to get the HWP status for, or special value "all" to select all CPUs.
+            cpus: CPU numbers to get the HWP status for (the caller must validate CPU numbers).
 
         Yields:
             Tuple of (cpu, val), where 'cpu' is the CPU number and 'val' is the HWP status (True if
@@ -270,6 +256,5 @@ class HWPMSR(ClassHelpers.SimpleCloseContext):
             ErrorNotSupported: If the platform does not support HWP.
         """
 
-        cpus = self._cpuinfo.normalize_cpus(cpus)
         pmenable = self._get_pmenable()
         yield from pmenable.is_feature_enabled("hwp", cpus=cpus)

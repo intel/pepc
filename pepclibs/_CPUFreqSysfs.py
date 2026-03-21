@@ -24,11 +24,10 @@ from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorVerify
 from pepclibs.helperlibs.Exceptions import ErrorOutOfRange, ErrorBadOrder
 
 if typing.TYPE_CHECKING:
-    from typing import Generator, Literal
+    from typing import Generator, Literal, Sequence
     from pepclibs import _HWPMSR
     from pepclibs.msr import MSR
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
-    from pepclibs.CPUInfoTypes import AbsNumsType
 
     # A CPU frequency sysfs file type. Possible values:
     #   - "min": a minimum CPU frequency file
@@ -262,7 +261,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
     def _get_freq_sysfs(self,
                         ftype: _SysfsFileType,
-                        cpus: AbsNumsType,
+                        cpus: Sequence[int],
                         limit: bool = False) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield CPU frequencies from the Linux "cpufreq" sysfs files for specified CPUs.
@@ -290,7 +289,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             # The frequency value is in kHz in sysfs, convert to Hz.
             yield cpu, freq * 1000
 
-    def get_min_freq(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
+    def get_min_freq(self, cpus: Sequence[int]) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the minimum CPU frequency for specified CPUs.
 
@@ -307,7 +306,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         yield from self._get_freq_sysfs("min", cpus)
 
-    def get_max_freq(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
+    def get_max_freq(self, cpus: Sequence[int]) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the maximum CPU frequency for specified CPUs.
 
@@ -324,7 +323,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         yield from self._get_freq_sysfs("max", cpus)
 
-    def get_cur_freq(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
+    def get_cur_freq(self, cpus: Sequence[int]) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the current CPU frequency for specified CPUs.
 
@@ -341,7 +340,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         yield from self._get_freq_sysfs("current", cpus)
 
-    def get_min_freq_limit(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
+    def get_min_freq_limit(self, cpus: Sequence[int]) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the minimum CPU frequency limit for specified CPUs.
 
@@ -358,7 +357,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         yield from self._get_freq_sysfs("min", cpus, limit=True)
 
-    def get_max_freq_limit(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
+    def get_max_freq_limit(self, cpus: Sequence[int]) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the maximum CPU frequency limit for specified CPUs.
 
@@ -375,7 +374,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         yield from self._get_freq_sysfs("max", cpus, limit=True)
 
-    def _validate_freq(self, freq: int, ftype: _SysfsFileType, cpus: AbsNumsType):
+    def _validate_freq(self, freq: int, ftype: _SysfsFileType, cpus: Sequence[int]):
         """
         Validate that a CPU frequency value is within the acceptable range.
 
@@ -434,7 +433,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
                     raise ErrorBadOrder(f"{name} value of '{freq_str}' is less than the "
                                         f"currently configured minimum frequency of {min_freq_str}")
 
-    def _set_freq_sysfs(self, freq: int, ftype: _SysfsFileType, cpus: AbsNumsType):
+    def _set_freq_sysfs(self, freq: int, ftype: _SysfsFileType, cpus: Sequence[int]):
         """
         Set the CPU frequency for the specified CPUs using the Linux "cpufreq" sysfs interface.
 
@@ -481,7 +480,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             setattr(err, "cpu", cpu)
             raise err
 
-    def set_min_freq(self, freq: int, cpus: AbsNumsType):
+    def set_min_freq(self, freq: int, cpus: Sequence[int]):
         """
         Set the minimum CPU frequency for the specified CPUs using the Linux "cpufreq" sysfs
         interfaces.
@@ -503,7 +502,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         self._set_freq_sysfs(freq, "min", cpus)
 
-    def set_max_freq(self, freq, cpus):
+    def set_max_freq(self, freq: int, cpus: Sequence[int]):
         """
         Set the maximum CPU frequency for the specified CPUs using the Linux "cpufreq" sysfs
         interfaces.
@@ -526,8 +525,8 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
         self._set_freq_sysfs(freq, "max", cpus)
 
     def get_available_frequencies(self,
-                                  cpus: AbsNumsType) -> Generator[tuple[int, list[int]],
-                                                                  None, None]:
+                                  cpus: Sequence[int]) -> Generator[tuple[int, list[int]],
+                                                                    None, None]:
         """
         Yield available CPU frequencies for specified CPUs. Frequencies are read from the
         'scaling_available_frequencies' sysfs file, which is typically provided by the
@@ -564,7 +563,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             yield cpu, sorted(freqs)
 
     def _get_base_freq_intel_pstate(self,
-                                    cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
+                                    cpus: Sequence[int]) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the base frequency for specified CPUs using the 'intel_pstate' driver.
 
@@ -587,7 +586,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             yield cpu, freq * 1000
 
     def _get_base_freq_bios_limit(self,
-                                  cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
+                                  cpus: Sequence[int]) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the base frequency for specified CPUs using the 'bios_limit' sysfs file.
 
@@ -615,7 +614,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             # The frequency value is in kHz in sysfs, convert to Hz.
             yield cpu, freq * 1000
 
-    def get_base_freq(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
+    def get_base_freq(self, cpus: Sequence[int]) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the base frequency for specified CPUs.
 
@@ -650,7 +649,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
                 # No CPUs were handled successfully, re-raise the original error.
                 raise ErrorNotSupported(str(err1))
 
-    def get_driver(self, cpus: AbsNumsType) -> Generator[tuple[int, str], None, None]:
+    def get_driver(self, cpus: Sequence[int]) -> Generator[tuple[int, str], None, None]:
         """
         Retrieve and yield the Linux CPU frequency driver name for specified CPUs.
 
@@ -698,7 +697,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             yield cpu, name
 
     def get_intel_pstate_mode(self,
-                              cpus: AbsNumsType) -> Generator[tuple[int, str], None, None]:
+                              cpus: Sequence[int]) -> Generator[tuple[int, str], None, None]:
         """
         Retrieve and yield the 'intel_pstate' driver mode for specified CPUs.
 
@@ -728,7 +727,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
             yield cpu, mode
 
-    def set_intel_pstate_mode(self, mode: str, cpus: AbsNumsType):
+    def set_intel_pstate_mode(self, mode: str, cpus: Sequence[int]):
         """
         Set the operational mode of the 'intel_pstate' driver to one of the supported modes:
         "active", "passive", or "off".
@@ -773,7 +772,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             raise Error(f"Failed to set 'intel_pstate' driver mode to '{mode}'"
                         f"{self._pman.hostmsg}:\n{err.indent(2)}") from err
 
-    def get_turbo(self, cpus: AbsNumsType) -> Generator[tuple[int, str], None, None]:
+    def get_turbo(self, cpus: Sequence[int]) -> Generator[tuple[int, str], None, None]:
         """
         Retrieve and yield the turbo on/off status for specified CPUs.
 
@@ -837,7 +836,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
         for cpu in cpus:
             yield cpu, val
 
-    def set_turbo(self, enable: bool, cpus: AbsNumsType):
+    def set_turbo(self, enable: bool, cpus: Sequence[int]):
         """
         Enable or disable turbo mode for specified CPUs.
 
@@ -907,7 +906,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             path = self._get_cpu_freq_sysfs_path("max", cpu, limit=True)
             self._sysfs_io.cache_remove(path)
 
-    def get_governor(self, cpus: AbsNumsType) -> Generator[tuple[int, str], None, None]:
+    def get_governor(self, cpus: Sequence[int]) -> Generator[tuple[int, str], None, None]:
         """
         Retrieve and yield the Linux CPU frequency governor name for specified CPUs.
 
@@ -934,8 +933,8 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
             yield cpu, name
 
-    def get_available_governors(self, cpus: AbsNumsType) -> \
-                                            Generator[tuple[int, list[str]], None, None]:
+    def get_available_governors(self, cpus: Sequence[int]) -> \
+                                                    Generator[tuple[int, list[str]], None, None]:
         """
         Retrieve and yield available Linux CPU frequency governor names for specified CPUs.
 
@@ -962,7 +961,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
             yield cpu, Trivial.split_csv_line(names, sep=" ")
 
-    def set_governor(self, governor: str, cpus: AbsNumsType):
+    def set_governor(self, governor: str, cpus: Sequence[int]):
         """
         Set the CPU frequency governor for the specified CPUs.
 

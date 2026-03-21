@@ -20,7 +20,7 @@ from pepclibs import CPUInfo
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 
 if typing.TYPE_CHECKING:
-    from typing import Final, NoReturn, Callable, Generator, Sequence, Iterable, Literal
+    from typing import Final, NoReturn, Callable, Generator, Sequence
     from pepclibs import _SysfsIO
     from pepclibs.msr import MSR
     from pepclibs.CPUInfoTypes import ScopeNameType
@@ -33,6 +33,10 @@ _MNAMES: Final[tuple[str, ...]] = ("sysfs", "msr")
 class EPBase(ClassHelpers.SimpleCloseContext):
     """
     Provide the base class for 'EPP' and 'EPB' modules.
+
+    Notes:
+        Methods do not validate the 'cpus' argument. Ensure that provided CPU numbers are valid and
+        online.
     """
 
     def __init__(self,
@@ -166,7 +170,7 @@ class EPBase(ClassHelpers.SimpleCloseContext):
         return Trivial.list_dedup(mnames)
 
     def _raise_getset_exception(self,
-                                cpus: list[int],
+                                cpus: Sequence[int],
                                 mnames: list[str],
                                 action: str,
                                 errors: list[Error]) -> NoReturn:
@@ -267,13 +271,13 @@ class EPBase(ClassHelpers.SimpleCloseContext):
                                   "class")
 
     def _get_epp_or_epb(self,
-                        cpus: Iterable[int] | Literal["all"],
+                        cpus: Sequence[int],
                         mnames: Sequence[str]) -> Generator[tuple[int, str | int, str], None, None]:
         """
         Yield EPB or EPP for CPUs in 'cpus'.
 
         Args:
-            cpus: Collection of integer CPU numbers.
+            cpus: CPU numbers to read EPP/EPB for (the caller must validate CPU numbers).
             mnames: List of mechanisms to use for reading.
 
         Yields:
@@ -281,7 +285,6 @@ class EPBase(ClassHelpers.SimpleCloseContext):
         """
 
         mnames = self._normalize_mnames(mnames)
-        cpus = self._cpuinfo.normalize_cpus(cpus)
         errors: list[Error] = []
         yielded = 0
 
@@ -313,7 +316,7 @@ class EPBase(ClassHelpers.SimpleCloseContext):
 
     def _set_epp_or_epb(self,
                         val: str | int,
-                        cpus: Iterable[int] | Literal["all"],
+                        cpus: Sequence[int],
                         mnames: Sequence[str]) -> str:
         """
         Set EPB or EPP for CPUs in 'cpus' using the 'mname' mechanism.
@@ -322,7 +325,7 @@ class EPBase(ClassHelpers.SimpleCloseContext):
             val: The EPB or EPP value to set. Can be an integer, a string representing an integer.
                  If 'mname' is "sysfs", 'val' can also be EPB or EPP policy name (e.g.,
                  "performance").
-            cpus: Collection of integer CPU numbers. Special value 'all' means "all CPUs".
+            cpus: CPU numbers to set EPP/EPB for (the caller must validate CPU numbers).
             mnames: List of mechanisms to use for setting EPB or EPP. The mechanisms will be tried
                     in the order specified in 'mnames'. Specify an empty sequence to try all
                     supported mechanisms.
@@ -335,7 +338,6 @@ class EPBase(ClassHelpers.SimpleCloseContext):
         """
 
         mnames = self._normalize_mnames(mnames)
-        cpus = self._cpuinfo.normalize_cpus(cpus)
         errors: list[Error] = []
 
         for cpu in cpus:
@@ -365,14 +367,13 @@ class EPBase(ClassHelpers.SimpleCloseContext):
         self._raise_getset_exception(cpus, mnames, "set", errors)
 
     def get_vals(self,
-                 cpus: Iterable[int] | Literal["all"] = "all",
+                 cpus: Sequence[int],
                  mnames: Sequence[str] = ()) -> Generator[tuple[int, str | int, str], None, None]:
         """
         Read EPP or EPB for CPUs 'cpus' using mechanisms in 'mnames'.
 
         Args:
-            cpus: Collection of integer CPU numbers to read EPP or EPB for. Special value 'all'
-                  means "all CPUs" (default).
+            cpus: CPU numbers to read EPP or EPB for (the caller must validate CPU numbers).
             mnames: List of mechanisms to use for reading EPP/EPB. The mechanisms will be tried in
                     the order specified in 'mnames'. Try all supported mechanisms by default.
         Yields:
@@ -399,7 +400,7 @@ class EPBase(ClassHelpers.SimpleCloseContext):
 
     def set_vals(self,
                  val: str | int,
-                 cpus: Iterable[int] | Literal["all"] = "all",
+                 cpus: Sequence[int],
                  mnames: Sequence[str] = ()) -> str:
         """
         Set EPP or EPB for CPUs in 'cpus' using the 'mname' mechanism.
@@ -408,8 +409,7 @@ class EPBase(ClassHelpers.SimpleCloseContext):
             val: The EPP/EPB value to set. Can be an integer or a string representing an integer.
                  If 'mname' is "sysfs", 'val' can also be EPP/EPB policy name (e.g.,
                  "performance").
-            cpus: Collection of integer CPU numbers to set EPP or EPB for. Special value 'all' means
-                  "all CPUs" (default).
+            cpus: CPU numbers to set EPP or EPB for (the caller must validate CPU numbers).
             mnames: List of mechanisms to use for setting EPP/EPB. The mechanisms will be tried in
                     the order specified in 'mnames'. Try all supported mechanisms by default.
 

@@ -832,4 +832,3 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
         """
 
         self.enable_feature(fname, enable, cpus=(cpu,))
-
