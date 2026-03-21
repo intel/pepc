@@ -16,8 +16,8 @@ lines and align the parameters vertically. Use one parameter per line in this ca
 
 1. Count indentation spaces. Typically it is 0 for top-level functions and 4 for methods inside a
    class.
-1. Count method name character-by-character (underscore counts as 1 character)
-2. Use formula:
+2. Count method name character-by-character (underscore counts as 1 character)
+3. Use formula:
    `Parameter Indent = Indent Spaces + 4 + Method Name Length + 1`,
     where 4 is the length of "def ", and 1 is for the opening parenthesis `(`.
 
@@ -48,7 +48,7 @@ The `(` is at column 29, so all parameters start at column 30.
 **Note:** Even if all parameters fit on a single line, if the return type annotation is long,
 it's better to break the signature into multiple lines and align the parameters vertically.
 
-**Example:**
+**Example 3:**
 
 ```python
     def is_feature_enabled_norm(self,

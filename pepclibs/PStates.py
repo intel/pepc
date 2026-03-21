@@ -220,7 +220,7 @@ class PStates(_PropsClassBase.PropsClassBase):
             for cpu in cpus:
                 yield cpu, 100000000
         else:
-            for cpu, bclk in fsbfreq.read_feature_int("fsb", cpus=cpus):
+            for cpu, bclk in fsbfreq.read_feature_int_norm("fsb", cpus=cpus):
                 # Convert MHz to Hz.
                 yield cpu, bclk * 1000000
 
@@ -395,7 +395,7 @@ class PStates(_PropsClassBase.PropsClassBase):
 
         platinfo = self._get_platinfo()
 
-        platinfo_iter = platinfo.read_feature_int("max_non_turbo_ratio", cpus=cpus)
+        platinfo_iter = platinfo.read_feature_int_norm("max_non_turbo_ratio", cpus=cpus)
         bclks_iter = self._get_bclks_cpus(cpus)
 
         iter_zip = zip(platinfo_iter, bclks_iter)
@@ -548,7 +548,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         """
 
         if mname == "msr":
-            for cpu, val in self._get_fsbfreq().read_feature_int("fsb", cpus=cpus):
+            for cpu, val in self._get_fsbfreq().read_feature_int_norm("fsb", cpus=cpus):
                 yield cpu, val * 1000000
         elif mname == "doc":
             try:

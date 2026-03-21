@@ -176,7 +176,7 @@ class EPP(_EPBase.EPBase):
         pkg_controlled_cpus: list[int] = []
         percpu_controlled_cpus: list[int] = []
 
-        for cpu, pkg_controlled in hwpreq.is_feature_pkg_controlled("epp", cpus=cpus):
+        for cpu, pkg_controlled in hwpreq.is_feature_pkg_controlled_norm("epp", cpus=cpus):
             cpus_list.append(cpu)
             if pkg_controlled:
                 pkg_controlled_cpus.append(cpu)
@@ -246,10 +246,10 @@ class EPP(_EPBase.EPBase):
                         f"integer value")
 
         # Disable package control for all CPUs.
-        hwpreq.disable_feature_pkg_control("epp", cpus=cpus)
+        hwpreq.disable_feature_pkg_control_norm("epp", cpus=cpus)
 
         try:
-            hwpreq.write_feature("epp", val, cpus=cpus)
+            hwpreq.write_feature_norm("epp", val, cpus=cpus)
         except Error as err:
             raise type(err)(f"Failed to set EPP{self._pman.hostmsg}:\n{err.indent(2)}") from err
 

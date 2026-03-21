@@ -114,7 +114,7 @@ def get_params(hostspec: str,
             try:
                 with fmsr_class(pman=pman, cpuinfo=cpuinfo) as fmsr:
                     for name, finfo in fmsr._features.items(): # pylint: disable=protected-access
-                        if not fmsr.is_feature_supported(name):
+                        if not fmsr.is_feature_supported_norm(name):
                             continue
                         if not is_safe_to_set(name, params["hostname"]):
                             continue

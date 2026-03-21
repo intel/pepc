@@ -34,7 +34,7 @@ def get_bclk(pman, fsbfreq=None, cpu=0):
         close_fsbfreq = True
 
     try:
-        bclk = fsbfreq.read_cpu_feature("fsb", cpu)
+        bclk = fsbfreq.read_cpu_feature_norm("fsb", cpu)
     except ErrorNotSupported:
         # Fall back to 100MHz clock speed.
         bclk = 100.0

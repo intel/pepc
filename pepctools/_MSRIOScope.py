@@ -313,7 +313,7 @@ def _check_feature_ok_to_test(fmsr: _FeaturedMSR.FeaturedMSR, fname: str) -> boo
 
     if fmsr.regname == "MSR_PKG_CST_CONFIG_CONTROL" and fname == "pkg_cstate_limit":
         # Check that the package C-state limit is unlocked.
-        for _, val in fmsr.read_feature("pkg_cstate_limit_lock", cpus="all"):
+        for _, val in fmsr.read_feature_norm("pkg_cstate_limit_lock", cpus="all"):
             if val != "off":
                 finfo = fmsr.features[fname]
                 bits_str = ":".join([str(bit) for bit in finfo["bits"]])
@@ -370,7 +370,7 @@ def _get_featured_msrs(pman: ProcessManagerType,
                           fname, bits_str, fmsr_cls.regname, fmsr_cls.regaddr)
                 continue
 
-            if not fmsr.is_feature_supported(fname, cpus="all"):
+            if not fmsr.is_feature_supported_norm(fname, cpus="all"):
                 _LOG.info("Skipping unsupported feature '%s' (bits %s) in MSR '%s' (%#x)",
                           fname, bits_str, fmsr_cls.regname, fmsr_cls.regaddr)
                 continue

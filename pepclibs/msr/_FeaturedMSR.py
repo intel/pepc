@@ -392,7 +392,9 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
                                     f"{self._features[fname]['name']} only on the following CPUs: "
                                     f"{supported_str}")
 
-    def validate_feature_supported(self, fname: str, cpus: Iterable[int] | Literal["all"] = "all"):
+    def validate_feature_supported_norm(self,
+                                        fname: str,
+                                        cpus: Iterable[int] | Literal["all"] = "all"):
         """
         Validate that a feature is supported by all specified CPUs.
 
@@ -425,9 +427,9 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
 
         return result
 
-    def is_feature_supported(self,
-                             fname: str,
-                             cpus: Iterable[int] | Literal["all"] = "all") -> bool:
+    def is_feature_supported_norm(self,
+                                  fname: str,
+                                  cpus: Iterable[int] | Literal["all"] = "all") -> bool:
         """
         Check if a feature is supported by all specified CPUs.
 
@@ -449,7 +451,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
 
         return self.is_feature_supported_nonorm(fname, cpus=[cpu])
 
-    def is_cpu_feature_supported(self, fname: str, cpu: int) -> bool:
+    def is_cpu_feature_supported_norm(self, fname: str, cpu: int) -> bool:
         """
         Check if a specific CPU supports a given feature.
 
@@ -632,9 +634,9 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
             # Ensure the order of features in the output matches the order in 'fnames'.
             yield cpu, {fname: vals[fname] for fname in fnames if fname in vals}
 
-    def read_features(self,
-                      fnames: Sequence[str],
-                      cpus: Iterable[int] | Literal["all"] = "all") -> \
+    def read_features_norm(self,
+                           fnames: Sequence[str],
+                           cpus: Iterable[int] | Literal["all"] = "all") -> \
                                     Generator[tuple[int, dict[str, FeatureValueType]], None, None]:
         """
         Read the values of multiple features from the MSR for given CPUs and yield the results.
@@ -683,9 +685,9 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
                     val = self._features[fname]["rvals"][_val]
                 yield cpu, val
 
-    def read_feature(self,
-                     fname: str,
-                     cpus: Iterable[int] | Literal["all"] = "all") -> \
+    def read_feature_norm(self,
+                          fname: str,
+                          cpus: Iterable[int] | Literal["all"] = "all") -> \
                                                 Generator[tuple[int, FeatureValueType], None, None]:
         """
         Read the value of a feature from the MSR for given CPUs and yield the results.
@@ -722,9 +724,9 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
         else:
             yield from self.read_feature_nonorm(fname, cpus=cpus)
 
-    def read_feature_int(self,
-                         fname: str,
-                         cpus: Iterable[int] | Literal["all"] = "all") -> \
+    def read_feature_int_norm(self,
+                              fname: str,
+                              cpus: Iterable[int] | Literal["all"] = "all") -> \
                                                     Generator[tuple[int, int], None, None]:
         """
         Same as 'read_feature()', but ensures that the returned value is of type 'int'.
@@ -743,7 +745,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
 
         raise Error(f"Failed to read feature '{fname}' from CPU {cpu}")
 
-    def read_cpu_feature(self, fname: str, cpu: int) -> FeatureValueType:
+    def read_cpu_feature_norm(self, fname: str, cpu: int) -> FeatureValueType:
         """
         Read the value of a feature from for a given CPU and return the result.
 
@@ -769,7 +771,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
 
         return int(self.read_cpu_feature_nonorm(fname, cpu))
 
-    def read_cpu_feature_int(self, fname: str, cpu: int) -> int:
+    def read_cpu_feature_int_norm(self, fname: str, cpu: int) -> int:
         """
         Same as 'read_cpu_feature()', but ensures that the returned value is of type 'int'.
         """
@@ -800,8 +802,10 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
             enabled = vals[fname] in {"on", "enabled"}
             yield cpu, enabled
 
-    def is_feature_enabled(self, fname: str, cpus: Iterable[int] | Literal["all"] = "all") -> \
-                                                            Generator[tuple[int, bool], None, None]:
+    def is_feature_enabled_norm(self,
+                                fname: str,
+                                cpus: Iterable[int] | Literal["all"] = "all") -> \
+                                                        Generator[tuple[int, bool], None, None]:
         """
         Check whether a boolean feature is enabled for specified CPUs.
 
@@ -828,7 +832,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
 
         raise Error(f"Failed to check if feature '{fname}' is enabled on CPU {cpu}")
 
-    def is_cpu_feature_enabled(self, fname, cpu):
+    def is_cpu_feature_enabled_norm(self, fname, cpu):
         """
         Check if a CPU feature is enabled for a CPU.
 
@@ -868,10 +872,11 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
             set_method(val, cpus=cpus)
         else:
             self._msr.write_bits(self.regaddr, finfo["bits"], val, cpus, iosname=finfo["iosname"])
-    def write_feature(self,
-                      fname: str,
-                      val: FeatureValueType,
-                      cpus: Iterable[int] | Literal["all"] = "all"):
+
+    def write_feature_norm(self,
+                           fname: str,
+                           val: FeatureValueType,
+                           cpus: Iterable[int] | Literal["all"] = "all"):
         """
         Write a feature value for the specified CPUs.
 
@@ -891,7 +896,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
 
         self.write_feature_nonorm(fname, val, cpus=[cpu])
 
-    def write_cpu_feature(self, fname: str, val: FeatureValueType, cpu: int):
+    def write_cpu_feature_norm(self, fname: str, val: FeatureValueType, cpu: int):
         """
         Write a feature value for a specified CPU.
 
@@ -927,10 +932,10 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
 
         self.write_feature_nonorm(fname, val, cpus=cpus)
 
-    def enable_feature(self,
-                       fname: str,
-                       enable: bool | str,
-                       cpus: Iterable[int] | Literal["all"] = "all"):
+    def enable_feature_norm(self,
+                            fname: str,
+                            enable: bool | str,
+                            cpus: Iterable[int] | Literal["all"] = "all"):
         """
         Enable or disable a boolean feature for specified CPUs.
 
@@ -952,7 +957,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
 
         self.enable_feature_nonorm(fname, enable, cpus=[cpu])
 
-    def enable_cpu_feature(self, fname, enable, cpu):
+    def enable_cpu_feature_norm(self, fname, enable, cpu):
         """
         Enable or disable a boolean feature for a specified CPU.
 

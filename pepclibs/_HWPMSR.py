@@ -168,7 +168,7 @@ class HWPMSR(ClassHelpers.SimpleCloseContext):
 
         fname = f"{plname}_perf"
         hwpcap = self._get_hwpcap()
-        yield from hwpcap.read_feature_int(fname, cpus=cpus)
+        yield from hwpcap.read_feature_int_norm(fname, cpus=cpus)
 
     def get_lowest_perf(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
@@ -255,4 +255,4 @@ class HWPMSR(ClassHelpers.SimpleCloseContext):
         """
 
         pmenable = self._get_pmenable()
-        yield from pmenable.is_feature_enabled("hwp", cpus=cpus)
+        yield from pmenable.is_feature_enabled_norm("hwp", cpus=cpus)

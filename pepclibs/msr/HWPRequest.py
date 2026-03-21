@@ -174,7 +174,7 @@ class HWPRequest(_FeaturedMSR.FeaturedMSR):
     def is_feature_pkg_controlled_nonorm(self, fname: str, cpus: Sequence[int]) -> \
                                                             Generator[tuple[int, bool], None, None]:
         """
-        Same as 'is_feature_pkg_controlled()', no CPU normalization.
+        Same as 'is_feature_pkg_controlled_norm()', no CPU normalization.
         """
 
         # Check if pkg_control is supported.
@@ -215,8 +215,8 @@ class HWPRequest(_FeaturedMSR.FeaturedMSR):
                 # No valid bit exists for this feature, so package control applies.
                 yield cpu, True
 
-    def is_feature_pkg_controlled(self, fname: str,
-                                  cpus: Iterable[int] | Literal["all"] = "all") -> \
+    def is_feature_pkg_controlled_norm(self, fname: str,
+                                       cpus: Iterable[int] | Literal["all"] = "all") -> \
                                                             Generator[tuple[int, bool], None, None]:
         """
         Check whether the specified HWP feature is managed by the package-level MSR
@@ -238,7 +238,7 @@ class HWPRequest(_FeaturedMSR.FeaturedMSR):
 
     def is_cpu_feature_pkg_controlled_nonorm(self, fname: str, cpu: int) -> bool:
         """
-        Same as 'is_cpu_feature_pkg_controlled()', no CPU normalization.
+        Same as 'is_cpu_feature_pkg_controlled_norm()', no CPU normalization.
         """
 
         try:
@@ -255,7 +255,7 @@ class HWPRequest(_FeaturedMSR.FeaturedMSR):
 
         return False
 
-    def is_cpu_feature_pkg_controlled(self, fname: str, cpu: int) -> bool:
+    def is_cpu_feature_pkg_controlled_norm(self, fname: str, cpu: int) -> bool:
         """
         Check whether the specified HWP feature is managed by the package-level MSR
         ('MSR_HWP_REQUEST_PKG') or by the per-CPU MSR ('MSR_HWP_REQUEST'). If package control is not
@@ -298,7 +298,7 @@ class HWPRequest(_FeaturedMSR.FeaturedMSR):
 
     def disable_feature_pkg_control_nonorm(self, fname: str, cpus: Sequence[int]):
         """
-        Same as 'disable_feature_pkg_control()', no CPU normalization.
+        Same as 'disable_feature_pkg_control_norm()', no CPU normalization.
         """
 
         if self._pman.is_remote:
@@ -307,8 +307,8 @@ class HWPRequest(_FeaturedMSR.FeaturedMSR):
             for cpu in cpus:
                 self.disable_cpu_feature_pkg_control_nonorm(fname, cpu)
 
-    def disable_feature_pkg_control(self, fname: str,
-                                    cpus: Iterable[int] | Literal["all"] = "all"):
+    def disable_feature_pkg_control_norm(self, fname: str,
+                                         cpus: Iterable[int] | Literal["all"] = "all"):
         """
         Disable the 'MSR_HWP_REQUEST_PKG' control for the specified HWP feature, allowing the
         feature to be managed on a per-CPU basis instead of at the package level. If package-level
@@ -325,7 +325,7 @@ class HWPRequest(_FeaturedMSR.FeaturedMSR):
 
     def disable_cpu_feature_pkg_control_nonorm(self, fname: str, cpu: int):
         """
-        Same as 'disable_cpu_feature_pkg_control()', no CPU normalization.
+        Same as 'disable_cpu_feature_pkg_control_norm()', no CPU normalization.
         """
 
         try:
@@ -337,7 +337,7 @@ class HWPRequest(_FeaturedMSR.FeaturedMSR):
         if pkg_control:
             self.write_cpu_feature_nonorm(f"{fname}_valid", "on", cpu)
 
-    def disable_cpu_feature_pkg_control(self, fname: str, cpu: int):
+    def disable_cpu_feature_pkg_control_norm(self, fname: str, cpu: int):
         """
         Disable the 'MSR_HWP_REQUEST_PKG' control for the specified HWP feature, allowing the
         feature to be managed on a per-CPU basis instead of at the package level. If package-level
