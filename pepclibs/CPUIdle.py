@@ -361,16 +361,16 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
         yield cpu, csinfo
 
     def _get_cstates_info(self,
-                          csnames: Iterable[str] | Literal["all"],
-                          cpus: Sequence[int]) -> \
+                          cpus: Sequence[int],
+                          csnames: Iterable[str] | Literal["all"]) -> \
                             Generator[tuple[int, dict[str, ReqCStateInfoTypedDict]], None, None]:
         """
         Retrieve and yield information about requestable C-states for given CPUs.
 
         Args:
-            csnames: Requestable C-state names to get information about.
             cpus: CPU numbers to get requestable C-states information for (the caller must validate
                   CPU numbers).
+            csnames: Requestable C-state names to get information about.
 
         Yields:
             Tuples of (CPU number, C-state information dictionary).
@@ -475,7 +475,7 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
             raise ErrorNotSupported(f"There is no idle driver in use{self._pman.hostmsg}")
 
         csnames = self._normalize_csnames(csnames)
-        yield from self._get_cstates_info(csnames, cpus)
+        yield from self._get_cstates_info(cpus, csnames)
 
     def get_cpu_cstates_info(self,
                              cpu: int,
@@ -653,7 +653,7 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
 
         toggled: ReqCStateToggleResultType = {}
 
-        for cpu, csinfo in self._get_cstates_info(csnames, cpus):
+        for cpu, csinfo in self._get_cstates_info(cpus, csnames):
             for csname, cstate in csinfo.items():
                 self._toggle_cstate(cpu, cstate["index"], enable)
 

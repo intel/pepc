@@ -23,7 +23,7 @@ from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorNotFou
 from pepclibs.msr import PowerCtl, PCStateConfigCtl
 
 # pylint: disable=unused-import
-from pepclibs._PropsClassBase import ErrorUsePerCPU, ErrorTryAnotherMechanism
+from pepclibs._PropsClassBase import ErrorTryAnotherMechanism
 
 if typing.TYPE_CHECKING:
     from typing import Generator, Literal, Iterable, Sequence, Union
@@ -118,8 +118,8 @@ class CStates(_PropsClassBase.PropsClassBase):
         return self._pcstatectl
 
     def get_cstates_info(self,
-                         csnames: Iterable[str] | Literal["all"] = "all",
-                         cpus: Iterable[int] | Literal["all"] = "all") -> \
+                         cpus: Iterable[int] | Literal["all"] = "all",
+                         csnames: Iterable[str] | Literal["all"] = "all") -> \
                             Generator[tuple[int, dict[str, ReqCStateInfoTypedDict]], None, None]:
         """Refer to 'CPUIdle.get_cstates_info()'."""
 
@@ -135,15 +135,15 @@ class CStates(_PropsClassBase.PropsClassBase):
         return self._get_cpuidle().get_cpu_cstates_info(cpu, csnames=csnames)
 
     def enable_cstates(self,
-                       csnames: Iterable[str] | Literal["all"] = "all",
                        cpus: Iterable[int] | Literal["all"] = "all",
+                       csnames: Iterable[str] | Literal["all"] = "all",
                        mnames: Sequence[MechanismNameType] = ()) -> ReqCStateToggleResultType:
         """
         Enable specified C-states on selected CPUs using the specified mechanisms.
 
         Args:
-            csnames: C-state names to enable, or "all" to enable all available C-states.
             cpus: CPU numbers to enable C-states on, or "all" for all CPUs.
+            csnames: C-state names to enable, or "all" to enable all available C-states.
             mnames: Mechanism names to use for enabling C-states. If empty, use all available
                     mechanisms.
 
@@ -163,8 +163,8 @@ class CStates(_PropsClassBase.PropsClassBase):
         return self._get_cpuidle().enable_cstates(cpus=cpus, csnames=csnames)
 
     def disable_cstates(self,
-                        csnames: Iterable[str] | Literal["all"] = "all",
                         cpus: Iterable[int] | Literal["all"] = "all",
+                        csnames: Iterable[str] | Literal["all"] = "all",
                         mnames: Sequence[MechanismNameType] = ()) -> dict:
         """Same as 'enable_cstates()', but disable specified C-states."""
 
