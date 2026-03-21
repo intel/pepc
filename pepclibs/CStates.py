@@ -119,7 +119,7 @@ class CStates(_PropsClassBase.PropsClassBase):
 
     def get_cstates_info(self,
                          csnames: Iterable[str] | Literal["all"] = "all",
-                         cpus: AbsNumsType | Literal["all"] = "all") -> \
+                         cpus: Iterable[int] | Literal["all"] = "all") -> \
                             Generator[tuple[int, dict[str, ReqCStateInfoTypedDict]], None, None]:
         """Refer to 'CPUIdle.get_cstates_info()'."""
 
@@ -136,7 +136,7 @@ class CStates(_PropsClassBase.PropsClassBase):
 
     def enable_cstates(self,
                        csnames: Iterable[str] | Literal["all"] = "all",
-                       cpus: AbsNumsType | Literal["all"] = "all",
+                       cpus: Iterable[int] | Literal["all"] = "all",
                        mnames: Sequence[MechanismNameType] = ()) -> ReqCStateToggleResultType:
         """
         Enable specified C-states on selected CPUs using the specified mechanisms.
@@ -164,7 +164,7 @@ class CStates(_PropsClassBase.PropsClassBase):
 
     def disable_cstates(self,
                         csnames: Iterable[str] | Literal["all"] = "all",
-                        cpus: AbsNumsType | Literal["all"] = "all",
+                        cpus: Iterable[int] | Literal["all"] = "all",
                         mnames: Sequence[MechanismNameType] = ()) -> dict:
         """Same as 'enable_cstates()', but disable specified C-states."""
 
