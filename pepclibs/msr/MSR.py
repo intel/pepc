@@ -26,7 +26,7 @@ from pepclibs.msr import _SimpleMSR
 from pepclibs.msr._SimpleMSR import _CPU_BYTEORDER
 
 if typing.TYPE_CHECKING:
-    from typing import Generator, TypedDict, Literal, Sequence, Iterable
+    from typing import Generator, TypedDict, Sequence
     from pepclibs import CPUInfo
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepclibs.CPUInfoTypes import ScopeNameType
@@ -69,21 +69,13 @@ class MSR(_SimpleMSR.SimpleMSR):
     1. Multi-CPU I/O.
         - 'read()' - read an MSR.
         - 'read_bits()' - read an MSR bits range.
-        - 'read_nonorm()' - read an MSR (no CPU normalization).
-        - 'read_bits_nonorm()' - read an MSR bits range (no CPU normalization).
         - 'write()' - write to an MSR.
         - 'write_bits()' - write MSR bits range.
-        - 'write_nonorm()' - write to an MSR (no CPU normalization).
-        - 'write_bits_nonorm()' - write MSR bits range (no CPU normalization).
     2. Single-CPU I/O.
         - 'read_cpu()' - read an MSR.
         - 'read_cpu_bits()' - read an MSR bits range.
-        - 'read_cpu_nonorm()' - read an MSR (no CPU normalization).
-        - 'read_cpu_bits_nonorm()' - read an MSR bits range (no CPU normalization).
         - 'write_cpu()' - write to an MSR.
         - 'write_cpu_bits()' - write MSR bits range.
-        - 'write_cpu_nonorm()' - write to an MSR (no CPU normalization).
-        - 'write_cpu_bits_nonorm()' - write MSR bits range (no CPU normalization).
     3. Transactions support.
         - 'start_transaction()' - start a transaction.
         - 'flush_transaction()' - flush the transaction buffer.
@@ -93,9 +85,10 @@ class MSR(_SimpleMSR.SimpleMSR):
         - 'set_bits()' - set bits range from a user-provided MSR value.
         - 'close()' - uninitialize the class object.
 
-    Note:
-        Current implementation is not thread-safe. Can only be used by single-threaded applications
-        (add locking to improve this).
+    Notes:
+        - CPU numbers passed to methods must be valid and normalized by the caller.
+        - Current implementation is not thread-safe. Can only be used by single-threaded
+          applications (add locking to improve this).
     """
 
     def __init__(self,
@@ -148,11 +141,11 @@ class MSR(_SimpleMSR.SimpleMSR):
         super().close()
 
     def _add_for_transaction(self,
-                            regaddr: int,
-                            regval: int,
-                            cpu: int,
-                            verify: bool,
-                            iosname: ScopeNameType):
+                             regaddr: int,
+                             regval: int,
+                             cpu: int,
+                             verify: bool,
+                             iosname: ScopeNameType):
         """
         Add the specified MSR address and value to the transaction buffer for the given
         CPU.
@@ -225,7 +218,7 @@ class MSR(_SimpleMSR.SimpleMSR):
         for cpu in cpus:
             self._cache.remove(regaddr, cpu, sname=iosname)
 
-        for cpu, new_val in self.read_nonorm(regaddr, cpus, iosname):
+        for cpu, new_val in self.read(regaddr, cpus, iosname=iosname):
             if new_val != regval:
                 raise ErrorVerifyFailed(f"Verification failed for MSR '{regaddr:#x}' on CPU {cpu}"
                                         f"{self._pman.hostmsg}:\n  Wrote '{regval:#x}', read back "
@@ -440,13 +433,23 @@ for cpu, cpus_info in transaction_buffer.items():
             regval = self._cache.get(regaddr, cpu)
             yield cpu, regval
 
-    def read_nonorm(self,
-              regaddr: int,
-              cpus: Sequence[int],
-              iosname: ScopeNameType) -> Generator[tuple[int, int], None, None]:
+    def read(self,
+             regaddr: int,
+             cpus: Sequence[int],
+             iosname: ScopeNameType = "CPU") -> Generator[tuple[int, int], None, None]:
         """
-        Same as 'read()', but does not validate/normalize the 'cpus' argument and expects it to be a
-        sequence.
+        Read the specified MSR from specified CPUs and yield the result.
+
+        Args:
+            regaddr: Address of the MSR to read.
+            cpus: CPU numbers to read the MSR from (the caller must validate CPU numbers).
+            iosname: Scope name for the MSR (e.g. "package", "core"). This is used for optimizing
+                     the read operation by skipping unnecessary reads of sibling CPUs.
+
+        Yields:
+            Tuple of (cpu, regval):
+                cpu: CPU number from which the MSR was read.
+                regval: Value read from the MSR.
         """
 
         if self._pman.is_remote:
@@ -461,74 +464,28 @@ for cpu, cpus_info in transaction_buffer.items():
                 self._cache.add(regaddr, cpu, regval, sname=iosname)
             yield cpu, regval
 
-    def read(self,
-             regaddr: int,
-             cpus: Iterable[int] | Literal["all"] = "all",
-             iosname: ScopeNameType = "CPU") -> Generator[tuple[int, int], None, None]:
-        """
-        Read the specified MSR from specified CPUs and yield the result.
-
-        Args:
-            regaddr: Address of the MSR to read.
-            cpus: CPU numbers to read the MSR from. Special value 'all' means "all CPUs".
-            iosname: Scope name for the MSR (e.g. "package", "core"). This is used for
-                     optimizing the read operation by skipping unnecessary reads of sibling CPUs.
-
-        Yields:
-            Tuple of (cpu, regval):
-                cpu: CPU number from which the MSR was read.
-                regval: Value read from the MSR.
-        """
-
-        cpus = self._cpuinfo.normalize_cpus(cpus)
-        yield from self.read_nonorm(regaddr, cpus, iosname)
-
-    def read_cpu_nonorm(self, regaddr: int, cpu: int, iosname: ScopeNameType = "CPU") -> int:
-        """
-        Same as 'read_cpu()', but does not validate/normalize the 'cpu' argument.
-        """
-
-        for _, regval in self.read_nonorm(regaddr, cpus=[cpu], iosname=iosname):
-            return regval
-
-        raise Error(f"Failed to read MSR 0x{regaddr:x} from CPU {cpu}{self._pman.hostmsg}")
-
     def read_cpu(self, regaddr: int, cpu: int, iosname: ScopeNameType = "CPU") -> int:
         """
         Read an MSR value from a specific CPU.
 
         Args:
             regaddr: Address of the MSR to read.
-            cpu: The CPU number to read the MSR from.
+            cpu: The CPU number to read the MSR from (the caller must validate CPU number).
             iosname: Scope name for the MSR (e.g. "package", "core").
 
         Returns:
             The value read from the specified MSR on the given CPU.
         """
 
-        cpu = self._cpuinfo.normalize_cpus([cpu])[0]
-        return self.read_cpu_nonorm(regaddr, cpu, iosname=iosname)
+        for _, regval in self.read(regaddr, (cpu,), iosname=iosname):
+            return regval
 
-    def read_bits_nonorm(self,
-                         regaddr: int,
-                         bits: tuple[int, int] | list[int],
-                         cpus: Sequence[int],
-                         iosname: ScopeNameType = "CPU") -> Generator[tuple[int, int], None, None]:
-        """
-        Same as 'read_bits()', but does not validate/normalize the 'cpus' argument and expects it to
-        be a sequence.
-        """
-
-        for cpu, regval in self.read_nonorm(regaddr, cpus, iosname=iosname):
-            val = self.get_bits(regval, bits)
-            _LOG.debug("CPU%d: MSR 0x%x: Bits %s: Read 0x%x%s", cpu, regaddr,
-                       ":".join([str(bit) for bit in bits]), val, self._pman.hostmsg)
-            yield cpu, val
+        raise Error(f"Failed to read MSR 0x{regaddr:x} from CPU {cpu}{self._pman.hostmsg}")
 
     def read_bits(self,
                   regaddr: int,
                   bits: tuple[int, int] | list[int],
-                  cpus: Iterable[int] | Literal["all"] = "all",
+                  cpus: Sequence[int],
                   iosname: ScopeNameType = "CPU") -> Generator[tuple[int, int], None, None]:
         """
         Read specific bits from an MSR for specified CPUs and yield results.
@@ -538,9 +495,9 @@ for cpu, cpus_info in transaction_buffer.items():
             bits: A tuple or list of two integers (msb, lsb) specifying the bit range to extract
                   from the MSR, where msb is the most significant bit and lsb is the least
                   significant bit.
-            cpus: CPU numbers to read the MSR from. Special value 'all' means "all CPUs".
-            iosname: Scope name for the MSR (e.g. "package", "core"). This is used for
-                     optimizing the read operation by skipping unnecessary reads of sibling CPUs.
+            cpus: CPU numbers to read the MSR from (the caller must validate CPU numbers).
+            iosname: Scope name for the MSR (e.g. "package", "core"). This is used for optimizing
+                     the read operation by skipping unnecessary reads of sibling CPUs.
 
         Yields:
             tuple: A tuple (cpu, val), where:
@@ -548,20 +505,11 @@ for cpu, cpus_info in transaction_buffer.items():
                 val: The value of the specified bits from the MSR.
         """
 
-        cpus = self._cpuinfo.normalize_cpus(cpus)
-        yield from self.read_bits_nonorm(regaddr, bits, cpus, iosname=iosname)
-
-    def read_cpu_bits_nonorm(self,
-                             regaddr: int,
-                             bits: tuple[int, int] | list[int],
-                             cpu: int,
-                             iosname: ScopeNameType = "CPU") -> int:
-        """
-        Same as 'read_cpu_bits()', but does not validate/normalize the 'cpu' argument.
-        """
-
-        regval = self.read_cpu_nonorm(regaddr, cpu, iosname=iosname)
-        return self.get_bits(regval, bits)
+        for cpu, regval in self.read(regaddr, cpus, iosname=iosname):
+            val = self.get_bits(regval, bits)
+            _LOG.debug("CPU%d: MSR 0x%x: Bits %s: Read 0x%x%s", cpu, regaddr,
+                       ":".join([str(bit) for bit in bits]), val, self._pman.hostmsg)
+            yield cpu, val
 
     def read_cpu_bits(self,
                       regaddr: int,
@@ -576,15 +524,15 @@ for cpu, cpus_info in transaction_buffer.items():
             bits: A tuple or list of two integers (msb, lsb) specifying the bit range to extract
                   from the MSR, where msb is the most significant bit and lsb is the least
                   significant bit.
-            cpu: CPU number to read the MSR from.
+            cpu: CPU number to read the MSR from (the caller must validate CPU number).
             iosname: Scope name for the MSR (e.g. "package", "core").
 
         Returns:
             Value of the requested bits from the MSR.
         """
 
-        cpu = self._cpuinfo.normalize_cpus([cpu])[0]
-        return self.read_cpu_bits_nonorm(regaddr, bits, cpu, iosname=iosname)
+        regval = self.read_cpu(regaddr, cpu, iosname=iosname)
+        return self.get_bits(regval, bits)
 
     def _write_remote(self,
                       regaddr: int,
@@ -656,15 +604,28 @@ for cpu, cpus_info in transaction_buffer.items():
         if verify and not self._in_transaction:
             self._verify(regaddr, regval, cpus, iosname)
 
-    def write_nonorm(self,
-               regaddr: int,
-               regval: int,
-               cpus: Sequence[int],
-               iosname: ScopeNameType = "CPU",
-               verify: bool = False):
+    def write(self,
+              regaddr: int,
+              regval: int,
+              cpus: Sequence[int],
+              iosname: ScopeNameType = "CPU",
+              verify: bool = False):
         """
-        Same as 'write()', but does not validate/normalize the 'cpus' argument, and expects it to be
-        a sequence.
+        Write a value to an MSR on specified CPUs.
+
+        Args:
+            regaddr: The address of the MSR to write to.
+            regval: The value to write to the MSR.
+            cpus: CPU numbers to write the MSR on (the caller must validate CPU numbers).
+            iosname: I/O scope name for the MSR address (e.g., "package", "core"). Used for
+                     optimizing the write operation by avoiding writing to sibling CPUs.
+            verify: If True, read back and verify the written value.
+
+        Raises:
+            ErrorVerifyFailed: If verification is enabled and the read-back value does not match the
+                               written value. The 'cpu' attribute of the exception will contain the
+                               CPU number where the verification failed, and 'expected' and 'actual'
+                               attributes will contain the expected and actual values, respectively.
         """
 
         if self._pman.is_remote and not self._in_transaction:
@@ -696,45 +657,6 @@ for cpu, cpus_info in transaction_buffer.items():
         if verify and not self._in_transaction:
             self._verify(regaddr, regval, cpus, iosname)
 
-    def write(self,
-              regaddr: int,
-              regval: int,
-              cpus: Iterable[int] | Literal["all"] = "all",
-              iosname: ScopeNameType = "CPU",
-              verify: bool = False):
-        """
-        Write a value to an MSR on specified CPUs.
-
-        Args:
-            regaddr: The address of the MSR to write to.
-            regval: The value to write to the MSR.
-            cpus: CPU numbers to write the MSR on. Special value 'all' means "all CPUs".
-            iosname: I/O scope name for the MSR address (e.g., "package", "core"). Used for
-                     optimizing the write operation by avoiding writing to sibling CPUs.
-            verify: If True, read back and verify the written value.
-
-        Raises:
-            ErrorVerifyFailed: If verification is enabled and the read-back value does not match the
-                               written value. The 'cpu' attribute of the exception will contain the
-                               CPU number where the verification failed, and 'expected' and 'actual'
-                               attributes will contain the expected and actual values, respectively.
-        """
-
-        cpus = self._cpuinfo.normalize_cpus(cpus)
-        self.write_nonorm(regaddr, regval, cpus, iosname=iosname, verify=verify)
-
-    def write_cpu_nonorm(self,
-                         regaddr: int,
-                         regval: int,
-                         cpu: int,
-                         iosname: ScopeNameType = "CPU",
-                         verify: bool = False):
-        """
-        Same as 'write_cpu()', but does not validate/normalize the 'cpu' argument.
-        """
-
-        self.write_nonorm(regaddr, regval, cpus=[cpu], iosname=iosname, verify=verify)
-
     def write_cpu(self,
                   regaddr: int,
                   regval: int,
@@ -747,7 +669,7 @@ for cpu, cpus_info in transaction_buffer.items():
         Args:
             regaddr: The address of the MSR to write to.
             regval: The value to write to the MSR.
-            cpu: CPU number to write the MSR on.
+            cpu: CPU number to write the MSR on (the caller must validate CPU number).
             iosname: The I/O scope name of the MSR.
             verify: If True, read back and verify the written value.
 
@@ -756,24 +678,38 @@ for cpu, cpus_info in transaction_buffer.items():
                                written value.
         """
 
-        cpu = self._cpuinfo.normalize_cpus([cpu])[0]
-        self.write_cpu_nonorm(regaddr, regval, cpu, iosname=iosname, verify=verify)
+        self.write(regaddr, regval, (cpu,), iosname=iosname, verify=verify)
 
-    def write_bits_nonorm(self,
-                          regaddr: int,
-                          bits: tuple[int, int] | list[int],
-                          val: int,
-                          cpus: Sequence[int],
-                          iosname: ScopeNameType = "CPU",
-                          verify: bool = False):
+    def write_bits(self,
+                   regaddr: int,
+                   bits: tuple[int, int] | list[int],
+                   val: int,
+                   cpus: Sequence[int],
+                   iosname: ScopeNameType = "CPU",
+                   verify: bool = False):
         """
-        Same as 'write_bits()', but does not validate/normalize the 'cpus' argument, and expects
-        it to be a sequence.
+        Write a value to specific bits of an MSR on one or more CPUs.
+
+        Args:
+            regaddr: The address of the MSR to write to.
+            bits: A tuple or list of two integers (msb, lsb) specifying the bit range to write to;
+                  msb is the most significant bit and lsb is the least significant bit.
+            val: The value to write to the specified bits range.
+            cpus: CPU numbers to write the MSR on (the caller must validate CPU numbers).
+            iosname: I/O scope name for the MSR address (e.g., "package", "core"). Used for
+                     optimizing the write operation by avoiding writing to sibling CPUs.
+            verify: If True, read back and verify the written value.
+
+        Raises:
+            ErrorVerifyFailed: If verification is enabled and the read-back value does not match the
+                               written value. The 'cpu' attribute of the exception will contain the
+                               CPU number where the verification failed, and 'expected' and 'actual'
+                               attributes will contain the expected and actual values, respectively.
         """
 
         regvals: dict[int, list[int]] = {}
 
-        for cpu, regval in self.read_nonorm(regaddr, cpus, iosname=iosname):
+        for cpu, regval in self.read(regaddr, cpus, iosname=iosname):
             new_regval = self.set_bits(regval, bits, val)
             _LOG.debug("CPU %d: MSR 0x%x: Set bits %s to 0x%x: Current MSR value: 0x%x%s, "
                        "new value: 0x%x", cpu, regaddr, ":".join([str(bit) for bit in bits]),
@@ -788,7 +724,7 @@ for cpu, cpus_info in transaction_buffer.items():
 
         for regval, regval_cpus in regvals.items():
             try:
-                self.write_nonorm(regaddr, regval, regval_cpus, iosname=iosname, verify=verify)
+                self.write(regaddr, regval, regval_cpus, iosname=iosname, verify=verify)
             except Error as err:
                 errmsg = err.indent(2)
                 cpus_str = ",".join([str(cpu) for cpu in regval_cpus])
@@ -796,49 +732,6 @@ for cpu, cpus_info in transaction_buffer.items():
                 raise type(err)(f"Failed to set bits {bits_str} of MSR 0x{regaddr:x} to value "
                                 f"0x{val:x} on CPUs {cpus_str}{self._pman.hostmsg}:\n"
                                 f"{errmsg}") from err
-
-    def write_bits(self,
-                   regaddr: int,
-                   bits: tuple[int, int] | list[int],
-                   val: int,
-                   cpus: Iterable[int] | Literal["all"] = "all",
-                   iosname: ScopeNameType = "CPU",
-                   verify: bool = False):
-        """
-        Write a value to specific bits of an MSR on one or more CPUs.
-
-        Args:
-            regaddr: The address of the MSR to write to.
-            bits: A tuple or list of two integers (msb, lsb) specifying the bit range to write to;
-                  msb is the most significant bit and lsb is the least significant bit.
-            val: The value to write to the specified bits range.
-            cpus: CPU numbers to write the MSR on. Special value 'all' means "all CPUs".
-            iosname: I/O scope name for the MSR address (e.g., "package", "core"). Used for
-                     optimizing the write operation by avoiding writing to sibling CPUs.
-            verify: If True, read back and verify the written value.
-
-        Raises:
-            ErrorVerifyFailed: If verification is enabled and the read-back value does not match the
-                               written value. The 'cpu' attribute of the exception will contain the
-                               CPU number where the verification failed, and 'expected' and 'actual'
-                               attributes will contain the expected and actual values, respectively.
-        """
-
-        cpus = self._cpuinfo.normalize_cpus(cpus)
-        self.write_bits_nonorm(regaddr, bits, val, cpus, iosname=iosname, verify=verify)
-
-    def write_cpu_bits_nonorm(self,
-                              regaddr: int,
-                              bits: tuple[int, int] | list[int],
-                              val: int,
-                              cpu: int,
-                              iosname: ScopeNameType = "CPU",
-                              verify: bool = False):
-        """
-        Same as 'write_cpu_bits()', but does not validate/normalize the 'cpu' argument.
-        """
-
-        self.write_bits_nonorm(regaddr, bits, val, cpus=[cpu], iosname=iosname, verify=verify)
 
     def write_cpu_bits(self,
                        regaddr: int,
@@ -855,7 +748,7 @@ for cpu, cpus_info in transaction_buffer.items():
             bits: A tuple or list of two integers (msb, lsb) specifying the bit range to write to;
                   msb is the most significant bit and lsb is the least significant bit.
             val: The value to write to the specified bits range.
-            cpu: CPU number to write the MSR on.
+            cpu: CPU number to write the MSR on (the caller must validate CPU number).
             iosname: I/O scope name for the MSR address (e.g., "package", "core"). Used for
                      optimizing the write operation by avoiding writing to sibling CPUs.
             verify: If True, read back and verify the written value.
@@ -865,5 +758,4 @@ for cpu, cpus_info in transaction_buffer.items():
                                written value.
         """
 
-        cpu = self._cpuinfo.normalize_cpus([cpu])[0]
-        self.write_cpu_bits_nonorm(regaddr, bits, val, cpu, iosname=iosname, verify=verify)
+        self.write_bits(regaddr, bits, val, (cpu,), iosname=iosname, verify=verify)

@@ -609,7 +609,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
         msr_values: dict[int, int] = {}
         if msr_fnames:
             min_iosname = self._get_smallest_iosname(msr_fnames)
-            for cpu, regval in self._msr.read_nonorm(self.regaddr, cpus=cpus, iosname=min_iosname):
+            for cpu, regval in self._msr.read(self.regaddr, cpus, iosname=min_iosname):
                 msr_values[cpu] = regval
 
         # Build the resulting feature values dictionary.
@@ -673,8 +673,8 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
                 yield cpu, val
         else:
             bits = self._features[fname]["bits"]
-            for cpu, val in self._msr.read_bits_nonorm(self.regaddr, bits, cpus=cpus,
-                                                        iosname=self._features[fname]["iosname"]):
+            for cpu, val in self._msr.read_bits(self.regaddr, bits, cpus,
+                                                iosname=self._features[fname]["iosname"]):
                 if "rvals" in self._features[fname]:
                     if typing.TYPE_CHECKING:
                         _val = cast(int, val)
@@ -867,8 +867,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
             # pylint: disable-next=not-callable
             set_method(val, cpus=cpus)
         else:
-            self._msr.write_bits_nonorm(self.regaddr, finfo["bits"], val, cpus=cpus,
-                                        iosname=finfo["iosname"])
+            self._msr.write_bits(self.regaddr, finfo["bits"], val, cpus, iosname=finfo["iosname"])
     def write_feature(self,
                       fname: str,
                       val: FeatureValueType,

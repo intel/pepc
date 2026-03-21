@@ -16,17 +16,18 @@ more information about MSR I/O scope.
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
+import types
 import typing
 import contextlib
 import pkgutil
 import importlib
 
 try:
+    argcomplete: types.ModuleType | None
     import argcomplete
-    _ARGCOMPLETE_AVAILABLE = True
 except ImportError:
     # We can live without argcomplete, we only lose tab completions.
-    _ARGCOMPLETE_AVAILABLE = False
+    argcomplete = None
 
 from pepctools._Pepc import ArgParse
 from pepclibs.helperlibs import Logging, ProcessManager, Trivial
@@ -209,21 +210,24 @@ def _detect_msr_bits_range_ioscope(cpuinfo: CPUInfo.CPUInfo,
         The detected I/O scope name.
     """
 
+    allcpus = cpuinfo.get_cpus()
+
     # Save the initial MSR values.
     initial_vals: dict[int, int] = {}
-    for _cpu, val in msr.read_bits(addr, bits):
+    for _cpu, val in msr.read_bits(addr, bits, allcpus):
         initial_vals[_cpu] = val
 
     snames = _get_existing_snames(cpuinfo)
 
     # The I/O scope detection setup: set the MSR bits range to 'values[0]' on all CPUs and to
     # 'values[1]' on one of the CPUs.
-    msr.write_bits(addr, bits, values[0], cpus="all", verify=True)
-    msr.write_bits(addr, bits, values[1], cpus=(cpu, 0), verify=True)
+    msr.write_bits(addr, bits, values[0], allcpus, verify=True)
+    cpus_to_write = cpuinfo.normalize_cpus([cpu, 0])
+    msr.write_bits(addr, bits, values[1], cpus_to_write, verify=True)
 
     # MSR values on all CPUs after the I/O scope detection setup.
     vals: dict[int, int] = {}
-    for _cpu, val in msr.read_bits(addr, bits):
+    for _cpu, val in msr.read_bits(addr, bits, allcpus):
         vals[_cpu] = val
 
     bits_str = ":".join([str(bit) for bit in bits])
@@ -241,7 +245,7 @@ def _detect_msr_bits_range_ioscope(cpuinfo: CPUInfo.CPUInfo,
     finally:
         # Restore the MSR to the initial value.
         for _cpu, val in initial_vals.items():
-            msr.write_bits(addr, bits, val, cpus=(_cpu,), verify=True)
+            msr.write_bits(addr, bits, val, (_cpu,), verify=True)
 
     return sname
 
@@ -482,8 +486,8 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     text = """CPU number to write to the MSR on, default is CPU 0."""
     parser.add_argument("--cpu", help=text, default="0")
 
-    if _ARGCOMPLETE_AVAILABLE:
-        argcomplete.autocomplete(parser)
+    if argcomplete is not None:
+        getattr(argcomplete, "autocomplete")(parser)
 
     return parser
 
@@ -629,6 +633,6 @@ def main():
         _LOG.info("\nInterrupted, exiting")
         return -1
     except Error as err:
-        _LOG.error_out(err)
+        _LOG.error_out(str(err))
 
     return 0

@@ -351,9 +351,9 @@ for cpu in cpus:
         return (regval & ~clear_mask) | set_mask
 
     def _cpus_write_local(self,
-                           regaddr: int,
-                           regval: int,
-                           cpus: Iterable[int]):
+                          regaddr: int,
+                          regval: int,
+                          cpus: Iterable[int]):
         """
         Write a value to an MSR on specified CPUs on a local host.
 

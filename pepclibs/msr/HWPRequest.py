@@ -157,10 +157,9 @@ class HWPRequest(_FeaturedMSR.FeaturedMSR):
             # Make sure the CPU supports HWP and HWP is enabled.
             cpuflags = proc_percpuinfo["flags"][cpus[0]]
             if "hwp" in cpuflags:
-                if self._msr.read_cpu_bits_nonorm(PMEnable.MSR_PM_ENABLE,
-                                                  cast(tuple[int, int],
-                                                       PMEnable.FEATURES["hwp"]["bits"]),
-                                                  cpus[0]):
+                if self._msr.read_cpu_bits(PMEnable.MSR_PM_ENABLE,
+                                           cast(tuple[int, int], PMEnable.FEATURES["hwp"]["bits"]),
+                                           cpus[0]):
                     continue
 
             # If HWP is not supported or not enabled for any CPU in the package, all the other CPUs
