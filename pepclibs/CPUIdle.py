@@ -24,9 +24,8 @@ from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorNotFou
 from pepclibs import CPUInfo, _PerCPUCache
 
 if typing.TYPE_CHECKING:
-    from typing import Literal, TypedDict, Union, Generator, Iterable, Final
+    from typing import Literal, TypedDict, Union, Generator, Iterable, Final, Sequence
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
-    from pepclibs.CPUInfoTypes import AbsNumsType
 
     class ReqCStateInfoTypedDict(TypedDict, total=False):
         """
@@ -160,7 +159,7 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
             raise Error(f"Failed to read kernel boot parameters{self._pman.hostmsg}\n"
                         f"{err.indent(2)}") from err
 
-    def _read_fpaths_and_values(self, cpus: AbsNumsType) -> tuple[list[str], list[str]]:
+    def _read_fpaths_and_values(self, cpus: Sequence[int]) -> tuple[list[str], list[str]]:
         """
         Extract sysfs file paths and their values for all C-states and the specified CPUs.
 
@@ -242,7 +241,7 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
                            for fpath, value in zip(fpaths, values)))
         return fpaths, values
 
-    def _read_cstates_info(self, cpus: AbsNumsType) -> \
+    def _read_cstates_info(self, cpus: Sequence[int]) -> \
                                Generator[tuple[int, dict[str, ReqCStateInfoTypedDict]], None, None]:
         """
         Retrieve and yield information about all requestable C-states for the specified CPUs.
@@ -375,7 +374,7 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
 
     def _get_cstates_info(self,
                           csnames: Iterable[str] | Literal["all"],
-                          cpus: AbsNumsType) -> \
+                          cpus: Sequence[int]) -> \
                             Generator[tuple[int, dict[str, ReqCStateInfoTypedDict]], None, None]:
         """
         Retrieve and yield information about requestable C-states for given CPUs.
@@ -462,7 +461,7 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
 
     def get_cstates_info(self,
                          csnames: Iterable[str] | Literal["all"] = "all",
-                         cpus: AbsNumsType | Literal["all"] = "all") -> \
+                         cpus: Sequence[int] | Literal["all"] = "all") -> \
                             Generator[tuple[int, dict[str, ReqCStateInfoTypedDict]], None, None]:
         """
         Retrieve and yield information about requestable C-states for given CPUs.
@@ -639,7 +638,7 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
 
     def _toggle_cstates(self,
                         csnames: Iterable[str] | Literal["all"] = "all",
-                        cpus: AbsNumsType | Literal["all"] = "all",
+                        cpus: Sequence[int] | Literal["all"] = "all",
                         enable: bool = True) -> ReqCStateToggleResultType:
         """
         Enable or disable specified CPU C-states on selected CPUs.
@@ -684,7 +683,7 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
 
     def enable_cstates(self,
                        csnames: Iterable[str] | Literal["all"] = "all",
-                       cpus: AbsNumsType | Literal["all"] = "all") -> ReqCStateToggleResultType:
+                       cpus: Sequence[int] | Literal["all"] = "all") -> ReqCStateToggleResultType:
         """
         Enable specified CPU C-states on selected CPUs.
 
@@ -704,7 +703,7 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
 
     def disable_cstates(self,
                        csnames: Iterable[str] | Literal["all"] = "all",
-                       cpus: AbsNumsType | Literal["all"] = "all") -> ReqCStateToggleResultType:
+                       cpus: Sequence[int] | Literal["all"] = "all") -> ReqCStateToggleResultType:
         """
         Enable specified CPU C-states on selected CPUs.
 
