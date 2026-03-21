@@ -176,7 +176,7 @@ class EPP(_EPBase.EPBase):
         pkg_controlled_cpus: list[int] = []
         percpu_controlled_cpus: list[int] = []
 
-        for cpu, pkg_controlled in hwpreq.is_feature_pkg_controlled_norm("epp", cpus=cpus):
+        for cpu, pkg_controlled in hwpreq.is_feature_pkg_controlled("epp", cpus=cpus):
             cpus_list.append(cpu)
             if pkg_controlled:
                 pkg_controlled_cpus.append(cpu)
@@ -186,13 +186,13 @@ class EPP(_EPBase.EPBase):
         # Read EPP from per-CPU MSR for CPUs not controlled by package MSR.
         epp_vals: dict[int, int] = {}
         if percpu_controlled_cpus:
-            for cpu, vals in hwpreq.read_features_nonorm(["epp"], cpus=percpu_controlled_cpus):
+            for cpu, vals in hwpreq.read_features(["epp"], cpus=percpu_controlled_cpus):
                 epp_vals[cpu] = int(vals["epp"])
 
         # Read EPP from package MSR for CPUs controlled by package MSR.
         if pkg_controlled_cpus:
             hwpreq_pkg = self._get_hwpreq_pkg()
-            for cpu, vals in hwpreq_pkg.read_features_nonorm(["epp"], cpus=pkg_controlled_cpus):
+            for cpu, vals in hwpreq_pkg.read_features(["epp"], cpus=pkg_controlled_cpus):
                 epp_vals[cpu] = int(vals["epp"])
 
         # Yield in the order of input cpus.
@@ -214,10 +214,10 @@ class EPP(_EPBase.EPBase):
         hwpreq_union: Union[HWPRequest.HWPRequest, HWPRequestPkg.HWPRequestPkg]
         hwpreq_union = hwpreq = self._get_hwpreq()
 
-        if hwpreq.is_cpu_feature_pkg_controlled_nonorm("epp", cpu):
+        if hwpreq.is_cpu_feature_pkg_controlled("epp", cpu):
             hwpreq_union = self._get_hwpreq_pkg()
 
-        return hwpreq_union.read_cpu_feature_int_nonorm("epp", cpu)
+        return hwpreq_union.read_cpu_feature_int("epp", cpu)
 
     def _fetch_from_msr(self, cpus: Sequence[int]) -> Generator[tuple[int, int], None, None]:
         """Refer to '_EPBase._fetch_from_msr()'."""
@@ -246,10 +246,10 @@ class EPP(_EPBase.EPBase):
                         f"integer value")
 
         # Disable package control for all CPUs.
-        hwpreq.disable_feature_pkg_control_norm("epp", cpus=cpus)
+        hwpreq.disable_feature_pkg_control("epp", cpus=cpus)
 
         try:
-            hwpreq.write_feature_norm("epp", val, cpus=cpus)
+            hwpreq.write_feature("epp", val, cpus=cpus)
         except Error as err:
             raise type(err)(f"Failed to set EPP{self._pman.hostmsg}:\n{err.indent(2)}") from err
 
@@ -263,14 +263,14 @@ class EPP(_EPBase.EPBase):
         """
 
         hwpreq = self._get_hwpreq()
-        hwpreq.disable_cpu_feature_pkg_control_nonorm("epp", cpu)
+        hwpreq.disable_cpu_feature_pkg_control("epp", cpu)
 
         if not Trivial.is_int(val):
             raise Error(f"Cannot set EPP to '{val}' using MSR mechanism, because it is not an "
                         f"integer value")
 
         try:
-            hwpreq.write_cpu_feature_nonorm("epp", val, cpu)
+            hwpreq.write_cpu_feature("epp", val, cpu)
         except Error as err:
             raise type(err)(f"Failed to set EPP{self._pman.hostmsg}:\n{err.indent(2)}") from err
 

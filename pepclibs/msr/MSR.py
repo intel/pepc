@@ -86,7 +86,7 @@ class MSR(_SimpleMSR.SimpleMSR):
         - 'close()' - uninitialize the class object.
 
     Notes:
-        - CPU numbers passed to methods must be valid and normalized by the caller.
+        - CPU numbers passed to methods must be validated by the caller.
         - Current implementation is not thread-safe. Can only be used by single-threaded
           applications (add locking to improve this).
     """

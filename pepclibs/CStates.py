@@ -196,7 +196,7 @@ class CStates(_PropsClassBase.PropsClassBase):
         else:
             _featured_msr_obj = self._get_pcstatectl()
 
-        yield from _featured_msr_obj.read_feature_norm(pname, cpus=cpus)
+        yield from _featured_msr_obj.read_feature(pname, cpus=cpus)
 
     def _get_pkg_cstate_limit(self,
                               pname: str,
@@ -216,12 +216,12 @@ class CStates(_PropsClassBase.PropsClassBase):
         pcstatectl = self._get_pcstatectl()
 
         if pname == "pkg_cstate_limit_lock":
-            yield from pcstatectl.read_feature_norm(pname, cpus=cpus)
+            yield from pcstatectl.read_feature(pname, cpus=cpus)
         elif pname == "pkg_cstate_limit":
-            for cpu, features in pcstatectl.read_feature_norm("pkg_cstate_limit", cpus=cpus):
+            for cpu, features in pcstatectl.read_feature("pkg_cstate_limit", cpus=cpus):
                 yield cpu, features
         elif pname == "pkg_cstate_limits":
-            pcstatectl.validate_feature_supported_norm("pkg_cstate_limit", cpus=cpus)
+            pcstatectl.validate_feature_supported("pkg_cstate_limit", cpus=cpus)
             # The "vals" attribute contains a dictionary with keys being the limit names and
             # values being the limit values.
             limits = list(pcstatectl.features["pkg_cstate_limit"]["vals"])
@@ -287,10 +287,10 @@ class CStates(_PropsClassBase.PropsClassBase):
 
         if mname == "msr":
             if pname in PowerCtl.FEATURES:
-                self._get_powerctl().write_feature_norm(pname, _val, cpus=cpus)
+                self._get_powerctl().write_feature(pname, _val, cpus=cpus)
                 return
             if pname in PCStateConfigCtl.FEATURES:
-                self._get_pcstatectl().write_feature_norm(pname, _val, cpus=cpus)
+                self._get_pcstatectl().write_feature(pname, _val, cpus=cpus)
                 return
 
         if mname == "sysfs":

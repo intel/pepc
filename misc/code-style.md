@@ -2,7 +2,9 @@
 
 This document provides guidelines for project coding style and conventions.
 
-## Alignment of Method Signatures
+## Code Style
+
+### Alignment of Method Signatures
 
 If possible, try to use a single line. If it does not fit, break the signature into multiple
 lines and align the parameters vertically. Use one parameter per line in this case.
@@ -37,9 +39,9 @@ Align the return type at an 4-character boundary so it ends near the 100-charact
 **Example 2:**
 
 ```python
-    def read_features_nonorm(self,
-                             fnames: Sequence[str],
-                             cpus: Sequence[int]) -> \
+    def read_multiple_features(self,
+                               fnames: Sequence[str],
+                               cpus: Sequence[int]) -> \
                                     Generator[tuple[int, dict[str, FeatureValueType]], None, None]:
 ```
 
@@ -51,13 +53,13 @@ it's better to break the signature into multiple lines and align the parameters 
 **Example 3:**
 
 ```python
-    def is_feature_enabled_norm(self,
-                                fname: str,
-                                cpus: Iterable[int] | Literal["all"] = "all") -> \
+    def check_is_feature_enabled(self,
+                                 fname: str,
+                                 cpus: Iterable[int] | Literal["all"] = "all") -> \
                                                         Generator[tuple[int, bool], None, None]:
 ```
 
-## Using Keyword Arguments
+### Using Keyword Arguments
 
 If a method signature includes keyword arguments, use keyword arguments when calling the method, and
 maintain the same order as in the signature. For example:
@@ -73,5 +75,42 @@ When calling this method, use keyword arguments in the same order:
 
 ```python
     for cpu, val in self.read(regaddr=0x4E70, cpus=cpus, verify=True):
+        ...
+```
+
+### Blank Lines Between Methods
+
+Use one blank line between method definitions within a class. Do not use multiple blank lines.
+
+**Example:**
+
+```python
+    def method_one(self):
+        """First method."""
+        pass
+
+    def method_two(self):
+        """Second method."""
+        pass
+```
+
+## Conventions
+
+### Prefer tuple over list
+
+One of the pattern is to pass a collection of items to a method. For example, passing one or two CPU
+numbers to a method. In such cases, prefer using a tuple instead of a list. For example:
+
+```python
+    def read(self,
+             regaddr: int,
+             cpus: Iterable[int] | Literal["all"] = "all",
+             verify: bool = False) -> Generator[tuple[int, int], None, None]:
+```
+
+When calling this method only for CPU 0, use a tuple for the `cpus` argument:
+
+```python
+    for cpu, val in self.read(regaddr=0x4E70, cpus=(0,), verify=True):
         ...
 ```

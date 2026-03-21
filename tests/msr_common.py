@@ -35,8 +35,8 @@ if typing.TYPE_CHECKING:
 
         Attributes:
             cpuinfo: A 'CPUInfo.CPUInfo' object.
-            cpus: All CPU numbers in the system.
-            testcpus: A few CPU numbers to use for testing.
+            cpus: All CPU numbers in the system (already normalized).
+            testcpus: A few CPU numbers to use for testing (already normalized).
             finfo: A dictionary where keys are MSR addresses and values are dictionaries of MSR
                    features.
             feature_classes: A list of MSR feature classes to test.
@@ -114,7 +114,7 @@ def get_params(hostspec: str,
             try:
                 with fmsr_class(pman=pman, cpuinfo=cpuinfo) as fmsr:
                     for name, finfo in fmsr._features.items(): # pylint: disable=protected-access
-                        if not fmsr.is_feature_supported_norm(name):
+                        if not fmsr.is_feature_supported(name, allcpus):
                             continue
                         if not is_safe_to_set(name, params["hostname"]):
                             continue

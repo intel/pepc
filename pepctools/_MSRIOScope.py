@@ -36,7 +36,7 @@ from pepclibs.msr import MSR, _FeaturedMSR
 from pepclibs import CPUInfo
 
 if typing.TYPE_CHECKING:
-    from typing import TypedDict, Generator
+    from typing import TypedDict, Generator, Sequence
     from types import ModuleType
     import argparse
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
@@ -299,13 +299,16 @@ def _get_featured_msr_modules() -> Generator[tuple[str, ModuleType], None, None]
             raise Error(f"Failed to iterate featured MSR modules:\n{errmsg}") from err
         raise Error(f"Failed to import featured MSR module {modname}:\n{errmsg}") from err
 
-def _check_feature_ok_to_test(fmsr: _FeaturedMSR.FeaturedMSR, fname: str) -> bool:
+def _check_feature_ok_to_test(fmsr: _FeaturedMSR.FeaturedMSR,
+                              fname: str,
+                              cpus: Sequence[int]) -> bool:
     """
     Check if a featured MSR feature is OK to test for I/O scope.
 
     Args:
         fmsr: The featured MSR object.
         fname: The name of the feature to check.
+        cpus: The CPUs to check the feature for.
 
     Returns:
         True if the feature can be tested, False otherwise.
@@ -313,7 +316,7 @@ def _check_feature_ok_to_test(fmsr: _FeaturedMSR.FeaturedMSR, fname: str) -> boo
 
     if fmsr.regname == "MSR_PKG_CST_CONFIG_CONTROL" and fname == "pkg_cstate_limit":
         # Check that the package C-state limit is unlocked.
-        for _, val in fmsr.read_feature_norm("pkg_cstate_limit_lock", cpus="all"):
+        for _, val in fmsr.read_feature("pkg_cstate_limit_lock", cpus=cpus):
             if val != "off":
                 finfo = fmsr.features[fname]
                 bits_str = ":".join([str(bit) for bit in finfo["bits"]])
@@ -347,6 +350,8 @@ def _get_featured_msrs(pman: ProcessManagerType,
         A tuple of the featured MSR object and feature name.
     """
 
+    allcpus = cpuinfo.get_cpus()
+
     for modname, module in _get_featured_msr_modules():
         fmsr_cls = getattr(module, modname, None)
         if not fmsr_cls:
@@ -370,13 +375,13 @@ def _get_featured_msrs(pman: ProcessManagerType,
                           fname, bits_str, fmsr_cls.regname, fmsr_cls.regaddr)
                 continue
 
-            if not fmsr.is_feature_supported_norm(fname, cpus="all"):
+            if not fmsr.is_feature_supported(fname, cpus=allcpus):
                 _LOG.info("Skipping unsupported feature '%s' (bits %s) in MSR '%s' (%#x)",
                           fname, bits_str, fmsr_cls.regname, fmsr_cls.regaddr)
                 continue
 
             # Handle special cases.
-            if not _check_feature_ok_to_test(fmsr, fname):
+            if not _check_feature_ok_to_test(fmsr, fname, allcpus):
                 continue
 
             yield fmsr, fname

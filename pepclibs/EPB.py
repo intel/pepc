@@ -131,13 +131,13 @@ class EPB(_EPBase.EPBase):
         """
 
         epbmsr_obj = self._get_epbmsr_obj()
-        yield from epbmsr_obj.read_feature_int_nonorm("epb", cpus=cpus)
+        yield from epbmsr_obj.read_feature_int("epb", cpus=cpus)
 
     def _write_to_msr(self, val: str | int, cpus: Sequence[int]):
         """Refer to '_EPBase._write_to_msr()'."""
 
         epbmsr_obj = self._get_epbmsr_obj()
-        epbmsr_obj.write_feature_nonorm("epb", val, cpus=cpus)
+        epbmsr_obj.write_feature("epb", val, cpus=cpus)
 
     def _fetch_from_sysfs(self,
                           cpus: Sequence[int]) -> Generator[tuple[int, str | int], None, None]:
