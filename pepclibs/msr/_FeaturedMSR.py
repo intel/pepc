@@ -171,19 +171,16 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
         - 'write_cpu_feature()' - write a feature value to a single CPU.
         - 'enable_cpu_feature()' - enable or disable a boolean feature on a single CPU.
         - 'is_cpu_feature_enabled()' - check if a boolean feature is enabled on a single CPU.
-                                              normalization.
     3. Feature support validation.
         - 'validate_feature_supported()' - validate feature support, raise if not supported.
-                                                  normalization.
         - 'is_feature_supported()' - check if a feature is supported on all CPUs.
         - 'is_cpu_feature_supported()' - check if a feature is supported on a single CPU.
-                                                normalization.
     4. Miscellaneous.
         - 'msr_bits_str()' - return a string describing the MSR address and bit range.
-        - 'close()' - uninitialize the class object
+        - 'close()' - uninitialize the class object.
 
     Notes:
-        - CPU numbers passed to methods must be validated by the caller.
+        - Methods do not validate the 'cpus' argument. The caller must validate CPU numbers.
     """
 
     regaddr: int = 0

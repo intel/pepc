@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2025 Intel Corporation
+# Copyright (C) 2020-2026 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Authors: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
@@ -69,39 +69,27 @@ _CST_SYSFS_FNAMES: Final[set[str]] = {"name", "desc", "disable", "latency", "res
 
 class CPUIdle(ClassHelpers.SimpleCloseContext):
     """
-    Provide an API for interacting with the Linux "cpuidle" subsystem via sysfs. Refer to Linux
-    kernel documentation for details about C-state attributes.
+    Provide API for interacting with the Linux "cpuidle" subsystem via sysfs.
 
-    Methods Overview:
-        enable_cstates(csnames="all", cpus="all")
-            Enable specified C-states on specified CPUs.
+    Public methods overview.
 
-        disable_cstates(csnames="all", cpus="all")
-            Disable specified C-states on specified CPUs.
+    1. C-states control.
+        - 'enable_cstates()' - enable C-states.
+        - 'disable_cstates()' - disable C-states.
+    2. C-states information.
+        - 'get_cstates_info()' - get C-states info for multiple CPUs.
+        - 'get_cpu_cstates_info()' - get C-states info for a single CPU.
+        - 'get_cpu_cstate_info()' - get single C-state info for a single CPU.
+    3. Idle driver control.
+        - 'get_idle_driver()' - get current idle driver name.
+        - 'get_current_governor()' - get current idle governor name.
+        - 'get_available_governors()' - get available idle governors.
+        - 'set_current_governor()' - set idle governor.
+    4. Miscellaneous.
+        - 'close()' - uninitialize the class object.
 
-        get_cstates_info(csnames="all", cpus="all")
-            Yield information about specified C-states for specified CPUs.
-
-        get_cpu_cstates_info(cpu, csnames="all")
-            Get information about specified C-states for a single CPU.
-
-        get_cpu_cstate_info(cpu, csname)
-            Get information about a single C-state for a single CPU.
-
-        get_idle_driver()
-            Return the name of the current idle driver.
-
-        get_current_governor()
-            Return the name of the current idle driver governor.
-
-        get_available_governors()
-            Return a list of available idle driver governors.
-
-        set_current_governor(governor)
-            Set the current idle driver governor.
-
-        close()
-            Uninitialize the class object and release resources.
+    Notes:
+        - Methods do not validate the 'cpus' argument. The caller must validate CPU numbers.
     """
 
     def __init__(self, pman: ProcessManagerType | None = None,
@@ -381,7 +369,8 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
 
         Args:
             csnames: Requestable C-state names to get information about.
-            cpus: CPU numbers to get requestable C-states information for.
+            cpus: CPU numbers to get requestable C-states information for (the caller must validate
+                  CPU numbers).
 
         Yields:
             Tuples of (CPU number, C-state information dictionary).
@@ -460,8 +449,8 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
         return [self._normalize_csname(csname) for csname in csnames]
 
     def get_cstates_info(self,
-                         csnames: Iterable[str] | Literal["all"] = "all",
-                         cpus: Sequence[int] | Literal["all"] = "all") -> \
+                         cpus: Sequence[int],
+                         csnames: Iterable[str] | Literal["all"] = "all") -> \
                             Generator[tuple[int, dict[str, ReqCStateInfoTypedDict]], None, None]:
         """
         Retrieve and yield information about requestable C-states for given CPUs.
@@ -470,9 +459,10 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
         documentation for details on C-state attributes.
 
         Args:
+            cpus: CPU numbers to get requestable C-states information for (the caller must validate
+                  CPU numbers).
             csnames: Requestable C-state names to get information about, or 'all' for all available
                      C-states.
-            cpus: CPU numbers to get requestable C-states information for, or 'all' for all CPUs.
 
         Yields:
             Tuples of (CPU number, C-states information dictionary).
@@ -481,7 +471,6 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
             ErrorNotSupported: If there are no requestable C-states available.
         """
 
-        cpus = self._cpuinfo.normalize_cpus(cpus)
         if not self.get_idle_driver():
             raise ErrorNotSupported(f"There is no idle driver in use{self._pman.hostmsg}")
 
@@ -508,7 +497,7 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
         """
 
         csinfo: dict[str, ReqCStateInfoTypedDict] = {}
-        for _, csinfo in self.get_cstates_info(csnames=csnames, cpus=(cpu,)):
+        for _, csinfo in self.get_cstates_info(cpus=(cpu,), csnames=csnames):
             break
         return csinfo
 
@@ -637,16 +626,16 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
                         f"contain '{val}'")
 
     def _toggle_cstates(self,
+                        cpus: Sequence[int],
                         csnames: Iterable[str] | Literal["all"] = "all",
-                        cpus: Sequence[int] | Literal["all"] = "all",
                         enable: bool = True) -> ReqCStateToggleResultType:
         """
         Enable or disable specified CPU C-states on selected CPUs.
 
         Args:
+            cpus: CPU numbers to apply the changes to (the caller must validate CPU numbers).
             csnames: Requestable C-state names to enable or disable, or 'all' to select all
                      available C-states.
-            cpus: CPU numbers to apply the changes to, or 'all' for all CPUs.
             enable: If True, enable the specified C-states, otherwise disable them.
 
         Returns:
@@ -660,7 +649,6 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
         if not self.get_idle_driver():
             raise ErrorNotSupported(f"there is no idle driver in use{self._pman.hostmsg}")
 
-        cpus = self._cpuinfo.normalize_cpus(cpus)
         csnames = self._normalize_csnames(csnames)
 
         toggled: ReqCStateToggleResultType = {}
@@ -682,14 +670,14 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
         return toggled
 
     def enable_cstates(self,
-                       csnames: Iterable[str] | Literal["all"] = "all",
-                       cpus: Sequence[int] | Literal["all"] = "all") -> ReqCStateToggleResultType:
+                       cpus: Sequence[int],
+                       csnames: Iterable[str] | Literal["all"] = "all") -> ReqCStateToggleResultType:
         """
         Enable specified CPU C-states on selected CPUs.
 
         Args:
+            cpus: CPU numbers to apply the changes to (the caller must validate CPU numbers).
             csnames: Requestable C-state names to enable, or 'all' to select all available C-states.
-            cpus: CPU numbers to apply the changes to, or 'all' for all CPUs.
 
         Returns:
             A dictionary mapping each affected CPU to a dictionary containing the list of enabled
@@ -699,18 +687,18 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
             ErrorNotSupported: If no idle driver is in use on the target host.
         """
 
-        return self._toggle_cstates(csnames, cpus, True)
+        return self._toggle_cstates(cpus, csnames, True)
 
     def disable_cstates(self,
-                       csnames: Iterable[str] | Literal["all"] = "all",
-                       cpus: Sequence[int] | Literal["all"] = "all") -> ReqCStateToggleResultType:
+                       cpus: Sequence[int],
+                       csnames: Iterable[str] | Literal["all"] = "all") -> ReqCStateToggleResultType:
         """
         Enable specified CPU C-states on selected CPUs.
 
         Args:
+            cpus: CPU numbers to apply the changes to (the caller must validate CPU numbers).
             csnames: Requestable C-state names to disable, or 'all' to select all available
                      C-states.
-            cpus: CPU numbers to apply the changes to, or 'all' for all CPUs.
 
         Returns:
             A dictionary mapping each affected CPU to a dictionary containing the list of disabled
@@ -720,7 +708,7 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
             ErrorNotSupported: If no idle driver is in use on the target host.
         """
 
-        return self._toggle_cstates(csnames, cpus, False)
+        return self._toggle_cstates(cpus, csnames, False)
 
     def set_current_governor(self, governor: str):
         """

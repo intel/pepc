@@ -123,7 +123,8 @@ class CStates(_PropsClassBase.PropsClassBase):
                             Generator[tuple[int, dict[str, ReqCStateInfoTypedDict]], None, None]:
         """Refer to 'CPUIdle.get_cstates_info()'."""
 
-        yield from self._get_cpuidle().get_cstates_info(csnames=csnames, cpus=cpus)
+        cpus = self._cpuinfo.normalize_cpus(cpus)
+        yield from self._get_cpuidle().get_cstates_info(cpus=cpus, csnames=csnames)
 
     def get_cpu_cstates_info(self,
                              cpu: int,
@@ -158,7 +159,8 @@ class CStates(_PropsClassBase.PropsClassBase):
         if "sysfs" not in mnames:
             raise ErrorTryAnotherMechanism("Use the 'sysfs' mechanism to enable C-states")
 
-        return self._get_cpuidle().enable_cstates(csnames=csnames, cpus=cpus)
+        cpus = self._cpuinfo.normalize_cpus(cpus)
+        return self._get_cpuidle().enable_cstates(cpus=cpus, csnames=csnames)
 
     def disable_cstates(self,
                         csnames: Iterable[str] | Literal["all"] = "all",
@@ -170,8 +172,9 @@ class CStates(_PropsClassBase.PropsClassBase):
         if "sysfs" not in mnames:
             raise ErrorTryAnotherMechanism("Use the 'sysfs' mechanism to disable C-states")
 
+        cpus = self._cpuinfo.normalize_cpus(cpus)
         try:
-            return self._get_cpuidle().disable_cstates(csnames=csnames, cpus=cpus)
+            return self._get_cpuidle().disable_cstates(cpus=cpus, csnames=csnames)
         except ErrorNotFound as err:
             raise ErrorNotSupported(str(err)) from err
 

@@ -61,8 +61,7 @@ _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
 class MSR(_SimpleMSR.SimpleMSR):
     """
-    Provide a capability to read and write CPU Model Specific Registers, including write-through
-    caching and transactions support.
+    Provide API for reading and writing CPU Model Specific Registers with caching and transactions.
 
     Public methods overview.
 
@@ -86,9 +85,8 @@ class MSR(_SimpleMSR.SimpleMSR):
         - 'close()' - uninitialize the class object.
 
     Notes:
-        - CPU numbers passed to methods must be validated by the caller.
-        - Current implementation is not thread-safe. Can only be used by single-threaded
-          applications (add locking to improve this).
+        - Methods do not validate the 'cpus' argument. The caller must validate CPU numbers.
+        - Implementation is not thread-safe, intended for single-threaded applications.
     """
 
     def __init__(self,

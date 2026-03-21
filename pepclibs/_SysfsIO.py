@@ -56,36 +56,36 @@ _MAX_PATHS_LEN = 16000
 
 class SysfsIO(ClassHelpers.SimpleCloseContext):
     """
-    Provide API for reading and writing sysfs files. Implement transactions, caching and optimized
-    I/O operations for remote hosts.
+    Provide API for reading and writing sysfs files with transactions, caching, and optimized I/O.
 
     Public methods overview.
 
     1. Read / write a single file.
-        * 'read()' - read a string.
-        * 'read_int()' - read an integer.
-        * 'write()' - write a string.
-        * 'write_int()' - write an integer.
-        * 'write_verify()' - write a string and verify.
-        * 'write_verify_int()' - write an integer and verify.
+        - 'read()' - read a string.
+        - 'read_int()' - read an integer.
+        - 'write()' - write a string.
+        - 'write_int()' - write an integer.
+        - 'write_verify()' - write a string and verify.
+        - 'write_verify_int()' - write an integer and verify.
     2. Read multiple files.
-        * 'read_paths()' - read multiple files, return strings.
-        * 'read_paths_int()' - read multiple files, return integers.
+        - 'read_paths()' - read multiple files, return strings.
+        - 'read_paths_int()' - read multiple files, return integers.
     3. Write multiple files.
-        * 'write_paths()' - write a string to multiple files.
-        * 'write_paths_int()' - write an integer to multiple files.
-        * 'write_paths_verify()' - write a string to multiple files and verify.
-        * 'write_paths_verify_int()' - write an integer to multiple files and verify.
+        - 'write_paths()' - write a string to multiple files.
+        - 'write_paths_int()' - write an integer to multiple files.
+        - 'write_paths_verify()' - write a string to multiple files and verify.
+        - 'write_paths_verify_int()' - write an integer to multiple files and verify.
     4. Cache operations.
-        * 'cache_add()' - add data to the cache.
-        * 'cache_remove()' - remove data from the cache.
+        - 'cache_add()' - add data to the cache.
+        - 'cache_remove()' - remove data from the cache.
     5. Transactions support.
-        * 'start_transaction()' - start a transaction.
-        * 'flush_transaction()' - flush the transaction buffer.
-        * 'commit_transaction()' - commit the transaction.
+        - 'start_transaction()' - start a transaction.
+        - 'flush_transaction()' - flush the transaction buffer.
+        - 'commit_transaction()' - commit the transaction.
 
-    Note, the methods of this class do not normalize the input path, and the user is supposed to do
-    it for caching to work efficiently (the cache is indexed by file path).
+    Notes:
+        - Methods do not normalize input paths. The caller should normalize paths for efficient
+          caching (cache is indexed by file path).
     """
 
     def __init__(self, pman: ProcessManagerType | None = None, enable_cache: bool = True):

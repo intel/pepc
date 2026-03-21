@@ -32,11 +32,10 @@ _MNAMES: Final[tuple[str, ...]] = ("sysfs", "msr")
 
 class EPBase(ClassHelpers.SimpleCloseContext):
     """
-    Provide the base class for 'EPP' and 'EPB' modules.
+    Base class for 'EPP' and 'EPB' modules.
 
     Notes:
-        Methods do not validate the 'cpus' argument. Ensure that provided CPU numbers are valid and
-        online.
+        - Methods do not validate the 'cpus' argument. The caller must validate CPU numbers.
     """
 
     def __init__(self,

@@ -39,33 +39,34 @@ _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
 class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
     """
-    Provide a capability to read and modify CPU frequency settings via the Linux "cpufreq" sysfs
-    interface.
+    Provide API for reading and modifying CPU frequency settings via Linux "cpufreq" sysfs.
 
-    Public Methods and Arguments:
-        - get_min_freq(cpus): Retrieve the minimum CPU frequency for specified CPUs.
-        - get_max_freq(cpus): Retrieve the maximum CPU frequency for specified CPUs.
-        - set_min_freq(freq, cpus): Set the minimum CPU frequency for specified CPUs.
-        - set_max_freq(freq, cpus): Set the maximum CPU frequency for specified CPUs.
-        - get_cur_freq(cpus): Retrieve the current CPU frequency for specified CPUs.
-        - get_min_freq_limit(cpus): Retrieve the minimum CPU frequency limit for specified CPUs.
-        - get_max_freq_limit(cpus): Retrieve the maximum CPU frequency limit for specified CPUs.
-        - get_available_frequencies(cpus): Retrieve the list of available CPU frequencies for
-                                           specified CPUs.
-        - get_base_freq(cpus): Retrieve the base frequency for specified CPUs.
-        - get_driver(cpus): Retrieve the CPU frequency driver name for specified CPUs.
-        - get_intel_pstate_mode(cpus): Retrieve the 'intel_pstate' driver mode for specified CPUs.
-        - set_intel_pstate_mode(mode, cpus): Set the 'intel_pstate' driver mode for specified CPUs.
-        - get_turbo(cpus): Retrieve the turbo mode status for specified CPUs.
-        - set_turbo(enable, cpus): Enable or disable turbo mode for specified CPUs.
-        - get_governor(cpus): Retrieve the CPU frequency governor for specified CPUs.
-        - get_available_governors(cpus): Retrieve the list of available governors for specified
-                                         CPUs.
-        - set_governor(governor, cpus): Set the CPU frequency governor for specified CPUs.
+    Public methods overview.
+
+    1. Frequency control.
+        - 'get_min_freq()' - get minimum CPU frequency.
+        - 'set_min_freq()' - set minimum CPU frequency.
+        - 'get_max_freq()' - get maximum CPU frequency.
+        - 'set_max_freq()' - set maximum CPU frequency.
+        - 'get_cur_freq()' - get current CPU frequency.
+    2. Frequency limits.
+        - 'get_min_freq_limit()' - get minimum CPU frequency limit.
+        - 'get_max_freq_limit()' - get maximum CPU frequency limit.
+        - 'get_available_frequencies()' - get available CPU frequencies.
+        - 'get_base_freq()' - get base CPU frequency.
+    3. Driver and turbo control.
+        - 'get_driver()' - get CPU frequency driver name.
+        - 'get_intel_pstate_mode()' - get 'intel_pstate' driver mode.
+        - 'set_intel_pstate_mode()' - set 'intel_pstate' driver mode.
+        - 'get_turbo()' - get turbo mode status.
+        - 'set_turbo()' - enable or disable turbo mode.
+    4. Governor control.
+        - 'get_governor()' - get CPU frequency governor.
+        - 'get_available_governors()' - get available governors.
+        - 'set_governor()' - set CPU frequency governor.
 
     Notes:
-        Methods do not validate the 'cpus' argument. Ensure that provided CPU numbers are valid and
-        online.
+        - Methods do not validate the 'cpus' argument. The caller must validate CPU numbers.
     """
 
     def __init__(self,

@@ -35,14 +35,21 @@ _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
 class EPP(_EPBase.EPBase):
     """
-    Provide a capability of reading and changing EPP (Energy Performance Preference).
+    Provide API for reading and changing EPP (Energy Performance Preference).
 
-    Public Methods:
-        - get_vals(): read EPP value(s).
-        - set_vals(): set EPP value(s).
-        - get_cpu_val(): read EPP value for a specific CPU.
-        - set_cpu_val(): set EPP value for a specific CPU.
-        - close(): uninitialize the class instance.
+    Public methods overview.
+
+    1. Multi-CPU I/O.
+        - 'get_vals()' - read EPP values.
+        - 'set_vals()' - set EPP values.
+    2. Single-CPU I/O.
+        - 'get_cpu_val()' - read EPP value for a single CPU.
+        - 'set_cpu_val()' - set EPP value for a single CPU.
+    3. Miscellaneous.
+        - 'close()' - uninitialize the class instance.
+
+    Notes:
+        - Methods do not validate the 'cpus' argument. The caller must validate CPU numbers.
     """
 
     def __init__(self,
