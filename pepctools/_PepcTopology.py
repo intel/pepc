@@ -339,7 +339,7 @@ def topology_info_command(args: argparse.Namespace, pman: ProcessManagerType):
         if not cmdl["columns"]:
             snames = _get_default_colnames(cpuinfo)
             colnames = list(snames)
-            if cpuinfo.is_hybrid:
+            if cpuinfo.is_hybrid():
                 colnames.append("hybrid")
             if noncomp_dies:
                 colnames.append("dtype")

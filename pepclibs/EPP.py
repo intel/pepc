@@ -337,7 +337,7 @@ class EPP(_EPBase.EPBase):
             policies = self._get_available_policies(cpus[0])
             policies_str = ", ".join(policies) if policies else "(unknown)"
             raise ErrorNotSupported(f"Numeric EPP values are not supported "
-                                    f"'{self._cpuinfo.cpudescr}'\n"
+                                    f"'{self._cpuinfo.get_cpudescr()}'\n"
                                     f"Use one of the following EPP policies: {policies_str}")
 
         # Check if workaround for write bug is needed. The bug causes writes to fail when the new

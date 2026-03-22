@@ -226,7 +226,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
 
         proc_cpuinfo = self._cpuinfo.get_proc_cpuinfo()
         if proc_cpuinfo["vendor_name"] != self.vendor_name:
-            raise ErrorNotSupported(f"CPU '{self._cpuinfo.cpudescr}' does not support MSR "
+            raise ErrorNotSupported(f"CPU '{self._cpuinfo.get_cpudescr()}' does not support MSR "
                                     f"{self.regaddr:#x} ({self.regname}), which is only supported "
                                     f"by '{self.vendor_name}' CPUs")
 
@@ -282,7 +282,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
         if not supported:
             # None of the features are supported by this processor.
             raise ErrorNotSupported(f"MSR {self.regaddr:#x} ({self.regname}) is not supported"
-                                    f"{self._pman.hostmsg} ({self._cpuinfo.cpudescr})")
+                                    f"{self._pman.hostmsg} ({self._cpuinfo.get_cpudescr()})")
 
     def _init_features_dict_defaults(self):
         """
@@ -375,12 +375,12 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
         if unsupported_cpus:
             if not supported_cpus:
                 raise ErrorNotSupported(f"{self._features[fname]['name']} is not supported on "
-                                        f"{self._cpuinfo.cpudescr}")
+                                        f"{self._cpuinfo.get_cpudescr()}")
 
             supported_str = Trivial.rangify(supported_cpus)
             unsupported_str = Trivial.rangify(unsupported_cpus)
             raise ErrorNotSupported(f"{self._features[fname]['name']} is not supported on CPUs "
-                                    f"{unsupported_str}.\n{self._cpuinfo.cpudescr} supports "
+                                    f"{unsupported_str}.\n{self._cpuinfo.get_cpudescr()} supports "
                                     f"{self._features[fname]['name']} only on the following CPUs: "
                                     f"{supported_str}")
 

@@ -52,8 +52,9 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
         _LOG.debug("Initializing the '%s' class object", self.__class__.__name__)
 
-        # A short CPU description string.
-        self.cpudescr = ""
+        self._cpudescr = ""
+        self._is_hybrid: bool | None = None
+        self._hybrid_cpus: dict[HybridCPUKeyType, list[int]] = {}
 
         self._close_pman = pman is None
         self._close_dieinfo = dieinfo is None
@@ -66,8 +67,6 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         self._all_cpus: list[int] = []
         # Set of online and offline CPUs.
         self._all_cpus_set: set[int] = set()
-        # Dictionary of P-core/E-core CPUs.
-        self._hybrid_cpus: dict[HybridCPUKeyType, list[int]] = {}
 
         self._dieinfo = dieinfo
         self._dieinfo_errmsg = ""
@@ -136,14 +135,6 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
         self._proc_cpuinfo: ProcCpuinfoTypedDict = {}
         self._proc_percpuinfo: ProcCpuinfoPerCPUTypedDict = {}
-
-        # TODO: make 'cpudescr' and 'is_hybrid' lazy.
-        self.cpudescr = self._get_cpu_description()
-
-        if self._pman.exists("/sys/devices/cpu_atom/cpus"):
-            self.is_hybrid = True
-        else:
-            self.is_hybrid = False
 
     def close(self):
         """Uninitialize the class instance."""
@@ -795,30 +786,6 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
         return self._all_cpus_set
 
-    def _get_cpu_description(self) -> str:
-        """
-        Build and return a human-readable string describing the processor.
-
-        Returns:
-            A string describing the processor.
-
-        Notes:
-            - For supported Intel CPUs, includes the codename.
-        """
-
-        # Some pre-release Intel CPUs are labeled as "GENUINE INTEL", hence 'lower()' is used.
-        proc_cpuinfo = self.get_proc_cpuinfo()
-        vendor, _, _ = CPUModels.split_vfm(proc_cpuinfo["vfm"])
-        if vendor == CPUModels.VENDOR_INTEL:
-            cpudescr = f"Intel processor model {proc_cpuinfo['model']:#x}"
-            for info in CPUModels.MODELS.values():
-                if info["vfm"] == proc_cpuinfo["vfm"]:
-                    cpudescr += f" (codename: {info['codename']})"
-                    break
-        else:
-            cpudescr = proc_cpuinfo["modelname"]
-        return cpudescr
-
     def _probe_lpe_cores_l3(self):
         """
         Look for LPE (Low Power Efficiency) cores on a hybrid system.
@@ -858,6 +825,44 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         # Make sure LPE cores are not in the E-core list.
         ecores = [cpu for cpu in self._hybrid_cpus["ecore"] if cpu not in no_l3]
         self._hybrid_cpus["ecore"] = ecores
+
+    def get_cpudescr(self) -> str:
+        """
+        Build and return a human-readable string describing the processor.
+
+        Returns:
+            A string describing the processor.
+
+        Notes:
+            - For supported Intel CPUs, includes the codename.
+        """
+
+        if not self._cpudescr:
+            # Some pre-release Intel CPUs are labeled as "GENUINE INTEL", hence 'lower()' is used.
+            proc_cpuinfo = self.get_proc_cpuinfo()
+            vendor, _, _ = CPUModels.split_vfm(proc_cpuinfo["vfm"])
+            if vendor == CPUModels.VENDOR_INTEL:
+                cpudescr = f"Intel processor model {proc_cpuinfo['model']:#x}"
+                for info in CPUModels.MODELS.values():
+                    if info["vfm"] == proc_cpuinfo["vfm"]:
+                        cpudescr += f" (codename: {info['codename']})"
+                        break
+            else:
+                cpudescr = proc_cpuinfo["modelname"]
+            self._cpudescr = cpudescr
+        return self._cpudescr
+
+    def is_hybrid(self) -> bool:
+        """
+        Check if the CPU is a hybrid processor.
+
+        Returns:
+            True if the CPU is a hybrid processor, False otherwise.
+        """
+
+        if self._is_hybrid is None:
+            self._is_hybrid = self._pman.exists("/sys/devices/cpu_atom/cpus")
+        return self._is_hybrid
 
     def _get_hybrid_cpus(self) -> dict[HybridCPUKeyType, list[int]]:
         """

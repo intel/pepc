@@ -555,13 +555,15 @@ class PStates(_PropsClassBase.PropsClassBase):
                 self._get_fsbfreq()
             except ErrorNotSupported:
                 if not self._is_intel:
-                    raise ErrorNotSupported(f"Unsupported CPU model '{self._cpuinfo.cpudescr}"
+                    raise ErrorNotSupported(f"Unsupported CPU model "
+                                            f"'{self._cpuinfo.get_cpudescr()}'"
                                             f"{self._pman.hostmsg}") from None
                 for cpu in cpus:
                     # Modern Intel platforms use 100MHz bus clock.
                     yield cpu, 100000000
                 return
-            raise ErrorTryAnotherMechanism(f"Use the 'msr' mechanism for {self._cpuinfo.cpudescr}")
+            raise ErrorTryAnotherMechanism(f"Use the 'msr' mechanism for "
+                                           f"{self._cpuinfo.get_cpudescr()}")
         else:
             raise Error(f"BUG: Unexpected mechanism '{mname}' for property 'bus_clock'")
 

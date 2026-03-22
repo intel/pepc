@@ -70,7 +70,6 @@ def override_cpu_model(cpuinfo: CPUInfo.CPUInfo, user_vfm: str):
     proc_cpuinfo["model"] = mdict["model"]
     proc_cpuinfo["vfm"] = CPUModels.make_vfm(mdict["vendor"], mdict["family"],
                                                      mdict["model"])
-    cpuinfo.cpudescr += f" (overridden with {user_vfm})"
 
     _LOG.notice("Overriding CPU model with '%s', resulting VFM is '%s:%s:%s",
                 user_vfm, mdict["vendor_name"], mdict["family"], mdict["model"])

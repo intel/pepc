@@ -42,6 +42,8 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         - 'get_topology()' - CPU topology.
         - 'get_proc_cpuinfo()' - General (static) '/proc/cpuinfo' information.
         - 'get_proc_percpuinfo()' - Per-CPU '/proc/cpuinfo' information.
+        - 'get_cpudescr()' - Human-readable CPU description string.
+        - 'is_hybrid()' - Check if the CPU is a hybrid processor.
         - 'get_dieinfo()' - '_DieInfo.DieInfo' object instance.
     2. Get packages/cores/etc.
         - 'get_cpus()'
@@ -1484,7 +1486,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
             - See 'HybridCPUKeyType' for the supported keys.
         """
 
-        if not self.is_hybrid:
+        if not self.is_hybrid():
             return {"pcore": self.get_cpus()}
 
         return self._get_hybrid_cpus()

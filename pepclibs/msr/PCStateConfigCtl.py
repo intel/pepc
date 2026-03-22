@@ -310,7 +310,7 @@ class PCStateConfigCtl(_FeaturedMSR.FeaturedMSR):
             limits = _PKG_CST_LIMITS[vfm]
         else:
             _LOG.warning("Unknown Package C-state limits for CPU model %s, assuming only "
-                         "PC0 is supported", self._cpuinfo.cpudescr)
+                         "PC0 is supported", self._cpuinfo.get_cpudescr())
             limits = _UNKNOWN_PKG_CST_LIMITS
 
         finfo = self._features["pkg_cstate_limit"]
