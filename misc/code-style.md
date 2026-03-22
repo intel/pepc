@@ -137,3 +137,8 @@ it is possible to use a special value of the same type as the parameter.
         if not cpus:
             cpus = self.get_all_cpus()
 ```
+
+### Prefer frozenset for Immutable Sets
+
+When defining a collection of items that should not be modified after creation, prefer using
+`frozenset` instead of `set`.

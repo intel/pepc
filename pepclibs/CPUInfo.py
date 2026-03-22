@@ -19,7 +19,7 @@ from pepclibs.helperlibs import Logging, Trivial
 from pepclibs.helperlibs.Exceptions import Error
 
 # pylint: disable=unused-import
-from pepclibs.CPUInfoVars import SCOPE_NAMES, HYBRID_TYPE_INFO, INVALID
+from pepclibs.CPUInfoVars import SCOPE_NAMES, HYBRID_TYPE_INFO
 from pepclibs._DieInfo import AGENT_TYPES
 # pylint: enable=unused-import
 
@@ -674,6 +674,11 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         else:
             raise Error(f"CPU {cpu} is not available{self._pman.hostmsg}")
 
+        # Update cache with the topology line for this CPU.
+        if cpu not in self._cpu_to_tline:
+            self._cpu_to_tline[cpu] = {}
+        self._cpu_to_tline[cpu].update(tline)
+
         result = {}
         for sname in snames:
             result[sname] = tline[sname]
@@ -1066,24 +1071,13 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
         cpus = self.normalize_cpus(cpus, offline_ok=True)
 
-        # CPU number -> core siblings index map.
-        cpu2index: dict[int, int] = {}
-
-        core = pkg = index = INVALID
-
-        for tline in self._get_topology(("CPU", "core", "package"), order="core"):
-            cpu = tline["CPU"]
-            if tline["core"] != core or tline["package"] != pkg:
-                core = tline["core"]
-                pkg = tline["package"]
-                index = 0
-            cpu2index[cpu] = index
-            index += 1
+        # Get or build the core sibling index cache.
+        cpu_to_index = self._get_cpu_to_core_index_cache()
 
         result = []
         indexes = set(indexes)
         for cpu in cpus:
-            if cpu in cpu2index and cpu2index[cpu] in indexes:
+            if cpu in cpu_to_index and cpu_to_index[cpu] in indexes:
                 result.append(cpu)
 
         return result
@@ -1126,23 +1120,13 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
         cpus = self.normalize_cpus(cpus, offline_ok=True)
 
-        # CPU number -> module siblings index map.
-        cpu2index = {}
-        module = pkg = index = INVALID
-
-        for tline in self._get_topology(("CPU", "module", "package"), order="module"):
-            cpu = tline["CPU"]
-            if tline["module"] != module or tline["package"] != pkg:
-                module = tline["module"]
-                pkg = tline["package"]
-                index = 0
-            cpu2index[cpu] = index
-            index += 1
+        # Get or build the module sibling index cache.
+        cpu_to_index = self._get_cpu_to_module_index_cache()
 
         result = []
         indexes = set(indexes)
         for cpu in cpus:
-            if cpu in cpu2index and cpu2index[cpu] in indexes:
+            if cpu in cpu_to_index and cpu_to_index[cpu] in indexes:
                 result.append(cpu)
 
         return result

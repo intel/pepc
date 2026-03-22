@@ -80,6 +80,10 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         # CPU to topology line cache for O(1) lookups.
         self._cpu_to_tline: dict[int, dict[ScopeNameType, int]] = {}
 
+        # Sibling index caches: CPU -> sibling index within core/module.
+        self._cpu_to_core_index: dict[int, int] = {}
+        self._cpu_to_module_index: dict[int, int] = {}
+
         # The topology dictionary is a dictionary of lists where keys are scope names. The values
         # are lists of topology lines (tlines) sorted in the key order (or more precisely, in the
         # order specified by the sorting map).
@@ -104,6 +108,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         self._proc_cpuinfo: ProcCpuinfoTypedDict = {}
         self._proc_percpuinfo: ProcCpuinfoPerCPUTypedDict = {}
 
+        # TODO: make 'cpudescr' and 'is_hybrid' lazy.
         self.cpudescr = self._get_cpu_description()
 
         if self._pman.exists("/sys/devices/cpu_atom/cpus"):
@@ -351,14 +356,59 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         for level in self._initialized_snames:
             self._sort_topology(tlines, level)
 
-        # Update the CPU-to-tline cache with all initialized topology lines.
-        for tline in tlines:
-            cpu = tline["CPU"]
-            if cpu not in self._cpu_to_tline:
-                self._cpu_to_tline[cpu] = {}
-            self._cpu_to_tline[cpu].update(tline)
-
         return self._topology[order]
+
+    def _get_cpu_to_core_index_cache(self) -> dict[int, int]:
+        """
+        Get or build the CPU-to-core-sibling-index cache.
+
+        Returns:
+            Dictionary mapping CPU numbers to their core sibling index.
+        """
+
+        if self._cpu_to_core_index:
+            return self._cpu_to_core_index
+
+        self._get_topology(("CPU", "core", "package"), order="core")
+
+        core = pkg = index = -1
+
+        for tline in self._topology["core"]:
+            cpu = tline["CPU"]
+            if tline["core"] != core or tline["package"] != pkg:
+                core = tline["core"]
+                pkg = tline["package"]
+                index = 0
+            self._cpu_to_core_index[cpu] = index
+            index += 1
+
+        return self._cpu_to_core_index
+
+    def _get_cpu_to_module_index_cache(self) -> dict[int, int]:
+        """
+        Get or build the CPU-to-module-sibling-index cache.
+
+        Returns:
+            Dictionary mapping CPU numbers to their module sibling index.
+        """
+
+        if self._cpu_to_module_index:
+            return self._cpu_to_module_index
+
+        self._get_topology(("CPU", "module", "package"), order="module")
+
+        module = pkg = index = -1
+
+        for tline in self._topology["module"]:
+            cpu = tline["CPU"]
+            if tline["module"] != module or tline["package"] != pkg:
+                module = tline["module"]
+                pkg = tline["package"]
+                index = 0
+            self._cpu_to_module_index[cpu] = index
+            index += 1
+
+        return self._cpu_to_module_index
 
     def _read_range(self, path: Path | str) -> list[int]:
         """
@@ -542,6 +592,8 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         self._initialized_snames = set()
         self._topology = {}
         self._cpu_to_tline = {}
+        self._cpu_to_core_index = {}
+        self._cpu_to_module_index = {}
         self._proc_percpuinfo = {}
 
         if self._dieinfo:
