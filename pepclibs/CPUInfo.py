@@ -1172,9 +1172,11 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         cores: dict[int, list[int]] = {}
         rem_cpus: list[int] = []
 
+        core_to_cpus = self._get_core_to_cpus_cache()
+
         for pkg in self.get_packages():
             for core in self.get_package_cores(package=pkg):
-                siblings_set = set(self.cores_to_cpus(cores=(core,), packages=(pkg,)))
+                siblings_set = core_to_cpus[pkg][core]
 
                 if siblings_set.issubset(cpus_set):
                     if pkg not in cores:
@@ -1229,9 +1231,11 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         dies: dict[int, list[int]] = {}
         rem_cpus: list[int] = []
 
+        die_to_cpus = self._get_die_to_cpus_cache()
+
         for pkg in self.get_packages():
             for die in self.get_package_dies(package=pkg):
-                siblings_set = set(self.dies_to_cpus(dies=(die,), packages=(pkg,)))
+                siblings_set = die_to_cpus[pkg][die]
 
                 if siblings_set.issubset(cpus_set):
                     if pkg not in dies:
@@ -1281,8 +1285,10 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
         cpus_set = set(cpus)
 
+        package_to_cpus = self._get_package_to_cpus_cache()
+
         for pkg in self.normalize_packages(packages):
-            pkg_cpus_set = set(self.package_to_cpus(pkg))
+            pkg_cpus_set = package_to_cpus[pkg]
 
             if pkg_cpus_set.issubset(cpus_set):
                 pkgs.append(pkg)

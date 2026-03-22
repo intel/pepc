@@ -84,6 +84,17 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         self._cpu_to_core_index: dict[int, int] = {}
         self._cpu_to_module_index: dict[int, int] = {}
 
+        # Core and die to CPU numbers caches: package -> core/die -> frozenset of CPU numbers.
+        # Core and die numbers are not globally unique, they are per-package.
+        self._core_to_cpus: dict[int, dict[int, frozenset[int]]] = {}
+        self._die_to_cpus: dict[int, dict[int, frozenset[int]]] = {}
+
+        # Module, node, and package to CPU numbers caches: module/node/package -> frozenset of
+        # CPU numbers. Module, node, and package numbers are globally unique.
+        self._module_to_cpus: dict[int, frozenset[int]] = {}
+        self._node_to_cpus: dict[int, frozenset[int]] = {}
+        self._package_to_cpus: dict[int, frozenset[int]] = {}
+
         # The topology dictionary is a dictionary of lists where keys are scope names. The values
         # are lists of topology lines (tlines) sorted in the key order (or more precisely, in the
         # order specified by the sorting map).
@@ -410,6 +421,119 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
         return self._cpu_to_module_index
 
+    def _get_core_to_cpus_cache(self) -> dict[int, dict[int, frozenset[int]]]:
+        """
+        Get or build the core-to-CPU-numbers cache.
+
+        Returns:
+            Dictionary mapping package numbers to dictionaries that map core numbers to
+            frozensets of CPU numbers.
+        """
+
+        if self._core_to_cpus:
+            return self._core_to_cpus
+
+        self._get_topology(("CPU", "core", "package"), order="core")
+
+        for tline in self._topology["core"]:
+            pkg = tline["package"]
+            core = tline["core"]
+            if pkg not in self._core_to_cpus:
+                self._core_to_cpus[pkg] = {}
+            if core not in self._core_to_cpus[pkg]:
+                self._core_to_cpus[pkg][core] = frozenset()
+            self._core_to_cpus[pkg][core] |= {tline["CPU"]}
+
+        return self._core_to_cpus
+
+    def _get_die_to_cpus_cache(self) -> dict[int, dict[int, frozenset[int]]]:
+        """
+        Get or build the die-to-CPU-numbers cache.
+
+        Returns:
+            Dictionary mapping package numbers to dictionaries that map die numbers to
+            frozensets of CPU numbers.
+        """
+
+        if self._die_to_cpus:
+            return self._die_to_cpus
+
+        self._get_topology(("CPU", "die", "package"), order="die")
+
+        for tline in self._topology["die"]:
+            pkg = tline["package"]
+            die = tline["die"]
+            if pkg not in self._die_to_cpus:
+                self._die_to_cpus[pkg] = {}
+            if die not in self._die_to_cpus[pkg]:
+                self._die_to_cpus[pkg][die] = frozenset()
+            self._die_to_cpus[pkg][die] |= {tline["CPU"]}
+
+        return self._die_to_cpus
+
+    def _get_module_to_cpus_cache(self) -> dict[int, frozenset[int]]:
+        """
+        Get or build the module-to-CPU-numbers cache.
+
+        Returns:
+            Dictionary mapping module numbers to frozensets of CPU numbers.
+        """
+
+        if self._module_to_cpus:
+            return self._module_to_cpus
+
+        self._get_topology(("CPU", "module"), order="module")
+
+        for tline in self._topology["module"]:
+            module = tline["module"]
+            if module not in self._module_to_cpus:
+                self._module_to_cpus[module] = frozenset()
+            self._module_to_cpus[module] |= {tline["CPU"]}
+
+        return self._module_to_cpus
+
+    def _get_node_to_cpus_cache(self) -> dict[int, frozenset[int]]:
+        """
+        Get or build the node-to-CPU-numbers cache.
+
+        Returns:
+            Dictionary mapping node numbers to frozensets of CPU numbers.
+        """
+
+        if self._node_to_cpus:
+            return self._node_to_cpus
+
+        self._get_topology(("CPU", "node"), order="node")
+
+        for tline in self._topology["node"]:
+            node = tline["node"]
+            if node not in self._node_to_cpus:
+                self._node_to_cpus[node] = frozenset()
+            self._node_to_cpus[node] |= {tline["CPU"]}
+
+        return self._node_to_cpus
+
+    def _get_package_to_cpus_cache(self) -> dict[int, frozenset[int]]:
+        """
+        Get or build the package-to-CPU-numbers cache.
+
+        Returns:
+            Dictionary mapping package numbers to frozensets of CPU numbers.
+        """
+
+        if self._package_to_cpus:
+            return self._package_to_cpus
+
+        self._get_topology(("CPU", "package"), order="package")
+
+        for tline in self._topology["package"]:
+            package = tline["package"]
+            if package not in self._package_to_cpus:
+                self._package_to_cpus[package] = frozenset()
+            self._package_to_cpus[package] |= {tline["CPU"]}
+
+        return self._package_to_cpus
+
     def _read_range(self, path: Path | str) -> list[int]:
         """
         Read a file containing a comma-separated list of integers or integer ranges, and return a
@@ -594,6 +718,11 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         self._cpu_to_tline = {}
         self._cpu_to_core_index = {}
         self._cpu_to_module_index = {}
+        self._core_to_cpus = {}
+        self._die_to_cpus = {}
+        self._module_to_cpus = {}
+        self._node_to_cpus = {}
+        self._package_to_cpus = {}
         self._proc_percpuinfo = {}
 
         if self._dieinfo:
