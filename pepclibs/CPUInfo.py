@@ -660,8 +660,14 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
             for sname in snames:
                 self._validate_sname(sname, name="topology scope name")
 
+        # Use cached topology line if available and contains all requested scopes.
+        if cpu in self._cpu_to_tline:
+            cached_tline = self._cpu_to_tline[cpu]
+            if all(sname in cached_tline for sname in snames):
+                return {sname: cached_tline[sname] for sname in snames}
+
+        # Cache miss or incomplete - build topology for requested scopes.
         tline = None
-        # TODO: This for loop is an O(n) operation, which is not optimal. Consider optimizing it.
         for tline in self._get_topology(snames):
             if cpu == tline["CPU"]:
                 break
@@ -1306,7 +1312,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         return (pkgs, rem_cpus)
 
     def normalize_cpus(self,
-                       cpus: Iterable[int]| Literal["all"],
+                       cpus: Iterable[int] | Literal["all"],
                        offline_ok: bool = False) -> list[int]:
         """
         Validate and normalize a collection of CPU numbers.

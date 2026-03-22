@@ -18,7 +18,7 @@ import contextlib
 from pathlib import Path
 from pepclibs import CPUModels, ProcCpuinfo
 from pepclibs.helperlibs import Logging, LocalProcessManager, ClassHelpers, Trivial
-from pepclibs.helperlibs.Exceptions import ErrorNotSupported, ErrorNotFound
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorNotFound
 
 if typing.TYPE_CHECKING:
     from typing import Iterable
@@ -76,6 +76,9 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
         # Topology scopes that have been already initialized.
         self._initialized_snames: set[ScopeNameType] = set()
+
+        # CPU to topology line cache for O(1) lookups.
+        self._cpu_to_tline: dict[int, dict[ScopeNameType, int]] = {}
 
         # The topology dictionary is a dictionary of lists where keys are scope names. The values
         # are lists of topology lines (tlines) sorted in the key order (or more precisely, in the
@@ -205,26 +208,30 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
         _LOG.debug("Reading CPU module information from sysfs")
 
-        no_cache_info = False
+        # Whether the L2 cache topology information is available in sysfs.
+        cache_info_available = False
+
         for cpu in cpus:
             if "module" in cpu_tdict[cpu]:
-                continue
-
-            if no_cache_info:
-                cpu_tdict[cpu]["module"] = cpu_tdict[cpu]["core"]
                 continue
 
             base = Path(f"{self._cpu_sysfs_base}/cpu{cpu}")
             try:
                 data = self._pman.read_file(base / "cache/index2/id")
             except ErrorNotFound as err:
-                if not no_cache_info:
-                    _LOG.debug("No CPU cache topology info found%s:\n%s.",
-                               self._pman.hostmsg, err.indent(2))
-                    no_cache_info = True
-                    cpu_tdict[cpu]["module"] = cpu_tdict[cpu]["core"]
-                    continue
+                if cache_info_available:
+                    raise Error(f"CPU cache topology info is inconsistent{self._pman.hostmsg}: "
+                                f"found for some CPUs but not for CPU {cpu}") from err
 
+                # First CPU failure: cache topology info not available system-wide.
+                _LOG.debug("No CPU cache topology info found%s:\n%s.",
+                           self._pman.hostmsg, err.indent(2))
+
+                for cpu in cpus:
+                    cpu_tdict[cpu]["module"] = cpu_tdict[cpu]["core"]
+                break
+
+            cache_info_available = True
             module = Trivial.str_to_int(data, what="module number")
             siblings = self._read_range(base / "cache/index2/shared_cpu_list")
             for sibling in siblings:
@@ -343,6 +350,13 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         self._initialized_snames.update(snames_set)
         for level in self._initialized_snames:
             self._sort_topology(tlines, level)
+
+        # Update the CPU-to-tline cache with all initialized topology lines.
+        for tline in tlines:
+            cpu = tline["CPU"]
+            if cpu not in self._cpu_to_tline:
+                self._cpu_to_tline[cpu] = {}
+            self._cpu_to_tline[cpu].update(tline)
 
         return self._topology[order]
 
@@ -527,6 +541,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         self._hybrid_cpus = {}
         self._initialized_snames = set()
         self._topology = {}
+        self._cpu_to_tline = {}
         self._proc_percpuinfo = {}
 
         if self._dieinfo:
