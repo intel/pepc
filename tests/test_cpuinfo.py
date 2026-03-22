@@ -701,3 +701,119 @@ def test_delayed_init(params: CommonTestParamsTypedDict):
         # Finally, the 'get_compute_dies()' initializes the 'die' scope.
         cpuinfo.get_compute_dies()
         assert "die" in cpuinfo._initialized_snames, "'die' scope should be initialized"
+
+def test_cpuinfo_order(params: CommonTestParamsTypedDict):
+    """
+    Test that conversion methods like cores_to_cpus() preserve the correct topology order.
+
+    This test ensures that when getting CPUs for all cores with a specific order parameter,
+    the results preserve the requested topology order and don't incorrectly group CPUs by parent.
+
+    The bug this test catches: when order != parent_sname in the cache, results should follow
+    the overall topology order, not be grouped by parent. For example, cores_to_cpus("all", "all",
+    order="package") should return CPUs in package order like [0, 1, 2, 3, 4, 5, 6, 7] (if CPUs
+    alternate between packages), NOT grouped by core like [0, 4, 1, 5, 2, 6, 3, 7].
+
+    Args:
+        params: The test parameters.
+    """
+
+    for cpuinfo in common.get_cpuinfos(params["pman"]):
+        # Get all CPUs in different orders.
+        cpus_cpu_order = cpuinfo.get_cpus(order="CPU")
+        cpus_pkg_order = cpuinfo.get_cpus(order="package")
+
+        # Test cores_to_cpus() with "all" cores and different orders.
+        cores_to_cpus_cpu = cpuinfo.cores_to_cpus(cores="all", packages="all", order="CPU")
+        cores_to_cpus_pkg = cpuinfo.cores_to_cpus(cores="all", packages="all", order="package")
+
+        # Results should match get_cpus() with the same order.
+        assert cores_to_cpus_cpu == cpus_cpu_order, \
+               f"cores_to_cpus(order='CPU') returned {cores_to_cpus_cpu}, " \
+               f"expected {cpus_cpu_order}"
+        assert cores_to_cpus_pkg == cpus_pkg_order, \
+               f"cores_to_cpus(order='package') returned {cores_to_cpus_pkg}, " \
+               f"expected {cpus_pkg_order}"
+
+        # The critical test: order="package" should NOT group CPUs by core.
+        # If CPUs are [0, 1, 2, 3, 4, 5, 6, 7] in package order, they should NOT be
+        # rearranged into core order like [0, 4, 1, 5, 2, 6, 3, 7].
+        # We verify this by checking that the package order matches the direct get_cpus().
+        assert cores_to_cpus_pkg == cpus_pkg_order, \
+               "cores_to_cpus with order='package' did not preserve package order"
+
+        # Test other conversion methods to ensure order parameter works correctly.
+        if cpuinfo.get_modules_count() > 1:
+            modules_to_cpus_cpu = cpuinfo.modules_to_cpus(modules="all", order="CPU")
+            modules_to_cpus_pkg = cpuinfo.modules_to_cpus(modules="all", order="package")
+            assert modules_to_cpus_cpu == cpus_cpu_order, \
+                   f"modules_to_cpus(order='CPU') returned {modules_to_cpus_cpu}, " \
+                   f"expected {cpus_cpu_order}"
+            assert modules_to_cpus_pkg == cpus_pkg_order, \
+                   f"modules_to_cpus(order='package') returned {modules_to_cpus_pkg}, " \
+                   f"expected {cpus_pkg_order}"
+
+        if cpuinfo.get_packages_count() > 1:
+            packages_to_cpus_cpu = cpuinfo.packages_to_cpus(packages="all", order="CPU")
+            packages_to_cpus_pkg = cpuinfo.packages_to_cpus(packages="all", order="package")
+            assert packages_to_cpus_cpu == cpus_cpu_order, \
+                   f"packages_to_cpus(order='CPU') returned {packages_to_cpus_cpu}, " \
+                   f"expected {cpus_cpu_order}"
+            assert packages_to_cpus_pkg == cpus_pkg_order, \
+                   f"packages_to_cpus(order='package') returned {packages_to_cpus_pkg}, " \
+                   f"expected {cpus_pkg_order}"
+
+def test_cpuinfo_noncomp_dies(params: CommonTestParamsTypedDict):
+    """
+    Test that dies_to_cpus() handles non-compute (I/O) dies correctly.
+
+    This test verifies that when dies_to_cpus() is called with I/O dies (which have no CPUs),
+    it doesn't raise an error and correctly returns only CPUs from compute dies.
+
+    The bug this test catches: _get_scope_nums() used to reject non-compute die numbers with
+    an error like "die 2,3 do not exist", even though they are valid I/O dies. The fix adds
+    non-compute dies to the valid set during validation, allowing them to pass through, while
+    they contribute zero CPUs to the result (correct behavior).
+
+    Args:
+        params: The test parameters.
+    """
+
+    for cpuinfo in common.get_cpuinfos(params["pman"]):
+        # Get all dies including non-compute (I/O) dies.
+        all_dies = cpuinfo.get_all_dies()
+        compute_dies = cpuinfo.get_compute_dies()
+        noncomp_dies = cpuinfo.get_noncomp_dies()
+
+        # Skip test if there are no non-compute dies on this system.
+        if not noncomp_dies:
+            continue
+
+        for package in all_dies:
+            pkg_all_dies = all_dies[package]
+            pkg_compute_dies = compute_dies.get(package, [])
+            pkg_noncomp_dies = noncomp_dies.get(package, [])
+
+            # Test 1: dies_to_cpus() with all dies (compute + non-compute) should not raise error.
+            cpus_all_dies = cpuinfo.dies_to_cpus(dies=pkg_all_dies, packages=(package,))
+
+            # Test 2: Result should match CPUs from compute dies only.
+            cpus_compute_dies = cpuinfo.dies_to_cpus(dies=pkg_compute_dies, packages=(package,))
+            assert cpus_all_dies == cpus_compute_dies, \
+                   f"dies_to_cpus() with all dies returned {cpus_all_dies}, " \
+                   f"but with compute dies only returned {cpus_compute_dies}"
+
+            # Test 3: dies_to_cpus() with only non-compute dies should return empty list.
+            if pkg_noncomp_dies:
+                cpus_noncomp_dies = cpuinfo.dies_to_cpus(dies=pkg_noncomp_dies,
+                                                          packages=(package,))
+                assert cpus_noncomp_dies == [], \
+                       f"dies_to_cpus() with non-compute dies returned {cpus_noncomp_dies}, " \
+                       f"expected empty list"
+
+            # Test 4: Test individual non-compute die numbers don't cause errors.
+            for die in pkg_noncomp_dies:
+                cpus = cpuinfo.dies_to_cpus(dies=(die,), packages=(package,))
+                assert cpus == [], \
+                       f"dies_to_cpus() with non-compute die {die} returned {cpus}, " \
+                       f"expected empty list"

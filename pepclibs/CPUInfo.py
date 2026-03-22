@@ -126,23 +126,6 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
 
         super().__init__(pman=pman, dieinfo=dieinfo)
 
-        # Scope name to its index number.
-        self._sname2idx: dict[ScopeNameType, int]
-        self._sname2idx = {sname: idx for idx, sname in enumerate(SCOPE_NAMES)}
-
-    def _validate_sname(self, sname: ScopeNameType, name: str = "scope name") -> None:
-        """
-        Check that the provided scope name is valid.
-
-        Args:
-            sname: Scope name to validate.
-            name: Label to use in the error message.
-        """
-
-        if sname not in self._sname2idx:
-            snames = ", ".join(SCOPE_NAMES)
-            raise Error(f"Bad {name} name '{sname}', use: {snames}")
-
     def get_topology(self,
                      snames: Iterable[ScopeNameType] | None = None,
                      order: ScopeNameType = "CPU") -> list[dict[ScopeNameType, int]]:
@@ -254,103 +237,6 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         # This module is not thread-save, so it is OK to return the topology dictionary, instead of
         # a copy.
         return topology
-
-    def _get_scope_nums(self,
-                        sname: ScopeNameType,
-                        parent_sname: ScopeNameType,
-                        nums: AbsNumsType | Literal["all"],
-                        order: ScopeNameType | None = None) -> list[int]:
-        """
-        Return a list of "scope" numbers (e.g., CPU numbers or core numbers) for specified parent
-        scope numbers (e.g., get a list of CPU numbers for specified cores, or get a list of core
-        numbers for specified packages).
-
-        Args:
-            sname: Scope name to retrieve the numbers for (e.g., "CPU", "core", "die").
-            parent_sname: Parent scope used for selecting scope numbers (e.g., "core",
-                          "package").
-            nums: Iterable of parent scope numbers for selecting scope numbers, or "all" for all
-                  parent scope numbers.
-            order: Scope name to sort the result by. Defaults to 'sname'.
-
-        Returns:
-            List of scope numbers corresponding to the specified parent scope numbers.
-
-        Examples:
-            1. Get CPU numbers in cores 1 and 3.
-               _get_scope_nums("CPU", "core", (1, 3))
-            2. Get node numbers in package 1.
-               _get_scope_nums("node", "package", (1,))
-            3. Get all core numbers.
-               _get_scope_nums("core", "package", "all")
-               _get_scope_nums("core", "node", "all")
-               _get_scope_nums("core", "core", "all")
-
-            Assume a system with 2 packages, 1 die per package, 2 cores per package, and 2 CPUs per
-            core:
-                - Package 0 includes die 0.
-                - Package 1 includes die 1.
-                - Die 0 includes cores 0 and 1.
-                - Die 1 includes cores 2 and 3.
-                - Core 0 includes CPUs 0 and 4
-                - Core 1 includes CPUs 1 and 5
-                - Core 3 includes CPUs 2 and 6
-                - Core 4 includes CPUs 3 and 7
-
-                1. _get_scope_nums("CPU", "core", "all") returns:
-                   [0, 1, 2, 3, 4, 5, 6, 7]
-                2. _get_scope_nums("CPU", "core", "all", order="core") returns:
-                   [0, 4, 1, 5, 2, 6, 3, 7]
-                3. _get_scope_nums("CPU", "core", (1,3), order="core") returns:
-                   [1, 5, 2, 6]
-        """
-
-        if order is None:
-            order = sname
-
-        self._validate_sname(sname)
-        self._validate_sname(parent_sname)
-        self._validate_sname(order, name="order")
-
-        if self._sname2idx[parent_sname] < self._sname2idx[sname]:
-            raise Error(f"Cannot get {sname}s for '{parent_sname}', {sname} is not a child of "
-                        f"{parent_sname}")
-
-        if nums != "all":
-            # Convert 'nums' to a set. Any non-integer values will be validated later.
-            nums_set = set(nums)
-        else:
-            nums_set = set()
-
-        result: dict[int, None] = {}
-        valid_nums: set[int] = set()
-
-        for tline in self._get_topology((parent_sname, sname), order=order):
-            valid_nums.add(tline[parent_sname])
-            if nums == "all" or tline[parent_sname] in nums_set:
-                result[tline[sname]] = None
-
-        if nums == "all":
-            return list(result)
-
-        # Validate the input numbers in 'nums'.
-        if not nums_set.issubset(valid_nums):
-            # If these are dies, account for non-compute dies as well. They do not have CPUs, so
-            # just add them to the valid numbers set.
-            if parent_sname == "die":
-                dieinfo = self.get_dieinfo()
-                proc_percpuinfo = self.get_proc_percpuinfo()
-                noncomp_dies = dieinfo.get_noncomp_dies(proc_percpuinfo)
-                for dies in noncomp_dies.values():
-                    valid_nums.update(dies)
-
-            if not nums_set.issubset(valid_nums):
-                valid = Trivial.rangify(valid_nums)
-                invalid = Trivial.rangify(nums_set - valid_nums)
-                raise Error(f"{parent_sname} {invalid} do not exist{self._pman.hostmsg}, valid "
-                            f"{parent_sname} numbers are: {valid}")
-
-        return list(result)
 
     def get_cpus(self, order: ScopeNameType = "CPU") -> list[int]:
         """

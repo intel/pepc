@@ -20,13 +20,14 @@ from pepclibs import CPUModels, ProcCpuinfo
 from pepclibs.helperlibs import Logging, LocalProcessManager, ClassHelpers, Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorNotFound
 
+from pepclibs.CPUInfoVars import SCOPE_NAMES
+
 if typing.TYPE_CHECKING:
-    from typing import Iterable
+    from typing import Iterable, Literal
     from pepclibs import _DieInfo
     from pepclibs.ProcCpuinfo import ProcCpuinfoTypedDict, ProcCpuinfoPerCPUTypedDict
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
-    from pepclibs.CPUInfoTypes import (ScopeNameType, AbsNumsType, HybridCPUKeyType,
-                                       HybridCPUKeyInfoType)
+    from pepclibs.CPUInfoTypes import ScopeNameType, AbsNumsType, HybridCPUKeyType
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
@@ -95,6 +96,23 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         self._node_to_cpus: dict[int, frozenset[int]] = {}
         self._package_to_cpus: dict[int, frozenset[int]] = {}
 
+        # Scope name to its index number.
+        self._sname2idx: dict[ScopeNameType, int]
+        self._sname2idx = {sname: idx for idx, sname in enumerate(SCOPE_NAMES)}
+
+        # A cache for '_get_scope_nums()' results - stores parent-to-children mappings and ordered
+        # child lists to avoid repeated topology walks.
+        # Structure: _scope_nums_cache[sname][parent_sname][order] =
+        #   (parent_to_child_dict, all_nums_list)
+        # Example: _scope_nums_cache["CPU"]["package"]["CPU"] could be:
+        #   ({0: [0, 2, 4, 6], 1: [1, 3, 5, 7]}, [0, 1, 2, 3, 4, 5, 6, 7])
+        # The dict groups children by parent, the list preserves overall topology order.
+        # Note: list ≠ concatenating dict values when order != parent_sname.
+        self._scope_nums_cache: dict[ScopeNameType,
+                                     dict[ScopeNameType,
+                                          dict[ScopeNameType,
+                                               tuple[dict[int, list[int]], list[int]]]]] = {}
+
         # The topology dictionary is a dictionary of lists where keys are scope names. The values
         # are lists of topology lines (tlines) sorted in the key order (or more precisely, in the
         # order specified by the sorting map).
@@ -133,6 +151,19 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         _LOG.debug("Closing the '%s' class object", self.__class__.__name__)
 
         ClassHelpers.close(self, close_attrs=("_dieinfo", "_pman"))
+
+    def _validate_sname(self, sname: ScopeNameType, name: str = "scope name") -> None:
+        """
+        Check that the provided scope name is valid.
+
+        Args:
+            sname: Scope name to validate.
+            name: Label to use in the error message.
+        """
+
+        if sname not in self._sname2idx:
+            snames = ", ".join(SCOPE_NAMES)
+            raise Error(f"Bad {name} name '{sname}', use: {snames}")
 
     def get_proc_cpuinfo(self) -> ProcCpuinfoTypedDict:
         """
@@ -368,6 +399,165 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
             self._sort_topology(tlines, level)
 
         return self._topology[order]
+
+    def _get_scope_nums_cache(self,
+                              sname: ScopeNameType,
+                              parent_sname: ScopeNameType,
+                              order: ScopeNameType) -> tuple[dict[int, list[int]], list[int]]:
+        """
+        Get parent-to-child mapping and ordered list of all children for the given parameters.
+
+        Args:
+            sname: Scope name to retrieve numbers for.
+            parent_sname: Parent scope name.
+            order: Scope name to sort results by.
+
+        Returns:
+            Tuple containing:
+                - Dictionary mapping parent numbers to lists of child numbers.
+                - List of all child numbers in topology order (deduplicated).
+
+        Example:
+            _get_scope_nums_cache("CPU", "package", "CPU") might return:
+                ({0: [0, 2, 4, 6], 1: [1, 3, 5, 7]}, [0, 1, 2, 3, 4, 5, 6, 7])
+            The dict groups children by parent, the list preserves overall topology order.
+            When order="package", the list would be [0, 2, 4, 6, 1, 3, 5, 7] instead.
+        """
+
+        if sname in self._scope_nums_cache:
+            if parent_sname in self._scope_nums_cache[sname]:
+                if order in self._scope_nums_cache[sname][parent_sname]:
+                    # Already cached.
+                    return self._scope_nums_cache[sname][parent_sname][order]
+
+        # Build the cache by walking topology once.
+        parent_to_child_dict: dict[int, dict[int, None]] = {}
+        all_nums_dict: dict[int, None] = {}  # To deduplicate while preserving order.
+
+        for tline in self._get_topology((parent_sname, sname), order=order):
+            parent_num = tline[parent_sname]
+            child_num = tline[sname]
+
+            if parent_num not in parent_to_child_dict:
+                parent_to_child_dict[parent_num] = {}
+            parent_to_child_dict[parent_num][child_num] = None
+            all_nums_dict[child_num] = None
+
+        # Convert to final format.
+        parent_to_child: dict[int, list[int]] = {}
+        for parent_num, children_dict in parent_to_child_dict.items():
+            parent_to_child[parent_num] = list(children_dict.keys())
+
+        all_nums = list(all_nums_dict.keys())
+
+        if sname not in self._scope_nums_cache:
+            self._scope_nums_cache[sname] = {}
+        if parent_sname not in self._scope_nums_cache[sname]:
+            self._scope_nums_cache[sname][parent_sname] = {}
+        self._scope_nums_cache[sname][parent_sname][order] = (parent_to_child, all_nums)
+
+        return (parent_to_child, all_nums)
+
+    def _get_scope_nums(self,
+                        sname: ScopeNameType,
+                        parent_sname: ScopeNameType,
+                        nums: AbsNumsType | Literal["all"],
+                        order: ScopeNameType | None = None) -> list[int]:
+        """
+        Return a list of "scope" numbers (e.g., CPU numbers or core numbers) for specified parent
+        scope numbers (e.g., get a list of CPU numbers for specified cores, or get a list of core
+        numbers for specified packages).
+
+        Args:
+            sname: Scope name to retrieve the numbers for (e.g., "CPU", "core", "die").
+            parent_sname: Parent scope used for selecting scope numbers (e.g., "core",
+                          "package").
+            nums: Iterable of parent scope numbers for selecting scope numbers, or "all" for all
+                  parent scope numbers.
+            order: Scope name to sort the result by. Defaults to 'sname'.
+
+        Notes:
+            - This method only returns compute dies (dies with CPUs). Non-compute dies are ignored.
+
+        Returns:
+            List of scope numbers corresponding to the specified parent scope numbers.
+
+        Examples:
+            1. Get CPU numbers in cores 1 and 3.
+               _get_scope_nums("CPU", "core", (1, 3))
+            2. Get node numbers in package 1.
+               _get_scope_nums("node", "package", (1,))
+            3. Get all core numbers.
+               _get_scope_nums("core", "package", "all")
+               _get_scope_nums("core", "node", "all")
+               _get_scope_nums("core", "core", "all")
+
+            Assume a system with 2 packages, 1 die per package, 2 cores per package, and 2 CPUs per
+            core:
+                - Package 0 includes die 0.
+                - Package 1 includes die 1.
+                - Die 0 includes cores 0 and 1.
+                - Die 1 includes cores 2 and 3.
+                - Core 0 includes CPUs 0 and 4
+                - Core 1 includes CPUs 1 and 5
+                - Core 3 includes CPUs 2 and 6
+                - Core 4 includes CPUs 3 and 7
+
+                1. _get_scope_nums("CPU", "core", "all") returns:
+                   [0, 1, 2, 3, 4, 5, 6, 7]
+                2. _get_scope_nums("CPU", "core", "all", order="core") returns:
+                   [0, 4, 1, 5, 2, 6, 3, 7]
+                3. _get_scope_nums("CPU", "core", (1,3), order="core") returns:
+                   [1, 5, 2, 6]
+        """
+
+        if order is None:
+            order = sname
+
+        self._validate_sname(sname)
+        self._validate_sname(parent_sname)
+        self._validate_sname(order, name="order")
+
+        if self._sname2idx[parent_sname] < self._sname2idx[sname]:
+            raise Error(f"Cannot get {sname}s for '{parent_sname}', {sname} is not a child of "
+                        f"{parent_sname}")
+
+        parent_to_child, all_nums = self._get_scope_nums_cache(sname, parent_sname, order)
+
+        parent_nums: set[int]
+        if nums == "all":
+            return all_nums
+
+        parent_nums = set(nums)
+        valid_nums = set(parent_to_child.keys())
+
+        if not parent_nums.issubset(valid_nums):
+            # If these are dies, account for non-compute dies as well. They do not have (or have
+            # zero) CPUs, cores, modules or nodes. Just add them to the valid numbers set. This
+            # ensures that if the caller included I/O dies, they are ignored, rather than cause
+            # an error.
+            if parent_sname == "die":
+                dieinfo = self.get_dieinfo()
+                proc_percpuinfo = self.get_proc_percpuinfo()
+                noncomp_dies_info = dieinfo.get_noncomp_dies_info(proc_percpuinfo)
+                for pkg_dies in noncomp_dies_info.values():
+                    valid_nums.update(pkg_dies.keys())
+
+            if not parent_nums.issubset(valid_nums):
+                valid = Trivial.rangify(valid_nums)
+                invalid = Trivial.rangify(parent_nums - valid_nums)
+                raise Error(f"{parent_sname} {invalid} do not exist{self._pman.hostmsg}, valid "
+                            f"{parent_sname} numbers are: {valid}")
+
+        # Build result from cached all_nums, filtering by parent_nums.
+        # Create a set of valid children based on requested parents.
+        valid_children: set[int] = set()
+        for parent_num in parent_nums:
+            if parent_num in parent_to_child:
+                valid_children.update(parent_to_child[parent_num])
+
+        # Filter all_nums to only include valid children (preserves order).
+        return [num for num in all_nums if num in valid_children]
 
     def _get_cpu_to_core_index_cache(self) -> dict[int, int]:
         """
@@ -723,6 +913,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         self._module_to_cpus = {}
         self._node_to_cpus = {}
         self._package_to_cpus = {}
+        self._scope_nums_cache = {}
         self._proc_percpuinfo = {}
 
         if self._dieinfo:

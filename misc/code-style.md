@@ -138,7 +138,17 @@ it is possible to use a special value of the same type as the parameter.
             cpus = self.get_all_cpus()
 ```
 
-### Prefer frozenset for Immutable Sets
+### Prefer frozenset and tuples for Immutable sets/sequences
 
 When defining a collection of items that should not be modified after creation, prefer using
-`frozenset` instead of `set`.
+`frozenset` instead of `set` and `tuple` instead of `list`.
+
+### Class Layout
+
+The `__init__()` method should be defined at the top of the class, immediately after the class
+docstring. The destructor and other special methods (e.g., `__enter__`, `__exit__`) should go after
+`__init__()`. Regular methods should be defined after the special methods.
+
+The general order of methods in a class should be that the inner methods are defined before the
+outer methods. For example, if a method A calls method B, then method B should be defined before
+method A.
