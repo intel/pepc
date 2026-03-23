@@ -345,8 +345,8 @@ def _load_sdict(specpath: Path) -> SDictTypedDict:
     return sdict
 
 def _check_keys(check_keys: Iterable[str],
-                allowed_keys: set[str],
-                mandatory_keys: set[str],
+                allowed_keys: frozenset[str],
+                mandatory_keys: frozenset[str],
                 where: str) -> str:
     """
     Validate given keys against allowed and mandatory keys.
@@ -419,7 +419,7 @@ def _parse_index_file(specpath: Path, vfm: int) -> SDDTypedDict:
 
     sdd: SDDTypedDict = {"vfm": -1, "idxpath": idxpath, "idxdict": idxdict}
 
-    keys = {"version", "vfms"}
+    keys = frozenset({"version", "vfms"})
     where = "at the top level of the index file"
     msg = _check_keys(idxdict, keys, keys, where)
     if msg:
@@ -433,7 +433,7 @@ def _parse_index_file(specpath: Path, vfm: int) -> SDDTypedDict:
     vfms: dict[int, IdxDictVFMEntryTypedDict] = idxdict["vfms"]
 
     for _vfm, info in vfms.items():
-        keys = {"subdir", "platform_name"}
+        keys = frozenset({"subdir", "platform_name"})
         where = f"in VFM={_vfm} spec definition"
         msg = _check_keys(info, keys, keys, where)
         if msg:
@@ -970,13 +970,13 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         self._drop_unimplemented_instances(fname, addr, mdmap, vals)
         return mdmap
 
-    def get_dummy_tpmi_info(self, addr: str, addrs: set[str]) -> tuple[_MDMapType, int]:
+    def get_dummy_tpmi_info(self, addr: str, addrs: frozenset[str]) -> tuple[_MDMapType, int]:
         """
         Generate and return a dummy 'tpmi_info' mdmap and package number for a TPMI device.
 
         Args:
             addr: PCI address of the TPMI device.
-            addrs: Set of all PCI addresses of TPMI devices found in the debugfs dump.
+            addrs: Frozenset of all PCI addresses of TPMI devices found in the debugfs dump.
 
         Returns:
             A tuple containing:
@@ -1084,7 +1084,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                     if "tpmi_info" not in fname2addrs:
                         # Handle the case when 'tpmi_info' spec file is missing in the debugfs dump
                         # scenario.
-                        mdmap, package = self.get_dummy_tpmi_info(addr, addrs_set)
+                        mdmap, package = self.get_dummy_tpmi_info(addr, frozenset(addrs_set))
                     else:
                         mdmap = self._build_mdmap(addr, "tpmi_info")
                         package = self._read_register("tpmi_info", addr, 0, "TPMI_BUS_INFO",
@@ -1139,7 +1139,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
             spec["feature_id"] = spec.pop("feature-id")
 
         # The allowed and the mandatory top-level key names.
-        keys = {"name", "desc", "feature_id", "registers"}
+        keys = frozenset({"name", "desc", "feature_id", "registers"})
         where = "at the top level of the spec file"
         msg = _check_keys(spec, keys, keys, where)
         if msg:
@@ -1152,7 +1152,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                            f"characters")
 
             # The allowed and the mandatory regdict key names.
-            keys = {"offset", "width", "fields"}
+            keys = frozenset({"offset", "width", "fields"})
             where = f"in the '{regname}' TPMI register definition"
             msg = _check_keys(regdict, keys, keys, where)
             if msg:
@@ -1183,7 +1183,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                                f"should include only upper case characters")
 
                 # The allowed and the mandatory bit field dictionary key names.
-                keys = {"bits", "readonly", "desc"}
+                keys = frozenset({"bits", "readonly", "desc"})
                 where = f"in bit field '{bfname}' of the '{regname}' TPMI register definition"
                 msg = _check_keys(bfdict, keys, keys, where)
                 if msg:
