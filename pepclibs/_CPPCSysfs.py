@@ -19,9 +19,8 @@ from pepclibs.helperlibs import Logging, LocalProcessManager, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorBadFormat, ErrorNotSupported
 
 if typing.TYPE_CHECKING:
-    from typing import Generator, Literal
+    from typing import Generator, Literal, Sequence
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
-    from pepclibs.CPUInfoTypes import AbsNumsType
 
     PerfLevelNameType = Literal["lowest", "lowest_nonlinear", "guaranteed", "nominal", "highest"]
 
@@ -40,18 +39,19 @@ class CPPCSysfs(ClassHelpers.SimpleCloseContext):
     Provide a capability to read CPU frequency and performance information from ACPI CPPC via Linux
     sysfs.
 
-    Public Methods:
-        - get_lowest_perf(cpus): Yield lowest performance level for CPUs from ACPI CPPC.
-        - get_lowest_nonlinear_perf(cpus): Yield lowest nonlinear performance level for CPUs from
-                                           ACPI CPPC.
-        - get_guaranteed_perf(cpus): Yield guaranteed performance level for CPUs from ACPI CPPC.
-        - get_nominal_perf(cpus): Yield nominal performance level for CPUs from ACPI CPPC.
-        - get_highest_perf(cpus): Yield highest performance level for CPUs from ACPI CPPC.
-        - get_nominal_freq(cpus): Yield nominal frequency for CPUs from ACPI CPPC.
+    Public methods overview.
+
+    1. Performance level read methods.
+        - 'get_lowest_perf()' - get lowest performance level for CPUs.
+        - 'get_lowest_nonlinear_perf()' - get lowest nonlinear performance level for CPUs.
+        - 'get_guaranteed_perf()' - get guaranteed performance level for CPUs.
+        - 'get_nominal_perf()' - get nominal performance level for CPUs.
+        - 'get_highest_perf()' - get highest performance level for CPUs.
+    2. Frequency read methods.
+        - 'get_nominal_freq()' - get nominal frequency for CPUs.
 
     Notes:
-        Methods do not validate the 'cpus' argument. Ensure that provided CPU numbers are valid and
-        online.
+        - Methods do not validate the 'cpus' argument. The caller must validate CPU numbers.
     """
 
     def __init__(self,
@@ -159,7 +159,7 @@ class CPPCSysfs(ClassHelpers.SimpleCloseContext):
 
     def _get_perf_level(self,
                         plname: PerfLevelNameType,
-                        cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
+                        cpus: Sequence[int]) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the performance level value for specified CPUs and performance level
         name.
@@ -182,12 +182,12 @@ class CPPCSysfs(ClassHelpers.SimpleCloseContext):
             val = self._read_cppc_sysfs_file(cpu, fname, f"{plname} CPU {cpu} performance")
             yield cpu, val
 
-    def get_lowest_perf(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
+    def get_lowest_perf(self, cpus: Sequence[int]) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the lowest performance level value for specified CPUs.
 
         Args:
-            cpus: CPU numbers to get the lowest performance level value for.
+            cpus: CPU numbers to get the lowest performance level for.
 
         Yields:
             Tuple (cpu, value), where 'cpu' is the CPU number and 'value' is the lowest performance
@@ -200,12 +200,12 @@ class CPPCSysfs(ClassHelpers.SimpleCloseContext):
         yield from self._get_perf_level("lowest", cpus)
 
     def get_lowest_nonlinear_perf(self,
-                                  cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
+                                  cpus: Sequence[int]) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the lowest_nonlinear performance level value for specified CPUs.
 
         Args:
-            cpus: CPU numbers to get the lowest_nonlinear performance level value for.
+            cpus: CPU numbers to get the lowest_nonlinear performance level for.
 
         Yields:
             Tuple (cpu, value), where 'cpu' is the CPU number and 'value' is the lowest nonlinear
@@ -217,12 +217,12 @@ class CPPCSysfs(ClassHelpers.SimpleCloseContext):
 
         yield from self._get_perf_level("lowest_nonlinear", cpus)
 
-    def get_guaranteed_perf(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
+    def get_guaranteed_perf(self, cpus: Sequence[int]) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the guaranteed performance level value for specified CPUs.
 
         Args:
-            cpus: CPU numbers to get the guaranteed performance level value for.
+            cpus: CPU numbers to get the guaranteed performance level for.
 
         Yields:
             Tuple (cpu, value), where 'cpu' is the CPU number and 'value' is the guaranteed
@@ -234,12 +234,12 @@ class CPPCSysfs(ClassHelpers.SimpleCloseContext):
 
         yield from self._get_perf_level("guaranteed", cpus)
 
-    def get_nominal_perf(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
+    def get_nominal_perf(self, cpus: Sequence[int]) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the nominal performance level value for specified CPUs.
 
         Args:
-            cpus: CPU numbers to get the nominal performance level value for.
+            cpus: CPU numbers to get the nominal performance level for.
 
         Yields:
             Tuple (cpu, value), where 'cpu' is the CPU number and 'value' is the nominal performance
@@ -251,12 +251,12 @@ class CPPCSysfs(ClassHelpers.SimpleCloseContext):
 
         yield from self._get_perf_level("nominal", cpus)
 
-    def get_highest_perf(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
+    def get_highest_perf(self, cpus: Sequence[int]) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the highest performance level value for specified CPUs.
 
         Args:
-            cpus: CPU numbers to get the highest performance level value for.
+            cpus: CPU numbers to get the highest performance level for.
 
         Yields:
             Tuple (cpu, value), where 'cpu' is the CPU number and 'value' is the highest performance
@@ -269,13 +269,13 @@ class CPPCSysfs(ClassHelpers.SimpleCloseContext):
         yield from self._get_perf_level("highest", cpus)
 
     def _get_freq(self,
-                  cpus: AbsNumsType,
+                  cpus: Sequence[int],
                   plname: PerfLevelNameType) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the frequency for specified CPUs and performance level name.
 
         Args:
-            cpus: CPU numbers to get the frequency limit for.
+            cpus: CPU numbers to get the frequency for.
             plname: Name of the performance level to retrieve (e.g., "nominal").
 
         Yields:
@@ -292,7 +292,7 @@ class CPPCSysfs(ClassHelpers.SimpleCloseContext):
             val = self._read_cppc_sysfs_file(cpu, fname, f"{plname} CPU {cpu} frequency")
             yield cpu, val * 1000 * 1000
 
-    def get_nominal_freq(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
+    def get_nominal_freq(self, cpus: Sequence[int]) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the nominal frequency for specified CPUs.
 
