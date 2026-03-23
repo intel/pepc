@@ -315,13 +315,24 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
             # No NUMA information in sysfs, assume a single NUMA node.
             for cpu in cpu_tdict:
                 cpu_tdict[cpu]["node"] = 0
-        else:
-            for node in nodes:
-                cpus = self._read_range(f"/sys/devices/system/node/node{node}/cpulist")
-                for cpu in cpus:
-                    # Suppress 'KeyError' in case the 'cpulist' file included an offline CPU.
-                    with contextlib.suppress(KeyError):
-                        cpu_tdict[cpu]["node"] = node
+            return
+
+        sysfs_io = self._get_sysfs_io()
+
+        # Generate paths for all node cpulist files.
+        node_paths = (Path(f"/sys/devices/system/node/node{node}/cpulist") for node in nodes)
+
+        # Read all cpulist files in bulk.
+        cpulists_iter = sysfs_io.read_paths(node_paths, what="node cpulist")
+
+        for node, (path, cpulist_str) in zip(nodes, cpulists_iter):
+            what = f"contents of file at '{path}'{self._pman.hostmsg}"
+            cpus = Trivial.split_csv_line_int(cpulist_str.strip(), what=what)
+
+            for cpu in cpus:
+                # Suppress 'KeyError' in case the 'cpulist' file included an offline CPU.
+                with contextlib.suppress(KeyError):
+                    cpu_tdict[cpu]["node"] = node
 
     def _sort_topology(self, tlines: list[dict[ScopeNameType, int]], order: ScopeNameType):
         """Sort and save the topology list by 'order' in sorting map."""
