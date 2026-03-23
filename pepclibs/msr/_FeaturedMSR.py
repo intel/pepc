@@ -61,8 +61,8 @@ if typing.TYPE_CHECKING:
         help: str
         type: str
         writable: bool
-        cpuflags: set[str]
-        vfms: set[int]
+        cpuflags: frozenset[str]
+        vfms: frozenset[int]
         vals: _FeatureValsType
         bits: tuple[int, int]
 
@@ -89,8 +89,8 @@ if typing.TYPE_CHECKING:
         help: str
         type: str
         writable: bool
-        cpuflags: set[str]
-        vfms: set[int]
+        cpuflags: frozenset[str]
+        vfms: frozenset[int]
         vals: _FeatureValsType | None
         bits: tuple[int, int] | None
 
