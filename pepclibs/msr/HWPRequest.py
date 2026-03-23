@@ -38,7 +38,7 @@ FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
         "sname": "CPU",
         "iosname": "CPU",
         "help": """The minimum desired CPU performance.""",
-        "cpuflags": {"hwp"},
+        "cpuflags": frozenset({"hwp"}),
         "type": "int",
         "bits": (7, 0),
         "writable": True,
@@ -48,7 +48,7 @@ FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
         "sname": "CPU",
         "iosname": "CPU",
         "help": """The maximum desired CPU performance.""",
-        "cpuflags": {"hwp"},
+        "cpuflags": frozenset({"hwp"}),
         "type": "int",
         "bits": (15, 8),
         "writable": True,
@@ -60,7 +60,7 @@ FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
         "help": """Energy Performance Preference is a hint to the CPU running in HWP mode about the
                    power and performance preference. Value 0 indicates highest performance and
                    value 255 indicates maximum energy savings.""",
-        "cpuflags": {"hwp", "hwp_epp"},
+        "cpuflags": frozenset({"hwp", "hwp_epp"}),
         "type": "int",
         "bits": (31, 24),
         "writable": True,
@@ -72,7 +72,7 @@ FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
         "help": f"""When enabled, the CPU ignores this per-CPU MSR {MSR_HWP_REQUEST}
                     (MSR_HWP_REQUEST), and instead, uses per-package MSR 0x772
                     (MSR_HWP_REQUEST_PKG).""",
-        "cpuflags": {"hwp", "hwp_pkg_req"},
+        "cpuflags": frozenset({"hwp", "hwp_pkg_req"}),
         "type": "bool",
         "vals": {"on": 1, "off": 0},
         "bits": (42, 42),
@@ -84,7 +84,7 @@ FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
         "iosname": "CPU",
         "help": f"""When set, the CPU reads the EPP value from per-CPU MSR {MSR_HWP_REQUEST}
                     (MSR_HWP_REQUEST), even if bit 42 ('pkg_control') is set.""",
-        "cpuflags": {"hwp", "hwp_epp"},
+        "cpuflags": frozenset({"hwp", "hwp_epp"}),
         "type": "bool",
         "vals": {"on": 1, "off": 0},
         "bits": (60, 60),
@@ -96,7 +96,7 @@ FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
         "iosname": "CPU",
         "help": f"""When set, the CPU reads the Maximum performance value from per-CPU MSR
                    {MSR_HWP_REQUEST} (MSR_HWP_REQUEST), even if bit 42 ('pkg_control') is set.""",
-        "cpuflags": {"hwp"},
+        "cpuflags": frozenset({"hwp"}),
         "type": "bool",
         "vals": {"on": 1, "off": 0},
         "bits": (62, 62),
@@ -108,7 +108,7 @@ FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
         "iosname": "CPU",
         "help": f"""When set, the CPU reads the Minimum performance value from per-CPU MSR
                     {MSR_HWP_REQUEST} (MSR_HWP_REQUEST), even if bit 42 ('pkg_control') is set.""",
-        "cpuflags": {"hwp"},
+        "cpuflags": frozenset({"hwp"}),
         "type": "bool",
         "vals": {"on": 1, "off": 0},
         "bits": (63, 63),

@@ -43,7 +43,7 @@ FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
         "help": """Software (as opposed to PCIe) Latency Tolerance Report (LTR) value for
                    snoop latency in nanoseconds. Value 0 corresponds to best possible service
                    request.""",
-        "vfms": set(_LTR_CPUS),
+        "vfms": frozenset(_LTR_CPUS),
         "type": "int",
         "bits": (25, 16),
         "writable": True,
@@ -53,7 +53,7 @@ FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
         "sname": "package",
         "iosname": "package",
         "help": "Multiplier for the snoop latency software LTR.",
-        "vfms": set(_LTR_CPUS),
+        "vfms": frozenset(_LTR_CPUS),
         "type": "int",
         "bits": (28, 26),
         "writable": True,
@@ -64,7 +64,7 @@ FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
         "iosname": "package",
         "help": """When set, use snoop latency software LTR value from this MSR regardless of LTR
                    from PCIe controllers.""",
-        "vfms": set(_LTR_CPUS),
+        "vfms": frozenset(_LTR_CPUS),
         "type": "bool",
         "vals": {"on": 1, "off": 0},
         "bits": (30, 30),
@@ -76,7 +76,7 @@ FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
         "iosname": "package",
         "help": """When enabled, power management unit takes into account snoop latency software
                    LTR value from this MSR, otherwise ignores it.""",
-        "vfms": set(_LTR_CPUS),
+        "vfms": frozenset(_LTR_CPUS),
         "type": "bool",
         "vals": {"on": 1, "off": 0},
         "bits": (31, 31),

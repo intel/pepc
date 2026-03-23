@@ -52,7 +52,7 @@ FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
         "iosname": None,
         "help": """The maximum allowed uncore ratio. This ratio multiplied by bus clock speed gives
                    the maximum allowed uncore frequency.""",
-        "vfms": set(_VMFS),
+        "vfms": frozenset(_VMFS),
         "type": "int",
         "writable": True,
         "bits": (6, 0),
@@ -63,7 +63,7 @@ FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
         "iosname": None,
         "help": """The minimum allowed uncore ratio. This ratio multiplied by bus clock speed gives
                    the minimum allowed uncore frequency.""",
-        "vfms": set(_VMFS),
+        "vfms": frozenset(_VMFS),
         "type": "int",
         "writable": True,
         "bits": (14, 8),

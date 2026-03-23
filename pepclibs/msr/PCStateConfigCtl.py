@@ -197,7 +197,7 @@ FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
                    (MSR_PKG_CST_CONFIG_CONTROL). This model-specific register can be locked by the
                    BIOS, in which case the package C-state limit can only be read, but cannot be
                    modified.""",
-        "vfms": set(_PKG_CST_LIMITS),
+        "vfms": frozenset(_PKG_CST_LIMITS),
         "type": "str",
         "vals": None,
         "bits": None,
@@ -211,7 +211,7 @@ FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
                    (MSR_PKG_CST_CONFIG_CONTROL), which include the Package C-state limit. This bit
                    is typically set by BIOS, and sometimes there is a BIOS menu to lock/unlock the
                    MSR.""",
-        "vfms": set(_PKG_CST_LIMITS),
+        "vfms": frozenset(_PKG_CST_LIMITS),
         "type": "bool",
         "vals": {"on": 1, "off": 0},
         "bits": (15, 15),

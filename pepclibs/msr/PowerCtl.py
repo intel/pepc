@@ -87,7 +87,7 @@ FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
         "iosname": None,
         "help": """When enabled, the CPU will start exiting the C6 idle state in advance, prior to
                    the next local APIC timer event.""",
-        "vfms": set(_CSTATE_PREWAKE_VFMS),
+        "vfms": frozenset(_CSTATE_PREWAKE_VFMS),
         "type": "bool",
         "vals": {"on": 0, "off": 1},
         "bits": (30, 30),
@@ -99,7 +99,7 @@ FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
         "iosname": None,
         "help": """When enabled, the CPU will take LTR constraints into account when making power
                    management decisions, such as selecting package C-state.""",
-        "vfms": set(LTR_VFMS),
+        "vfms": frozenset(LTR_VFMS),
         "type": "bool",
         "vals": {"on": 0, "off": 1},
         "bits": (35, 35),

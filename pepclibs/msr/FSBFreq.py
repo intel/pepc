@@ -112,7 +112,7 @@ FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
         "sname": None,
         "iosname": None,
         "help": "Platform bus clock speed (FSB) in megahertz",
-        "vfms": set(_FSB_CODES),
+        "vfms": frozenset(_FSB_CODES),
         "type": "float",
         "writable": False,
     },

@@ -79,7 +79,7 @@ FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
         "iosname": None,
         "help": """The ratio of maximum turbo frequency in case of 1 active core. This ratio
                    multiplied by bus clock speed gives the maximum 1 core turbo frequency.""",
-        "vfms": set(_CT_VFMS),
+        "vfms": frozenset(_CT_VFMS),
         "type": "int",
         "bits": (7, 0),
         "writable": False,
@@ -91,7 +91,7 @@ FEATURES: Final[dict[str, PartialFeatureTypedDict]] = {
         "help": """The ratio of maximum turbo frequency in case "group 0" count of cores are
                    active. This ratio multiplied by bus clock speed gives the frequency. Count of
                    cores in group 0 is provided by MSR 0x1AE.""",
-        "vfms": set(_GT_VFMS),
+        "vfms": frozenset(_GT_VFMS),
         "type": "int",
         "bits": (7, 0),
         "writable": False,
