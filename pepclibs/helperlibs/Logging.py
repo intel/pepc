@@ -13,16 +13,19 @@ Logging support.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import sys
+import types
 import typing
 import logging
 import traceback
 from pathlib import Path
+
 try:
-    # It is OK if 'colorama' is not available, we only lose message coloring.
+    colorama: types.ModuleType | None
     import colorama
-    _COLORAMA_AVAILABLE = True
 except ImportError:
-    _COLORAMA_AVAILABLE = False
+    # We can live without colorama, we only lose tab completions.
+    colorama = None
+
 from pepclibs.helperlibs.Exceptions import Error
 
 if typing.TYPE_CHECKING:
@@ -119,7 +122,7 @@ class _MyFormatter(logging.Formatter):
                 str: The "end color output" code as a string.
             """
 
-            if level in self._colors:
+            if colorama and level in self._colors:
                 return str(colorama.Style.RESET_ALL)
             return ""
 
@@ -247,6 +250,9 @@ class Logger(logging.Logger):
         Initialize the colorama colors for different log levels.
         """
 
+        if not colorama:
+            return
+
         self._colors[DEBUG] = colorama.Fore.GREEN
         self._colors[WARNING] = colorama.Fore.YELLOW + colorama.Style.BRIGHT
         self._colors[NOTICE] = colorama.Fore.CYAN + colorama.Style.BRIGHT
@@ -292,7 +298,7 @@ class Logger(logging.Logger):
 
         self.setLevel(level)
 
-        if not _COLORAMA_AVAILABLE:
+        if not colorama:
             colored = False
 
         if colored is None:
@@ -402,7 +408,7 @@ class Logger(logging.Logger):
         tback = lines[0:last_idx]
 
         if tback:
-            if _COLORAMA_AVAILABLE:
+            if colorama:
                 dim = colorama.Style.RESET_ALL + colorama.Style.DIM
                 undim = colorama.Style.RESET_ALL
             else:
