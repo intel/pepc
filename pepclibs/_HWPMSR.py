@@ -17,18 +17,18 @@ from pepclibs import CPUInfo
 from pepclibs.helperlibs import Logging, LocalProcessManager, ClassHelpers
 
 if typing.TYPE_CHECKING:
-    from typing import Generator, Literal, Sequence
+    from typing import Generator, Literal, Sequence, Final
     from pepclibs.msr import MSR, PMEnable, HWPCapabilities
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
     PerfLevelNameType = Literal["lowest", "efficient", "guaranteed", "highest"]
 
-_PERF_LEVEL_NAMES: set[PerfLevelNameType] = {
+_PERF_LEVEL_NAMES: Final[frozenset[PerfLevelNameType]] = frozenset({
     "lowest",
     "efficient",
     "guaranteed",
     "highest",
-}
+})
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
