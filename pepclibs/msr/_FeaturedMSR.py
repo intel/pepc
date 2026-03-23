@@ -28,7 +28,7 @@ from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs.msr import MSR
 
 if typing.TYPE_CHECKING:
-    from typing import TypedDict, Sequence, Literal, Union, Generator, Protocol, cast, Iterable
+    from typing import TypedDict, Sequence, Literal, Union, Generator, cast, Iterable
     from pepclibs import CPUInfo
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepclibs.CPUInfoTypes import ScopeNameType
@@ -65,23 +65,6 @@ if typing.TYPE_CHECKING:
         vfms: set[int]
         vals: _FeatureValsType
         bits: tuple[int, int]
-
-    class _ReadFeatureMethodType(Protocol):
-        """
-        The type for a feature get method.
-        """
-
-        def __call__(self, cpus: Iterable[int] | Literal["all"] = "all") -> \
-                                        Generator[tuple[int, FeatureValueType], None, None]:
-            ...
-
-    class _WriteFeatureMethodType(Protocol):
-        """
-        The type for a feature set method.
-        """
-
-        def __call__(self, val: FeatureValueType, cpus: Iterable[int] | Literal["all"] = "all"):
-            ...
 
     class PartialFeatureTypedDict(TypedDict, total=False):
         """
@@ -552,50 +535,30 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
         _LOG.debug("Reading features %s on CPUs %s",
                    ",".join(fnames), self._cpuinfo.cpus_to_str(cpus))
 
-        # Separate features into those with custom read methods and those read from MSR bits.
-        custom_fnames: list[tuple[str, _ReadFeatureMethodType]] = []
-        msr_fnames: list[str] = []
-
-        for fname in fnames:
-            read_method_name = f"_get_{fname}"
-            read_method: _ReadFeatureMethodType | None = getattr(self, read_method_name, None)
-            if read_method:
-                custom_fnames.append((fname, read_method))
-            else:
-                msr_fnames.append(fname)
-
-        # Read custom features for all CPUs in bulk operations.
-        custom_values: dict[str, dict[int, FeatureValueType]] = {}
-        for fname, read_method in custom_fnames:
-            custom_values[fname] = {}
-            for cpu, val in read_method(cpus=cpus):
-                custom_values[fname][cpu] = val
-
+        # Read all features from MSR in bulk.
+        min_iosname = self._get_smallest_iosname(fnames)
         msr_values: dict[int, int] = {}
-        if msr_fnames:
-            min_iosname = self._get_smallest_iosname(msr_fnames)
-            for cpu, regval in self._msr.read(self.regaddr, cpus, iosname=min_iosname):
-                msr_values[cpu] = regval
+        for cpu, regval in self._msr.read(self.regaddr, cpus, iosname=min_iosname):
+            msr_values[cpu] = regval
 
         # Build the resulting feature values dictionary.
         for cpu in cpus:
             vals: dict[str, FeatureValueType] = {}
 
-            for fname, info in custom_values.items():
-                vals[fname] = info[cpu]
-
-            for fname in msr_fnames:
+            for fname in fnames:
                 regval = msr_values[cpu]
                 bits = self._features[fname]["bits"]
-                val = self._msr.get_bits(regval, bits)
+                intval = self._msr.get_bits(regval, bits)
 
                 # Convert to user-friendly value if mapping exists.
+                val: FeatureValueType
                 if "rvals" in self._features[fname]:
-                    val = self._features[fname]["rvals"][val]
+                    val = self._features[fname]["rvals"][intval]
+                else:
+                    val = intval
                 vals[fname] = val
 
-            # Ensure the order of features in the output matches the order in 'fnames'.
-            yield cpu, {fname: vals[fname] for fname in fnames if fname in vals}
+            yield cpu, vals
 
     def read_feature(self,
                      fname: str,
@@ -615,27 +578,20 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
 
         self.validate_feature_supported(fname, cpus=cpus)
 
-        read_method_name = f"_get_{fname}"
-        read_method: _ReadFeatureMethodType | None = getattr(self, read_method_name, None)
-
         _LOG.debug("Reading feature '%s' (%s) on CPUs %s",
                    fname, self.msr_bits_str(fname), self._cpuinfo.cpus_to_str(cpus))
 
-        if read_method:
-            # pylint: disable-next=not-callable
-            for cpu, val in read_method(cpus=cpus):
-                yield cpu, val
-        else:
-            bits = self._features[fname]["bits"]
-            for cpu, val in self._msr.read_bits(self.regaddr, bits, cpus,
-                                                iosname=self._features[fname]["iosname"]):
-                if "rvals" in self._features[fname]:
-                    if typing.TYPE_CHECKING:
-                        _val = cast(int, val)
-                    else:
-                        _val = val
-                    val = self._features[fname]["rvals"][_val]
-                yield cpu, val
+        bits = self._features[fname]["bits"]
+        for cpu, intval in self._msr.read_bits(self.regaddr, bits, cpus,
+                                               iosname=self._features[fname]["iosname"]):
+            val: FeatureValueType = intval
+            if "rvals" in self._features[fname]:
+                if typing.TYPE_CHECKING:
+                    _val = cast(int, intval)
+                else:
+                    _val = intval
+                val = self._features[fname]["rvals"][_val]
+            yield cpu, val
 
     def read_feature_int(self,
                          fname: str,
@@ -764,13 +720,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
             raise Error(f"Feature '{fullname}' can not be modified{self._pman.hostmsg}, it is "
                         f"read-only")
 
-        set_method_name = f"_set_{fname}"
-        set_method: _WriteFeatureMethodType | None = getattr(self, set_method_name, None)
-        if set_method:
-            # pylint: disable-next=not-callable
-            set_method(val, cpus=cpus)
-        else:
-            self._msr.write_bits(self.regaddr, finfo["bits"], val, cpus, iosname=finfo["iosname"])
+        self._msr.write_bits(self.regaddr, finfo["bits"], val, cpus, iosname=finfo["iosname"])
 
 
     def write_cpu_feature(self, fname: str, val: FeatureValueType, cpu: int):
