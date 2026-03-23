@@ -53,14 +53,14 @@ if typing.TYPE_CHECKING:
 
         Attributes:
             title: A short description of the die.
-            agent_types: A set of agent types present on the die.
+            agent_types: A frozenset of agent types present on the die.
             addr: The TPMI PCI device address.
             instance: The TPMI instance number.
             cluster: The TPMI cluster number.
         """
 
         title: str
-        agent_types: set[AgentTypes]
+        agent_types: frozenset[AgentTypes]
         addr: str
         instance: int
         cluster: int
@@ -229,12 +229,12 @@ class DieInfo(ClassHelpers.SimpleCloseContext):
         return Trivial.split_csv_line_int(str_of_ranges, what=what)
 
     @staticmethod
-    def _format_die_title(agent_types: set[AgentTypes]) -> str:
+    def _format_die_title(agent_types: frozenset[AgentTypes]) -> str:
         """
         Format and return a die title based on its agent types.
 
         Args:
-            agent_types: A set of agent types present on the die.
+            agent_types: A frozenset of agent types present on the die.
 
         Returns:
             A formatted die title string.
@@ -422,11 +422,12 @@ class DieInfo(ClassHelpers.SimpleCloseContext):
         # dictionaries. Do not assign die IDs at this stage yet.
         for package, addr, instance, cluster in tpmi.iter_ufs_feature():
             ufs_status = tpmi.read_ufs_register(addr, instance, cluster, "UFS_STATUS")
-            agent_types = set()
+            agent_types_list = []
             for agent_type in AGENT_TYPES:
                 if tpmi.get_bitfield(ufs_status, "ufs", "UFS_STATUS",
                                      f"AGENT_TYPE_{agent_type.upper()}"):
-                    agent_types.add(agent_type)
+                    agent_types_list.append(agent_type)
+            agent_types = frozenset(agent_types_list)
 
             die_info: DieInfoTypedDict = {}
             die_info["title"] = self._format_die_title(agent_types)
@@ -508,7 +509,7 @@ class DieInfo(ClassHelpers.SimpleCloseContext):
             for die in dies:
                 die_info: DieInfoTypedDict = {
                     "title": "Compute",
-                    "agent_types": {"core"},
+                    "agent_types": frozenset({"core"}),
                     "addr": "",
                     "instance": -1,
                     "cluster": -1,
