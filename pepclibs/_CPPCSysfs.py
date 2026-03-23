@@ -19,18 +19,18 @@ from pepclibs.helperlibs import Logging, LocalProcessManager, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorBadFormat, ErrorNotSupported
 
 if typing.TYPE_CHECKING:
-    from typing import Generator, Literal, Sequence
+    from typing import Generator, Literal, Sequence, Final
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
     PerfLevelNameType = Literal["lowest", "lowest_nonlinear", "guaranteed", "nominal", "highest"]
 
-_PERF_LEVEL_NAMES: set[PerfLevelNameType] = {
+_PERF_LEVEL_NAMES: Final[frozenset[PerfLevelNameType]] = frozenset({
     "lowest",
     "lowest_nonlinear",
     "guaranteed",
     "nominal",
     "highest",
-}
+})
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
