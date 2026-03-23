@@ -78,6 +78,7 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
     4. Cache operations.
         - 'cache_add()' - add data to the cache.
         - 'cache_remove()' - remove data from the cache.
+        - 'cache_flush()' - flush the cache.
     5. Transactions support.
         - 'start_transaction()' - start a transaction.
         - 'flush_transaction()' - flush the transaction buffer.
@@ -166,6 +167,19 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
 
         if path in self._cache:
             del self._cache[path]
+
+    def cache_flush(self):
+        """
+        Flush the entire cache, removing all cached values.
+        """
+
+        if not self._enable_cache:
+            return
+
+        if self._in_transaction:
+            raise Error("Cannot flush cache while a transaction is in progress")
+
+        self._cache.clear()
 
     def _add_for_transaction(self,
                              path: Path,
@@ -448,10 +462,10 @@ for path, (val, verify, retries, sleep) in winfo.items():
 
         The input argument is the batch write information dictionary in the same format as the
         transaction buffer.
-        
+
         Args:
             batch_info: The batch write information dictionary.
-            
+
         Raises:
             ErrorVerifyFailed: If verification of any write operation fails.
         """
