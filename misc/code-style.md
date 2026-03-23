@@ -20,13 +20,39 @@ This document provides guidelines for project coding style and conventions.
 
 ### Alignment of Method Signatures
 
-If possible, try to use a single line. If it does not fit, break the signature into multiple
-lines and align the parameters vertically. Use one parameter per line in this case.
+If the entire signature fits on one line within the 100-character limit, keep it on one line.
+
+If the signature must be split, use one parameter per line. Do not put multiple parameters on the
+same line.
 
 **Alignment Rule**: Use the opening parenthesis `(` as the anchor point.
 
 - The first parameter starts immediately after the `(`
 - All subsequent parameters must align vertically at the same column position (column of `(` + 1)
+- Each parameter goes on its own line
+
+**Examples:**
+
+```python
+# Good: All parameters fit on one line
+def short_func(param1: int, param2: str) -> bool:
+
+# Good: Split with one parameter per line
+def long_function_name(self,
+                       param1: int,
+                       param2: str,
+                       param3: bool = False) -> dict:
+
+# Bad: Multiple parameters on one line when split
+def long_function_name(self, param1: int,
+                       param2: str, param3: bool = False) -> dict:
+
+# Bad: Incorrect alignment
+def long_function_name(self,
+                    param1: int,
+                    param2: str,
+                    param3: bool = False) -> dict:
+```
 
 **Algorithm:**
 
@@ -45,7 +71,7 @@ lines and align the parameters vertically. Use one parameter per line in this ca
                              cpus: Iterable[int] | Literal["all"] = "all") -> bool:
 ```
 
-The `(` is at column 28, so all parameters start at column 29.
+The `(` is at column 28, so all parameters start at column 29. Each parameter is on its own line.
 
 If the return type annotation is long, move it to the next line using a backslash `\` continuation.
 Align the return type at an 4-character boundary so it ends near the 100-character line limit.
@@ -59,10 +85,11 @@ Align the return type at an 4-character boundary so it ends near the 100-charact
                                     Generator[tuple[int, dict[str, FeatureValueType]], None, None]:
 ```
 
-The `(` is at column 29, so all parameters start at column 30.
+The `(` is at column 29, so all parameters start at column 30. One parameter per line.
 
-**Note:** Even if all parameters fit on a single line, if the return type annotation is long,
-it's better to break the signature into multiple lines and align the parameters vertically.
+Note: Even if all parameters fit on a single line, if the return type annotation is long,
+it's better to break the signature into multiple lines and align the parameters vertically, with
+one parameter per line.
 
 **Example 3:**
 
@@ -78,7 +105,7 @@ it's better to break the signature into multiple lines and align the parameters 
 When a function or method call does not fit on a single line, split it across multiple lines
 following the same alignment rules as method signatures.
 
-**Alignment Rule**: Use the opening parenthesis `(` as the anchor point.
+Use the opening parenthesis `(` as the anchor point:
 
 - Fit as many arguments as possible on the first line without exceeding 100 characters
 - When continuing on the next line, align arguments at the column of `(` + 1
@@ -108,24 +135,58 @@ The `(` is at column 47, so continuation arguments start at column 48.
 
 The `(` after `zip` is at column 58, so `siblings_iter` starts at column 59.
 
-### Using Keyword Arguments
+### Alignment of Log Messages
 
-If a method signature includes keyword arguments, use keyword arguments when calling the method, and
-maintain the same order as in the signature. For example:
+Log messages follow the same alignment rules as function calls.
+
+If the entire log message (including all arguments) fits on one line within the
+100-character limit, keep it on one line.
+
+Only split the message across multiple lines if it exceeds 100 characters. When splitting, prefer to
+move all arguments to continuation lines, properly aligned. However, if moving all arguments to the
+next line would require an additional line (compared to keeping some on the first line), it's
+acceptable to keep some arguments on the same line as the format string.
+
+**Example 1:**
 
 ```python
-    def read(self,
-             regaddr: int,
-             cpus: Iterable[int] | Literal["all"] = "all",
-             verify: bool = False) -> Generator[tuple[int, int], None, None]:
+    # Good: Fits on one line
+    _LOG.debug("Cached: Read: CPU%d: MSR 0x%x%s", cpu, regaddr, self._pman.hostmsg)
+
+    # Bad: Unnecessarily split when it fits on one line
+    _LOG.debug("Cached: Read: CPU%d: MSR 0x%x%s",
+               cpu, regaddr, self._pman.hostmsg)
 ```
 
-When calling this method, use keyword arguments in the same order:
+**Example 2:**
 
 ```python
-    for cpu, val in self.read(regaddr=0x4E70, cpus=cpus, verify=True):
-        ...
+    # Good: All arguments on the next line when the message is too long
+    _LOG.debug("Remote: Read: MSR 0x%x from CPUs %s%s, the command is: %s",
+               regaddr, cpus_range, self._pman.hostmsg, cmd)
+
+    # Bad: Some arguments on the same line as format string
+    _LOG.debug("Remote: Read: MSR 0x%x from CPUs %s%s, the command is: %s", regaddr, cpus_range,
+               self._pman.hostmsg, cmd)
 ```
+
+**Example 3:**
+
+```python
+    # Good: Keeps the same number of lines by having some arguments on the first line
+    _LOG.debug("Transaction %d: %s: %s: CPU%d: MSR 0x%x: 0x%x to '%s'%s, command: %s", index,
+               transaction_type, operation_type, cpu, addr, regval, path, self._pman.hostmsg, cmd)
+
+    # Bad: Adds an extra line without improving readability
+    _LOG.debug("Transaction %d: %s: %s: CPU%d: MSR 0x%x: 0x%x to '%s'%s, command: %s",
+               index, transaction_type, operation_type, cpu, addr, regval, path, self._pman.hostmsg,
+               cmd)
+```
+
+### Quotes
+
+Prefer using double quotes whenever possible. Use single quotes only when the string contains double
+quotes that would require escaping. Or when you have to.
 
 ### Blank Lines Between Methods
 
@@ -159,6 +220,28 @@ No need to document the 'Error' exception in docstrings, as it is a common base 
 exceptions in the project. However, document all other exceptions that a public method can raise. In
 case of private methods, it is not necessary to document exceptions in docstrings, but it is
 recommended to document them if it does not make docstrings too repetitive or if the case is tricky.
+
+### Small vs Capital Letters in Messages
+
+Every log message and exception message should start with a capital letter. One-line messages do
+not need to end with a period, but multi-line messages or messages with multiple sentences should
+use periods.
+
+When a message contains a colon, the text immediately following the colon should also start with a
+capital letter. This applies to all colons in the message, creating a consistent hierarchical
+structure.
+
+**Examples:**
+
+```python
+    # Good: Capital letters after each colon
+    _LOG.debug("Local: Read: CPU%d: MSR 0x%x: 0x%x", cpu, regaddr, val)
+    _LOG.debug("Transaction: Remote: Write: Executing command%s: %s", hostmsg, cmd)
+    raise Error(f"BUG: Invalid CPU number: {cpu}. Valid range is 0-{max_cpu}.")
+
+    # Bad: Lowercase after colons
+    _LOG.debug("Local: read: CPU%d: msr 0x%x: 0x%x", cpu, regaddr, val)
+```
 
 ## Conventions
 
@@ -216,3 +299,22 @@ When converting a string to an integer or float, prefer using `Trivial.str_to_in
 These methods provide better error handling and support for different number formats. Use the
 built-in methods only if it is already verified that the string is a valid number and does not
 require special handling.
+
+### Using Keyword Arguments
+
+If a method signature includes keyword arguments, use keyword arguments when calling the method, and
+maintain the same order as in the signature. For example:
+
+```python
+    def read(self,
+             regaddr: int,
+             cpus: Iterable[int] | Literal["all"] = "all",
+             verify: bool = False) -> Generator[tuple[int, int], None, None]:
+```
+
+When calling this method, use keyword arguments in the same order:
+
+```python
+    for cpu, val in self.read(regaddr=0x4E70, cpus=cpus, verify=True):
+        ...
+```
