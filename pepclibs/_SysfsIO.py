@@ -89,7 +89,8 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
           caching (cache is indexed by file path).
     """
 
-    def __init__(self, pman: ProcessManagerType | None = None, enable_cache: bool = True):
+    def __init__(self, pman: ProcessManagerType | None = None, enable_cache: bool = True,
+                 read_only: bool = False):
         """
         Initialize a class instance.
 
@@ -97,9 +98,12 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
             pman: The process manager object that defines the target host. Use a local process
                   manager if not provided.
             enable_cache: Enable caching if True, disable if False.
+            read_only: If True, any write operation will raise an error. Read-only mode is mutually
+                       exclusive with transactions.
         """
 
         self._enable_cache = enable_cache
+        self._read_only = read_only
         self._close_pman = pman is None
 
         self._pman: ProcessManagerType
@@ -237,6 +241,9 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
         operations by buffering writes and merging multiple writes to the same file into a single
         operation.
         """
+
+        if self._read_only:
+            raise Error("Cannot start a transaction in read-only mode")
 
         if not self._enable_cache:
             _LOG.debug("Transactions support requires caching to be enabled")
@@ -830,6 +837,9 @@ for path in paths:
             ErrorNotSupported: If the file does not exist.
         """
 
+        if self._read_only:
+            raise Error("Cannot write in read-only mode")
+
         self.cache_remove(path)
         if self._in_transaction:
             self._add_for_transaction(path, val, what)
@@ -878,6 +888,9 @@ for path in paths:
             ErrorNotSupported: If the file does not exist.
             ErrorVerifyFailed: If the value read from the file does not match the value written.
         """
+
+        if self._read_only:
+            raise Error("Cannot write in read-only mode")
 
         self.cache_remove(path)
 
@@ -1039,6 +1052,9 @@ for path in paths:
                   messages.
         """
 
+        if self._read_only:
+            raise Error("Cannot write in read-only mode")
+
         paths_list = list(paths)
 
         for path in paths_list:
@@ -1101,6 +1117,9 @@ for path in paths:
             retries: Number of times to retry verification if it fails.
             sleep: Number of seconds to sleep between verification retries.
         """
+
+        if self._read_only:
+            raise Error("Cannot write in read-only mode")
 
         paths_list = list(paths)
 
