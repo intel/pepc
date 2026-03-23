@@ -2,6 +2,19 @@
 
 This document provides guidelines for project coding style and conventions.
 
+## Table of Contents
+
+- [Code Style](#code-style)
+  - [Alignment of Method Signatures](#alignment-of-method-signatures)
+  - [Using Keyword Arguments](#using-keyword-arguments)
+  - [Blank Lines Between Methods](#blank-lines-between-methods)
+  - [Class Layout](#class-layout)
+  - [Documenting Exceptions in Docstrings](#documenting-exceptions-in-docstrings)
+- [Conventions](#conventions)
+  - [Prefer Tuple Over List](#prefer-tuple-over-list)
+  - [Avoid None as Default Value](#avoid-none-as-default-value)
+  - [Prefer Frozenset and Tuples for Immutable Sets/Sequences](#prefer-frozenset-and-tuples-for-immutable-setssequences)
+
 ## Code Style
 
 ### Alignment of Method Signatures
@@ -94,11 +107,28 @@ Use one blank line between method definitions within a class. Do not use multipl
         pass
 ```
 
+### Class Layout
+
+The `__init__()` method should be defined at the top of the class, immediately after the class
+docstring. The destructor and other special methods (e.g., `__enter__`, `__exit__`) should go after
+`__init__()`. Regular methods should be defined after the special methods.
+
+The general order of methods in a class should be that the inner methods are defined before the
+outer methods. For example, if a method A calls method B, then method B should be defined before
+method A.
+
+### Documenting Exceptions in Docstrings
+
+No need to document the 'Error' exception in docstrings, as it is a common base class for all
+exceptions in the project. However, document all other exceptions that a public method can raise. In
+case of private methods, it is not necessary to document exceptions in docstrings, but it is
+recommended to document them if it does not make docstrings too repetitive or if the case is tricky.
+
 ## Conventions
 
-### Prefer tuple over list
+### Prefer Tuple Over List
 
-One of the pattern is to pass a collection of items to a method. For example, passing one or two CPU
+One of the patterns is to pass a collection of items to a method. For example, passing one or two CPU
 numbers to a method. In such cases, prefer using a tuple instead of a list. For example:
 
 ```python
@@ -138,17 +168,7 @@ it is possible to use a special value of the same type as the parameter.
             cpus = self.get_all_cpus()
 ```
 
-### Prefer frozenset and tuples for Immutable sets/sequences
+### Prefer Frozenset and Tuples for Immutable Sets/Sequences
 
 When defining a collection of items that should not be modified after creation, prefer using
 `frozenset` instead of `set` and `tuple` instead of `list`.
-
-### Class Layout
-
-The `__init__()` method should be defined at the top of the class, immediately after the class
-docstring. The destructor and other special methods (e.g., `__enter__`, `__exit__`) should go after
-`__init__()`. Regular methods should be defined after the special methods.
-
-The general order of methods in a class should be that the inner methods are defined before the
-outer methods. For example, if a method A calls method B, then method B should be defined before
-method A.
