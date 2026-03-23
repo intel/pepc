@@ -20,7 +20,7 @@ if typing.TYPE_CHECKING:
     from pepclibs._PropsTypes import PropertyTypedDict
 
 # Special values for writable uncore frequency properties.
-_SPECIAL_UNCORE_FREQ_VALS = {"min", "max", "mdl"}
+_SPECIAL_UNCORE_FREQ_VALS: Final[frozenset[str]] = frozenset({"min", "max", "mdl"})
 
 # This properties dictionary defines the CPU properties supported by this module.
 #

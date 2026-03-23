@@ -68,7 +68,9 @@ if typing.TYPE_CHECKING:
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
-_SCOPE_NAMES_SET = {"CPU", "core", "module", "die", "node", "package", "global"}
+_SCOPE_NAMES_SET: Final[frozenset[str]] = frozenset({
+    "CPU", "core", "module", "die", "node", "package", "global"
+})
 
 MECHANISMS: Final[dict[MechanismNameType, MechanismTypedDict]] = {
     "sysfs" : {
