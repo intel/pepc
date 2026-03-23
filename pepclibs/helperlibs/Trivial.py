@@ -187,14 +187,14 @@ def str_to_int(snum: str | int, base: int = 0, what: str = "") -> int:
                         f"{errmsg}") from err
 
         if base != 0 and base < 2:
-            raise Error(f"BUG: Bad base value {base} when converting bad {what} '{snum}': must be "
+            raise Error(f"BUG: Bad base value {base} when converting bad {what} '{snum}': Must be "
                         f"greater than 2 or 0") from None
 
         if base:
             errmsg = f"a base {base} integer"
         else:
             errmsg = "an integer"
-        raise ErrorBadFormat(f"Bad {what} '{snum}': should be {errmsg}") from None
+        raise ErrorBadFormat(f"Bad {what} '{snum}': Should be {errmsg}") from None
 
     return num
 
@@ -219,7 +219,7 @@ def str_to_float(snum: str | float, what: str = "") -> float:
         if not what:
             what = "value"
         pfx = f"Bad {what} '{snum}'"
-        raise ErrorBadFormat(f"{pfx}: should be a floating point number") from None
+        raise ErrorBadFormat(f"{pfx}: Should be a floating point number") from None
 
 def str_to_num(snum: str | int, what: str = "") -> int | float:
     """
@@ -245,7 +245,7 @@ def str_to_num(snum: str | int, what: str = "") -> int | float:
             if not what:
                 what = "value"
             pfx = f"Bad {what} '{snum}'"
-            raise ErrorBadFormat(f"{pfx}: should be an integer or floating point number") from None
+            raise ErrorBadFormat(f"{pfx}: Should be an integer or floating point number") from None
 
 def is_int(value: str | int | float, base: int = 0) -> bool:
     """
@@ -306,8 +306,10 @@ def is_num(value: str | int | float) -> bool:
 
     return True
 
-def validate_value_in_range(value: int | float, minval: int | float,
-                            maxval: int | float, what: str = ""):
+def validate_value_in_range(value: int | float,
+                            minval: int | float,
+                            maxval: int | float,
+                            what: str = ""):
     """
     Validate that 'value' is in the ['minval', 'maxval'] range.
 
@@ -324,8 +326,11 @@ def validate_value_in_range(value: int | float, minval: int | float,
         raise Error(f"{what.capitalize()} '{value}' is out of range, should be within "
                     f"[{minval},{maxval}]")
 
-def validate_range(minval: int | float, maxval: int | float, min_limit: int | float | None = None,
-                   max_limit: int | float | None = None, what: str = ""):
+def validate_range(minval: int | float,
+                   maxval: int | float,
+                   min_limit: int | float | None = None,
+                   max_limit: int | float | None = None,
+                   what: str = ""):
     """
     Validate correctness of range ['minval', 'maxval'].
 
@@ -391,7 +396,9 @@ def list_dedup(elts: Iterable) -> list:
 
     return list(dict.fromkeys(elts))
 
-def split_csv_line(csv_line: str, sep: str = ",", dedup: bool = False,
+def split_csv_line(csv_line: str,
+                   sep: str = ",",
+                   dedup: bool = False,
                    keep_empty: bool = False) -> list[str]:
     """
     Split a comma-separated values line and return the list of values.
@@ -419,7 +426,10 @@ def split_csv_line(csv_line: str, sep: str = ",", dedup: bool = False,
         return list_dedup(result)
     return result
 
-def split_csv_line_int(csv_line: str, sep: str = ",", dedup: bool = False, base: int = 0,
+def split_csv_line_int(csv_line: str,
+                       sep: str = ",",
+                       dedup: bool = False,
+                       base: int = 0,
                        what: str = "") -> list[int]:
     """
     Split a comma-separated values line consisting of integers return the list of integer values.
@@ -454,20 +464,23 @@ def split_csv_line_int(csv_line: str, sep: str = ",", dedup: bool = False, base:
 
         range_vals = [range_val for range_val in val.split("-") if range_val]
         if len(range_vals) != 2:
-            raise ErrorBadFormat(f"Bad {what} '{csv_line}': error in '{val}': should be two "
+            raise ErrorBadFormat(f"Bad {what} '{csv_line}': Error in '{val}': Should be two "
                                  f"integers separated by '-'")
 
         rvals = [str_to_int(rval, base=base, what=what) for rval in range_vals]
         if rvals[0] > rvals[1]:
-            raise ErrorBadFormat(f"Bad {what} '{csv_line}': error in range '{val}': the first "
+            raise ErrorBadFormat(f"Bad {what} '{csv_line}': Error in range '{val}': The first "
                                  f"number should be smaller than the second")
 
         result += range(rvals[0], rvals[1] + 1)
 
     return result
 
-def parse_int_list(nums: str | int | Iterable[str | int], sep: str = ",",
-                   dedup: bool = False, base: int = 0, what: str = "") -> list[int]:
+def parse_int_list(nums: str | int | Iterable[str | int],
+                   sep: str = ",",
+                   dedup: bool = False,
+                   base: int = 0,
+                   what: str = "") -> list[int]:
     """
     Same as 'split_csv_line_int()', but also accepts non-strings on input.
 
@@ -510,12 +523,12 @@ def rangify(numbers: Iterable[int | str]) -> str:
     try:
         numbers_int = [int(number) for number in numbers]
     except (ValueError, TypeError) as err:
-        raise Error(f"failed to translate numbers to ranges, expected list of numbers, got "
+        raise Error(f"Failed to translate numbers to ranges, expected list of numbers, got "
                     f"'{numbers}'") from err
 
     range_strs = []
     numbers_int = sorted(numbers_int)
-    for _, pairs in groupby(enumerate(numbers_int), lambda x:x[0]-x[1]):
+    for _, pairs in groupby(enumerate(numbers_int), lambda x: x[0] - x[1]):
         # The 'pairs' is an iterable of tuples (enumerate value, number). E.g. 'numbers_int'
         # [5,6,7,8,10,11,13] would result in three iterable groups:
         # ((0, 5), (1, 6), (2, 7), (3, 8)) , ((4, 10), (5, 11)) and  (6, 13)
