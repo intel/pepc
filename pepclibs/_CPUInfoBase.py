@@ -24,7 +24,7 @@ from pepclibs.CPUInfoVars import SCOPE_NAMES
 
 if typing.TYPE_CHECKING:
     from typing import Iterable, Literal
-    from pepclibs import _DieInfo
+    from pepclibs import _DieInfo, _SysfsIO
     from pepclibs.ProcCpuinfo import ProcCpuinfoTypedDict, ProcCpuinfoPerCPUTypedDict
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepclibs.CPUInfoTypes import ScopeNameType, AbsNumsType, HybridCPUKeyType
@@ -70,6 +70,9 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
         self._dieinfo = dieinfo
         self._dieinfo_errmsg = ""
+
+        self._cpu_sysfs_base = Path("/sys/devices/system/cpu")
+        self._sysfs_io: _SysfsIO.SysfsIO | None = None
 
         # The topology dictionary.
         self._topology: dict[ScopeNameType, list[dict[ScopeNameType, int]]] = {}
@@ -126,8 +129,6 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
              "node":    ("node", "CPU"),
              "package": ("package", "CPU")}
 
-        self._cpu_sysfs_base = Path("/sys/devices/system/cpu")
-
         if pman:
             self._pman = pman
         else:
@@ -141,7 +142,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
 
         _LOG.debug("Closing the '%s' class object", self.__class__.__name__)
 
-        ClassHelpers.close(self, close_attrs=("_dieinfo", "_pman"))
+        ClassHelpers.close(self, close_attrs=("_sysfs_io", "_dieinfo", "_pman"))
 
     def _validate_sname(self, sname: ScopeNameType, name: str = "scope name") -> None:
         """
@@ -155,6 +156,24 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         if sname not in self._sname2idx:
             snames = ", ".join(SCOPE_NAMES)
             raise Error(f"Bad {name} name '{sname}', use: {snames}")
+
+    def _get_sysfs_io(self) -> _SysfsIO.SysfsIO:
+        """
+        Return an instance of '_SysfsIO.SysfsIO'.
+
+        Returns:
+            An instance of '_SysfsIO.SysfsIO'.
+        """
+
+        if not self._sysfs_io:
+            # pylint: disable-next=import-outside-toplevel
+            from pepclibs import _SysfsIO
+
+            # No writes are expected, and reads do not need caching because every file is read at
+            # most once.
+            self._sysfs_io = _SysfsIO.SysfsIO(self._pman, enable_cache=False, read_only=True)
+
+        return self._sysfs_io
 
     def get_proc_cpuinfo(self) -> ProcCpuinfoTypedDict:
         """
@@ -231,6 +250,64 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
                         cpu_tdict[cpu]["package"] = package
                         cpu_tdict[cpu]["core"] = core
 
+    def _add_modules_remote(self,
+                            cpu_tdict: dict[int, dict[ScopeNameType, int]],
+                            cpus: AbsNumsType):
+        """
+        Add module numbers for the specified CPUs to the CPU topology dictionary (remote hosts).
+
+        Args:
+            cpu_tdict: CPU topology dictionary to update with module information.
+            cpus: CPU numbers for which to add module numbers.
+
+        Notes:
+            - Module numbers are read from the sysfs files under
+              '/sys/devices/system/cpu/cpu<cpu>/cache/index2/'.
+            - This implementation uses bulk I/O for efficiency on remote hosts.
+        """
+
+        sysfs_io = self._get_sysfs_io()
+
+        # Filter CPUs that need module info.
+        cpus_to_read = [cpu for cpu in cpus if "module" not in cpu_tdict[cpu]]
+
+        if not cpus_to_read:
+            return
+
+        # Generate paths for module IDs and shared CPU lists.
+        id_paths = (self._cpu_sysfs_base / f"cpu{cpu}" / "cache/index2/id"
+                    for cpu in cpus_to_read)
+        shared_paths = (self._cpu_sysfs_base / f"cpu{cpu}" / "cache/index2/shared_cpu_list"
+                        for cpu in cpus_to_read)
+
+        # Read module IDs and shared CPU lists in bulk.
+        modules_iter = sysfs_io.read_paths_int(id_paths, what="module number",
+                                               val_if_not_found=None)
+        siblings_iter = sysfs_io.read_paths(shared_paths, what="shared CPU list")
+
+        for cpu, (path, module), (_, siblings_str) in zip(cpus_to_read, modules_iter,
+                                                          siblings_iter):
+            if module is None:
+                if cpu != cpus_to_read[0]:
+                    # Cache topology info was found for some CPUs but not this one.
+                    raise Error(f"CPU cache topology info is inconsistent{self._pman.hostmsg}: "
+                                f"found for some CPUs but not for CPU {cpu}")
+
+                # First CPU failure: cache topology info not available system-wide.
+                _LOG.debug("No CPU cache topology info found%s.", self._pman.hostmsg)
+
+                for cpu in cpus:
+                    cpu_tdict[cpu]["module"] = cpu_tdict[cpu]["core"]
+                return
+
+            what = f"contents of file at '{path}'{self._pman.hostmsg}"
+            siblings = Trivial.split_csv_line_int(siblings_str.strip(), what=what)
+
+            for sibling in siblings:
+                # Suppress 'KeyError' in case the 'shared_cpu_list' file included an offline CPU.
+                with contextlib.suppress(KeyError):
+                    cpu_tdict[sibling]["module"] = module
+
     def _add_modules(self, cpu_tdict: dict[int, dict[ScopeNameType, int]], cpus: AbsNumsType):
         """
         Add module numbers for the specified CPUs to the CPU topology dictionary.
@@ -245,6 +322,13 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         """
 
         _LOG.debug("Reading CPU module information from sysfs")
+
+        # For remote hosts, use bulk I/O for efficiency. For local hosts, use a loop-based
+        # approach instead. Reading the 'shared_cpu_list' file for one CPU reveals module
+        # information for multiple CPUs at once (all siblings in the module). This allows early
+        # termination, often reading significantly fewer files than the bulk I/O approach would.
+        if self._pman.is_remote:
+            return self._add_modules_remote(cpu_tdict, cpus)
 
         # Whether the L2 cache topology information is available in sysfs.
         cache_info_available = False
