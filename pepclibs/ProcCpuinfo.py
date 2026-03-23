@@ -50,7 +50,7 @@ if typing.TYPE_CHECKING:
             topology: A dictionary representing the CPU topology ({package: {core: [CPUs]}}).
         """
 
-        flags: dict[int, set[str]]
+        flags: dict[int, frozenset[str]]
         topology: dict[int, dict[int, list[int]]]
 
 def _parse_cpuinfo_block(block: str,
@@ -110,7 +110,7 @@ def _parse_cpuinfo_block(block: str,
     if core not in percpu_info["topology"][package]:
         percpu_info["topology"][package][core] = []
     percpu_info["topology"][package][core].append(cpu)
-    percpu_info["flags"][cpu] = flags
+    percpu_info["flags"][cpu] = frozenset(flags)
 
 def get_proc_cpuinfo(pman: ProcessManagerType | None = None) -> ProcCpuinfoTypedDict:
     """
