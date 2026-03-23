@@ -932,6 +932,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
 
         # Values for all the instances and offsets found in the 'mem_dump' file.
         vals: dict[int, dict[int, int]] = {}
+        instance = -1
 
         with self._pman.open(path, "r") as fobj:
             for line in fobj:
@@ -945,6 +946,10 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                     mdmap[instance] = {}
                     vals[instance] = {}
                 else:
+                    if instance == -1:
+                        raise Error(f"BUG: unexpected line in TPMI 'mem_dump' file '{path}' "
+                                    f"before any instance is defined:\n{line}")
+
                     # Matches two different line formats:
                     #   " 00000020: 013afd40 00004000 2244aacc deadbeef" and
                     #   "[00000020] 013afd40 00004000 2244aacc deadbeef".
