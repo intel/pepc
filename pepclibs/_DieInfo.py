@@ -534,6 +534,11 @@ class DieInfo(ClassHelpers.SimpleCloseContext):
 
         _LOG.debug("Discovering compute dies via sysfs")
 
+        # No bulk I/O optimization for remote hosts here. Each die includes many CPUs, and reading
+        # 'die_cpus_list' for one CPU reveals all CPUs on that die. The loop terminates early for
+        # CPUs that have already been discovered. For a system with N dies, at most N CPUs will
+        # actually read files (one per die). Typical systems have 2-8 dies, so bulk I/O would read
+        # all CPU topology files instead of just a few, which is counterproductive.
         cpu2die: dict[int, int] = {}
         compute_dies_sets: dict[int, set[int]] = {}
         compute_dies_cpus_sets: dict[int, dict[int, set[int]]] = {}
