@@ -47,7 +47,7 @@ class PropertyTypedDict(TypedDict, total=False):
         iosname: The I/O scope name of the property.
         mnames: A tuple of mechanism names supported by the property.
         writable: Whether the property is writable.
-        special_vals: A set of special values for the property.
+        special_vals: A frozenset of special values for the property.
         subprops: A tuple of sub-properties related to this property.
     """
 
@@ -57,7 +57,7 @@ class PropertyTypedDict(TypedDict, total=False):
     sname: ScopeNameType | None
     mnames: tuple[MechanismNameType, ...]
     writable: bool
-    special_vals: set[str]
+    special_vals: frozenset[str]
     subprops: tuple[str, ...]
 
 PropertyValueType = Union[int, float, bool, str, list[str], list[int]]
