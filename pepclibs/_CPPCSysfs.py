@@ -117,29 +117,40 @@ class CPPCSysfs(ClassHelpers.SimpleCloseContext):
 
         return self._sysfs_base / f"cpu{cpu}/acpi_cppc" / fname
 
-    def _read_cppc_sysfs_file(self, cpu: int, fname: str, what: str) -> int:
+    def _read_cppc_sysfs_file(self,
+                              cpus: Sequence[int],
+                              fname: str,
+                              what: str) -> Generator[tuple[int, int], None, None]:
         """
-        Read the specified ACPI CPPC sysfs file for a given CPU and gracefully handle errors. Cache
-        the value read from the sysfs file to avoid repeated reads.
+        Read the specified ACPI CPPC sysfs file for a sequence of CPUs and gracefully handle errors.
+        This method uses bulk I/O operations when reading from remote hosts. Cache the values read
+        from the sysfs files to avoid repeated reads.
 
         Args:
-            cpu: CPU number for which to read the sysfs file.
+            cpus: CPU numbers for which to read the sysfs file.
             fname: Name of the sysfs file under the 'acpi_cppc' sysfs sub-directory to read.
             what: Description of the value being read, used for logging and error messages.
 
-        Returns:
-            The value read from the sysfs file, after adding it to the cache.
+        Yields:
+            Tuple (cpu, value), where 'cpu' is the CPU number and 'value' is the value read from
+            the sysfs file.
 
         Raises:
             ErrorNotSupported: If the ACPI CPPC sysfs file does not exist.
         """
 
-        path = self._get_sysfs_path(cpu, fname)
-
-        val: int | None = None
+        # Build paths for all CPUs.
+        paths = [self._get_sysfs_path(cpu, fname) for cpu in cpus]
 
         try:
-            val = self._sysfs_io.read_int(path, what=what)
+            read_paths_iter = self._sysfs_io.read_paths_int(paths, what=what)
+            for cpu, (path, val) in zip(cpus, read_paths_iter):
+                if val == 0:
+                    _LOG.debug("ACPI CPPC sysfs file '%s' contains 0%s", path, self._pman.hostmsg)
+                    raise ErrorNotSupported(f"Read '0' for {what} from '{path}'")
+
+                self._sysfs_io.cache_add(path, str(val))
+                yield cpu, val
         except ErrorBadFormat:
             raise
         except ErrorNotSupported:
@@ -147,15 +158,8 @@ class CPPCSysfs(ClassHelpers.SimpleCloseContext):
         except Error as err:
             # On some platforms reading CPPC sysfs files always fails. So treat these errors as if
             # the sysfs file was not even available and raise 'ErrorNotSupported'.
-            _LOG.debug("ACPI CPPC sysfs file '%s' is not readable%s", path, self._pman.hostmsg)
+            _LOG.debug("ACPI CPPC sysfs files are not readable%s", self._pman.hostmsg)
             raise ErrorNotSupported(str(err)) from err
-
-        if val == 0:
-            _LOG.debug("ACPI CPPC sysfs file '%s' contains 0%s", path, self._pman.hostmsg)
-            raise ErrorNotSupported(f"Read '0' for {what} from '{path}'")
-
-        self._sysfs_io.cache_add(path, str(val))
-        return val
 
     def _get_perf_level(self,
                         plname: PerfLevelNameType,
@@ -177,17 +181,16 @@ class CPPCSysfs(ClassHelpers.SimpleCloseContext):
             raise Error(f"BUG: Unknown performance level name '{plname}'")
 
         fname = f"{plname}_perf"
+        what = f"{plname} performance"
 
-        for cpu in cpus:
-            val = self._read_cppc_sysfs_file(cpu, fname, f"{plname} CPU {cpu} performance")
-            yield cpu, val
+        yield from self._read_cppc_sysfs_file(cpus, fname, what)
 
     def get_lowest_perf(self, cpus: Sequence[int]) -> Generator[tuple[int, int], None, None]:
         """
         Retrieve and yield the lowest performance level value for specified CPUs.
 
         Args:
-            cpus: CPU numbers to get the lowest performance level for.
+            cpus: CPU numbers to get the lowest performance level value for.
 
         Yields:
             Tuple (cpu, value), where 'cpu' is the CPU number and 'value' is the lowest performance
@@ -205,7 +208,7 @@ class CPPCSysfs(ClassHelpers.SimpleCloseContext):
         Retrieve and yield the lowest_nonlinear performance level value for specified CPUs.
 
         Args:
-            cpus: CPU numbers to get the lowest_nonlinear performance level for.
+            cpus: CPU numbers to get the lowest_nonlinear performance level value for.
 
         Yields:
             Tuple (cpu, value), where 'cpu' is the CPU number and 'value' is the lowest nonlinear
@@ -222,7 +225,7 @@ class CPPCSysfs(ClassHelpers.SimpleCloseContext):
         Retrieve and yield the guaranteed performance level value for specified CPUs.
 
         Args:
-            cpus: CPU numbers to get the guaranteed performance level for.
+            cpus: CPU numbers to get the guaranteed performance level value for.
 
         Yields:
             Tuple (cpu, value), where 'cpu' is the CPU number and 'value' is the guaranteed
@@ -239,7 +242,7 @@ class CPPCSysfs(ClassHelpers.SimpleCloseContext):
         Retrieve and yield the nominal performance level value for specified CPUs.
 
         Args:
-            cpus: CPU numbers to get the nominal performance level for.
+            cpus: CPU numbers to get the nominal performance level value for.
 
         Yields:
             Tuple (cpu, value), where 'cpu' is the CPU number and 'value' is the nominal performance
@@ -256,7 +259,7 @@ class CPPCSysfs(ClassHelpers.SimpleCloseContext):
         Retrieve and yield the highest performance level value for specified CPUs.
 
         Args:
-            cpus: CPU numbers to get the highest performance level for.
+            cpus: CPU numbers to get the highest performance level value for.
 
         Yields:
             Tuple (cpu, value), where 'cpu' is the CPU number and 'value' is the highest performance
@@ -275,7 +278,7 @@ class CPPCSysfs(ClassHelpers.SimpleCloseContext):
         Retrieve and yield the frequency for specified CPUs and performance level name.
 
         Args:
-            cpus: CPU numbers to get the frequency for.
+            cpus: CPU numbers to get the frequency limit for.
             plname: Name of the performance level to retrieve (e.g., "nominal").
 
         Yields:
@@ -287,9 +290,9 @@ class CPPCSysfs(ClassHelpers.SimpleCloseContext):
             raise Error(f"BUG: Unknown performance level name '{plname}'")
 
         fname = f"{plname}_freq"
+        what = f"{plname} frequency"
 
-        for cpu in cpus:
-            val = self._read_cppc_sysfs_file(cpu, fname, f"{plname} CPU {cpu} frequency")
+        for cpu, val in self._read_cppc_sysfs_file(cpus, fname, what):
             yield cpu, val * 1000 * 1000
 
     def get_nominal_freq(self, cpus: Sequence[int]) -> Generator[tuple[int, int], None, None]:
