@@ -6,6 +6,7 @@ This document provides guidelines for project coding style and conventions.
 
 - [Code Style](#code-style)
   - [Alignment of Method Signatures](#alignment-of-method-signatures)
+  - [Alignment of Function Calls](#alignment-of-function-calls)
   - [Using Keyword Arguments](#using-keyword-arguments)
   - [Blank Lines Between Methods](#blank-lines-between-methods)
   - [Class Layout](#class-layout)
@@ -71,6 +72,41 @@ it's better to break the signature into multiple lines and align the parameters 
                                  cpus: Iterable[int] | Literal["all"] = "all") -> \
                                                         Generator[tuple[int, bool], None, None]:
 ```
+
+### Alignment of Function Calls
+
+When a function or method call does not fit on a single line, split it across multiple lines
+following the same alignment rules as method signatures.
+
+**Alignment Rule**: Use the opening parenthesis `(` as the anchor point.
+
+- Fit as many arguments as possible on the first line without exceeding 100 characters
+- When continuing on the next line, align arguments at the column of `(` + 1
+- All subsequent arguments must align vertically at the same column position
+
+**Algorithm:**
+
+1. Count indentation spaces
+2. Count characters up to and including the opening parenthesis `(`
+3. Argument indent = Indent spaces + Character count to opening parenthesis (inclusive)
+
+**Example 1:**
+
+```python
+        modules_iter = sysfs_io.read_paths_int(id_paths, what="module number",
+                                               val_if_not_found=None)
+```
+
+The `(` is at column 47, so continuation arguments start at column 48.
+
+**Example 2:**
+
+```python
+        for cpu, (path, module), (_, siblings_str) in zip(cpus_to_read, modules_iter,
+                                                          siblings_iter):
+```
+
+The `(` after `zip` is at column 58, so `siblings_iter` starts at column 59.
 
 ### Using Keyword Arguments
 
@@ -172,3 +208,11 @@ it is possible to use a special value of the same type as the parameter.
 
 When defining a collection of items that should not be modified after creation, prefer using
 `frozenset` instead of `set` and `tuple` instead of `list`.
+
+### Converting from str to int/float
+
+When converting a string to an integer or float, prefer using `Trivial.str_to_int()`,
+`Trivial.str_to_float()`, or `Trivial.str_to_num()` instead of the built-in `int()` or `float()`.
+These methods provide better error handling and support for different number formats. Use the
+built-in methods only if it is already verified that the string is a valid number and does not
+require special handling.
