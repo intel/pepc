@@ -765,6 +765,9 @@ for path in paths:
 
         Raises:
             ErrorNotSupported: If the file does not exist.
+
+        Notes:
+            - The order of yielded results matches the order of input paths.
         """
 
         if self._optimize_io:
@@ -809,6 +812,9 @@ for path in paths:
         Raises:
             ErrorNotSupported: If the file does not exist.
             ErrorBadFormat: If the file contents cannot be parsed as an integer.
+
+        Notes:
+            - The order of yielded results matches the order of input paths.
         """
 
         for path, val in self.read_paths(paths, what=what, val_if_not_found=val_if_not_found):
