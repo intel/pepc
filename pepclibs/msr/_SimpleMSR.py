@@ -189,6 +189,8 @@ class SimpleMSR(ClassHelpers.SimpleCloseContext):
 
         for cpu in cpus:
             path = f"/dev/cpu/{cpu}/msr"
+            _LOG.debug("Local: Read: CPU%d: MSR 0x%x from '%s'%s",
+                       cpu, regaddr, path, self._pman.hostmsg)
             fd = os.open(path, os.O_RDONLY)
             try:
                 regval_bytes = os.pread(fd, self.regbytes, regaddr)
@@ -198,7 +200,6 @@ class SimpleMSR(ClassHelpers.SimpleCloseContext):
             finally:
                 os.close(fd)
             regval = int.from_bytes(regval_bytes, byteorder=_CPU_BYTEORDER)
-            _LOG.debug("CPU%d: MSR 0x%x: Read 0x%x%s", cpu, regaddr, regval, self._pman.hostmsg)
             yield cpu, regval
 
     def _cpus_read_remote(self,
@@ -220,7 +221,14 @@ class SimpleMSR(ClassHelpers.SimpleCloseContext):
         """
 
         python_path = self._pman.get_python_path()
-        cpus_str = ",".join([str(cpu) for cpu in cpus])
+        cpus_list = list(cpus)
+        cpus_str = ",".join([str(cpu) for cpu in cpus_list])
+
+        if _LOG.getEffectiveLevel() == Logging.DEBUG:
+            cpus_range = Trivial.rangify(cpus_list)
+            _LOG.debug("Remote: Read: MSR 0x%x from CPUs %s%s",
+                       regaddr, cpus_range, self._pman.hostmsg)
+
         cmd = f"""{python_path} -c '
 import os
 cpus = [{cpus_str}]
@@ -249,8 +257,6 @@ for cpu in cpus:
 
             cpu = Trivial.str_to_int(split[0], what="CPU number")
             regval = Trivial.str_to_int(split[1], what=f"MSR {regaddr:#x} value on CPU {cpu}")
-
-            _LOG.debug("CPU%d: MSR 0x%x: Read 0x%x%s", cpu, regaddr, regval, self._pman.hostmsg)
             yield cpu, regval
 
     def _cpus_read_pman(self,
@@ -270,6 +276,8 @@ for cpu in cpus:
 
         for cpu in cpus:
             path = Path(f"/dev/cpu/{cpu}/msr")
+            _LOG.debug("Emulation: Read: CPU%d: MSR 0x%x from '%s'%s",
+                       cpu, regaddr, path, self._pman.hostmsg)
             try:
                 with self._pman.open(path, "rb") as fobj:
                     fobj.seek(regaddr)
@@ -278,7 +286,6 @@ for cpu in cpus:
                 raise type(err)(f"Failed to read MSR '{regaddr:#x}' from file '{path}'"
                                 f"{self._pman.hostmsg}:\n{err.indent(2)}") from err
             regval = int.from_bytes(regval_bytes, byteorder=_CPU_BYTEORDER)
-            _LOG.debug("CPU%d: MSR 0x%x: Read 0x%x%s", cpu, regaddr, regval, self._pman.hostmsg)
             yield cpu, regval
 
     def cpus_read(self,
@@ -367,6 +374,8 @@ for cpu in cpus:
 
         for cpu in cpus:
             path = f"/dev/cpu/{cpu}/msr"
+            _LOG.debug("Local: Write: CPU%d: MSR 0x%x: 0x%x to '%s'%s",
+                       cpu, regaddr, regval, path, self._pman.hostmsg)
             fd = os.open(path, os.O_RDWR)
             try:
                 os.pwrite(fd, regval_bytes, regaddr)
@@ -375,7 +384,6 @@ for cpu in cpus:
                             f"{cpu}{self._pman.hostmsg} (file '{path}'): {err}") from err
             finally:
                 os.close(fd)
-            _LOG.debug("CPU%d: MSR 0x%x: Wrote 0x%x", cpu, regaddr, regval)
 
     def _cpus_write_remote(self,
                            regaddr: int,
@@ -394,7 +402,8 @@ for cpu in cpus:
         """
 
         python_path = self._pman.get_python_path()
-        cpus_str = ",".join([str(cpu) for cpu in cpus])
+        cpus_list = list(cpus)
+        cpus_str = ",".join([str(cpu) for cpu in cpus_list])
 
         cmd = f"""{python_path} -c '
 import os
@@ -409,6 +418,9 @@ for cpu in cpus:
     finally:
         os.close(fd)
 '"""
+
+        _LOG.debug("Remote: Write: MSR 0x%x: 0x%x%s",
+                   regaddr, regval, self._pman.hostmsg)
 
         try:
             self._pman.run_verify(cmd)
@@ -431,12 +443,13 @@ for cpu in cpus:
 
         for cpu in cpus:
             path = Path(f"/dev/cpu/{cpu}/msr")
+            _LOG.debug("Emulation: Write: CPU%d: MSR 0x%x: 0x%x to '%s'%s",
+                       cpu, regaddr, regval, path, self._pman.hostmsg)
             with self._pman.open(path, "r+b") as fobj:
                 try:
                     fobj.seek(regaddr)
                     fobj.write(regval_bytes)
                     fobj.flush()
-                    _LOG.debug("CPU%d: MSR 0x%x: Wrote 0x%x", cpu, regaddr, regval)
                 except Error as err:
                     raise type(err)(f"Failed to write '{regval:#x}' to MSR '{regaddr:#x}' of CPU "
                                     f"{cpu}{self._pman.hostmsg} (file '{path}'):\n"

@@ -268,10 +268,8 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
             ErrorNotSupported: If the file is not found.
         """
 
-        if _LOG.getEffectiveLevel() == Logging.DEBUG:
-            what = "" if not what else f" {what}"
-            _LOG.debug("Writing value '%s' to%s sysfs file '%s'%s",
-                       val, what, path, self._pman.hostmsg)
+        _LOG.debug("Writing value '%s' to%s sysfs file '%s'%s",
+                   val, "" if not what else f" {what}", path, self._pman.hostmsg)
 
         try:
             with self._pman.open(path, "r+") as fobj:
@@ -354,6 +352,9 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
         """
 
         python_path = self._pman.get_python_path()
+
+        _LOG.debug("Remote: Write: %d sysfs files with verification%s",
+                   len(batch_info), self._pman.hostmsg)
 
         cmd = f"""{python_path} -c '
 import time
@@ -571,7 +572,17 @@ for path, (val, verify, retries, sleep) in winfo.items():
         """
 
         if path in self._cache:
+            _LOG.debug("Cached: Read: Sysfs file '%s'%s", path, self._pman.hostmsg)
             return self._cache[path]
+
+        if _LOG.getEffectiveLevel() == Logging.DEBUG:
+            if isinstance(self._pman, LocalProcessManager.LocalProcessManager):
+                msg_prefix = "Local"
+            elif isinstance(self._pman, EmulProcessManager.EmulProcessManager):
+                msg_prefix = "Emulation"
+            else:
+                msg_prefix = "Remote"
+            _LOG.debug("%s: Read: Sysfs file '%s'%s", msg_prefix, path, self._pman.hostmsg)
 
         try:
             with self._pman.open(path, "r") as fobj:
@@ -633,6 +644,11 @@ for path, (val, verify, retries, sleep) in winfo.items():
         read_paths = [path for path in paths if path not in self._cache]
 
         if read_paths:
+            if _LOG.getEffectiveLevel() == Logging.DEBUG:
+                paths_range = Trivial.rangify([i for i in range(len(read_paths))])
+                _LOG.debug("Remote: Read: %d sysfs files (indices %s)%s",
+                           len(read_paths), paths_range, self._pman.hostmsg)
+
             paths_str = ",\n".join(f"\"{str(path)}\"" for path in read_paths)
 
             cmd = f"""{python_path} -c '
@@ -955,6 +971,9 @@ for path in paths:
         """
 
         python_path = self._pman.get_python_path()
+
+        _LOG.debug("Remote: Write: Value '%s' to %d sysfs files%s",
+                   val, len(paths), self._pman.hostmsg)
 
         paths_str = ",\n".join(f"\"{str(path)}\"" for path in paths)
         cmd = f"""{python_path} -c '

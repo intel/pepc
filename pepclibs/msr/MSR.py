@@ -19,7 +19,7 @@ import typing
 import pprint
 from pathlib import Path
 from pepclibs import _PerCPUCache
-from pepclibs.helperlibs import EmulProcessManager, Logging
+from pepclibs.helperlibs import EmulProcessManager, Logging, Trivial
 from pepclibs.helperlibs import ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorVerifyFailed
 from pepclibs.msr import _SimpleMSR
@@ -231,14 +231,14 @@ class MSR(_SimpleMSR.SimpleMSR):
             try:
                 for regaddr, regval_info in cpus_info.items():
                     regval = regval_info["regval"]
+                    _LOG.debug("Transaction: Local: Write: CPU%d: MSR 0x%x: 0x%x to '%s'%s",
+                               cpu, regaddr, regval, path, self._pman.hostmsg)
                     try:
                         regval_bytes = regval.to_bytes(self.regbytes, byteorder=_CPU_BYTEORDER)
                         os.pwrite(fd, regval_bytes, regaddr)
                     except OSError as err:
                         raise Error(f"Failed to write '{regval:#x}' to MSR '{regaddr:#x}' of CPU "
                                     f"{cpu}{self._pman.hostmsg} (file '{path}'): {err}") from err
-                    _LOG.debug("CPU%d: Commit MSR 0x%x: Wrote 0x%x%s",
-                               cpu, regaddr, regval, self._pman.hostmsg)
             finally:
                 os.close(fd)
 
@@ -249,6 +249,13 @@ class MSR(_SimpleMSR.SimpleMSR):
         Generate a small Python script that performs the MSR writes and executes it on the remote
         host.
         """
+
+        if _LOG.getEffectiveLevel() == Logging.DEBUG:
+            for cpu, cpus_info in self._transaction_buffer.items():
+                for regaddr, regval_info in cpus_info.items():
+                    regval = regval_info["regval"]
+                    _LOG.debug("Transaction: Remote: Write: CPU%d: MSR 0x%x: 0x%x%s",
+                               cpu, regaddr, regval, self._pman.hostmsg)
 
         python_path = self._pman.get_python_path()
 
@@ -274,6 +281,8 @@ for cpu, cpus_info in transaction_buffer.items():
         os.close(fd)
 '"""
 
+        _LOG.debug("Transaction: Remote: Write: Executing command%s", self._pman.hostmsg)
+
         self._pman.run_verify(cmd)
 
     def _transaction_write_emulation(self):
@@ -284,6 +293,8 @@ for cpu, cpus_info in transaction_buffer.items():
             with self._pman.open(path, "r+b") as fobj:
                 for regaddr, regval_info in cpus_info.items():
                     regval = regval_info["regval"]
+                    _LOG.debug("Transaction: Emulation: Write: CPU%d: MSR 0x%x: 0x%x to '%s'%s",
+                               cpu, regaddr, regval, path, self._pman.hostmsg)
                     try:
                         fobj.seek(regaddr)
                         regval_bytes = regval.to_bytes(self.regbytes, byteorder=_CPU_BYTEORDER)
@@ -293,8 +304,6 @@ for cpu, cpus_info in transaction_buffer.items():
                         raise Error(f"Failed to write '{regval:#x}' to MSR '{regaddr:#x}' of CPU "
                                     f"{cpu}{self._pman.hostmsg} (file '{path}'):\n"
                                     f"{err.indent(2)}") from err
-                    _LOG.debug("CPU%d: Commit MSR 0x%x: Wrote 0x%x%s",
-                               cpu, regaddr, regval, self._pman.hostmsg)
 
     def flush_transaction(self) -> bool:
         """
@@ -421,7 +430,9 @@ for cpu, cpus_info in transaction_buffer.items():
 
         if not do_read:
             for cpu in cpus:
-                yield cpu, self._cache.get(regaddr, cpu)
+                _LOG.debug("Cached: Read: CPU%d: MSR 0x%x%s", cpu, regaddr, self._pman.hostmsg)
+                regval = self._cache.get(regaddr, cpu)
+                yield cpu, regval
             return
 
         for cpu, regval in super()._cpus_read_remote(regaddr, do_read):
@@ -429,6 +440,11 @@ for cpu, cpus_info in transaction_buffer.items():
 
         for cpu in cpus:
             regval = self._cache.get(regaddr, cpu)
+            if cpu in do_read:
+                # Already logged by parent class
+                pass
+            else:
+                _LOG.debug("Cached: Read: CPU%d: MSR 0x%x%s", cpu, regaddr, self._pman.hostmsg)
             yield cpu, regval
 
     def read(self,
@@ -456,6 +472,7 @@ for cpu, cpus_info in transaction_buffer.items():
 
         for cpu in cpus:
             if self._cache.is_cached(regaddr, cpu):
+                _LOG.debug("Cached: Read: CPU%d: MSR 0x%x%s", cpu, regaddr, self._pman.hostmsg)
                 regval = self._cache.get(regaddr, cpu)
             else:
                 regval = super().cpu_read(regaddr, cpu)
@@ -505,8 +522,9 @@ for cpu, cpus_info in transaction_buffer.items():
 
         for cpu, regval in self.read(regaddr, cpus, iosname=iosname):
             val = self.get_bits(regval, bits)
-            _LOG.debug("CPU%d: MSR 0x%x: Bits %s: Read 0x%x%s", cpu, regaddr,
-                       ":".join([str(bit) for bit in bits]), val, self._pman.hostmsg)
+            _LOG.debug("CPU%d: MSR 0x%x: Bits %s: Read 0x%x%s",
+                       cpu, regaddr, ":".join([str(bit) for bit in bits]), val,
+                       self._pman.hostmsg)
             yield cpu, val
 
     def read_cpu_bits(self,
@@ -597,6 +615,11 @@ for cpu, cpus_info in transaction_buffer.items():
         for cpu in do_write:
             self._cache.add(regaddr, cpu, regval, sname=iosname)
 
+        for cpu in cpus:
+            if cpu in dont_write:
+                _LOG.debug("Cached: Write skipped: CPU%d: MSR 0x%x: 0x%x (value matches)%s",
+                           cpu, regaddr, regval, self._pman.hostmsg)
+
         # In case of an ongoing transaction, skip the verification, it'll be done at the end of the
         # transaction.
         if verify and not self._in_transaction:
@@ -644,6 +667,8 @@ for cpu, cpus_info in transaction_buffer.items():
                 super().cpu_write(regaddr, regval, cpu)
             else:
                 self._add_for_transaction(regaddr, regval, cpu, verify, iosname)
+                _LOG.debug("Transaction: Buffered: CPU%d: MSR 0x%x: 0x%x%s",
+                           cpu, regaddr, regval, self._pman.hostmsg)
 
             # The '_cache.add()' call below is scope-aware: it caches 'regval' not only for CPU
             # 'cpu', but also for all its 'iosname' siblings. For example, if 'iosname' is
@@ -710,8 +735,9 @@ for cpu, cpus_info in transaction_buffer.items():
         for cpu, regval in self.read(regaddr, cpus, iosname=iosname):
             new_regval = self.set_bits(regval, bits, val)
             _LOG.debug("CPU %d: MSR 0x%x: Set bits %s to 0x%x: Current MSR value: 0x%x%s, "
-                       "new value: 0x%x", cpu, regaddr, ":".join([str(bit) for bit in bits]),
-                       val, regval, self._pman.hostmsg, new_regval)
+                       "new value: 0x%x",
+                       cpu, regaddr, ":".join([str(bit) for bit in bits]), val, regval,
+                       self._pman.hostmsg, new_regval)
             if regval == new_regval:
                 _LOG.debug("CPU %d: MSR 0x%x: No change, skipping writing", cpu, regaddr)
                 continue
