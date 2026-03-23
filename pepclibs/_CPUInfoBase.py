@@ -890,6 +890,10 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
             - They are identified by the fact that they do not have the L3 cache.
         """
 
+        # No bulk I/O optimization for remote hosts here. Hybrid platforms are currently only
+        # client systems with low CPU counts (big servers are not hybrid). The L3 cache hierarchy
+        # typically has only one or a few levels, so the loop terminates after one or a few
+        # iterations. Bulk I/O would read all files instead of benefiting from early termination.
         cpus = self._get_online_cpus_set()
 
         has_l3: set[int] = set()
@@ -933,7 +937,6 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         """
 
         if not self._cpudescr:
-            # Some pre-release Intel CPUs are labeled as "GENUINE INTEL", hence 'lower()' is used.
             proc_cpuinfo = self.get_proc_cpuinfo()
             vendor, _, _ = CPUModels.split_vfm(proc_cpuinfo["vfm"])
             if vendor == CPUModels.VENDOR_INTEL:
