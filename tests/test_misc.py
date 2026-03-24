@@ -18,7 +18,7 @@ import typing
 import random
 import pytest
 from tests import common
-from pepclibs import CPUInfo, PStates, CStates, _PropsCache
+from pepclibs import CPUInfo, PStates, CStates, _PerCPUCache
 
 if typing.TYPE_CHECKING:
     from typing import Generator, cast
@@ -87,36 +87,37 @@ def test_unknown_cpu_model(params: _TestParamsTypedDict):
                     pobj.get_cpu_prop(pname, 0)
                     break
 
-def test_propscache_scope(params: _TestParamsTypedDict):
+def test_percpucache_scope(params: _TestParamsTypedDict):
     """
-    Test that the 'PropsCache' class correctly caches values according to CPU scope.
+    Test that the 'PerCPUCache' class correctly caches values according to CPU scope.
 
     Args:
         params: The test parameters.
     """
 
     siblings = {}
-    pman = params["pman"]
     cpuinfo = params["cpuinfo"]
 
     mname = "sysfs"
     test_cpu = random.choice(cpuinfo.get_cpus())
-    pcache = _PropsCache.PropsCache(cpuinfo=cpuinfo, pman=pman)
+    pcache = _PerCPUCache.PerCPUCache(cpuinfo=cpuinfo)
 
     for sname in CPUInfo.SCOPE_NAMES:
         # Value of 'val' and 'pname' do not matter, as long as they are unique.
         val = object()
         pname = object()
+        # Use (pname, mname) tuple as the cache key.
+        key = (pname, mname)
 
-        pcache.add(pname, test_cpu, val, mname, sname=sname)
+        pcache.add(key, test_cpu, val, sname=sname)
 
         if sname not in siblings:
             siblings[sname] = params["cpuinfo"].get_cpu_siblings(test_cpu, sname=sname)
         cpus = siblings[sname]
 
         for cpu in cpuinfo.get_cpus():
-            res = pcache.is_cached(pname, cpu, mname)
+            res = pcache.is_cached(key, cpu)
             if cpu in cpus:
-                assert pcache.get(pname, cpu, mname) == val
+                assert pcache.get(key, cpu) == val
             else:
                 assert res is False
