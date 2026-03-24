@@ -19,7 +19,7 @@ import typing
 import pprint
 from pathlib import Path
 from pepclibs import _PerCPUCache
-from pepclibs.helperlibs import EmulProcessManager, Logging, Trivial
+from pepclibs.helperlibs import EmulProcessManager, Logging
 from pepclibs.helperlibs import ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorVerifyFailed
 from pepclibs.msr import _SimpleMSR
