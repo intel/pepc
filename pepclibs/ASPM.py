@@ -6,41 +6,82 @@
 #
 # Author: Antti Laakso <antti.laakso@intel.com>
 
-"""This module provides an API to control PCI Active State Power Management (ASPM)."""
+"""Provide an API to control PCI Active State Power Management (ASPM)."""
 
+from __future__ import annotations # Remove when switching to Python 3.10+.
+
+import typing
 from pathlib import Path
 from pepclibs.helperlibs import Logging, LocalProcessManager, Trivial, ClassHelpers, KernelVersion
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorPermissionDenied
 from pepclibs.helperlibs.Exceptions import ErrorNotSupported
 
+if typing.TYPE_CHECKING:
+    from typing import Generator
+    from pepclibs.helperlibs.ProcessManager import ProcessManagerType
+
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
 class ASPM(ClassHelpers.SimpleCloseContext):
-    """This class provides an API to control PCI ASPM."""
+    """Provide an API to control PCI ASPM."""
 
-    def _get_policies(self, strip=True):
+    def __init__(self, pman: ProcessManagerType | None = None):
         """
-        Return list of available ASPM profiles on system. If strip is False, square brackets are
-        not removed from currently active policy.
+        Initialize an instance to control PCI ASPM.
+
+        Args:
+            pman: The process manager object that defines the target host.
+        """
+
+        self._pman: ProcessManagerType
+        if not pman:
+            self._pman = LocalProcessManager.LocalProcessManager()
+        else:
+            self._pman = pman
+
+        self._close_pman = pman is None
+        self._policy_path = Path("/sys/module/pcie_aspm/parameters/policy")
+        self._sysfs_base = Path("/sys/bus/pci/devices")
+
+        self._kver: str = ""
+
+    def close(self):
+        """Uninitialize the class object."""
+        ClassHelpers.close(self, close_attrs=("_pman",))
+
+    def _get_policies(self, strip: bool = True) -> list[str]:
+        """
+        Return a list of available ASPM policies on the system.
+
+        Args:
+            strip: If 'True', remove square brackets from the currently active policy name.
+
+        Returns:
+            List of available ASPM policy names.
         """
 
         try:
             with self._pman.open(self._policy_path, "r") as fobj:
-                policies = fobj.read().strip()
+                policies_str = fobj.read().strip()
         except Error as err:
-            raise Error(f"failed to read ASPM policy from file '{self._policy_path}'"
+            raise Error(f"Failed to read ASPM policy from file '{self._policy_path}'"
                         f"{self._pman.hostmsg}:\n{err.indent(2)}") from err
 
-        policies = Trivial.split_csv_line(policies, sep=" ")
+        policies = Trivial.split_csv_line(policies_str, sep=" ")
         if strip:
             policies = [policy.strip("[]") for policy in policies]
 
         return policies
 
-    def set_policy(self, policy):
+    def set_policy(self, policy: str):
         """
-        Set global ASPM policy. The arguments are as follows.
-          * policy - ASPM policy name to set.
+        Set the global ASPM policy.
+
+        Args:
+            policy: ASPM policy name to set.
+
+        Raises:
+            ErrorPermissionDenied: Failed to set the policy due to insufficient permissions.
         """
 
         policies = self._get_policies()
@@ -50,7 +91,7 @@ class ASPM(ClassHelpers.SimpleCloseContext):
             raise Error(f"ASPM policy '{policy}' not available{self._pman.hostmsg}.\n"
                         f"  Use one of the following: {policies_str}")
 
-        errmsg = f"failed to set ASPM policy to '{policy}'{self._pman.hostmsg}:"
+        errmsg = f"Failed to set ASPM policy to '{policy}'{self._pman.hostmsg}:"
         try:
             with self._pman.open(self._policy_path, "r+") as fobj:
                 fobj.write(policy)
@@ -60,8 +101,13 @@ class ASPM(ClassHelpers.SimpleCloseContext):
         except Error as err:
             raise Error(f"{errmsg}\n{err.indent(2)}") from err
 
-    def get_policy(self):
-        """Return current global ASPM policy."""
+    def get_policy(self) -> str:
+        """
+        Return the current global ASPM policy.
+
+        Returns:
+            The current global ASPM policy name.
+        """
 
         policies = self._get_policies(strip=False)
         active = [policy for policy in policies if policy.startswith("[") and policy.endswith("]")]
@@ -72,20 +118,32 @@ class ASPM(ClassHelpers.SimpleCloseContext):
 
         return active[0].strip("[]")
 
-    def get_policies(self):
-        """Yield the available global ASPM policy names."""
+    def get_policies(self) -> Generator[str, None, None]:
+        """
+        Yield the available global ASPM policy names.
+
+        Yields:
+            Available ASPM policy names.
+        """
 
         for policy in self._get_policies():
             yield policy
 
-    def _l1_file_not_found(self, addr, err):
+    def _l1_file_not_found(self, addr: str, err: Error):
         """
         Raise an exception with a helpful error message when the per-device L1 ASPM sysfs file does
         not exist.
+
+        Args:
+            addr: The PCI device address in the extended BDF notation.
+            err: The exception that was raised when the file was not found.
+
+        Raises:
+            ErrorNotSupported: The device does not support L1 ASPM or the kernel is too old.
         """
 
         path = self._sysfs_base / addr
-        msg = f"the '{addr}' PCI device was not found{self._pman.hostmsg}:\n{err.indent(2)}"
+        msg = f"The '{addr}' PCI device was not found{self._pman.hostmsg}:\n{err.indent(2)}"
         if not self._pman.exists(path):
             raise Error(msg)
 
@@ -94,13 +152,13 @@ class ASPM(ClassHelpers.SimpleCloseContext):
             try:
                 self._kver = KernelVersion.get_kver(pman=self._pman)
             except Error as err1:
-                _LOG.warn_once("failed to detect kernel version%s:\n%s",
+                _LOG.warn_once("Failed to detect kernel version%s:\n%s",
                                self._pman.hostmsg, err1.indent(2))
 
         if self._kver:
             if KernelVersion.kver_lt(self._kver, "5.5"):
                 raise ErrorNotSupported(f"{msg}\nKernel version{self._pman.hostmsg} is "
-                                        f"{self._kver} and it is not new enough - PCI L1 ASPM "
+                                        f"{self._kver} and it is not new enough: PCI L1 ASPM "
                                         f"support was added in kernel version 5.5.")
 
         raise ErrorNotSupported(f"{msg}.\nPossible reasons:\n"
@@ -112,14 +170,19 @@ class ASPM(ClassHelpers.SimpleCloseContext):
                                 f"  4. The 'CONFIG_PCIEASPM' kernel configuration option is "
                                 f"disabled.")
 
-    def is_l1_enabled(self, addr):
+    def is_l1_enabled(self, addr: str) -> bool:
         """
-        Return 'True' if L1 ASPM is enabled for a PCI device 'addr' and 'False' otherwise. The
-        arguments are as follows.
-          * addr - the PCI device address in the extended BDF notation
-                   ([<domain>:<bus>:<slot>.<func> format]).
+        Return 'True' if L1 ASPM is enabled for a PCI device and 'False' otherwise.
 
-        Raise 'ErrorNotSupported' if the device does not support L1 ASPM.
+        Args:
+            addr: The PCI device address in the extended BDF notation
+                  ([<domain>:<bus>:<slot>.<func>] format).
+
+        Returns:
+            'True' if L1 ASPM is enabled for the device, 'False' otherwise.
+
+        Raises:
+            ErrorNotSupported: The device does not support L1 ASPM.
         """
 
         path = self._sysfs_base / addr / Path("link/l1_aspm")
@@ -130,19 +193,22 @@ class ASPM(ClassHelpers.SimpleCloseContext):
         except ErrorNotFound as err:
             return self._l1_file_not_found(addr, err)
         except Error as err:
-            raise Error(f"sysfs file read operation failed{self._pman.hostmsg}:\n"
+            raise Error(f"Sysfs file read operation failed{self._pman.hostmsg}:\n"
                         f"{err.indent(2)}") from err
 
         return bool(Trivial.str_to_int(val, what="L1 ASPM state value from '{path}"))
 
-    def toggle_l1_state(self, addr, enable):
+    def toggle_l1_state(self, addr: str, enable: bool):
         """
-        Enable or disable a L1 ASPM for a PCI device. The arguments are as follows.
-          * addr - the PCI device address in the extended BDF notation
-                   ([<domain>:<bus>:<slot>.<func> format]).
-          * enable - enable L1 ASPM if 'True', otherwise disable.
+        Enable or disable L1 ASPM for a PCI device.
 
-        Raise 'ErrorNotSupported' if the device does not support L1 ASPM.
+        Args:
+            addr: The PCI device address in the extended BDF notation
+                  ([<domain>:<bus>:<slot>.<func>] format).
+            enable: Enable L1 ASPM if 'True', otherwise disable.
+
+        Raises:
+            ErrorNotSupported: The device does not support L1 ASPM.
         """
 
         val = "1" if enable else "0"
@@ -154,26 +220,5 @@ class ASPM(ClassHelpers.SimpleCloseContext):
         except ErrorNotFound as err:
             self._l1_file_not_found(addr, err)
         except Error as err:
-            raise Error(f"sysfs file write operation failed{self._pman.hostmsg}:\n"
+            raise Error(f"Sysfs file write operation failed{self._pman.hostmsg}:\n"
                         f"{err.indent(2)}") from err
-
-    def __init__(self, pman=None):
-        """
-        The class constructor. The arguments are as follows.
-          * pman - the process manager object that defines the target host.
-        """
-
-        self._pman = pman
-
-        self._close_pman = pman is None
-        self._policy_path = Path("/sys/module/pcie_aspm/parameters/policy")
-        self._sysfs_base = Path("/sys/bus/pci/devices")
-
-        self._kver = None
-
-        if not self._pman:
-            self._pman = LocalProcessManager.LocalProcessManager()
-
-    def close(self):
-        """Uninitialize the class object."""
-        ClassHelpers.close(self, close_attrs=("_pman",))
