@@ -9,7 +9,9 @@
 # Authors: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 #          Niklas Neronin <niklas.neronin@intel.com>
 
-"""Common functions for the C-state, P-state and uncore command-line option tets."""
+"""
+Common functions for property class command-line option tests (e.g., PStates, CStates, Uncore).
+"""
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
@@ -19,7 +21,7 @@ from pepctools import _Pepc
 
 if typing.TYPE_CHECKING:
     from typing import Generator, Mapping, cast
-    from pepclibs import CPUInfo, CStates, PStates, Uncore
+    from pepclibs import CPUInfo
     from tests.common import CommonTestParamsTypedDict
     from pepclibs.CPUInfoTypes import ScopeNameType
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
@@ -61,7 +63,7 @@ def extend_params(params: CommonTestParamsTypedDict,
         pobj: A property object for the host under test.
         cpuinfo: The 'CPUInfo.CPUInfo' object for the host under test.
 
-    Yields:
+    Returns:
         A dictionary with test parameters.
     """
 
@@ -143,14 +145,15 @@ def get_good_optarget_opts(params: PropsCmdlTestParamsTypedDict,
     '--packages', etc.
 
     Args:
-        params: The test parameters dictionary.
+        params: The test paramet
         sname: Scope name indicating the topology level for which to generate options.
 
     Yields:
         Valid operation target command-line options for the specified scope.
     """
 
-    def _get_package_opts(params, pkg):
+    def _get_package_opts(params: PropsCmdlTestParamsTypedDict,
+                          pkg: int) -> Generator[str, None, None]:
         """
         Yield operation target command-line options for the package scope.
 
@@ -159,7 +162,7 @@ def get_good_optarget_opts(params: PropsCmdlTestParamsTypedDict,
             pkg: The package number for which to generate options.
 
         Yields:
-            str: Package scope command-line option string for the specified package.
+            Package scope command-line option string for the specified package.
         """
 
         opts = [f"--packages {pkg}",
