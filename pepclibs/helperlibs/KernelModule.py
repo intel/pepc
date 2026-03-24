@@ -1,29 +1,84 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2021 Intel Corporation
+# Copyright (C) 2020-2026 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
-"""
-This module provides API for loading and unloading Linux kernel modules (drivers).
-"""
+"""Provide API for loading and unloading Linux kernel modules (drivers)."""
 
+from __future__ import annotations # Remove when switching to Python 3.10+.
+
+import typing
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs.helperlibs import Logging, LocalProcessManager, Dmesg, ClassHelpers
 
+if typing.TYPE_CHECKING:
+    from pepclibs.helperlibs.ProcessManager import ProcessManagerType
+
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
-# The drivers supported by this module.
-DRIVERS = {}
-
 class KernelModule(ClassHelpers.SimpleCloseContext):
-    """This class represents a Linux kernel module."""
+    """Represent a Linux kernel module."""
 
-    def _get_usage_count(self):
+    def __init__(self,
+                 name: str,
+                 pman: ProcessManagerType | None = None,
+                 dmesg: Dmesg.Dmesg | bool | None = None):
         """
-        Returns 'None' if module is not loaded, otherwise returns the module usage count.
+        Initialize a class instance.
+
+        Args:
+            name: Kernel module name.
+            pman: The process manager object that defines the target host.
+            dmesg: 'True' to enable 'dmesg' output checks (default), 'False' to disable them.
+                   Can also be a 'Dmesg' object.
+
+        Notes:
+            - By default, objects of this class capture 'dmesg' output on the host defined by
+              'pman'. The first 'dmesg' snapshot is taken before loading/unloading the driver.
+              The second snapshot is taken only if an error happens. This allows to extract new
+              'dmesg' lines, which are potentially related to the kernel module. These lines are
+              then included to the error message, which is very helpful for diagnosing the error.
+            - If you already have a 'Dmesg' object with the first snapshot captured, you can pass
+              it via the 'dmesg' argument, in which case the 'dmesg' tool will be invoked one less
+              time, which is more optimal.
+        """
+
+        if not name:
+            raise Error("BUG: No driver name provided")
+
+        self._pman: ProcessManagerType
+        if not pman:
+            self._pman = LocalProcessManager.LocalProcessManager()
+        else:
+            self._pman = pman
+
+        self.name = name
+        self._dmesg_obj: Dmesg.Dmesg | None
+
+        self._close_pman = pman is None
+        self._close_dmesg_obj = dmesg is None
+
+        if dmesg is False:
+            self._dmesg_obj = None
+        elif isinstance(dmesg, Dmesg.Dmesg):
+            self._dmesg_obj = dmesg
+        else:
+            # dmesg is None or True - create a new Dmesg object
+            self._dmesg_obj = Dmesg.Dmesg(pman=self._pman)
+
+    def close(self):
+        """Uninitialize the class instance."""
+        ClassHelpers.close(self, close_attrs=("_dmesg_obj", "_pman",))
+
+    def _get_usage_count(self) -> int | None:
+        """
+        Return 'None' if module is not loaded, otherwise return the module usage count.
+
+        Returns:
+            The module usage count, or 'None' if the module is not loaded.
         """
 
         with self._pman.open("/proc/modules", "r") as fobj:
@@ -37,8 +92,13 @@ class KernelModule(ClassHelpers.SimpleCloseContext):
 
         return None
 
-    def _get_new_dmesg(self):
-        """Return new dmesg messages if available."""
+    def _get_new_dmesg(self) -> str:
+        """
+        Return new dmesg messages if available.
+
+        Returns:
+            New dmesg messages, or an empty string if none are available.
+        """
 
         if not self._dmesg_obj:
             return ""
@@ -47,8 +107,13 @@ class KernelModule(ClassHelpers.SimpleCloseContext):
             return f"New kernel messages{self._pman.hostmsg}:\n{new_msgs}"
         return ""
 
-    def _run_mod_cmd(self, cmd):
-        """This helper function runs module load/unload command 'cmd'."""
+    def _run_mod_cmd(self, cmd: str):
+        """
+        Run module load/unload command.
+
+        Args:
+            cmd: The command to run.
+        """
 
         if self._dmesg_obj:
             if not self._dmesg_obj.captured:
@@ -60,12 +125,17 @@ class KernelModule(ClassHelpers.SimpleCloseContext):
                 raise Error(f"{err}\n{self._get_new_dmesg()}") from err
 
             if _LOG.getEffectiveLevel() == Logging.DEBUG:
-                _LOG.debug("the following command finished: %s\n%s", cmd, self._get_new_dmesg())
+                _LOG.debug("The following command finished: %s\n%s", cmd, self._get_new_dmesg())
         else:
             self._pman.run_verify(cmd)
 
-    def is_loaded(self):
-        """Check if the module is loaded."""
+    def is_loaded(self) -> bool:
+        """
+        Check if the module is loaded.
+
+        Returns:
+            'True' if the module is loaded, 'False' otherwise.
+        """
 
         return self._get_usage_count() is not None
 
@@ -80,10 +150,13 @@ class KernelModule(ClassHelpers.SimpleCloseContext):
 
         self._unload()
 
-    def load(self, opts=None, unload=False):
+    def load(self, opts: str | None = None, unload: bool = False):
         """
-        Load the module with 'opts' options to 'modprobe'. If 'unload' is 'True', then unload the
-        module first.
+        Load the module.
+
+        Args:
+            opts: Options to pass to 'modprobe'.
+            unload: If 'True', unload the module first before loading.
         """
 
         if unload:
@@ -98,42 +171,3 @@ class KernelModule(ClassHelpers.SimpleCloseContext):
         if _LOG.getEffectiveLevel() == Logging.DEBUG:
             opts += " dyndbg=+pf"
         self._run_mod_cmd(f"modprobe {self.name} {opts}")
-
-    def __init__(self, name, pman=None, dmesg=None):
-        """
-        The class constructor. The arguments are as follows.
-          * name - kernel module name.
-          * pman - the process manager object that defines the target host.
-          * dmesg - 'True' to enable 'dmesg' output checks (default), 'False' to disable them. Can
-                    also be a 'Dmesg' object.
-
-        By default, objects of this class capture 'dmesg' output on the host defined by 'pman'. The
-        first 'dmesg' snapshot is taken before loading/unloading the driver. The second snapshot is
-        taken only if an error happens. This allows to extract new 'dmesg' lines, which are
-        potentially related to the delayed event device driver. These lines are then included to the
-        error message, which is very helpful for diagnosing the error.
-
-        If you already have a 'Dmesg' object with the first snapshot captured, you can pass it via
-        the 'dmesg' argument, in which case the 'dmesg' tool will be invoked one less time, which is
-        more optimal.
-        """
-
-        if not name:
-            raise Error("BUG: no driver name provided")
-
-        self._pman = pman
-        self.name = name
-        self._dmesg_obj = dmesg
-
-        self._close_pman = pman is None
-        self._close_dmesg_obj = dmesg is None
-
-        if not self._pman:
-            self._pman = LocalProcessManager.LocalProcessManager()
-
-        if not self._dmesg_obj:
-            self._dmesg_obj = Dmesg.Dmesg(pman=self._pman)
-
-    def close(self):
-        """Stop the measurements."""
-        ClassHelpers.close(self, close_attrs=("_dmesg_obj", "_pman",))
