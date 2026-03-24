@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2025 Intel Corporation
+# Copyright (C) 2020-2026 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
@@ -158,11 +158,11 @@ SSH_OPTIONS: list[ArgTypedDict] = [
 
 def add_options(parser: argparse.ArgumentParser | ArgsParser, options: Iterable[ArgTypedDict]):
     """
-    Add command line options to the given parser.
+    Add command-line options to the argument parser.
 
     Args:
-        parser: The argument parser object to which options will be added.
-        options: An iterable collection of option definition dictionaries.
+        parser: Argument parser to add options to.
+        options: Iterable of option definition dictionaries.
     """
 
     for opt in options:
@@ -179,23 +179,23 @@ def add_options(parser: argparse.ArgumentParser | ArgsParser, options: Iterable[
 
 def add_ssh_options(parser: argparse.ArgumentParser | ArgsParser):
     """
-    Add SSH-related command-line options to the given argument parser.
+    Add SSH-related command-line options to the argument parser.
 
     Args:
-        parser: The argument parser object to which SSH options will be added.
+        parser: Argument parser to add SSH options to.
     """
 
     add_options(parser, SSH_OPTIONS)
 
 def format_common_args(args: argparse.Namespace) -> CommonArgsTypedDict:
     """
-    Verify common command-line arguments and return them as a dictionary.
+    Verify and format common command-line arguments.
 
     Args:
         args: Parsed command-line arguments.
 
     Returns:
-        A dictionary containing the common options.
+        Dictionary containing the common options.
     """
 
     cmdl: CommonArgsTypedDict = {}
@@ -227,13 +227,13 @@ def format_common_args(args: argparse.Namespace) -> CommonArgsTypedDict:
 
 def format_ssh_args(args: argparse.Namespace) -> SSHArgsTypedDict:
     """
-    Verify SSH-related command-line arguments and return them as a dictionary.
+    Verify and format SSH-related command-line arguments.
 
     Args:
         args: Parsed command-line arguments.
 
     Returns:
-        A dictionary containing the SSH-related options.
+        Dictionary containing the SSH-related options.
     """
 
     hostname: str = getattr(args, "hostname", "localhost")
@@ -264,11 +264,10 @@ def format_ssh_args(args: argparse.Namespace) -> SSHArgsTypedDict:
 
 class OrderedArg(argparse.Action):
     """
-    Implement an argparse action to preserve the order of command-line arguments.
+    Argparse action that preserves the order of command-line arguments.
 
-    This action stores arguments and their values in the 'oargs' attribute of the namespace,
-    maintaining the order in which arguments are parsed. Use this when the order of arguments
-    matters.
+    This action stores arguments and their values in the 'oargs' attribute, maintaining the order
+    in which they are parsed. Use this when argument order matters.
 
     Example:
         parser.add_argument("--foo", action=OrderedArg)
@@ -282,7 +281,15 @@ class OrderedArg(argparse.Action):
                  namespace: argparse.Namespace,
                  values: str | Sequence[Any] | None,
                  option_string: str | None = None):
-        """Append the ordered argument to the 'oargs' attribute."""
+        """
+        Store the argument in the ordered 'oargs' dictionary.
+
+        Args:
+            parser: The argument parser instance.
+            namespace: The namespace object where parsed arguments are stored.
+            values: The value(s) for the argument.
+            option_string: The option string that triggered this action.
+        """
 
         oargs: dict[str, Any]
         if not hasattr(namespace, "oargs"):
@@ -298,11 +305,18 @@ class OrderedArg(argparse.Action):
 
 def _add_parser(subparsers: SubParsersType, *args: Any, **kwargs: Any) -> argparse.ArgumentParser:
     """
-    Override the 'add_parser()' method of a subparsers object to mangle the 'description' argument.
+    Wrap 'add_parser()' to normalize the 'description' argument.
 
-    This function removes all newlines and extra whitespace from the 'description' keyword argument
-    before calling the original 'add_parser()' method. Unfortunately, a monkey-patch is has to be
-    used to override the 'add_parser()' method of the 'subparsers' object.
+    Remove all newlines and extra whitespace from the 'description' keyword argument before calling
+    the original 'add_parser()' method.
+
+    Args:
+        subparsers: Subparsers action object returned by 'add_subparsers()'.
+        *args: Positional arguments for the original 'add_parser()' method.
+        **kwargs: Keyword arguments for the original 'add_parser()' method.
+
+    Returns:
+        ArgumentParser instance created by the original 'add_parser()' method.
 
     Example:
         subparsers = parser.add_subparsers()
@@ -310,16 +324,6 @@ def _add_parser(subparsers: SubParsersType, *args: Any, **kwargs: Any) -> argpar
         subparsers.add_parser("subcommand", help="help", description=descr)
 
         Without this function, the 'description' would be displayed with newlines and extra spaces.
-        This function ensures that the 'description' is formatted correctly for display in help
-        text.
-
-    Args:
-        subparsers: The subparsers action object returned by 'add_subparsers()'.
-        *args: Positional arguments to pass to the original 'add_parser()' method.
-        **kwargs: Keyword arguments to pass to the original 'add_parser()' method.
-
-    Returns:
-        The 'ArgumentParser' instance created by the original 'add_parser()' method.
     """
 
     if "description" in kwargs:
@@ -330,16 +334,20 @@ def _add_parser(subparsers: SubParsersType, *args: Any, **kwargs: Any) -> argpar
 
 class ArgsParser(argparse.ArgumentParser):
     """
-    Enhance 'argparse.ArgumentParser' with standard options and improved usability.
-      - Add and validate standard options, such  as '-h' and '-q'.
-      - Remove extra whitespace and newlines from 'description' in 'add_parser()'.
-      - Override 'error()' to always suggest using '-h' for help and provide typo suggestions.
+    Enhanced ArgumentParser with standard options and improved usability.
+
+    Notes:
+      - Adds and validates standard options like '-h', '-q', '-d', and '--force-color'.
+      - Removes extra whitespace and newlines from 'description' in 'add_parser()'.
+      - Overrides 'error()' to suggest '-h' for help and provide typo suggestions.
     """
 
     def __init__(self, *args: Any, **kwargs: Any):
         """
-        We assume all tools using this module support the '-q' and '-d' options. This helper adds
-        them to the 'parser' argument parser object.
+        Initialize the parser with standard options.
+
+        Args:
+            Same as in 'ArgumentParser.__init__()'.
         """
 
         if "ver" in kwargs:
@@ -374,11 +382,10 @@ class ArgsParser(argparse.ArgumentParser):
 
     def parse_args(self, *args: Any, **kwargs: Any) -> argparse.Namespace: # type: ignore[override]
         """
-        Parse command line arguments and configure debug logging.
+        Parse command-line arguments and configure debug logging.
 
         Args:
-            *args: Positional arguments for 'ArgumentParser.parse_args()'.
-            **kwargs: Keyword arguments for 'ArgumentParser.parse_args()'.
+            Same as in 'ArgumentParser.parse_args()'.
         """
 
         _args = super().parse_args(*args, **kwargs)
@@ -391,14 +398,13 @@ class ArgsParser(argparse.ArgumentParser):
 
     def add_subparsers(self, *args: Any, **kwargs: Any) -> SubParsersType:
         """
-        Create subparsers with a customized 'add_parser()' method.
+        Create subparsers with normalized description formatting.
 
         Args:
-            *args: Positional arguments for 'add_subparsers'.
-            **kwargs: Keyword arguments for 'add_subparsers'.
+            Same as in 'ArgumentParser.add_subparsers()'.
 
         Returns:
-            The subparsers action object.
+            Subparsers action object.
         """
 
         subparsers = super().add_subparsers(*args, **kwargs)
@@ -409,10 +415,10 @@ class ArgsParser(argparse.ArgumentParser):
 
     def error(self, message: str):
         """
-        Improve error messages from 'argparse.ArgumentParser'.
+        Provide improved error messages with helpful suggestions.
 
         Args:
-            message: The original error message.
+            message: Original error message from argparse.
         """
 
         if "invalid choice: " not in message:
