@@ -88,7 +88,8 @@ def extend_params(params: CommonTestParamsTypedDict,
 def run_pepc(arguments: str,
              pman: ProcessManagerType,
              exp_exc: ExceptionTypeType | None = None,
-             ignore: Mapping[ExceptionTypeType, str] | None = None):
+             ignore: Mapping[ExceptionTypeType, str] | None = None,
+             capture_output: bool = False) -> tuple[str, str]:
     """
     Execute the 'pepc' command and validate its outcome.
 
@@ -100,6 +101,11 @@ def run_pepc(arguments: str,
                  expected exception. By default, any exception is considered a failure.
         ignore: A dictionary mapping error types to command argument strings. Can be used for
                 ignoring certain exceptions.
+        capture_output: If True, capture and return stdout and stderr as strings. If False, return
+                        empty strings.
+
+    Returns:
+        A tuple of (stdout, stderr) strings. Empty strings if capture_output is False.
 
     Raises:
         AssertionError: If the command execution does not match the expected outcome.
@@ -109,8 +115,8 @@ def run_pepc(arguments: str,
         _ignore = cast(dict[type[Exception], str], ignore)
     else:
         _ignore = ignore
-    TestRunner.run_tool(_Pepc, _Pepc.TOOLNAME, arguments, pman=pman, exp_exc=exp_exc,
-                        ignore=_ignore)
+    return TestRunner.run_tool(_Pepc, _Pepc.TOOLNAME, arguments, pman=pman, exp_exc=exp_exc,
+                               ignore=_ignore, capture_output=capture_output)
 
 def get_mechanism_opts(params: PropsCmdlTestParamsTypedDict,
                        allow_readonly: bool = True) -> Generator[str, None, None]:

@@ -279,7 +279,7 @@ for cpu in cpus:
             _LOG.debug("Emulation: Read: CPU%d: MSR 0x%x from '%s'%s",
                        cpu, regaddr, path, self._pman.hostmsg)
             try:
-                with self._pman.openb(path, "r") as fobj:
+                with self._pman.openb(path, "rb") as fobj:
                     fobj.seek(regaddr)
                     regval_bytes = fobj.read(self.regbytes)
             except Error as err:

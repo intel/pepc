@@ -239,6 +239,8 @@ class Logger(logging.Logger):
         self._colors: dict[int, str] = {}
         self._seen_msgs: set = set()
         self._formatters: list[_MyFormatter] = []
+        self._extra_info_handlers: dict[IO[str], logging.Handler] = {}
+        self._extra_error_handlers: dict[IO[str], logging.Handler] = {}
 
         if not name:
             name = "default"
@@ -263,7 +265,8 @@ class Logger(logging.Logger):
                   level: int | None = None,
                   colored: bool | None = None,
                   info_stream: IO[str] = sys.stdout,
-                  error_stream: IO[str] = sys.stderr):
+                  error_stream: IO[str] = sys.stderr,
+                  argv: Sequence[str] | None = None):
         """
         Configure the logger.
 
@@ -277,10 +280,15 @@ class Logger(logging.Logger):
             info_stream: The stream for 'INFO' level messages. Default is 'sys.stdout'.
             error_stream: The stream for messages of all levels except 'INFO'. Default is
                           'sys.stderr'.
+            argv: Command-line arguments to check for flags like '-d', '-q', '--force-color'.
+                  Defaults to 'sys.argv' if not provided.
 
         Returns:
             Logger: The configured logger instance.
         """
+
+        if argv is None:
+            argv = sys.argv
 
         if not prefix:
             prefix = ""
@@ -289,9 +297,9 @@ class Logger(logging.Logger):
 
         if not level:
             # Change log level names.
-            if "-q" in sys.argv:
+            if "-q" in argv:
                 level = WARNING
-            elif "-d" in sys.argv:
+            elif "-d" in argv:
                 level = DEBUG
             else:
                 level = INFO
@@ -299,12 +307,12 @@ class Logger(logging.Logger):
         self.setLevel(level)
 
         if not colorama:
-            if "--force-color" in sys.argv:
+            if "--force-color" in argv:
                 raise Error("Cannot use '--force-color': 'colorama' module is not installed")
             colored = False
 
         if colored is None:
-            if "--force-color" in sys.argv:
+            if "--force-color" in argv:
                 colored = True
             else:
                 colored = info_stream.isatty() and error_stream.isatty()
@@ -508,6 +516,77 @@ class Logger(logging.Logger):
         if msg_hash not in self._seen_msgs:
             self._seen_msgs.add(msg_hash)
             self.log(WARNING, fmt, *args)
+
+    def add_info_stream(self, stream: IO[str]):
+        """
+        Add an additional stream for INFO level messages.
+
+        Args:
+            stream: The stream to add for INFO level messages.
+
+        Notes:
+            Multiple streams can be added. Use 'remove_info_stream()' with the same stream
+            reference to remove it later.
+        """
+
+        if stream in self._extra_info_handlers:
+            return
+
+        formatter = _MyFormatter(prefix=self.prefix, colors=self._colors if self.colored else {})
+        handler = logging.StreamHandler(stream)
+        handler.setFormatter(formatter)
+        handler.addFilter(_MyFilter([INFO]))
+        self.addHandler(handler)
+        self._extra_info_handlers[stream] = handler
+
+    def add_error_stream(self, stream: IO[str]):
+        """
+        Add an additional stream for all log levels except INFO.
+
+        Args:
+            stream: The stream to add for DEBUG, WARNING, ERROR, and other non-INFO messages.
+
+        Notes:
+            Multiple streams can be added. Use 'remove_error_stream()' with the same stream
+            reference to remove it later.
+        """
+
+        if stream in self._extra_error_handlers:
+            return
+
+        formatter = _MyFormatter(prefix=self.prefix, colors=self._colors if self.colored else {})
+        handler = logging.StreamHandler(stream)
+        handler.setFormatter(formatter)
+        handler.addFilter(_MyFilter([DEBUG, WARNING, NOTICE, ERROR, ERRINFO, CRITICAL]))
+        self.addHandler(handler)
+        self._extra_error_handlers[stream] = handler
+
+    def remove_info_stream(self, stream: IO[str]):
+        """
+        Remove a previously added info stream.
+
+        Args:
+            stream: The stream to remove (must be the same object passed to 'add_info_stream()').
+        """
+
+        if stream in self._extra_info_handlers:
+            handler = self._extra_info_handlers[stream]
+            self.removeHandler(handler)
+            del self._extra_info_handlers[stream]
+
+    def remove_error_stream(self, stream: IO[str]):
+        """
+        Remove a previously added error stream.
+
+        Args:
+            stream: The stream to remove (must be the same object passed to
+                    'add_error_stream()').
+        """
+
+        if stream in self._extra_error_handlers:
+            handler = self._extra_error_handlers[stream]
+            self.removeHandler(handler)
+            del self._extra_error_handlers[stream]
 
 logging.setLoggerClass(Logger)
 
