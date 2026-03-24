@@ -80,7 +80,16 @@ def _check_columns(colnames: Sequence[str], caplog: pytest.LogCaptureFixture, cm
         cmd: The command that was run.
     """
 
-    header_args = caplog.records[0].args
+    # Find the first record with non-empty args from _PepcTopology (the header).
+    # Skip warning/notice records that may appear before the topology table, but fail on errors.
+    header_args = None
+    for record in caplog.records:
+        if record.levelname in ("ERROR", "CRITICAL"):
+            raise AssertionError(f"Error log record found: {record.message}")
+        if record.args and "_PepcTopology" in record.name:
+            header_args = record.args
+            break
+
     assert header_args is not None, "No output captured from 'pepc topology info' command"
 
     # Verify that the first output line contains the requested column names.
@@ -165,13 +174,25 @@ def _fetch_topology_from_output(caplog: pytest.LogCaptureFixture,
         A list of dictionaries mapping column names to values.
     """
 
-    header_args = caplog.records[0].args
+    # Find the first record with non-empty args from _PepcTopology (the header).
+    # Skip warning/notice records that may appear before the topology table, but fail on errors.
+    header_idx = -1
+    for idx, record in enumerate(caplog.records):
+        if record.levelname in ("ERROR", "CRITICAL"):
+            raise AssertionError(f"Error log record found: {record.message}")
+        if record.args and "_PepcTopology" in record.name:
+            header_idx = idx
+            break
+
+    assert header_idx >= 0, "No output captured from 'pepc topology info' command"
+
+    header_args = caplog.records[header_idx].args
     assert header_args is not None, "No output captured from 'pepc topology info' command"
 
     header = [str(hdr) for hdr in header_args]
     topology: list[dict[str, int | str]] = []
 
-    for record in caplog.records[1:]:
+    for record in caplog.records[header_idx + 1:]:
         assert record.args is not None, \
                "No output captured from 'pepc topology info' command"
 
