@@ -279,7 +279,7 @@ for cpu in cpus:
             _LOG.debug("Emulation: Read: CPU%d: MSR 0x%x from '%s'%s",
                        cpu, regaddr, path, self._pman.hostmsg)
             try:
-                with self._pman.open(path, "rb") as fobj:
+                with self._pman.openb(path, "r") as fobj:
                     fobj.seek(regaddr)
                     regval_bytes = fobj.read(self.regbytes)
             except Error as err:
@@ -445,7 +445,7 @@ for cpu in cpus:
             path = Path(f"/dev/cpu/{cpu}/msr")
             _LOG.debug("Emulation: Write: CPU%d: MSR 0x%x: 0x%x to '%s'%s",
                        cpu, regaddr, regval, path, self._pman.hostmsg)
-            with self._pman.open(path, "r+b") as fobj:
+            with self._pman.openb(path, "r+") as fobj:
                 try:
                     fobj.seek(regaddr)
                     fobj.write(regval_bytes)

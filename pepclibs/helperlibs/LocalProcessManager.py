@@ -23,7 +23,6 @@ import typing
 import tempfile
 import subprocess
 from pathlib import Path
-from typing import IO, cast
 from operator import itemgetter
 from pepclibs.helperlibs import Logging, _ProcessManagerBase, ClassHelpers
 from pepclibs.helperlibs._ProcessManagerBase import ProcWaitResultType
@@ -31,7 +30,7 @@ from pepclibs.helperlibs.Exceptions import Error, ErrorTimeOut, ErrorPermissionD
 from pepclibs.helperlibs.Exceptions import ErrorNotFound, ErrorExists
 
 if typing.TYPE_CHECKING:
-    from typing import Generator
+    from typing import Generator, cast, IO
     from pepclibs.helperlibs._ProcessManagerBase import LsdirTypedDict
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
@@ -342,8 +341,19 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         self.get(src, dst)
 
-    def open(self, path: str | Path, mode: str) -> IO:
-        """Refer to 'ProcessManagerBase.open()'."""
+    def _open(self, path: str | Path, mode: str) -> IO:
+        """
+        Open a file at the specified path and return the file-like object in text mode with "utf-8"
+        encoding.
+
+        Args:
+            path: The path to the file to open.
+            mode: The mode in which to open the file, similar to 'mode' argument the built-in Python
+                  'open()' function.
+
+        Returns:
+            A file-like object corresponding to the opened file.
+        """
 
         # pylint: disable=consider-using-with,unspecified-encoding
 
@@ -366,9 +376,21 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         # Make sure all file methods raise only exceptions derived from 'Error'.
         wfobj = ClassHelpers.WrapExceptions(fobj, get_err_prefix=_ProcessManagerBase.get_err_prefix)
-        if "b" in mode:
-            return cast(IO[bytes], wfobj)
-        return cast(IO[str], wfobj)
+        if typing.TYPE_CHECKING:
+            return cast(IO, wfobj)
+        return wfobj
+
+    def open(self, path: str | Path, mode: str) -> IO[str]:
+        """Refer to 'ProcessManagerBase.open()'."""
+
+        mode = self._open_mode_adjust(mode)
+        return self._open(path, mode)
+
+    def openb(self, path: str | Path, mode: str) -> IO[bytes]:
+        """Refer to 'ProcessManagerBase.openb()'."""
+
+        mode = self._openb_mode_adjust(mode)
+        return self._open(path, mode)
 
     def time_time(self) -> float:
         """Refer to 'ProcessManagerBase.time_time()'."""

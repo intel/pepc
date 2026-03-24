@@ -647,7 +647,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
                                         timeout=timeout)
             raise Error(msg) from err
 
-    def open(self, path: str | Path, mode: str) -> IO:
+    def _open(self, path: str | Path, mode: str) -> IO:
         """Same as 'ProcessManagerBase.open()', but rebase 'path' to the base directory."""
 
         _LOG.debug("Opening file '%s' with mode '%s'", path, mode)
@@ -657,6 +657,18 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             return self._emd["files"][path].open(mode)
 
         return _EmulFile.get_emul_file(path, self._basepath).open(mode)
+
+    def open(self, path: str | Path, mode: str) -> IO[str]:
+        """Refer to 'ProcessManagerBase.open()'."""
+
+        mode = self._open_mode_adjust(mode)
+        return self._open(path, mode)
+
+    def openb(self, path: str | Path, mode: str) -> IO[bytes]:
+        """Refer to 'ProcessManagerBase.openb()'."""
+
+        mode = self._openb_mode_adjust(mode)
+        return self._open(path, mode)
 
     def mkdir(self, dirpath: str | Path, parents: bool = False, exist_ok: bool = False):
         """Same as 'ProcessManagerBase.mkdir()', but rebase 'path' to the base directory."""

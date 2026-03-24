@@ -290,7 +290,7 @@ for cpu, cpus_info in transaction_buffer.items():
 
         for cpu, cpus_info in self._transaction_buffer.items():
             path = Path(f"/dev/cpu/{cpu}/msr")
-            with self._pman.open(path, "r+b") as fobj:
+            with self._pman.openb(path, "r+") as fobj:
                 for regaddr, regval_info in cpus_info.items():
                     regval = regval_info["regval"]
                     _LOG.debug("Transaction: Emulation: Write: CPU%d: MSR 0x%x: 0x%x to '%s'%s",

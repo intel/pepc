@@ -1156,9 +1156,27 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         return result
 
-    def open(self, path: str | Path, mode: str) -> IO:
+    def _open_mode_adjust(self, mode: str) -> str:
         """
-        Open a file at the specified path and return the file-like object.
+        Adjust the 'mode' argument for the 'open()' method to ensure it does not include 'b'.
+
+        Args:
+            mode: The mode string to check.
+
+        Returns:
+            The mode string, ensuring it does not include 'b' for text mode.
+        """
+
+        if "b" in mode:
+            _LOG.warning("Incorrect usage of ProcessManagerBase.open(): the 'mode' argument "
+                         "should not include 'b'")
+            return mode.replace("b", "")
+        return mode
+
+    def open(self, path: str | Path, mode: str) -> IO[str]:
+        """
+        Open a file at the specified path and return the file-like object in text mode with "utf-8"
+        encoding.
 
         Args:
             path: The path to the file to open.
@@ -1167,12 +1185,42 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         Returns:
             A file-like object corresponding to the opened file.
-
-        Notes:
-            If "b" is not in the mode, the file is opened in text mode with the "utf-8" encoding.
         """
 
         raise NotImplementedError("ProcessManagerBase.open()")
+
+    def _openb_mode_adjust(self, mode: str) -> str:
+        """
+        Adjust the 'mode' argument for the 'openb()' method to ensure it includes 'b'.
+
+        Args:
+            mode: The mode string to check.
+
+        Returns:
+            The mode string, ensuring it includes 'b' for binary mode.
+        """
+
+        if "b" not in mode:
+            _LOG.warning("Incorrect usage of ProcessManagerBase.openb(): the 'mode' argument "
+                         "should include 'b'")
+            return mode + "b"
+        return mode
+
+    def openb(self, path: str | Path, mode: str) -> IO[bytes]:
+        """
+        Open a file at the specified path in binary mode and return the file-like object.
+
+        Args:
+            path: The path to the file to open.
+            mode: The mode in which to open the file, similar to 'mode' argument the built-in Python
+                  'open()' function. The "b" character is implied in the mode for this method, so it
+                  does not have to be included in the 'mode' argument.
+
+        Returns:
+            A file-like object corresponding to the opened file in binary mode.
+        """
+
+        raise NotImplementedError("ProcessManagerBase.openb()")
 
     def read_file(self, path: Path | str) -> str:
         """

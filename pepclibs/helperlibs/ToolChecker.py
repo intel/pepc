@@ -21,8 +21,9 @@ from pepclibs.helperlibs import Logging, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound
 
 if typing.TYPE_CHECKING:
-    from typing import Final
+    from typing import Final, Union
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
+    from pepclibs.helperlibs._ProcessManagerBase import ProcessManagerBase
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
@@ -92,7 +93,7 @@ class ToolChecker(ClassHelpers.SimpleCloseContext):
     meaningful suggestion if the OS package is not installed.
     """
 
-    def __init__(self, pman: ProcessManagerType):
+    def __init__(self, pman: Union[ProcessManagerType, ProcessManagerBase]):
         """
         Initialize a class instance.
 

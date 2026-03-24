@@ -57,7 +57,7 @@ class LinuxPMQoS(ClassHelpers.SimpleCloseContext):
         """
 
         try:
-            with self._pman.open(self._cdev_path, "rb") as fobj:
+            with self._pman.openb(self._cdev_path, "r") as fobj:
                 limit = fobj.read(4)
         except ErrorNotFound as err:
             raise ErrorNotSupported(f"failed to read '{self._cdev_path}'{self._pman.hostmsg}\n"

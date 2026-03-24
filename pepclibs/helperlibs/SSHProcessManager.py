@@ -1129,8 +1129,19 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         return self._sftp
 
-    def open(self, path: str | Path, mode: str) -> IO:
-        """Refer to 'ProcessManagerBase.open()'."""
+    def _open(self, path: str | Path, mode: str) -> IO:
+        """
+        Open a file at the specified path and return the file-like object in text mode with "utf-8"
+        encoding.
+
+        Args:
+            path: The path to the file to open.
+            mode: The mode in which to open the file, similar to 'mode' argument the built-in Python
+                  'open()' function.
+
+        Returns:
+            A file-like object corresponding to the opened file.
+        """
 
         def _read_(fobj: IO, size: int | None = None) -> bytes | str:
             """
@@ -1236,8 +1247,20 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         # Make sure methods of 'fobj' always raise the 'Error' exception.
         wfobj = ClassHelpers.WrapExceptions(fobj, get_err_prefix=get_err_prefix)
         if typing.TYPE_CHECKING:
-            return cast(IO[str], wfobj)
+            return cast(IO, wfobj)
         return wfobj
+
+    def open(self, path: str | Path, mode: str) -> IO[str]:
+        """Refer to 'ProcessManagerBase.open()'."""
+
+        mode = self._open_mode_adjust(mode)
+        return self._open(path, mode)
+
+    def openb(self, path: str | Path, mode: str) -> IO[bytes]:
+        """Refer to 'ProcessManagerBase.openb()'."""
+
+        mode = self._openb_mode_adjust(mode)
+        return self._open(path, mode)
 
     def time_time(self) -> float:
         """Refer to 'ProcessManagerBase.time_time()'."""
