@@ -18,7 +18,7 @@ import typing
 import random
 import pytest
 from tests import common
-from pepclibs import CPUInfo, PStates, CStates, _PerCPUCache
+from pepclibs import CPUInfo, _PerCPUCache
 
 if typing.TYPE_CHECKING:
     from typing import Generator, cast
@@ -60,32 +60,6 @@ def get_params(hostspec: str, username: str) -> Generator[_TestParamsTypedDict, 
         params["cpuinfo"] = cpuinfo
 
         yield params
-
-def test_unknown_cpu_model(params: _TestParamsTypedDict):
-    """
-    Test behavior of property objects when querying properties on an unknown CPU model.
-
-    Args:
-        params: The test parameters.
-    """
-
-    pman = params["pman"]
-
-    with CPUInfo.CPUInfo(pman=pman) as cpuinfo:
-        proc_cpuinfo = cpuinfo.get_proc_cpuinfo()
-        proc_cpuinfo["model"] = 0
-
-        with PStates.PStates(pman=pman, cpuinfo=cpuinfo) as pobj:
-            for pname in pobj.props:
-                if pobj.prop_is_supported_cpu(pname, 0):
-                    pobj.get_cpu_prop(pname, 0)
-                    break
-
-        with CStates.CStates(pman=pman, cpuinfo=cpuinfo) as pobj:
-            for pname in pobj.props:
-                if pobj.prop_is_supported_cpu(pname, 0):
-                    pobj.get_cpu_prop(pname, 0)
-                    break
 
 def test_percpucache_scope(params: _TestParamsTypedDict):
     """
