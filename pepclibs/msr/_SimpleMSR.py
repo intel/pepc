@@ -340,6 +340,9 @@ for cpu in cpus:
             bits: A tuple or list of two integers (msb, lsb) specifying the bit range to set;
                   msb is the most significant bit and lsb is the least significant bit.
             val: The value to set in the bits range to.
+
+        Returns:
+            The modified MSR value with the specified bits set.
         """
 
         bits = self._normalize_bits(bits)

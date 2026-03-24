@@ -295,7 +295,7 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
                 val: str,
                 what: str = "",
                 retries: int = 0,
-                sleep: int | float = 0):
+                sleep: int | float = 0) -> str:
         """
         Verify that the specified sysfs file contains the expected value.
 
@@ -339,7 +339,9 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
                                 f"{self._pman.hostmsg}:\n  Wrote '{val}', but read '{new_val}' "
                                 f"back", expected=val, actual=new_val, path=path)
 
-    def _write_paths_vals_optimized_helper(self, batch_info, winfo):
+    def _write_paths_vals_optimized_helper(self,
+                                            batch_info: dict[Path, _TransactionItemTypedDict],
+                                            winfo: str):
         """
         Write multiple paths and values with I/O optimizations for remote hosts.
 
@@ -636,6 +638,9 @@ for path, (val, verify, retries, sleep) in winfo.items():
         """
         Read the specified list of paths in a single SSH command. The arguments are the same as for
         'read_paths()'.
+
+        Yields:
+            Tuples of (path, value) for each successfully read path.
         """
 
         _file_not_found_val = "pepc_file_not_found"
@@ -719,6 +724,9 @@ for path in paths:
         be very slow. To optimize this, we read multiple files in a single SSH command by running a
         Python script on the remote host that reads all the specified files and prints their
         contents.
+
+        Yields:
+            Tuples of (path, value) for each successfully read path.
         """
 
         _LOG.debug("Reading multiple sysfs files with I/O optimizations")
@@ -758,6 +766,9 @@ for path in paths:
         """
         Implement 'read_paths()' without I/O optimizations for remote hosts. The arguments are the
         same as for 'read_paths()'.
+
+        Yields:
+            Tuples of (path, value) for each successfully read path.
         """
 
         for path in paths:
@@ -932,7 +943,20 @@ for path in paths:
                          what: str = "",
                          retries: int = 0,
                          sleep: int | float = 0):
-        """Same as 'write_verify()', but write an integer value 'val'."""
+        """
+        Same as 'write_verify()', but write an integer value 'val'.
+
+        Args:
+            path: Path to the sysfs file to write to.
+            val: Integer value to write (can be provided as string or int).
+            what: Optional description of what is being written (used in error messages).
+            retries: Number of times to retry verification if the value does not match.
+            sleep: Number of seconds to sleep between retries.
+
+        Raises:
+            ErrorNotSupported: If the sysfs file does not support the requested value.
+            ErrorVerifyFailed: If verification fails after all retries.
+        """
 
         intval = Trivial.str_to_int(val, what=what)
         val = str(intval)

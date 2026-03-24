@@ -108,7 +108,7 @@ class EPB(_EPBase.EPBase):
 
             msr = self._get_msr()
             self._epbmsr_obj = EnergyPerfBias.EnergyPerfBias(self._cpuinfo, pman=self._pman,
-                                                          msr=msr)
+                                                             msr=msr)
         return self._epbmsr_obj
 
     def _validate_value(self, val: str | int, policy_ok: bool = False):

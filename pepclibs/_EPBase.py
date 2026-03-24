@@ -95,7 +95,7 @@ class EPBase(ClassHelpers.SimpleCloseContext):
         ClassHelpers.close(self, close_attrs=close_attrs)
 
     def _build_supported_dict(self) -> dict[int, bool]:
-        """"
+        """
         Build the per-CPU dictionary with boolean values indicating whether EPP/EPB is supported for
         each CPU.
 

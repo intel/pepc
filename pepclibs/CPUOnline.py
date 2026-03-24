@@ -37,7 +37,7 @@ class CPUOnline(ClassHelpers.SimpleCloseContext):
         Initialize a class instance.
 
         Args:
-            progress: Set logging level for progress messages. Defaults to 'DEBUG'.
+            loglevel: Set logging level for progress messages. Defaults to 'DEBUG'.
             pman: The process manager object for the host to online/offline CPUs. If not provided,
                   a 'LocalProcessManager.LocalProcessManager()' object is created.
             cpuinfo: An instance of 'CPUInfo.CPUInfo()' to use. If not provided, a new instance is
@@ -248,8 +248,8 @@ class CPUOnline(ClassHelpers.SimpleCloseContext):
                               exception.
 
         Raises:
-            Exception: If a CPU does not support onlining/offlining and 'skip_unsupported'
-                       is False.
+            ErrorNotSupported: If a CPU does not support onlining/offlining and 'skip_unsupported'
+                               is False.
         """
 
         self._toggle(cpus, False, skip_unsupported)
@@ -267,9 +267,9 @@ class CPUOnline(ClassHelpers.SimpleCloseContext):
         Raises:
             ErrorNotFound: If the CPU path does not exist and is not due to hotplug being disabled.
 
-        Note:
-            If the hotplug subsystem is disabled and the "online" file is missing, assume the CPU is
-            online.
+        Notes:
+            - If the hotplug subsystem is disabled and the "online" file is missing, assume the CPU
+              is online.
         """
 
         path = self._get_path(cpu)

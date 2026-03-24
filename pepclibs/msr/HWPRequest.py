@@ -260,6 +260,10 @@ class HWPRequest(_FeaturedMSR.FeaturedMSR):
         An implementation of 'disable_feature_pkg_control()' optimized for a remote host,
         where it is more optimal to read the package control state for all CPUs in a single bulk
         operation and then update the necessary CPUs in a single bulk write operation.
+
+        Args:
+            fname: The feature name to disable package control for.
+            cpus: CPU numbers to disable package control for.
         """
 
         try:

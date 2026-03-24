@@ -419,7 +419,13 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
                     cpu_tdict[cpu]["node"] = node
 
     def _sort_topology(self, tlines: list[dict[ScopeNameType, int]], order: ScopeNameType):
-        """Sort and save the topology list by 'order' in sorting map."""
+        """
+        Sort and save the topology list by 'order' in sorting map.
+
+        Args:
+            tlines: List of topology line dictionaries to sort.
+            order: Scope name to use for sorting order.
+        """
 
         skeys = self._sorting_map[order]
         self._topology[order] = sorted(tlines, key=lambda tline: tuple(tline[s] for s in skeys))
