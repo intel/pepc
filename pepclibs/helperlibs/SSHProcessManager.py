@@ -35,12 +35,9 @@ from typing import cast
 from collections.abc import Callable
 try:
     import paramiko
-    # Import 'DummyParamiko' in any case because some users of this module rely on getting the list
-    # of dependencies by inspecting imports.
-    # pylint: disable=unused-import
-    from pepclibs.helperlibs import DummyParamiko
 except (ModuleNotFoundError, ImportError):
     from pepclibs.helperlibs import DummyParamiko as paramiko  # type: ignore[no-redef]
+from pepclibs.helperlibs import DummyParamiko
 from pepclibs.helperlibs import Logging, _ProcessManagerBase, ClassHelpers, Trivial
 from pepclibs.helperlibs._ProcessManagerBase import ProcWaitResultType
 from pepclibs.helperlibs.Exceptions import Error, ErrorPermissionDenied, ErrorTimeOut, ErrorConnect
@@ -535,7 +532,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         # The command to use for figuring out full paths in the 'which()' method.
         self._which_cmd: str | None = None
 
-        self._sftp: paramiko.SFTPClient | None = None
+        self._sftp: paramiko.SFTPClient | DummyParamiko.SFTPClient | None = None
 
         # The interactive shell session.
         self._intsh: SSHProcess | None = None
@@ -589,7 +586,9 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         try:
             self.ssh = paramiko.SSHClient()
-            self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            auto_add_policy = paramiko.AutoAddPolicy()
+            if not isinstance(auto_add_policy, DummyParamiko.AutoAddPolicy):
+                self.ssh.set_missing_host_key_policy(auto_add_policy)
             # We expect to be authenticated either with the key or an empty password.
             self.ssh.connect(username=self.username, hostname=connhost, port=port,
                              key_filename=self.privkeypath, timeout=self.connection_timeout,
@@ -886,6 +885,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         if not intsh:
             return self._run_in_new_session(command, cwd=cwd, env=env, mix_output=mix_output)
 
+        acquired = False
         try:
             acquired = self._acquire_intsh_lock(command=command)
             if not acquired or self._intsh_busy:
@@ -1109,7 +1109,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         self._scp(f"\"{src}\"", f"{self.hostname}:\"{dst}\"")
 
-    def _get_sftp(self) -> paramiko.SFTPClient:
+    def _get_sftp(self) -> paramiko.SFTPClient | DummyParamiko.SFTPClient:
         """
         Get an SFTP server object. If an SFTP session is already established, return the existing
         session. Otherwise, create a new SFTP session using the SSH connection.
@@ -1521,7 +1521,7 @@ for ent in entries:
         for which_cmd in which_cmds:
             cmd = f"{which_cmd} -- '{program}'"
             try:
-                stdout, stderr, exitcode = self.run(cmd, join=False)
+                result = self.run_nojoin(cmd)
             except ErrorNotFound:
                 if which_cmd != which_cmds[-1]:
                     # We have more commands to try.
@@ -1530,10 +1530,12 @@ for ent in entries:
 
             self._which_cmd = which_cmd
             break
+        else:
+            return raise_or_return()
 
-        if not exitcode:
+        if not result["exitcode"]:
             # Which could return several paths. They may contain aliases.
-            for line in cast(list[str], stdout):
+            for line in cast(list[str], result["stdout"]):
                 line = line.strip()
                 if not line.startswith("alias"):
                     return Path(line)
@@ -1541,7 +1543,8 @@ for ent in entries:
 
         # The 'which' tool exits with status 1 when the program is not found. Any other error code
         # is an real failure.
-        if exitcode != 1:
-            raise Error(self.get_cmd_failure_msg(cmd, stdout, stderr, exitcode))
+        if result["exitcode"] != 1:
+            raise Error(self.get_cmd_failure_msg(cmd, result["stdout"], result["stderr"],
+                                                 result["exitcode"]))
 
         return raise_or_return()

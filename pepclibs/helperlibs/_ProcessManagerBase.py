@@ -898,7 +898,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
             timeout: The maximum time to wait for the command to complete.
             capture_output: Whether to capture the command's output.
             mix_output: Whether to merge stdout and stderr into a single stream.
-            join: Whether to join the output streams.
+            join: Whether to join the output streams
             output_fobjs: File-like objects to write the command's stdout and stderr.
             cwd: The working directory to execute the command in.
             intsh: Use an existing interactive shell if True, or a new shell if False. The former

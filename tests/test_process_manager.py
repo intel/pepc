@@ -530,13 +530,13 @@ def test_open(params: CommonTestParamsTypedDict):
         assert fobj.read() == ""
 
     # Test binary mode.
-    fobj = pman.openb(test_file, "w+")
-    fobj.write(b"Hello, world!")
+    fobjb = pman.openb(test_file, "w+")
+    fobjb.write(b"Hello, world!")
     assert pman.is_file(test_file)
-    fobj.seek(0)
-    assert fobj.read() == b"Hello, world!"
-    assert fobj.read() == b""
-    fobj.close()
+    fobjb.seek(0)
+    assert fobjb.read() == b"Hello, world!"
+    assert fobjb.read() == b""
+    fobjb.close()
 
     # Test truncate.
     with pman.open(test_file, "r+") as fobj:

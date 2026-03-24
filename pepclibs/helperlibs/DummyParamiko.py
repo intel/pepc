@@ -19,7 +19,7 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 import typing
 
 if typing.TYPE_CHECKING:
-    from typing import Tuple
+    from typing import Any, IO
 
 class AuthenticationException(Exception):
     """"A dummy version of 'paramiko.ConfigParseError'."""
@@ -27,6 +27,22 @@ class AuthenticationException(Exception):
 class ConfigParseError(Exception):
     """"A dummy version of 'paramiko.ConfigParseError'."""
 
+class SFTPClient:
+    """A dummy version of 'paramiko.SFTPClient'."""
+
+    def file(self, path: str, mode: str) -> IO:
+        """A dummy version of 'paramiko.SFTPClient.file()'."""
+        raise NotImplementedError("paramiko is not available")
+
+class MissingHostKeyPolicy:
+    """A dummy version of 'paramiko.MissingHostKeyPolicy'."""
+
+class AutoAddPolicy(MissingHostKeyPolicy):
+    """A dummy version of 'paramiko.AutoAddPolicy'."""
+
+    def __init__(self):
+        """A dummy version of 'paramiko.AutoAddPolicy.__init__()'."""
+        raise NotImplementedError("paramiko is not available")
 class SSHConfig:
     """A dummy version of 'paramiko.SSHConfig'."""
 
@@ -38,6 +54,10 @@ class SSHConfig:
         """A dummy version of 'paramiko.SSHConfig.from_path()'."""
         raise NotImplementedError("paramiko is not available")
 
+    def lookup(self, _: str) -> dict:
+        """A dummy version of 'paramiko.SSHConfig.lookup()'."""
+        raise NotImplementedError("paramiko is not available")
+
 class SSHClient:
     """A dummy version of 'paramiko.SSHClient'."""
 
@@ -45,11 +65,11 @@ class SSHClient:
         """A dummy version of 'paramiko.SSHClient.__init__()'."""
         raise NotImplementedError("paramiko is not available")
 
-    def set_missing_host_key_policy(self, _: AutoAddPolicy):
+    def set_missing_host_key_policy(self, _: Any):
         """A dummy version of 'paramiko.SSHClient.set_missing_host_key_policy()'."""
         raise NotImplementedError("paramiko is not available")
 
-    def connect(self, *_: Tuple[str, int, str, str]):
+    def connect(self, **kwargs: Any):
         """A dummy version of 'paramiko.SSHClient.connect()'."""
         raise NotImplementedError("paramiko is not available")
 
@@ -57,9 +77,6 @@ class SSHClient:
         """A dummy version of 'paramiko.SSHClient.get_transport()'."""
         raise NotImplementedError("paramiko is not available")
 
-class AutoAddPolicy:
-    """A dummy version of 'paramiko.AutoAddPolicy'."""
-
-    def __init__(self):
-        """A dummy version of 'paramiko.AutoAddPolicy.__init__()'."""
+    def open_sftp(self) -> SFTPClient:
+        """A dummy version of 'paramiko.SSHConfig.open_sftp()'."""
         raise NotImplementedError("paramiko is not available")
