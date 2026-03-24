@@ -18,15 +18,16 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 import os
 import re
 import stat
+import types
 import typing
 from pathlib import Path
 
 try:
+    argcomplete: types.ModuleType | None
     import argcomplete
-    _ARGCOMPLETE_AVAILABLE = True
 except ImportError:
     # We can live without argcomplete, we only lose tab completions.
-    _ARGCOMPLETE_AVAILABLE = False
+    argcomplete = None
 
 from pepclibs import ProcCpuinfo, CPUModels
 from pepclibs.msr import EnergyPerfBias, FSBFreq, HWPRequest, HWPRequestPkg
@@ -398,8 +399,8 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
               name of the host the command is run on. See the '-H' option."""
     parser.add_argument("-o", "--outdir", type=Path, help=text)
 
-    if _ARGCOMPLETE_AVAILABLE:
-        argcomplete.autocomplete(parser)
+    if argcomplete is not None:
+        getattr(argcomplete, "autocomplete")(parser)
 
     return parser
 
@@ -481,10 +482,10 @@ def _collect_cmd_output(pman: ProcessManagerType,
         raise Error(f"Failed to create directory '{datapath}':\n{errmsg}") from err
 
     res = pman.run_join(cmdinfo["command"])
-    if res["exitcode"] != 0 and not cmdinfo.get("ignore_exitcode"):
-        _LOG.error("Command '%s' exited with code %d", cmdinfo["command"], res["exitcode"])
+    if res.exitcode != 0 and not cmdinfo.get("ignore_exitcode"):
+        _LOG.error("Command '%s' exited with code %d", cmdinfo["command"], res.exitcode)
 
-    for fname, data in ("stdout", res["stdout"]), ("stderr", res["stderr"]):
+    for fname, data in ("stdout", res.stdout), ("stderr", res.stderr):
         if not data:
             # No output.
             continue
@@ -513,14 +514,14 @@ def _collect_inline(pman: ProcessManagerType, inlinfo, basedir):
         raise Error(f"Failed to create directory '{cmdpath}':\n{errmsg}") from err
 
     res = pman.run_join(inlinfo["command"])
-    if res["exitcode"] != 0:
-        _LOG.notice("Command '%s' exited with code %d", inlinfo["command"], res["exitcode"])
+    if res.exitcode != 0:
+        _LOG.notice("Command '%s' exited with code %d", inlinfo["command"], res.exitcode)
 
     path = cmdpath / inlinfo["filename"]
 
     try:
         with open(path, "w", encoding="utf-8") as fobj:
-            fobj.write(res["stdout"])
+            fobj.write(res.stdout)
     except OSError as err:
         errmsg = Error(str(err)).indent(2)
         raise Error(f"Failed to perform I/O on file '{path}':\n{errmsg}") from err
@@ -566,10 +567,10 @@ def _collect_msrs(pman: ProcessManagerType, msrinfo: _TDCollectMSRsTypedDict, ba
 
                 for addr in msrinfo["addresses"]:
                     res = pman.run_join(f"rdmsr {addr} -p {cpu}")
-                    if res["exitcode"] != 0:
+                    if res.exitcode != 0:
                         continue
 
-                    value = res["stdout"].strip()
+                    value = res.stdout.strip()
                     line += f"{addr}{msrinfo['separator2']}{value} "
 
                 fobj.write(line + "\n")
@@ -591,11 +592,11 @@ def _copy_file(pman: ProcessManagerType, src: Path, outdir: Path):
 
     # In some cases '/proc/cpuinfo' is not fully copied when using 'scp' or 'rsync'.
     res = pman.run_join(f"cat -- '{src}'")
-    if res["exitcode"] != 0:
-        _LOG.notice("'cat %s' exited with code %d", src, res["exitcode"])
+    if res.exitcode != 0:
+        _LOG.notice("'cat %s' exited with code %d", src, res.exitcode)
 
     with open(dst, "w", encoding="utf-8") as fobj:
-        fobj.write(res["stdout"])
+        fobj.write(res.stdout)
 
 def _copy_dir(pman: ProcessManagerType, src: Path, outdir: Path) -> list[_TDCollectFileTypedDict]:
     """
@@ -625,7 +626,7 @@ def _copy_dir(pman: ProcessManagerType, src: Path, outdir: Path) -> list[_TDColl
             files += _copy_dir(pman, entry["path"] / ".*", outdir)
         else:
             _copy_file(pman, entry["path"], outdir)
-            files += [{"path": entry["path"], "readonly": is_readonly}]
+            files += [_TDCollectFileTypedDict(path=entry["path"], readonly=is_readonly)]
 
     return files
 
@@ -676,7 +677,7 @@ def __main():
                     _copy_file(pman, file["path"], datapath)
 
             if "recursive_copy" in tdcinfo:
-                files = []
+                files: list[_TDCollectFileTypedDict] = []
                 for directory in tdcinfo["recursive_copy"]:
                     files += _copy_dir(pman, Path(directory["path"]), datapath)
 
@@ -717,6 +718,6 @@ def main():
     except KeyboardInterrupt:
         _LOG.info("\nInterrupted, exiting")
     except Error as err:
-        _LOG.error_out(err)
+        _LOG.error_out(str(err))
 
     return exitcode

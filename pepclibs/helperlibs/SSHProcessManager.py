@@ -1521,7 +1521,7 @@ for ent in entries:
         for which_cmd in which_cmds:
             cmd = f"{which_cmd} -- '{program}'"
             try:
-                result = self.run_nojoin(cmd)
+                res = self.run_nojoin(cmd)
             except ErrorNotFound:
                 if which_cmd != which_cmds[-1]:
                     # We have more commands to try.
@@ -1533,9 +1533,9 @@ for ent in entries:
         else:
             return raise_or_return()
 
-        if not result["exitcode"]:
+        if not res.exitcode:
             # Which could return several paths. They may contain aliases.
-            for line in cast(list[str], result["stdout"]):
+            for line in cast(list[str], res.stdout):
                 line = line.strip()
                 if not line.startswith("alias"):
                     return Path(line)
@@ -1543,8 +1543,7 @@ for ent in entries:
 
         # The 'which' tool exits with status 1 when the program is not found. Any other error code
         # is an real failure.
-        if result["exitcode"] != 1:
-            raise Error(self.get_cmd_failure_msg(cmd, result["stdout"], result["stderr"],
-                                                 result["exitcode"]))
+        if res.exitcode != 1:
+            raise Error(self.get_cmd_failure_msg(cmd, res.stdout, res.stderr, res.exitcode))
 
         return raise_or_return()

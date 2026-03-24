@@ -44,39 +44,37 @@ if typing.TYPE_CHECKING:
         mode: int
         ctime: float
 
-    class ProcWaitResultJoinTypedDict(TypedDict):
-        """
-        A typed dictionary for the result of the 'wait()' method for a process with joined output
-        lines.
+class ProcWaitResultJoinType(NamedTuple):
+    """
+    The result of the 'run_join()' method for a process with joined output lines.
 
-        Attributes:
-            stdout: The standard output of the process as a single string. The tailing newline is
-                    not stripped.
-            stderr: The standard error of the process as a single string. The tailing newline is
-                    not stripped.
-            exitcode: The exit code of the process. Can be 'None' if the process is still running.
-        """
+    Attributes:
+        stdout: The standard output of the process as a single string. The tailing newline is
+                not stripped.
+        stderr: The standard error of the process as a single string. The tailing newline is
+                not stripped.
+        exitcode: The exit code of the process. Can be 'None' if the process is still running.
+    """
 
-        stdout: str
-        stderr: str
-        exitcode: int | None
+    stdout: str
+    stderr: str
+    exitcode: int | None
 
-    class ProcWaitResultNoJoinTypedDict(TypedDict):
-        """
-        A typed dictionary for the result of the 'wait()' method for a process with non-joined
-        output lines.
+class ProcWaitResultNoJoinType(NamedTuple):
+    """
+    The result of the 'run_nojoin()' method for a process with non-joined output lines.
 
-        Attributes:
-            stdout: The standard output of the process as a list of strings lines. The tailing
-                    newline is not stripped.
-            stderr: The standard error of the process as a list of strings lines. The tailing
-                    newline is not stripped.
-            exitcode: The exit code of the process. Can be 'None' if the process is still running.
-        """
+    Attributes:
+        stdout: The standard output of the process as a list of strings lines. The tailing
+                newline is not stripped.
+        stderr: The standard error of the process as a list of strings lines. The tailing
+                newline is not stripped.
+        exitcode: The exit code of the process. Can be 'None' if the process is still running.
+    """
 
-        stdout: list[str]
-        stderr: list[str]
-        exitcode: int | None
+    stdout: list[str]
+    stderr: list[str]
+    exitcode: int | None
 
 class ProcWaitResultType(NamedTuple):
     """
@@ -837,7 +835,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
                  cwd: str | Path | None = None,
                  intsh: bool = True,
                  env: dict[str, str] | None = None,
-                 newgrp: bool = False) -> ProcWaitResultJoinTypedDict:
+                 newgrp: bool = False) -> ProcWaitResultJoinType:
         """
         Same as 'run(join=True)', provided for convenience and more deterministic return type.
         """
@@ -847,10 +845,13 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
                        intsh=intsh, env=env, newgrp=newgrp)
 
         if typing.TYPE_CHECKING:
-            return ProcWaitResultJoinTypedDict(stdout=cast(str, res.stdout),
-                                               stderr=cast(str, res.stderr),
-                                               exitcode=res.exitcode)
-        return {"stdout": res.stdout, "stderr": res.stderr, "exitcode": res.exitcode}
+            stdout = cast(str, res.stdout)
+            stderr = cast(str, res.stderr)
+        else:
+            stdout = res.stdout
+            stderr = res.stderr
+
+        return ProcWaitResultJoinType(stdout=stdout, stderr=stderr, exitcode=res.exitcode)
 
     def run_nojoin(self,
                    cmd: str | Path,
@@ -861,7 +862,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
                    cwd: str | Path | None = None,
                    intsh: bool = True,
                    env: dict[str, str] | None = None,
-                   newgrp: bool = False) -> ProcWaitResultNoJoinTypedDict:
+                   newgrp: bool = False) -> ProcWaitResultNoJoinType:
         """
         Same as 'run(join=False)', provided for convenience and more deterministic return type.
         """
@@ -871,10 +872,13 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
                        intsh=intsh, env=env, newgrp=newgrp)
 
         if typing.TYPE_CHECKING:
-            return ProcWaitResultNoJoinTypedDict(stdout=cast(list[str], res.stdout),
-                                                 stderr=cast(list[str], res.stderr),
-                                                 exitcode=res.exitcode)
-        return {"stdout": res.stdout, "stderr": res.stderr, "exitcode": res.exitcode}
+            stdout = cast(list[str], res.stdout)
+            stderr = cast(list[str], res.stderr)
+        else:
+            stdout = res.stdout
+            stderr = res.stderr
+
+        return ProcWaitResultNoJoinType(stdout=stdout, stderr=stderr, exitcode=res.exitcode)
 
     def run_verify(self,
                    cmd: str | Path,
