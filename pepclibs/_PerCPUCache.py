@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2025 Intel Corporation
+# Copyright (C) 2020-2026 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Authors: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
@@ -32,7 +32,9 @@ class PerCPUCache:
     consistency.
     """
 
-    def __init__(self, cpuinfo: CPUInfo.CPUInfo, enable_cache: bool = True,
+    def __init__(self,
+                 cpuinfo: CPUInfo.CPUInfo,
+                 enable_cache: bool = True,
                  enable_scope: bool = True):
         """
         Initialize a class instance.
@@ -77,7 +79,7 @@ class PerCPUCache:
         except KeyError:
             raise ErrorNotFound(f"'{key}' is not cached for CPU {cpu}") from None
 
-    def is_cached(self, key: Hashable, cpu: int):
+    def is_cached(self, key: Hashable, cpu: int) -> bool:
         """
         Check if the cache contains an entry for the given key and CPU.
 
@@ -86,7 +88,7 @@ class PerCPUCache:
             cpu: The CPU number of the cache entry to check.
 
         Returns:
-            bool: True if the entry is present in the cache, False otherwise.
+            True if the entry is present in the cache, False otherwise.
         """
 
         if key not in self._cache or cpu not in self._cache[key]:
