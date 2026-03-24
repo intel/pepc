@@ -325,9 +325,9 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
         for info in infos:
             dirpath = dspath / info["dirname"]
+            path = dirpath / "stdout.txt"
 
             try:
-                path = dirpath / "stdout.txt"
                 if path.exists():
                     with open(path, encoding="utf-8") as fobj:
                         stdout = fobj.readlines()
