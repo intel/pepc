@@ -299,6 +299,8 @@ class Logger(logging.Logger):
         self.setLevel(level)
 
         if not colorama:
+            if "--force-color" in sys.argv:
+                raise Error("Cannot use '--force-color': 'colorama' module is not installed")
             colored = False
 
         if colored is None:
