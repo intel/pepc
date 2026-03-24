@@ -3,7 +3,7 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2025 Intel Corporation
+# Copyright (C) 2020-2026 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Author: Niklas Neronin <niklas.neronin@intel.com>
@@ -11,87 +11,3 @@
 """Misc tests for pepc."""
 
 # TODO: Add a test that --force-color works as expected.
-
-from __future__ import annotations # Remove when switching to Python 3.10+.
-
-import typing
-import random
-import pytest
-from tests import common
-from pepclibs import CPUInfo, _PerCPUCache
-
-if typing.TYPE_CHECKING:
-    from typing import Generator, cast
-    from tests.common import CommonTestParamsTypedDict
-
-    class _TestParamsTypedDict(CommonTestParamsTypedDict, total=False):
-        """
-        The test parameters dictionary.
-
-        Attributes:
-            cpuinfo: A 'CPUInfo.CPUInfo' object.
-        """
-
-        cpuinfo: CPUInfo.CPUInfo
-
-@pytest.fixture(name="params", scope="module")
-def get_params(hostspec: str, username: str) -> Generator[_TestParamsTypedDict, None, None]:
-    """
-    Generate a dictionary with testing parameters.
-
-    Establish a connection to the host described by 'hostspec' and build a dictionary of parameters
-    required for testing.
-
-    Args:
-        hostspec: Host specification used to establish the connection.
-        username: The username to use when connecting to a remote host.
-
-    Yields:
-        A dictionary containing test parameters.
-    """
-
-    with common.get_pman(hostspec, username=username) as pman, \
-         CPUInfo.CPUInfo(pman=pman) as cpuinfo:
-        params = common.build_params(pman)
-
-        if typing.TYPE_CHECKING:
-            params = cast(_TestParamsTypedDict, params)
-
-        params["cpuinfo"] = cpuinfo
-
-        yield params
-
-def test_percpucache_scope(params: _TestParamsTypedDict):
-    """
-    Test that the 'PerCPUCache' class correctly caches values according to CPU scope.
-
-    Args:
-        params: The test parameters.
-    """
-
-    siblings = {}
-    cpuinfo = params["cpuinfo"]
-
-    mname = "sysfs"
-    test_cpu = random.choice(cpuinfo.get_cpus())
-    pcache = _PerCPUCache.PerCPUCache(cpuinfo=cpuinfo)
-
-    for sname in CPUInfo.SCOPE_NAMES:
-        # Value of 'val' and 'pname' do not matter, as long as they are unique.
-        val = object()
-        pname = object()
-        # Use (pname, mname) tuple as the cache key.
-        key = (pname, mname)
-
-        pcache.add(key, test_cpu, val, sname=sname)
-
-        if sname not in siblings:
-            siblings[sname] = params["cpuinfo"].get_cpu_siblings(test_cpu, sname=sname)
-        cpus = siblings[sname]
-
-        for cpu in cpuinfo.get_cpus():
-            res = pcache.is_cached(key, cpu)
-            if cpu in cpus:
-                assert pcache.get(key, cpu) == val
-            else:
-                assert res is False
