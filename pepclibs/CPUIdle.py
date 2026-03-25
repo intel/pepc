@@ -670,7 +670,8 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
 
     def enable_cstates(self,
                        cpus: Sequence[int],
-                       csnames: Iterable[str] | Literal["all"] = "all") -> ReqCStateToggleResultType:
+                       csnames: Iterable[str] | Literal["all"] = "all") -> \
+                                                                        ReqCStateToggleResultType:
         """
         Enable specified CPU C-states on selected CPUs.
 
@@ -690,7 +691,8 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
 
     def disable_cstates(self,
                        cpus: Sequence[int],
-                       csnames: Iterable[str] | Literal["all"] = "all") -> ReqCStateToggleResultType:
+                       csnames: Iterable[str] | Literal["all"] = "all") -> \
+                                                                        ReqCStateToggleResultType:
         """
         Enable specified CPU C-states on selected CPUs.
 

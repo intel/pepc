@@ -19,7 +19,7 @@ from pepclibs.helperlibs import LocalProcessManager, ClassHelpers
 from pepclibs.helperlibs.Exceptions import ErrorVerifyFailed, ErrorNotFound, ErrorNotSupported
 
 if typing.TYPE_CHECKING:
-    from typing import Generator, Final, Literal
+    from typing import Generator, Final, Literal, Sequence
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
 _CPU_BYTEORDER: Final[Literal["little", "big"]] = "little"
@@ -28,8 +28,19 @@ class LinuxPMQoS(ClassHelpers.SimpleCloseContext):
     """
     Provide a capability of reading and changing Linux PM QoS latency limits.
 
-    Note, class methods do not validate the 'cpus' arguments. The caller is assumed to have done the
-    validation. The input CPU numbers should exist and should be online.
+    Public methods overview.
+
+    1. Per-CPU latency limits.
+        - 'get_latency_limit()' - read per-CPU latency limits.
+        - 'set_latency_limit()' - set per-CPU latency limits.
+    2. Global latency limit.
+        - 'get_global_latency_limit()' - read global latency limit.
+    3. Miscellaneous.
+        - 'close()' - uninitialize the class object.
+
+    Notes:
+        - Methods do not validate the 'cpus' argument. The caller must validate CPU numbers and
+          ensure they exist and are online.
     """
 
     def __init__(self,
@@ -89,13 +100,13 @@ class LinuxPMQoS(ClassHelpers.SimpleCloseContext):
 
         return self._sysfs_base / f"cpu{cpu}" / "power" / "pm_qos_resume_latency_us"
 
-    def get_latency_limit(self, cpus: list[int]) -> Generator[tuple[int, float], None, None]:
+    def get_latency_limit(self, cpus: Sequence[int]) -> Generator[tuple[int, float], None, None]:
         """
         For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the Linux PM QoS
         latency limit read via the per-CPU sysfs interface, in seconds.
 
         Args:
-            cpus: A collection of integer CPU numbers to get the latency limit for.
+            cpus: CPU numbers to get the latency limit for (the caller must validate CPU numbers).
 
         Yields:
             Tuples of (cpu, latency_limit) where latency_limit is in seconds.
@@ -136,13 +147,13 @@ class LinuxPMQoS(ClassHelpers.SimpleCloseContext):
         # Convert from microseconds to seconds.
         return limit_us / 1000000
 
-    def set_latency_limit(self, latency_limit: float, cpus: list[int]):
+    def set_latency_limit(self, latency_limit: float, cpus: Sequence[int]):
         """
         For every CPU in 'cpus', set the latency limit via Linux PM QoS sysfs interfaces.
 
         Args:
             latency_limit: The latency limit value to set, in seconds.
-            cpus: A collection of CPU numbers to set the latency limit for.
+            cpus: CPU numbers to set the latency limit for (the caller must validate CPU numbers).
         """
 
         # Convert seconds to microseconds.

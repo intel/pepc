@@ -26,7 +26,7 @@ from pepclibs.msr import _SimpleMSR
 from pepclibs.msr._SimpleMSR import _CPU_BYTEORDER
 
 if typing.TYPE_CHECKING:
-    from typing import Generator, TypedDict, Sequence
+    from typing import cast, Generator, TypedDict, Sequence
     from pepclibs import CPUInfo
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepclibs.CPUInfoTypes import ScopeNameType
@@ -169,7 +169,11 @@ class MSR(_SimpleMSR.SimpleMSR):
                 raise Error(f"BUG: Inconsistent verification flag value for MSR {regaddr:#x}:\n"
                             f"  old: {tinfo['verify']}, new: {verify}")
         else:
-            tinfo = self._transaction_buffer[cpu][regaddr] = {}
+            if typing.TYPE_CHECKING:
+                _empty_dict = cast(_TransactionBufferItemTypedDict, {})
+            else:
+                _empty_dict = {}
+            tinfo = self._transaction_buffer[cpu][regaddr] = _empty_dict
 
         tinfo["regval"] = regval
         tinfo["verify"] = verify

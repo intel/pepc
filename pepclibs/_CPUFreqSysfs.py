@@ -269,7 +269,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         Args:
             ftype: The CPU frequency sysfs file type.
-            cpus: CPU numbers to get the frequency for.
+            cpus: CPU numbers to get the frequency for (the caller must validate CPU numbers).
             limit: Whether to use the "limit" file or the "scaling" sysfs file for reading the
                    frequency.
 
@@ -295,7 +295,8 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
         Retrieve and yield the minimum CPU frequency for specified CPUs.
 
         Args:
-            cpus: CPU numbers to get the minimum frequency for.
+            cpus: CPU numbers to get the minimum frequency for (the caller must validate
+                  CPU numbers).
 
         Yields:
             Tuple of (cpu, frequency), where 'cpu' is the CPU number and 'frequency' is the minimum
@@ -312,7 +313,8 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
         Retrieve and yield the maximum CPU frequency for specified CPUs.
 
         Args:
-            cpus: CPU numbers to get the maximum frequency for.
+            cpus: CPU numbers to get the maximum frequency for (the caller must validate
+                  CPU numbers).
 
         Yields:
             Tuple of (cpu, frequency), where 'cpu' is the CPU number and 'frequency' is the maximum
@@ -329,7 +331,8 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
         Retrieve and yield the current CPU frequency for specified CPUs.
 
         Args:
-            cpus: CPU numbers to get the current frequency for.
+            cpus: CPU numbers to get the current frequency for (the caller must validate
+                  CPU numbers).
 
         Yields:
             Tuple (cpu, frequency), where 'cpu' is the CPU number and 'frequency' is the current
@@ -346,7 +349,8 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
         Retrieve and yield the minimum CPU frequency limit for specified CPUs.
 
         Args:
-            cpus: CPU numbers to get the minimum frequency limit for.
+            cpus: CPU numbers to get the minimum frequency limit for (the caller must validate
+                  CPU numbers).
 
         Yields:
             Tuple (cpu, frequency), where 'cpu' is the CPU number and 'frequency' is the minimum
@@ -363,7 +367,8 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
         Retrieve and yield the maximum CPU frequency limit for specified CPUs.
 
         Args:
-            cpus: CPU numbers to get the maximum frequency limit for.
+            cpus: CPU numbers to get the maximum frequency limit for (the caller must validate
+                  CPU numbers).
 
         Yields:
             Tuple (cpu, frequency), where 'cpu' is the CPU number and 'frequency' is the maximum
@@ -382,7 +387,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
         Args:
             freq: The CPU frequency value to validate, in Hz.
             ftype: The CPU frequency sysfs file type.
-            cpus: CPU numbers to validate the frequency for.
+            cpus: CPU numbers to validate the frequency for (the caller must validate CPU numbers).
 
         Raises:
             ErrorOutOfRange: If the CPU frequency value is outside the allowed range.
@@ -488,7 +493,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         Args:
             freq: The frequency value to set, in Hz.
-            cpus: CPU numbers to set the frequency for.
+            cpus: CPU numbers to set the frequency for (the caller must validate CPU numbers).
 
         Raises:
             ErrorNotSupported: If the CPU frequency sysfs file does not exist.
@@ -510,7 +515,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         Args:
             freq: The frequency value to set, in Hz.
-            cpus: CPU numbers to set the frequency for.
+            cpus: CPU numbers to set the frequency for (the caller must validate CPU numbers).
 
         Raises:
             ErrorNotSupported: If the CPU frequency sysfs file does not exist.
@@ -534,7 +539,8 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
         'acpi-cpufreq' driver.
 
         Args:
-            cpus: CPU numbers to get the list of available frequencies for.
+            cpus: CPU numbers to get the list of available frequencies for (the caller must
+                  validate CPU numbers).
 
         Yields:
             Tuple of (cpu, frequencies), where 'cpu' is the CPU number and 'frequencies' is a sorted
@@ -620,7 +626,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
         Retrieve and yield the base frequency for specified CPUs.
 
         Args:
-            cpus: CPU numbers to get the base frequency for.
+            cpus: CPU numbers to get the base frequency for (the caller must validate CPU numbers).
 
         Yields:
             Tuple of (cpu, frequency), where 'cpu' is the CPU number and 'frequency' is the base
@@ -655,7 +661,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
         Retrieve and yield the Linux CPU frequency driver name for specified CPUs.
 
         Args:
-            cpus: CPU numbers to get the driver name for.
+            cpus: CPU numbers to get the driver name for (the caller must validate CPU numbers).
 
         Yields:
             Tuple of (cpu, driver_name) where 'cpu' is the CPU number and 'driver_name' is the Linux
@@ -703,7 +709,8 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
         Retrieve and yield the 'intel_pstate' driver mode for specified CPUs.
 
         Args:
-            cpus: CPU numbers to get the 'intel_pstate' driver mode for.
+            cpus: CPU numbers to get the 'intel_pstate' driver mode for (the caller must validate
+                  CPU numbers).
 
         Yields:
             Tuple (cpu, mode), where 'cpu' is the CPU number and 'mode' is the current
@@ -735,7 +742,8 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         Args:
             mode: The desired 'intel_pstate' driver mode ("active", "passive", or "off").
-            cpus: CPU numbers to set the 'intel_pstate' driver mode for.
+            cpus: CPU numbers to set the 'intel_pstate' driver mode for (the caller must validate
+                  CPU numbers).
 
         Raises:
             ErrorNotSupported: If the current driver is not 'intel_pstate', or it does not support
@@ -778,7 +786,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
         Retrieve and yield the turbo on/off status for specified CPUs.
 
         Args:
-            cpus: CPU numbers to get the turbo status for.
+            cpus: CPU numbers to get the turbo status for (the caller must validate CPU numbers).
 
         Yields:
             Tuple of (cpu, val), where 'cpu' is the CPU number and 'val' is either "on" or "off"
@@ -843,7 +851,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         Args:
             enable: if True, enable turbo mode; if False, disable it.
-            cpus: CPU numbers to set the turbo mode for.
+            cpus: CPU numbers to set the turbo mode for (the caller must validate CPU numbers).
 
         Raises:
             ErrorNotSupported: If the CPU frequency driver does not support turbo control or if
@@ -912,7 +920,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
         Retrieve and yield the Linux CPU frequency governor name for specified CPUs.
 
         Args:
-            cpus: CPU numbers to get the governor name for.
+            cpus: CPU numbers to get the governor name for (the caller must validate CPU numbers).
 
         Yields:
             Tuple (cpu, governor), where 'cpu' is the CPU number and 'governor' is the current
@@ -940,7 +948,8 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
         Retrieve and yield available Linux CPU frequency governor names for specified CPUs.
 
         Args:
-            cpus: CPU numbers to get the list of available governors for.
+            cpus: CPU numbers to get the list of available governors for (the caller must validate
+                  CPU numbers).
 
         Yields:
             Tuple (cpu, governors), where 'cpu' is the CPU number and 'governors' is a list of
@@ -968,7 +977,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         Args:
             governor: Name of the governor to set.
-            cpus: CPU numbers to set the governor for.
+            cpus: CPU numbers to set the governor for (the caller must validate CPU numbers).
 
         Raises:
             ErrorNotSupported: If the CPU governors sysfs files do not exist.
