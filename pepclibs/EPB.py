@@ -19,8 +19,7 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 import typing
 from pathlib import Path
 
-from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
-from pepclibs.helperlibs.Exceptions import ErrorPath, ErrorPerCPUPath
+from pepclibs.helperlibs.Exceptions import ErrorPath, ErrorPerCPUPath, ErrorNotSupported
 from pepclibs.helperlibs.Exceptions import ErrorVerifyFailedPath, ErrorVerifyFailedPerCPUPath
 from pepclibs.helperlibs import Trivial, ClassHelpers
 from pepclibs import _EPBase

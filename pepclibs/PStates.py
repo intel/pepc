@@ -19,7 +19,8 @@ import contextlib
 from pepclibs import _PropsClassBase
 from pepclibs.PStatesVars import PROPS
 from pepclibs.helperlibs import Human, ClassHelpers, Logging
-from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorVerifyFailed
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
+from pepclibs.helperlibs.Exceptions import ErrorVerifyFailedPerCPUPath, ErrorPerCPU
 
 from pepclibs._PropsClassBase import ErrorTryAnotherMechanism
 
@@ -846,7 +847,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         cpufreq_obj.set_governor(governor, cpus=cpus)
         return "sysfs"
 
-    def _handle_write_and_read_freq_mismatch(self, err: ErrorVerifyFailed) -> NoReturn:
+    def _handle_write_and_read_freq_mismatch(self, err: ErrorVerifyFailedPerCPUPath) -> NoReturn:
         """
         Handle mismatches between written and read CPU frequency values in sysfs.
 
@@ -854,7 +855,8 @@ class PStates(_PropsClassBase.PropsClassBase):
             err: The exception object containing the error details.
 
         Raises:
-            ErrorVerifyFailed: always raised to indicate the mismatch, includes a detailed message.
+            ErrorVerifyFailedPerCPUPath: always raised to indicate the mismatch, includes a
+                                         detailed message.
         """
 
         if err.expected is None:
@@ -870,8 +872,6 @@ class PStates(_PropsClassBase.PropsClassBase):
         if err.actual is None:
             raise Error("BUG: Read frequency is not set in the 'ErrorVerifyFailed' object")
 
-        if err.cpu is None:
-            raise Error("BUG: CPU number is not set in the 'ErrorVerifyFailed' object")
         cpu = err.cpu
 
         msg = str(err)
@@ -987,16 +987,15 @@ class PStates(_PropsClassBase.PropsClassBase):
                     cpufreq_obj.set_max_freq(new_freq, freq_cpus)
                 else:
                     raise Error(f"BUG: Unexpected CPU frequency property {pname}")
-            except ErrorVerifyFailed as err:
+            except ErrorVerifyFailedPerCPUPath as err:
                 self._handle_write_and_read_freq_mismatch(err)
 
-    def _handle_epp_set_exception(self,
-                                  val: str,
-                                  mname: MechanismNameType,
-                                  err: Error) -> str | None:
+    def _improve_epp_error_message(self,
+                                   val: str,
+                                   mname: MechanismNameType,
+                                   err: ErrorPerCPU) -> str:
         """
-        Handle a situation where setting the Energy Performance Preference (EPP) fails. The goal is
-        to improve the error message to help the user understand the reason for the failure.
+        Improve error message when setting Energy Performance Preference (EPP) fails.
 
         Args:
             val: The attempted EPP value.
@@ -1004,32 +1003,31 @@ class PStates(_PropsClassBase.PropsClassBase):
             err: The exception object raised during the EPP set attempt.
 
         Returns:
-            A string with a detailed error message, None if the error message was not improved.
+            A string with a detailed error message, empty string if the error message was not
+            improved.
         """
 
         # Newer Linux kernels with intel_pstate driver in active mode forbid changing EPP to
         # anything but 0 or "performance". Provide a helpful error message for this special case.
 
         if mname != "sysfs":
-            return None
+            return ""
         if val in ("0", "performance"):
-            return None
-        if not hasattr(err, "cpu"):
-            return None
+            return ""
 
         cpus = [err.cpu]
         _, driver = next(self._get_prop_cpus_mnames("driver", cpus,
                                                     self._props["driver"]["mnames"]))
         if driver != "intel_pstate":
-            return None
+            return ""
         _, mode = next(self._get_prop_cpus_mnames("intel_pstate_mode", cpus,
                                                   self._props["intel_pstate_mode"]["mnames"]))
         if mode != "active":
-            return None
+            return ""
         _, governor = next(self._get_prop_cpus_mnames("governor", cpus,
                                                       self._props["governor"]["mnames"]))
         if governor != "performance":
-            return None
+            return ""
 
         return f"{err}\nThe 'performance' governor of the 'intel_pstate' driver sets EPP to 0 " \
                f"(performance) and does not allow for changing it."
@@ -1052,11 +1050,11 @@ class PStates(_PropsClassBase.PropsClassBase):
                 _epp_val = val
             try:
                 self._get_eppobj().set_vals(_epp_val, cpus=cpus, mnames=(mname,))
-            except Error as err:
-                msg = self._handle_epp_set_exception(str(val), mname, err)
-                if msg is None:
-                    raise
-                raise type(err)(msg) from err
+            except ErrorPerCPU as err:
+                msg = self._improve_epp_error_message(str(val), mname, err)
+                if msg:
+                    raise type(err)(msg) from err
+                raise
         elif pname == "epb":
             if typing.TYPE_CHECKING:
                 _epb_val = cast(bool, val)

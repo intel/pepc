@@ -8,6 +8,35 @@
 
 """
 Exception types used in this project.
+
+Exception Hierarchy:
+====================
+
+Error (base)
+  ├─ ErrorPath                              (has path attribute)
+  │    └─ ErrorVerifyFailedPath             (has path + expected + actual)
+  │
+  ├─ ErrorPerCPU                            (has cpu attribute)
+  │    └─ ErrorPerCPUPath                   (has cpu + path)
+  │         └─ ErrorVerifyFailedPerCPUPath  (has cpu + path + expected + actual)
+  │
+  ├─ ErrorVerifyFailed                      (has expected + actual attributes)
+  │    ├─ ErrorVerifyFailedPath             (also inherits from ErrorPath)
+  │    └─ ErrorVerifyFailedPerCPUPath       (also inherits from ErrorPerCPUPath)
+  │
+  ├─ ErrorConnect         (connection failures)
+  ├─ ErrorOutOfRange      (value out of valid range)
+  ├─ ErrorBadOrder        (incorrect ordering)
+  ├─ ErrorTimeOut         (timeout occurred)
+  ├─ ErrorExists          (already exists)
+  ├─ ErrorNotFound        (not found)
+  └─ ErrorNotSupported    (feature not supported)
+
+Key Patterns:
+  - Use ErrorPath when file path is involved
+  - Use ErrorPerCPU when CPU number is involved
+  - Use ErrorPerCPUPath when both CPU and path are involved (multiple inheritance)
+  - Use ErrorVerifyFailed* variants when write-verify operations fail
 """
 
 from __future__ import annotations # Remove when switching to Python 3.10+.

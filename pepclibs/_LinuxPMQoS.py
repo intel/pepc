@@ -16,8 +16,7 @@ import typing
 from pathlib import Path
 from pepclibs import _SysfsIO
 from pepclibs.helperlibs import LocalProcessManager, ClassHelpers, Trivial
-from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
-from pepclibs.helperlibs.Exceptions import ErrorVerifyFailed
+from pepclibs.helperlibs.Exceptions import ErrorNotFound, ErrorNotSupported
 from pepclibs.helperlibs.Exceptions import ErrorPath, ErrorPerCPUPath
 from pepclibs.helperlibs.Exceptions import ErrorVerifyFailedPath, ErrorVerifyFailedPerCPUPath
 
