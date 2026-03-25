@@ -108,6 +108,10 @@ class MSR(_SimpleMSR.SimpleMSR):
                           cache and propagate to hardware immediately (write-through policy). If
                           False, caching is disabled, and every read/write operation accesses the
                           hardware directly.
+
+        Raises:
+            ErrorPermissionDenied: No permissions to access MSRs.
+            ErrorNotSupported: MSR access is not supported.
         """
 
         super().__init__(pman=pman)
@@ -213,10 +217,10 @@ class MSR(_SimpleMSR.SimpleMSR):
             iosname: The I/O scope name of the MSR.
 
         Raises:
-            ErrorVerifyFailedPerCPUPath: If the value read from the MSR does not match the
-                                         expected value for any CPU. The exception contains the
-                                         CPU number, expected and actual values, and the MSR
-                                         device path.
+            ErrorVerifyFailedPerCPUPath: The value read from the MSR does not match the expected
+                                         value for any CPU. The exception contains the CPU
+                                         number, expected and actual values, and the MSR device
+                                         path.
         """
 
         for cpu in cpus:
@@ -246,9 +250,11 @@ class MSR(_SimpleMSR.SimpleMSR):
                         regval_bytes = regval.to_bytes(self.regbytes, byteorder=_CPU_BYTEORDER)
                         os.pwrite(fd, regval_bytes, regaddr)
                     except OSError as err:
-                        raise ErrorPerCPUPath(f"Failed to write '{regval:#x}' to MSR '{regaddr:#x}' "
-                                              f"of CPU {cpu}{self._pman.hostmsg} (file '{path}'): "
-                                              f"{err}", cpu=cpu, path=path) from err
+                        errmsg = Error(str(err)).indent(2)
+                        raise ErrorPerCPUPath(f"Failed to write '{regval:#x}' to MSR "
+                                              f"'{regaddr:#x}' of CPU {cpu}{self._pman.hostmsg} "
+                                              f"(file '{path}'):\n{errmsg}",
+                                              cpu=cpu, path=path) from err
             finally:
                 os.close(fd)
 
@@ -495,6 +501,10 @@ for cpu, cpus_info in transaction_buffer.items():
             Tuple of (cpu, regval):
                 cpu: CPU number from which the MSR was read.
                 regval: Value read from the MSR.
+
+        Raises:
+            ErrorPerCPUPath: An I/O error occurred while reading the MSR (includes CPU and path
+                             information).
         """
 
         if self._pman.is_remote:
@@ -521,6 +531,10 @@ for cpu, cpus_info in transaction_buffer.items():
 
         Returns:
             The value read from the specified MSR on the given CPU.
+
+        Raises:
+            ErrorPerCPUPath: An I/O error occurred while reading the MSR (includes CPU and path
+                             information).
         """
 
         for _, regval in self.read(regaddr, (cpu,), iosname=iosname):
@@ -578,6 +592,10 @@ for cpu, cpus_info in transaction_buffer.items():
 
         Returns:
             Value of the requested bits from the MSR.
+
+        Raises:
+            ErrorPerCPUPath: An I/O error occurred while reading the MSR (includes CPU and path
+                             information).
         """
 
         regval = self.read_cpu(regaddr, cpu, iosname=iosname)
@@ -604,8 +622,8 @@ for cpu, cpus_info in transaction_buffer.items():
             verify: If True, read back and verify the written value.
 
         Raises:
-            ErrorVerifyFailedPerCPUPath: If verification is enabled and the read-back value does
-                                         not match the written value. The 'cpu' attribute of the
+            ErrorVerifyFailedPerCPUPath: Verification is enabled and the read-back value does not
+                                         match the written value. The 'cpu' attribute of the
                                          exception will contain the CPU number where the
                                          verification failed, and 'expected' and 'actual'
                                          attributes will contain the expected and actual values,
@@ -678,8 +696,10 @@ for cpu, cpus_info in transaction_buffer.items():
             verify: If True, read back and verify the written value.
 
         Raises:
-            ErrorVerifyFailedPerCPUPath: If verification is enabled and the read-back value does
-                                         not match the written value. The 'cpu' attribute of the
+            ErrorPerCPUPath: An I/O error occurred while writing to the MSR (includes CPU and path
+                             information).
+            ErrorVerifyFailedPerCPUPath: Verification is enabled and the read-back value does not
+                                         match the written value. The 'cpu' attribute of the
                                          exception will contain the CPU number where the
                                          verification failed, and 'expected' and 'actual'
                                          attributes will contain the expected and actual values,
@@ -734,8 +754,10 @@ for cpu, cpus_info in transaction_buffer.items():
             verify: If True, read back and verify the written value.
 
         Raises:
-            ErrorVerifyFailedPerCPUPath: If verification is enabled and the read-back value does
-                                         not match the written value.
+            ErrorPerCPUPath: An I/O error occurred while writing to the MSR (includes CPU and path
+                             information).
+            ErrorVerifyFailedPerCPUPath: Verification is enabled and the read-back value does not
+                                         match the written value.
         """
 
         self.write(regaddr, regval, (cpu,), iosname=iosname, verify=verify)
@@ -761,8 +783,10 @@ for cpu, cpus_info in transaction_buffer.items():
             verify: If True, read back and verify the written value.
 
         Raises:
-            ErrorVerifyFailedPerCPUPath: If verification is enabled and the read-back value does
-                                         not match the written value. The 'cpu' attribute of the
+            ErrorPerCPUPath: An I/O error occurred while reading or writing the MSR (includes CPU
+                             and path information).
+            ErrorVerifyFailedPerCPUPath: Verification is enabled and the read-back value does not
+                                         match the written value. The 'cpu' attribute of the
                                          exception will contain the CPU number where the
                                          verification failed, and 'expected' and 'actual'
                                          attributes will contain the expected and actual values,
@@ -817,8 +841,10 @@ for cpu, cpus_info in transaction_buffer.items():
             verify: If True, read back and verify the written value.
 
         Raises:
-            ErrorVerifyFailedPerCPUPath: If verification is enabled and the read-back value does
-                                         not match the written value.
+            ErrorPerCPUPath: An I/O error occurred while reading or writing the MSR (includes CPU
+                             and path information).
+            ErrorVerifyFailedPerCPUPath: Verification is enabled and the read-back value does not
+                                         match the written value.
         """
 
         self.write_bits(regaddr, bits, val, (cpu,), iosname=iosname, verify=verify)

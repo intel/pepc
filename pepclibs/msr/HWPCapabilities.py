@@ -97,7 +97,7 @@ class HWPCapabilities(_FeaturedMSR.FeaturedMSR):
                  provided, a new MSR object will be created.
 
         Raises:
-            ErrorNotSupported: If CPU vendor is not supported or if the CPU does not the MSR.
+            ErrorNotSupported: CPU vendor is not supported or the CPU does not have the MSR.
         """
 
         self._partial_features = copy.deepcopy(FEATURES)

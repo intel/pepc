@@ -20,7 +20,8 @@ from pathlib import Path
 from pepclibs.helperlibs import Logging, LocalProcessManager, EmulProcessManager, ClassHelpers
 from pepclibs.helperlibs import Trivial
 from pepclibs.helperlibs.Exceptions import ErrorNotSupported, ErrorBadFormat
-from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorVerifyFailed
+from pepclibs.helperlibs.Exceptions import Error, ErrorPath, ErrorNotFound
+from pepclibs.helperlibs.Exceptions import ErrorVerifyFailed, ErrorVerifyFailedPath
 
 if typing.TYPE_CHECKING:
     from typing import TypedDict, Generator, Iterable
@@ -280,8 +281,8 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
                     val = str(val)
                     if len(val) > 24:
                         val = f"{val[:23]}...snip..."
-                    raise Error(f"Failed to write value '{val}' to{what} sysfs file '{path}'"
-                                f"{self._pman.hostmsg}:\n{err.indent(2)}") from err
+                    raise ErrorPath(f"Failed to write value '{val}' to{what} sysfs file '{path}'"
+                                    f"{self._pman.hostmsg}:\n{err.indent(2)}", path=path) from err
         except ErrorNotFound as err:
             what = "" if not what else f" {what}"
             val = str(val)
@@ -314,6 +315,8 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
 
         Raises:
             ErrorVerifyFailed: If the value in the file does not match 'val' after all retries.
+            ErrorVerifyFailedPath: Specific subclass of ErrorVerifyFailed that includes the file
+                                   path information (this is what's actually raised).
         """
 
         while True:
@@ -335,9 +338,9 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
         val_str = str(val)
         if len(val_str) > 24:
             val_str = f"{val_str[:23]}...snip..."
-        raise ErrorVerifyFailed(f"Failed to write value '{val_str}' to{what} sysfs file '{path}'"
-                                f"{self._pman.hostmsg}:\n  Wrote '{val}', but read '{new_val}' "
-                                f"back", expected=val, actual=new_val, path=path)
+        raise ErrorVerifyFailedPath(f"Failed to write value '{val_str}' to{what} sysfs file "
+                                    f"'{path}'{self._pman.hostmsg}:\n  Wrote '{val}', but read "
+                                    f"'{new_val}' back", expected=val, actual=new_val, path=path)
 
     def _write_paths_vals_optimized_helper(self,
                                             batch_info: dict[Path, _TransactionItemTypedDict],
@@ -351,6 +354,8 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
 
         Raises:
             ErrorVerifyFailed: If verification of any write operation fails.
+            ErrorVerifyFailedPath: Specific subclass of ErrorVerifyFailed that includes the file
+                                   path information (this is what's actually raised).
         """
 
         python_path = self._pman.get_python_path()
@@ -453,18 +458,18 @@ for path, (val, verify, retries, sleep) in winfo.items():
         what = "" if not what else f" {what}"
 
         if error_type == "Write":
-            raise Error(f"Failed to write value '{val}' to{what} sysfs file '{path}'"
-                        f"{self._pman.hostmsg}:\n{stdout}")
+            raise ErrorPath(f"Failed to write value '{val}' to{what} sysfs file '{path}'"
+                            f"{self._pman.hostmsg}:\n{stdout}", path=path)
         if error_type == "Read":
-            raise Error(f"Failed to read back value from{what} sysfs file '{path}'"
-                        f"{self._pman.hostmsg}:\n{stdout}")
+            raise ErrorPath(f"Failed to read back value from{what} sysfs file '{path}'"
+                            f"{self._pman.hostmsg}:\n{stdout}", path=path)
         if error_type == "Verify":
             expected_val = mobj.group(2)
             actual_val = mobj.group(3)
-            raise ErrorVerifyFailed(f"Failed to write value '{val}' to{what} sysfs file '{path}'"
-                                    f"{self._pman.hostmsg}:\n  Wrote '{expected_val}', but read "
-                                    f"'{actual_val}' back",
-                                    expected=expected_val, actual=actual_val, path=path)
+            raise ErrorVerifyFailedPath(f"Failed to write value '{val}' to{what} sysfs file "
+                                        f"'{path}'{self._pman.hostmsg}:\n  Wrote '{expected_val}', "
+                                        f"but read '{actual_val}' back",
+                                        expected=expected_val, actual=actual_val, path=path)
 
     def _write_paths_vals_optimized(self, batch_info: dict[Path, _TransactionItemTypedDict]):
         """
@@ -478,6 +483,8 @@ for path, (val, verify, retries, sleep) in winfo.items():
 
         Raises:
             ErrorVerifyFailed: If verification of any write operation fails.
+            ErrorVerifyFailedPath: Specific subclass of ErrorVerifyFailed that includes the file
+                                   path information (this is what's actually raised).
         """
 
         # Format a dictionary of write operations as a string for the Python script: winfo, which
@@ -570,7 +577,8 @@ for path, (val, verify, retries, sleep) in winfo.items():
             The contents of the file as a string.
 
         Raises:
-            ErrorNotSupported: If the file does not exist.
+            ErrorNotSupported: The file does not exist.
+            ErrorPath: An I/O error occurred while reading the file (includes path information).
         """
 
         if path in self._cache:
@@ -592,8 +600,8 @@ for path, (val, verify, retries, sleep) in winfo.items():
                     val = fobj.read().strip()
                 except Error as err:
                     what = "" if not what else f" {what}"
-                    raise Error(f"Failed to read{what} from '{path}'{self._pman.hostmsg}\n"
-                                f"{err.indent(2)}") from err
+                    raise ErrorPath(f"Failed to read{what} from '{path}'{self._pman.hostmsg}\n"
+                                    f"{err.indent(2)}", path=path) from err
         except ErrorNotFound as err:
             if val_if_not_found is not None:
                 return val_if_not_found
@@ -617,8 +625,9 @@ for path, (val, verify, retries, sleep) in winfo.items():
             The integer value read from the file.
 
         Raises:
-            ErrorNotSupported: If the file does not exist.
-            ErrorBadFormat: If the file contents cannot be parsed as an integer.
+            ErrorNotSupported: The file does not exist.
+            ErrorBadFormat: The file contents cannot be parsed as an integer.
+            ErrorPath: An I/O error occurred while reading the file (includes path information).
         """
 
         val = self.read(path, what=what, val_if_not_found=val_if_not_found)
@@ -698,7 +707,8 @@ for path in paths:
                                                 f"{self._pman.hostmsg}")
                 else:
                     if val.startswith("ERROR: Failed to read file "):
-                        raise Error(f"Failed to read{what}'{self._pman.hostmsg}:\n  {val}")
+                        raise ErrorPath(f"Failed to read{what} from '{path}'{self._pman.hostmsg}:\n"
+                                        f"  {val}", path=path)
                     self.cache_add(path, val)
                     read_results[path] = val
         else:
@@ -791,7 +801,8 @@ for path in paths:
             Tuples of (path, value) for each file read.
 
         Raises:
-            ErrorNotSupported: If the file does not exist.
+            ErrorNotSupported: The file does not exist.
+            ErrorPath: An I/O error occurred while reading files (includes path information).
 
         Notes:
             - The order of yielded results matches the order of input paths.
@@ -837,8 +848,9 @@ for path in paths:
             Tuples of (path, value) for each file read, where value is an integer.
 
         Raises:
-            ErrorNotSupported: If the file does not exist.
-            ErrorBadFormat: If the file contents cannot be parsed as an integer.
+            ErrorNotSupported: The file does not exist.
+            ErrorBadFormat: The file contents cannot be parsed as an integer.
+            ErrorPath: An I/O error occurred while reading files (includes path information).
 
         Notes:
             - The order of yielded results matches the order of input paths.
@@ -867,7 +879,9 @@ for path in paths:
                   messages.
 
         Raises:
-            ErrorNotSupported: If the file does not exist.
+            ErrorNotSupported: The file does not exist.
+            ErrorPath: An I/O error occurred while writing to the file (includes path
+                       information).
         """
 
         if self._read_only:
@@ -891,7 +905,9 @@ for path in paths:
                   messages.
 
         Raises:
-            ErrorNotSupported: If the file does not exist.
+            ErrorNotSupported: The file does not exist.
+            ErrorPath: An I/O error occurred while writing to the file (includes path
+                       information).
         """
 
         int_val = Trivial.str_to_int(val, what=what)
@@ -918,8 +934,11 @@ for path in paths:
             sleep: Number of seconds to sleep between verification retries.
 
         Raises:
-            ErrorNotSupported: If the file does not exist.
-            ErrorVerifyFailed: If the value read from the file does not match the value written.
+            ErrorNotSupported: The file does not exist.
+            ErrorVerifyFailedPath: The value read from the file does not match the value written
+                                   (includes path information).
+            ErrorPath: An I/O error occurred while writing to the file (includes path
+                       information).
         """
 
         if self._read_only:
@@ -954,8 +973,11 @@ for path in paths:
             sleep: Number of seconds to sleep between retries.
 
         Raises:
-            ErrorNotSupported: If the sysfs file does not support the requested value.
-            ErrorVerifyFailed: If verification fails after all retries.
+            ErrorNotSupported: The sysfs file does not support the requested value.
+            ErrorVerifyFailedPath: Verification failed after all retries (includes path
+                                   information).
+            ErrorPath: An I/O error occurred while writing to the file (includes path
+                       information).
         """
 
         intval = Trivial.str_to_int(val, what=what)
@@ -1052,8 +1074,8 @@ for path in paths:
             raise Error(f"Unexpected path '{path}' in the error message:\n{stdout}")
 
         what = "" if not what else f" {what}"
-        raise Error(f"Failed to write value '{val}' to{what} sysfs file '{path}'"
-                    f"{self._pman.hostmsg}:\n{stdout}")
+        raise ErrorPath(f"Failed to write value '{val}' to{what} sysfs file '{path}'"
+                        f"{self._pman.hostmsg}:\n{stdout}", path=path)
 
     def _write_paths_optimized(self, paths: Iterable[Path], val: str, what: str = ""):
         """
@@ -1099,6 +1121,10 @@ for path in paths:
             val: The value to write to the files.
             what: Optional short description of what is being written, included in exception
                   messages.
+
+        Raises:
+            ErrorNotSupported: Any file does not exist.
+            ErrorPath: An I/O error occurred while writing to files (includes path information).
         """
 
         if self._read_only:
@@ -1138,6 +1164,10 @@ for path in paths:
             val: The integer value to write to the files.
             what: Optional short description of what is being written, included in exception
                   messages.
+
+        Raises:
+            ErrorNotSupported: Any file does not exist.
+            ErrorPath: An I/O error occurred while writing to files (includes path information).
         """
 
         intval = Trivial.str_to_int(val, what=what)
@@ -1165,6 +1195,11 @@ for path in paths:
                   messages.
             retries: Number of times to retry verification if it fails.
             sleep: Number of seconds to sleep between verification retries.
+
+        Raises:
+            ErrorVerifyFailedPath: Verification of a write operation failed (includes path
+                                   information).
+            ErrorPath: An I/O error occurred while writing to files (includes path information).
         """
 
         if self._read_only:
@@ -1224,6 +1259,11 @@ for path in paths:
                   messages.
             retries: Number of times to retry verification if it fails.
             sleep: Number of seconds to sleep between verification retries.
+
+        Raises:
+            ErrorVerifyFailedPath: Verification of a write operation failed (includes path
+                                   information).
+            ErrorPath: An I/O error occurred while writing to files (includes path information).
         """
 
         intval = Trivial.str_to_int(val, what=what)

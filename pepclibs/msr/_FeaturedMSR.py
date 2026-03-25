@@ -185,7 +185,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
                  provided, a new MSR object will be created.
 
         Raises:
-            ErrorNotSupported: If CPU vendor is not supported or if the CPU does not the MSR.
+            ErrorNotSupported: CPU vendor is not supported or the CPU does not have the MSR.
         """
 
         _LOG.debug("Initializing MSR %s (0x%x)", self.regname, self.regaddr)
@@ -340,7 +340,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
             cpus: CPU numbers to check support for (the caller must validate CPU numbers).
 
         Raises:
-            ErrorNotSupported: If the feature is not supported on one or more of the specified CPUs.
+            ErrorNotSupported: The feature is not supported on one or more of the specified CPUs.
         """
 
         if fname not in self._features:

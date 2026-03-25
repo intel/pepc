@@ -64,6 +64,10 @@ class SimpleMSR(ClassHelpers.SimpleCloseContext):
         Args:
             pman: The process manager object that defines the target host. If not provided, a local
                   process manager will be used.
+
+        Raises:
+            ErrorPermissionDenied: No permissions to access MSRs.
+            ErrorNotSupported: MSR access is not supported.
         """
 
         if pman:
@@ -352,6 +356,10 @@ for cpu in cpus:
             Tuple of (cpu, regval):
                 cpu: CPU number from which the MSR was read.
                 regval: Value read from the MSR.
+
+        Raises:
+            ErrorPerCPUPath: An I/O error occurred while reading the MSR (includes CPU and path
+                             information).
         """
 
         if DISABLE_IO_OPTIMIZATIONS or \
@@ -373,6 +381,10 @@ for cpu in cpus:
 
         Returns:
             The value of the MSR as an integer.
+
+        Raises:
+            ErrorPerCPUPath: An I/O error occurred while reading the MSR (includes CPU and path
+                             information).
         """
 
         for _, regval in self.cpus_read(regaddr, (cpu,)):
@@ -553,6 +565,10 @@ for cpu in cpus:
             regval: The value to write to the MSR.
             cpus: CPU numbers to write the MSR on. The numbers have to be validated and normalized
                   by the caller.
+
+        Raises:
+            ErrorPerCPUPath: An I/O error occurred while writing to the MSR (includes CPU and path
+                             information).
         """
 
         if DISABLE_IO_OPTIMIZATIONS or \
@@ -571,6 +587,10 @@ for cpu in cpus:
             regaddr: The address of the MSR to write to.
             regval: The value to write to the MSR.
             cpu: CPU number to write the MSR on.
+
+        Raises:
+            ErrorPerCPUPath: An I/O error occurred while writing to the MSR (includes CPU and path
+                             information).
         """
 
         self.cpus_write(regaddr, regval, (cpu,))

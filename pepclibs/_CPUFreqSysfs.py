@@ -20,7 +20,9 @@ from pathlib import Path
 from pepclibs import CPUInfo, _SysfsIO
 from pepclibs.helperlibs import Logging, LocalProcessManager, ClassHelpers, Trivial, KernelVersion
 from pepclibs.helperlibs import Human
-from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorVerifyFailed
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
+from pepclibs.helperlibs.Exceptions import ErrorPath, ErrorPerCPUPath
+from pepclibs.helperlibs.Exceptions import ErrorVerifyFailedPath, ErrorVerifyFailedPerCPUPath
 from pepclibs.helperlibs.Exceptions import ErrorOutOfRange, ErrorBadOrder
 
 if typing.TYPE_CHECKING:
@@ -213,6 +215,28 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
                                                enable_cache=self._enable_cache)
         return self._hwp_msr_obj
 
+    def _extract_cpu_from_path(self, path: Path, basename: str) -> int:
+        """
+        Extract CPU number from a sysfs path.
+
+        Args:
+            path: The sysfs path.
+            basename: The directory name prefix ("policy" or "cpu").
+
+        Returns:
+            The CPU number extracted from the path.
+        """
+
+        if basename == "policy":
+            # e.g., /sys/.../policy42/... -> policy42
+            dir_name = path.parent.name
+        else:  # "cpu"
+            # e.g., /sys/.../cpu42/cpufreq/... -> cpu42
+            dir_name = path.parent.parent.name
+
+        cpu_str = dir_name.replace(basename, "")
+        return Trivial.str_to_int(cpu_str, what=f"CPU number from path '{path}'")
+
     def _get_policy_sysfs_path(self, cpu: int, fname: str) -> Path:
         """
         Construct and return the sysfs path for a specific cpufreq policy file.
@@ -260,6 +284,23 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
         self._path_cache[ftype][cpu][limit] = path
         return path
 
+    def __get_freq_sysfs(self,
+                         ftype: _SysfsFileType,
+                         cpus: Sequence[int],
+                         limit: bool = False) -> Generator[tuple[int, int], None, None]:
+        """Implement '_get_freq_sysfs()'. Arguments are the same."""
+
+        self._warn_no_ecores_bug()
+
+        paths_iter = (self._get_cpu_freq_sysfs_path(ftype, cpu, limit=limit) for cpu in cpus)
+
+        for path, freq in self._sysfs_io.read_paths_int(paths_iter, what=f"{ftype} frequency"):
+            # Extract CPU number from path (e.g., /sys/.../policy42/... -> 42).
+            cpu = self._extract_cpu_from_path(path, "policy")
+
+            # The frequency value is in kHz in sysfs, convert to Hz.
+            yield cpu, freq * 1000
+
     def _get_freq_sysfs(self,
                         ftype: _SysfsFileType,
                         cpus: Sequence[int],
@@ -276,19 +317,17 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
         Yields:
             Tuple of (cpu, frequency), where 'cpu' is the CPU number and 'frequency' is the
             frequency in Hz.
+
+        Raises:
+            ErrorPerCPUPath: An I/O error occurred. The exception includes the CPU number and the
+                             sysfs path that caused the error.
         """
 
-        self._warn_no_ecores_bug()
-
-        paths_iter = (self._get_cpu_freq_sysfs_path(ftype, cpu, limit=limit) for cpu in cpus)
-
-        for path, freq in self._sysfs_io.read_paths_int(paths_iter, what=f"{ftype} frequency"):
-            # Extract CPU number from path (e.g., /sys/.../policy42/... -> 42).
-            policy_dir = path.parent.name  # e.g., "policy42"
-            cpu = int(policy_dir.replace("policy", ""))
-
-            # The frequency value is in kHz in sysfs, convert to Hz.
-            yield cpu, freq * 1000
+        try:
+            yield from self.__get_freq_sysfs(ftype, cpus, limit=limit)
+        except ErrorPath as err:
+            cpu = self._extract_cpu_from_path(err.path, "policy")
+            raise ErrorPerCPUPath(str(err), cpu=cpu, path=err.path) from err
 
     def get_min_freq(self, cpus: Sequence[int]) -> Generator[tuple[int, int], None, None]:
         """
@@ -304,6 +343,8 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         Raises:
             ErrorNotSupported: If the CPU frequency sysfs file does not exist.
+            ErrorPerCPUPath: An I/O error occurred. The exception includes the CPU number and the
+                             sysfs path that caused the error.
         """
 
         yield from self._get_freq_sysfs("min", cpus)
@@ -322,6 +363,8 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         Raises:
             ErrorNotSupported: If the CPU frequency sysfs file does not exist.
+            ErrorPerCPUPath: An I/O error occurred. The exception includes the CPU number and the
+                             sysfs path that caused the error.
         """
 
         yield from self._get_freq_sysfs("max", cpus)
@@ -340,6 +383,8 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         Raises:
             ErrorNotSupported: If the CPU frequency sysfs file does not exist.
+            ErrorPerCPUPath: An I/O error occurred. The exception includes the CPU number and the
+                             sysfs path that caused the error.
         """
 
         yield from self._get_freq_sysfs("current", cpus)
@@ -358,6 +403,8 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         Raises:
             ErrorNotSupported: If the CPU frequency sysfs file does not exist.
+            ErrorPerCPUPath: An I/O error occurred. The exception includes the CPU number and the
+                             sysfs path that caused the error.
         """
 
         yield from self._get_freq_sysfs("min", cpus, limit=True)
@@ -376,6 +423,8 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         Raises:
             ErrorNotSupported: If the CPU frequency sysfs file does not exist.
+            ErrorPerCPUPath: An I/O error occurred. The exception includes the CPU number and the
+                             sysfs path that caused the error.
         """
 
         yield from self._get_freq_sysfs("max", cpus, limit=True)
@@ -439,25 +488,8 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
                     raise ErrorBadOrder(f"{name} value of '{freq_str}' is less than the "
                                         f"currently configured minimum frequency of {min_freq_str}")
 
-    def _set_freq_sysfs(self, freq: int, ftype: _SysfsFileType, cpus: Sequence[int]):
-        """
-        Set the CPU frequency for the specified CPUs using the Linux "cpufreq" sysfs interface.
-
-        Args:
-            freq: Target CPU frequency in Hz.
-            ftype: The CPU frequency sysfs file type.
-            cpus: CPU numbers to set the frequency for.
-
-        Raises:
-            ErrorNotSupported: If the CPU frequency sysfs file does not exist.
-            ErrorVerifyFailed: If the frequency could not be set or verified after retries. The
-                               exception object will have an additional 'cpu' attribute indicating
-                               the CPU number that failed, the 'expected' attribute will contain the
-                               expected value, and the 'actual' attribute will contain the actual
-                               value read from sysfs.
-            ErrorOutOfRange: If the CPU frequency value is outside the allowed range.
-            ErrorBadOrder: If min. CPU frequency is greater than max. CPU frequency and vice versa.
-        """
+    def __set_freq_sysfs(self, freq: int, ftype: _SysfsFileType, cpus: Sequence[int]):
+        """Implement '_set_freq_sysfs()'. Arguments are the same."""
 
         self._warn_no_ecores_bug()
 
@@ -469,22 +501,41 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         paths_iter = (self._get_cpu_freq_sysfs_path(ftype, cpu) for cpu in cpus)
 
-        try:
-            if not self._verify:
-                self._sysfs_io.write_paths_int(paths_iter, freq // 1000, what=what)
-            else:
-                self._sysfs_io.write_paths_verify_int(paths_iter, freq // 1000, what=what,
-                                                       retries=retries, sleep=sleep)
-        except ErrorVerifyFailed as err:
-            # Extract CPU number from path (e.g., /sys/.../policy42/... -> 42).
-            if not hasattr(err, "path"):
-                raise
+        if not self._verify:
+            self._sysfs_io.write_paths_int(paths_iter, freq // 1000, what=what)
+        else:
+            self._sysfs_io.write_paths_verify_int(paths_iter, freq // 1000, what=what,
+                                                   retries=retries, sleep=sleep)
 
-            path: Path = getattr(err, "path")
-            policy_dir = path.parent.name  # e.g., "policy42"
-            cpu = int(policy_dir.replace("policy", ""))
-            setattr(err, "cpu", cpu)
-            raise err
+    def _set_freq_sysfs(self, freq: int, ftype: _SysfsFileType, cpus: Sequence[int]):
+        """
+        Set the CPU frequency for the specified CPUs using the Linux "cpufreq" sysfs interface.
+
+        Args:
+            freq: Target CPU frequency in Hz.
+            ftype: The CPU frequency sysfs file type.
+            cpus: CPU numbers to set the frequency for.
+
+        Raises:
+            ErrorNotSupported: If the CPU frequency sysfs file does not exist.
+            ErrorPerCPUPath: An I/O error occurred. The exception includes the CPU number and the
+                             sysfs path that caused the error.
+            ErrorVerifyFailedPerCPUPath: The frequency could not be set or verified after retries.
+                                         The exception includes the CPU number, sysfs path, expected
+                                         value, and actual value read from sysfs.
+            ErrorOutOfRange: If the CPU frequency value is outside the allowed range.
+            ErrorBadOrder: If min. CPU frequency is greater than max. CPU frequency and vice versa.
+        """
+
+        try:
+            self.__set_freq_sysfs(freq, ftype, cpus)
+        except ErrorVerifyFailedPath as err:
+            cpu = self._extract_cpu_from_path(err.path, "policy")
+            raise ErrorVerifyFailedPerCPUPath(str(err), cpu=cpu, path=err.path,
+                                              expected=err.expected, actual=err.actual) from err
+        except ErrorPath as err:
+            cpu = self._extract_cpu_from_path(err.path, "policy")
+            raise ErrorPerCPUPath(str(err), cpu=cpu, path=err.path) from err
 
     def set_min_freq(self, freq: int, cpus: Sequence[int]):
         """
@@ -497,11 +548,11 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         Raises:
             ErrorNotSupported: If the CPU frequency sysfs file does not exist.
-            ErrorVerifyFailed: If the frequency could not be set or verified after retries. The
-                               exception object will have an additional 'cpu' attribute indicating
-                               the CPU number that failed, the 'expected' attribute will contain the
-                               expected value, and the 'actual' attribute will contain the actual
-                               value read from sysfs.
+            ErrorPerCPUPath: An I/O error occurred. The exception includes the CPU number and the
+                             sysfs path that caused the error.
+            ErrorVerifyFailedPerCPUPath: The frequency could not be set or verified after retries.
+                                         The exception includes the CPU number, sysfs path, expected
+                                         value, and actual value read from sysfs.
             ErrorOutOfRange: If the CPU frequency value is outside the allowed range.
             ErrorBadOrder: If min. CPU frequency is greater than max. CPU frequency and vice versa.
         """
@@ -519,16 +570,39 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         Raises:
             ErrorNotSupported: If the CPU frequency sysfs file does not exist.
-            ErrorVerifyFailed: If the frequency could not be set or verified after retries. The
-                               exception object will have an additional 'cpu' attribute indicating
-                               the CPU number that failed, the 'expected' attribute will contain the
-                               expected value, and the 'actual' attribute will contain the actual
-                               value read from sysfs.
+            ErrorPerCPUPath: An I/O error occurred. The exception includes the CPU number and the
+                             sysfs path that caused the error.
+            ErrorVerifyFailedPerCPUPath: The frequency could not be set or verified after retries.
+                                         The exception includes the CPU number, sysfs path, expected
+                                         value, and actual value read from sysfs.
             ErrorOutOfRange: If the CPU frequency value is outside the allowed range.
             ErrorBadOrder: If min. CPU frequency is greater than max. CPU frequency and vice versa.
         """
 
         self._set_freq_sysfs(freq, "max", cpus)
+
+    def __get_available_frequencies(self,
+                                    cpus: Sequence[int]) -> Generator[tuple[int, list[int]],
+                                                                      None, None]:
+        """Implement 'get_available_frequencies()'. Arguments are the same."""
+
+        fname = "scaling_available_frequencies"
+        paths_iter = (self._get_policy_sysfs_path(cpu, fname) for cpu in cpus)
+
+        for path, val in self._sysfs_io.read_paths(paths_iter, what="available CPU frequencies"):
+            # Extract CPU number from path (e.g., /sys/.../policy42/... -> 42).
+            cpu = self._extract_cpu_from_path(path, "policy")
+
+            freqs: list[int] = []
+            for freq_str in val.split():
+                try:
+                    freq = Trivial.str_to_int(freq_str, what="CPU frequency value")
+                    freqs.append(freq * 1000)
+                except Error as err:
+                    raise Error(f"Bad contents of file '{path}'{self._pman.hostmsg}\n"
+                                f"{err.indent(2)}") from err
+
+            yield cpu, sorted(freqs)
 
     def get_available_frequencies(self,
                                   cpus: Sequence[int]) -> Generator[tuple[int, list[int]],
@@ -548,26 +622,28 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         Raises:
             ErrorNotSupported: If the frequencies sysfs file is not present.
+            ErrorPerCPUPath: An I/O error occurred. The exception includes the CPU number and the
+                             sysfs path that caused the error.
         """
 
-        fname = "scaling_available_frequencies"
-        paths_iter = (self._get_policy_sysfs_path(cpu, fname) for cpu in cpus)
+        try:
+            yield from self.__get_available_frequencies(cpus)
+        except ErrorPath as err:
+            cpu = self._extract_cpu_from_path(err.path, "policy")
+            raise ErrorPerCPUPath(str(err), cpu=cpu, path=err.path) from err
 
-        for path, val in self._sysfs_io.read_paths(paths_iter, what="available CPU frequencies"):
+    def __get_base_freq_intel_pstate(self,
+                                     cpus: Sequence[int]) -> Generator[tuple[int, int], None, None]:
+        """Implement '_get_base_freq_intel_pstate()'. Arguments are the same."""
+
+        paths_iter = (self._get_policy_sysfs_path(cpu, "base_frequency") for cpu in cpus)
+
+        for path, freq in self._sysfs_io.read_paths_int(paths_iter, what="base frequency"):
             # Extract CPU number from path (e.g., /sys/.../policy42/... -> 42).
-            policy_dir = path.parent.name  # e.g., "policy42"
-            cpu = int(policy_dir.replace("policy", ""))
+            cpu = self._extract_cpu_from_path(path, "policy")
 
-            freqs: list[int] = []
-            for freq_str in val.split():
-                try:
-                    freq = Trivial.str_to_int(freq_str, what="CPU frequency value")
-                    freqs.append(freq * 1000)
-                except Error as err:
-                    raise Error(f"Bad contents of file '{path}'{self._pman.hostmsg}\n"
-                                f"{err.indent(2)}") from err
-
-            yield cpu, sorted(freqs)
+            # The frequency value is in kHz in sysfs, convert to Hz.
+            yield cpu, freq * 1000
 
     def _get_base_freq_intel_pstate(self,
                                     cpus: Sequence[int]) -> Generator[tuple[int, int], None, None]:
@@ -580,14 +656,33 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
         Yields:
             Tuple of (cpu, frequency), where 'cpu' is the CPU number and 'frequency' is the base
             frequency in Hz.
+
+        Raises:
+            ErrorPerCPUPath: An I/O error occurred. The exception includes the CPU number and the
+                             sysfs path that caused the error.
         """
 
-        paths_iter = (self._get_policy_sysfs_path(cpu, "base_frequency") for cpu in cpus)
+        try:
+            yield from self.__get_base_freq_intel_pstate(cpus)
+        except ErrorPath as err:
+            cpu = self._extract_cpu_from_path(err.path, "policy")
+            raise ErrorPerCPUPath(str(err), cpu=cpu, path=err.path) from err
+
+    def __get_base_freq_bios_limit(self,
+                                   cpus: Sequence[int]) -> Generator[tuple[int, int], None, None]:
+        """Implement '_get_base_freq_bios_limit()'. Arguments are the same."""
+
+        paths_iter = (self._sysfs_base / f"cpu{cpu}/cpufreq/bios_limit" for cpu in cpus)
 
         for path, freq in self._sysfs_io.read_paths_int(paths_iter, what="base frequency"):
-            # Extract CPU number from path (e.g., /sys/.../policy42/... -> 42).
-            policy_dir = path.parent.name  # e.g., "policy42"
-            cpu = int(policy_dir.replace("policy", ""))
+            # Extract CPU number from path (e.g., /sys/.../cpu42/cpufreq/bios_limit -> 42).
+            cpu = self._extract_cpu_from_path(path, "cpu")
+
+            # On Intel systems that support turbo, the 'bios_limit' file includes the turbo
+            # activation frequency, which is base frequency + 1MHz. So we need to subtract 1MHz from
+            # the value read from the 'bios_limit' file to get the actual base frequency.
+            if freq % 10000:
+                freq -= 1000
 
             # The frequency value is in kHz in sysfs, convert to Hz.
             yield cpu, freq * 1000
@@ -603,23 +698,17 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
         Yields:
             Tuple of (cpu, frequency), where 'cpu' is the CPU number and 'frequency' is the base
             frequency in Hz.
+
+        Raises:
+            ErrorPerCPUPath: An I/O error occurred. The exception includes the CPU number and the
+                             sysfs path that caused the error.
         """
 
-        paths_iter = (self._sysfs_base / f"cpu{cpu}/cpufreq/bios_limit" for cpu in cpus)
-
-        for path, freq in self._sysfs_io.read_paths_int(paths_iter, what="base frequency"):
-            # Extract CPU number from path (e.g., /sys/.../cpu42/cpufreq/bios_limit -> 42).
-            cpu_dir = path.parent.parent.name  # e.g., "cpu42"
-            cpu = int(cpu_dir.replace("cpu", ""))
-
-            # On Intel systems that support turbo, the 'bios_limit' file includes the turbo
-            # activation frequency, which is base frequency + 1MHz. So we need to subtract 1MHz from
-            # the value read from the 'bios_limit' file to get the actual base frequency.
-            if freq % 10000:
-                freq -= 1000
-
-            # The frequency value is in kHz in sysfs, convert to Hz.
-            yield cpu, freq * 1000
+        try:
+            yield from self.__get_base_freq_bios_limit(cpus)
+        except ErrorPath as err:
+            cpu = self._extract_cpu_from_path(err.path, "cpu")
+            raise ErrorPerCPUPath(str(err), cpu=cpu, path=err.path) from err
 
     def get_base_freq(self, cpus: Sequence[int]) -> Generator[tuple[int, int], None, None]:
         """
@@ -634,6 +723,8 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         Raises:
             ErrorNotSupported: If the base frequency sysfs files do not exist.
+            ErrorPerCPUPath: An I/O error occurred. The exception includes the CPU number and the
+                             sysfs path that caused the error.
         """
 
         # Try intel_pstate method first, fall back to bios_limit if not supported.
@@ -678,30 +769,36 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
         fname = "scaling_driver"
         paths_iter = (self._get_policy_sysfs_path(cpu, fname) for cpu in cpus)
 
-        for path, name in self._sysfs_io.read_paths(paths_iter, what=what, val_if_not_found=""):
-            # Extract CPU number from path (e.g., /sys/.../policy42/... -> 42).
-            policy_dir = path.parent.name  # e.g., "policy42"
-            cpu = int(policy_dir.replace("policy", ""))
+        try:
+            for path, name in self._sysfs_io.read_paths(paths_iter, what=what, val_if_not_found=""):
+                # Extract CPU number from path (e.g., /sys/.../policy42/... -> 42).
+                policy_dir = path.parent.name  # e.g., "policy42"
+                cpu = int(policy_dir.replace("policy", ""))
 
-            if not name:
-                # The 'intel_pstate' driver may be in 'off' mode, in which case the
-                # 'scaling_driver' sysfs file does not exist. Check if the 'intel_pstate'
-                # sysfs directory exists to confirm the driver is present.
-                if intel_pstate_exists is None:
-                    intel_pstate_exists = self._pman.exists(self._sysfs_base / "intel_pstate")
+                if not name:
+                    # The 'intel_pstate' driver may be in 'off' mode, in which case the
+                    # 'scaling_driver' sysfs file does not exist. Check if the 'intel_pstate'
+                    # sysfs directory exists to confirm the driver is present.
+                    if intel_pstate_exists is None:
+                        intel_pstate_exists = self._pman.exists(self._sysfs_base / "intel_pstate")
 
-                if intel_pstate_exists:
+                    if intel_pstate_exists:
+                        name = "intel_pstate"
+                    else:
+                        raise ErrorNotSupported(f"Failed to read {what} from '{path}'"
+                                                f"{self._pman.hostmsg}: File does not exist")
+                elif name == "intel_cpufreq":
+                    # The 'intel_pstate' driver reports itself as 'intel_pstate' in active mode
+                    # and 'intel_cpufreq' in passive mode. We always return 'intel_pstate' to
+                    # avoid user confusion.
                     name = "intel_pstate"
-                else:
-                    raise ErrorNotSupported(f"Failed to read {what} from '{path}'"
-                                            f"{self._pman.hostmsg}: File does not exist")
-            elif name == "intel_cpufreq":
-                # The 'intel_pstate' driver reports itself as 'intel_pstate' in active mode
-                # and 'intel_cpufreq' in passive mode. We always return 'intel_pstate' to
-                # avoid user confusion.
-                name = "intel_pstate"
 
-            yield cpu, name
+                yield cpu, name
+        except ErrorPath as err:
+            # Extract CPU number from path and convert to ErrorPerCPUPath.
+            policy_dir = err.path.parent.name  # e.g., "policy42"
+            cpu = int(policy_dir.replace("policy", ""))
+            raise ErrorPerCPUPath(str(err), cpu=cpu, path=err.path) from err
 
     def get_intel_pstate_mode(self,
                               cpus: Sequence[int]) -> Generator[tuple[int, str], None, None]:
@@ -915,6 +1012,20 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             path = self._get_cpu_freq_sysfs_path("max", cpu, limit=True)
             self._sysfs_io.cache_remove(path)
 
+    def __get_governor(self, cpus: Sequence[int]) -> Generator[tuple[int, str], None, None]:
+        """Implement 'get_governor()'. Arguments are the same."""
+
+        what = "CPU frequency governor"
+
+        fname = "scaling_governor"
+        paths_iter = (self._get_policy_sysfs_path(cpu, fname) for cpu in cpus)
+
+        for path, name in self._sysfs_io.read_paths(paths_iter, what=what):
+            # Extract CPU number from path (e.g., /sys/.../policy42/... -> 42).
+            cpu = self._extract_cpu_from_path(path, "policy")
+
+            yield cpu, name
+
     def get_governor(self, cpus: Sequence[int]) -> Generator[tuple[int, str], None, None]:
         """
         Retrieve and yield the Linux CPU frequency governor name for specified CPUs.
@@ -928,19 +1039,30 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         Raises:
             ErrorNotSupported: If the governor information cannot be determined.
+            ErrorPerCPUPath: An I/O error occurred. The exception includes the CPU number and the
+                             sysfs path that caused the error.
         """
 
-        what = "CPU frequency governor"
+        try:
+            yield from self.__get_governor(cpus)
+        except ErrorPath as err:
+            cpu = self._extract_cpu_from_path(err.path, "policy")
+            raise ErrorPerCPUPath(str(err), cpu=cpu, path=err.path) from err
 
-        fname = "scaling_governor"
+    def __get_available_governors(self, cpus: Sequence[int]) -> \
+                                                    Generator[tuple[int, list[str]], None, None]:
+        """Implement 'get_available_governors()'. Arguments are the same."""
+
+        what = "available CPU frequency governors"
+
+        fname = "scaling_available_governors"
         paths_iter = (self._get_policy_sysfs_path(cpu, fname) for cpu in cpus)
 
-        for path, name in self._sysfs_io.read_paths(paths_iter, what=what):
+        for path, names in self._sysfs_io.read_paths(paths_iter, what=what):
             # Extract CPU number from path (e.g., /sys/.../policy42/... -> 42).
-            policy_dir = path.parent.name  # e.g., "policy42"
-            cpu = int(policy_dir.replace("policy", ""))
+            cpu = self._extract_cpu_from_path(path, "policy")
 
-            yield cpu, name
+            yield cpu, Trivial.split_csv_line(names, sep=" ")
 
     def get_available_governors(self, cpus: Sequence[int]) -> \
                                                     Generator[tuple[int, list[str]], None, None]:
@@ -957,31 +1079,18 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         Raises:
             ErrorNotSupported: If the governors sysfs file is not present.
+            ErrorPerCPUPath: An I/O error occurred. The exception includes the CPU number and the
+                             sysfs path that caused the error.
         """
 
-        what = "available CPU frequency governors"
+        try:
+            yield from self.__get_available_governors(cpus)
+        except ErrorPath as err:
+            cpu = self._extract_cpu_from_path(err.path, "policy")
+            raise ErrorPerCPUPath(str(err), cpu=cpu, path=err.path) from err
 
-        fname = "scaling_available_governors"
-        paths_iter = (self._get_policy_sysfs_path(cpu, fname) for cpu in cpus)
-
-        for path, names in self._sysfs_io.read_paths(paths_iter, what=what):
-            # Extract CPU number from path (e.g., /sys/.../policy42/... -> 42).
-            policy_dir = path.parent.name  # e.g., "policy42"
-            cpu = int(policy_dir.replace("policy", ""))
-
-            yield cpu, Trivial.split_csv_line(names, sep=" ")
-
-    def set_governor(self, governor: str, cpus: Sequence[int]):
-        """
-        Set the CPU frequency governor for the specified CPUs.
-
-        Args:
-            governor: Name of the governor to set.
-            cpus: CPU numbers to set the governor for (the caller must validate CPU numbers).
-
-        Raises:
-            ErrorNotSupported: If the CPU governors sysfs files do not exist.
-        """
+    def __set_governor(self, governor: str, cpus: Sequence[int]):
+        """Implement 'set_governor()'. Arguments are the same."""
 
         what = "CPU frequency governor"
         paths_to_write = []
@@ -999,3 +1108,23 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
         # Write to all governor files in one batch operation.
         if paths_to_write:
             self._sysfs_io.write_paths(paths_to_write, governor, what=what)
+
+    def set_governor(self, governor: str, cpus: Sequence[int]):
+        """
+        Set the CPU frequency governor for the specified CPUs.
+
+        Args:
+            governor: Name of the governor to set.
+            cpus: CPU numbers to set the governor for (the caller must validate CPU numbers).
+
+        Raises:
+            ErrorNotSupported: If the CPU governors sysfs files do not exist.
+            ErrorPerCPUPath: An I/O error occurred. The exception includes the CPU number and the
+                             sysfs path that caused the error.
+        """
+
+        try:
+            self.__set_governor(governor, cpus)
+        except ErrorPath as err:
+            cpu = self._extract_cpu_from_path(err.path, "policy")
+            raise ErrorPerCPUPath(str(err), cpu=cpu, path=err.path) from err
