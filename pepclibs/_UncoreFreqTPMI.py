@@ -15,7 +15,6 @@ via TPMI.
 #       Check AUTONOMOUS_UFS_DISABLED before using ELC
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
-import math
 import typing
 from pepclibs import TPMI, _UncoreFreqBase
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
@@ -307,7 +306,7 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
 
         # TPMI represents the ELC threshold as an integer between 0 and 127, where 0 corresponds to
         # 0% and 127 corresponds to 100%.
-        return math.ceil((raw_threshold * 100.0) / 127)
+        return (raw_threshold * 100 + 126) // 127  # ceil division
 
     def _elc_threshold_percent2raw(self, threshold: int) -> int:
         """
@@ -322,7 +321,7 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
 
         # TPMI represents the ELC threshold as an integer between 0 and 127, where 0 corresponds to
         # 0% and 127 corresponds to 100%.
-        return int((threshold * 127.0) / 100)
+        return (threshold * 127) // 100            # floor division
 
     def _get_elc_threshold_dies(self,
                                 thrtype: _ELCThresholdType,
