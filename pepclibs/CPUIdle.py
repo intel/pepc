@@ -16,7 +16,6 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import re
 import typing
-from typing import cast
 import contextlib
 from pathlib import Path
 from pepclibs.helperlibs import Logging, LocalProcessManager, Trivial, ClassHelpers
@@ -24,7 +23,7 @@ from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorNotFou
 from pepclibs import CPUInfo, _PerCPUCache
 
 if typing.TYPE_CHECKING:
-    from typing import Literal, TypedDict, Union, Generator, Iterable, Final, Sequence
+    from typing import cast, Literal, TypedDict, Union, Generator, Iterable, Final, Sequence
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
     class ReqCStateInfoTypedDict(TypedDict, total=False):

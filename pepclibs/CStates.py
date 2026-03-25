@@ -15,18 +15,16 @@ Provide a capability of retrieving and setting S-state related properties.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
-from typing import cast
 from pepclibs import _PropsClassBase, CPUIdle
 from pepclibs.CStatesVars import PROPS
 from pepclibs.helperlibs import ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorNotFound
 from pepclibs.msr import PowerCtl, PCStateConfigCtl
 
-# pylint: disable=unused-import
 from pepclibs._PropsClassBase import ErrorTryAnotherMechanism
 
 if typing.TYPE_CHECKING:
-    from typing import Generator, Literal, Iterable, Sequence, Union
+    from typing import cast, Generator, Literal, Iterable, Sequence, Union
     from pepclibs import CPUInfo
     from pepclibs.msr import MSR
     from pepclibs.msr._FeaturedMSR import FeatureValueType
@@ -229,7 +227,10 @@ class CStates(_PropsClassBase.PropsClassBase):
             # values being the limit values.
             limits = list(pcstatectl.features["pkg_cstate_limit"]["vals"])
             for cpu in cpus:
-                yield cpu, cast(list[str], limits)
+                if typing.TYPE_CHECKING:
+                    yield cpu, cast(list[str], limits)
+                else:
+                    yield cpu, limits
 
     def _get_cpuidle_prop(self,
                           pname: str,
@@ -298,7 +299,11 @@ class CStates(_PropsClassBase.PropsClassBase):
 
         if mname == "sysfs":
             if pname == "governor":
-                self._get_cpuidle().set_current_governor(cast(str, val))
+                if typing.TYPE_CHECKING:
+                    _value = cast(str, val)
+                else:
+                    _value = val
+                self._get_cpuidle().set_current_governor(_value)
                 return
 
         raise Error(f"BUG: Unsupported property '{pname}'")

@@ -14,7 +14,6 @@ Provide a capability of retrieving and setting uncore-related properties.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
-from typing import cast
 import statistics
 from pepclibs import _PropsClassBase
 from pepclibs.UncoreVars import PROPS
@@ -25,7 +24,7 @@ from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs._PropsClassBase import ErrorTryAnotherMechanism, ErrorUsePerCPU
 
 if typing.TYPE_CHECKING:
-    from typing import Generator, Union, Sequence
+    from typing import cast, Generator, Union, Sequence
     from pepclibs import _SysfsIO, _UncoreFreqSysfs, _UncoreFreqTPMI
     from pepclibs.CPUInfo import CPUInfo
     from pepclibs.msr import MSR
@@ -473,11 +472,23 @@ class Uncore(_PropsClassBase.PropsClassBase):
             raise Error(f"BUG: Unexpected mechanism '{mname}'")
 
         if pname == "elc_low_threshold":
-            uncfreq_obj.set_elc_low_threshold_dies(cast(int, val), dies)
+            if typing.TYPE_CHECKING:
+                _val_int = cast(int, val)
+            else:
+                _val_int = val
+            uncfreq_obj.set_elc_low_threshold_dies(_val_int, dies)
         elif pname == "elc_high_threshold":
-            uncfreq_obj.set_elc_high_threshold_dies(cast(int, val), dies)
+            if typing.TYPE_CHECKING:
+                _val_int = cast(int, val)
+            else:
+                _val_int = val
+            uncfreq_obj.set_elc_high_threshold_dies(_val_int, dies)
         elif pname == "elc_high_threshold_status":
-            uncfreq_obj.set_elc_high_threshold_status_dies(cast(bool, val), dies)
+            if typing.TYPE_CHECKING:
+                _val_bool = cast(bool, val)
+            else:
+                _val_bool = val
+            uncfreq_obj.set_elc_high_threshold_status_dies(_val_bool, dies)
         else:
             raise Error(f"BUG: Unexpected uncore ELC threshold property {pname}")
 
