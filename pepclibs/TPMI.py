@@ -1900,7 +1900,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         # Version not in cache, read it from TPMI registers.
         fdict = self._get_fdict(fname)
 
-        # Find the register containing INTERFACE_VERSION
+        # Find the register containing INTERFACE_VERSION.
         version_regname = None
         version_bfdict = None
         for regname, regdict in fdict.items():

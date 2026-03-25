@@ -11,7 +11,6 @@ Provide functionality for reading and modifying uncore frequency and other prope
 via TPMI.
 """
 
-# TODO: Check AUTONOMOUS_UFS_DISABLED before using ELC
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
@@ -68,14 +67,17 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
 
         self._tpmi: TPMI.TPMI = cpuinfo.get_dieinfo().get_tpmi()
 
-        # Verify TPMI interface version. Both uncore frequency control and ELC require version 0.2
-        # or later. Check one die during initialization to fail early. Assume all dies have the
-        # same version.
+        # Verify TPMI interface version and check if ELC is enabled. Both uncore frequency control
+        # and ELC require version 0.2 or later. ELC is disabled if the AUTONOMOUS_UFS_DISABLED bit
+        # is set (it may be disabled in BIOS or not supported at all).
+        #
+        # Assume all dies have the same version and ELC enabled status (optimization).
         dies_info = self._cpuinfo.get_all_dies_info()
         for _, pkg_dies in dies_info.items():
             for _, die_info in pkg_dies.items():
                 addr = die_info["addr"]
                 instance = die_info["instance"]
+                cluster = die_info["cluster"]
                 major, minor = self._tpmi.get_version("uncore", addr, instance)
 
                 if major < 0 or (major == 0 and minor < 2):
@@ -83,6 +85,11 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
                         f"Uncore frequency control via TPMI is not supported{self._pman.hostmsg}: "
                         f"TPMI interface version is {major}.{minor}, but version 0.2 or later is "
                         f"required")
+
+                autonomous_disabled = self._tpmi.read_ufs_register(addr, instance, cluster,
+                                                                   "UFS_HEADER",
+                                                                   bfname="AUTONOMOUS_UFS_DISABLED")
+                self._elc_enabled = not bool(autonomous_disabled)
                 break
             break
 
@@ -115,6 +122,19 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
         cluster = die_info["cluster"]
 
         return addr, instance, cluster
+
+    def _check_elc_enabled(self):
+        """
+        Check if ELC (Efficiency Latency Control) is enabled.
+
+        Raises:
+            ErrorNotSupported: If ELC is disabled because AUTONOMOUS_UFS_DISABLED is set.
+        """
+
+        if not self._elc_enabled:
+            raise ErrorNotSupported(f"ELC is disabled{self._pman.hostmsg}: the "
+                                    f"AUTONOMOUS_UFS_DISABLED bit is set in the TPMI UFS_HEADER "
+                                    f"register")
 
     @staticmethod
     def _get_freq_regname(ftype: _FreqValueType) -> tuple[str, str]:
@@ -275,6 +295,8 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
                                 dies: RelNumsType):
         """Refer to '_UncoreFreqBase._set_elc_zone_freq_dies()'."""
 
+        self._check_elc_enabled()
+
         ratio = int(freq / RATIO_MULTIPLIER)
         regname, bfname = self._get_elc_zone_freq_regname(ztype, ftype)
 
@@ -332,7 +354,7 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
 
         # TPMI represents the ELC threshold as an integer between 0 and 127, where 0 corresponds to
         # 0% and 127 corresponds to 100%.
-        return (raw_threshold * 100 + 126) // 127  # ceil division
+        return (raw_threshold * 100 + 126) // 127
 
     def _elc_threshold_percent2raw(self, threshold: int) -> int:
         """
@@ -347,7 +369,7 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
 
         # TPMI represents the ELC threshold as an integer between 0 and 127, where 0 corresponds to
         # 0% and 127 corresponds to 100%.
-        return (threshold * 127) // 100            # floor division
+        return (threshold * 127) // 100
 
     def _get_elc_threshold_dies(self,
                                 thrtype: _ELCThresholdType,
@@ -384,6 +406,8 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
                                 dies: RelNumsType):
         """Refer to '_UncoreFreqBase._set_elc_threshold_dies()'."""
 
+        self._check_elc_enabled()
+
         regname, bfname = self._get_elc_threshold_regname(thrtype)
 
         for package, pkg_dies in dies.items():
@@ -399,6 +423,8 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
                                        thrtype: _ELCThresholdType,
                                        dies: RelNumsType):
         """Refer to '_UncoreFreqBase._set_elc_threshold_status_dies()'."""
+
+        self._check_elc_enabled()
 
         regname, bfname = self._get_elc_threshold_regname(thrtype, status=True)
 
