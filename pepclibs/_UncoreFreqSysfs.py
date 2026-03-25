@@ -273,28 +273,32 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
 
         return agent_types
 
-    def _build_dies_info(self):
+    def _build_dies_info_legacy(self):
         """
-        Build the dies information dictionary that maps package and die numbers to corresponding
-        uncore frequency driver sysfs sub-directory names.
+        Build the dies information dictionary for the legacy sysfs API.
 
-        TODO: This method is long (113 lines). Consider refactoring into smaller helper methods:
-              - _build_dies_info_legacy()
-              - _build_dies_info_new_api()
-              - _validate_sysfs_die_mapping()
+        The legacy sysfs API uses 'package_XX_die_YY' directory naming.
         """
 
-        self._dirmap = {}
         sysfs_base_lsdir = self._lsdir_sysfs_base()
+        for dirname in sysfs_base_lsdir:
+            match = re.match(r"package_(\d+)_die_(\d+)", dirname)
+            if match:
+                package = int(match.group(1))
+                die = int(match.group(2))
+                self._add_die(package, die, dirname)
 
-        if not self._use_new_sysfs_api():
-            for dirname in sysfs_base_lsdir:
-                match = re.match(r"package_(\d+)_die_(\d+)", dirname)
-                if match:
-                    package = int(match.group(1))
-                    die = int(match.group(2))
-                    self._add_die(package, die, dirname)
-            return
+    def _build_dies_info_new_api(self) -> dict[str, tuple[int, int, DieInfoTypedDict]]:
+        """
+        Build the directory-to-die mapping for the new sysfs API.
+
+        The new sysfs API uses 'uncoreXX' directories. This method builds the expected mapping
+        between directory names and die information based on TPMI topology.
+
+        Returns:
+            A dictionary mapping directory names (e.g., 'uncore00') to tuples of
+            (package, die, die_info).
+        """
 
         dies_info = self._cpuinfo.get_all_dies_info()
 
@@ -320,10 +324,13 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
             for inst, clusters in topo_sorted[addr].items():
                 topo_sorted[addr][inst] = {clust: clusters[clust] for clust in sorted(clusters)}
 
-        # Use the fact that the driver enumerates the TPMI devices in the order of TPMI device PCI
-        # addresses, which start from package 0 / TPMI partition 0 (see 'tpmi_info', the 'PARTITION'
-        # field), then package 0 / TPMI partition 1, etc. Therefore, the order of the 'uncoreXX'
-        # directories corresponds to package and die numbers.
+        # Map 'uncoreXX' directories to dies by relying on the kernel driver's enumeration order.
+        # The driver currently enumerates TPMI devices by PCI address (lowest to highest), starting
+        # from package 0 / TPMI partition 0 (see 'tpmi_info', 'PARTITION' field), then package 0 /
+        # TPMI partition 1, etc. This enumeration order is not guaranteed to remain stable across
+        # kernel versions, but there is currently no alternative. The kernel provides 'package_id'
+        # but not 'die_id'. The 'domain_id' file exists but it does not represent any hardware ID -
+        # it's just a synthetic per-package sequence number manufactured by the driver.
 
         # {dirname: tuple[package, die, die_info]}
         dirname2die_info: dict[str, tuple[int, int, DieInfoTypedDict]] = {}
@@ -344,6 +351,22 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
             _LOG.debug("The sorted topology:\n%s", pprint.pformat(topo_sorted, sort_dicts=False))
             _LOG.debug("The directory to die info mapping:\n%s",
                        pprint.pformat(dirname2die_info, sort_dicts=False))
+
+        return dirname2die_info
+
+    def _validate_and_add_sysfs_dies(self,
+                                     dirname2die_info: dict[str, tuple[int, int, DieInfoTypedDict]],
+                                     sysfs_base_lsdir: list[str]):
+        """
+        Validate sysfs directories match the expected TPMI topology and add them to dirmap.
+
+        Args:
+            dirname2die_info: Expected mapping of directory names to (package, die, die_info) tuples.
+            sysfs_base_lsdir: List of directory names found in the sysfs base directory.
+
+        Raises:
+            Error: If validation fails (missing directories, mismatched package IDs, etc.).
+        """
 
         index = -1
         for dirname in sorted(sysfs_base_lsdir):
@@ -391,6 +414,22 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
                                 f"Got: {', '.join(agent_types_sysfs)}")
 
             self._add_die(package, die, dirname)
+
+    def _build_dies_info(self):
+        """
+        Build the dies information dictionary that maps package and die numbers to corresponding
+        uncore frequency driver sysfs sub-directory names.
+        """
+
+        self._dirmap = {}
+
+        if not self._use_new_sysfs_api():
+            self._build_dies_info_legacy()
+            return
+
+        sysfs_base_lsdir = self._lsdir_sysfs_base()
+        dirname2die_info = self._build_dies_info_new_api()
+        self._validate_and_add_sysfs_dies(dirname2die_info, sysfs_base_lsdir)
 
     def _get_dies_info(self) -> RelNumsType:
         """
