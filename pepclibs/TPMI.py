@@ -595,6 +595,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
     1. Querying features and metadata.
         - 'get_known_features()' - return information about all known TPMI features.
         - 'get_unknown_features()' - return a list of TPMI feature IDs that lack a spec file.
+        - 'get_version()' - get the TPMI interface version for a feature, address, and instance.
         - 'get_sdict()' - return the spec file dictionary for a specified TPMI feature.
         - 'get_fdict()' - return the feature dictionary for a specified TPMI feature.
     2. Iterating over features.
@@ -731,6 +732,10 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         #   {addr: {instance: {cluster: offset}}}.
         self._cmaps: dict[str, dict[int, dict[int, int]]] = {}
 
+        # Cache of TPMI interface versions for features, addresses, and instances:
+        #   {feature_name: {addr: {instance: (major, minor)}}}.
+        self._version_cache: dict[str, dict[str, dict[int, tuple[int, int]]]] = {}
+
         self._build_fmaps()
 
     def close(self):
@@ -803,6 +808,42 @@ class TPMI(ClassHelpers.SimpleCloseContext):
 
         return path
 
+    @staticmethod
+    def _split_version(version: int) -> tuple[int, int]:
+        """
+        Split a TPMI interface version value into major and minor version numbers.
+
+        Args:
+            version: The TPMI interface version value (bits 7:5 contain major, bits 4:0 contain
+                     minor).
+
+        Returns:
+            A tuple containing (major_version, minor_version).
+        """
+
+        # Bits 7:5 contain major version number, bits 4:0 contain minor version number.
+        major_version = (version >> 5) & 0b111
+        minor_version = version & 0b11111
+        return major_version, minor_version
+
+    def _cache_version(self, fname: str, addr: str, instance: int, major: int, minor: int):
+        """
+        Add a TPMI interface version to the cache.
+
+        Args:
+            fname: Name of the TPMI feature.
+            addr: PCI address of the TPMI device.
+            instance: Instance number.
+            major: Major version number.
+            minor: Minor version number.
+        """
+
+        if fname not in self._version_cache:
+            self._version_cache[fname] = {}
+        if addr not in self._version_cache[fname]:
+            self._version_cache[fname][addr] = {}
+        self._version_cache[fname][addr][instance] = (major, minor)
+
     def _drop_unimplemented_instances(self,
                                       fname: str,
                                       addr: str,
@@ -856,9 +897,10 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                     continue
 
                 # Verify version is supported and consistent across all instances.
-                # Bits 7:5 contain major version number, bits 4:0 contain minor version number.
-                major_version = (version >> 5) & 0b111
-                minor_version = version & 0b11111
+                major_version, minor_version = self._split_version(version)
+
+                # Cache the version for this instance.
+                self._cache_version(fname, addr, instance, major_version, minor_version)
 
                 # TPMI interface versions up to version 0.3 are supported.
                 if major_version != _TPMI_MAX_MAJOR_VERSION or \
@@ -1814,7 +1856,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         Returns:
             Dictionary of sdicts for all known features.
 
-        Note:
+        Notes:
             The returned dictionaries should be treated as read-only and must not be modified.
             For performance reasons, references to internal dictionaries are returned rather than
             deep copies.
@@ -1837,6 +1879,48 @@ class TPMI(ClassHelpers.SimpleCloseContext):
 
         return list(self._unknown_fids)
 
+    def get_version(self, fname: str, addr: str, instance: int) -> tuple[int, int]:
+        """
+        Retrieve the TPMI interface version for a feature, PCI address, and instance.
+
+        Args:
+            fname: Name of the TPMI feature.
+            addr: PCI address of the TPMI device.
+            instance: Instance number within the feature.
+
+        Returns:
+            A tuple containing (major_version, minor_version).
+        """
+
+        if fname in self._version_cache:
+            if addr in self._version_cache[fname]:
+                if instance in self._version_cache[fname][addr]:
+                    return self._version_cache[fname][addr][instance]
+
+        # Version not in cache, read it from TPMI registers.
+        fdict = self._get_fdict(fname)
+
+        # Find the register containing INTERFACE_VERSION
+        version_regname = None
+        version_bfdict = None
+        for regname, regdict in fdict.items():
+            bfdicts: dict[str, BFDictTypedDict] = regdict.get("fields", {})
+            if "INTERFACE_VERSION" in bfdicts:
+                version_regname = regname
+                version_bfdict = bfdicts["INTERFACE_VERSION"]
+                break
+
+        if not version_regname or not version_bfdict:
+            raise Error(f"TPMI interface version register not found for feature '{fname}'")
+
+        regval = self._read_register(fname, addr, instance, version_regname)
+        version = (regval & version_bfdict["bitmask"]) >> version_bfdict["bitshift"]
+
+        major_version, minor_version = self._split_version(version)
+        self._cache_version(fname, addr, instance, major_version, minor_version)
+
+        return (major_version, minor_version)
+
     def get_sdict(self, fname: str) -> SDictTypedDict:
         """
         Retrieve the spec file dictionary for a specified TPMI feature.
@@ -1847,10 +1931,10 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         Returns:
             A spec file dictionary for the specified feature.
 
-        Note:
-            The returned dictionary should be treated as read-only and must not be modified. For
-            performance reasons, a reference to the internal dictionary is returned rather than
-            a deep copy.
+        Notes:
+            - The returned dictionary should be treated as read-only and must not be modified. For
+              performance reasons, a reference to the internal dictionary is returned rather than a
+              deep copy.
         """
 
         return self._get_sdict(fname)
@@ -1865,10 +1949,10 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         Returns:
             A dictionary mapping feature names to their corresponding register dictionaries.
 
-        Note:
-            The returned dictionary should be treated as read-only and must not be modified. For
-            performance reasons, a reference to the internal dictionary is returned rather than
-            a deep copy.
+        Notes:
+            - The returned dictionary should be treated as read-only and must not be modified. For
+              performance reasons, a reference to the internal dictionary is returned rather than a
+              deep copy.
         """
 
         return self._get_fdict(fname)
