@@ -19,7 +19,7 @@ from pepclibs.helperlibs import ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error
 
 if typing.TYPE_CHECKING:
-    from typing import Generator, Sequence
+    from typing import cast, Generator, Sequence
     from pepclibs import _SysfsIO, CPUInfo, _LinuxPMQoS
     from pepclibs.msr import MSR
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
@@ -101,6 +101,11 @@ class PMQoS(_PropsClassBase.PropsClassBase):
         linux_pmqos_obj = self._get_linux_pmqos_obj()
 
         if pname == "latency_limit":
-            linux_pmqos_obj.set_latency_limit(val, cpus)
+            if typing.TYPE_CHECKING:
+                # Note: The base class validates the type of 'val', so this cast is safe.
+                val_float = cast(float, val)
+            else:
+                val_float = val
+            linux_pmqos_obj.set_latency_limit(val_float, cpus)
         else:
             raise Error(f"BUG: Unknown property '{pname}'")

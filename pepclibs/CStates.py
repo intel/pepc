@@ -331,4 +331,4 @@ class CStates(_PropsClassBase.PropsClassBase):
             prop["iosname"] = finfo[pname]["iosname"]
             self.props[pname]["sname"] = prop["sname"]
         else:
-            raise Error(f"BUG: unexpected property \"{pname}\"")
+            raise Error(f"BUG: Unexpected property '{pname}'")

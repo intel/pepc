@@ -73,27 +73,27 @@ _SCOPE_NAMES_SET: Final[frozenset[str]] = frozenset({
 })
 
 MECHANISMS: Final[dict[MechanismNameType, MechanismTypedDict]] = {
-    "sysfs" : {
+    "sysfs": {
         "short": "sysfs",
         "long":  "Linux sysfs file-system",
         "writable": True,
     },
-    "tpmi" : {
+    "tpmi": {
         "short": "tpmi",
         "long":  "Topology Aware Register and PM Capsule Interface (TPMI)",
         "writable": True,
     },
-    "cdev" : {
+    "cdev": {
         "short": "cdev",
         "long":  "Linux character device node",
         "writable": True,
     },
-    "msr" : {
+    "msr": {
         "short": "MSR",
         "long":  "Model Specific Register (MSR)",
         "writable": True,
     },
-    "doc" : {
+    "doc": {
         "short": "Documentation",
         "long":  "Hardware documentation",
         "writable": False,
@@ -635,7 +635,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         if isinstance(val, bool):
             val = "on" if val is True else "off"
 
-        return {"package": package, "die" : die, "pname": pname, "val": val, "mname": mname}
+        return {"package": package, "die": die, "pname": pname, "val": val, "mname": mname}
 
     @staticmethod
     def _construct_package_pvinfo(pname: str,
@@ -1285,7 +1285,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         Returns:
             The value of the requested property for the specified die.
 
-        Rises:
+        Raises:
             ErrorNotSupported: If none of the mechanisms support the property.
         """
 
@@ -1523,7 +1523,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
         Returns:
             The value of the requested property for the specified package.
 
-        Rises:
+        Raises:
             ErrorNotSupported: If none of the specified mechanisms support the property.
         """
 
