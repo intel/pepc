@@ -18,6 +18,7 @@ import typing
 import pytest
 from tests import common, props_common
 from pepclibs import CPUInfo, Uncore
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 
 if typing.TYPE_CHECKING:
     from typing import Generator
@@ -110,3 +111,89 @@ def test_uncore_set_props_mechanisms_bool(params: PropsTestParamsTypedDict):
     """
 
     props_common.verify_set_bool_props(params, 0)
+
+def test_uncore_set_prop_cpus(params: PropsTestParamsTypedDict):
+    """
+    Test the 'set_prop_cpus()' method for uncore properties.
+
+    Uncore properties are die-scoped. The 'set_prop_cpus()' method translates CPU numbers to die
+    numbers. This test verifies that the translation works correctly and that properties can be set
+    and retrieved using CPU numbers.
+
+    Args:
+        params: The test parameters.
+    """
+
+    pobj = params["pobj"]
+    cpuinfo = params["cpuinfo"]
+    packages = cpuinfo.get_packages()
+
+    if not packages:
+        return
+
+    pkg = packages[0]
+    dies = cpuinfo.get_all_package_dies(pkg)
+
+    if not dies:
+        return
+
+    die = dies[0]
+    die_cpus = cpuinfo.dies_to_cpus(dies=[die], packages=[pkg])
+
+    if not die_cpus or not pobj.prop_is_supported_cpu("max_freq", die_cpus[0]):
+        return
+
+    # Get the current max frequency for this die
+    orig_val = pobj.get_cpu_prop("max_freq", die_cpus[0])["val"]
+
+    # Get the limits to determine a safe value to set
+    try:
+        min_limit = pobj.get_cpu_prop("min_freq_limit", die_cpus[0])["val"]
+        max_limit = pobj.get_cpu_prop("max_freq_limit", die_cpus[0])["val"]
+    except ErrorNotSupported:
+        return
+
+    # Set max_freq using CPU numbers (all CPUs from the die)
+    test_val = "max"
+    pobj.set_prop_cpus("max_freq", test_val, cpus=die_cpus)
+
+    # Verify the value was set correctly by reading it back.
+    for cpu in die_cpus:
+        result = pobj.get_cpu_prop("max_freq", cpu)
+        assert result["val"] == max_limit, \
+            f"Expected max_freq={max_limit} for CPU {cpu}, got {result['val']}"
+
+    # Set back to a different value using a subset of CPUs (should still work for
+    # complete die).
+    test_val = "min"
+    pobj.set_prop_cpus("max_freq", test_val, cpus=die_cpus)
+
+    # Verify again.
+    for cpu in die_cpus:
+        result = pobj.get_cpu_prop("max_freq", cpu)
+        assert result["val"] == min_limit, \
+            f"Expected max_freq={min_limit} for CPU {cpu}, got {result['val']}"
+
+    # Restore original value.
+    pobj.set_prop_cpus("max_freq", orig_val, cpus=die_cpus)
+
+    # Test that incomplete die (single CPU) is rejected by validation.
+    try:
+        pobj.set_prop_cpus("max_freq", "max", cpus=[die_cpus[0]])
+        assert False, "Expected Error when calling set_prop_cpus() with incomplete die " \
+                      "(single CPU)"
+    except Error as err:
+        # Expected - validation should reject incomplete die.
+        assert "must include all CPUs" in str(err), \
+               f"Expected validation error about complete dies, got: {err}"
+
+    # Test that incomplete die (partial CPUs) is rejected by validation.
+    if len(die_cpus) > 2:
+        try:
+            pobj.set_prop_cpus("max_freq", "max", cpus=die_cpus[:2])
+            assert False, "Expected Error when calling set_prop_cpus() with incomplete " \
+                          "die (partial CPUs)"
+        except Error as err:
+            # Expected - validation should reject incomplete die.
+            assert "must include all CPUs" in str(err), \
+                   f"Expected validation error about complete dies, got: {err}"

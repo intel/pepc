@@ -16,6 +16,7 @@ import typing
 from typing import cast
 import pytest
 from tests import common, props_cmdl_common
+from pepclibs.helperlibs import Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorBadOrder, ErrorNotSupported, ErrorOutOfRange
 
 from pepclibs import CPUInfo, Uncore, _UncoreFreqTPMI, CPUOnline
@@ -27,8 +28,7 @@ if typing.TYPE_CHECKING:
     from pepclibs.helperlibs.Exceptions import ExceptionTypeType
     from pepclibs.CPUInfoTypes import ScopeNameType
 
-_IGNORE: Final[dict[ExceptionTypeType, str]] = {ErrorNotSupported: "",
-                                            ErrorTryAnotherMechanism: ""}
+_IGNORE: Final[dict[ExceptionTypeType, str]] = {ErrorNotSupported: "", ErrorTryAnotherMechanism: ""}
 
 @pytest.fixture(name="params", scope="module")
 def get_params(hostspec: str, username: str) -> Generator[PropsCmdlTestParamsTypedDict, None, None]:
@@ -300,3 +300,64 @@ def test_uncore_set_order(params: PropsCmdlTestParamsTypedDict):
 
     if pobj.prop_is_supported_cpu("elc_low_threshold", 0):
         _set_freq_pairs(params, "elc_low_threshold", "elc_high_threshold", 1, 2, 99, 100)
+
+def test_uncore_cpus_option(params: PropsCmdlTestParamsTypedDict):
+    """
+    Test the '--cpus' option for uncore commands.
+
+    Uncore properties are die-scoped, so when using '--cpus', the tool translates CPU numbers to
+    die numbers. This test verifies that:
+    1. Single CPU from a die fails (incomplete die specification)
+    2. Multiple CPUs from same die that don't cover the entire die fail
+    3. All CPUs from a die succeed
+    4. CPUs from multiple complete dies succeed
+
+    Args:
+        params: The test parameters dictionary.
+    """
+
+    pman = params["pman"]
+    cpuinfo = params["cpuinfo"]
+    packages = params["packages"]
+
+    if not packages:
+        return
+
+    pkg = packages[0]
+    dies = params["dies"][pkg]
+
+    if not dies:
+        return
+
+    die = dies[0]
+    die_cpus = cpuinfo.dies_to_cpus(dies=[die], packages=[pkg])
+
+    if not die_cpus:
+        return
+
+    # Test 1: Single CPU from a die should fail validation (incomplete die).
+    single_cpu = die_cpus[0]
+    cmd = f"uncore config --max-freq max --cpus {single_cpu}"
+    props_cmdl_common.run_pepc(cmd, pman, exp_exc=Error, ignore=_IGNORE)
+
+    # Test 2: Multiple CPUs from same die (but not all) should fail if it doesn't cover all
+    # CPUs.
+    if len(die_cpus) > 2:
+        partial_cpus = f"{die_cpus[0]},{die_cpus[1]}"
+        cmd = f"uncore config --max-freq max --cpus {partial_cpus}"
+        props_cmdl_common.run_pepc(cmd, pman, exp_exc=Error, ignore=_IGNORE)
+
+    # Test 3: All CPUs from a die should succeed.
+    all_die_cpus = Trivial.rangify(die_cpus)
+    cmd = f"uncore config --max-freq max --cpus {all_die_cpus}"
+    props_cmdl_common.run_pepc(cmd, pman, ignore=_IGNORE)
+
+    # Test 4: CPUs from multiple complete dies should succeed.
+    if len(dies) > 1:
+        die2 = dies[1]
+        die2_cpus = cpuinfo.dies_to_cpus(dies=[die2], packages=[pkg])
+        if die2_cpus:
+            all_cpus = die_cpus + die2_cpus
+            all_cpus_str = Trivial.rangify(all_cpus)
+            cmd = f"uncore config --max-freq max --cpus {all_cpus_str}"
+            props_cmdl_common.run_pepc(cmd, pman, ignore=_IGNORE)
