@@ -277,6 +277,11 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
         """
         Build the dies information dictionary that maps package and die numbers to corresponding
         uncore frequency driver sysfs sub-directory names.
+
+        TODO: This method is long (113 lines). Consider refactoring into smaller helper methods:
+              - _build_dies_info_legacy()
+              - _build_dies_info_new_api()
+              - _validate_sysfs_die_mapping()
         """
 
         self._dirmap = {}
@@ -733,14 +738,18 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
                 _LOG.debug("Set package %d die %d %s to %d Hz, wrote file '%s'",
                            package, die, what, freq, path)
 
-    def _probe_driver(self):
+    def _get_driver_error_message(self, vfm: int) -> tuple[str, str]:
         """
-        Attempt to determine and load the required kernel module for uncore frequency support.
-        """
+        Construct the error message and determine the driver name for the uncore frequency driver.
 
-        proc_cpuinfo = self._cpuinfo.get_proc_cpuinfo()
-        vfm = proc_cpuinfo["vfm"]
-        errmsg = ""
+        Args:
+            vfm: The CPU VFM (Vendor-Family-Model) identifier.
+
+        Returns:
+            Tuple containing:
+                - drvname: The kernel driver name.
+                - msg: The error message explaining why the driver is not available.
+        """
 
         # If the CPU supports MSR_UNCORE_RATIO_LIMIT, the uncore frequency driver is
         # "intel_uncore_frequency".
@@ -768,6 +777,19 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
                   f"is supported since kernel version 6.5.\n" \
                   f" 4. the '{drvname}' driver is not enabled. Try to compile the kernel " \
                   f"with the '{kopt}' option."
+
+        return drvname, msg
+
+    def _probe_driver(self):
+        """
+        Attempt to determine and load the required kernel module for uncore frequency support.
+        """
+
+        proc_cpuinfo = self._cpuinfo.get_proc_cpuinfo()
+        vfm = proc_cpuinfo["vfm"]
+        errmsg = ""
+
+        drvname, msg = self._get_driver_error_message(vfm)
 
         try:
             self._drv = KernelModule.KernelModule(drvname, pman=self._pman)

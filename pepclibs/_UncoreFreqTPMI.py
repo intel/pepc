@@ -34,11 +34,12 @@ if typing.TYPE_CHECKING:
 # The uncore frequency ratio -> uncore frequency Hz multiplier.
 RATIO_MULTIPLIER: Final[int] = 100_000_000 # 100MHz
 
-# Unfortunately TPMI does not provide the limit values. The way the Linux kernel driver
-# works-around this is it assumes that the initial min/max values at the driver
-# initialization time (boot time) are the actual limits. But in theory, these may not be the
-# actual limits, these may be the limits the BIOS configured or even mis-configured. So just
-# pick some reasonable numbers for the limits.
+# TPMI hardware does not provide frequency limit values. The sysfs implementation has access
+# to correct limits because the Linux kernel driver initializes at boot time and reads the
+# BIOS-configured values, which it then assumes are the actual hardware limits. However, when
+# using TPMI directly, we don't have access to those boot-time initial values - the current
+# TPMI register values may have been modified after boot by software. Therefore, we use
+# hard-coded reasonable limits instead.
 MIN_FREQ_LIMIT: Final[int] = 100_000_000   # 100MHz
 MAX_FREQ_LIMIT: Final[int] = 5_000_000_000 # 5GHz
 
@@ -206,6 +207,14 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
         Raises:
             ErrorOutOfRange: If the uncore frequency value is outside the allowed range.
             ErrorBadOrder: If max. uncore frequency is less than min. uncore frequency.
+
+        Note:
+            The sysfs implementation has access to correct frequency limits because the kernel
+            driver initializes at boot time and reads the BIOS-configured values, treating them
+            as the actual hardware limits. In contrast, this TPMI implementation must use
+            hard-coded MIN_FREQ_LIMIT and MAX_FREQ_LIMIT constants because the current TPMI
+            register values may have been modified after boot and don't reflect the original
+            hardware limits.
         """
 
         min_freq: int | None = None
