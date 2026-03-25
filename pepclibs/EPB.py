@@ -19,7 +19,9 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 import typing
 from pathlib import Path
 
-from pepclibs.helperlibs.Exceptions import ErrorNotSupported
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
+from pepclibs.helperlibs.Exceptions import ErrorPath, ErrorPerCPUPath
+from pepclibs.helperlibs.Exceptions import ErrorVerifyFailedPath, ErrorVerifyFailedPerCPUPath
 from pepclibs.helperlibs import Trivial, ClassHelpers
 from pepclibs import _EPBase
 
@@ -94,6 +96,23 @@ class EPB(_EPBase.EPBase):
         ClassHelpers.close(self, close_attrs=("_epbmsr_obj",))
         super().close()
 
+    def _extract_cpu_from_path(self, path: Path) -> int:
+        """
+        Extract the CPU number from EPB sysfs path.
+
+        Args:
+            path: The EPB sysfs path.
+
+        Returns:
+            The CPU number.
+        """
+
+        # Path format: /sys/devices/system/cpu/cpu<N>/power/energy_perf_bias
+        # Extract "cpu<N>" from the path
+        dir_name = path.parent.parent.name
+        cpu_str = dir_name.replace("cpu", "")
+        return Trivial.str_to_int(cpu_str, what=f"CPU number from path '{path}'")
+
     def _get_epbmsr_obj(self) -> EnergyPerfBias.EnergyPerfBias:
         """
         Return an 'EnergyPerfBias.EnergyPerfBias' object.
@@ -146,9 +165,9 @@ class EPB(_EPBase.EPBase):
         epbmsr_obj = self._get_epbmsr_obj()
         epbmsr_obj.write_feature("epb", val, cpus=cpus)
 
-    def _fetch_from_sysfs(self,
-                          cpus: Sequence[int]) -> Generator[tuple[int, str | int], None, None]:
-        """Refer to '_EPBase._fetch_from_sysfs()'."""
+    def __fetch_from_sysfs(self,
+                           cpus: Sequence[int]) -> Generator[tuple[int, str | int], None, None]:
+        """Implement '_fetch_from_sysfs()'. Arguments are the same."""
 
         sysfs_io = self._get_sysfs_io()
         paths_iter = (Path(self._sysfs_epb_path % cpu) for cpu in cpus)
@@ -156,10 +175,44 @@ class EPB(_EPBase.EPBase):
         for cpu, (_, val) in zip(cpus, sysfs_io.read_paths(paths_iter, what="EPB")):
             yield cpu, val
 
-    def _write_to_sysfs(self, val: str | int, cpus: Sequence[int]):
-        """Refer to '_EPBase._write_to_sysfs()'."""
+    def _fetch_from_sysfs(self,
+                          cpus: Sequence[int]) -> Generator[tuple[int, str | int], None, None]:
+        """
+        Refer to '_EPBase._fetch_from_sysfs()'.
+
+        Raises:
+            ErrorPerCPUPath: If reading the sysfs file fails with path-related error.
+        """
+
+        try:
+            yield from self.__fetch_from_sysfs(cpus)
+        except ErrorPath as err:
+            cpu = self._extract_cpu_from_path(err.path)
+            raise ErrorPerCPUPath(str(err), cpu=cpu, path=err.path) from err
+
+    def __write_to_sysfs(self, val: str | int, cpus: Sequence[int]):
+        """Implement '_write_to_sysfs()'. Arguments are the same."""
 
         sysfs_io = self._get_sysfs_io()
         paths_iter = (Path(self._sysfs_epb_path % cpu) for cpu in cpus)
 
         sysfs_io.write_paths(paths_iter, str(val).strip(), what="EPB")
+
+    def _write_to_sysfs(self, val: str | int, cpus: Sequence[int]):
+        """
+        Refer to '_EPBase._write_to_sysfs()'.
+
+        Raises:
+            ErrorPerCPUPath: If writing the sysfs file fails with path-related error.
+            ErrorVerifyFailedPerCPUPath: If the written value doesn't match the expected value.
+        """
+
+        try:
+            self.__write_to_sysfs(val, cpus)
+        except ErrorVerifyFailedPath as err:
+            cpu = self._extract_cpu_from_path(err.path)
+            raise ErrorVerifyFailedPerCPUPath(str(err), cpu=cpu, path=err.path,
+                                              expected=err.expected, actual=err.actual) from err
+        except ErrorPath as err:
+            cpu = self._extract_cpu_from_path(err.path)
+            raise ErrorPerCPUPath(str(err), cpu=cpu, path=err.path) from err

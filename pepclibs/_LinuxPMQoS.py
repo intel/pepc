@@ -15,8 +15,11 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 import typing
 from pathlib import Path
 from pepclibs import _SysfsIO
-from pepclibs.helperlibs import LocalProcessManager, ClassHelpers
-from pepclibs.helperlibs.Exceptions import ErrorVerifyFailed, ErrorNotFound, ErrorNotSupported
+from pepclibs.helperlibs import LocalProcessManager, ClassHelpers, Trivial
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
+from pepclibs.helperlibs.Exceptions import ErrorVerifyFailed
+from pepclibs.helperlibs.Exceptions import ErrorPath, ErrorPerCPUPath
+from pepclibs.helperlibs.Exceptions import ErrorVerifyFailedPath, ErrorVerifyFailedPerCPUPath
 
 if typing.TYPE_CHECKING:
     from typing import Generator, Final, Literal, Sequence
@@ -100,6 +103,34 @@ class LinuxPMQoS(ClassHelpers.SimpleCloseContext):
 
         return self._sysfs_base / f"cpu{cpu}" / "power" / "pm_qos_resume_latency_us"
 
+    def _extract_cpu_from_path(self, path: Path) -> int:
+        """
+        Extract the CPU number from PM QoS sysfs path.
+
+        Args:
+            path: The PM QoS sysfs path.
+
+        Returns:
+            The CPU number.
+        """
+
+        # Path format: /sys/devices/system/cpu/cpu<N>/power/pm_qos_resume_latency_us
+        # Extract "cpu<N>" from the path
+        dir_name = path.parent.parent.name
+        cpu_str = dir_name.replace("cpu", "")
+        return Trivial.str_to_int(cpu_str, what=f"CPU number from path '{path}'")
+
+    def __get_latency_limit(self, cpus: Sequence[int]) -> Generator[tuple[int, float], None, None]:
+        """Implement 'get_latency_limit()'. Arguments are the same."""
+
+        for cpu in cpus:
+            path = self._get_latency_limit_sysfs_path(cpu)
+            what = f"CPU{cpu} PM QoS latency limit"
+
+            val = self._sysfs_io.read_int(path, what=what)
+            # Convert microseconds to seconds.
+            yield cpu, val / 1000000
+
     def get_latency_limit(self, cpus: Sequence[int]) -> Generator[tuple[int, float], None, None]:
         """
         For every CPU in 'cpus', yield a '(cpu, val)' tuple, where 'val' is the Linux PM QoS
@@ -113,15 +144,14 @@ class LinuxPMQoS(ClassHelpers.SimpleCloseContext):
 
         Raises:
             ErrorNotSupported: If the CPU PM QoS latency limit sysfs file does not exist.
+            ErrorPerCPUPath: If reading the sysfs file fails with path-related error.
         """
 
-        for cpu in cpus:
-            path = self._get_latency_limit_sysfs_path(cpu)
-            what = "CPU{cpu} PM QoS latency limit"
-
-            val = self._sysfs_io.read_int(path, what=what)
-            # Convert microseconds to seconds.
-            yield cpu, val / 1000000
+        try:
+            yield from self.__get_latency_limit(cpus)
+        except ErrorPath as err:
+            cpu = self._extract_cpu_from_path(err.path)
+            raise ErrorPerCPUPath(str(err), cpu=cpu, path=err.path) from err
 
     def get_global_latency_limit(self) -> float:
         """
@@ -147,6 +177,21 @@ class LinuxPMQoS(ClassHelpers.SimpleCloseContext):
         # Convert from microseconds to seconds.
         return limit_us / 1000000
 
+    def __set_latency_limit(self, latency_limit: float, cpus: Sequence[int]):
+        """Implement 'set_latency_limit()'. Arguments are the same."""
+
+        # Convert seconds to microseconds.
+        limit_us = round(latency_limit * 1000000)
+
+        for cpu in cpus:
+            what = f"CPU{cpu} PM QoS latency limit"
+            path = self._get_latency_limit_sysfs_path(cpu)
+
+            if not self._verify:
+                self._sysfs_io.write_int(path, limit_us, what=what)
+            else:
+                self._sysfs_io.write_verify_int(path, limit_us, what=what)
+
     def set_latency_limit(self, latency_limit: float, cpus: Sequence[int]):
         """
         For every CPU in 'cpus', set the latency limit via Linux PM QoS sysfs interfaces.
@@ -154,20 +199,18 @@ class LinuxPMQoS(ClassHelpers.SimpleCloseContext):
         Args:
             latency_limit: The latency limit value to set, in seconds.
             cpus: CPU numbers to set the latency limit for (the caller must validate CPU numbers).
+
+        Raises:
+            ErrorPerCPUPath: If writing the sysfs file fails with path-related error.
+            ErrorVerifyFailedPerCPUPath: If the written value doesn't match the expected value.
         """
 
-        # Convert seconds to microseconds.
-        limit_us = round(latency_limit * 1000000)
-
-        for cpu in cpus:
-            what = "CPU{cpu} PM QoS latency limit"
-            path = self._get_latency_limit_sysfs_path(cpu)
-
-            try:
-                if not self._verify:
-                    self._sysfs_io.write_int(path, limit_us, what=what)
-                else:
-                    self._sysfs_io.write_verify_int(path, limit_us, what=what)
-            except ErrorVerifyFailed as err:
-                setattr(err, "cpu", cpu)
-                raise err
+        try:
+            self.__set_latency_limit(latency_limit, cpus)
+        except ErrorVerifyFailedPath as err:
+            cpu = self._extract_cpu_from_path(err.path)
+            raise ErrorVerifyFailedPerCPUPath(str(err), cpu=cpu, path=err.path,
+                                              expected=err.expected, actual=err.actual) from err
+        except ErrorPath as err:
+            cpu = self._extract_cpu_from_path(err.path)
+            raise ErrorPerCPUPath(str(err), cpu=cpu, path=err.path) from err

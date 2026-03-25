@@ -18,7 +18,10 @@ import typing
 from pathlib import Path
 from pepclibs import CPUModels
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
-from pepclibs.helperlibs import Trivial, ClassHelpers, KernelVersion, Logging, EmulProcessManager
+from pepclibs.helperlibs.Exceptions import ErrorPath, ErrorPerCPUPath
+from pepclibs.helperlibs.Exceptions import ErrorVerifyFailedPath, ErrorVerifyFailedPerCPUPath
+from pepclibs.helperlibs import Trivial, ClassHelpers, KernelVersion, Logging
+from pepclibs.helperlibs import EmulProcessManager
 from pepclibs import _EPBase
 
 if typing.TYPE_CHECKING:
@@ -93,6 +96,23 @@ class EPP(_EPBase.EPBase):
 
         ClassHelpers.close(self, close_attrs=("_hwpreq", "_hwpreq_pkg"))
         super().close()
+
+    def _extract_cpu_from_path(self, path: Path) -> int:
+        """
+        Extract the CPU number from EPP sysfs path.
+
+        Args:
+            path: The EPP sysfs path.
+
+        Returns:
+            The CPU number.
+        """
+
+        # Path format: /sys/devices/system/cpu/cpufreq/policy<N>/energy_performance_preference
+        # Extract "policy<N>" from the path
+        dir_name = path.parent.name
+        cpu_str = dir_name.replace("policy", "")
+        return Trivial.str_to_int(cpu_str, what=f"CPU number from path '{path}'")
 
     def _get_hwpreq(self) -> HWPRequest.HWPRequest:
         """
@@ -292,9 +312,9 @@ class EPP(_EPBase.EPBase):
             for cpu in cpus:
                 self._write_cpu_msr(val, cpu)
 
-    def _fetch_from_sysfs(self,
-                          cpus: Sequence[int]) -> Generator[tuple[int, str | int], None, None]:
-        """Refer to '_EPBase._fetch_from_sysfs()'."""
+    def __fetch_from_sysfs(self,
+                           cpus: Sequence[int]) -> Generator[tuple[int, str | int], None, None]:
+        """Implement '_fetch_from_sysfs()'. Arguments are the same."""
 
         sysfs_io = self._get_sysfs_io()
         paths_iter = (Path(self._sysfs_epp_path % cpu) for cpu in cpus)
@@ -304,6 +324,21 @@ class EPP(_EPBase.EPBase):
             if Trivial.is_int(val):
                 _val = int(val)
             yield cpu, _val
+
+    def _fetch_from_sysfs(self,
+                          cpus: Sequence[int]) -> Generator[tuple[int, str | int], None, None]:
+        """
+        Refer to '_EPBase._fetch_from_sysfs()'.
+
+        Raises:
+            ErrorPerCPUPath: If reading the sysfs file fails with path-related error.
+        """
+
+        try:
+            yield from self.__fetch_from_sysfs(cpus)
+        except ErrorPath as err:
+            cpu = self._extract_cpu_from_path(err.path)
+            raise ErrorPerCPUPath(str(err), cpu=cpu, path=err.path) from err
 
     def _has_write_bug(self) -> bool:
         """
@@ -326,8 +361,8 @@ class EPP(_EPBase.EPBase):
             return False
         return True
 
-    def _write_to_sysfs(self, val: str | int, cpus: Sequence[int]):
-        """Refer to '_EPBase._write_to_sysfs()'."""
+    def __write_to_sysfs(self, val: str | int, cpus: Sequence[int]):
+        """Implement '_write_to_sysfs()'. Arguments are the same."""
 
         val_str = str(val).strip()
 
@@ -356,3 +391,22 @@ class EPP(_EPBase.EPBase):
             sysfs_io = self._get_sysfs_io()
             paths_iter = (Path(self._sysfs_epp_path % cpu) for cpu in cpus_to_write)
             sysfs_io.write_paths(paths_iter, val_str, what="EPP")
+
+    def _write_to_sysfs(self, val: str | int, cpus: Sequence[int]):
+        """
+        Refer to '_EPBase._write_to_sysfs()'.
+
+        Raises:
+            ErrorPerCPUPath: If writing the sysfs file fails with path-related error.
+            ErrorVerifyFailedPerCPUPath: If the written value doesn't match the expected value.
+        """
+
+        try:
+            self.__write_to_sysfs(val, cpus)
+        except ErrorVerifyFailedPath as err:
+            cpu = self._extract_cpu_from_path(err.path)
+            raise ErrorVerifyFailedPerCPUPath(str(err), cpu=cpu, path=err.path,
+                                              expected=err.expected, actual=err.actual) from err
+        except ErrorPath as err:
+            cpu = self._extract_cpu_from_path(err.path)
+            raise ErrorPerCPUPath(str(err), cpu=cpu, path=err.path) from err
