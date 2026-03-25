@@ -15,13 +15,16 @@ and transactions support.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import os
+import re
 import typing
 import pprint
 from pathlib import Path
 from pepclibs import _PerCPUCache
 from pepclibs.helperlibs import EmulProcessManager, Logging
+from pepclibs.helperlibs import Trivial
 from pepclibs.helperlibs import ClassHelpers
-from pepclibs.helperlibs.Exceptions import Error, ErrorVerifyFailed
+from pepclibs.helperlibs.Exceptions import Error, ErrorVerifyFailedPerCPUPath
+from pepclibs.helperlibs.Exceptions import ErrorPerCPUPath
 from pepclibs.msr import _SimpleMSR
 from pepclibs.msr._SimpleMSR import _CPU_BYTEORDER
 
@@ -210,11 +213,10 @@ class MSR(_SimpleMSR.SimpleMSR):
             iosname: The I/O scope name of the MSR.
 
         Raises:
-            ErrorVerifyFailed: If the value read from the MSR does not match the expected value for
-                               any CPU. The 'cpu' attribute of the exception will contain
-                               the CPU number where the verification failed, and 'expected' and
-                               'actual' attributes will contain the expected and actual values,
-                               respectively.
+            ErrorVerifyFailedPerCPUPath: If the value read from the MSR does not match the
+                                         expected value for any CPU. The exception contains the
+                                         CPU number, expected and actual values, and the MSR
+                                         device path.
         """
 
         for cpu in cpus:
@@ -222,15 +224,18 @@ class MSR(_SimpleMSR.SimpleMSR):
 
         for cpu, new_val in self.read(regaddr, cpus, iosname=iosname):
             if new_val != regval:
-                raise ErrorVerifyFailed(f"Verification failed for MSR '{regaddr:#x}' on CPU {cpu}"
-                                        f"{self._pman.hostmsg}:\n  Wrote '{regval:#x}', read back "
-                                        f"'{new_val:#x}'", cpu=cpu, expected=regval, actual=new_val)
+                path = self.format_msr_device_path(cpu)
+                raise ErrorVerifyFailedPerCPUPath(f"Verification failed for MSR '{regaddr:#x}' on "
+                                                  f"CPU {cpu}{self._pman.hostmsg}:\n  "
+                                                  f"Wrote '{regval:#x}', read back '{new_val:#x}'",
+                                                  cpu=cpu, expected=regval, actual=new_val,
+                                                  path=path)
 
     def _transaction_write_local(self):
         """Write MSR transactions on a local host."""
 
         for cpu, cpus_info in self._transaction_buffer.items():
-            path = Path(f"/dev/cpu/{cpu}/msr")
+            path = self.format_msr_device_path(cpu)
             fd = os.open(path, os.O_RDWR)
             try:
                 for regaddr, regval_info in cpus_info.items():
@@ -241,8 +246,9 @@ class MSR(_SimpleMSR.SimpleMSR):
                         regval_bytes = regval.to_bytes(self.regbytes, byteorder=_CPU_BYTEORDER)
                         os.pwrite(fd, regval_bytes, regaddr)
                     except OSError as err:
-                        raise Error(f"Failed to write '{regval:#x}' to MSR '{regaddr:#x}' of CPU "
-                                    f"{cpu}{self._pman.hostmsg} (file '{path}'): {err}") from err
+                        raise ErrorPerCPUPath(f"Failed to write '{regval:#x}' to MSR '{regaddr:#x}' "
+                                              f"of CPU {cpu}{self._pman.hostmsg} (file '{path}'): "
+                                              f"{err}", cpu=cpu, path=path) from err
             finally:
                 os.close(fd)
 
@@ -275,25 +281,45 @@ import os
 transaction_buffer = {transaction_buffer_str}
 for cpu, cpus_info in transaction_buffer.items():
     path = "/dev/cpu/%d/msr" % cpu
-    fd = os.open(path, os.O_RDWR)
     try:
-        for regaddr, regval_info in cpus_info.items():
-            regval = regval_info["regval"]
-            regval_bytes = regval.to_bytes({self.regbytes}, byteorder="{_CPU_BYTEORDER}")
-            os.pwrite(fd, regval_bytes, regaddr)
-    finally:
-        os.close(fd)
+        fd = os.open(path, os.O_RDWR)
+        try:
+            for regaddr, regval_info in cpus_info.items():
+                regval = regval_info["regval"]
+                regval_bytes = regval.to_bytes({self.regbytes}, byteorder="{_CPU_BYTEORDER}")
+                os.pwrite(fd, regval_bytes, regaddr)
+        finally:
+            os.close(fd)
+    except Exception as err:
+        print("ERROR: CPU: %d: Path: %s: Error: %s" % (cpu, path, err))
+        raise SystemExit(0)
 '"""
 
         _LOG.debug("Transaction: Remote: Write: Executing command%s", self._pman.hostmsg)
 
-        self._pman.run_verify(cmd)
+        stdout, _ = self._pman.run_verify_join(cmd)
+        for line in stdout.splitlines():
+            if not line.startswith("ERROR: "):
+                continue
+
+            regex = r"ERROR: CPU: (\d+): Path: (.+): Error: (.+)"
+            mobj = re.match(regex, line)
+            if not mobj:
+                raise Error(f"Failed to parse remote MSR transaction write error:\n"
+                            f"{line}")
+
+            cpu = Trivial.str_to_int(mobj.group(1), what="CPU number")
+            path = Path(mobj.group(2))
+            errmsg = Error(mobj.group(3)).indent(2)
+            raise ErrorPerCPUPath(f"MSR transaction write failed for CPU {cpu} "
+                                  f"{self._pman.hostmsg} (file '{path}'):\n{errmsg}",
+                                  cpu=cpu, path=path)
 
     def _transaction_write_emulation(self):
         """Write MSR transactions on an emulated host."""
 
         for cpu, cpus_info in self._transaction_buffer.items():
-            path = Path(f"/dev/cpu/{cpu}/msr")
+            path = self.format_msr_device_path(cpu)
             with self._pman.openb(path, "r+") as fobj:
                 for regaddr, regval_info in cpus_info.items():
                     regval = regval_info["regval"]
@@ -305,9 +331,10 @@ for cpu, cpus_info in transaction_buffer.items():
                         fobj.write(regval_bytes)
                         fobj.flush()
                     except Error as err:
-                        raise Error(f"Failed to write '{regval:#x}' to MSR '{regaddr:#x}' of CPU "
-                                    f"{cpu}{self._pman.hostmsg} (file '{path}'):\n"
-                                    f"{err.indent(2)}") from err
+                        raise ErrorPerCPUPath(f"Failed to write '{regval:#x}' to MSR "
+                                              f"'{regaddr:#x}' of CPU {cpu}{self._pman.hostmsg} "
+                                              f"(file '{path}'):\n{err.indent(2)}",
+                                              cpu=cpu, path=path) from err
 
     def flush_transaction(self) -> bool:
         """
@@ -499,7 +526,9 @@ for cpu, cpus_info in transaction_buffer.items():
         for _, regval in self.read(regaddr, (cpu,), iosname=iosname):
             return regval
 
-        raise Error(f"Failed to read MSR 0x{regaddr:x} from CPU {cpu}{self._pman.hostmsg}")
+        path = self.format_msr_device_path(cpu)
+        raise ErrorPerCPUPath(f"Failed to read MSR 0x{regaddr:x} from CPU {cpu}"
+                              f"{self._pman.hostmsg}", cpu=cpu, path=path)
 
     def read_bits(self,
                   regaddr: int,
@@ -575,10 +604,12 @@ for cpu, cpus_info in transaction_buffer.items():
             verify: If True, read back and verify the written value.
 
         Raises:
-            ErrorVerifyFailed: If verification is enabled and the read-back value does not match the
-                               written value. The 'cpu' attribute of the exception will contain the
-                               CPU number where the verification failed, and 'expected' and 'actual'
-                               attributes will contain the expected and actual values, respectively.
+            ErrorVerifyFailedPerCPUPath: If verification is enabled and the read-back value does
+                                         not match the written value. The 'cpu' attribute of the
+                                         exception will contain the CPU number where the
+                                         verification failed, and 'expected' and 'actual'
+                                         attributes will contain the expected and actual values,
+                                         respectively.
         """
 
         if not self._enable_cache:
@@ -647,10 +678,12 @@ for cpu, cpus_info in transaction_buffer.items():
             verify: If True, read back and verify the written value.
 
         Raises:
-            ErrorVerifyFailed: If verification is enabled and the read-back value does not match the
-                               written value. The 'cpu' attribute of the exception will contain the
-                               CPU number where the verification failed, and 'expected' and 'actual'
-                               attributes will contain the expected and actual values, respectively.
+            ErrorVerifyFailedPerCPUPath: If verification is enabled and the read-back value does
+                                         not match the written value. The 'cpu' attribute of the
+                                         exception will contain the CPU number where the
+                                         verification failed, and 'expected' and 'actual'
+                                         attributes will contain the expected and actual values,
+                                         respectively.
         """
 
         if self._pman.is_remote and not self._in_transaction:
@@ -701,8 +734,8 @@ for cpu, cpus_info in transaction_buffer.items():
             verify: If True, read back and verify the written value.
 
         Raises:
-            ErrorVerifyFailed: If verification is enabled and the read-back value does not match the
-                               written value.
+            ErrorVerifyFailedPerCPUPath: If verification is enabled and the read-back value does
+                                         not match the written value.
         """
 
         self.write(regaddr, regval, (cpu,), iosname=iosname, verify=verify)
@@ -728,10 +761,12 @@ for cpu, cpus_info in transaction_buffer.items():
             verify: If True, read back and verify the written value.
 
         Raises:
-            ErrorVerifyFailed: If verification is enabled and the read-back value does not match the
-                               written value. The 'cpu' attribute of the exception will contain the
-                               CPU number where the verification failed, and 'expected' and 'actual'
-                               attributes will contain the expected and actual values, respectively.
+            ErrorVerifyFailedPerCPUPath: If verification is enabled and the read-back value does
+                                         not match the written value. The 'cpu' attribute of the
+                                         exception will contain the CPU number where the
+                                         verification failed, and 'expected' and 'actual'
+                                         attributes will contain the expected and actual values,
+                                         respectively.
         """
 
         regvals: dict[int, list[int]] = {}
@@ -782,8 +817,8 @@ for cpu, cpus_info in transaction_buffer.items():
             verify: If True, read back and verify the written value.
 
         Raises:
-            ErrorVerifyFailed: If verification is enabled and the read-back value does not match the
-                               written value.
+            ErrorVerifyFailedPerCPUPath: If verification is enabled and the read-back value does
+                                         not match the written value.
         """
 
         self.write_bits(regaddr, bits, val, (cpu,), iosname=iosname, verify=verify)

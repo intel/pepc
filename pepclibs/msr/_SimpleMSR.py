@@ -19,11 +19,13 @@ MSR I/O Performance Note:
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import os
+import re
 import typing
 from pathlib import Path
 from pepclibs.helperlibs import ClassHelpers, FSHelpers, Trivial
 from pepclibs.helperlibs import Logging, LocalProcessManager, EmulProcessManager, KernelModule
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorPermissionDenied
+from pepclibs.helperlibs.Exceptions import ErrorPerCPUPath
 
 if typing.TYPE_CHECKING:
     from typing import Literal, Generator, Final, Iterable
@@ -40,6 +42,20 @@ class SimpleMSR(ClassHelpers.SimpleCloseContext):
     """
     Provide a capability to read and write CPU Model Specific Registers.
     """
+
+    @staticmethod
+    def format_msr_device_path(cpu: int) -> Path:
+        """
+        Format the MSR device path for a given CPU.
+
+        Args:
+            cpu: CPU number.
+
+        Returns:
+            Path to the MSR device file for the specified CPU.
+        """
+
+        return Path(f"/dev/cpu/{cpu}/msr")
 
     def __init__(self, pman: ProcessManagerType | None = None):
         """
@@ -90,7 +106,7 @@ class SimpleMSR(ClassHelpers.SimpleCloseContext):
         Attempt to load the 'msr' kernel driver if the required device node does not exist.
         """
 
-        dev_path = Path("/dev/cpu/0/msr")
+        dev_path = self.format_msr_device_path(0)
         if self._pman.exists(dev_path):
             return
 
@@ -188,15 +204,15 @@ class SimpleMSR(ClassHelpers.SimpleCloseContext):
         """
 
         for cpu in cpus:
-            path = f"/dev/cpu/{cpu}/msr"
+            path = self.format_msr_device_path(cpu)
             _LOG.debug("Local: Read: CPU%d: MSR 0x%x from '%s'%s",
                        cpu, regaddr, path, self._pman.hostmsg)
             fd = os.open(path, os.O_RDONLY)
             try:
                 regval_bytes = os.pread(fd, self.regbytes, regaddr)
             except OSError as err:
-                raise Error(f"Failed to read MSR '{regaddr:#x}' from file '{path}'"
-                            f"{self._pman.hostmsg}: {err}") from err
+                raise ErrorPerCPUPath(f"Failed to read MSR '{regaddr:#x}' from file '{path}'"
+                                      f"{self._pman.hostmsg}: {err}", cpu=cpu, path=path) from err
             finally:
                 os.close(fd)
             regval = int.from_bytes(regval_bytes, byteorder=_CPU_BYTEORDER)
@@ -234,24 +250,57 @@ import os
 cpus = [{cpus_str}]
 for cpu in cpus:
     path = "/dev/cpu/%d/msr" % cpu
-    fd = os.open(path, os.O_RDONLY)
     try:
-        regval = os.pread(fd, {self.regbytes}, {regaddr:#x})
-        regval = int.from_bytes(regval, byteorder="{_CPU_BYTEORDER}")
-        print("%d,%d" % (cpu, regval))
-    finally:
-        os.close(fd)
+        fd = os.open(path, os.O_RDONLY)
+        try:
+            regval = os.pread(fd, {self.regbytes}, {regaddr:#x})
+            regval = int.from_bytes(regval, byteorder="{_CPU_BYTEORDER}")
+            print("%d,%d" % (cpu, regval))
+        finally:
+            os.close(fd)
+    except Exception as err:
+        print("ERROR: CPU: '%d': Path: '%s': Error: '%s'" % (cpu, path, err))
+        raise SystemExit(0)
 '"""
 
         try:
-            stdout, _ = self._pman.run_verify_nojoin(cmd)
+            stdout, stderr = self._pman.run_verify_join(cmd)
         except Error as err:
             errmsg = err.indent(2)
             raise type(err)(f"Failed to read MSR '{regaddr:#x}' on CPUs {cpus_str}"
                             f"{self._pman.hostmsg}:\n{errmsg}") from err
 
-        for line in stdout:
-            split = Trivial.split_csv_line(line.strip())
+        if stderr:
+            # Nothing is expected on stderr, if there is any output, treat it as an error.
+            raise Error(f"Failed to read MSR '{regaddr:#x}' on CPUs {cpus_str}"
+                        f"{self._pman.hostmsg}:\nUnexpected output on stderr:\n{stderr}")
+
+        for line in stdout.splitlines():
+            line = line.strip()
+            if not line:
+                continue
+
+            # Check for error message from the remote script.
+            if line.startswith("ERROR: "):
+                generic_errmsg = (f"Failed to read MSR '{regaddr:#x}' on CPUs {cpus_str}"
+                                  f"{self._pman.hostmsg}:\n{line}")
+
+                # Try to parse the error message to extract CPU, path, and error.
+                regex = r"ERROR: CPU: '(\d+)': Path: '(.+)': Error: '(.+)'"
+                mobj = re.match(regex, line)
+                if not mobj:
+                    raise Error(generic_errmsg)
+
+                cpu = Trivial.str_to_int(mobj.group(1), what="CPU number")
+                path = Path(mobj.group(2))
+                errmsg = mobj.group(3)
+
+                raise ErrorPerCPUPath(f"Failed to read MSR '{regaddr:#x}' from CPU {cpu}"
+                                      f"{self._pman.hostmsg} (file '{path}'):\n"
+                                      f"{Error(errmsg).indent(2)}", cpu=cpu, path=path)
+
+            # Normal output: CPU,value
+            split = Trivial.split_csv_line(line)
             if len(split) != 2:
                 raise Error(f"BUG: bad MSR read script line '{line}'")
 
@@ -275,7 +324,7 @@ for cpu in cpus:
         """
 
         for cpu in cpus:
-            path = Path(f"/dev/cpu/{cpu}/msr")
+            path = self.format_msr_device_path(cpu)
             _LOG.debug("Emulation: Read: CPU%d: MSR 0x%x from '%s'%s",
                        cpu, regaddr, path, self._pman.hostmsg)
             try:
@@ -329,7 +378,9 @@ for cpu in cpus:
         for _, regval in self.cpus_read(regaddr, (cpu,)):
             return regval
 
-        raise Error(f"Failed to read MSR '{regaddr:#x}' from CPU {cpu}{self._pman.hostmsg}")
+        path = self.format_msr_device_path(cpu)
+        raise ErrorPerCPUPath(f"Failed to read MSR '{regaddr:#x}' from CPU {cpu}"
+                              f"{self._pman.hostmsg}", cpu=cpu, path=path)
 
     def set_bits(self, regval: int, bits: tuple[int, int] | list[int], val: int) -> int:
         """
@@ -376,15 +427,16 @@ for cpu in cpus:
         regval_bytes = regval.to_bytes(self.regbytes, byteorder=_CPU_BYTEORDER)
 
         for cpu in cpus:
-            path = f"/dev/cpu/{cpu}/msr"
+            path = self.format_msr_device_path(cpu)
             _LOG.debug("Local: Write: CPU%d: MSR 0x%x: 0x%x to '%s'%s",
                        cpu, regaddr, regval, path, self._pman.hostmsg)
             fd = os.open(path, os.O_RDWR)
             try:
                 os.pwrite(fd, regval_bytes, regaddr)
             except OSError as err:
-                raise Error(f"Failed to write '{regval:#x}' to MSR '{regaddr:#x}' of CPU "
-                            f"{cpu}{self._pman.hostmsg} (file '{path}'): {err}") from err
+                raise ErrorPerCPUPath(f"Failed to write '{regval:#x}' to MSR '{regaddr:#x}' of CPU "
+                                      f"{cpu}{self._pman.hostmsg} (file '{path}'): {err}",
+                                      cpu=cpu, path=path) from err
             finally:
                 os.close(fd)
 
@@ -415,22 +467,56 @@ regval = {regval:#x}
 regval_bytes = regval.to_bytes({self.regbytes}, byteorder="{_CPU_BYTEORDER}")
 for cpu in cpus:
     path = "/dev/cpu/%d/msr" % cpu
-    fd = os.open(path, os.O_RDWR)
     try:
-        os.pwrite(fd, regval_bytes, {regaddr:#x})
-    finally:
-        os.close(fd)
+        fd = os.open(path, os.O_RDWR)
+        try:
+            os.pwrite(fd, regval_bytes, {regaddr:#x})
+        finally:
+            os.close(fd)
+    except Exception as err:
+        print("ERROR: CPU: '%d': Path: '%s': Error: '%s'" % (cpu, path, err))
+        raise SystemExit(0)
 '"""
 
         _LOG.debug("Remote: Write: MSR 0x%x: 0x%x%s",
                    regaddr, regval, self._pman.hostmsg)
 
         try:
-            self._pman.run_verify(cmd)
+            stdout, stderr = self._pman.run_verify_join(cmd)
         except Error as err:
             errmsg = err.indent(2)
             raise type(err)(f"Failed to write '{regval:#x}' to MSR '{regaddr:#x}' on CPUs "
                             f"{cpus_str}{self._pman.hostmsg}:\n{errmsg}") from err
+
+        if stderr:
+            # Nothing is expected on stderr, if there is any output, treat it as an error.
+            raise Error(f"Failed to write '{regval:#x}' to MSR '{regaddr:#x}' on CPUs {cpus_str}"
+                        f"{self._pman.hostmsg}:\nUnexpected output on stderr:\n{stderr}")
+
+        if not stdout:
+            # All writes succeeded.
+            return
+
+        stdout = stdout.strip()
+        generic_errmsg = (f"Failed to write '{regval:#x}' to MSR '{regaddr:#x}' on CPUs "
+                          f"{cpus_str}{self._pman.hostmsg}:\n{stdout}")
+
+        if not stdout.startswith("ERROR: "):
+            raise Error(generic_errmsg)
+
+        # Try to parse the error message to extract CPU, path, and error.
+        regex = r"ERROR: CPU: '(\d+)': Path: '(.+)': Error: '(.+)'"
+        mobj = re.match(regex, stdout)
+        if not mobj:
+            raise Error(generic_errmsg)
+
+        cpu = Trivial.str_to_int(mobj.group(1), what="CPU number")
+        path = Path(mobj.group(2))
+        errmsg = mobj.group(3)
+
+        raise ErrorPerCPUPath(f"Failed to write '{regval:#x}' to MSR '{regaddr:#x}' of CPU {cpu}"
+                              f"{self._pman.hostmsg} (file '{path}'):\n"
+                              f"{Error(errmsg).indent(2)}", cpu=cpu, path=path)
 
     def _cpus_write_pman(self, regaddr: int, regval: int, cpus: Iterable[int]):
         """
@@ -445,7 +531,7 @@ for cpu in cpus:
         regval_bytes = regval.to_bytes(self.regbytes, byteorder=_CPU_BYTEORDER)
 
         for cpu in cpus:
-            path = Path(f"/dev/cpu/{cpu}/msr")
+            path = self.format_msr_device_path(cpu)
             _LOG.debug("Emulation: Write: CPU%d: MSR 0x%x: 0x%x to '%s'%s",
                        cpu, regaddr, regval, path, self._pman.hostmsg)
             with self._pman.openb(path, "r+") as fobj:
