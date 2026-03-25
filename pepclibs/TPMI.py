@@ -11,66 +11,71 @@
 Read and write TPMI registers on Intel CPUs. TPMI stands for "Topology Aware Register and PM Capsule
 Interface" - a memory-mapped interface for accessing power management features on Intel CPUs.
 
+Public functions overview.
+
+1. Querying available features.
+    - 'get_features()' - retrieve available TPMI features and scanned spec directories.
+
 Terminology:
-    * feature - A group of TPMI registers exposed by the processor via PCIe VSEC (Vendor-Specific
+    - feature - A group of TPMI registers exposed by the processor via PCIe VSEC (Vendor-Specific
                 Extended Capabilities) as a single capability. Typically, a TPMI feature corresponds
                 to a processor capability. For example, the "uncore" TPMI feature includes registers
                 for uncore frequency scaling, "rapl" covers Running Average Power Limit (RAPL), and
                 "sst" covers Intel Speed Select Technology (SST).
-    * supported feature - A TPMI feature available on the processor.
-    * known feature - A supported feature with a corresponding spec file, allowing decoding and
+    - supported feature - A TPMI feature available on the processor.
+    - known feature - A supported feature with a corresponding spec file, allowing decoding and
                       usage.
-    * unknown feature - A supported feature without a spec file.
-    * feature_id - A unique integer identifier for a feature.
-    * fdict - A dictionary describing TPMI registers associated with a feature. The fdict structure
+    - unknown feature - A supported feature without a spec file.
+    - feature_id - A unique integer identifier for a feature.
+    - fdict - A dictionary describing TPMI registers associated with a feature. The fdict structure
               matches the "registers" section of the feature spec file. Keys are register names.
               Values are register dictionaries (regdicts). Information outside "registers" is stored
               in the sdict.
-    * regdict - Register dictionary describing a single register within fdict.
-    * bfdict - Bit field dictionary describing a single bit field within regdict.
-    * spec file - YAML file describing the registers and bit fields for a TPMI feature. Each
+    - regdict - Register dictionary describing a single register within fdict.
+    - bfdict - Bit field dictionary describing a single bit field within regdict.
+    - spec file - YAML file describing the registers and bit fields for a TPMI feature. Each
                   supported feature has a spec file, which is also required to decode the feature's
                   PCIe VSEC table.
-    * spec directory - Directory containing spec files. There is an 'index.yml' file in the spec
+    - spec directory - Directory containing spec files. There is an 'index.yml' file in the spec
                        directory, and sub-directories containing spec files for specific
                        platforms.
-    * sdict - Spec file dictionary containing basic TPMI spec file information: feature name, ID,
+    - sdict - Spec file dictionary containing basic TPMI spec file information: feature name, ID,
               description, and spec file path. Sdicts are built by partially reading spec files
               during initial scanning.
-    * sdd - The spec directory dictionary. Describes a scanned and parsed spec directory, including
+    - sdd - The spec directory dictionary. Describes a scanned and parsed spec directory, including
             the index dictionary (idxdict), and the used VFM entry (vfm).
-    * instance - Logical "areas" or "components" within TPMI features, represented by integer
+    - instance - Logical "areas" or "components" within TPMI features, represented by integer
                  instance numbers. Specify the instance when reading or writing TPMI registers.
-    * cluster - An instance of UFS (Uncore Frequency Scaling) TPMI is further divided into multiple
+    - cluster - An instance of UFS (Uncore Frequency Scaling) TPMI is further divided into multiple
                 clusters, each representing a copy of UFS registers. Clusters are identified by
                 cluster IDs (0-7). Each cluster has its own offset within the TPMI instance memory
                 space.
-    * offset - TPMI register offset relative to the start of the TPMI instance memory space, as
+    - offset - TPMI register offset relative to the start of the TPMI instance memory space, as
                defined in spec files.
 """
 
 # Internal terms (not exposed to users of this module).
 #
 # Naming conventions:
-#   * something dict - Dictionary describing an object, populated from the spec file.
-#   * something map - Dictionary describing an object, populated from debugfs files and directories.
+#   - something dict - Dictionary describing an object, populated from the spec file.
+#   - something map - Dictionary describing an object, populated from debugfs files and directories.
 #
 # Terminology:
-#   * fmap - Feature map. Maps PCI addresses to TPMI device information for a feature.
+#   - fmap - Feature map. Maps PCI addresses to TPMI device information for a feature.
 #            Example fmap structure:
 #                {
 #                  "0000:00:03.1": {"package": 0, "mdmap": mdmap},
 #                  "0000:80:03.1": {"package": 1, "mdmap": mdmap}
 #                }
-#   * mem_dump - Linux TPMI debugfs file named "mem_dump" (e.g.,
+#   - mem_dump - Linux TPMI debugfs file named "mem_dump" (e.g.,
 #                /sys/kernel/debug/tpmi-0000:00:03.1/tpmi-id-00/mem_dump). Contains TPMI memory
 #                dumps for all instances in text format. To read a TPMI register, parse 'mem_dump'
 #                to determine the correct file position.
-#   * mdmap - mem_dump map. Cache file positions for TPMI register reads to avoid reparsing
+#   - mdmap - mem_dump map. Cache file positions for TPMI register reads to avoid reparsing
 #             'mem_dump'. mdmap is a two-level dictionary: first indexed by instance number, then by
 #             TPMI memory offset. The value is the file position in 'mem_dump'. Use mdmap to quickly
 #             locate the file position for a given instance and register offset.
-#   * cmap - Clusters map. Map UFS clusters IDs to their offsets relative to the start of the TPMI
+#   - cmap - Clusters map. Map UFS clusters IDs to their offsets relative to the start of the TPMI
 #            instance memory space.
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
@@ -466,8 +471,8 @@ def get_features(specdirs: Iterable[Path] = (),
 
     Returns:
         A tuple containing:
-            * A dictionary of spec dictionaries for all found TPMI features. Keys are feature names.
-            * A dictionary of scanned spec directories. Keys are spec directory paths.
+            - A dictionary of spec dictionaries for all found TPMI features. Keys are feature names.
+            - A dictionary of scanned spec directories. Keys are spec directory paths.
 
     Raises:
         ErrorNotSupported: If no TPMI spec files are found in the specified directories, if the
@@ -475,10 +480,10 @@ def get_features(specdirs: Iterable[Path] = (),
                            supported.
 
     Notes:
-        1. During the scanning process, only the headers of spec files are read. The entire YAML
-           file is not parsed, to avoid the overhead of loading complete spec files.
-        2. Every spec directory must contain an 'index.yml' file, which is used to find the
-           sub-directory containing spec files for the current platform based on 'vfm'.
+        - During the scanning process, only the headers of spec files are read. The entire YAML
+          file is not parsed, to avoid the overhead of loading complete spec files.
+        - Every spec directory must contain an 'index.yml' file, which is used to find the
+          sub-directory containing spec files for the current platform based on 'vfm'.
     """
 
     if vfm == -1:
@@ -585,48 +590,32 @@ class TPMI(ClassHelpers.SimpleCloseContext):
     Provide methods to read and write TPMI registers, query available features, and extract
     bit field values.
 
-    Public Methods:
-        get_known_features():
-            Return information about all known TPMI features supported by the system.
+    Public methods overview.
 
-        get_unknown_features():
-            Return a list of TPMI feature IDs that are present but lack a specification file.
-
-        get_sdict(fname):
-            Return the spec file dictionary (sdict) for the specified TPMI feature.
-
-        get_fdict(fname):
-            Return the feature dictionary (fdict) for the specified TPMI feature.
-
-        iter_feature(fname, packages=(), addrs=(), instances=()):
-            Iterate over TPMI devices and instances for a given feature.
-
-        iter_ufs_feature(fname, packages=(), addrs=(), instances=(), clusters=()):
-            Iterate over TPMI devices, instances, and clusters for the UFS feature.
-
-        iter_feature_cluster(fname, packages=(), addrs=(), instances=(), clusters=()):
-            Iterate over TPMI devices, instances, and clusters for a given feature.
-
-        read_register(fname, addr, instance, regname, bfname=None):
-            Read the value of a TPMI register or a specific bit field.
-
-        read_ufs_register(addr, instance, regname, cluster, bfname=None):
-            Read the value of a UFS TPMI register or a specific bit field.
-
-        read_register_cluster(fname, addr, instance, cluster, regname, bfname=None):
-            Read the value of a TPMI register or a specific bit field, specifying the cluster.
-
-        write_register(value, fname, addr, instance, regname, bfname=None):
-            Write a value to a TPMI register or a specific bit field.
-
-        write_ufs_register(value, addr, instance, regname, cluster, bfname=None):
-            Write a value to a UFS TPMI register or a specific bit field.
-
-        write_register_cluster(value, fname, addr, instance, cluster, regname, bfname=None):
-            Write a value to a TPMI register or a specific bit field, specifying the cluster.
-
-        get_bitfield(regval, fname, regname, bfname):
-            Extract the value of a bit field from a register value.
+    1. Querying features and metadata.
+        - 'get_known_features()' - return information about all known TPMI features.
+        - 'get_unknown_features()' - return a list of TPMI feature IDs that lack a spec file.
+        - 'get_sdict()' - return the spec file dictionary for a specified TPMI feature.
+        - 'get_fdict()' - return the feature dictionary for a specified TPMI feature.
+    2. Iterating over features.
+        - 'iter_feature()' - iterate over TPMI devices and instances for a given feature.
+        - 'iter_ufs_feature()' - iterate over TPMI devices, instances, and clusters for the UFS
+                                 feature.
+        - 'iter_feature_cluster()' - iterate over TPMI devices, instances, and clusters for a given
+                                     feature.
+    3. Reading registers.
+        - 'read_register()' - read a TPMI register or a specific bit field.
+        - 'read_ufs_register()' - read a UFS TPMI register or a specific bit field.
+        - 'read_register_cluster()' - read a TPMI register or a specific bit field, specifying the
+                                      cluster.
+    4. Writing registers.
+        - 'write_register()' - write a value to a TPMI register or a specific bit field.
+        - 'write_ufs_register()' - write a value to a UFS TPMI register or a specific bit field.
+        - 'write_register_cluster()' - write a value to a TPMI register or a specific bit field,
+                                       specifying the cluster.
+    5. Miscellaneous.
+        - 'get_bitfield()' - extract the value of a bit field from a register value.
+        - 'close()' - uninitialize the class object.
     """
 
     def __init__(self,
@@ -655,11 +644,11 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                                TPMI features are found on the system.
 
         Notes:
-            1. TPMI is designed to be forward-compatible. If VFM is not provided, a default VFM
-               from an early TPMI-capable platform generation is used (Granite Rapids Xeon),
-               which is compatible with later generations like Sierra Forest Xeon.
-            2. When 'base' is provided, all TPMI accesses are done against the debugfs dump located
-               at 'base' instead of the live system defined by 'pman'.
+            - TPMI is designed to be forward-compatible. If VFM is not provided, a default VFM
+              from an early TPMI-capable platform generation is used (Granite Rapids Xeon),
+              which is compatible with later generations like Sierra Forest Xeon.
+            - When 'base' is provided, all TPMI accesses are done against the debugfs dump located
+              at 'base' instead of the live system defined by 'pman'.
         """
 
         self._close_pman = pman is None
@@ -796,7 +785,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
             f"   3. The TPMI driver is not enabled. Try to compile the kernel with "
             f"'CONFIG_INTEL_TPMI' enabled.")
 
-    def _get_debugfs_feature_path(self, addr, fname) -> Path:
+    def _get_debugfs_feature_path(self, addr: str, fname: str) -> Path:
         """
         Get the path to the Linux debugfs directory for a specific TPMI feature.
 
@@ -896,7 +885,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         if not version_reg_found:
             raise Error(f"TPMI interface version register not found for feature '{fname}'")
 
-    def _build_mdmap(self, addr, fname) -> _MDMapType:
+    def _build_mdmap(self, addr: str, fname: str) -> _MDMapType:
         """
         Build and return the memory dump map (mdmap) for a TPMI feature at a given PCI device
         address.
@@ -985,8 +974,8 @@ class TPMI(ClassHelpers.SimpleCloseContext):
 
         Returns:
             A tuple containing:
-                * A dummy 'tpmi_info' mdmap with all instances marked as unimplemented.
-                * An assigned package number for the TPMI device.
+                - A dummy 'tpmi_info' mdmap with all instances marked as unimplemented.
+                - An assigned package number for the TPMI device.
 
         Notes:
             - This method handles the case when the 'tpmi_info' feature is missing from the debugfs
@@ -2261,6 +2250,10 @@ class TPMI(ClassHelpers.SimpleCloseContext):
             regname: Name of the TPMI register to write to.
             bfname: Name of the bit field to write to. If not provided, write the entire register.
 
+        Raises:
+            ErrorPermissionDenied: If TPMI is read-only, or if the register or bit field is
+                                   read-only.
+
         Notes:
             - For the 'ufs' feature, this method assumes cluster number 0.
             - Use 'write_ufs_register()' or 'write_register_cluster()' to write registers to
@@ -2292,6 +2285,10 @@ class TPMI(ClassHelpers.SimpleCloseContext):
             regname: Name of the TPMI register to write to.
             bfname: Name of the bit field to write to. If not provided, write the entire register.
 
+        Raises:
+            ErrorPermissionDenied: If TPMI is read-only, or if the register or bit field is
+                                   read-only.
+
         Notes:
             - Unlike other TPMI features, UFS may have multiple clusters per instance.
         """
@@ -2322,6 +2319,10 @@ class TPMI(ClassHelpers.SimpleCloseContext):
             cluster: TPMI cluster number to write the register to.
             regname: Name of the TPMI register to write to.
             bfname: Name of the bit field to write to. If not provided, write the entire register.
+
+        Raises:
+            ErrorPermissionDenied: If TPMI is read-only, or if the register or bit field is
+                                   read-only.
 
         Notes:
             - Only the 'ufs' feature has multiple clusters.
