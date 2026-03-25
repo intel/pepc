@@ -11,8 +11,7 @@ Provide functionality for reading and modifying uncore frequency and other prope
 via TPMI.
 """
 
-# TODO: check TPMI version before using ELC, see the kernel driver.
-#       Check AUTONOMOUS_UFS_DISABLED before using ELC
+# TODO: Check AUTONOMOUS_UFS_DISABLED before using ELC
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
@@ -68,6 +67,24 @@ class UncoreFreqTpmi(_UncoreFreqBase.UncoreFreqBase):
         super().__init__(cpuinfo, pman, enable_cache=False)
 
         self._tpmi: TPMI.TPMI = cpuinfo.get_dieinfo().get_tpmi()
+
+        # Verify TPMI interface version. Both uncore frequency control and ELC require version 0.2
+        # or later. Check one die during initialization to fail early. Assume all dies have the
+        # same version.
+        dies_info = self._cpuinfo.get_all_dies_info()
+        for _, pkg_dies in dies_info.items():
+            for _, die_info in pkg_dies.items():
+                addr = die_info["addr"]
+                instance = die_info["instance"]
+                major, minor = self._tpmi.get_version("uncore", addr, instance)
+
+                if major < 0 or (major == 0 and minor < 2):
+                    raise ErrorNotSupported(
+                        f"Uncore frequency control via TPMI is not supported{self._pman.hostmsg}: "
+                        f"TPMI interface version is {major}.{minor}, but version 0.2 or later is "
+                        f"required")
+                break
+            break
 
     def close(self):
         """Uninitialize the class instance."""
