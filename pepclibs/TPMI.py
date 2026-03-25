@@ -1623,19 +1623,22 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         if cluster > 0:
             offset = self._adjust_ufs_offset(addr, instance, cluster, offset)
 
+        # Unfortunately, the TPMI debugfs interface does not support writing 64-bit values in one
+        # go, even for registers that are 64 bits wide. Instead, the value needs to be split into
+        # 32-bit parts and written sequentially, starting with the least significant part.
         with self._pman.open(path, "r+") as fobj:
-            while width > 0:
-                # TODO: Can 64-bit writes be done in one operation?
+            while True:
                 writeval = value & 0xffffffff
                 data = f"{instance},{offset},{writeval:#x}"
                 _LOG.debug("Writing '%s' to '%s'", data, path)
 
                 fobj.write(data)
-                fobj.seek(0)
-
                 width -= 32
                 offset += 4
                 value >>= 32
+                if width <= 0:
+                    break
+                fobj.seek(0)
 
     def _get_mdmap(self, fname: str, addr: str) -> _MDMapType:
         """
