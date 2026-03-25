@@ -15,8 +15,9 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 import typing
 from pathlib import Path
 from pepclibs import CPUInfo, _SysfsIO
-from pepclibs.helperlibs import Logging, LocalProcessManager, ClassHelpers
+from pepclibs.helperlibs import Logging, LocalProcessManager, ClassHelpers, Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorBadFormat, ErrorNotSupported
+from pepclibs.helperlibs.Exceptions import ErrorPath, ErrorPerCPUPath
 
 if typing.TYPE_CHECKING:
     from typing import Generator, Literal, Sequence, Final
@@ -102,6 +103,21 @@ class CPPCSysfs(ClassHelpers.SimpleCloseContext):
         close_attrs = ("_sysfs_io", "_cpuinfo", "_pman")
         ClassHelpers.close(self, close_attrs=close_attrs)
 
+    def _extract_cpu_from_path(self, path: Path) -> int:
+        """Extract CPU number from an ACPI CPPC sysfs path.
+
+        Args:
+            path: The sysfs path (e.g., /sys/.../cpu42/acpi_cppc/...).
+
+        Returns:
+            The CPU number extracted from the path.
+        """
+
+        # e.g., /sys/.../cpu42/acpi_cppc/... -> cpu42
+        cpu_dir = path.parent.parent.name
+        cpu_str = cpu_dir.replace("cpu", "")
+        return Trivial.str_to_int(cpu_str, what=f"CPU number from path '{path}'")
+
     def _get_sysfs_path(self, cpu: int, fname: str) -> Path:
         """
         Construct and return full sysfs path for a given CPU and file name under the 'acpi_cppc'
@@ -117,27 +133,11 @@ class CPPCSysfs(ClassHelpers.SimpleCloseContext):
 
         return self._sysfs_base / f"cpu{cpu}/acpi_cppc" / fname
 
-    def _read_cppc_sysfs_file(self,
-                              cpus: Sequence[int],
-                              fname: str,
-                              what: str) -> Generator[tuple[int, int], None, None]:
-        """
-        Read the specified ACPI CPPC sysfs file for a sequence of CPUs and gracefully handle errors.
-        This method uses bulk I/O operations when reading from remote hosts. Cache the values read
-        from the sysfs files to avoid repeated reads.
-
-        Args:
-            cpus: CPU numbers for which to read the sysfs file.
-            fname: Name of the sysfs file under the 'acpi_cppc' sysfs sub-directory to read.
-            what: Description of the value being read, used for logging and error messages.
-
-        Yields:
-            Tuple (cpu, value), where 'cpu' is the CPU number and 'value' is the value read from
-            the sysfs file.
-
-        Raises:
-            ErrorNotSupported: If the ACPI CPPC sysfs file does not exist.
-        """
+    def __read_cppc_sysfs_file(self,
+                                cpus: Sequence[int],
+                                fname: str,
+                                what: str) -> Generator[tuple[int, int], None, None]:
+        """Implement '_read_cppc_sysfs_file()'. Arguments are the same."""
 
         # Build paths for all CPUs.
         paths = [self._get_sysfs_path(cpu, fname) for cpu in cpus]
@@ -160,6 +160,36 @@ class CPPCSysfs(ClassHelpers.SimpleCloseContext):
             # the sysfs file was not even available and raise 'ErrorNotSupported'.
             _LOG.debug("ACPI CPPC sysfs files are not readable%s", self._pman.hostmsg)
             raise ErrorNotSupported(str(err)) from err
+
+    def _read_cppc_sysfs_file(self,
+                              cpus: Sequence[int],
+                              fname: str,
+                              what: str) -> Generator[tuple[int, int], None, None]:
+        """
+        Read the specified ACPI CPPC sysfs file for a sequence of CPUs and gracefully handle errors.
+        This method uses bulk I/O operations when reading from remote hosts. Cache the values read
+        from the sysfs files to avoid repeated reads.
+
+        Args:
+            cpus: CPU numbers for which to read the sysfs file.
+            fname: Name of the sysfs file under the 'acpi_cppc' sysfs sub-directory to read.
+            what: Description of the value being read, used for logging and error messages.
+
+        Yields:
+            Tuple (cpu, value), where 'cpu' is the CPU number and 'value' is the value read from
+            the sysfs file.
+
+        Raises:
+            ErrorNotSupported: If the ACPI CPPC sysfs file does not exist.
+            ErrorPerCPUPath: An I/O error occurred. The exception includes the CPU number and the
+                             sysfs path that caused the error.
+        """
+
+        try:
+            yield from self.__read_cppc_sysfs_file(cpus, fname, what)
+        except ErrorPath as err:
+            cpu = self._extract_cpu_from_path(err.path)
+            raise ErrorPerCPUPath(str(err), cpu=cpu, path=err.path) from err
 
     def _get_perf_level(self,
                         plname: PerfLevelNameType,
@@ -198,6 +228,8 @@ class CPPCSysfs(ClassHelpers.SimpleCloseContext):
 
         Raises:
             ErrorNotSupported: If the ACPI CPPC sysfs file does not exist.
+            ErrorPerCPUPath: An I/O error occurred. The exception includes the CPU number and the
+                             sysfs path that caused the error.
         """
 
         yield from self._get_perf_level("lowest", cpus)
@@ -216,6 +248,8 @@ class CPPCSysfs(ClassHelpers.SimpleCloseContext):
 
         Raises:
             ErrorNotSupported: If the ACPI CPPC sysfs file does not exist.
+            ErrorPerCPUPath: An I/O error occurred. The exception includes the CPU number and the
+                             sysfs path that caused the error.
         """
 
         yield from self._get_perf_level("lowest_nonlinear", cpus)
@@ -233,6 +267,8 @@ class CPPCSysfs(ClassHelpers.SimpleCloseContext):
 
         Raises:
             ErrorNotSupported: If the ACPI CPPC sysfs file does not exist.
+            ErrorPerCPUPath: An I/O error occurred. The exception includes the CPU number and the
+                             sysfs path that caused the error.
         """
 
         yield from self._get_perf_level("guaranteed", cpus)
@@ -250,6 +286,8 @@ class CPPCSysfs(ClassHelpers.SimpleCloseContext):
 
         Raises:
             ErrorNotSupported: If the ACPI CPPC sysfs file does not exist.
+            ErrorPerCPUPath: An I/O error occurred. The exception includes the CPU number and the
+                             sysfs path that caused the error.
         """
 
         yield from self._get_perf_level("nominal", cpus)
@@ -267,6 +305,8 @@ class CPPCSysfs(ClassHelpers.SimpleCloseContext):
 
         Raises:
             ErrorNotSupported: If the ACPI CPPC sysfs file does not exist.
+            ErrorPerCPUPath: An I/O error occurred. The exception includes the CPU number and the
+                             sysfs path that caused the error.
         """
 
         yield from self._get_perf_level("highest", cpus)
@@ -308,6 +348,8 @@ class CPPCSysfs(ClassHelpers.SimpleCloseContext):
 
         Raises:
             ErrorNotSupported: If the ACPI CPPC CPU frequency sysfs file does not exist.
+            ErrorPerCPUPath: An I/O error occurred. The exception includes the CPU number and the
+                             sysfs path that caused the error.
         """
 
         yield from self._get_freq(cpus, "nominal")
