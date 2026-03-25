@@ -71,6 +71,7 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         - 'package_to_cpus()'
         - 'package_to_modules()'
         - 'package_to_nodes()'
+        - 'package_to_dies()'
         - 'cores_to_cpus()'
         - 'modules_to_cpus()'
         - 'dies_to_cpus()'
@@ -683,6 +684,27 @@ class CPUInfo(_CPUInfoBase.CPUInfoBase):
         """
 
         return self._get_scope_nums("node", "package", (package,), order=order)
+
+    def package_to_dies(self, package: int, order: ScopeNameType = "die") -> list[int]:
+        """
+        Return a list of compute die numbers within the specified package.
+
+        Args:
+            package: Package number to retrieve die numbers for.
+            order: Sorting order for the returned list of die numbers.
+
+        Returns:
+            List of compute die numbers in the given package, sorted in the specified order.
+
+        Notes:
+            - Only dies containing at least one online CPU are included, as Linux does not provide
+              topology information for offline CPUs.
+            - Die numbers may be globally unique or relative to the package, depending on the
+              system.
+            - Non-compute dies (dies without CPUs) are not included.
+        """
+
+        return self._get_scope_nums("die", "package", (package,), order=order)
 
     def cores_to_cpus(self,
                       cores: AbsNumsType | Literal["all"] = "all",

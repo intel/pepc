@@ -17,7 +17,7 @@ import typing
 import statistics
 from pepclibs import _PropsClassBase
 from pepclibs.UncoreVars import PROPS
-from pepclibs.helperlibs import ClassHelpers, Logging
+from pepclibs.helperlibs import ClassHelpers, Logging, Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 
 # pylint: disable-next=unused-import
@@ -329,8 +329,26 @@ class Uncore(_PropsClassBase.PropsClassBase):
                        mnames: Sequence[MechanismNameType]):
         """Refer to 'PropsClassBase._set_prop_cpus()'."""
 
-        # TODO: implement by translating CPU numbers to die num
-        raise Error(f"BUG: Unsupported property '{pname}'")
+        _LOG.debug("Setting property '%s' to value '%s' using mechanism '%s', cpus: %s",
+                   pname, val, mname, self._cpuinfo.cpus_to_str(cpus))
+
+        # Uncore properties are die-scoped, so translate CPU numbers to die numbers.
+        # Each CPU will map to its containing die, and the property will be set for those dies.
+        # Note: Multiple CPUs from the same die will only result in setting the die once.
+        dies: dict[int, list[int]] = {}
+        for cpu in cpus:
+            package = self._cpuinfo.cpu_to_package(cpu)
+            die = self._cpuinfo.cpu_to_die(cpu)
+            if package not in dies:
+                dies[package] = []
+            dies[package].append(die)
+
+        # Remove duplicates from die lists.
+        for package in dies:
+            dies[package] = Trivial.list_dedup(dies[package])
+
+        # Use the existing die-level setter.
+        self._set_prop_dies(pname, val, dies, mname, mnames)
 
     def _set_numeric_freq_dies(self,
                                pname: str,

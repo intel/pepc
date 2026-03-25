@@ -6,6 +6,7 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
  - Handle HWP systems without EPP support more gracefully.
+ - Fix a crash when uncore commands are used for a single CPU.
 ### Added
 ### Removed
 ### Changed
