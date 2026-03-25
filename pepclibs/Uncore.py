@@ -25,9 +25,10 @@ from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs._PropsClassBase import ErrorTryAnotherMechanism, ErrorUsePerCPU
 
 if typing.TYPE_CHECKING:
-    from typing import Any, Generator, Union, Sequence
+    from typing import Generator, Union, Sequence
     from pepclibs import _SysfsIO, _UncoreFreqSysfs, _UncoreFreqTPMI
     from pepclibs.CPUInfo import CPUInfo
+    from pepclibs.msr import MSR
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepclibs._PropsTypes import PropertyValueType, MechanismNameType
     from pepclibs.CPUInfoTypes import AbsNumsType, RelNumsType
@@ -43,10 +44,10 @@ class Uncore(_PropsClassBase.PropsClassBase):
     def __init__(self,
                  pman: ProcessManagerType | None = None,
                  cpuinfo: CPUInfo | None = None,
-                 msr: Any = None,
+                 msr: MSR.MSR | None = None,
                  sysfs_io: _SysfsIO.SysfsIO | None = None,
                  enable_cache: bool = True):
-        """Refer to 'PropsClassBase._get_prop_cpus()'."""
+        """Refer to 'PropsClassBase.__init__()'."""
 
         super().__init__(pman=pman, cpuinfo=cpuinfo, msr=msr, sysfs_io=sysfs_io,
                          enable_cache=enable_cache)
