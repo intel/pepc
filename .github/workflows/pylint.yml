@@ -63,10 +63,12 @@ jobs:
           mkdir -- .tmp
           touch .tmp/modified-files
 
-          # Find modified files, filter for Python scripts, and save them to modified-files
+          # Find modified files, filter for Python scripts, and save them to modified-files.
+          # Exclude .md files which may be misdetected as Python due to code examples.
           git diff-tree --diff-filter=d --no-commit-id --name-status -r "$from..HEAD" | \
             cut -f2- | xargs -r file -Ni -- | \
-            sed -n -e 's#: text/x-script.python;.*##p' > .tmp/modified-files;
+            sed -n -e 's#: text/x-script.python;.*##p' | \
+            grep -v '\.md$' > .tmp/modified-files;
 
           echo "Files to check:"
           cat .tmp/modified-files
