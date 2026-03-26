@@ -9,6 +9,9 @@
 """
 Provide API for reading and writing sysfs files. Implement transactions, caching and optimized I/O
 operations for remote hosts.
+
+Note: Despite the name, this module can be used for reading and writing any files, not just sysfs
+      files.
 """
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
@@ -88,6 +91,8 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
     Notes:
         - Methods do not normalize input paths. The caller should normalize paths for efficient
           caching (cache is indexed by file path).
+        - Despite the name, this class can be used for reading and writing any files, not just
+          sysfs files.
     """
 
     def __init__(self, pman: ProcessManagerType | None = None, enable_cache: bool = True,
