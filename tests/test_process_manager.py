@@ -1,18 +1,19 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2025 Intel Corporation
+# Copyright (C) 2025-2026 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
-Tests for the 'ProcessManager', 'LocalProcessManager', and 'SSHProcessManager' modules.
+Tests for the 'EmulProcessManager', 'LocalProcessManager', and 'SSHProcessManager' modules.
 """
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import stat
+import time
 from pathlib import Path
 import typing
 import pytest
@@ -83,10 +84,10 @@ def test_time_time(params: CommonTestParamsTypedDict):
     """Test the 'time_time()' method."""
 
     pman = params["pman"]
-    time = pman.time_time()
+    timestamp = pman.time_time()
 
-    assert isinstance(time, float)
-    assert time > 0
+    assert isinstance(timestamp, float)
+    assert timestamp > 0
 
 _HELLO_WORLD_START = """-c 'import sys
 print("1: hello")
@@ -598,7 +599,7 @@ def _create_test_dir(pman: ProcessManagerType, path: Path):
 
     subdir = path / "subdir"
     pman.mkdir(subdir)
-    with pman.open(subdir/ "test.txt", "w") as fobj:
+    with pman.open(subdir / "test.txt", "w") as fobj:
         fobj.write("Hello, test!")
 
     pman.mksocket(path / "test.socket")
@@ -699,7 +700,7 @@ def test_read(params: CommonTestParamsTypedDict):
     # Test reading the file.
     assert pman.read_file(test_file) == "Hello, world!"
 
-    # Test the 'ErrorNonFound' exception.
+    # Test the 'ErrorNotFound' exception.
     bogus_path = tmpdir / "bogus.txt"
     with pytest.raises(ErrorNotFound):
         pman.read_file(bogus_path)
@@ -717,10 +718,12 @@ def test_lsdir(params: CommonTestParamsTypedDict):
     test_dir = tmpdir / "test_dir"
     _create_test_dir(pman, test_dir)
 
-    # Test listing the directory.
+    # Test listing the directory with no sorting (sort_by="none").
     count = 0
-    for info in pman.lsdir(test_dir):
+    names_unsorted = []
+    for info in pman.lsdir(test_dir, sort_by="none"):
         count += 1
+        names_unsorted.append(info["name"])
         if info["name"] == "subdir":
             assert stat.S_ISDIR(info["mode"])
         elif info["name"] == "test.socket":
@@ -732,6 +735,85 @@ def test_lsdir(params: CommonTestParamsTypedDict):
 
         assert info["path"] == test_dir / info["name"]
         assert isinstance(info["ctime"], float)
+
+    assert count == 3, f"Expected 3 entries, got {count}"
+    assert set(names_unsorted) == {"subdir", "test.fifo", "test.socket"}, \
+           f"sort_by='none' returned unexpected names: {names_unsorted}"
+
+    # Test sorting by name.
+    names = [info["name"] for info in pman.lsdir(test_dir, sort_by="alphabetic")]
+    assert names == ["subdir", "test.fifo", "test.socket"], \
+           f"sort_by='alphabetic' failed: {names}"
+
+    # Test reverse sorting by name.
+    names = [info["name"] for info in pman.lsdir(test_dir, sort_by="alphabetic", reverse=True)]
+    assert names == ["test.socket", "test.fifo", "subdir"], \
+           f"sort_by='alphabetic', reverse=True failed: {names}"
+
+    # Test that reverse is ignored when sort_by="none".
+    names_none = [info["name"] for info in pman.lsdir(test_dir, sort_by="none")]
+    names_none_reverse = [info["name"] for info in pman.lsdir(test_dir, sort_by="none",
+                                                               reverse=True)]
+    assert set(names_none) == set(names_none_reverse) == {"subdir", "test.fifo", "test.socket"}, \
+           "sort_by='none' should ignore reverse parameter"
+
+    # Test sorting by ctime. Create files with staggered creation times to ensure reliable test.
+    test_ctime_dir = tmpdir / "test_ctime"
+    pman.mkdir(test_ctime_dir)
+
+    # Create files with deliberate delays to ensure different ctimes.
+    file1 = test_ctime_dir / "file1.txt"
+    with pman.open(file1, "w") as fobj:
+        fobj.write("first")
+
+    # Sleep to ensure different ctime.
+    time.sleep(0.2)
+
+    file2 = test_ctime_dir / "file2.txt"
+    with pman.open(file2, "w") as fobj:
+        fobj.write("second")
+
+    time.sleep(0.2)
+
+    file3 = test_ctime_dir / "file3.txt"
+    with pman.open(file3, "w") as fobj:
+        fobj.write("third")
+
+    # Test sorting by ctime (ascending order: oldest first).
+    names = [info["name"] for info in pman.lsdir(test_ctime_dir, sort_by="ctime")]
+    assert names == ["file1.txt", "file2.txt", "file3.txt"], \
+           f"sort_by='ctime' failed: {names}"
+
+    # Test reverse sorting by ctime (descending order: newest first).
+    names = [info["name"] for info in pman.lsdir(test_ctime_dir, sort_by="ctime", reverse=True)]
+    assert names == ["file3.txt", "file2.txt", "file1.txt"], \
+           f"sort_by='ctime', reverse=True failed: {names}"
+
+    # Test natural sorting. Create files with multiple numeric parts to demonstrate correct
+    # sorting.
+    test_natural_dir = tmpdir / "test_natural"
+    pman.mkdir(test_natural_dir)
+
+    # Create files in a deliberately unsorted order.
+    for name in ["row5col7", "z", "row52col7", "row5col0", "row5col10", "row"]:
+        with pman.open(test_natural_dir / name, "w") as fobj:
+            fobj.write(name)
+
+    # Test alphabetic sort (incorrect for numeric suffixes).
+    names = [info["name"] for info in pman.lsdir(test_natural_dir, sort_by="alphabetic")]
+    assert names == ["row", "row52col7", "row5col0", "row5col10", "row5col7", "z"], \
+           f"sort_by='alphabetic' failed: {names}"
+
+    # Test natural sort (correct for numeric suffixes).
+    names = [info["name"] for info in pman.lsdir(test_natural_dir, sort_by="natural")]
+    assert names == ["row", "row5col0", "row5col7", "row5col10", "row52col7", "z"], \
+           f"sort_by='natural' failed: {names}"
+
+    # Test reverse natural sort.
+    names = [info["name"] for info in pman.lsdir(test_natural_dir, sort_by="natural",
+                                                  reverse=True)]
+    assert names == ["z", "row52col7", "row5col10", "row5col7", "row5col0", "row"], \
+           f"sort_by='natural', reverse=True failed: {names}"
 
     # Test the 'ErrorNotFound' exception.
     bogus_dir = test_dir / "bogus"
@@ -749,7 +831,7 @@ def test_unlink(params: CommonTestParamsTypedDict):
 
     # Create a test file.
     tmpdir = pman.mkdtemp()
-    test_dir= tmpdir / "tst_dir"
+    test_dir = tmpdir / "tst_dir"
     _create_test_dir(pman, test_dir)
 
     test_file = test_dir / "subdir" / "test.txt"

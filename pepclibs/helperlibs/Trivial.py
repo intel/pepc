@@ -13,6 +13,7 @@ Common trivial helpers.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import os
+import re
 import grp
 import pwd
 import typing
@@ -305,6 +306,33 @@ def is_num(value: str | int | float) -> bool:
             return False
 
     return True
+
+def natural_sort_key(name: str) -> list[int | str]:
+    """
+    Generate a sort key for natural (human-friendly) sorting of strings with numbers.
+
+    Splits the input string into alternating text and numeric parts. Numeric parts are converted to
+    integers for proper comparison.
+
+    Args:
+        name: The string to generate a sort key for.
+
+    Returns:
+        A list of alternating strings and integers suitable for sorting.
+
+    Examples:
+        "state2" -> ["state", 2]
+        "state10" -> ["state", 10]
+        "row5col7" -> ["row", 5, "col", 7]
+        "row52col7" -> ["row", 52, "col", 7]
+        "z" -> ["z"]
+    """
+
+    parts: list[int | str] = []
+    for match in re.finditer(r'(\d+|\D+)', name):
+        part = match.group(0)
+        parts.append(int(part) if part.isdigit() else part)
+    return parts
 
 def validate_value_in_range(value: int | float,
                             minval: int | float,

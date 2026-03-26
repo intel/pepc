@@ -30,7 +30,6 @@ import logging
 import threading
 import contextlib
 from pathlib import Path
-from operator import itemgetter
 from typing import cast
 from collections.abc import Callable
 try:
@@ -45,7 +44,7 @@ from pepclibs.helperlibs.Exceptions import ErrorNotFound, ErrorExists
 
 if typing.TYPE_CHECKING:
     from typing import Generator, IO, Sequence
-    from pepclibs.helperlibs._ProcessManagerBase import LsdirTypedDict
+    from pepclibs.helperlibs._ProcessManagerBase import LsdirTypedDict, LsdirSortbyType
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
@@ -1353,7 +1352,10 @@ except OSError as err:
         cmd = f"mkfifo -- '{path}'"
         self.run_verify(cmd)
 
-    def lsdir(self, path: str | Path) -> Generator[LsdirTypedDict, None, None]:
+    def lsdir(self,
+              path: str | Path,
+              sort_by: LsdirSortbyType = "none",
+              reverse: bool = False) -> Generator[LsdirTypedDict, None, None]:
         """Refer to 'ProcessManagerBase.lsdir()'."""
 
         path = Path(path)
@@ -1398,7 +1400,7 @@ for ent in entries:
                               "ctime": float(entry[2]),
                               "mode": int(entry[1])}
 
-        yield from sorted(info.values(), key=itemgetter("ctime"), reverse=True)
+        yield from self._sort_lsdir_result(info, sort_by, reverse)
 
     def exists(self, path: str | Path) -> bool:
         """Refer to 'ProcessManagerBase.exists()'."""

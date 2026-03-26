@@ -36,7 +36,7 @@ from pepclibs.helperlibs._ProcessManagerBase import ProcWaitResultType
 
 if typing.TYPE_CHECKING:
     from typing import Generator, TypedDict, Sequence, IO, cast
-    from pepclibs.helperlibs._ProcessManagerBase import LsdirTypedDict
+    from pepclibs.helperlibs._ProcessManagerBase import LsdirTypedDict, LsdirSortbyType
 
     class _TestDataInlineDirsTypedDict(TypedDict, total=False):
         """
@@ -676,12 +676,15 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         dirpath = self._basepath / str(dirpath).lstrip("/")
         super().mkdir(dirpath, parents=parents, exist_ok=exist_ok)
 
-    def lsdir(self, path: str | Path) -> Generator[LsdirTypedDict, None, None]:
+    def lsdir(self,
+              path: str | Path,
+              sort_by: LsdirSortbyType = "none",
+              reverse: bool = False) -> Generator[LsdirTypedDict, None, None]:
         """Same as 'ProcessManagerBase.lsdir()', but rebase 'path' to the base directory."""
 
         emul_path = Path(self._basepath / str(path).lstrip("/"))
 
-        for entry in super().lsdir(emul_path):
+        for entry in super().lsdir(emul_path, sort_by=sort_by, reverse=reverse):
             entry["path"] = entry["path"].relative_to(self._basepath)
             yield entry
 

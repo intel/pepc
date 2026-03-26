@@ -22,11 +22,12 @@ import threading
 import contextlib
 from pathlib import Path
 from typing import NamedTuple
+from operator import itemgetter
 from pepclibs.helperlibs import Logging, Human, Trivial, ClassHelpers, ToolChecker
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound
 
 if typing.TYPE_CHECKING:
-    from typing import IO, Any, cast, Generator, TypedDict
+    from typing import IO, Any, cast, Generator, TypedDict, Literal
 
     class LsdirTypedDict(TypedDict):
         """
@@ -43,6 +44,8 @@ if typing.TYPE_CHECKING:
         path: Path
         mode: int
         ctime: float
+
+    LsdirSortbyType = Literal["none", "ctime", "alphabetic", "natural"]
 
 class ProcWaitResultJoinType(NamedTuple):
     """
@@ -1327,14 +1330,70 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         raise NotImplementedError("ProcessManagerBase.mkfifo()")
 
-    def lsdir(self, path: str | Path) -> Generator[LsdirTypedDict, None, None]:
+    def _sort_lsdir_result(self,
+                           info: dict[str, LsdirTypedDict],
+                           sort_by: LsdirSortbyType,
+                           reverse: bool) -> Generator[LsdirTypedDict, None, None]:
+        """
+        Sort and yield directory entries according to 'sort_by' and 'reverse' parameters.
+
+        Args:
+            info: Dictionary of directory entries to sort.
+            sort_by: Sorting method for directory entries.
+            reverse: If True, reverse the sort order.
+
+        Yields:
+            Sorted directory entries as 'LsdirTypedDict' dictionaries.
+        """
+
+        if sort_by == "ctime":
+            yield from sorted(info.values(), key=itemgetter("ctime"), reverse=reverse)
+        elif sort_by == "alphabetic":
+            yield from sorted(info.values(), key=itemgetter("name"), reverse=reverse)
+        elif sort_by == "natural":
+            yield from sorted(info.values(),
+                              key=lambda x: Trivial.natural_sort_key(x["name"]),
+                              reverse=reverse)
+        elif sort_by == "none":
+            yield from info.values()
+        else:
+            raise Error(f"Invalid sort_by value: '{sort_by}'. Supported values: "
+                        f"'ctime', 'alphabetic', 'natural', 'none'")
+
+    def lsdir(self,
+              path: str | Path,
+              sort_by: LsdirSortbyType = "none",
+              reverse: bool = False) -> Generator[LsdirTypedDict, None, None]:
         """
         Yield directory entries in the specified path as 'LsdirTypedDict' dictionaries.
 
-        Entries are yielded in creation time (ctime) order.
-
         Args:
             path: The directory path to list entries from.
+            sort_by: Sorting method for directory entries. Supported values:
+                     - "none": No sorting (order is system-dependent).
+                     - "ctime": Sort by creation time.
+                     - "alphabetic": Sort by entry name alphabetically.
+                     - "natural": Sort by entry name with natural ordering (handles numeric parts
+                       correctly, e.g., "state2" < "state10").
+            reverse: If True, reverse the sort order. Ignored when sort_by is "none".
+
+        Examples:
+            Example 1: Sorting C-state directories (single numeric suffix).
+                Input: state10, state2, state1, state20, state0, state3
+
+                Alphabetic ascending (reverse=False):
+                    state0, state1, state10, state2, state20, state3
+                Natural ascending (reverse=False):
+                    state0, state1, state2, state3, state10, state20
+                Natural descending (reverse=True):
+                    state20, state10, state3, state2, state1, state0
+
+            Example 2: Sorting multi-numeric names.
+                Input: row5col7, z, row52col7, row5col0, row5col10, row
+                Alphabetic ascending (reverse=False):
+                    row, row52col7, row5col0, row5col10, row5col7, z
+                Natural ascending (reverse=False):
+                    row, row5col0, row5col7, row5col10, row52col7, z
 
         Raises:
             ErrorNotFound: If the specified path does not exist or is not a directory.

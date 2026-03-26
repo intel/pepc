@@ -23,7 +23,6 @@ import typing
 import tempfile
 import subprocess
 from pathlib import Path
-from operator import itemgetter
 from pepclibs.helperlibs import Logging, _ProcessManagerBase, ClassHelpers
 from pepclibs.helperlibs._ProcessManagerBase import ProcWaitResultType
 from pepclibs.helperlibs.Exceptions import Error, ErrorTimeOut, ErrorPermissionDenied
@@ -31,7 +30,7 @@ from pepclibs.helperlibs.Exceptions import ErrorNotFound, ErrorExists
 
 if typing.TYPE_CHECKING:
     from typing import Generator, cast, IO
-    from pepclibs.helperlibs._ProcessManagerBase import LsdirTypedDict
+    from pepclibs.helperlibs._ProcessManagerBase import LsdirTypedDict, LsdirSortbyType
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
@@ -438,7 +437,10 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
             msg = Error(str(err)).indent(2)
             raise Error(f"Failed to create named pipe '{path}':\n{msg}") from None
 
-    def lsdir(self, path: str | Path) -> Generator[LsdirTypedDict, None, None]:
+    def lsdir(self,
+              path: str | Path,
+              sort_by: LsdirSortbyType = "none",
+              reverse: bool = False) -> Generator[LsdirTypedDict, None, None]:
         """Refer to 'ProcessManagerBase.lsdir()'."""
 
         path = Path(path)
@@ -468,7 +470,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
                            "ctime": stinfo.st_ctime,
                            "mode": stinfo.st_mode}
 
-        yield from sorted(info.values(), key=itemgetter("ctime"), reverse=True)
+        yield from self._sort_lsdir_result(info, sort_by, reverse)
 
     def exists(self, path: str | Path) -> bool:
         """Refer to 'ProcessManagerBase.exists()'."""
