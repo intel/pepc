@@ -80,6 +80,11 @@ def _get_set_and_verify_data() -> Generator[tuple[str, str | int], None, None]:
     yield "elc_low_threshold", 10
     yield "elc_high_threshold", 90
 
+    # Reset frequencies to safe state for subsequent tests to avoid leaving min_freq at maximum
+    # which would cause validation failures when trying to lower max_freq.
+    yield "min_freq", "min"
+    yield "max_freq", "max"
+
 def test_uncore_set_and_verify(params: PropsTestParamsTypedDict):
     """
     Verify that 'get_prop_cpus()' returns the same values as set by 'set_prop_cpus()'.
