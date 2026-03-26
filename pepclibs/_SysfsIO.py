@@ -687,8 +687,9 @@ for path in paths:
                                 f"{errmsg}") from err
 
             if stderr:
+                stderr_str = "".join(stderr)
                 raise Error(f"Unexpected output on stderr while reading sysfs files"
-                            f"{self._pman.hostmsg}:\n{stderr}")
+                            f"{self._pman.hostmsg}:\n{stderr_str}")
 
             if len(read_paths) != len(stdout):
                 raise Error(f"BUG: Unexpected number of lines from the optimized read command:\n"
