@@ -328,7 +328,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         # information for multiple CPUs at once (all siblings in the module). This allows early
         # termination, often reading significantly fewer files than the bulk I/O approach would.
         if self._pman.is_remote:
-            return self._add_modules_remote(cpu_tdict, cpus)
+            self._add_modules_remote(cpu_tdict, cpus)
 
         # Whether the L2 cache topology information is available in sysfs.
         cache_info_available = False

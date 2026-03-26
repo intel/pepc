@@ -659,7 +659,7 @@ for path, (val, verify, retries, sleep) in winfo.items():
 
         if read_paths:
             if _LOG.getEffectiveLevel() == Logging.DEBUG:
-                paths_range = Trivial.rangify([i for i in range(len(read_paths))])
+                paths_range = Trivial.rangify(list(range(len(read_paths))))
                 _LOG.debug("Remote: Read: %d sysfs files (indices %s)%s",
                            len(read_paths), paths_range, self._pman.hostmsg)
 

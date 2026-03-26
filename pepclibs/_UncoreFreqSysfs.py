@@ -361,7 +361,8 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
         Validate sysfs directories match the expected TPMI topology and add them to dirmap.
 
         Args:
-            dirname2die_info: Expected mapping of directory names to (package, die, die_info) tuples.
+            dirname2die_info: Expected mapping of directory names to (package, die, die_info)
+                              tuples.
             sysfs_base_lsdir: List of directory names found in the sysfs base directory.
 
         Raises:

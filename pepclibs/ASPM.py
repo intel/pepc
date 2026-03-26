@@ -126,8 +126,7 @@ class ASPM(ClassHelpers.SimpleCloseContext):
             Available ASPM policy names.
         """
 
-        for policy in self._get_policies():
-            yield policy
+        yield from self._get_policies()
 
     def _l1_file_not_found(self, addr: str, err: Error):
         """

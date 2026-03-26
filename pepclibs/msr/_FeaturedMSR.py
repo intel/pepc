@@ -509,8 +509,7 @@ class FeaturedMSR(ClassHelpers.SimpleCloseContext):
         for fname in fnames:
             feature_iosname = self._features[fname]["iosname"]
             granularity = granularities[feature_iosname]
-            if granularity < min_granularity:
-                min_granularity = granularity
+            min_granularity = min(min_granularity, granularity)
 
         return CPUInfoVars.SCOPE_NAMES[min_granularity]
 
