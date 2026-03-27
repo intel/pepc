@@ -1213,7 +1213,7 @@ def do_main(pman: ProcessManagerType | None = None):
         raise Error("The '--dataset' option cannot be used with '--host'")
 
     # Handle the 'no_pman_opts' attribute: If any of the listed attributes (options) is set,
-    # then, do not create the process manager, mass 'None' to 'args.func' instead.
+    # then, do not create the process manager, pass 'None' to 'args.func' instead.
     no_pman = False
     if getattr(args, "no_pman_opts", False):
         attrs: Iterable[str] = getattr(args, "no_pman_opts", ())
