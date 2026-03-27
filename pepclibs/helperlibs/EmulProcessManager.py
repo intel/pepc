@@ -37,6 +37,7 @@ from pepclibs.helperlibs._ProcessManagerBase import ProcWaitResultType
 if typing.TYPE_CHECKING:
     from typing import Generator, TypedDict, Sequence, IO, cast
     from pepclibs.helperlibs._ProcessManagerBase import LsdirTypedDict, LsdirSortbyType
+    from pepctools._EmulDataConfigTypes import _EmulDataConfigMSRTypedDict
 
     class _TestDataInlineDirsTypedDict(TypedDict, total=False):
         """
@@ -82,27 +83,6 @@ if typing.TYPE_CHECKING:
         separator: str
         readonly: bool
 
-    class _TestDataMSRsTypedDict(TypedDict, total=False):
-        """
-        Typed dictionary describing MSRs in the YAML configuration.
-
-        Attributes:
-            dirname: Name of the sub-directory within the dataset containing the MSRs file.
-            filename: The MSRs file name. Contains a list of MSR device node paths, MSR addresses
-                      and their values.
-            addresses: List of MSR addresses included in the MSR file.
-            separator1: The separator used in the MSRs file to separate MSR device node paths and
-                        the MSR values.
-            separator2: The separator used in the MSRs file to separate MSR addresses and MSR
-                        values.
-        """
-
-        dirname: str
-        filename: str
-        addresses: list[int]
-        separator1: str
-        separator2: str
-
     class _TestDataFilesTypedDict(TypedDict, total=False):
         """
         Typed dictionary describing files in the YAML configuration.
@@ -136,13 +116,13 @@ if typing.TYPE_CHECKING:
             commands: List of command configurations.
             inlinefiles: List of inline files configurations.
             msrs: List of MSR configurations.
-            files: List of file configurations.
+            msr: MSR configuration.
         """
 
         inlinedirs: list[_TestDataInlineDirsTypedDict]
         commands: list[_TestDataCommandsTypedDict]
         inlinefiles: list[_TestDataInlineFilesTypedDict]
-        msrs: _TestDataMSRsTypedDict
+        msr: _EmulDataConfigMSRTypedDict
         files: list[_TestDataFilesTypedDict]
         directories: list[_TestDataDirectoriesTypedDict]
 
@@ -347,16 +327,16 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             result = _EmulCmdResultType(stdout=stdout, stderr=stderr, exitcode=0)
             self._emd["cmds"][info["command"]] = result
 
-    def _process_msrs(self, info: _TestDataMSRsTypedDict, filepath: Path):
+    def _process_msrs(self, info: _EmulDataConfigMSRTypedDict, dspath: Path):
         """
         Create emulated MSR device files from MSR emulation data.
 
         Args:
             info: MSR configuration dictionary.
-            filepath: The dataset path.
+            dspath: The dataset path.
         """
 
-        dirpath = filepath / info["dirname"]
+        dirpath = dspath / info["dirname"]
         if not dirpath.exists():
             return
 
@@ -368,27 +348,30 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             errmsg = Error(str(err)).indent(2)
             raise Error(f"Failed to read emulated MSR data from '{filepath}':\n{errmsg}") from err
 
-        sep1 = info["separator1"]
-        sep2 = info["separator2"]
-
+        data_by_cpu: dict[int, dict[int, bytes]] = {}
         for line in lines:
-            split = line.split(sep1)
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
 
+            split = line.split(":", 1)
             if len(split) != 2:
                 raise Error(f"Unexpected line format in file '{filepath}':\n  "
-                            f"Expected <path>{sep1}<reg_value_pairs>, received '{line}'")
+                            f"Expected <hex_addr>:<cpu_val_pairs>, received '{line}'")
 
-            path = split[0]
-            reg_val_pairs = split[1].split()
+            regaddr = int(split[0], 16)
+            cpu_val_pairs = split[1].split()
 
-            data: dict[int, bytes] = {}
-            for reg_val_pair in reg_val_pairs:
-                regaddr_str, regval_str = reg_val_pair.split(sep2)
-
-                regaddr = int(regaddr_str)
+            for cpu_val_pair in cpu_val_pairs:
+                cpu_str, regval_str = cpu_val_pair.split("|", 1)
+                cpu = int(cpu_str)
                 regval = int(regval_str, 16)
-                data[regaddr] = int.to_bytes(regval, 8, byteorder="little")
+                if cpu not in data_by_cpu:
+                    data_by_cpu[cpu] = {}
+                data_by_cpu[cpu][regaddr] = int.to_bytes(regval, 8, byteorder="little")
 
+        for cpu, data in data_by_cpu.items():
+            path = f"/dev/cpu/{cpu}/msr"
             emul = _EmulFile.get_emul_file(path, self._basepath, data=data)
             self._emd["files"][path] = emul
 
@@ -456,8 +439,8 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         if "commands" in yaml:
             self._process_commands(yaml["commands"], dspath)
 
-        if "msrs" in yaml:
-            self._process_msrs(yaml["msrs"], dspath)
+        if "msr" in yaml:
+            self._process_msrs(yaml["msr"], dspath)
 
         if "files" in yaml:
             self._process_files(yaml["files"], dspath / yaml_path.stem)

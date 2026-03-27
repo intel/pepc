@@ -67,7 +67,7 @@ class SimpleMSR(ClassHelpers.SimpleCloseContext):
 
         Raises:
             ErrorPermissionDenied: No permissions to access MSRs.
-            ErrorNotSupported: MSR access is not supported.
+            ErrorNotSupported: MSR is not supported.
         """
 
         if pman:

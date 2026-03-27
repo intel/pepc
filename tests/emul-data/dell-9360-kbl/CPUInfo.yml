@@ -28,24 +28,3 @@ inlinefiles:
   readonly: true
   dirname: CPUInfo/hybrid-info
   filename: hybrid.txt
-msrs:
-  addresses:
-  - 432
-  - 205
-  - 1908
-  - 1906
-  - 1905
-  - 206
-  - 508
-  - 226
-  - 1904
-  - 429
-  - 430
-  - 430
-  - 430
-  - 2562
-  - 84
-  separator1: ':'
-  separator2: '|'
-  dirname: CPUInfo/msr
-  filename: msr.txt

@@ -3,11 +3,11 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2022-2025 Intel Corporation
+# Copyright (C) 2022-2026 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
-# Authors: Antti Laakso <antti.laakso@linux.intel.com>
-#          Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
+# Authors: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
+#          Antti Laakso <antti.laakso@linux.intel.com>
 
 """
 Emulation data generator for collecting system data used to emulate.
@@ -15,11 +15,14 @@ Emulation data generator for collecting system data used to emulate.
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
-import os
 import re
+import os
 import stat
 import types
 import typing
+import inspect
+import pkgutil
+import importlib
 from pathlib import Path
 
 try:
@@ -29,17 +32,17 @@ except ImportError:
     # We can live without argcomplete, we only lose tab completions.
     argcomplete = None
 
-from pepclibs import ProcCpuinfo, CPUModels
-from pepclibs.msr import EnergyPerfBias, FSBFreq, HWPRequest, HWPRequestPkg
-from pepclibs.msr import PlatformInfo, PowerCtl, PCStateConfigCtl, PMEnable, TurboRatioLimit
-from pepclibs.msr import TurboRatioLimit1, SwLTROvrd, PMLogicalId, HWPCapabilities
+from pepclibs import CPUModels, CPUInfo, CPUOnline
+import pepclibs.msr as _msr_pkg
+from pepclibs.msr import _FeaturedMSR, MSR
 from pepclibs.helperlibs import Logging, ArgParse, ProcessManager, YAML, Trivial
-from pepclibs.helperlibs.Exceptions import Error
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 
 if typing.TYPE_CHECKING:
     import argparse
-    from typing import Final, TypedDict
+    from typing import Final, TypedDict, Generator
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
+    from pepctools._EmulDataConfigTypes import _EmulDataConfigMSRTypedDict
 
     class _CmdlineArgsTypedDict(TypedDict, total=False):
         """
@@ -122,26 +125,6 @@ if typing.TYPE_CHECKING:
         dirname: str
         filename: str
 
-    class _TDCollectMSRsTypedDict(TypedDict, total=False):
-        """
-        A typed dictionary for defining MSR registers to read when collecting emulation data.
-
-        Attributes:
-            addresses: A list of MSR addresses to read.
-            separator1: The separator used in the output emulation data file to separate the MSR
-                        device path and the MSR address.
-            separator2: The separator used in the output emulation data file to separate the MSR
-                        address and its value.
-            dirname: The sub-directory name to store the collected MSR values at.
-            filename: The name of the file to store the collected MSR values at.
-        """
-
-        addresses: list[int]
-        separator1: str
-        separator2: str
-        dirname: str
-        filename: str
-
     class _TDCollectRCopyTypedDict(TypedDict, total=False):
         """
         A typed dictionary for defining a directory to copy recursively when collecting emulation
@@ -173,7 +156,6 @@ if typing.TYPE_CHECKING:
         recursive_copy: list[_TDCollectRCopyTypedDict]
         inlinedirs: list[_TDCollectInlDirsTypedDict]
         inlinefiles: list[_TDCollectInlFilesTypedDict]
-        msrs: _TDCollectMSRsTypedDict
 
 _TOOLNAME: Final[str] = "emulation-data-generator"
 _VERSION: Final[str] = "0.1"
@@ -230,27 +212,6 @@ _CPUInfoTDCollectInfo: _TDCollectTypedDict = {
          "readonly": True,
          "dirname": "hybrid-info",
          "filename": "hybrid.txt"}],
-    "msrs" :
-        {"addresses": [
-            EnergyPerfBias.MSR_ENERGY_PERF_BIAS,
-            FSBFreq.MSR_FSB_FREQ,
-            HWPRequest.MSR_HWP_REQUEST,
-            HWPRequestPkg.MSR_HWP_REQUEST_PKG,
-            HWPCapabilities.MSR_HWP_CAPABILITIES,
-            PlatformInfo.MSR_PLATFORM_INFO,
-            PowerCtl.MSR_POWER_CTL,
-            PCStateConfigCtl.MSR_PKG_CST_CONFIG_CONTROL,
-            PMEnable.MSR_PM_ENABLE,
-            TurboRatioLimit.MSR_TURBO_RATIO_LIMIT,
-            TurboRatioLimit1.MSR_TURBO_RATIO_LIMIT1,
-            TurboRatioLimit1.MSR_TURBO_GROUP_CORECNT,
-            TurboRatioLimit1.MSR_TURBO_RATIO_LIMIT_CORES,
-            SwLTROvrd.MSR_SW_LTR_OVRD,
-            PMLogicalId.MSR_PM_LOGICAL_ID],
-         "separator1": ":",
-         "separator2": "|",
-         "dirname": "msr",
-         "filename": "msr.txt"}
 }
 
 _ASPMTDCollectInfo: _TDCollectTypedDict = {
@@ -375,9 +336,6 @@ _TPMITDCollectInfo: _TDCollectTypedDict = {
         {"path": Path("/sys/kernel/debug/tpmi-.*")}],
 }
 
-# TODO: Currently there is ne '_TDCollectTypedDict' per module, but this is not that helpful,
-# because some modules share the same emulation data. Modules also change over time, so emulation
-# data location may change.
 _TDCollectInfo: dict[str, _TDCollectTypedDict] = {
     "CPUInfo" : _CPUInfoTDCollectInfo,
     "ASPM" : _ASPMTDCollectInfo,
@@ -388,6 +346,14 @@ _TDCollectInfo: dict[str, _TDCollectTypedDict] = {
     "Systemctl" : _SysctlTDCollectInfo,
     "TPMI" : _TPMITDCollectInfo,
 }
+
+# MSR data are stored in a text file, one line per MSR address, in the
+# "<hex_addr>:<cpu_num>|<hex_val> ...", for example:
+# 1a0:0|45 1|45 2|45 3|45 ...
+# The MSR data sub-directory name in the emulation data directory.
+_MSR_SUBDIR: Final[str] = "msr"
+# The MSR data file name in the emulation data directory.
+_MSR_DATA_FILE: Final[str] = "msr.txt"
 
 def _build_arguments_parser() -> ArgParse.ArgsParser:
     """
@@ -532,57 +498,6 @@ def _collect_inline(pman: ProcessManagerType, inlinfo, basedir):
         errmsg = Error(str(err)).indent(2)
         raise Error(f"Failed to perform I/O on file '{path}':\n{errmsg}") from err
 
-def _collect_msrs(pman: ProcessManagerType, msrinfo: _TDCollectMSRsTypedDict, basedir: Path):
-    """
-    Collect MSR emulation data from the SUT
-
-    Args:
-        pman: The process manager object that defines the SUT to read the MSR values from.
-        msrinfo: Dictionary containing MSR data collection details.
-        basedir: Path to the base output directory.
-    """
-
-    proc_cpuinfo = ProcCpuinfo.get_proc_cpuinfo(pman)
-    if proc_cpuinfo["vendor"] != CPUModels.VENDOR_INTEL:
-        _LOG.notice("The SUT CPU vendor is '%s', not Intel, skipping MSR collection",
-                    proc_cpuinfo["vendor_name"])
-        return
-
-    lines, _ = pman.run_verify_nojoin("lscpu -p=cpu --")
-
-    cpus = []
-    for line in lines:
-        if line.startswith("#"):
-            continue
-        cpu = int(line.strip())
-        cpus.append(cpu)
-
-    outdir = basedir / msrinfo["dirname"]
-    try:
-        os.makedirs(outdir, exist_ok=True)
-    except OSError as err:
-        errmsg = Error(str(err)).indent(2)
-        raise Error(f"Failed to create directory '{outdir}':\n{errmsg}") from err
-
-    path = outdir / msrinfo["filename"]
-
-    try:
-        with open(path, "w+", encoding="utf-8") as fobj:
-            for cpu in cpus:
-                line = f"/dev/cpu/{cpu}/msr{msrinfo['separator1']}"
-
-                for addr in msrinfo["addresses"]:
-                    res = pman.run_join(f"rdmsr {addr} -p {cpu}")
-                    if res.exitcode != 0:
-                        continue
-
-                    value = res.stdout.strip()
-                    line += f"{addr}{msrinfo['separator2']}{value} "
-
-                fobj.write(line + "\n")
-    except Error as err:
-        raise Error(f"Failed to perform I/O on file '{path}':\n{err.indent(2)}") from err
-
 def _copy_file(pman: ProcessManagerType, src: Path, outdir: Path):
     """
     Copy a file from the SUT.
@@ -637,12 +552,12 @@ def _copy_dir(pman: ProcessManagerType, src: Path, outdir: Path) -> list[_TDColl
 
     return files
 
-def _generate_config_file(modname: str, tdcoll_info: _TDCollectTypedDict, outdir: Path):
+def _generate_config_file(modname: str, tdcoll_info: dict, outdir: Path):
     """
-    Generate the emulation data module YAML configuration file.
+    Generate the emulation data YAML configuration file.
 
     Args:
-        modname: The name of the module to generate the configuration file for.
+        modname: The base name of the configuration file (without extension).
         tdcoll_info: The emulation data collection information dictionary.
         outdir: The output directory to store the configuration file at.
     """
@@ -651,63 +566,195 @@ def _generate_config_file(modname: str, tdcoll_info: _TDCollectTypedDict, outdir
         fobj.write(f"# This file was generated by the '{_TOOLNAME}' tool.\n")
         YAML.dump(tdcoll_info, fobj)
 
-def __main():
+def _discover_msr_classes() -> Generator[type[_FeaturedMSR.FeaturedMSR], None, None]:
     """
-    The entry point of the tool.
+    Yield all 'FeaturedMSR' subclasses found in the 'pepclibs.msr' package, one per module, in
+    module iteration order.
+
+    Yields:
+        'FeaturedMSR' subclasses, one per MSR module.
+    """
+
+    yiedled: set[type[_FeaturedMSR.FeaturedMSR]] = set()
+
+    for _, modname, ispkg in pkgutil.iter_modules(_msr_pkg.__path__):
+        if modname.startswith("_") or ispkg:
+            continue
+        module = importlib.import_module(f"pepclibs.msr.{modname}")
+        for _, obj in inspect.getmembers(module, inspect.isclass):
+            if not issubclass(obj, _FeaturedMSR.FeaturedMSR):
+                continue
+            if obj is _FeaturedMSR.FeaturedMSR:
+                continue
+            if obj in yiedled:
+                continue
+            yiedled.add(obj)
+            yield obj
+            break
+
+def _get_msr_data(cpuinfo: CPUInfo.CPUInfo,
+                  pman: ProcessManagerType,
+                  cpus: list[int]) -> Generator[tuple[int, dict[int, str]], None, None]:
+    """
+    Collect MSR data from the SUT for all 'FeaturedMSR' subclasses found in the 'pepclibs.msr'
+    package.
+
+    Args:
+        cpuinfo: CPU information object for the SUT.
+        pman: The process manager object that defines the SUT to read the MSR values from.
+        cpus: List of CPU numbers to read MSR values for.
+
+    Yields:
+        Tuples of '(addr, vals)', where 'addr' is the MSR address and 'vals' is a
+        '{cpu: hex_val}' dictionary for that address.
+    """
+
+    seen_addrs: set[int] = set()
+
+    with MSR.MSR(cpuinfo, pman=pman) as msr:
+        for cls in _discover_msr_classes():
+            try:
+                with cls(cpuinfo=cpuinfo, pman=pman, msr=msr) as fmsr:
+                    addr = fmsr.regaddr
+            except ErrorNotSupported:
+                continue
+
+            if addr in seen_addrs:
+                raise Error(f"BUG: MSR address {addr:#x} is covered by multiple classes")
+
+            seen_addrs.add(addr)
+
+            vals: dict[int, str] = {}
+            for cpu, regval in msr.read(addr, cpus):
+                vals[cpu] = f"{regval:x}"
+
+            yield addr, vals
+
+def _collect_msrs(cpuinfo: CPUInfo.CPUInfo,
+                  pman: ProcessManagerType,
+                  basedir: Path,
+                  config_yml: dict):
+    """
+    Collect MSR emulation data from the SUT and populate the emulation data configuration dictionary
+    with MSR information.
+
+    Args:
+        cpuinfo: CPU information object for the SUT.
+        pman: The process manager object that defines the SUT to read the MSR values from.
+        basedir: Path to the base output directory.
+        config_yml: The emulation data configuration dictionary to populate with the MSR section.
+    """
+
+    proc_cpuinfo = cpuinfo.get_proc_cpuinfo()
+    if proc_cpuinfo["vendor"] != CPUModels.VENDOR_INTEL:
+        _LOG.notice("The SUT CPU vendor is '%s', not Intel, skipping MSR collection",
+                    proc_cpuinfo["vendor_name"])
+        return
+
+    cpus = cpuinfo.get_cpus()
+
+    outdir = basedir / _MSR_SUBDIR
+    try:
+        os.makedirs(outdir, exist_ok=True)
+    except OSError as err:
+        errmsg = Error(str(err)).indent(2)
+        raise Error(f"Failed to create directory '{outdir}':\n{errmsg}") from err
+
+    path = outdir / _MSR_DATA_FILE
+
+    try:
+        with open(path, "w+", encoding="utf-8") as fobj:
+            # The output format is:
+            # # <hex_addr>:<cpu_num>|<hex_val> <cpu_num>|<hex_val> ...
+            # All values are hexadecimal without the '0x' prefix.
+            fobj.write("# Format: <msr_hex_addr>:<cpu_num>|<hex_val> ... for every CPU ...\n")
+
+            for addr, cpu_data in _get_msr_data(cpuinfo, pman, cpus):
+                if not cpu_data:
+                    continue
+                pairs = " ".join(f"{cpu}|{val}" for cpu, val in cpu_data.items())
+                fobj.write(f"{addr:x}:{pairs}\n")
+    except OSError as err:
+        raise Error(f"Failed to perform I/O on file '{path}'{pman.hostmsg}:\n"
+                    f"{Error(str(err)).indent(2)}") from err
+
+    msr_config: _EmulDataConfigMSRTypedDict = {
+        "dirname": _MSR_SUBDIR,
+        "filename": _MSR_DATA_FILE,
+    }
+    config_yml["msr"] = msr_config
+
+def _online_all_cpus(pman: ProcessManagerType, cpuinfo: CPUInfo.CPUInfo):
+    """
+    Online all CPUs on the SUT.
+
+    Args:
+        pman: The process manager object that defines the SUT to online CPUs on.
+        cpuinfo: CPU information object for the SUT.
+    """
+
+    with CPUOnline.CPUOnline(pman=pman, cpuinfo=cpuinfo) as onl:
+        onl.online()
+
+def _do_main(pman: ProcessManagerType, outdir: Path, cpuinfo: CPUInfo.CPUInfo) -> int:
+    """
+    The main body of the tool.
+
+    Args:
+        pman: The process manager object that defines the SUT to collect data from.
+        outdir: Path to the output directory to store the collected data at.
+        cpuinfo: CPU information object for the SUT.
 
     Returns:
-        int: The program exit code.
+        The program exit code.
     """
 
-    args = _parse_arguments()
-    cmdl = _get_cmdline_args(args)
+    _online_all_cpus(pman, cpuinfo)
 
-    with ProcessManager.get_pman(cmdl["hostname"], username=cmdl["username"],
-                                 privkeypath=cmdl["privkey"], timeout=cmdl["timeout"]) as pman:
-        pman.run_verify("pepc cpu-hotplug online --cpus all")
+    # The contents of the 'config.yml' file, which will be created in the emulation data root
+    # directory and describe the collected emulation data.
+    config_yml: dict = {}
 
-        for modname, tdcinfo in _TDCollectInfo.items():
-            datapath = cmdl["outdir"] / modname
+    _collect_msrs(cpuinfo, pman, outdir, config_yml)
+    _generate_config_file("config", config_yml, outdir)
 
-            if "prepare_cmds" in tdcinfo:
-                for command in tdcinfo["prepare_cmds"]:
-                    pman.run(command)
-                del tdcinfo["prepare_cmds"]
+    for modname, tdcinfo in _TDCollectInfo.items():
+        datapath = outdir / modname
 
-            if "commands" in tdcinfo:
-                for cmdinfo in tdcinfo["commands"]:
-                    _collect_cmd_output(pman, cmdinfo, datapath)
-                    cmdinfo["dirname"] = f"{modname}/{cmdinfo['dirname']}"
+        if "prepare_cmds" in tdcinfo:
+            for command in tdcinfo["prepare_cmds"]:
+                pman.run(command)
+            del tdcinfo["prepare_cmds"]
 
-            if "files" in tdcinfo:
-                for file in tdcinfo["files"]:
-                    _copy_file(pman, file["path"], datapath)
+        if "commands" in tdcinfo:
+            for cmdinfo in tdcinfo["commands"]:
+                _collect_cmd_output(pman, cmdinfo, datapath)
+                cmdinfo["dirname"] = f"{modname}/{cmdinfo['dirname']}"
 
-            if "recursive_copy" in tdcinfo:
-                files: list[_TDCollectFileTypedDict] = []
-                for directory in tdcinfo["recursive_copy"]:
-                    files += _copy_dir(pman, Path(directory["path"]), datapath)
+        if "files" in tdcinfo:
+            for file in tdcinfo["files"]:
+                _copy_file(pman, file["path"], datapath)
 
-                del tdcinfo["recursive_copy"]
-                if files:
-                    tdcinfo["files"] = files
+        if "recursive_copy" in tdcinfo:
+            files: list[_TDCollectFileTypedDict] = []
+            for directory in tdcinfo["recursive_copy"]:
+                files += _copy_dir(pman, Path(directory["path"]), datapath)
 
-            for section in ("inlinedirs", "inlinefiles"):
-                if section not in tdcinfo:
-                    continue
+            del tdcinfo["recursive_copy"]
+            if files:
+                tdcinfo["files"] = files
 
-                for inlinfo in tdcinfo[section]:
-                    _collect_inline(pman, inlinfo, datapath)
-                    inlinfo["dirname"] = f"{modname}/{inlinfo['dirname']}"
-                    del inlinfo["command"]
+        for section in ("inlinedirs", "inlinefiles"):
+            if section not in tdcinfo:
+                continue
 
-            if "msrs" in tdcinfo:
-                _collect_msrs(pman, tdcinfo["msrs"], datapath)
-                if tdcinfo["msrs"]:
-                    tdcinfo["msrs"]["dirname"] = f"{modname}/{tdcinfo['msrs']['dirname']}"
+            for inlinfo in tdcinfo[section]:
+                _collect_inline(pman, inlinfo, datapath)
+                inlinfo["dirname"] = f"{modname}/{inlinfo['dirname']}"
+                del inlinfo["command"]
 
-            if tdcinfo:
-                _generate_config_file(modname, tdcinfo, cmdl["outdir"])
+        if tdcinfo:
+            _generate_config_file(modname, tdcinfo, outdir)
 
     return 0
 
@@ -716,12 +763,19 @@ def main():
     The entry point of the tool.
 
     Returns:
-        int: The program exit code.
+        The program exit code.
     """
+
+    args = _parse_arguments()
+    cmdl = _get_cmdline_args(args)
 
     exitcode = -1
     try:
-        return __main()
+        with ProcessManager.get_pman(cmdl["hostname"], username=cmdl["username"],
+                                     privkeypath=cmdl["privkey"],
+                                     timeout=cmdl["timeout"]) as pman, \
+             CPUInfo.CPUInfo(pman=pman) as cpuinfo:
+            return _do_main(pman, cmdl["outdir"], cpuinfo)
     except KeyboardInterrupt:
         _LOG.info("\nInterrupted, exiting")
     except Error as err:
