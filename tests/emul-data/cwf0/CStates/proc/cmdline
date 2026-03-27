@@ -1,0 +1,1 @@
+BOOT_IMAGE=http://futurelab/pxelinux/node/cwf0/custom-kernel/kernel initrd=http://futurelab/pxelinux/node/cwf0/custom-kernel/initramfs.img root=UUID=9ab9eab5-9fb4-4e69-9c5f-f667c9b45859 ro console=ttyS0,115200 msr.allow_writes=on
