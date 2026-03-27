@@ -475,11 +475,11 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         Test data is organized as follows:
             - test_data_root/
               - common/
-              - common.yaml
+              - common.yml
             - dataset1/
-              - category1.yaml
+              - category1.yml
               - category1/
-              - category2.yaml
+              - category2.yml
               - category2/
               ...
             - dataset2/
@@ -498,11 +498,11 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
         # Load the shared test data from the 'common' directory located in the parent of the
         # dataset.
-        yaml_path = dspath.parent / "common" / "common.yaml"
+        yaml_path = dspath.parent / "common" / "common.yml"
         self._process_test_data_category(yaml_path)
 
         for yaml_path in dspath.iterdir():
-            if not str(yaml_path).endswith(".yaml"):
+            if not str(yaml_path).endswith(".yml"):
                 continue
             self._process_test_data_category(yaml_path)
 
