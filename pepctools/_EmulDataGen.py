@@ -108,6 +108,10 @@ if typing.TYPE_CHECKING:
         """
         A typed dictionary for defining a command to run to collect directory paths.
 
+        This captures directory existence, not contents. It is used for paths that may contain no
+        files. For example, offline CPU directories whose files are absent even though the directory
+        itself exists.
+
         Attributes:
             command: The command to run to collect the directory paths.
             dirname: The sub-directory name to store the command output at.
@@ -267,6 +271,8 @@ _CPUOnlineTDCollectInfo: _TDCollectTypedDict = {
          "readonly": False,
          "dirname": "cpuonline-info",
          "filename": "cpuonline.txt"}],
+    # Offline CPUs have a /sys/devices/system/cpu/cpuN/ directory but no 'online' file — the file
+    # only exists for online CPUs. The directory existence must therefore be captured separately.
     "inlinedirs" : [
         {"command": r"find /sys/devices/system/cpu -type d -regextype posix-extended -regex "
                     r"'.*cpu([[:digit:]]+)'",
