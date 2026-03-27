@@ -626,7 +626,8 @@ def _copy_dir(pman: ProcessManagerType, src: Path, outdir: Path) -> list[_TDColl
             files += _copy_dir(pman, entry["path"] / ".*", outdir)
         else:
             _copy_file(pman, entry["path"], outdir)
-            files += [_TDCollectFileTypedDict(path=entry["path"], readonly=is_readonly)]
+            info: _TDCollectFileTypedDict = {"path": entry["path"], "readonly": is_readonly}
+            files += [info]
 
     return files
 
