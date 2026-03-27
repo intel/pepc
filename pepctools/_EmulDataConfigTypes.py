@@ -25,3 +25,15 @@ if typing.TYPE_CHECKING:
 
         dirname: str
         filename: str
+
+    class _EmulDataConfigSysfsTypedDict(TypedDict, total=False):
+        """
+        Typed dictionary for the 'sysfs' section of the emulation data configuration file.
+
+        Attributes:
+            dirname: Name of the sub-directory containing the sysfs data file.
+            filename: The sysfs data file name.
+        """
+
+        dirname: str
+        filename: str

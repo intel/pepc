@@ -2,8 +2,3 @@
 files:
 - path: /proc/cmdline
   readonly: true
-inlinefiles:
-- separator: ':'
-  readonly: false
-  dirname: CStates/cstates
-  filename: cstates.txt

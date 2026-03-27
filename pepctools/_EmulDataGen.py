@@ -43,6 +43,19 @@ if typing.TYPE_CHECKING:
     from typing import Final, TypedDict, Generator
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepctools._EmulDataConfigTypes import _EmulDataConfigMSRTypedDict
+    from pepctools._EmulDataConfigTypes import _EmulDataConfigSysfsTypedDict
+
+    class _SysfsCollectEntryTypedDict(TypedDict):
+        """
+        A typed dictionary describing a single sysfs data collection entry.
+
+        Attributes:
+            command: The grep command used to read sysfs file contents.
+            readonly: Whether the collected sysfs files are read-only.
+        """
+
+        command: str
+        readonly: bool
 
     class _CmdlineArgsTypedDict(TypedDict, total=False):
         """
@@ -107,24 +120,6 @@ if typing.TYPE_CHECKING:
         dirname: str
         filename: str
 
-    class _TDCollectInlDirsTypedDict(TypedDict, total=False):
-        """
-        A typed dictionary for defining a command to run to collect directory paths.
-
-        This captures directory existence, not contents. It is used for paths that may contain no
-        files. For example, offline CPU directories whose files are absent even though the directory
-        itself exists.
-
-        Attributes:
-            command: The command to run to collect the directory paths.
-            dirname: The sub-directory name to store the command output at.
-            filename: The name of the file to store the command output at.
-        """
-
-        command: str
-        dirname: str
-        filename: str
-
     class _TDCollectRCopyTypedDict(TypedDict, total=False):
         """
         A typed dictionary for defining a directory to copy recursively when collecting emulation
@@ -141,20 +136,16 @@ if typing.TYPE_CHECKING:
         A typed dictionary for defining all the emulation data to collect.
 
         Attributes:
-            prepare_cmds: The commands to run before collecting any emulation data.
             commands: The commands to run to collect emulation data.
             files: The files to read to collect emulation data.
             recursive_copy: The directories to copy recursively to collect emulation data.
-            inlinedirs: The commands to run to collect directory paths.
             inlinefiles: The commands to run to collect the contents of multiple files.
             msrs: The MSR registers to read to collect emulation data.
         """
 
-        prepare_cmds: list[str]
         commands: list[_TDCollectCommandTypedDict]
         files: list[_TDCollectFileTypedDict]
         recursive_copy: list[_TDCollectRCopyTypedDict]
-        inlinedirs: list[_TDCollectInlDirsTypedDict]
         inlinefiles: list[_TDCollectInlFilesTypedDict]
 
 _TOOLNAME: Final[str] = "emulation-data-generator"
@@ -165,163 +156,16 @@ _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc").configure(prefix=_T
 
 _CPUInfoTDCollectInfo: _TDCollectTypedDict = {
     "commands" : [
-        {"command": "lscpu", "dirname": "lscpu"},
         {"command": "uname -a", "dirname": "uname"},],
     "files" : [
         {"path": Path("/proc/cpuinfo"),
          "readonly": True}],
-    "inlinefiles" : [
-        # Command for reading die info.
-        {"command": r"grep -H '.*' "
-                    r"/sys/devices/system/cpu/cpu[0-9]*/topology/die_id "
-                    r"/sys/devices/system/cpu/cpu[0-9]*/topology/die_cpus_list",
-         "separator": ":",
-         "readonly": True,
-         "dirname": "die-info",
-         "filename": "die.txt"},
-        # Command for reading module info.
-        {"command": r"grep -H '.*' "
-                    r"/sys/devices/system/cpu/cpu[0-9]*/cache/index[0-9]/id "
-                    r"/sys/devices/system/cpu/cpu[0-9]*/cache/index[0-9]/shared_cpu_list",
-         "separator": ":",
-         "readonly": True,
-         "dirname": "module-info",
-         "filename": "module.txt"},
-        # Command for reading online CPUs and all CPUs.
-        {"command": r"grep -H '.*' "
-                    r"/sys/devices/system/cpu/online "
-                    r"/sys/devices/system/cpu/present",
-         "separator": ":",
-         "readonly": True,
-         "dirname": "cpu-info",
-         "filename": "cpu.txt"},
-        # Command for reading node info.
-        {"command": r"grep -H '.*' "
-                    r"/sys/devices/system/node/online "
-                    r"/sys/devices/system/node/node[0-9]/cpulist",
-         "separator": ":",
-         "readonly": True,
-         "dirname": "node-info",
-         "filename": "node.txt"},
-        # Command for reading hybrid topology info.
-        {"command": r"grep -H '.*' "
-                    r"/sys/devices/cpu_atom/cpus "
-                    r"/sys/devices/cpu_core/cpus "
-                    r"/sys/devices/cpu_lowpower/cpus",
-         "separator": ":",
-         "readonly": True,
-         "dirname": "hybrid-info",
-         "filename": "hybrid.txt"}],
-}
-
-_ASPMTDCollectInfo: _TDCollectTypedDict = {
-    "inlinefiles" : [
-        {"command": r"grep -H '.*' "
-                    r"/sys/module/pcie_aspm/parameters/policy",
-         "separator": ":",
-         "readonly": False,
-         "dirname": "aspm-info",
-         "filename": "aspm.txt"}]
-}
-
-_CPUOnlineTDCollectInfo: _TDCollectTypedDict = {
-    "inlinefiles" : [
-        {"command": r"grep -H '.*' "
-                    r"/sys/devices/system/cpu/cpu[0-9]*/online",
-         "separator": ":",
-         "readonly": False,
-         "dirname": "cpuonline-info",
-         "filename": "cpuonline.txt"}],
-    # Offline CPUs have a /sys/devices/system/cpu/cpuN/ directory but no 'online' file — the file
-    # only exists for online CPUs. The directory existence must therefore be captured separately.
-    "inlinedirs" : [
-        {"command": r"find /sys/devices/system/cpu -type d -regextype posix-extended -regex "
-                    r"'.*cpu([[:digit:]]+)'",
-         "dirname": "cpuonline-info",
-         "filename": "cpuonline-dirs.txt"}],
 }
 
 _CStatesTDCollectInfo: _TDCollectTypedDict = {
     "files" : [
         {"path": Path("/proc/cmdline"),
          "readonly": True}],
-    "inlinefiles" : [
-        {"command": r"grep -H --directories=skip '.*' "
-                    r"/sys/devices/system/cpu/cpu[0-9]*/cpuidle/state[0-9]/* "
-                    r"/sys/devices/system/cpu/cpuidle/*",
-         "separator": ":",
-         "readonly": False,
-         "dirname": "cstates",
-         "filename": "cstates.txt"}]
-}
-
-PStatesTDCollectInfo: _TDCollectTypedDict = {
-    "prepare_cmds" : [
-        "modprobe intel_uncore_frequency",
-        "modprobe msr",
-        "pepc pstates config --min-freq min --max-freq max --cpus all",
-        "pepc uncore config --min-freq min --max-freq max --cpus all",
-        "pepc cstates config --enable all --cpus all"],
-    "inlinefiles" : [
-        {"command": r"grep -H --directories=recurse '.*' "
-                    r"/sys/devices/system/cpu/cpufreq",
-         "separator": ":",
-         "readonly": False,
-         "dirname": "pstates",
-         "filename": "pstates.txt"},
-        {"command" : r"grep -H --directories=recurse '.*' "
-                     r"/sys/devices/system/cpu/intel_pstate",
-         "separator": ":",
-         "readonly": False,
-         "dirname": "pstates",
-         "filename": "intel_pstates.txt"},
-        {"command" : r"grep -H --directories=recurse '.*' "
-                     r"/sys/devices/system/cpu/intel_uncore_frequency/*/*",
-         "separator": ":",
-         "readonly": False,
-         "dirname": "pstates",
-         "filename": "uncore.txt"},
-        {"command" : r"grep -H '.*' "
-                     r"/sys/devices/system/cpu/cpu[0-9]*/power/energy_perf_bias",
-         "separator": ":",
-         "readonly": False,
-         "dirname": "pstates",
-         "filename": "epb.txt"},
-        {"command" : r"grep -H '.*' "
-                     r"/sys/devices/system/cpu/cpu[0-9]*/acpi_cppc/* --exclude '*_ctrs'",
-         "separator": ":",
-         "readonly": False,
-         "dirname": "pstates",
-         "filename": "cppc.txt"},
-        {"command" : r"grep -H '.*' "
-                     r"/sys/devices/system/cpu/cpufreq/policy[0-9]*/energy_performance_preference",
-         "separator": ":",
-         "readonly": False,
-         "dirname": "pstates",
-         "filename": "epp.txt"},
-        {"command" : r"grep -H '.*' "
-                     r"/sys/devices/system/cpu/cpufreq/policy[0-9]*/"
-                     r"energy_performance_available_preferences",
-         "separator": ":",
-         "readonly": True,
-         "dirname": "pstates",
-         "filename": "epp_policies.txt"},
-        {"command" : r"grep -H '.*' "
-                     r"/sys/devices/system/cpu/cpu[0-9]*/cpufreq/bios_limit",
-         "separator": ":",
-         "readonly": True,
-         "dirname": "pstates",
-         "filename": "bios_limit.txt"}]
-}
-
-_PMQoSTDCollectInfo: _TDCollectTypedDict = {
-    "inlinefiles" : [
-        {"command": r"grep -H --directories=skip '.*' "
-                    r"/sys/devices/system/cpu/cpu[0-9]*/power/pm_qos_resume_latency_us",
-         "separator": ":",
-         "readonly": False,
-         "dirname": "pmqos",
-         "filename": "latency_limit.txt"}]
 }
 
 _SysctlTDCollectInfo: _TDCollectTypedDict = {
@@ -338,14 +182,96 @@ _TPMITDCollectInfo: _TDCollectTypedDict = {
 
 _TDCollectInfo: dict[str, _TDCollectTypedDict] = {
     "CPUInfo" : _CPUInfoTDCollectInfo,
-    "ASPM" : _ASPMTDCollectInfo,
-    "CPUOnline" : _CPUOnlineTDCollectInfo,
     "CStates" : _CStatesTDCollectInfo,
-    "PStates" : PStatesTDCollectInfo,
-    "PMQoS" : _PMQoSTDCollectInfo,
     "Systemctl" : _SysctlTDCollectInfo,
     "TPMI" : _TPMITDCollectInfo,
 }
+
+# The sysfs data sub-directory name in the emulation data directory.
+_SYSFS_SUBDIR: Final[str] = "sys"
+# The sysfs data file name in the emulation data directory.
+_SYSFS_DATA_FILE: Final[str] = "sysfs.txt"
+
+# Each entry describes a set of sysfs files to collect, grouped by read-only status.
+# 'command' is passed directly to the process manager (grep with sysfs glob patterns).
+_SYSFS_PATHS: list[_SysfsCollectEntryTypedDict] = [
+    # CPU topology.
+    {"command": r"grep -H '.*' "
+                r"/sys/devices/system/cpu/cpu[0-9]*/topology/die_id "
+                r"/sys/devices/system/cpu/cpu[0-9]*/topology/die_cpus_list",
+     "readonly": True},
+    # CPU cache info.
+    {"command": r"grep -H '.*' "
+                r"/sys/devices/system/cpu/cpu[0-9]*/cache/index[0-9]/id "
+                r"/sys/devices/system/cpu/cpu[0-9]*/cache/index[0-9]/shared_cpu_list",
+     "readonly": True},
+    # Online CPUs and all present CPUs.
+    {"command": r"grep -H '.*' "
+                r"/sys/devices/system/cpu/online "
+                r"/sys/devices/system/cpu/present",
+     "readonly": True},
+    # NUMA node info.
+    {"command": r"grep -H '.*' "
+                r"/sys/devices/system/node/online "
+                r"/sys/devices/system/node/node[0-9]/cpulist",
+     "readonly": True},
+    # Hybrid CPU topology (Atom, Core, Lowpower clusters).
+    {"command": r"grep -H '.*' "
+                r"/sys/devices/cpu_atom/cpus "
+                r"/sys/devices/cpu_core/cpus "
+                r"/sys/devices/cpu_lowpower/cpus",
+     "readonly": True},
+    # ASPM policy.
+    {"command": r"grep -H '.*' "
+                r"/sys/module/pcie_aspm/parameters/policy",
+     "readonly": False},
+    # Per-CPU online state.
+    {"command": r"grep -H '.*' "
+                r"/sys/devices/system/cpu/cpu[0-9]*/online",
+     "readonly": False},
+    # C-state sysfs files.
+    {"command": r"grep -H --directories=skip '.*' "
+                r"/sys/devices/system/cpu/cpu[0-9]*/cpuidle/state[0-9]/* "
+                r"/sys/devices/system/cpu/cpuidle/*",
+     "readonly": False},
+    # P-states: cpufreq (all files under the directory tree).
+    {"command": r"grep -H --directories=recurse '.*' "
+                r"/sys/devices/system/cpu/cpufreq",
+     "readonly": False},
+    # P-states: Intel P-state driver.
+    {"command": r"grep -H --directories=recurse '.*' "
+                r"/sys/devices/system/cpu/intel_pstate",
+     "readonly": False},
+    # P-states: Intel uncore frequency.
+    {"command": r"grep -H --directories=recurse '.*' "
+                r"/sys/devices/system/cpu/intel_uncore_frequency/*/*",
+     "readonly": False},
+    # P-states: energy performance bias.
+    {"command": r"grep -H '.*' "
+                r"/sys/devices/system/cpu/cpu[0-9]*/power/energy_perf_bias",
+     "readonly": False},
+    # P-states: ACPI CPPC (excluding counter files).
+    {"command": r"grep -H '.*' "
+                r"/sys/devices/system/cpu/cpu[0-9]*/acpi_cppc/* --exclude '*_ctrs'",
+     "readonly": False},
+    # P-states: energy performance preference (EPP).
+    {"command": r"grep -H '.*' "
+                r"/sys/devices/system/cpu/cpufreq/policy[0-9]*/energy_performance_preference",
+     "readonly": False},
+    # P-states: available EPP policies (read-only).
+    {"command": r"grep -H '.*' "
+                r"/sys/devices/system/cpu/cpufreq/policy[0-9]*/"
+                r"energy_performance_available_preferences",
+     "readonly": True},
+    # P-states: BIOS frequency limit (read-only).
+    {"command": r"grep -H '.*' "
+                r"/sys/devices/system/cpu/cpu[0-9]*/cpufreq/bios_limit",
+     "readonly": True},
+    # PM QoS resume latency limit.
+    {"command": r"grep -H --directories=skip '.*' "
+                r"/sys/devices/system/cpu/cpu[0-9]*/power/pm_qos_resume_latency_us",
+     "readonly": False},
+]
 
 # MSR data are stored in a text file, one line per MSR address, in the
 # "<hex_addr>:<cpu_num>|<hex_val> ...", for example:
@@ -630,6 +556,58 @@ def _get_msr_data(cpuinfo: CPUInfo.CPUInfo,
 
             yield addr, vals
 
+def _collect_sysfs(pman: ProcessManagerType, basedir: Path, config_yml: dict):
+    """
+    Collect sysfs emulation data from the SUT and populate the emulation data configuration
+    dictionary with sysfs information.
+
+    Args:
+        pman: The process manager object that defines the SUT to read sysfs files from.
+        basedir: Path to the base output directory.
+        config_yml: The emulation data configuration dictionary to populate with the sysfs section.
+    """
+
+    outdir = basedir / _SYSFS_SUBDIR
+    try:
+        os.makedirs(outdir, exist_ok=True)
+    except OSError as err:
+        errmsg = Error(str(err)).indent(2)
+        raise Error(f"Failed to create directory '{outdir}':\n{errmsg}") from err
+
+    path = outdir / _SYSFS_DATA_FILE
+
+    try:
+        with open(path, "w", encoding="utf-8") as fobj:
+            # The output format is one entry per line: <mode>|<sysfs_path>|<value>.
+            # 'mode' is 'ro' for read-only entries and 'rw' for read-write entries.
+            # '|' is used as a separator because ':' may appear in sysfs paths (e.g., PCI
+            # addresses like '0000:00:00.0').
+            fobj.write("# Format: <ro|rw>|<sysfs_path>|<value>\n")
+
+            for entry in _SYSFS_PATHS:
+                res = pman.run_join(entry["command"])
+                if res.exitcode != 0:
+                    _LOG.notice("Command '%s' exited with code %d",
+                                entry["command"], res.exitcode)
+
+                if not res.stdout:
+                    continue
+
+                mode = "ro" if entry["readonly"] else "rw"
+                for line in res.stdout.splitlines():
+                    # grep -H output is '<path>:<value>'; split on the first ':' only.
+                    sysfs_path, _, value = line.partition(":")
+                    fobj.write(f"{mode}|{sysfs_path}|{value}\n")
+    except OSError as err:
+        raise Error(f"Failed to perform I/O on file '{path}'{pman.hostmsg}:\n"
+                    f"{Error(str(err)).indent(2)}") from err
+
+    sysfs_config: _EmulDataConfigSysfsTypedDict = {
+        "dirname": _SYSFS_SUBDIR,
+        "filename": _SYSFS_DATA_FILE,
+    }
+    config_yml["sysfs"] = sysfs_config
+
 def _collect_msrs(cpuinfo: CPUInfo.CPUInfo,
                   pman: ProcessManagerType,
                   basedir: Path,
@@ -696,6 +674,23 @@ def _online_all_cpus(pman: ProcessManagerType, cpuinfo: CPUInfo.CPUInfo):
     with CPUOnline.CPUOnline(pman=pman, cpuinfo=cpuinfo) as onl:
         onl.online()
 
+def _prepare(pman: ProcessManagerType, cpuinfo: CPUInfo.CPUInfo):
+    """
+    Prepare the SUT for emulation data collection.
+
+    Args:
+        pman: The process manager object that defines the SUT.
+        cpuinfo: CPU information object for the SUT.
+    """
+
+    _online_all_cpus(pman, cpuinfo)
+
+    pman.run("modprobe intel_uncore_frequency")
+    pman.run("modprobe msr")
+    pman.run("pepc pstates config --min-freq min --max-freq max --cpus all")
+    pman.run("pepc uncore config --min-freq min --max-freq max --cpus all")
+    pman.run("pepc cstates config --enable all --cpus all")
+
 def _do_main(pman: ProcessManagerType, outdir: Path, cpuinfo: CPUInfo.CPUInfo) -> int:
     """
     The main body of the tool.
@@ -709,22 +704,18 @@ def _do_main(pman: ProcessManagerType, outdir: Path, cpuinfo: CPUInfo.CPUInfo) -
         The program exit code.
     """
 
-    _online_all_cpus(pman, cpuinfo)
+    _prepare(pman, cpuinfo)
 
     # The contents of the 'config.yml' file, which will be created in the emulation data root
     # directory and describe the collected emulation data.
     config_yml: dict = {}
 
     _collect_msrs(cpuinfo, pman, outdir, config_yml)
+    _collect_sysfs(pman, outdir, config_yml)
     _generate_config_file("config", config_yml, outdir)
 
     for modname, tdcinfo in _TDCollectInfo.items():
         datapath = outdir / modname
-
-        if "prepare_cmds" in tdcinfo:
-            for command in tdcinfo["prepare_cmds"]:
-                pman.run(command)
-            del tdcinfo["prepare_cmds"]
 
         if "commands" in tdcinfo:
             for cmdinfo in tdcinfo["commands"]:
@@ -744,7 +735,7 @@ def _do_main(pman: ProcessManagerType, outdir: Path, cpuinfo: CPUInfo.CPUInfo) -
             if files:
                 tdcinfo["files"] = files
 
-        for section in ("inlinedirs", "inlinefiles"):
+        for section in ("inlinefiles",):
             if section not in tdcinfo:
                 continue
 

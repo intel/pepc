@@ -1,1 +1,0 @@
-/sys/module/pcie_aspm/parameters/policy:[default] performance powersave powersupersave 

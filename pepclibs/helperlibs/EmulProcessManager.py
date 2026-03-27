@@ -35,23 +35,10 @@ from pepclibs.helperlibs.emul import _EmulFile
 from pepclibs.helperlibs._ProcessManagerBase import ProcWaitResultType
 
 if typing.TYPE_CHECKING:
-    from typing import Generator, TypedDict, Sequence, IO, cast
+    from typing import Generator, TypedDict, IO, cast
     from pepclibs.helperlibs._ProcessManagerBase import LsdirTypedDict, LsdirSortbyType
     from pepctools._EmulDataConfigTypes import _EmulDataConfigMSRTypedDict
-
-    class _TestDataInlineDirsTypedDict(TypedDict, total=False):
-        """
-        Typed dictionary describing inline directories in the YAML configuration.
-
-        Attributes:
-            dirname: Name of the sub-directory within the dataset containing the inline directories
-                     file.
-            filename: The inline directories file name. Contains a list of directory paths to
-                      emulate.
-        """
-
-        dirname: str
-        filename: str
+    from pepctools._EmulDataConfigTypes import _EmulDataConfigSysfsTypedDict
 
     class _TestDataCommandsTypedDict(TypedDict, total=False):
         """
@@ -112,17 +99,18 @@ if typing.TYPE_CHECKING:
         Typed dictionary describing the YAML configuration for test data.
 
         Attributes:
-            inlinedirs: List of inline directories configurations.
             commands: List of command configurations.
             inlinefiles: List of inline files configurations.
-            msrs: List of MSR configurations.
             msr: MSR configuration.
+            sysfs: Sysfs configuration.
+            files: List of file configurations.
+            directories: List of directory configurations.
         """
 
-        inlinedirs: list[_TestDataInlineDirsTypedDict]
         commands: list[_TestDataCommandsTypedDict]
         inlinefiles: list[_TestDataInlineFilesTypedDict]
         msr: _EmulDataConfigMSRTypedDict
+        sysfs: _EmulDataConfigSysfsTypedDict
         files: list[_TestDataFilesTypedDict]
         directories: list[_TestDataDirectoriesTypedDict]
 
@@ -217,35 +205,6 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         with contextlib.suppress(Exception):
             super().close()
 
-    def _process_inlinedirs(self, infos: Sequence[_TestDataInlineDirsTypedDict], dspath: Path):
-        """
-        Create emulated directories from the "inline directories" emulation data.
-
-        Args:
-            infos: A collection of inline directories configuration dictionaries.
-            dspath: The dataset path.
-        """
-
-        for info in infos:
-            filepath = dspath / info["dirname"] / info["filename"]
-
-            try:
-                with open(filepath, "r", encoding="utf-8") as fobj:
-                    lines = fobj.readlines()
-            except OSError as err:
-                errmsg = Error(str(err)).indent(2)
-                raise Error(f"Failed to read inline directories configuration file '{filepath}':\n"
-                            f"{errmsg}") from err
-
-            for line in lines:
-                dirpath = self._basepath / line.strip().lstrip("/")
-                try:
-                    dirpath.mkdir(parents=True, exist_ok=True)
-                except OSError as err:
-                    errmsg = Error(str(err)).indent(2)
-                    raise Error(f"Failed to create emulated directory '{dirpath}':\n"
-                                f"{errmsg}") from err
-
     def _process_inlinefiles(self, infos: list[_TestDataInlineFilesTypedDict], dspath: Path):
         """
         Create emulated files from "inline files" emulation data.
@@ -326,6 +285,54 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
             result = _EmulCmdResultType(stdout=stdout, stderr=stderr, exitcode=0)
             self._emd["cmds"][info["command"]] = result
+
+    def _process_sysfs(self, info: _EmulDataConfigSysfsTypedDict, dspath: Path):
+        """
+        Create emulated sysfs files from sysfs emulation data.
+
+        Args:
+            info: Sysfs configuration dictionary.
+            dspath: The dataset path.
+        """
+
+        filepath = dspath / info["dirname"] / info["filename"]
+        try:
+            with open(filepath, "r", encoding="utf-8") as fobj:
+                lines = fobj.readlines()
+        except OSError as err:
+            errmsg = Error(str(err)).indent(2)
+            raise Error(f"Failed to read emulated sysfs data from '{filepath}':\n"
+                        f"{errmsg}") from err
+
+        for line in lines:
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+
+            # Format: <ro|rw>|<sysfs_path>|<value>.
+            parts = line.split("|", 2)
+            if len(parts) != 3:
+                raise Error(f"Unexpected line format in file '{filepath}':\n  "
+                            f"Expected <ro|rw>|<path>|<value>, received '{line}'")
+
+            mode, path, data = parts
+            if mode not in ("ro", "rw"):
+                raise Error(f"Unexpected mode '{mode}' in file '{filepath}':\n  "
+                            f"Expected 'ro' or 'rw', received '{line}'")
+
+            readonly = mode == "ro"
+
+            # Note about lstrip(): 'path' is an absolute path starting with '/'. If not stripped,
+            # joining it with the base path would ignore the base path.
+            dirpath = (self._basepath / path.lstrip("/")).parent
+            try:
+                dirpath.mkdir(parents=True, exist_ok=True)
+            except OSError as err:
+                errmsg = Error(str(err)).indent(2)
+                raise Error(f"Failed to create directory '{dirpath}':\n{errmsg}") from err
+
+            emul = _EmulFile.get_emul_file(path, self._basepath, data=data, readonly=readonly)
+            self._emd["files"][path] = emul
 
     def _process_msrs(self, info: _EmulDataConfigMSRTypedDict, dspath: Path):
         """
@@ -430,9 +437,6 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
         dspath = yaml_path.parent
 
-        if "inlinedirs" in yaml:
-            self._process_inlinedirs(yaml["inlinedirs"], dspath)
-
         if "inlinefiles" in yaml:
             self._process_inlinefiles(yaml["inlinefiles"], dspath)
 
@@ -441,6 +445,9 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
         if "msr" in yaml:
             self._process_msrs(yaml["msr"], dspath)
+
+        if "sysfs" in yaml:
+            self._process_sysfs(yaml["sysfs"], dspath)
 
         if "files" in yaml:
             self._process_files(yaml["files"], dspath / yaml_path.stem)
