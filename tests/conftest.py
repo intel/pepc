@@ -17,9 +17,14 @@ import os
 import typing
 from pathlib import Path
 import pytest
+from pepclibs.helperlibs import Logging
 
 if typing.TYPE_CHECKING:
     from typing import Generator, Final
+
+# Configure the 'main.pepc' logger with an empty argv so the log level defaults to INFO,
+# regardless of how pytest was invoked (e.g., 'pytest -q' would otherwise set it to WARNING).
+Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc").configure(prefix="pepc", argv=[])
 
 # The test modules that are host-agnostic.
 _NOHOST_MODULES: Final[set[str]] = {"tests.test_human",

@@ -41,7 +41,7 @@ if typing.TYPE_CHECKING:
 _VERSION: Final[str] = "1.6.26"
 TOOLNAME: Final[str] = "pepc"
 
-_LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc").configure(prefix=TOOLNAME)
+_LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc")
 
 _DATASET_OPTION: Final[ArgTypedDict] = {
     "short": "-D",
@@ -1263,6 +1263,7 @@ def main() -> int:
     """
 
     try:
+        _LOG.configure(prefix=TOOLNAME)
         do_main()
     except KeyboardInterrupt:
         _LOG.info("\nInterrupted, exiting")
