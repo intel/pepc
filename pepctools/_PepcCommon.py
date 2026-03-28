@@ -15,7 +15,7 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 import typing
 from pepclibs import CPUInfo, CPUModels
 from pepclibs.helperlibs import Logging, Systemctl, Trivial
-from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepctools._OpTarget import ErrorNoTarget
 
 if typing.TYPE_CHECKING:
@@ -41,7 +41,7 @@ def check_tuned_presence(pman: ProcessManagerType):
                 _LOG.warning("The 'tuned' service is active%s! It may override the changes made by "
                              "'pepc'\nConsider having 'tuned' disabled while experimenting with "
                              "power management settings.", pman.hostmsg)
-    except ErrorNotFound:
+    except ErrorNotSupported:
         pass
     except Error as err:
         _LOG.warning("Failed to check for 'tuned' presence:\n%s", err.indent(2))
