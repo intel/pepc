@@ -20,7 +20,7 @@ import re
 import time
 import typing
 from pathlib import Path
-from pepclibs.helperlibs import Logging, LocalProcessManager, EmulProcessManager, ClassHelpers
+from pepclibs.helperlibs import Logging, LocalProcessManager, ClassHelpers
 from pepclibs.helperlibs import Trivial
 from pepclibs.helperlibs.Exceptions import ErrorNotSupported, ErrorBadFormat
 from pepclibs.helperlibs.Exceptions import Error, ErrorPath, ErrorNotFound
@@ -121,7 +121,7 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
         if DISABLE_IO_OPTIMIZATIONS and VERIFY_IO_OPTIMIZATIONS:
             _LOG.warning("I/O optimizations are disabled, but their verification is enabled")
 
-        if isinstance(self._pman, EmulProcessManager.EmulProcessManager):
+        if self._pman.is_emulated:
             self._optimize_io = False
         else:
             if DISABLE_IO_OPTIMIZATIONS:
@@ -593,7 +593,7 @@ for path, (val, verify, retries, sleep) in winfo.items():
         if _LOG.getEffectiveLevel() == Logging.DEBUG:
             if isinstance(self._pman, LocalProcessManager.LocalProcessManager):
                 msg_prefix = "Local"
-            elif isinstance(self._pman, EmulProcessManager.EmulProcessManager):
+            elif self._pman.is_emulated:
                 msg_prefix = "Emulation"
             else:
                 msg_prefix = "Remote"

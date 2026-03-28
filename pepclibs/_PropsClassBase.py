@@ -39,7 +39,7 @@ import copy
 import typing
 
 from pepclibs import CPUInfo, CPUModels
-from pepclibs.helperlibs import Logging, Trivial, Human, ClassHelpers, EmulProcessManager
+from pepclibs.helperlibs import Logging, Trivial, Human, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 
 if typing.TYPE_CHECKING:
@@ -203,7 +203,7 @@ class PropsClassBase(ClassHelpers.SimpleCloseContext):
 
         if pman:
             self._pman = pman
-            if isinstance(pman, EmulProcessManager.EmulProcessManager):
+            if pman.is_emulated:
                 # The emulation layer does not support MSR scope, so disable the scope optimization,
                 # and make sure writes go to all CPUs, not just one CPU in the scope.
                 self._enable_scope = False

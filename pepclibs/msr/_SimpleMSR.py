@@ -22,8 +22,8 @@ import os
 import re
 import typing
 from pathlib import Path
-from pepclibs.helperlibs import ClassHelpers, FSHelpers, Trivial
-from pepclibs.helperlibs import Logging, LocalProcessManager, EmulProcessManager, KernelModule
+from pepclibs.helperlibs import ClassHelpers, FSHelpers, Trivial, Logging, KernelModule
+from pepclibs.helperlibs import LocalProcessManager
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorPermissionDenied
 from pepclibs.helperlibs.Exceptions import ErrorPerCPUPath
 
@@ -362,8 +362,7 @@ for cpu in cpus:
                              information).
         """
 
-        if DISABLE_IO_OPTIMIZATIONS or \
-           isinstance(self._pman, EmulProcessManager.EmulProcessManager):
+        if DISABLE_IO_OPTIMIZATIONS or self._pman.is_emulated:
             yield from self._cpus_read_pman(regaddr, cpus)
         elif self._pman.is_remote:
             yield from self._cpus_read_remote(regaddr, cpus)
@@ -571,8 +570,7 @@ for cpu in cpus:
                              information).
         """
 
-        if DISABLE_IO_OPTIMIZATIONS or \
-           isinstance(self._pman, EmulProcessManager.EmulProcessManager):
+        if DISABLE_IO_OPTIMIZATIONS or self._pman.is_emulated:
             self._cpus_write_pman(regaddr, regval, cpus)
         elif self._pman.is_remote:
             self._cpus_write_remote(regaddr, regval, cpus)

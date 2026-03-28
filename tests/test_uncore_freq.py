@@ -641,7 +641,7 @@ def test_freq_cross_mechanisms(params: _TestParamsTypedDict):
         params: The test parameters.
     """
 
-    if common.is_emulated(params["pman"]):
+    if params["pman"].is_emulated:
         pytest.skip("The cross-mechanism uncore frequency test is not supported on emulated "
                     "environments")
 

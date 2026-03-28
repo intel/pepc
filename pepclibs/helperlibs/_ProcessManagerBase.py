@@ -737,6 +737,8 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         # Whether the process manager is managing a remote host.
         self.is_remote = False
+        # Whether the process manager is managing an emulated host.
+        self.is_emulated = False
         # The hostname of the host.
         self.hostname = "localhost"
         # The message referring to the host to add to error messages.

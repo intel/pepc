@@ -64,7 +64,7 @@ def _get_msr_test_params(params: FeaturedMSRTestParamsTypedDict,
             elif not include_ro:
                 continue
 
-            if not common.is_emulated(params["pman"]) and include_rw:
+            if not params["pman"].is_emulated and include_rw:
                 continue
 
             if not finfo["bits"]:
@@ -143,7 +143,7 @@ def test_msr_write_bad(params: FeaturedMSRTestParamsTypedDict):
 
     # Following test will expect failure when writing to readonly MSR. On emulated host, such writes
     # don't fail.
-    if common.is_emulated(params["pman"]):
+    if params["pman"].is_emulated:
         return
 
     for msr in msr_common.get_msr_objs(params):

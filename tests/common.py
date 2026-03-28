@@ -63,19 +63,6 @@ def _get_emul_data_path(dataset: str) -> Path:
 
     return Path(__file__).parent.resolve() / "emul-data" / dataset
 
-def is_emulated(pman: ProcessManagerType) -> bool:
-    """
-    Determine if the provided process manager corresponds to an emulated system.
-
-    Args:
-        pman: The process manager instance to check.
-
-    Returns:
-        True if the process manager corresponds to an emulated system, False otherwise.
-    """
-
-    return pman.hostname.startswith("emulation:")
-
 def get_pman(hostspec: str, username: str = "") -> ProcessManagerType:
     """
     Create and return a process manager for the specified host.

@@ -20,11 +20,8 @@ import typing
 import pprint
 from pathlib import Path
 from pepclibs import _PerCPUCache
-from pepclibs.helperlibs import EmulProcessManager, Logging
-from pepclibs.helperlibs import Trivial
-from pepclibs.helperlibs import ClassHelpers
-from pepclibs.helperlibs.Exceptions import Error, ErrorVerifyFailedPerCPUPath
-from pepclibs.helperlibs.Exceptions import ErrorPerCPUPath
+from pepclibs.helperlibs import ClassHelpers, Trivial, Logging
+from pepclibs.helperlibs.Exceptions import Error, ErrorPerCPUPath, ErrorVerifyFailedPerCPUPath
 from pepclibs.msr import _SimpleMSR
 from pepclibs.msr._SimpleMSR import _CPU_BYTEORDER
 
@@ -120,7 +117,7 @@ class MSR(_SimpleMSR.SimpleMSR):
         self._enable_cache = enable_cache
         self._enable_scope = True
 
-        if isinstance(pman, EmulProcessManager.EmulProcessManager):
+        if pman.is_emulated:
             # The emulation layer does not support MSR scope, so disable the scope optimization, and
             # make sure writes go to all CPUs, not just one CPU in the scope.
             self._enable_scope = False
@@ -366,7 +363,7 @@ for cpu, cpus_info in transaction_buffer.items():
 
         if self._pman.is_remote:
             self._transaction_write_remote()
-        elif isinstance(self._pman, EmulProcessManager.EmulProcessManager):
+        elif self._pman.is_emulated:
             self._transaction_write_emulation()
         else:
             self._transaction_write_local()

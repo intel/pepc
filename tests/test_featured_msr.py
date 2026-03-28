@@ -217,7 +217,7 @@ def _is_verify_error_ok(params: FeaturedMSRTestParamsTypedDict, err: ErrorVerify
         True if the verification error should be ignored, False otherwise.
     """
 
-    if common.is_emulated(params["pman"]):
+    if params["pman"].is_emulated:
         return False
 
     if not hasattr(err, "regname"):

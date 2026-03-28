@@ -21,7 +21,6 @@ from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs.helperlibs.Exceptions import ErrorPath, ErrorPerCPUPath
 from pepclibs.helperlibs.Exceptions import ErrorVerifyFailedPath, ErrorVerifyFailedPerCPUPath
 from pepclibs.helperlibs import Trivial, ClassHelpers, KernelVersion, Logging
-from pepclibs.helperlibs import EmulProcessManager
 from pepclibs import _EPBase
 
 if typing.TYPE_CHECKING:
@@ -350,7 +349,7 @@ class EPP(_EPBase.EPBase):
             True if the bug is present, False otherwise.
         """
 
-        if isinstance(self._pman, EmulProcessManager.EmulProcessManager):
+        if self._pman.is_emulated:
             # The bug is not present in the emulator, so skip the check.
             return False
 

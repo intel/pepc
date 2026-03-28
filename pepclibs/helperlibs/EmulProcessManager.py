@@ -107,6 +107,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
         self.hostmsg = f" on '{self.hostname}'"
         self.is_remote = False
+        self.is_emulated = True
 
         pid = Trivial.get_pid()
 

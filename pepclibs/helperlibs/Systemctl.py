@@ -16,7 +16,6 @@ import typing
 from typing import cast
 from pathlib import Path
 from pepclibs.helperlibs import Logging, LocalProcessManager, Trivial, ClassHelpers
-from pepclibs.helperlibs import EmulProcessManager
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorNotFound
 
 if typing.TYPE_CHECKING:
@@ -50,7 +49,7 @@ class Systemctl(ClassHelpers.SimpleCloseContext):
         else:
             self._pman = pman
 
-        if isinstance(self._pman, EmulProcessManager.EmulProcessManager):
+        if self._pman.is_emulated:
             raise ErrorNotSupported("Systemctl API is not supported for emulated hosts")
 
         try:
@@ -77,9 +76,6 @@ class Systemctl(ClassHelpers.SimpleCloseContext):
             units: A single systemd unit name or an iterable of unit names to run the action on.
             action: The action to run on the unit(s), such as 'start', 'stop', or 'restart'.
             save: Whether to save the action run for each unit.
-
-        Raises:
-            Error: If the unit state did not change after the action.
         """
 
         unit_names: Iterable[str]
@@ -124,9 +120,6 @@ class Systemctl(ClassHelpers.SimpleCloseContext):
             units: Name or collection of names of systemd units to start.
             save: If True, save the current units state for later restoration via the 'restore()'
                   method.
-
-        Raises:
-            Error: If a unit failed to start.
         """
 
         self._run_action(units, "start", save=save)
@@ -139,9 +132,6 @@ class Systemctl(ClassHelpers.SimpleCloseContext):
             units: Name or collection of names of systemd units to stop.
             save: If True, save the current units state for later restoration via the 'restore()'
                   method.
-
-        Raises:
-            Error: If a unit failed to stop.
         """
 
         self._run_action(units, "stop", save=save)
@@ -152,9 +142,6 @@ class Systemctl(ClassHelpers.SimpleCloseContext):
 
         Args:
             units: Name or collection of names of systemd units to restart.
-
-        Raises:
-            Error: If a unit failed to restart.
         """
 
         self._run_action(units, "restart", save=False)
@@ -162,9 +149,6 @@ class Systemctl(ClassHelpers.SimpleCloseContext):
     def restore(self):
         """
         Restore the previously saved state of systemd units.
-
-        Raises:
-            Error: If a unit failed to start or stop during restoration.
         """
 
         if not self._saved_units:
@@ -227,9 +211,6 @@ class Systemctl(ClassHelpers.SimpleCloseContext):
 
         Returns:
             List of names of NTP services that were stopped.
-
-        Raises:
-            Error: If a service failed to stop.
         """
 
         services = ("ntpd", "ntpdate", "sntp", "systemd-timesyncd", "chronyd")
@@ -248,9 +229,6 @@ class Systemctl(ClassHelpers.SimpleCloseContext):
 
         Returns:
             List of restored NTP service names, or an empty list if no services were saved.
-
-        Raises:
-            Error: If a service failed to start.
         """
 
         if self._saved_ntp_services:
@@ -266,9 +244,6 @@ class Systemctl(ClassHelpers.SimpleCloseContext):
 
         Returns:
             List of timer names that were stopped.
-
-        Raises:
-            Error: If a timer failed to stop.
         """
 
         cmd = f"{self._systemctl_path} list-timers"
@@ -288,9 +263,6 @@ class Systemctl(ClassHelpers.SimpleCloseContext):
 
         Returns:
             List of restored timer names, or an empty list if no timers were saved.
-
-        Raises:
-            Error: If a timer failed to start.
         """
 
         if self._saved_timers:
