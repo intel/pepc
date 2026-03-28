@@ -7,10 +7,17 @@
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
-Type definitions for emulation data configuration files.
+Shared constants and type definitions for emulation data configuration.
+
+This module contains shared definitions used by both the emulation data generator
+(_EmulDataGen.py) and the emulation process manager (EmulProcessManager.py).
 """
 import typing
 from pathlib import Path
+from typing import Final
+
+# The name of the main configuration file in each emulation dataset directory.
+EMUL_CONFIG_FNAME: Final[str] = "config.yml"
 
 if typing.TYPE_CHECKING:
     from typing import TypedDict

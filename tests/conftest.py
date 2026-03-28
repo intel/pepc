@@ -18,6 +18,7 @@ import typing
 from pathlib import Path
 import pytest
 from pepclibs.helperlibs import Logging
+from pepclibs.helperlibs.emul.EmulCommon import EMUL_CONFIG_FNAME
 
 if typing.TYPE_CHECKING:
     from typing import Generator, Final
@@ -68,7 +69,7 @@ def _get_datasets() -> Generator[str, None, None]:
     basepath = Path(__file__).parent.resolve() / "emul-data"
     for dirname in os.listdir(basepath):
         datapath = Path(f"{basepath}/{dirname}")
-        if datapath.is_dir() and (datapath / "config.yml").exists():
+        if datapath.is_dir() and (datapath / EMUL_CONFIG_FNAME).exists():
             yield dirname
 
 def pytest_generate_tests(metafunc: pytest.Metafunc):

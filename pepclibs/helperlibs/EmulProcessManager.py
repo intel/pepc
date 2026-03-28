@@ -31,25 +31,15 @@ from pathlib import Path
 from pepclibs.helperlibs import Logging, LocalProcessManager, Trivial, YAML
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs.helperlibs.emul import _EmulFile
+from pepclibs.helperlibs.emul.EmulCommon import EMUL_CONFIG_FNAME
 from pepclibs.helperlibs._ProcessManagerBase import ProcWaitResultType
 
 if typing.TYPE_CHECKING:
-    from typing import Generator, TypedDict, IO, cast
+    from typing import Generator, TypedDict, IO, cast, Final
     from pepclibs.helperlibs._ProcessManagerBase import LsdirTypedDict, LsdirSortbyType
-    from pepctools._EmulDataConfigTypes import _EmulDataConfigMSRTypedDict
-    from pepctools._EmulDataConfigTypes import _EmulDataConfigSysfsTypedDict
-    from pepctools._EmulDataConfigTypes import _EmulDataConfigProcfsTypedDict
-
-    class _TestDataDirectoriesTypedDict(TypedDict, total=False):
-        """
-        Typed dictionary describing empty directories in the YAML configuration.
-
-        Attributes:
-            path: The emulated empty directory path.
-        """
-
-        path: str
-        readonly: bool
+    from pepclibs.helperlibs.emul.EmulCommon import _EmulDataConfigMSRTypedDict
+    from pepclibs.helperlibs.emul.EmulCommon import _EmulDataConfigSysfsTypedDict
+    from pepclibs.helperlibs.emul.EmulCommon import _EmulDataConfigProcfsTypedDict
 
     class _TestDataYAMLTypedDict(TypedDict, total=False):
         """
@@ -58,39 +48,37 @@ if typing.TYPE_CHECKING:
         Attributes:
             msr: MSR configuration.
             sysfs: Sysfs configuration.
-            directories: List of directory configurations.
+            procfs: Procfs configuration.
         """
 
         msr: _EmulDataConfigMSRTypedDict
         sysfs: _EmulDataConfigSysfsTypedDict
-        directories: list[_TestDataDirectoriesTypedDict]
+        procfs: _EmulDataConfigProcfsTypedDict
 
     class _EmulDataTypedDict(TypedDict, total=False):
         """
-        A typed dictionary for the emulation data.
+        The main emulation data dictionary that holds all emulated resources.
+
+        Attributes:
+            files: Dictionary mapping absolute file paths (e.g., "/sys/devices/system/cpu/online",
+                   "/dev/cpu/0/msr") to corresponding emulated file objects.
         """
 
         files: dict[str, _EmulFile.EmulFileType]
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
+_DEFAULT_HOSTNAME: Final[str] = "emulated_host"
+
 class EmulProcessManager(LocalProcessManager.LocalProcessManager):
     """
     A process manager that emulates a System Under Test (SUT) for testing purposes.
 
-    A mock implementation of a process manager designed for unit testing. Instead of executing real
-    commands or interacting with the actual filesystem, return pre-defined results. Instead of
-    writing the real SUT filesystem, manipulate files and directories in memory or within a
-    temporary directory (the base directory).
-
-    Key Features:
-        - Filesystem-related methods (e.g., mkdir, lsdir, is_file) operate relative to the base
-          directory (which is just a temporary directory), not the real local filesystem.
-          So all file and directory operations are sandboxed within the base directory.
-        - The emulation data (emd) are initialized and populated from the emulation dataset.
+    A mock implementation of a process manager designed for unit testing. Instead of writing the
+    real SUT filesystem, manipulate files and directories in memory or within local filesystem.
     """
 
-    def __init__(self, hostname: str | None = None):
+    def __init__(self, hostname: str = _DEFAULT_HOSTNAME):
         """
         Initialize a class instance.
 
@@ -100,11 +88,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
         super().__init__()
 
-        if hostname:
-            self.hostname = hostname
-        else:
-            self.hostname = "emulated local host"
-
+        self.hostname = hostname
         self.hostmsg = f" on '{self.hostname}'"
         self.is_remote = False
         self.is_emulated = True
@@ -126,16 +110,15 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         # Remove the emulation data in the temporary directory.
         self._basepath_removed = True
 
-        with contextlib.suppress(Error, OSError):
+        with contextlib.suppress(Exception):
             super().rmtree(self._basepath)
-
 
     def close(self):
         """Stop emulation."""
 
         self._basepath_removed = True
 
-        with contextlib.suppress(Error):
+        with contextlib.suppress(Exception):
             super().rmtree(self._basepath)
 
         with contextlib.suppress(Exception):
@@ -286,23 +269,6 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             emul = _EmulFile.get_emul_file(path, self._basepath, data=data)
             self._emd["files"][path] = emul
 
-    def _process_directories(self, infos: list[_TestDataDirectoriesTypedDict]):
-        """
-        Create emulated directories from the emulation data.
-
-        Args:
-            infos: A collection of directories configuration dictionaries.
-        """
-
-        for info in infos:
-            dirpath = self._basepath / info["path"].lstrip("/")
-
-            try:
-                dirpath.mkdir(parents=True, exist_ok=True)
-            except OSError as err:
-                errmsg = Error(str(err)).indent(2)
-                raise Error(f"Failed to create directory '{dirpath}':\n{errmsg}") from err
-
     def _process_test_data_category(self, yaml_path: Path):
         """
         Process an emulation data category configuration file and initialize related emulation data.
@@ -327,41 +293,40 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         if "procfs" in yaml:
             self._process_procfs(yaml["procfs"], dspath)
 
-        if "directories" in yaml:
-            self._process_directories(yaml["directories"])
-
     def init_emul_data(self, dspath: Path):
         """
-        Load a dataset and initialize the emulation data.
+        Load an emulation dataset and initialize the emulation data.
 
         Args:
           dspath: Path to the dataset directory to load.
 
-        Emulation data is organized as follows:
+        Each dataset directory contains a single 'config.yml' file that describes all emulation
+        data for a System Under Test (SUT):
             - dataset1/
-              - category1.yml
-              - category1/
-              - category2.yml
-              - category2/
+              - config.yml          # Main configuration file
+              - msr/                # MSR register data
+              - sys/                # Sysfs file data
+              - proc/               # Procfs file data
               ...
             - dataset2/
               ...
 
-        Each dataset represents a System Under Test (SUT). Within each dataset, data is divided
-        into multiple categories, each described by a YAML file and a corresponding sub-directory
-        containing the actual data.
+        The 'config.yml' file contains top-level sections ('msr', 'sysfs', 'procfs', etc.) that
+        describe how to load and configure emulated files from their respective sub-directories.
 
-        Originally, categories matched pepc Python modules, but this mapping is no longer strict.
-        Categories now simply group related emulation data.
+        This method eagerly loads all emulation data from the configuration file and prepares the
+        emulated filesystem structure in the temporary base directory.
+
+        Note: A TODO exists to implement lazy loading, where data would only be loaded when
+              actually accessed, improving initialization performance for tests that use only
+              a subset of the emulation data.
         """
 
         # TODO: Instead of eagerly building all emulation data up front, construct it lazily and
         # only for the components that are actually required.
 
-        for yaml_path in dspath.iterdir():
-            if not str(yaml_path).endswith(".yml"):
-                continue
-            self._process_test_data_category(yaml_path)
+        config_path = dspath / EMUL_CONFIG_FNAME
+        self._process_test_data_category(config_path)
 
     def _extract_path(self, cmd: str) -> str:
         """

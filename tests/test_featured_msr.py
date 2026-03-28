@@ -16,6 +16,7 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 import typing
 import pytest
 from tests import msr_common
+from tests.msr_common import get_params # pylint: disable=unused-import
 
 from pepclibs.msr import MSR
 from pepclibs.helperlibs.Exceptions import Error, ErrorVerifyFailed

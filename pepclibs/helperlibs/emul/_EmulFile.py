@@ -21,11 +21,11 @@ if typing.TYPE_CHECKING:
     from typing import Any, Union
 
     EmulFileType = Union[_EmulFileBase.EmulFileBase,
-                        _CPUOnlineEmulFile.CPUOnlineEmulFile,
-                        _DevMSREmulFile.DevMSREmulFile,
-                        _EPBEmulFile.EPBEmulFile,
-                        _ASPMPolicyEmulFile.ASPMPolicyEmulFile,
-                        _TPMIEmulFile.TPMIEmulFile]
+                         _CPUOnlineEmulFile.CPUOnlineEmulFile,
+                         _DevMSREmulFile.DevMSREmulFile,
+                         _EPBEmulFile.EPBEmulFile,
+                         _ASPMPolicyEmulFile.ASPMPolicyEmulFile,
+                         _TPMIEmulFile.TPMIEmulFile]
 
 def get_emul_file(path: str,
                   basepath: Path,

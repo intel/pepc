@@ -40,14 +40,15 @@ import pepclibs.msr as _msr_pkg
 from pepclibs.msr import _FeaturedMSR, MSR
 from pepclibs.helperlibs import Logging, ArgParse, ProcessManager, YAML, Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
+from pepclibs.helperlibs.emul.EmulCommon import EMUL_CONFIG_FNAME
 
 if typing.TYPE_CHECKING:
     import argparse
     from typing import Final, TypedDict, Generator
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
-    from pepctools._EmulDataConfigTypes import _EmulDataConfigMSRTypedDict
-    from pepctools._EmulDataConfigTypes import _EmulDataConfigSysfsTypedDict
-    from pepctools._EmulDataConfigTypes import _EmulDataConfigProcfsTypedDict
+    from pepclibs.helperlibs.emul.EmulCommon import _EmulDataConfigMSRTypedDict
+    from pepclibs.helperlibs.emul.EmulCommon import _EmulDataConfigSysfsTypedDict
+    from pepclibs.helperlibs.emul.EmulCommon import _EmulDataConfigProcfsTypedDict
 
     class _SysfsInlineCmdTypedDict(TypedDict):
         """
@@ -492,10 +493,6 @@ def _collect_sysfs(pman: ProcessManagerType, basedir: Path, config_yml: dict):
 
     config_yml["sysfs"] = sysfs_config
 
-    # Ensure the debugfs mount point directory always exists in the emulated filesystem. Without
-    # this, 'lsdir()' on it would raise 'ErrorNotFound' on non-TPMI systems.
-    config_yml["directories"] = [{"path": str(_SYSFS_TPMI_BASEDIR)}]
-
 def _collect_procfs(pman: ProcessManagerType, basedir: Path, config_yml: dict):
     """
     Collect procfs emulation data from the SUT and populate the emulation data configuration
@@ -620,15 +617,15 @@ def _do_main(pman: ProcessManagerType, outdir: Path, cpuinfo: CPUInfo.CPUInfo) -
 
     _prepare(pman, cpuinfo)
 
-    # The contents of the 'config.yml' file, which will be created in the emulation data root
-    # directory and describe the collected emulation data.
+    # The contents of the main configuration file (EMUL_CONFIG_FNAME), which will be
+    # created in the emulation data root directory and describe the collected emulation data.
     config_yml: dict = {}
 
     _collect_msrs(cpuinfo, pman, outdir, config_yml)
     _collect_sysfs(pman, outdir, config_yml)
     _collect_procfs(pman, outdir, config_yml)
 
-    _generate_config_file(outdir / "config.yml", config_yml)
+    _generate_config_file(outdir / EMUL_CONFIG_FNAME, config_yml)
 
     return 0
 
