@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2025 Intel Corporation
+# Copyright (C) 2020-2026 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
@@ -66,8 +66,8 @@ def get_mount_points(pman: ProcessManagerType | None = None) -> Generator[MountI
             try:
                 contents: str = fobj.read()
             except Error as err:
-                errmsg = err.indent(2)
-                raise type(err)(f"Failed to read '{mounts_file}'{wpman.hostmsg}:\n{errmsg}") from err
+                raise type(err)(f"Failed to read '{mounts_file}'{wpman.hostmsg}:\n"
+                                f"{err.indent(2)}") from err
 
     for line in contents.splitlines():
         if not line:
@@ -105,14 +105,14 @@ def mount_debugfs(mnt: Path | None = None,
     """
 
     with ProcessManager.pman_or_local(pman) as wpman:
-        if not mnt:
+        if mnt is None:
             mount_point = DEBUGFS_MOUNT_POINT
         else:
             try:
                 mount_point = wpman.abspath(mnt)
             except Error as err:
-                errmsg = err.indent(2)
-                raise type(err)(f"Failed to resolve path '{mnt}'{wpman.hostmsg}:\n{errmsg}") from err
+                raise type(err)(f"Failed to resolve path '{mnt}'{wpman.hostmsg}:\n"
+                                f"{err.indent(2)}") from err
 
         for mntinfo in get_mount_points(pman=wpman):
             if mntinfo["fstype"] == "debugfs" and Path(mntinfo["mntpoint"]) == mount_point:
@@ -147,5 +147,5 @@ def wait_for_a_file(path: Path,
                 return
             time.sleep(interval)
 
-        interval_str = Human.duration(timeout)
-        raise Error(f"File '{path}' did not appear{wpman.hostmsg} within '{interval_str}'")
+        timeout_str = Human.duration(timeout)
+        raise Error(f"File '{path}' did not appear{wpman.hostmsg} within '{timeout_str}'")
