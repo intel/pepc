@@ -54,6 +54,9 @@ def get_mount_points(pman: ProcessManagerType | None = None) -> Generator[MountI
 
     Yields:
         Instances of 'MountInfoTypedDict' for each mount point found in '/proc/mounts'.
+
+    Raises:
+        ErrorNotFound: If '/proc/mounts' does not exist on the host.
     """
 
     mounts_file = Path("/proc/mounts")
@@ -62,9 +65,9 @@ def get_mount_points(pman: ProcessManagerType | None = None) -> Generator[MountI
         with wpman.open(mounts_file, "r") as fobj:
             try:
                 contents: str = fobj.read()
-            except OSError as err:
-                errmsg = Error(str(err)).indent(2)
-                raise Error(f"Failed to read '{mounts_file}'{wpman.hostmsg}:\n{errmsg}") from err
+            except Error as err:
+                errmsg = err.indent(2)
+                raise type(err)(f"Failed to read '{mounts_file}'{wpman.hostmsg}:\n{errmsg}") from err
 
     for line in contents.splitlines():
         if not line:
@@ -96,6 +99,9 @@ def mount_debugfs(mnt: Path | None = None,
 
     Notes:
         - If debugfs is already mounted at the specified mount point, do not remount it.
+
+    Raises:
+        ErrorNotFound: If the mount point directory does not exist on the host.
     """
 
     with ProcessManager.pman_or_local(pman) as wpman:
@@ -104,10 +110,9 @@ def mount_debugfs(mnt: Path | None = None,
         else:
             try:
                 mount_point = wpman.abspath(mnt)
-            except OSError as err:
-                errmsg = Error(str(err)).indent(2)
-                raise Error(f"Failed to resolve path '{mnt}'{wpman.hostmsg}:\n"
-                            f"{errmsg}") from err
+            except Error as err:
+                errmsg = err.indent(2)
+                raise type(err)(f"Failed to resolve path '{mnt}'{wpman.hostmsg}:\n{errmsg}") from err
 
         for mntinfo in get_mount_points(pman=wpman):
             if mntinfo["fstype"] == "debugfs" and Path(mntinfo["mntpoint"]) == mount_point:

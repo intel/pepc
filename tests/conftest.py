@@ -59,20 +59,14 @@ def pytest_addoption(parser: pytest.Parser):
 
 def _get_datasets() -> Generator[str, None, None]:
     """
-    Find and yield the names of all directories in the 'tests/emul-data' directory, excluding
-    'common'.
+    Find and yield the names of all dataset directories in 'tests/emul-data'.
 
     Yields:
-        The name of each valid directory in 'tests/emul-data', excluding 'common'.
+        The name of each valid dataset directory in 'tests/emul-data'.
     """
 
     basepath = Path(__file__).parent.resolve() / "emul-data"
     for dirname in os.listdir(basepath):
-        # The "common" dataset contains emulation data for all SUTs and does not represent a single
-        # host, so skip it.
-        if dirname == "common":
-            continue
-
         datapath = Path(f"{basepath}/{dirname}")
         if datapath.is_dir():
             yield dirname

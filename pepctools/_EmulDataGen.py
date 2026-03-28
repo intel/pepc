@@ -129,6 +129,7 @@ _PROCFS_FILES: list[Path] = [
     Path("/proc/cpuinfo"),
     Path("/proc/cmdline"),
     Path("/proc/version"),
+    Path("/proc/mounts"),
 ]
 
 # The sysfs data sub-directory name in the emulation data directory.
@@ -545,6 +546,9 @@ def _collect_sysfs(pman: ProcessManagerType, basedir: Path, config_yml: dict):
         }
 
     config_yml["sysfs"] = sysfs_config
+
+    # Ensure the debugfs mount point directory always exists in the emulated filesystem.
+    config_yml["directories"] = [{"path": str(_SYSFS_TPMI_BASEDIR)}]
 
 def _collect_procfs(pman: ProcessManagerType, basedir: Path, config_yml: dict):
     """

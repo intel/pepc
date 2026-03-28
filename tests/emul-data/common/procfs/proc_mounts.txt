@@ -1,1 +1,0 @@
-/proc/mounts:debugfs /sys/kernel/debug debugfs rw,nosuid,nodev,noexec,relatime 0 0

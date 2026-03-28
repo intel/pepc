@@ -477,9 +477,6 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
           dspath: Path to the dataset directory to load.
 
         Test data is organized as follows:
-            - test_data_root/
-              - common/
-              - common.yml
             - dataset1/
               - category1.yml
               - category1/
@@ -489,9 +486,9 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             - dataset2/
               ...
 
-        Each dataset represents a System Under Test (SUT). The 'common' directory contains data
-        shared across all datasets. Within each dataset, data is divided into multiple categories,
-        each described by a YAML file and a corresponding sub-directory containing the actual data.
+        Each dataset represents a System Under Test (SUT). Within each dataset, data is divided
+        into multiple categories, each described by a YAML file and a corresponding sub-directory
+        containing the actual data.
 
         Originally, categories matched pepc Python modules, but this mapping is no longer strict.
         Categories now simply group related test data.
@@ -499,11 +496,6 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
         # TODO: Instead of eagerly building all emulation data up front, construct it lazily and
         # only for the components that are actually required.
-
-        # Load the shared test data from the 'common' directory located in the parent of the
-        # dataset.
-        yaml_path = dspath.parent / "common" / "common.yml"
-        self._process_test_data_category(yaml_path)
 
         for yaml_path in dspath.iterdir():
             if not str(yaml_path).endswith(".yml"):

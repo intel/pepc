@@ -89,7 +89,7 @@ from pathlib import Path
 import yaml
 from pepclibs import CPUModels
 from pepclibs.helperlibs import Logging, YAML, ClassHelpers, FSHelpers, ProjectFiles, Trivial, Human
-from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorNotSupported
 from pepclibs.helperlibs.Exceptions import ErrorPermissionDenied
 from pepclibs.TPMIVars import DEFAULT_VFM, DEFAULT_PLATFORM_NAME, UFS_HEADER_REGNAMES
 
@@ -686,7 +686,11 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         self._unmount_debugfs: bool
 
         if not self.base:
-            self._debugfs_mnt, self._unmount_debugfs = FSHelpers.mount_debugfs(pman=self._pman)
+            try:
+                self._debugfs_mnt, self._unmount_debugfs = FSHelpers.mount_debugfs(pman=self._pman)
+            except ErrorNotFound as err:
+                raise ErrorNotSupported(f"TPMI is not supported{self._pman.hostmsg}: debugfs mount "
+                                        f"point not found.\n{err.indent(2)}") from err
         else:
             # The base path plays the role of debugfs mount point when accessing a debugfs dump.
             self._debugfs_mnt = self.base
@@ -764,9 +768,13 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         tpmi_dir_pattern = re.compile(r"^tpmi-[0-9a-f]{4}:[0-9a-f]{2}:[0-9a-f]{2}\.[0-9a-f]$")
 
         debugfs_tpmi_dirs: list[Path] = []
-        for entry in self._pman.lsdir(self._debugfs_mnt):
-            if tpmi_dir_pattern.match(entry["name"]):
-                debugfs_tpmi_dirs.append(entry["path"])
+        try:
+            for entry in self._pman.lsdir(self._debugfs_mnt):
+                if tpmi_dir_pattern.match(entry["name"]):
+                    debugfs_tpmi_dirs.append(entry["path"])
+        except ErrorNotFound as err:
+            raise ErrorNotSupported(f"TPMI is not supported{self._pman.hostmsg}: debugfs directory "
+                                    f"'{self._debugfs_mnt}' not found.\n{err.indent(2)}") from err
 
         if debugfs_tpmi_dirs:
             return debugfs_tpmi_dirs
