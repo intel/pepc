@@ -124,6 +124,7 @@ _PROCFS_SUBDIR: Final[str] = "proc"
 _PROCFS_FILES: list[Path] = [
     Path("/proc/cpuinfo"),
     Path("/proc/cmdline"),
+    Path("/proc/version"),
 ]
 
 # The sysfs data sub-directory name in the emulation data directory.
