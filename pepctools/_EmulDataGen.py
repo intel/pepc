@@ -142,11 +142,6 @@ _VERSION: Final[str] = "0.1"
 # Note, logger name is the project name, not the tool name.
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc").configure(prefix=_TOOLNAME)
 
-_CPUInfoTDCollectInfo: _TDCollectTypedDict = {
-    "commands" : [
-        {"command": "uname -a", "dirname": "uname"},],
-}
-
 _SysctlTDCollectInfo: _TDCollectTypedDict = {
     "commands" : [
         {"command": "systemctl is-active -- 'tuned'",
@@ -155,7 +150,6 @@ _SysctlTDCollectInfo: _TDCollectTypedDict = {
 }
 
 _TDCollectInfo: dict[str, _TDCollectTypedDict] = {
-    "CPUInfo" : _CPUInfoTDCollectInfo,
     "Systemctl" : _SysctlTDCollectInfo,
 }
 
