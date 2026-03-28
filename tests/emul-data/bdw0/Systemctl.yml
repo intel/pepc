@@ -1,9 +1,0 @@
-metadata:
-  generated_by:
-    tool: emulation-data-generator
-    version: '0.1'
-    date: '2026-03-28 11:47:17'
-commands:
-- command: systemctl is-active -- 'tuned'
-  dirname: Systemctl/systemctl-tuned-active
-  ignore_exitcode: true

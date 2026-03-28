@@ -28,7 +28,6 @@ import re
 import typing
 import contextlib
 from pathlib import Path
-from typing import NamedTuple
 from pepclibs.helperlibs import Logging, LocalProcessManager, Trivial, YAML
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs.helperlibs.emul import _EmulFile
@@ -40,36 +39,6 @@ if typing.TYPE_CHECKING:
     from pepctools._EmulDataConfigTypes import _EmulDataConfigMSRTypedDict
     from pepctools._EmulDataConfigTypes import _EmulDataConfigSysfsTypedDict
     from pepctools._EmulDataConfigTypes import _EmulDataConfigProcfsTypedDict
-
-    class _TestDataCommandsTypedDict(TypedDict, total=False):
-        """
-        Typed dictionary describing command results in the YAML configuration.
-
-        Attributes:
-            command: The emulated command, including options.
-            dirname: Name of the sub-directory within the dataset containing standard error and
-                     standard output of the emulated command.
-        """
-
-        command: str
-        dirname: str
-
-    class _TestDataInlineFilesTypedDict(TypedDict, total=False):
-        """
-        Typed dictionary describing inline files in the YAML configuration.
-
-        Attributes:
-            dirname: Name of the sub-directory within the dataset containing the inline files
-                     file.
-            filename: The inline files file name. Contains a list of file paths and their values.
-            separator: The separator used in the inline files file to separate paths and values.
-            readonly: Whether the inline files are read-only.
-        """
-
-        dirname: str
-        filename: str
-        separator: str
-        readonly: bool
 
     class _TestDataDirectoriesTypedDict(TypedDict, total=False):
         """
@@ -87,16 +56,11 @@ if typing.TYPE_CHECKING:
         Typed dictionary describing the YAML configuration for emulation data.
 
         Attributes:
-            commands: List of command configurations.
-            inlinefiles: List of inline files configurations.
             msr: MSR configuration.
             sysfs: Sysfs configuration.
-            files: List of file configurations.
             directories: List of directory configurations.
         """
 
-        commands: list[_TestDataCommandsTypedDict]
-        inlinefiles: list[_TestDataInlineFilesTypedDict]
         msr: _EmulDataConfigMSRTypedDict
         sysfs: _EmulDataConfigSysfsTypedDict
         directories: list[_TestDataDirectoriesTypedDict]
@@ -106,22 +70,7 @@ if typing.TYPE_CHECKING:
         A typed dictionary for the emulation data.
         """
 
-        cmds: dict[str, _EmulCmdResultType]
         files: dict[str, _EmulFile.EmulFileType]
-
-class _EmulCmdResultType(NamedTuple):
-    """
-    Type for emulation command execution results.
-
-    Attributes:
-        stdout: The standard output of the command.
-        stderr: The standard error of the command.
-        exitcode: The exit code of the command.
-    """
-
-    stdout: list[str]
-    stderr: list[str]
-    exitcode: int
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
@@ -135,7 +84,6 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
     temporary directory (the base directory).
 
     Key Features:
-        - Emulate command execution by returning pre-defined stdout/stderr for supported commands.
         - Filesystem-related methods (e.g., mkdir, lsdir, is_file) operate relative to the base
           directory (which is just a temporary directory), not the real local filesystem.
           So all file and directory operations are sandboxed within the base directory.
@@ -166,7 +114,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         self._basepath_removed = False
 
         # The emulation data dictionary.
-        self._emd: _EmulDataTypedDict = {"cmds": {}, "files": {}}
+        self._emd: _EmulDataTypedDict = {"files": {}}
 
     def __del__(self):
         """The class destructor."""
@@ -191,87 +139,6 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
         with contextlib.suppress(Exception):
             super().close()
-
-    def _process_inlinefiles(self, infos: list[_TestDataInlineFilesTypedDict], dspath: Path):
-        """
-        Create emulated files from "inline files" emulation data.
-
-        Args:
-            infos: A collection of inline files configuration dictionaries.
-            dspath: The dataset path.
-        """
-
-        for info in infos:
-            filepath = dspath / info["dirname"] / info["filename"]
-
-            try:
-                with open(filepath, "r", encoding="utf-8") as fobj:
-                    lines = fobj.readlines()
-            except OSError as err:
-                errmsg = Error(str(err)).indent(2)
-                raise Error(f"Failed to read inline files configuration file '{filepath}':\n"
-                            f"{errmsg}") from err
-
-            sep = info["separator"]
-
-            for line in lines:
-                split = line.split(sep)
-
-                if len(split) != 2:
-                    raise Error(f"Unexpected line format in '{filepath}':\n"
-                                f"  Expected <path>{sep}<value>, received '{line}'")
-
-                path = split[0]
-                data = split[1]
-
-                # Note about lstrip(): it is required because 'path' is an absolute path starting
-                # with '/'. If not stripped, joining it with the base path would ignore the base
-                # path. For example, Path("/tmp") / "/sys" results in "/sys" instead of "/tmp/sys".
-                dirpath = self._basepath / path.lstrip("/")
-                dirpath = dirpath.parent
-
-                try:
-                    dirpath.mkdir(parents=True, exist_ok=True)
-                except OSError as err:
-                    errmsg = Error(str(err)).indent(2)
-                    raise Error(f"Failed to create directory '{dirpath}':\n{errmsg}") from err
-
-                emul = _EmulFile.get_emul_file(path, self._basepath, data=data,
-                                               readonly=info["readonly"])
-                self._emd["files"][path] = emul
-
-    def _process_commands(self, infos: list[_TestDataCommandsTypedDict], dspath: Path):
-        """
-        Read and save emulated commands stdout and stderr from "commands" emulation data.
-
-        Args:
-            infos: A collection of commands configuration dictionaries.
-            dspath: The dataset path.
-        """
-
-        for info in infos:
-            dirpath = dspath / info["dirname"]
-            path = dirpath / "stdout.txt"
-
-            try:
-                if path.exists():
-                    with open(path, encoding="utf-8") as fobj:
-                        stdout = fobj.readlines()
-                else:
-                    stdout = []
-
-                path = dirpath / "stderr.txt"
-                if path.exists():
-                    with open(path, encoding="utf-8") as fobj:
-                        stderr = fobj.readlines()
-                else:
-                    stderr = []
-            except OSError as err:
-                errmsg = Error(str(err)).indent(2)
-                raise Error(f"Failed to read '{path}':\n{errmsg}") from err
-
-            result = _EmulCmdResultType(stdout=stdout, stderr=stderr, exitcode=0)
-            self._emd["cmds"][info["command"]] = result
 
     def _process_procfs(self, info: _EmulDataConfigProcfsTypedDict, dspath: Path):
         """
@@ -450,12 +317,6 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
         dspath = yaml_path.parent
 
-        if "inlinefiles" in yaml:
-            self._process_inlinefiles(yaml["inlinefiles"], dspath)
-
-        if "commands" in yaml:
-            self._process_commands(yaml["commands"], dspath)
-
         if "msr" in yaml:
             self._process_msrs(yaml["msr"], dspath)
 
@@ -500,32 +361,6 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             if not str(yaml_path).endswith(".yml"):
                 continue
             self._process_test_data_category(yaml_path)
-
-    def _get_predefined_result(self,
-                               cmd: str,
-                               join: bool = True) -> tuple[str | list[str], str | list[str]]:
-        """
-        Return the predefined stdout and stderr values for a command.
-
-        Args:
-            cmd: The command string to look up the predefined result for.
-            join: Whether to join the output lists into strings (same as in 'run_verify()').
-
-        Returns:
-            A tuple containing stdout and stderr, either as strings or lists of strings.
-
-        Raises:
-            ErrorNotSupported: If there is no predefined result for the command.
-        """
-
-        if cmd not in self._emd["cmds"]:
-            raise ErrorNotSupported(f"Unsupported command: '{cmd}'")
-
-        result = self._emd["cmds"][cmd]
-        if join:
-            return "".join(result.stdout), "".join(result.stderr)
-
-        return result.stdout, result.stderr
 
     def _extract_path(self, cmd: str) -> str:
         """
@@ -579,8 +414,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             env: dict[str, str] | None = None,
             newgrp: bool = False) -> ProcWaitResultType:
         """
-        Pretend running command 'cmd', return predefined result. If there are no predefined results
-        for it, try to "rebase" the command and run it locally.
+        Run command 'cmd' by rebasing any emulated paths and executing locally.
 
         The arguments and return value are the same as 'ProcessManagerBase.run()'.
         """
@@ -589,18 +423,13 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
         _LOG.debug("Running the following emulated command:\n%s", cmd)
 
-        try:
-            stdout, stderr = self._get_predefined_result(cmd, join=join)
-        except ErrorNotSupported:
-            rebased_cmd = self._rebase_cmd(cmd)
-            if rebased_cmd is None:
-                raise
+        rebased_cmd = self._rebase_cmd(cmd)
+        if rebased_cmd is None:
+            raise ErrorNotSupported(f"Unsupported command: '{cmd}'")
 
-            return super().run(rebased_cmd, timeout=timeout, capture_output=capture_output,
-                               mix_output=mix_output, join=join, output_fobjs=output_fobjs,
-                               cwd=cwd, intsh=intsh, env=env, newgrp=newgrp)
-
-        return ProcWaitResultType(stdout=stdout, stderr=stderr, exitcode=0)
+        return super().run(rebased_cmd, timeout=timeout, capture_output=capture_output,
+                           mix_output=mix_output, join=join, output_fobjs=output_fobjs,
+                           cwd=cwd, intsh=intsh, env=env, newgrp=newgrp)
 
     def run_verify(self,
                    cmd: str | Path,
@@ -614,8 +443,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
                    env: dict[str, str] | None = None,
                    newgrp: bool = False) -> tuple[str | list[str], str | list[str]]:
         """
-        Pretend running command 'cmd', return predefined result. If there are no predefined results
-        for it, try to "rebase" the command and run it locally.
+        Run command 'cmd' by rebasing any emulated paths and executing locally.
 
         The arguments and return value are the same as 'ProcessManagerBase.run_verify()'.
         """
@@ -624,23 +452,20 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
         _LOG.debug("Running the following emulated command:\n%s", cmd)
 
-        try:
-            return self._get_predefined_result(cmd, join=join)
-        except ErrorNotSupported as err:
-            rebased_cmd = self._rebase_cmd(cmd)
-            if rebased_cmd is None:
-                raise
+        rebased_cmd = self._rebase_cmd(cmd)
+        if rebased_cmd is None:
+            raise ErrorNotSupported(f"Unsupported command: '{cmd}'")
 
-            # Avoid running 'super().run_verify()', because it calls 'run()' of this class.
-            result = super().run(rebased_cmd, timeout=timeout, capture_output=capture_output,
-                                 mix_output=mix_output, join=join, output_fobjs=output_fobjs,
-                                 cwd=cwd, intsh=intsh, env=env, newgrp=newgrp)
-            if result.exitcode == 0:
-                return (result.stdout, result.stderr)
+        # Avoid running 'super().run_verify()', because it calls 'run()' of this class.
+        result = super().run(rebased_cmd, timeout=timeout, capture_output=capture_output,
+                             mix_output=mix_output, join=join, output_fobjs=output_fobjs,
+                             cwd=cwd, intsh=intsh, env=env, newgrp=newgrp)
+        if result.exitcode == 0:
+            return (result.stdout, result.stderr)
 
-            msg = self.get_cmd_failure_msg(cmd, result.stdout, result.stderr, result.exitcode,
-                                        timeout=timeout)
-            raise Error(msg) from err
+        msg = self.get_cmd_failure_msg(cmd, result.stdout, result.stderr, result.exitcode,
+                                    timeout=timeout)
+        raise Error(msg)
 
     def _open(self, path: str | Path, mode: str) -> IO:
         """Same as 'ProcessManagerBase.open()', but rebase 'path' to the base directory."""

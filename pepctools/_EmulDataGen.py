@@ -80,46 +80,11 @@ if typing.TYPE_CHECKING:
         outdir: Path
         replace: bool
 
-    class _TDCollectCommandTypedDict(TypedDict, total=False):
-        """
-        A typed dictionary for defining a command to run to collect a piece of emulation data.
-
-        Attributes:
-            command: The command to run.
-            dirname: The sub-directory name to store the command output at.
-            ignore_exitcode: Whether to ignore the command's exit code.
-        """
-
-        command: str
-        dirname: str
-        ignore_exitcode: bool
-
-    class _TDCollectTypedDict(TypedDict, total=False):
-        """
-        A typed dictionary for defining all the emulation data to collect.
-
-        Attributes:
-            commands: The commands to run to collect emulation data.
-        """
-
-        commands: list[_TDCollectCommandTypedDict]
-
 _TOOLNAME: Final[str] = "emulation-data-generator"
 _VERSION: Final[str] = "0.1"
 
 # Note, logger name is the project name, not the tool name.
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc").configure(prefix=_TOOLNAME)
-
-_SysctlTDCollectInfo: _TDCollectTypedDict = {
-    "commands" : [
-        {"command": "systemctl is-active -- 'tuned'",
-         "dirname": "systemctl-tuned-active",
-         "ignore_exitcode": True}],
-}
-
-_TDCollectInfo: dict[str, _TDCollectTypedDict] = {
-    "Systemctl" : _SysctlTDCollectInfo,
-}
 
 # The procfs data sub-directory name in the dataset directory.
 _PROCFS_SUBDIR: Final[str] = "proc"
@@ -315,39 +280,6 @@ def _get_cmdline_args(args: argparse.Namespace) -> _CmdlineArgsTypedDict:
     cmdl["replace"] = getattr(args, "replace", False)
 
     return cmdl
-
-def _collect_cmd_output(pman: ProcessManagerType,
-                        cmdinfo: _TDCollectCommandTypedDict,
-                        outdir: Path):
-    """
-    Run a command on the SUT and save its output in the specified output directory.
-
-    Args:
-        pman: The process manager object that defines the SUT to run the command on.
-        cmdinfo: Dictionary containing command details.
-        outdir: Path to the output directory.
-    """
-
-    datapath = outdir / cmdinfo["dirname"]
-
-    try:
-        os.makedirs(datapath, exist_ok=True)
-    except OSError as err:
-        errmsg = Error(str(err)).indent(2)
-        raise Error(f"Failed to create directory '{datapath}':\n{errmsg}") from err
-
-    res = pman.run_join(cmdinfo["command"])
-    if res.exitcode != 0 and not cmdinfo.get("ignore_exitcode"):
-        _LOG.error("Command '%s' exited with code %d", cmdinfo["command"], res.exitcode)
-
-    for fname, data in ("stdout", res.stdout), ("stderr", res.stderr):
-        if not data:
-            # No output.
-            continue
-
-        path = datapath / f"{fname}.txt"
-        with open(path, "w", encoding="utf-8") as fobj:
-            fobj.write(data)
 
 def _copy_file(pman: ProcessManagerType, src: Path, outdir: Path):
     """
@@ -683,17 +615,6 @@ def _do_main(pman: ProcessManagerType, outdir: Path, cpuinfo: CPUInfo.CPUInfo) -
     _collect_sysfs(pman, outdir, config_yml)
     _collect_procfs(pman, outdir, config_yml)
     _generate_config_file("config", config_yml, outdir)
-
-    for modname, tdcinfo in _TDCollectInfo.items():
-        datapath = outdir / modname
-
-        if "commands" in tdcinfo:
-            for cmdinfo in tdcinfo["commands"]:
-                _collect_cmd_output(pman, cmdinfo, datapath)
-                cmdinfo["dirname"] = f"{modname}/{cmdinfo['dirname']}"
-
-        if tdcinfo:
-            _generate_config_file(modname, tdcinfo, outdir)
 
     return 0
 
