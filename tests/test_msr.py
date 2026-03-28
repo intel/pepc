@@ -15,7 +15,7 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
 import pytest
-from tests import common, msr_common
+from tests import msr_common
 from tests.msr_common import get_params # pylint: disable=unused-import
 
 from pepclibs.msr.TurboRatioLimit import MSR_TURBO_RATIO_LIMIT

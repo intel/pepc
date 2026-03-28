@@ -10,7 +10,8 @@
 #          Antti Laakso <antti.laakso@linux.intel.com>
 
 """
-Emulation data generator for collecting system data used to emulate.
+Emulation data generator - a tool to collect data from a real system and generate emulation data
+files which can be used for emulating that system.
 """
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
@@ -292,33 +293,46 @@ def _copy_file(pman: ProcessManagerType, src: Path, outdir: Path):
     """
 
     dst = Path(outdir / str(src).lstrip("/"))
-    os.makedirs(dst.parent, exist_ok=True)
+
+    try:
+        os.makedirs(dst.parent, exist_ok=True)
+    except OSError as err:
+        errmsg = Error(str(err)).indent(2)
+        raise Error(f"Failed to create directory '{dst.parent}':\n{errmsg}") from err
 
     # In some cases '/proc/cpuinfo' is not fully copied when using 'scp' or 'rsync'.
     res = pman.run_join(f"cat -- '{src}'")
     if res.exitcode != 0:
         _LOG.notice("'cat %s' exited with code %d", src, res.exitcode)
 
-    with open(dst, "w", encoding="utf-8") as fobj:
-        fobj.write(res.stdout)
+    try:
+        with open(dst, "w", encoding="utf-8") as fobj:
+            fobj.write(res.stdout)
+    except OSError as err:
+        errmsg = Error(str(err)).indent(2)
+        raise Error(f"Failed to write to file '{dst}':\n{errmsg}") from err
 
-def _generate_config_file(modname: str, config_yml: dict, outdir: Path):
+def _generate_config_file(outpath: Path, config_yml: dict):
     """
     Generate the emulation data YAML configuration file.
 
     Args:
-        modname: The base name of the configuration file (without extension).
+        outpath: Path to the output configuration file.
         config_yml: The emulation data configuration dictionary.
-        outdir: The output directory to store the configuration file at.
     """
 
     date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    config_yml = {"metadata": {"generated_by": {"tool": _TOOLNAME, "version": _VERSION,
-                                                 "date": date}},
-                  **config_yml}
+    yml = {"metadata": {"generated_by": {"tool": _TOOLNAME,
+                                         "version": _VERSION,
+                                         "date": date}},
+           **config_yml}
 
-    with open(outdir / f"{modname}.yml", "w", encoding="utf-8") as fobj:
-        YAML.dump(config_yml, fobj)
+    try:
+        with open(outpath, "w", encoding="utf-8") as fobj:
+            YAML.dump(yml, fobj)
+    except OSError as err:
+        errmsg = Error(str(err)).indent(2)
+        raise Error(f"Failed to write the configuration file '{outpath}':\n{errmsg}") from err
 
 def _discover_msr_classes() -> Generator[type[_FeaturedMSR.FeaturedMSR], None, None]:
     """
@@ -329,7 +343,7 @@ def _discover_msr_classes() -> Generator[type[_FeaturedMSR.FeaturedMSR], None, N
         'FeaturedMSR' subclasses, one per MSR module.
     """
 
-    yiedled: set[type[_FeaturedMSR.FeaturedMSR]] = set()
+    yielded: set[type[_FeaturedMSR.FeaturedMSR]] = set()
 
     for _, modname, ispkg in pkgutil.iter_modules(_msr_pkg.__path__):
         if modname.startswith("_") or ispkg:
@@ -340,9 +354,9 @@ def _discover_msr_classes() -> Generator[type[_FeaturedMSR.FeaturedMSR], None, N
                 continue
             if obj is _FeaturedMSR.FeaturedMSR:
                 continue
-            if obj in yiedled:
+            if obj in yielded:
                 continue
-            yiedled.add(obj)
+            yielded.add(obj)
             yield obj
             break
 
@@ -404,8 +418,8 @@ def _collect_sysfs_rcopy(pman: ProcessManagerType, basedir: Path) -> Generator[P
             continue
 
         # The 'relative_to("/")' is needed because concatenating two paths starting with '/' would
-        # ignore the first one. E.g., Path("/base") / Path("/sys/kernel/debug/dir0" would result in
-        # Path("/sys/kernel/debug/dir0") instead of Path("/base/sys/kernel/debug /dir0")).
+        # ignore the first one. E.g., Path("/base") / Path("/sys/kernel/debug/dir0") would result
+        # in Path("/sys/kernel/debug/dir0") instead of Path("/base/sys/kernel/debug/dir0").
         dst = basedir / entry["path"].parent.relative_to("/")
         try:
             os.makedirs(dst, exist_ok=True)
@@ -415,7 +429,6 @@ def _collect_sysfs_rcopy(pman: ProcessManagerType, basedir: Path) -> Generator[P
 
         pman.rsync(entry["path"], dst, remotesrc=True)
 
-        # Current design: recursively copied sysfs directories are always treated as read-only.
         yield entry["path"].relative_to(f"/{_SYSFS_SUBDIR}")
 
 def _collect_sysfs(pman: ProcessManagerType, basedir: Path, config_yml: dict):
@@ -614,7 +627,8 @@ def _do_main(pman: ProcessManagerType, outdir: Path, cpuinfo: CPUInfo.CPUInfo) -
     _collect_msrs(cpuinfo, pman, outdir, config_yml)
     _collect_sysfs(pman, outdir, config_yml)
     _collect_procfs(pman, outdir, config_yml)
-    _generate_config_file("config", config_yml, outdir)
+
+    _generate_config_file(outdir / "config.yml", config_yml)
 
     return 0
 
@@ -629,7 +643,7 @@ def main():
     args = _parse_arguments()
     cmdl = _get_cmdline_args(args)
 
-    exitcode = -1
+    exitcode = 1
     try:
         outdir = cmdl["outdir"]
         if outdir.exists() and any(outdir.iterdir()):
