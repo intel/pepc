@@ -39,6 +39,7 @@ if typing.TYPE_CHECKING:
     from pepclibs.helperlibs._ProcessManagerBase import LsdirTypedDict, LsdirSortbyType
     from pepctools._EmulDataConfigTypes import _EmulDataConfigMSRTypedDict
     from pepctools._EmulDataConfigTypes import _EmulDataConfigSysfsTypedDict
+    from pepctools._EmulDataConfigTypes import _EmulDataConfigProcfsTypedDict
 
     class _TestDataCommandsTypedDict(TypedDict, total=False):
         """
@@ -286,6 +287,31 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             result = _EmulCmdResultType(stdout=stdout, stderr=stderr, exitcode=0)
             self._emd["cmds"][info["command"]] = result
 
+    def _process_procfs(self, info: _EmulDataConfigProcfsTypedDict, dspath: Path):
+        """
+        Create emulated procfs files from procfs emulation data.
+
+        Args:
+            info: Procfs configuration dictionary.
+            dspath: The dataset path.
+        """
+
+        procfs_dir = dspath / info["dirname"]
+        for filepath in procfs_dir.rglob("*"):
+            if not filepath.is_file():
+                continue
+            rel = filepath.relative_to(dspath)
+            proc_path = f"/{rel}"
+            try:
+                with open(filepath, "r", encoding="utf-8") as fobj:
+                    data = fobj.read()
+            except OSError as err:
+                errmsg = Error(str(err)).indent(2)
+                raise Error(f"Failed to read '{filepath}':\n{errmsg}") from err
+            # Current design: all procfs files are always treated as read-only.
+            emul = _EmulFile.get_emul_file(proc_path, self._basepath, data=data, readonly=True)
+            self._emd["files"][proc_path] = emul
+
     def _process_sysfs(self, info: _EmulDataConfigSysfsTypedDict, dspath: Path):
         """
         Create emulated sysfs files from sysfs emulation data.
@@ -350,6 +376,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
                 except OSError as err:
                     errmsg = Error(str(err)).indent(2)
                     raise Error(f"Failed to read '{filepath}':\n{errmsg}") from err
+                # Current design: recursively copied sysfs files are always treated as read-only.
                 emul = _EmulFile.get_emul_file(sysfs_path, self._basepath, data=data,
                                                readonly=True)
                 self._emd["files"][sysfs_path] = emul
@@ -468,6 +495,9 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
         if "sysfs" in yaml:
             self._process_sysfs(yaml["sysfs"], dspath)
+
+        if "procfs" in yaml:
+            self._process_procfs(yaml["procfs"], dspath)
 
         if "files" in yaml:
             self._process_files(yaml["files"], dspath / yaml_path.stem)

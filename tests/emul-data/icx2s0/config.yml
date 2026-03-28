@@ -5,3 +5,5 @@ msr:
 sysfs:
   dirname: sys
   inlinefiles: inlinefiles.txt
+procfs:
+  dirname: proc

@@ -44,6 +44,7 @@ if typing.TYPE_CHECKING:
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepctools._EmulDataConfigTypes import _EmulDataConfigMSRTypedDict
     from pepctools._EmulDataConfigTypes import _EmulDataConfigSysfsTypedDict
+    from pepctools._EmulDataConfigTypes import _EmulDataConfigProcfsTypedDict
 
     class _SysfsInlineCmdTypedDict(TypedDict):
         """
@@ -144,15 +145,6 @@ _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc").configure(prefix=_T
 _CPUInfoTDCollectInfo: _TDCollectTypedDict = {
     "commands" : [
         {"command": "uname -a", "dirname": "uname"},],
-    "files" : [
-        {"path": Path("/proc/cpuinfo"),
-         "readonly": True}],
-}
-
-_CStatesTDCollectInfo: _TDCollectTypedDict = {
-    "files" : [
-        {"path": Path("/proc/cmdline"),
-         "readonly": True}],
 }
 
 _SysctlTDCollectInfo: _TDCollectTypedDict = {
@@ -164,9 +156,17 @@ _SysctlTDCollectInfo: _TDCollectTypedDict = {
 
 _TDCollectInfo: dict[str, _TDCollectTypedDict] = {
     "CPUInfo" : _CPUInfoTDCollectInfo,
-    "CStates" : _CStatesTDCollectInfo,
     "Systemctl" : _SysctlTDCollectInfo,
 }
+
+# The procfs data sub-directory name in the emulation data directory.
+_PROCFS_SUBDIR: Final[str] = "proc"
+
+# The procfs files to collect from the SUT.
+_PROCFS_FILES: list[Path] = [
+    Path("/proc/cpuinfo"),
+    Path("/proc/cmdline"),
+]
 
 # The sysfs data sub-directory name in the emulation data directory.
 _SYSFS_SUBDIR: Final[str] = "sys"
@@ -537,6 +537,7 @@ def _collect_sysfs_rcopy(pman: ProcessManagerType, basedir: Path) -> Generator[P
 
         pman.rsync(entry["path"], dst, remotesrc=True)
 
+        # Current design: recursively copied sysfs directories are always treated as read-only.
         yield entry["path"].relative_to(f"/{_SYSFS_SUBDIR}")
 
 def _collect_sysfs(pman: ProcessManagerType, basedir: Path, config_yml: dict):
@@ -596,6 +597,26 @@ def _collect_sysfs(pman: ProcessManagerType, basedir: Path, config_yml: dict):
         sysfs_config["rcopy"] = rcopy
 
     config_yml["sysfs"] = sysfs_config
+
+def _collect_procfs(pman: ProcessManagerType, basedir: Path, config_yml: dict):
+    """
+    Collect procfs emulation data from the SUT and populate the emulation data configuration
+    dictionary with procfs information.
+
+    Args:
+        pman: The process manager object that defines the SUT to read procfs files from.
+        basedir: Path to the base output directory.
+        config_yml: The emulation data configuration dictionary to populate with the procfs section.
+    """
+
+    # Current design: all procfs files are always treated as read-only.
+    for src in _PROCFS_FILES:
+        _copy_file(pman, src, basedir)
+
+    procfs_config: _EmulDataConfigProcfsTypedDict = {
+        "dirname": _PROCFS_SUBDIR,
+    }
+    config_yml["procfs"] = procfs_config
 
 def _collect_msrs(cpuinfo: CPUInfo.CPUInfo,
                   pman: ProcessManagerType,
@@ -707,6 +728,7 @@ def _do_main(pman: ProcessManagerType, outdir: Path, cpuinfo: CPUInfo.CPUInfo) -
 
     _collect_msrs(cpuinfo, pman, outdir, config_yml)
     _collect_sysfs(pman, outdir, config_yml)
+    _collect_procfs(pman, outdir, config_yml)
     _generate_config_file("config", config_yml, outdir)
 
     for modname, tdcinfo in _TDCollectInfo.items():

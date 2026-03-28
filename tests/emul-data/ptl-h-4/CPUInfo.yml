@@ -2,6 +2,3 @@
 commands:
 - command: uname -a
   dirname: CPUInfo/uname
-files:
-- path: /proc/cpuinfo
-  readonly: true

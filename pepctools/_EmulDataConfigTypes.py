@@ -40,3 +40,13 @@ if typing.TYPE_CHECKING:
         dirname: str
         inlinefiles: str
         rcopy: list[Path]
+
+    class _EmulDataConfigProcfsTypedDict(TypedDict, total=False):
+        """
+        Typed dictionary for the 'procfs' section of the emulation data configuration file.
+
+        Attributes:
+            dirname: Name of the sub-directory containing the procfs data files.
+        """
+
+        dirname: str
