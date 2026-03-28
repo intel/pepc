@@ -22,7 +22,7 @@ EMUL_CONFIG_FNAME: Final[str] = "config.yml"
 if typing.TYPE_CHECKING:
     from typing import TypedDict
 
-    class _EmulDataConfigMSRTypedDict(TypedDict, total=False):
+    class _EDConfMSRTypedDict(TypedDict, total=False):
         """
         Typed dictionary for the 'msr' section of the emulation data configuration file.
 
@@ -34,21 +34,21 @@ if typing.TYPE_CHECKING:
         dirname: str
         filename: str
 
-    class _EmulDataConfigSysfsRcopyTypedDict(TypedDict, total=False):
+    class _EDConfSysfsRcopyTypedDict(TypedDict, total=False):
         """
         Typed dictionary for the 'sysfs.rcopy' section of the emulation data configuration file.
 
         Attributes:
             paths: List of sub-paths (relative to the sysfs sub-directory) to recursively copy.
-            rw_patterns: Optional list of Python regex patterns. A copied file whose absolute
-                         virtual sysfs path matches any pattern is registered as read-write.
-                         All other files default to read-only.
+            rw_patterns: Optional list of Python regex patterns. A file whose path matches any of
+                         these patterns is registered is read-write. All other files default to
+                         read-only.
         """
 
         paths: list[Path]
         rw_patterns: list[str]
 
-    class _EmulDataConfigSysfsTypedDict(TypedDict, total=False):
+    class _EDConfSysfsTypedDict(TypedDict, total=False):
         """
         Typed dictionary for the 'sysfs' section of the emulation data configuration file.
 
@@ -60,18 +60,58 @@ if typing.TYPE_CHECKING:
 
         dirname: str
         inlinefiles: str
-        rcopy: _EmulDataConfigSysfsRcopyTypedDict
+        rcopy: _EDConfSysfsRcopyTypedDict
 
-    class _EmulDataConfigProcfsTypedDict(TypedDict, total=False):
+    class _EDConfProcfsTypedDict(TypedDict, total=False):
         """
         Typed dictionary for the 'procfs' section of the emulation data configuration file.
 
         Attributes:
             dirname: Name of the sub-directory containing the procfs data files.
-            rw_patterns: Optional list of Python regex patterns. A procfs file whose absolute path
-                         matches any pattern is registered as read-write. All other files default
-                         to read-only.
+            rw_patterns: Optional list of Python regex patterns. A procfs file whose path matches
+                         any of these patterns is read-write. All other files default to read-only.
         """
 
         dirname: str
         rw_patterns: list[str]
+
+    class _EDConfMetadataGeneratedByTypedDict(TypedDict, total=False):
+        """
+        Typed dictionary for the 'metadata.generated_by' section of the emulation data
+        configuration.
+
+        Attributes:
+            tool: Name of the tool that generated the emulation data.
+            version: Version of the tool.
+            date: Date when the emulation data was generated.
+        """
+
+        tool: str
+        version: str
+        date: str
+
+    class _EDConfMetadataTypedDict(TypedDict, total=False):
+        """
+        Typed dictionary for the 'metadata' section of the emulation data configuration file.
+
+        Attributes:
+            generated_by: Information about the tool that generated the emulation data.
+        """
+
+        generated_by: _EDConfMetadataGeneratedByTypedDict
+
+    class _EDConfTypedDict(TypedDict, total=False):
+        """
+        Typed dictionary describing the complete YAML emulation data configuration file.
+
+        Attributes:
+            metadata: Metadata about the emulation data (version, generation date, etc).
+            msr: MSR register configuration.
+            sysfs: Sysfs files configuration.
+            procfs: Procfs files configuration.
+        """
+
+        metadata: _EDConfMetadataTypedDict
+        msr: _EDConfMSRTypedDict
+        sysfs: _EDConfSysfsTypedDict
+        procfs: _EDConfProcfsTypedDict

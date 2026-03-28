@@ -37,31 +37,17 @@ from pepclibs.helperlibs._ProcessManagerBase import ProcWaitResultType
 if typing.TYPE_CHECKING:
     from typing import Generator, TypedDict, IO, cast, Final
     from pepclibs.helperlibs._ProcessManagerBase import LsdirTypedDict, LsdirSortbyType
-    from pepclibs.helperlibs.emul.EmulCommon import _EmulDataConfigMSRTypedDict
-    from pepclibs.helperlibs.emul.EmulCommon import _EmulDataConfigSysfsTypedDict
-    from pepclibs.helperlibs.emul.EmulCommon import _EmulDataConfigProcfsTypedDict
+    from pepclibs.helperlibs.emul.EmulCommon import _EDConfMSRTypedDict, _EDConfSysfsTypedDict
+    from pepclibs.helperlibs.emul.EmulCommon import _EDConfProcfsTypedDict, _EDConfTypedDict
 
-    class _TestDataYAMLTypedDict(TypedDict, total=False):
-        """
-        Typed dictionary describing the YAML configuration for emulation data.
-
-        Attributes:
-            msr: MSR configuration.
-            sysfs: Sysfs configuration.
-            procfs: Procfs configuration.
-        """
-
-        msr: _EmulDataConfigMSRTypedDict
-        sysfs: _EmulDataConfigSysfsTypedDict
-        procfs: _EmulDataConfigProcfsTypedDict
-
-    class _EmulDataTypedDict(TypedDict, total=False):
+    class _EMDTypedDict(TypedDict, total=False):
         """
         The main emulation data dictionary that holds all emulated resources.
 
         Attributes:
-            files: Dictionary mapping absolute file paths (e.g., "/sys/devices/system/cpu/online",
-                   "/dev/cpu/0/msr") to corresponding emulated file objects.
+            files: Dictionary mapping absolute paths of emulated files (e.g.,
+                   "/sys/devices/system/cpu/online", "/dev/cpu/0/msr") to corresponding emulated
+                   file objects.
         """
 
         files: dict[str, _EmulFile.EmulFileType]
@@ -97,9 +83,10 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
         self._basepath: Path = super().mkdtemp(prefix=f"emulprocs_{pid}_")
         self._basepath_removed = False
+        self._dataset_path: Path
 
         # The emulation data dictionary.
-        self._emd: _EmulDataTypedDict = {"files": {}}
+        self._emd: _EMDTypedDict = {"files": {}}
 
     def __del__(self):
         """The class destructor."""
@@ -124,21 +111,20 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         with contextlib.suppress(Exception):
             super().close()
 
-    def _process_procfs(self, info: _EmulDataConfigProcfsTypedDict, dspath: Path):
+    def _process_procfs(self, info: _EDConfProcfsTypedDict):
         """
         Create emulated procfs files from procfs emulation data.
 
         Args:
             info: Procfs configuration dictionary.
-            dspath: The dataset path.
         """
 
-        procfs_dir = dspath / info["dirname"]
+        procfs_dir = self._dataset_path / info["dirname"]
         rw_patterns = info.get("rw_patterns", [])
         for filepath in procfs_dir.rglob("*"):
             if not filepath.is_file():
                 continue
-            relpath = filepath.relative_to(dspath)
+            relpath = filepath.relative_to(self._dataset_path)
             proc_path = f"/{relpath}"
             try:
                 with open(filepath, "r", encoding="utf-8") as fobj:
@@ -150,16 +136,15 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             emul = _EmulFile.get_emul_file(proc_path, self._basepath, data=data, readonly=readonly)
             self._emd["files"][proc_path] = emul
 
-    def _process_sysfs(self, info: _EmulDataConfigSysfsTypedDict, dspath: Path):
+    def _process_sysfs(self, info: _EDConfSysfsTypedDict):
         """
         Create emulated sysfs files from sysfs emulation data.
 
         Args:
             info: Sysfs configuration dictionary.
-            dspath: The dataset path.
         """
 
-        filepath = dspath / info["dirname"] / info["inlinefiles"]
+        filepath = self._dataset_path / info["dirname"] / info["inlinefiles"]
         try:
             with open(filepath, "r", encoding="utf-8") as fobj:
                 lines = fobj.readlines()
@@ -198,7 +183,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             emul = _EmulFile.get_emul_file(path, self._basepath, data=data, readonly=readonly)
             self._emd["files"][path] = emul
 
-        sysfs_dir = dspath / info["dirname"]
+        sysfs_dir = self._dataset_path / info["dirname"]
         rcopy = info.get("rcopy", {})
         rw_patterns = rcopy.get("rw_patterns", [])
         for relpath in rcopy.get("paths", []):
@@ -221,16 +206,15 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
                                                readonly=readonly)
                 self._emd["files"][sysfs_path] = emul
 
-    def _process_msrs(self, info: _EmulDataConfigMSRTypedDict, dspath: Path):
+    def _process_msrs(self, info: _EDConfMSRTypedDict):
         """
         Create emulated MSR device files from MSR emulation data.
 
         Args:
             info: MSR configuration dictionary.
-            dspath: The dataset path.
         """
 
-        dirpath = dspath / info["dirname"]
+        dirpath = self._dataset_path / info["dirname"]
         if not dirpath.exists():
             return
 
@@ -269,29 +253,23 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             emul = _EmulFile.get_emul_file(path, self._basepath, data=data)
             self._emd["files"][path] = emul
 
-    def _process_test_data_category(self, yaml_path: Path):
+    def _init_emul_data(self, ydict: _EDConfTypedDict):
         """
-        Process an emulation data category configuration file and initialize related emulation data.
+        Initialize the emulation data from the configuration dictionary.
 
         Args:
-            yaml_path: Path to the YAML configuration file describing the emulation data category.
+            ydict: The emulation data configuration dictionary (the YAML configuration file loaded
+                   as a Python dictionary).
         """
 
-        if typing.TYPE_CHECKING:
-            yaml = cast(_TestDataYAMLTypedDict, YAML.load(yaml_path))
-        else:
-            yaml = YAML.load(yaml_path)
+        if "msr" in ydict:
+            self._process_msrs(ydict["msr"])
 
-        dspath = yaml_path.parent
+        if "sysfs" in ydict:
+            self._process_sysfs(ydict["sysfs"])
 
-        if "msr" in yaml:
-            self._process_msrs(yaml["msr"], dspath)
-
-        if "sysfs" in yaml:
-            self._process_sysfs(yaml["sysfs"], dspath)
-
-        if "procfs" in yaml:
-            self._process_procfs(yaml["procfs"], dspath)
+        if "procfs" in ydict:
+            self._process_procfs(ydict["procfs"])
 
     def init_emul_data(self, dspath: Path):
         """
@@ -325,8 +303,15 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         # TODO: Instead of eagerly building all emulation data up front, construct it lazily and
         # only for the components that are actually required.
 
-        config_path = dspath / EMUL_CONFIG_FNAME
-        self._process_test_data_category(config_path)
+        self._dataset_path = dspath
+
+        _yml = YAML.load(self._dataset_path / EMUL_CONFIG_FNAME)
+        if typing.TYPE_CHECKING:
+            ydict = cast(_EDConfTypedDict, _yml)
+        else:
+            ydict = _yml
+
+        self._init_emul_data(ydict)
 
     def _extract_path(self, cmd: str) -> str:
         """

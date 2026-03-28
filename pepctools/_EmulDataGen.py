@@ -46,9 +46,7 @@ if typing.TYPE_CHECKING:
     import argparse
     from typing import Final, TypedDict, Generator
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
-    from pepclibs.helperlibs.emul.EmulCommon import _EmulDataConfigMSRTypedDict
-    from pepclibs.helperlibs.emul.EmulCommon import _EmulDataConfigSysfsTypedDict
-    from pepclibs.helperlibs.emul.EmulCommon import _EmulDataConfigProcfsTypedDict
+    from pepclibs.helperlibs.emul.EmulCommon import _EDConfTypedDict
 
     class _SysfsInlineCmdTypedDict(TypedDict):
         """
@@ -313,7 +311,7 @@ def _copy_file(pman: ProcessManagerType, src: Path, outdir: Path):
         errmsg = Error(str(err)).indent(2)
         raise Error(f"Failed to write to file '{dst}':\n{errmsg}") from err
 
-def _generate_config_file(outpath: Path, config_yml: dict):
+def _generate_config_file(outpath: Path, config_yml: _EDConfTypedDict):
     """
     Generate the emulation data YAML configuration file.
 
@@ -323,14 +321,17 @@ def _generate_config_file(outpath: Path, config_yml: dict):
     """
 
     date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    yml = {"metadata": {"generated_by": {"tool": _TOOLNAME,
-                                         "version": _VERSION,
-                                         "date": date}},
-           **config_yml}
 
+    config_yml["metadata"] = {
+        "generated_by": {
+            "tool": _TOOLNAME,
+            "version": _VERSION,
+            "date": date,
+        }
+    }
     try:
         with open(outpath, "w", encoding="utf-8") as fobj:
-            YAML.dump(yml, fobj)
+            YAML.dump(config_yml, fobj)
     except OSError as err:
         errmsg = Error(str(err)).indent(2)
         raise Error(f"Failed to write the configuration file '{outpath}':\n{errmsg}") from err
@@ -432,7 +433,7 @@ def _collect_sysfs_rcopy(pman: ProcessManagerType, basedir: Path) -> Generator[P
 
         yield entry["path"].relative_to(f"/{_SYSFS_SUBDIR}")
 
-def _collect_sysfs(pman: ProcessManagerType, basedir: Path, config_yml: dict):
+def _collect_sysfs(pman: ProcessManagerType, basedir: Path, config_yml: _EDConfTypedDict):
     """
     Collect sysfs emulation data from the SUT and populate the emulation data configuration
     dictionary with sysfs information.
@@ -479,21 +480,19 @@ def _collect_sysfs(pman: ProcessManagerType, basedir: Path, config_yml: dict):
         raise Error(f"Failed to perform I/O on file '{path}'{pman.hostmsg}:\n"
                     f"{Error(str(err)).indent(2)}") from err
 
-    sysfs_config: _EmulDataConfigSysfsTypedDict = {
+    rcopy_paths = list(_collect_sysfs_rcopy(pman, basedir))
+
+    config_yml["sysfs"] = {
         "dirname": _SYSFS_SUBDIR,
         "inlinefiles": _SYSFS_DATA_FILE,
     }
-
-    rcopy_paths = list(_collect_sysfs_rcopy(pman, basedir))
     if rcopy_paths:
-        sysfs_config["rcopy"] = {
+        config_yml["sysfs"]["rcopy"] = {
             "paths": rcopy_paths,
             "rw_patterns": _SYSFS_TPMI_RW_PATTERNS,
         }
 
-    config_yml["sysfs"] = sysfs_config
-
-def _collect_procfs(pman: ProcessManagerType, basedir: Path, config_yml: dict):
+def _collect_procfs(pman: ProcessManagerType, basedir: Path, config_yml: _EDConfTypedDict):
     """
     Collect procfs emulation data from the SUT and populate the emulation data configuration
     dictionary with procfs information.
@@ -508,15 +507,14 @@ def _collect_procfs(pman: ProcessManagerType, basedir: Path, config_yml: dict):
     for src in _PROCFS_FILES:
         _copy_file(pman, src, basedir)
 
-    procfs_config: _EmulDataConfigProcfsTypedDict = {
+    config_yml["procfs"] = {
         "dirname": _PROCFS_SUBDIR,
     }
-    config_yml["procfs"] = procfs_config
 
 def _collect_msrs(cpuinfo: CPUInfo.CPUInfo,
                   pman: ProcessManagerType,
                   basedir: Path,
-                  config_yml: dict):
+                  config_yml: _EDConfTypedDict):
     """
     Collect MSR emulation data from the SUT and populate the emulation data configuration dictionary
     with MSR information.
@@ -561,11 +559,10 @@ def _collect_msrs(cpuinfo: CPUInfo.CPUInfo,
         raise Error(f"Failed to perform I/O on file '{path}'{pman.hostmsg}:\n"
                     f"{Error(str(err)).indent(2)}") from err
 
-    msr_config: _EmulDataConfigMSRTypedDict = {
+    config_yml["msr"] = {
         "dirname": _MSR_SUBDIR,
         "filename": _MSR_DATA_FILE,
     }
-    config_yml["msr"] = msr_config
 
 def _prepare(pman: ProcessManagerType, cpuinfo: CPUInfo.CPUInfo):
     """
@@ -619,7 +616,8 @@ def _do_main(pman: ProcessManagerType, outdir: Path, cpuinfo: CPUInfo.CPUInfo) -
 
     # The contents of the main configuration file (EMUL_CONFIG_FNAME), which will be
     # created in the emulation data root directory and describe the collected emulation data.
-    config_yml: dict = {}
+    config_yml: _EDConfTypedDict = {}
+    config_yml["metadata"] = {}
 
     _collect_msrs(cpuinfo, pman, outdir, config_yml)
     _collect_sysfs(pman, outdir, config_yml)
