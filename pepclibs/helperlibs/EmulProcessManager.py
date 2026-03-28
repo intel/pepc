@@ -71,19 +71,6 @@ if typing.TYPE_CHECKING:
         separator: str
         readonly: bool
 
-    class _TestDataFilesTypedDict(TypedDict, total=False):
-        """
-        Typed dictionary describing files in the YAML configuration.
-
-        Attributes:
-            path: The emulated file path. There is a file in the dataset category sub-directory with
-                  the same relative path, it includes the emulated file contents.
-            readonly: Whether the emulated file is read-only.
-        """
-
-        path: str
-        readonly: bool
-
     class _TestDataDirectoriesTypedDict(TypedDict, total=False):
         """
         Typed dictionary describing empty directories in the YAML configuration.
@@ -112,7 +99,6 @@ if typing.TYPE_CHECKING:
         inlinefiles: list[_TestDataInlineFilesTypedDict]
         msr: _EmulDataConfigMSRTypedDict
         sysfs: _EmulDataConfigSysfsTypedDict
-        files: list[_TestDataFilesTypedDict]
         directories: list[_TestDataDirectoriesTypedDict]
 
     class _EmulDataTypedDict(TypedDict, total=False):
@@ -429,29 +415,6 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             emul = _EmulFile.get_emul_file(path, self._basepath, data=data)
             self._emd["files"][path] = emul
 
-    def _process_files(self, infos: list[_TestDataFilesTypedDict], catpath: Path):
-        """
-        Create emulated files from the emulation data.
-
-        Args:
-            infos: A collection of files configuration dictionaries.
-            catpath: The category path (a sub-directory in the dataset path).
-        """
-
-        for info in infos:
-            filepath = catpath / info["path"].lstrip("/")
-
-            try:
-                with open(filepath, "r", encoding="utf-8") as fobj:
-                    data = fobj.read()
-            except OSError as err:
-                errmsg = Error(str(err)).indent(2)
-                raise Error(f"Failed to read '{filepath}':\n{errmsg}") from err
-
-            emul = _EmulFile.get_emul_file(info["path"], self._basepath, data=data,
-                                           readonly=info["readonly"])
-            self._emd["files"][info["path"]] = emul
-
     def _process_directories(self, infos: list[_TestDataDirectoriesTypedDict]):
         """
         Create emulated directories from the emulation data.
@@ -498,9 +461,6 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
         if "procfs" in yaml:
             self._process_procfs(yaml["procfs"], dspath)
-
-        if "files" in yaml:
-            self._process_files(yaml["files"], dspath / yaml_path.stem)
 
         if "directories" in yaml:
             self._process_directories(yaml["directories"])
