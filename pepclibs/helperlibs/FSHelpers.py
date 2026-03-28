@@ -103,10 +103,10 @@ def mount_debugfs(mnt: Path | None = None,
             mount_point = DEBUGFS_MOUNT_POINT
         else:
             try:
-                mount_point = wpman.abspath()
+                mount_point = wpman.abspath(mnt)
             except OSError as err:
                 errmsg = Error(str(err)).indent(2)
-                raise Error(f"Failed to resolve path '{mount_point}'{wpman.hostmsg}:\n"
+                raise Error(f"Failed to resolve path '{mnt}'{wpman.hostmsg}:\n"
                             f"{errmsg}") from err
 
         for mntinfo in get_mount_points(pman=wpman):
