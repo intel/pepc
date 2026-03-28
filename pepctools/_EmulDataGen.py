@@ -45,9 +45,9 @@ if typing.TYPE_CHECKING:
     from pepctools._EmulDataConfigTypes import _EmulDataConfigMSRTypedDict
     from pepctools._EmulDataConfigTypes import _EmulDataConfigSysfsTypedDict
 
-    class _SysfsCollectEntryTypedDict(TypedDict):
+    class _SysfsInlineCmdTypedDict(TypedDict):
         """
-        A typed dictionary describing a single sysfs data collection entry.
+        A typed dictionary describing a single sysfs inline data collection command.
 
         Attributes:
             command: The grep command used to read sysfs file contents.
@@ -189,86 +189,86 @@ _TDCollectInfo: dict[str, _TDCollectTypedDict] = {
 
 # The sysfs data sub-directory name in the emulation data directory.
 _SYSFS_SUBDIR: Final[str] = "sys"
-# The sysfs data file name in the emulation data directory.
-_SYSFS_DATA_FILE: Final[str] = "sysfs.txt"
+# The sysfs inline data file name in the emulation data directory.
+_SYSFS_DATA_FILE: Final[str] = "inlinefiles.txt"
 
 # Each entry describes a set of sysfs files to collect, grouped by read-only status.
 # 'command' is passed directly to the process manager (grep with sysfs glob patterns).
-_SYSFS_PATHS: list[_SysfsCollectEntryTypedDict] = [
+_SYSFS_INLINE_CMDS: list[_SysfsInlineCmdTypedDict] = [
     # CPU topology.
-    {"command": r"grep -H '.*' "
+    {"command": r"grep -Z -H '.*' "
                 r"/sys/devices/system/cpu/cpu[0-9]*/topology/die_id "
                 r"/sys/devices/system/cpu/cpu[0-9]*/topology/die_cpus_list",
      "readonly": True},
     # CPU cache info.
-    {"command": r"grep -H '.*' "
+    {"command": r"grep -Z -H '.*' "
                 r"/sys/devices/system/cpu/cpu[0-9]*/cache/index[0-9]/id "
                 r"/sys/devices/system/cpu/cpu[0-9]*/cache/index[0-9]/shared_cpu_list",
      "readonly": True},
     # Online CPUs and all present CPUs.
-    {"command": r"grep -H '.*' "
+    {"command": r"grep -Z -H '.*' "
                 r"/sys/devices/system/cpu/online "
                 r"/sys/devices/system/cpu/present",
      "readonly": True},
     # NUMA node info.
-    {"command": r"grep -H '.*' "
+    {"command": r"grep -Z -H '.*' "
                 r"/sys/devices/system/node/online "
                 r"/sys/devices/system/node/node[0-9]/cpulist",
      "readonly": True},
     # Hybrid CPU topology (Atom, Core, Lowpower clusters).
-    {"command": r"grep -H '.*' "
+    {"command": r"grep -Z -H '.*' "
                 r"/sys/devices/cpu_atom/cpus "
                 r"/sys/devices/cpu_core/cpus "
                 r"/sys/devices/cpu_lowpower/cpus",
      "readonly": True},
     # ASPM policy.
-    {"command": r"grep -H '.*' "
+    {"command": r"grep -Z -H '.*' "
                 r"/sys/module/pcie_aspm/parameters/policy",
      "readonly": False},
     # Per-CPU online state.
-    {"command": r"grep -H '.*' "
+    {"command": r"grep -Z -H '.*' "
                 r"/sys/devices/system/cpu/cpu[0-9]*/online",
      "readonly": False},
     # C-state sysfs files.
-    {"command": r"grep -H --directories=skip '.*' "
+    {"command": r"grep -Z -H --directories=skip '.*' "
                 r"/sys/devices/system/cpu/cpu[0-9]*/cpuidle/state[0-9]/* "
                 r"/sys/devices/system/cpu/cpuidle/*",
      "readonly": False},
     # P-states: cpufreq (all files under the directory tree).
-    {"command": r"grep -H --directories=recurse '.*' "
+    {"command": r"grep -Z -H --directories=recurse '.*' "
                 r"/sys/devices/system/cpu/cpufreq",
      "readonly": False},
     # P-states: Intel P-state driver.
-    {"command": r"grep -H --directories=recurse '.*' "
+    {"command": r"grep -Z -H --directories=recurse '.*' "
                 r"/sys/devices/system/cpu/intel_pstate",
      "readonly": False},
     # P-states: Intel uncore frequency.
-    {"command": r"grep -H --directories=recurse '.*' "
+    {"command": r"grep -Z -H --directories=recurse '.*' "
                 r"/sys/devices/system/cpu/intel_uncore_frequency/*/*",
      "readonly": False},
     # P-states: energy performance bias.
-    {"command": r"grep -H '.*' "
+    {"command": r"grep -Z -H '.*' "
                 r"/sys/devices/system/cpu/cpu[0-9]*/power/energy_perf_bias",
      "readonly": False},
     # P-states: ACPI CPPC (excluding counter files).
-    {"command": r"grep -H '.*' "
+    {"command": r"grep -Z -H '.*' "
                 r"/sys/devices/system/cpu/cpu[0-9]*/acpi_cppc/* --exclude '*_ctrs'",
      "readonly": False},
     # P-states: energy performance preference (EPP).
-    {"command": r"grep -H '.*' "
+    {"command": r"grep -Z -H '.*' "
                 r"/sys/devices/system/cpu/cpufreq/policy[0-9]*/energy_performance_preference",
      "readonly": False},
     # P-states: available EPP policies (read-only).
-    {"command": r"grep -H '.*' "
+    {"command": r"grep -Z -H '.*' "
                 r"/sys/devices/system/cpu/cpufreq/policy[0-9]*/"
                 r"energy_performance_available_preferences",
      "readonly": True},
     # P-states: BIOS frequency limit (read-only).
-    {"command": r"grep -H '.*' "
+    {"command": r"grep -Z -H '.*' "
                 r"/sys/devices/system/cpu/cpu[0-9]*/cpufreq/bios_limit",
      "readonly": True},
     # PM QoS resume latency limit.
-    {"command": r"grep -H --directories=skip '.*' "
+    {"command": r"grep -Z -H --directories=skip '.*' "
                 r"/sys/devices/system/cpu/cpu[0-9]*/power/pm_qos_resume_latency_us",
      "readonly": False},
 ]
@@ -584,7 +584,7 @@ def _collect_sysfs(pman: ProcessManagerType, basedir: Path, config_yml: dict):
             # addresses like '0000:00:00.0').
             fobj.write("# Format: <ro|rw>|<sysfs_path>|<value>\n")
 
-            for entry in _SYSFS_PATHS:
+            for entry in _SYSFS_INLINE_CMDS:
                 res = pman.run_join(entry["command"])
                 if res.exitcode != 0:
                     _LOG.notice("Command '%s' exited with code %d",
@@ -595,8 +595,9 @@ def _collect_sysfs(pman: ProcessManagerType, basedir: Path, config_yml: dict):
 
                 mode = "ro" if entry["readonly"] else "rw"
                 for line in res.stdout.splitlines():
-                    # grep -H output is '<path>:<value>'; split on the first ':' only.
-                    sysfs_path, _, value = line.partition(":")
+                    # 'grep -Z -H' separates the path and value with a '\0' byte, which avoids
+                    # ambiguity when the path or value contains ':'.
+                    sysfs_path, _, value = line.partition("\0")
                     fobj.write(f"{mode}|{sysfs_path}|{value}\n")
     except OSError as err:
         raise Error(f"Failed to perform I/O on file '{path}'{pman.hostmsg}:\n"
