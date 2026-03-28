@@ -24,6 +24,7 @@ Terminology:
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
+import os
 import re
 import typing
 import contextlib
@@ -33,6 +34,7 @@ from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs.helperlibs.emul import _EmulFile
 from pepclibs.helperlibs.emul.EmulCommon import EMUL_CONFIG_FNAME
 from pepclibs.helperlibs._ProcessManagerBase import ProcWaitResultType
+from pepclibs.msr._SimpleMSR import _CPU_BYTEORDER
 
 if typing.TYPE_CHECKING:
     from typing import Generator, TypedDict, IO, cast, Final
@@ -47,7 +49,7 @@ if typing.TYPE_CHECKING:
         Attributes:
             files: Dictionary mapping absolute paths of emulated files (e.g.,
                    "/sys/devices/system/cpu/online", "/dev/cpu/0/msr") to corresponding emulated
-                   file objects.
+                   file objects (e.g., 'EmulFile' instances).
         """
 
         files: dict[str, _EmulFile.EmulFileType]
@@ -62,6 +64,9 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
     A mock implementation of a process manager designed for unit testing. Instead of writing the
     real SUT filesystem, manipulate files and directories in memory or within local filesystem.
+
+    Note: After creating an instance, call 'init_emul_data()' with a dataset path to load the
+          emulation data before using any other methods.
     """
 
     def __init__(self, hostname: str = _DEFAULT_HOSTNAME):
@@ -111,63 +116,101 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         with contextlib.suppress(Exception):
             super().close()
 
-    def _process_procfs(self, info: _EDConfProcfsTypedDict):
+    def _get_inlinefile_lines(self, filepath: Path) -> Generator[str, None, None]:
+        """
+        Iterate over non-empty, non-comment lines in an inlinefile format data file.
+
+        Args:
+            filepath: Path to the inlinefile to read.
+
+        Yields:
+            Lines with leading/trailing whitespace stripped, excluding empty lines and comment
+            lines.
+        """
+
+        try:
+            with open(filepath, "r", encoding="utf-8") as fobj:
+                for line in fobj:
+                    line = line.strip()
+                    if line and not line.startswith("#"):
+                        yield line
+        except OSError as err:
+            errmsg = Error(str(err)).indent(2)
+            raise Error(f"Failed to read file '{filepath}':\n{errmsg}") from err
+
+    def _iter_files_recursive(self, dirpath: Path) -> Generator[Path, None, None]:
+        """
+        Recursively iterate over all files in a directory tree.
+
+        Args:
+            dirpath: Path to the directory to traverse.
+
+        Yields:
+            Path objects for each regular file found in the directory tree.
+        """
+
+        try:
+            for root, _, files in os.walk(dirpath):
+                for filename in files:
+                    yield Path(root) / filename
+        except OSError as err:
+            errmsg = Error(str(err)).indent(2)
+            raise Error(f"Failed to traverse directory '{dirpath}':\n{errmsg}") from err
+
+    def _process_procfs(self, yinfo: _EDConfProcfsTypedDict):
         """
         Create emulated procfs files from procfs emulation data.
 
         Args:
-            info: Procfs configuration dictionary.
+            yinfo: Procfs configuration dictionary.
         """
 
-        procfs_dir = self._dataset_path / info["dirname"]
-        rw_patterns = info.get("rw_patterns", [])
-        for filepath in procfs_dir.rglob("*"):
-            if not filepath.is_file():
-                continue
-            relpath = filepath.relative_to(self._dataset_path)
-            proc_path = f"/{relpath}"
+        procfs_dir_path = self._dataset_path / yinfo["dirname"]
+        rw_patterns = yinfo.get("rw_patterns", [])
+
+        # Note: Directories are automatically created by 'EmulFileBase', so iterate only files.
+        for filepath in self._iter_files_recursive(procfs_dir_path):
+            # Example path values:
+            #   filepath:   /path/to/dataset/proc/cpuinfo
+            #   relpath:    cpuinfo
+            #   proc_path:  /proc/cpuinfo
+            relpath = filepath.relative_to(procfs_dir_path)
+            proc_path = f"/{yinfo['dirname']}/{relpath}"
             try:
                 with open(filepath, "r", encoding="utf-8") as fobj:
                     data = fobj.read()
             except OSError as err:
                 errmsg = Error(str(err)).indent(2)
                 raise Error(f"Failed to read '{filepath}':\n{errmsg}") from err
-            readonly = not any(re.search(regex, proc_path) for regex in rw_patterns)
-            emul = _EmulFile.get_emul_file(proc_path, self._basepath, data=data, readonly=readonly)
-            self._emd["files"][proc_path] = emul
 
-    def _process_sysfs(self, info: _EDConfSysfsTypedDict):
+            readonly = not any(re.search(regex, proc_path) for regex in rw_patterns)
+            # TODO: Seems silly to read file and pass data - EmulFile could read file itself, or
+            # copy it, which would be more efficient.
+            emul_file = _EmulFile.get_emul_file(proc_path, self._basepath, data=data,
+                                                readonly=readonly)
+            self._emd["files"][proc_path] = emul_file
+
+    def _process_sysfs_inlinefiles(self, yinfo: _EDConfSysfsTypedDict):
         """
-        Create emulated sysfs files from sysfs emulation data.
+        Create emulated sysfs files from inline sysfs emulation data.
 
         Args:
-            info: Sysfs configuration dictionary.
+            yinfo: Sysfs configuration dictionary.
         """
 
-        filepath = self._dataset_path / info["dirname"] / info["inlinefiles"]
-        try:
-            with open(filepath, "r", encoding="utf-8") as fobj:
-                lines = fobj.readlines()
-        except OSError as err:
-            errmsg = Error(str(err)).indent(2)
-            raise Error(f"Failed to read emulated sysfs data from '{filepath}':\n"
-                        f"{errmsg}") from err
+        inlinefile_path = self._dataset_path / yinfo["dirname"] / yinfo["inlinefiles"]
 
-        for line in lines:
-            line = line.strip()
-            if not line or line.startswith("#"):
-                continue
-
-            # Format: <ro|rw>|<sysfs_path>|<value>.
+        for line in self._get_inlinefile_lines(inlinefile_path):
+            # Format: <mode>|<sysfs_path>|<value>.
             parts = line.split("|", 2)
             if len(parts) != 3:
-                raise Error(f"Unexpected line format in file '{filepath}':\n  "
-                            f"Expected <ro|rw>|<path>|<value>, received '{line}'")
+                raise Error(f"Unexpected line format in file '{inlinefile_path}':\n  "
+                            f"Expected <mode>|<path>|<value>, received:\n'{line}'")
 
             mode, path, data = parts
             if mode not in ("ro", "rw"):
-                raise Error(f"Unexpected mode '{mode}' in file '{filepath}':\n  "
-                            f"Expected 'ro' or 'rw', received '{line}'")
+                raise Error(f"Unexpected mode '{mode}' in file '{inlinefile_path}':\n  "
+                            f"Expected 'ro' or 'rw', received:\n'{line}'")
 
             readonly = mode == "ro"
 
@@ -180,78 +223,107 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
                 errmsg = Error(str(err)).indent(2)
                 raise Error(f"Failed to create directory '{dirpath}':\n{errmsg}") from err
 
-            emul = _EmulFile.get_emul_file(path, self._basepath, data=data, readonly=readonly)
-            self._emd["files"][path] = emul
+            emul_file = _EmulFile.get_emul_file(path, self._basepath, data=data, readonly=readonly)
+            self._emd["files"][path] = emul_file
 
-        sysfs_dir = self._dataset_path / info["dirname"]
-        rcopy = info.get("rcopy", {})
+    def _process_sysfs_rcopy(self, yinfo: _EDConfSysfsTypedDict):
+        """
+        Create emulated sysfs files from recursively copied sysfs directories.
+
+        Args:
+            yinfo: Sysfs configuration dictionary.
+        """
+
+        rcopy = yinfo.get("rcopy", {})
+        if not rcopy:
+            return
+
+        sysfs_dir_path = self._dataset_path / yinfo["dirname"]
         rw_patterns = rcopy.get("rw_patterns", [])
+
         for relpath in rcopy.get("paths", []):
-            rcopy_base = sysfs_dir / relpath
+            # Example path values:
+            #   relpath:        "kernel/debug/tpmi-0000:80:03.1"
+            #   rcopy_base:     "/path/to/dataset/sys/kernel/debug/tpmi-0000:80:03.1"
+            rcopy_base = sysfs_dir_path / relpath
             if not rcopy_base.exists():
-                continue
-            for filepath in rcopy_base.rglob("*"):
-                if not filepath.is_file():
-                    continue
-                relpath = filepath.relative_to(sysfs_dir)
-                sysfs_path = f"/{info['dirname']}/{relpath}"
+                cfgfile_path = self._dataset_path / EMUL_CONFIG_FNAME
+                raise Error(f"Path '{relpath}' specified in '{cfgfile_path}' does not exist")
+
+            # Note: Directories are automatically created by 'EmulFileBase', so iterate only files.
+            for filepath in self._iter_files_recursive(rcopy_base):
+                # Example path values:
+                #   filepath:   /path/to/dataset/sys/kernel/debug/tpmi-0000:80:03.1/tpmi-id-0c/mem_dump
+                #   relpath:    kernel/debug/tpmi-0000:80:03.1/tpmi-id-0c/mem_dump
+                #   sysfs_path: /sys/kernel/debug/tpmi-0000:80:03.1/tpmi-id-0c/mem_dump
+                relpath = filepath.relative_to(sysfs_dir_path)
+                sysfs_path = f"/{yinfo['dirname']}/{relpath}"
                 try:
                     with open(filepath, "r", encoding="utf-8") as fobj:
                         data = fobj.read()
                 except OSError as err:
                     errmsg = Error(str(err)).indent(2)
                     raise Error(f"Failed to read '{filepath}':\n{errmsg}") from err
-                readonly = not any(re.search(regex, sysfs_path) for regex in rw_patterns)
-                emul = _EmulFile.get_emul_file(sysfs_path, self._basepath, data=data,
-                                               readonly=readonly)
-                self._emd["files"][sysfs_path] = emul
 
-    def _process_msrs(self, info: _EDConfMSRTypedDict):
+                readonly = not any(re.search(regex, sysfs_path) for regex in rw_patterns)
+                emul_file = _EmulFile.get_emul_file(sysfs_path, self._basepath, data=data,
+                                               readonly=readonly)
+                self._emd["files"][sysfs_path] = emul_file
+
+    def _process_sysfs(self, yinfo: _EDConfSysfsTypedDict):
         """
-        Create emulated MSR device files from MSR emulation data.
+        Create emulated sysfs files from sysfs emulation data.
 
         Args:
-            info: MSR configuration dictionary.
+            yinfo: Sysfs configuration dictionary.
         """
 
-        dirpath = self._dataset_path / info["dirname"]
-        if not dirpath.exists():
+        self._process_sysfs_inlinefiles(yinfo)
+        self._process_sysfs_rcopy(yinfo)
+
+    def _process_msrs(self, yinfo: _EDConfMSRTypedDict):
+        """
+        Create emulated MSR device files from the dataset.
+
+        Args:
+            yinfo: the 'msr' section of the emulation data configuration dictionary.
+        """
+
+        msr_dir_path = self._dataset_path / yinfo["dirname"]
+        if not msr_dir_path.exists():
             return
 
-        filepath = dirpath / info["filename"]
-        try:
-            with open(filepath, "r", encoding="utf-8") as fobj:
-                lines = fobj.readlines()
-        except OSError as err:
-            errmsg = Error(str(err)).indent(2)
-            raise Error(f"Failed to read emulated MSR data from '{filepath}':\n{errmsg}") from err
+        inlinefile_path = msr_dir_path / yinfo["filename"]
 
-        data_by_cpu: dict[int, dict[int, bytes]] = {}
-        for line in lines:
-            line = line.strip()
-            if not line or line.startswith("#"):
-                continue
+        # Parsed MSR data organized by CPU: {cpu: {addr: value}}.
+        cpu_addr_val: dict[int, dict[int, bytes]] = {}
 
+        for line in self._get_inlinefile_lines(inlinefile_path):
             split = line.split(":", 1)
             if len(split) != 2:
-                raise Error(f"Unexpected line format in file '{filepath}':\n  "
-                            f"Expected <hex_addr>:<cpu_val_pairs>, received '{line}'")
+                raise Error(f"Unexpected line format in file '{inlinefile_path}':\n  "
+                            f"Expected <hex_addr>:<cpu_val_pairs>, received:\n{line}")
 
-            regaddr = int(split[0], 16)
-            cpu_val_pairs = split[1].split()
+            addr = Trivial.str_to_int(split[0], base=16, what="MSR address")
+            pairs = split[1].split()
 
-            for cpu_val_pair in cpu_val_pairs:
-                cpu_str, regval_str = cpu_val_pair.split("|", 1)
-                cpu = int(cpu_str)
-                regval = int(regval_str, 16)
-                if cpu not in data_by_cpu:
-                    data_by_cpu[cpu] = {}
-                data_by_cpu[cpu][regaddr] = int.to_bytes(regval, 8, byteorder="little")
+            for pair in pairs:
+                cpu_str, regval_str = pair.split("|", 1)
+                cpu = Trivial.str_to_int(cpu_str, what="CPU number")
+                value = Trivial.str_to_int(regval_str, base=16, what="MSR register value")
 
-        for cpu, data in data_by_cpu.items():
+                if cpu not in cpu_addr_val:
+                    cpu_addr_val[cpu] = {}
+                elif addr in cpu_addr_val[cpu]:
+                    raise Error(f"Duplicate CPU {cpu} and MSR address {addr:#x} in file "
+                                f"'{inlinefile_path}': Line:\n{line}")
+
+                cpu_addr_val[cpu][addr] = int.to_bytes(value, 8, byteorder=_CPU_BYTEORDER)
+
+        for cpu, addr2val in cpu_addr_val.items():
             path = f"/dev/cpu/{cpu}/msr"
-            emul = _EmulFile.get_emul_file(path, self._basepath, data=data)
-            self._emd["files"][path] = emul
+            emul_file = _EmulFile.get_emul_file(path, self._basepath, data=addr2val)
+            self._emd["files"][path] = emul_file
 
     def _init_emul_data(self, ydict: _EDConfTypedDict):
         """
@@ -294,10 +366,6 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
         This method eagerly loads all emulation data from the configuration file and prepares the
         emulated filesystem structure in the temporary base directory.
-
-        Note: A TODO exists to implement lazy loading, where data would only be loaded when
-              actually accessed, improving initialization performance for tests that use only
-              a subset of the emulation data.
         """
 
         # TODO: Instead of eagerly building all emulation data up front, construct it lazily and
