@@ -685,8 +685,6 @@ def _prepare(pman: ProcessManagerType, cpuinfo: CPUInfo.CPUInfo):
 
     _online_all_cpus(pman, cpuinfo)
 
-    pman.run("modprobe intel_uncore_frequency")
-    pman.run("modprobe msr")
     pman.run("pepc pstates config --min-freq min --max-freq max --cpus all")
     pman.run("pepc uncore config --min-freq min --max-freq max --cpus all")
     pman.run("pepc cstates config --enable all --cpus all")
