@@ -10,6 +10,7 @@
 Type definitions for emulation data configuration files.
 """
 import typing
+from pathlib import Path
 
 if typing.TYPE_CHECKING:
     from typing import TypedDict
@@ -32,8 +33,10 @@ if typing.TYPE_CHECKING:
 
         Attributes:
             dirname: Name of the sub-directory containing the sysfs data file.
-            filename: The sysfs data file name.
+            inlinefiles: The sysfs inline data file name.
+            rcopy: List of sub-paths of recursively copied directories.
         """
 
         dirname: str
-        filename: str
+        inlinefiles: str
+        rcopy: list[Path]

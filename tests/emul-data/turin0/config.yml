@@ -4,4 +4,4 @@ msr:
   filename: msr.txt
 sysfs:
   dirname: sys
-  filename: sysfs.txt
+  inlinefiles: inlinefiles.txt

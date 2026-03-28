@@ -295,7 +295,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             dspath: The dataset path.
         """
 
-        filepath = dspath / info["dirname"] / info["filename"]
+        filepath = dspath / info["dirname"] / info["inlinefiles"]
         try:
             with open(filepath, "r", encoding="utf-8") as fobj:
                 lines = fobj.readlines()
@@ -333,6 +333,26 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
             emul = _EmulFile.get_emul_file(path, self._basepath, data=data, readonly=readonly)
             self._emd["files"][path] = emul
+
+        sysfs_dir = dspath / info["dirname"]
+        for rcopy_rel in info.get("rcopy", []):
+            rcopy_base = sysfs_dir / rcopy_rel
+            if not rcopy_base.exists():
+                continue
+            for filepath in rcopy_base.rglob("*"):
+                if not filepath.is_file():
+                    continue
+                rel = filepath.relative_to(sysfs_dir)
+                sysfs_path = f"/{info['dirname']}/{rel}"
+                try:
+                    with open(filepath, "r", encoding="utf-8") as fobj:
+                        data = fobj.read()
+                except OSError as err:
+                    errmsg = Error(str(err)).indent(2)
+                    raise Error(f"Failed to read '{filepath}':\n{errmsg}") from err
+                emul = _EmulFile.get_emul_file(sysfs_path, self._basepath, data=data,
+                                               readonly=True)
+                self._emd["files"][sysfs_path] = emul
 
     def _process_msrs(self, info: _EmulDataConfigMSRTypedDict, dspath: Path):
         """

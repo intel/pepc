@@ -120,17 +120,6 @@ if typing.TYPE_CHECKING:
         dirname: str
         filename: str
 
-    class _TDCollectRCopyTypedDict(TypedDict, total=False):
-        """
-        A typed dictionary for defining a directory to copy recursively when collecting emulation
-        data.
-
-        Attributes:
-            path: The path to the directory to copy.
-        """
-
-        path: Path
-
     class _TDCollectTypedDict(TypedDict, total=False):
         """
         A typed dictionary for defining all the emulation data to collect.
@@ -138,14 +127,12 @@ if typing.TYPE_CHECKING:
         Attributes:
             commands: The commands to run to collect emulation data.
             files: The files to read to collect emulation data.
-            recursive_copy: The directories to copy recursively to collect emulation data.
             inlinefiles: The commands to run to collect the contents of multiple files.
             msrs: The MSR registers to read to collect emulation data.
         """
 
         commands: list[_TDCollectCommandTypedDict]
         files: list[_TDCollectFileTypedDict]
-        recursive_copy: list[_TDCollectRCopyTypedDict]
         inlinefiles: list[_TDCollectInlFilesTypedDict]
 
 _TOOLNAME: Final[str] = "emulation-data-generator"
@@ -175,22 +162,18 @@ _SysctlTDCollectInfo: _TDCollectTypedDict = {
          "ignore_exitcode": True}],
 }
 
-_TPMITDCollectInfo: _TDCollectTypedDict = {
-    "recursive_copy" : [
-        {"path": Path("/sys/kernel/debug/tpmi-.*")}],
-}
-
 _TDCollectInfo: dict[str, _TDCollectTypedDict] = {
     "CPUInfo" : _CPUInfoTDCollectInfo,
     "CStates" : _CStatesTDCollectInfo,
     "Systemctl" : _SysctlTDCollectInfo,
-    "TPMI" : _TPMITDCollectInfo,
 }
 
 # The sysfs data sub-directory name in the emulation data directory.
 _SYSFS_SUBDIR: Final[str] = "sys"
 # The sysfs inline data file name in the emulation data directory.
 _SYSFS_DATA_FILE: Final[str] = "inlinefiles.txt"
+# Base directory for TPMI sysfs files.
+_SYSFS_TPMI_BASEDIR: Final[Path] = Path("/sys/kernel/debug")
 
 # Each entry describes a set of sysfs files to collect, grouped by read-only status.
 # 'command' is passed directly to the process manager (grep with sysfs glob patterns).
@@ -445,39 +428,6 @@ def _copy_file(pman: ProcessManagerType, src: Path, outdir: Path):
     with open(dst, "w", encoding="utf-8") as fobj:
         fobj.write(res.stdout)
 
-def _copy_dir(pman: ProcessManagerType, src: Path, outdir: Path) -> list[_TDCollectFileTypedDict]:
-    """
-    Recursively copy the contents of a directory from the SUT.
-
-    Args:
-        pman: The process manager object that defines the remote SUT to copy the directory from.
-        src: Path to the source directory. The last part of the path may be a regular expression to
-             match directories.
-        outdir: Path to the destination directory.
-
-    Returns:
-        A list of dictionaries, each containing metadata for a copied file, including its path and
-        read-only status.
-    """
-
-    files: list[_TDCollectFileTypedDict] = []
-
-    for entry in pman.lsdir(src.parent):
-        if not re.fullmatch(src.name, entry["name"]):
-            continue
-
-        is_dir = stat.S_ISDIR(entry["mode"])
-        is_readonly = not entry["mode"] & stat.S_IWUSR
-
-        if is_dir:
-            files += _copy_dir(pman, entry["path"] / ".*", outdir)
-        else:
-            _copy_file(pman, entry["path"], outdir)
-            info: _TDCollectFileTypedDict = {"path": entry["path"], "readonly": is_readonly}
-            files += [info]
-
-    return files
-
 def _generate_config_file(modname: str, tdcoll_info: dict, outdir: Path):
     """
     Generate the emulation data YAML configuration file.
@@ -556,6 +506,39 @@ def _get_msr_data(cpuinfo: CPUInfo.CPUInfo,
 
             yield addr, vals
 
+def _collect_sysfs_rcopy(pman: ProcessManagerType, basedir: Path) -> Generator[Path, None, None]:
+    """
+    Recursively copy sysfs directories from the SUT into the output sysfs directory tree.
+
+    Args:
+        pman: The process manager object that defines the SUT to copy directories from.
+        basedir: Path to the base output directory.
+
+    Yields:
+        Paths relative to the sysfs sub-directory for each copied top-level directory
+        (e.g., Path("kernel/debug/dir0")).
+    """
+
+    for entry in pman.lsdir(_SYSFS_TPMI_BASEDIR):
+        if not re.fullmatch(r"tpmi-.*", entry["name"]):
+            continue
+        if not stat.S_ISDIR(entry["mode"]):
+            continue
+
+        # The 'relative_to("/")' is needed because concatenating two paths starting with '/' would
+        # ignore the first one. E.g., Path("/base") / Path("/sys/kernel/debug/dir0" would result in
+        # Path("/sys/kernel/debug/dir0") instead of Path("/base/sys/kernel/debug /dir0")).
+        dst = basedir / entry["path"].parent.relative_to("/")
+        try:
+            os.makedirs(dst, exist_ok=True)
+        except OSError as err:
+            errmsg = Error(str(err)).indent(2)
+            raise Error(f"Failed to create directory '{dst}':\n{errmsg}") from err
+
+        pman.rsync(entry["path"], dst, remotesrc=True)
+
+        yield entry["path"].relative_to(f"/{_SYSFS_SUBDIR}")
+
 def _collect_sysfs(pman: ProcessManagerType, basedir: Path, config_yml: dict):
     """
     Collect sysfs emulation data from the SUT and populate the emulation data configuration
@@ -605,8 +588,13 @@ def _collect_sysfs(pman: ProcessManagerType, basedir: Path, config_yml: dict):
 
     sysfs_config: _EmulDataConfigSysfsTypedDict = {
         "dirname": _SYSFS_SUBDIR,
-        "filename": _SYSFS_DATA_FILE,
+        "inlinefiles": _SYSFS_DATA_FILE,
     }
+
+    rcopy = list(_collect_sysfs_rcopy(pman, basedir))
+    if rcopy:
+        sysfs_config["rcopy"] = rcopy
+
     config_yml["sysfs"] = sysfs_config
 
 def _collect_msrs(cpuinfo: CPUInfo.CPUInfo,
@@ -732,15 +720,6 @@ def _do_main(pman: ProcessManagerType, outdir: Path, cpuinfo: CPUInfo.CPUInfo) -
         if "files" in tdcinfo:
             for file in tdcinfo["files"]:
                 _copy_file(pman, file["path"], datapath)
-
-        if "recursive_copy" in tdcinfo:
-            files: list[_TDCollectFileTypedDict] = []
-            for directory in tdcinfo["recursive_copy"]:
-                files += _copy_dir(pman, Path(directory["path"]), datapath)
-
-            del tdcinfo["recursive_copy"]
-            if files:
-                tdcinfo["files"] = files
 
         for section in ("inlinefiles",):
             if section not in tdcinfo:
