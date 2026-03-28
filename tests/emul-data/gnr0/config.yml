@@ -6,7 +6,10 @@ sysfs:
   dirname: sys
   inlinefiles: inlinefiles.txt
   rcopy:
-  - kernel/debug/tpmi-0000:00:03.1
-  - kernel/debug/tpmi-0000:80:03.1
+    paths:
+    - kernel/debug/tpmi-0000:00:03.1
+    - kernel/debug/tpmi-0000:80:03.1
+    rw_patterns:
+    - .*/mem_write$
 procfs:
   dirname: proc

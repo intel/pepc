@@ -21,7 +21,7 @@ from pepclibs.helperlibs.Exceptions import Error
 from pepclibs.helperlibs.emul import _EmulFileBase
 
 if typing.TYPE_CHECKING:
-    from typing import IO, Callable
+    from typing import IO
 
 def _mem_write_emul_file_write(self: IO[str], data: str) -> int:
     """
@@ -66,11 +66,7 @@ def _mem_write_emul_file_write(self: IO[str], data: str) -> int:
         errmsg = Error(str(err)).indent(2)
         raise Error(f"Failed to update the 'mem_dump' file at {md_fullpath}:\n{errmsg}") from err
 
-    self.truncate(len(data))
-    self.seek(0)
-
-    orig_write: Callable[[str], int] = getattr(self, "__orig_write")
-    return orig_write(data)
+    return len(data)
 
 class TPMIEmulFile(_EmulFileBase.EmulFileBase):
     """
@@ -191,7 +187,6 @@ class TPMIEmulFile(_EmulFileBase.EmulFileBase):
 
         setattr(fobj, "__md_fullpath", self._md_fullpath)
         setattr(fobj, "__mdmap", self._mdmap)
-        setattr(fobj, "__orig_write", fobj.write)
         # Monkey-patch the 'write()' method of the file object.
         setattr(fobj, "write", types.MethodType(_mem_write_emul_file_write, fobj))
 

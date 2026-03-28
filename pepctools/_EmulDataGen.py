@@ -132,6 +132,9 @@ _SYSFS_SUBDIR: Final[str] = "sys"
 _SYSFS_DATA_FILE: Final[str] = "inlinefiles.txt"
 # Base directory for TPMI sysfs files.
 _SYSFS_TPMI_BASEDIR: Final[Path] = Path("/sys/kernel/debug")
+# Regex patterns for TPMI sysfs files that should be registered as read-write in emulation.
+# 'mem_write' is the only writable TPMI debugfs file; all others are read-only.
+_SYSFS_TPMI_RW_PATTERNS: Final[list[str]] = [r".*/mem_write$"]
 
 # Each entry describes a set of sysfs files to collect, grouped by read-only status.
 # 'command' is passed directly to the process manager (grep with sysfs glob patterns).
@@ -522,9 +525,12 @@ def _collect_sysfs(pman: ProcessManagerType, basedir: Path, config_yml: dict):
         "inlinefiles": _SYSFS_DATA_FILE,
     }
 
-    rcopy = list(_collect_sysfs_rcopy(pman, basedir))
-    if rcopy:
-        sysfs_config["rcopy"] = rcopy
+    rcopy_paths = list(_collect_sysfs_rcopy(pman, basedir))
+    if rcopy_paths:
+        sysfs_config["rcopy"] = {
+            "paths": rcopy_paths,
+            "rw_patterns": _SYSFS_TPMI_RW_PATTERNS,
+        }
 
     config_yml["sysfs"] = sysfs_config
 

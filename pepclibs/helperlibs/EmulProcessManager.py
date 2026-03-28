@@ -25,6 +25,7 @@ Terminology:
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
+import re
 import typing
 import contextlib
 from pathlib import Path
@@ -283,19 +284,20 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         """
 
         procfs_dir = dspath / info["dirname"]
+        rw_patterns = info.get("rw_patterns", [])
         for filepath in procfs_dir.rglob("*"):
             if not filepath.is_file():
                 continue
-            rel = filepath.relative_to(dspath)
-            proc_path = f"/{rel}"
+            relpath = filepath.relative_to(dspath)
+            proc_path = f"/{relpath}"
             try:
                 with open(filepath, "r", encoding="utf-8") as fobj:
                     data = fobj.read()
             except OSError as err:
                 errmsg = Error(str(err)).indent(2)
                 raise Error(f"Failed to read '{filepath}':\n{errmsg}") from err
-            # Current design: all procfs files are always treated as read-only.
-            emul = _EmulFile.get_emul_file(proc_path, self._basepath, data=data, readonly=True)
+            readonly = not any(re.search(regex, proc_path) for regex in rw_patterns)
+            emul = _EmulFile.get_emul_file(proc_path, self._basepath, data=data, readonly=readonly)
             self._emd["files"][proc_path] = emul
 
     def _process_sysfs(self, info: _EmulDataConfigSysfsTypedDict, dspath: Path):
@@ -347,24 +349,26 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             self._emd["files"][path] = emul
 
         sysfs_dir = dspath / info["dirname"]
-        for rcopy_rel in info.get("rcopy", []):
-            rcopy_base = sysfs_dir / rcopy_rel
+        rcopy = info.get("rcopy", {})
+        rw_patterns = rcopy.get("rw_patterns", [])
+        for relpath in rcopy.get("paths", []):
+            rcopy_base = sysfs_dir / relpath
             if not rcopy_base.exists():
                 continue
             for filepath in rcopy_base.rglob("*"):
                 if not filepath.is_file():
                     continue
-                rel = filepath.relative_to(sysfs_dir)
-                sysfs_path = f"/{info['dirname']}/{rel}"
+                relpath = filepath.relative_to(sysfs_dir)
+                sysfs_path = f"/{info['dirname']}/{relpath}"
                 try:
                     with open(filepath, "r", encoding="utf-8") as fobj:
                         data = fobj.read()
                 except OSError as err:
                     errmsg = Error(str(err)).indent(2)
                     raise Error(f"Failed to read '{filepath}':\n{errmsg}") from err
-                # Current design: recursively copied sysfs files are always treated as read-only.
+                readonly = not any(re.search(regex, sysfs_path) for regex in rw_patterns)
                 emul = _EmulFile.get_emul_file(sysfs_path, self._basepath, data=data,
-                                               readonly=True)
+                                               readonly=readonly)
                 self._emd["files"][sysfs_path] = emul
 
     def _process_msrs(self, info: _EmulDataConfigMSRTypedDict, dspath: Path):
