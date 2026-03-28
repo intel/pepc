@@ -12,15 +12,14 @@
 A process manager that emulates a SUT for testing purposes.
 
 Provide the 'EmulProcessManager' class, a subclass of 'LocalProcessManager' that pretends to execute
-commands on a SUT, but performs local operations, returning pre-defined results based on test data
-previously collected from a real SUT using the 'tdgen' tool.
+commands on a SUT, but performs local operations, returning pre-defined results based on emulation
+data previously collected from a real SUT using the 'tdgen' tool.
 
 Terminology:
-    - Test Data: Data collected from real SUTs, stored in the "test" sub-directory, used to emulate
-      results of commands and file I/O operations.
-    - Data Set: A directory containing test data for a single SUT.
-    - Emulation Data (emd): Processed version of test data, either stored in memory or in a
-      temporary directory on the local file-system.
+    - Emulation data: The data collected from a real SUT (command outputs, file contents, MSR
+                      values, etc.) used to emulate results of commands and file I/O operations.
+    - Emulation dataset: A directory containing emulation data for a single SUT. Also referred to as
+      just "dataset" when the context is clear.
 """
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
@@ -85,7 +84,7 @@ if typing.TYPE_CHECKING:
 
     class _TestDataYAMLTypedDict(TypedDict, total=False):
         """
-        Typed dictionary describing the YAML configuration for test data.
+        Typed dictionary describing the YAML configuration for emulation data.
 
         Attributes:
             commands: List of command configurations.
@@ -140,7 +139,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         - Filesystem-related methods (e.g., mkdir, lsdir, is_file) operate relative to the base
           directory (which is just a temporary directory), not the real local filesystem.
           So all file and directory operations are sandboxed within the base directory.
-        - The emulation data (emd) are initialized and populated from the test data.
+        - The emulation data (emd) are initialized and populated from the emulation dataset.
     """
 
     def __init__(self, hostname: str | None = None):
@@ -438,10 +437,10 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
     def _process_test_data_category(self, yaml_path: Path):
         """
-        Process a test data category configuration file and initialize related emulation data.
+        Process an emulation data category configuration file and initialize related emulation data.
 
         Args:
-            yaml_path: Path to the YAML configuration file describing the test data category.
+            yaml_path: Path to the YAML configuration file describing the emulation data category.
         """
 
         if typing.TYPE_CHECKING:
@@ -476,7 +475,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         Args:
           dspath: Path to the dataset directory to load.
 
-        Test data is organized as follows:
+        Emulation data is organized as follows:
             - dataset1/
               - category1.yml
               - category1/
@@ -491,7 +490,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         containing the actual data.
 
         Originally, categories matched pepc Python modules, but this mapping is no longer strict.
-        Categories now simply group related test data.
+        Categories now simply group related emulation data.
         """
 
         # TODO: Instead of eagerly building all emulation data up front, construct it lazily and

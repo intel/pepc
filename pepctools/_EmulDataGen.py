@@ -121,7 +121,7 @@ _TDCollectInfo: dict[str, _TDCollectTypedDict] = {
     "Systemctl" : _SysctlTDCollectInfo,
 }
 
-# The procfs data sub-directory name in the emulation data directory.
+# The procfs data sub-directory name in the dataset directory.
 _PROCFS_SUBDIR: Final[str] = "proc"
 
 # The procfs files to collect from the SUT.
@@ -132,9 +132,9 @@ _PROCFS_FILES: list[Path] = [
     Path("/proc/mounts"),
 ]
 
-# The sysfs data sub-directory name in the emulation data directory.
+# The sysfs data sub-directory name in the dataset directory.
 _SYSFS_SUBDIR: Final[str] = "sys"
-# The sysfs inline data file name in the emulation data directory.
+# The sysfs inline data file name in the dataset directory.
 _SYSFS_DATA_FILE: Final[str] = "inlinefiles.txt"
 # Base directory for TPMI sysfs files.
 _SYSFS_TPMI_BASEDIR: Final[Path] = Path("/sys/kernel/debug")
@@ -226,9 +226,9 @@ _SYSFS_INLINE_CMDS: list[_SysfsInlineCmdTypedDict] = [
 # MSR data are stored in a text file, one line per MSR address, in the
 # "<hex_addr>:<cpu_num>|<hex_val> ...", for example:
 # 1a0:0|45 1|45 2|45 3|45 ...
-# The MSR data sub-directory name in the emulation data directory.
+# The MSR data sub-directory name in the dataset directory.
 _MSR_SUBDIR: Final[str] = "msr"
-# The MSR data file name in the emulation data directory.
+# The MSR data file name in the dataset directory.
 _MSR_DATA_FILE: Final[str] = "msr.txt"
 
 def _build_arguments_parser() -> ArgParse.ArgsParser:
@@ -547,7 +547,8 @@ def _collect_sysfs(pman: ProcessManagerType, basedir: Path, config_yml: dict):
 
     config_yml["sysfs"] = sysfs_config
 
-    # Ensure the debugfs mount point directory always exists in the emulated filesystem.
+    # Ensure the debugfs mount point directory always exists in the emulated filesystem. Without
+    # this, 'lsdir()' on it would raise 'ErrorNotFound' on non-TPMI systems.
     config_yml["directories"] = [{"path": str(_SYSFS_TPMI_BASEDIR)}]
 
 def _collect_procfs(pman: ProcessManagerType, basedir: Path, config_yml: dict):
