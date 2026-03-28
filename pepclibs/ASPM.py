@@ -64,8 +64,8 @@ class ASPM(ClassHelpers.SimpleCloseContext):
             with self._pman.open(self._policy_path, "r") as fobj:
                 policies_str = fobj.read().strip()
         except Error as err:
-            raise Error(f"Failed to read ASPM policy from file '{self._policy_path}'"
-                        f"{self._pman.hostmsg}:\n{err.indent(2)}") from err
+            raise type(err)(f"Failed to read ASPM policy from file '{self._policy_path}'"
+                            f"{self._pman.hostmsg}:\n{err.indent(2)}") from err
 
         policies = Trivial.split_csv_line(policies_str, sep=" ")
         if strip:
@@ -96,10 +96,10 @@ class ASPM(ClassHelpers.SimpleCloseContext):
             with self._pman.open(self._policy_path, "r+") as fobj:
                 fobj.write(policy)
         except ErrorPermissionDenied as err:
-            raise ErrorPermissionDenied(f"{errmsg}\n{err.indent(2)}\n  Sometimes booting with "
-                                        f"'pcie_aspm=force' command line option helps") from err
+            raise type(err)(f"{errmsg}\n{err.indent(2)}\n  Sometimes booting with "
+                            f"'pcie_aspm=force' command line option helps") from err
         except Error as err:
-            raise Error(f"{errmsg}\n{err.indent(2)}") from err
+            raise type(err)(f"{errmsg}\n{err.indent(2)}") from err
 
     def get_policy(self) -> str:
         """
@@ -192,8 +192,8 @@ class ASPM(ClassHelpers.SimpleCloseContext):
         except ErrorNotFound as err:
             return self._l1_file_not_found(addr, err)
         except Error as err:
-            raise Error(f"Sysfs file read operation failed{self._pman.hostmsg}:\n"
-                        f"{err.indent(2)}") from err
+            raise type(err)(f"Sysfs file read operation failed{self._pman.hostmsg}:\n"
+                            f"{err.indent(2)}") from err
 
         return bool(Trivial.str_to_int(val, what="L1 ASPM state value from '{path}"))
 
@@ -219,5 +219,5 @@ class ASPM(ClassHelpers.SimpleCloseContext):
         except ErrorNotFound as err:
             self._l1_file_not_found(addr, err)
         except Error as err:
-            raise Error(f"Sysfs file write operation failed{self._pman.hostmsg}:\n"
-                        f"{err.indent(2)}") from err
+            raise type(err)(f"Sysfs file write operation failed{self._pman.hostmsg}:\n"
+                            f"{err.indent(2)}") from err

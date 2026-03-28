@@ -215,7 +215,7 @@ class CPUOnline(ClassHelpers.SimpleCloseContext):
                 with self._pman.open(path, "r+") as fobj:
                     fobj.write(data)
             except Error as err:
-                raise Error(f"Failed to {state_str} CPU{cpu}:\n{err.indent(2)}") from err
+                raise type(err)(f"Failed to {state_str} CPU{cpu}:\n{err.indent(2)}") from err
             toggled.append(cpu)
 
         if toggled:

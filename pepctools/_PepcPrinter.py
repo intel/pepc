@@ -702,7 +702,7 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
                                                          override_sname=override_sname)
         except ErrorNoCPUTarget as err:
             name = self._pobj.props[pname]["name"]
-            raise ErrorNoCPUTarget(f"Impossible to get {name}:\n{err.indent(2)}") from err
+            raise type(err)(f"Impossible to get {name}:\n{err.indent(2)}") from err
 
         try:
             if sname == "die":

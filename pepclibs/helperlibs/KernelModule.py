@@ -122,7 +122,7 @@ class KernelModule(ClassHelpers.SimpleCloseContext):
             try:
                 self._pman.run_verify(cmd)
             except Error as err:
-                raise Error(f"{err}\n{self._get_new_dmesg()}") from err
+                raise type(err)(f"{err}\n{self._get_new_dmesg()}") from err
 
             if _LOG.getEffectiveLevel() == Logging.DEBUG:
                 _LOG.debug("The following command finished: %s\n%s", cmd, self._get_new_dmesg())

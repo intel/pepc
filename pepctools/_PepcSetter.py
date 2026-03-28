@@ -106,7 +106,7 @@ class _PropsSetter(ClassHelpers.SimpleCloseContext):
             sname, nums = _PepcCommon.get_sname_and_nums(self._pobj, pname, optar)
         except ErrorNoCPUTarget as err:
             name = self._pobj.props[pname]["name"]
-            raise ErrorNoCPUTarget(f"Impossible to set {name}:\n{err.indent(2)}") from err
+            raise type(err)(f"Impossible to set {name}:\n{err.indent(2)}") from err
 
         if sname == "die":
             if typing.TYPE_CHECKING:

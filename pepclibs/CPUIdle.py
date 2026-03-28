@@ -322,8 +322,8 @@ except Exception as err:
             stdout, stderr = self._pman.run_verify_nojoin(cmd)
         except Error as err:
             errmsg = err.indent(2)
-            raise Error(f"Failed to list C-state directories{self._pman.hostmsg}:\n"
-                        f"{errmsg}") from err
+            raise type(err)(f"Failed to list C-state directories{self._pman.hostmsg}:\n"
+                            f"{errmsg}") from err
 
         if stderr:
             stderr_str = "".join(stderr)

@@ -552,9 +552,9 @@ def get_features(specdirs: Iterable[Path] = (),
                 _LOG.debug("Failed to load TPMI spec file '%s':\n%s", specpath, err.indent(2))
                 load_errors_cnt += 1
                 if load_errors_cnt > _MAX_SCAN_LOAD_ERRORS:
-                    raise Error(f"Failed to load spec file '{specpath}':\n{err.indent(2)}\n"
-                                f"Reached the maximum spec file load errors count of "
-                                f"{_MAX_SCAN_LOAD_ERRORS}") from err
+                    raise type(err)(f"Failed to load spec file '{specpath}':\n{err.indent(2)}\n"
+                                    f"Reached the maximum spec file load errors count of "
+                                    f"{_MAX_SCAN_LOAD_ERRORS}") from err
                 continue
 
             if sdict["name"] in sdicts:

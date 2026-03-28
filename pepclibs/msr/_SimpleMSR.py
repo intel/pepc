@@ -86,8 +86,8 @@ class SimpleMSR(ClassHelpers.SimpleCloseContext):
         try:
             self._ensure_dev_msr()
         except ErrorPermissionDenied as err:
-            raise ErrorPermissionDenied(f"No permissions to access MSRs{self._pman.hostmsg}:\n"
-                                        f"{err.indent(2)}") from err
+            raise type(err)(f"No permissions to access MSRs{self._pman.hostmsg}:\n"
+                            f"{err.indent(2)}") from err
         except Error as err:
             raise ErrorNotSupported(f"MSR access is not supported{self._pman.hostmsg}:\n"
                                     f"{err.indent(2)}") from err

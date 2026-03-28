@@ -1084,7 +1084,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         try:
             LocalProcessManager.LocalProcessManager().run_verify(cmd)
         except Error as err:
-            raise Error(f"Failed to copy files '{src}' to '{dst}':\n{err.indent(2)}") from err
+            raise type(err)(f"Failed to copy files '{src}' to '{dst}':\n{err.indent(2)}") from err
 
     def get(self, src: str | Path, dst: str | Path):
         """

@@ -246,8 +246,8 @@ def get_kver_ktree(ktree: Path,
         try:
             kver = wpman.run_verify_join(cmd)[0].strip()
         except Error as err:
-            raise Error(f"Cannot detect kernel version in '{ktree}':\n{err.indent(2)}\nMake sure "
-                        f"kernel sources are configured.") from err
+            raise type(err)(f"Cannot detect kernel version in '{ktree}':\n{err.indent(2)}\nMake sure "
+                            f"kernel sources are configured.") from err
 
     return kver
 

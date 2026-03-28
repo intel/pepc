@@ -64,7 +64,8 @@ def _mem_write_emul_file_write(self: IO[str], data: str) -> int:
             fobj.write(value_str)
     except Error as err:
         errmsg = Error(str(err)).indent(2)
-        raise Error(f"Failed to update the 'mem_dump' file at {md_fullpath}:\n{errmsg}") from err
+        raise type(err)(f"Failed to update the 'mem_dump' file at {md_fullpath}:\n"
+                        f"{errmsg}") from err
 
     return len(data)
 

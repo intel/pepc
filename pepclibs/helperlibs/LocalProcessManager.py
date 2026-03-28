@@ -320,7 +320,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
             stdout, _ = self.run_verify(cmd)
         except Error as err:
             msg = Error(str(err)).indent(2)
-            raise Error(f"Failed to copy files '{src}' to '{dst}':\n{msg}") from err
+            raise type(err)(f"Failed to copy files '{src}' to '{dst}':\n{msg}") from err
 
         assert isinstance(stdout, str)
 

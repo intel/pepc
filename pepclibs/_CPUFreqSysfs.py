@@ -599,8 +599,8 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
                     freq = Trivial.str_to_int(freq_str, what="CPU frequency value")
                     freqs.append(freq * 1000)
                 except Error as err:
-                    raise Error(f"Bad contents of file '{path}'{self._pman.hostmsg}\n"
-                                f"{err.indent(2)}") from err
+                    raise type(err)(f"Bad contents of file '{path}'{self._pman.hostmsg}\n"
+                                    f"{err.indent(2)}") from err
 
             yield cpu, sorted(freqs)
 
@@ -875,8 +875,8 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
         try:
             self._sysfs_io.write(path, mode, what=what)
         except Error as err:
-            raise Error(f"Failed to set 'intel_pstate' driver mode to '{mode}'"
-                        f"{self._pman.hostmsg}:\n{err.indent(2)}") from err
+            raise type(err)(f"Failed to set 'intel_pstate' driver mode to '{mode}'"
+                           f"{self._pman.hostmsg}:\n{err.indent(2)}") from err
 
     def get_turbo(self, cpus: Sequence[int]) -> Generator[tuple[int, str], None, None]:
         """
@@ -920,7 +920,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
                     for _, mode in self.get_intel_pstate_mode((cpu,)):
                         break
                 except Error as exc:
-                    raise Error(str(err)) from exc
+                    raise type(err)(str(err)) from exc
 
                 if mode == "":
                     raise Error("BUG: Failed to get 'intel_pstate' driver mode") from err
@@ -983,7 +983,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
                     for _, mode in self.get_intel_pstate_mode((cpu,)):
                         break
                 except Error as exc:
-                    raise Error(str(err)) from exc
+                    raise type(err)(str(err)) from exc
 
                 if mode == "":
                     raise Error("BUG: Failed to get 'intel_pstate' driver mode") from err
