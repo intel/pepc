@@ -127,10 +127,10 @@ def _lt_rc(rc1: int, rc2: int) -> bool:
         # Both are final releases, equal.
         return False
     if rc1 == 0:
-        # rc1 is final (newer), rc2 is RC (older)
+        # rc1 is final (newer), rc2 is RC (older).
         return False
     if rc2 == 0:
-        # rc1 is RC (older), rc2 is final (newer)
+        # rc1 is RC (older), rc2 is final (newer).
         return True
 
     return rc1 < rc2
@@ -196,7 +196,7 @@ def kver_ge(kver1: str, kver2: str) -> bool:
 
     return not kver_lt(kver1, kver2)
 
-def get_kver(pman: ProcessManagerType | None) -> str:
+def get_kver(pman: ProcessManagerType | None = None) -> str:
     """
     Retrieve the kernel version string from the currently running kernel on the host associated with
     'pman'.
@@ -216,8 +216,22 @@ def get_kver(pman: ProcessManagerType | None) -> str:
     """
 
     with ProcessManager.pman_or_local(pman) as wpman:
-        kver = wpman.run_verify_join("uname -r")[0].strip()
-        return kver
+        proc_version = Path("/proc/version")
+
+        try:
+            with wpman.open(proc_version, "r") as fobj:
+                contents = fobj.read()
+        except Error as err:
+            raise type(err)(f"Failed to read '{proc_version}'{wpman.hostmsg}:\n"
+                            f"{err.indent(2)}") from err
+
+        # Format: "Linux version <kver> (...)".
+        parts = contents.split()
+        if len(parts) < 3 or parts[0] != "Linux" or parts[1] != "version":
+            raise Error(f"Failed to parse kernel version from '{proc_version}'{wpman.hostmsg}:\n"
+                        f"  {contents.strip()!r}")
+
+        return parts[2]
 
 def get_kver_ktree(ktree: Path,
                    pman: ProcessManagerType | None = None,
@@ -246,8 +260,8 @@ def get_kver_ktree(ktree: Path,
         try:
             kver = wpman.run_verify_join(cmd)[0].strip()
         except Error as err:
-            raise type(err)(f"Cannot detect kernel version in '{ktree}':\n{err.indent(2)}\nMake sure "
-                            f"kernel sources are configured.") from err
+            raise type(err)(f"Cannot detect kernel version in '{ktree}':\n{err.indent(2)}\n"
+                            f"Make sure kernel sources are configured.") from err
 
     return kver
 
@@ -269,7 +283,7 @@ def get_kver_bin(path: Path, pman: ProcessManagerType | None = None) -> str:
     with ProcessManager.pman_or_local(pman) as wpman:
         stdout = wpman.run_verify_join(cmd)[0].strip()
 
-        msg = f"ran this command: {cmd}, got output:\n{stdout}"
+        msg = f"Ran this command: {cmd}, got output:\n{stdout}"
 
         matchobj = re.match(r".* Linux kernel.* executable[ ,].*", stdout)
         if not matchobj:
