@@ -18,6 +18,7 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 import re
 import os
 import stat
+import shutil
 import types
 import typing
 import inspect
@@ -68,6 +69,8 @@ if typing.TYPE_CHECKING:
             username: The username to use for SSH connections.
             privkey: The private key file to use for SSH authentication.
             timeout: The timeout value for SSH connections.
+            outdir: Path to the output directory.
+            replace: If True, remove the output directory contents before proceeding.
         """
 
         hostname: str
@@ -75,6 +78,7 @@ if typing.TYPE_CHECKING:
         privkey: str
         timeout: int | float
         outdir: Path
+        replace: bool
 
     class _TDCollectCommandTypedDict(TypedDict, total=False):
         """
@@ -242,6 +246,11 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
               name of the host the command is run on. See the '-H' option."""
     parser.add_argument("-o", "--outdir", type=Path, help=text)
 
+    text = """If the output directory already exists and is not empty, remove its contents before
+              proceeding. Without this option the tool will error out if the output directory
+              already exists and is not empty."""
+    parser.add_argument("--replace", action="store_true", help=text)
+
     if argcomplete is not None:
         getattr(argcomplete, "autocomplete")(parser)
 
@@ -301,6 +310,8 @@ def _get_cmdline_args(args: argparse.Namespace) -> _CmdlineArgsTypedDict:
         cmdl["outdir"] = outdir
     else:
         cmdl["outdir"] = Path(hostname)
+
+    cmdl["replace"] = getattr(args, "replace", False)
 
     return cmdl
 
@@ -694,6 +705,13 @@ def main():
 
     exitcode = -1
     try:
+        outdir = cmdl["outdir"]
+        if outdir.exists() and any(outdir.iterdir()):
+            if not cmdl["replace"]:
+                raise Error(f"Output directory '{outdir}' already exists and is not empty. Use "
+                            f"'--replace' to remove its contents and proceed.")
+            shutil.rmtree(outdir)
+
         with ProcessManager.get_pman(cmdl["hostname"], username=cmdl["username"],
                                      privkeypath=cmdl["privkey"],
                                      timeout=cmdl["timeout"]) as pman, \
