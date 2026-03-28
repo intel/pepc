@@ -32,7 +32,7 @@ except ImportError:
     # We can live without argcomplete, we only lose tab completions.
     argcomplete = None
 
-from pepclibs import CPUModels, CPUInfo, CPUOnline
+from pepclibs import CPUModels, CPUInfo, CPUOnline, CStates, PStates, Uncore
 import pepclibs.msr as _msr_pkg
 from pepclibs.msr import _FeaturedMSR, MSR
 from pepclibs.helperlibs import Logging, ArgParse, ProcessManager, YAML, Trivial
@@ -662,18 +662,6 @@ def _collect_msrs(cpuinfo: CPUInfo.CPUInfo,
     }
     config_yml["msr"] = msr_config
 
-def _online_all_cpus(pman: ProcessManagerType, cpuinfo: CPUInfo.CPUInfo):
-    """
-    Online all CPUs on the SUT.
-
-    Args:
-        pman: The process manager object that defines the SUT to online CPUs on.
-        cpuinfo: CPU information object for the SUT.
-    """
-
-    with CPUOnline.CPUOnline(pman=pman, cpuinfo=cpuinfo) as onl:
-        onl.online()
-
 def _prepare(pman: ProcessManagerType, cpuinfo: CPUInfo.CPUInfo):
     """
     Prepare the SUT for emulation data collection.
@@ -683,11 +671,31 @@ def _prepare(pman: ProcessManagerType, cpuinfo: CPUInfo.CPUInfo):
         cpuinfo: CPU information object for the SUT.
     """
 
-    _online_all_cpus(pman, cpuinfo)
+    with CPUOnline.CPUOnline(pman=pman, cpuinfo=cpuinfo) as onl:
+        onl.online()
 
-    pman.run("pepc pstates config --min-freq min --max-freq max --cpus all")
-    pman.run("pepc uncore config --min-freq min --max-freq max --cpus all")
-    pman.run("pepc cstates config --enable all --cpus all")
+    cpus = cpuinfo.get_cpus()
+
+    with PStates.PStates(pman=pman, cpuinfo=cpuinfo) as pstates:
+        try:
+            pstates.set_prop_cpus("min_freq", "min", cpus)
+            pstates.set_prop_cpus("max_freq", "max", cpus)
+        except ErrorNotSupported:
+            pass
+
+    dies = {pkg: cpuinfo.get_package_dies(pkg) for pkg in cpuinfo.get_packages()}
+    with Uncore.Uncore(pman=pman, cpuinfo=cpuinfo) as uncore:
+        try:
+            uncore.set_prop_dies("min_freq", "min", dies)
+            uncore.set_prop_dies("max_freq", "max", dies)
+        except ErrorNotSupported:
+            pass
+
+    with CStates.CStates(pman=pman, cpuinfo=cpuinfo) as cstates:
+        try:
+            cstates.enable_cstates(cpus=cpus, csnames="all")
+        except ErrorNotSupported:
+            pass
 
 def _do_main(pman: ProcessManagerType, outdir: Path, cpuinfo: CPUInfo.CPUInfo) -> int:
     """
