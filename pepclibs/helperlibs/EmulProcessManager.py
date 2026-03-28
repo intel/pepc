@@ -30,10 +30,9 @@ import typing
 import contextlib
 from pathlib import Path
 from pepclibs.helperlibs import Logging, LocalProcessManager, Trivial, YAML
-from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
+from pepclibs.helperlibs.Exceptions import Error
 from pepclibs.helperlibs.emul import _EmulFile
 from pepclibs.helperlibs.emul.EmulCommon import EMUL_CONFIG_FNAME
-from pepclibs.helperlibs._ProcessManagerBase import ProcWaitResultType
 from pepclibs.msr._SimpleMSR import _CPU_BYTEORDER
 
 if typing.TYPE_CHECKING:
@@ -171,7 +170,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         # Note: Directories are automatically created by 'EmulFileBase', so iterate only files.
         for filepath in self._iter_files_recursive(procfs_dir_path):
             # Example path values:
-            #   filepath:   /path/to/dataset/proc/cpuinfo
+            #   filepath:   /dataset_path/proc/cpuinfo
             #   relpath:    cpuinfo
             #   proc_path:  /proc/cpuinfo
             relpath = filepath.relative_to(procfs_dir_path)
@@ -244,7 +243,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         for relpath in rcopy.get("paths", []):
             # Example path values:
             #   relpath:        "kernel/debug/tpmi-0000:80:03.1"
-            #   rcopy_base:     "/path/to/dataset/sys/kernel/debug/tpmi-0000:80:03.1"
+            #   rcopy_base:     "/dataset_path/sys/kernel/debug/tpmi-0000:80:03.1"
             rcopy_base = sysfs_dir_path / relpath
             if not rcopy_base.exists():
                 cfgfile_path = self._dataset_path / EMUL_CONFIG_FNAME
@@ -253,7 +252,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             # Note: Directories are automatically created by 'EmulFileBase', so iterate only files.
             for filepath in self._iter_files_recursive(rcopy_base):
                 # Example path values:
-                #   filepath:   /path/to/dataset/sys/kernel/debug/tpmi-0000:80:03.1/tpmi-id-0c/mem_dump
+                #   filepath:   /dataset_path/sys/kernel/debug/tpmi-0000:80:03.1/tpmi-id-0c/mem_dump
                 #   relpath:    kernel/debug/tpmi-0000:80:03.1/tpmi-id-0c/mem_dump
                 #   sysfs_path: /sys/kernel/debug/tpmi-0000:80:03.1/tpmi-id-0c/mem_dump
                 relpath = filepath.relative_to(sysfs_dir_path)
@@ -381,113 +380,8 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
         self._init_emul_data(ydict)
 
-    def _extract_path(self, cmd: str) -> str:
-        """
-        Parse the command string and search for a path that exists within the base directory.
-
-        Args:
-            cmd: Command string to parse and search for an emulated path in.
-
-        Returns:
-            The path found in the command if it exists under the base path, otherwise an empty
-            string.
-        """
-
-        for split in cmd.split():
-            if Path(self._basepath / split).exists():
-                return split
-            for strip_chr in ("'/", "\"/"):
-                if Path(self._basepath / split.strip(strip_chr)).exists():
-                    return split.strip(strip_chr)
-
-        return ""
-
-    def _rebase_cmd(self, cmd: str) -> str | None:
-        """
-        Modify a command to reference emulated files by rebasing paths in the command. If the
-        command contains a path that can be emulated, replace it with the corresponding path under
-        the base emulation directory.
-
-        Args:
-            cmd: The command to rebase.
-
-        Returns:
-            The rebased command if a path is found in the emulation data, otherwise None.
-        """
-
-        # At the moment only a single path substitution is implemented.
-        path_str = self._extract_path(cmd)
-        if not path_str:
-            return None
-        return cmd.replace(path_str, f"{self._basepath}/{path_str.lstrip('/')}")
-
-    def run(self,
-            cmd: str | Path,
-            timeout: int | float | None = None,
-            capture_output: bool = True,
-            mix_output: bool = False,
-            join: bool = True,
-            output_fobjs: tuple[IO[str] | None, IO[str] | None] = (None, None),
-            cwd: str | Path | None = None,
-            intsh: bool | None = None,
-            env: dict[str, str] | None = None,
-            newgrp: bool = False) -> ProcWaitResultType:
-        """
-        Run command 'cmd' by rebasing any emulated paths and executing locally.
-
-        The arguments and return value are the same as 'ProcessManagerBase.run()'.
-        """
-
-        cmd = str(cmd)
-
-        _LOG.debug("Running the following emulated command:\n%s", cmd)
-
-        rebased_cmd = self._rebase_cmd(cmd)
-        if rebased_cmd is None:
-            raise ErrorNotSupported(f"Unsupported command: '{cmd}'")
-
-        return super().run(rebased_cmd, timeout=timeout, capture_output=capture_output,
-                           mix_output=mix_output, join=join, output_fobjs=output_fobjs,
-                           cwd=cwd, intsh=intsh, env=env, newgrp=newgrp)
-
-    def run_verify(self,
-                   cmd: str | Path,
-                   timeout: int | float | None = None,
-                   capture_output: bool = True,
-                   mix_output: bool = False,
-                   join: bool = True,
-                   output_fobjs: tuple[IO[str] | None, IO[str] | None] = (None, None),
-                   cwd: str | Path | None = None,
-                   intsh: bool | None = None,
-                   env: dict[str, str] | None = None,
-                   newgrp: bool = False) -> tuple[str | list[str], str | list[str]]:
-        """
-        Run command 'cmd' by rebasing any emulated paths and executing locally.
-
-        The arguments and return value are the same as 'ProcessManagerBase.run_verify()'.
-        """
-
-        cmd = str(cmd)
-
-        _LOG.debug("Running the following emulated command:\n%s", cmd)
-
-        rebased_cmd = self._rebase_cmd(cmd)
-        if rebased_cmd is None:
-            raise ErrorNotSupported(f"Unsupported command: '{cmd}'")
-
-        # Avoid running 'super().run_verify()', because it calls 'run()' of this class.
-        result = super().run(rebased_cmd, timeout=timeout, capture_output=capture_output,
-                             mix_output=mix_output, join=join, output_fobjs=output_fobjs,
-                             cwd=cwd, intsh=intsh, env=env, newgrp=newgrp)
-        if result.exitcode == 0:
-            return (result.stdout, result.stderr)
-
-        msg = self.get_cmd_failure_msg(cmd, result.stdout, result.stderr, result.exitcode,
-                                    timeout=timeout)
-        raise Error(msg)
-
     def _open(self, path: str | Path, mode: str) -> IO:
-        """Same as 'ProcessManagerBase.open()', but rebase 'path' to the base directory."""
+        """Implement 'open()'."""
 
         _LOG.debug("Opening file '%s' with mode '%s'", path, mode)
 
