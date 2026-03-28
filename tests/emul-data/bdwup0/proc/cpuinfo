@@ -5,7 +5,7 @@ model		: 71
 model name	: Intel(R) Xeon(R) CPU E3-1285L v4 @ 3.40GHz
 stepping	: 1
 microcode	: 0x13
-cpu MHz		: 3026.924
+cpu MHz		: 800.000
 cache size	: 6144 KB
 physical id	: 0
 siblings	: 8
@@ -33,7 +33,7 @@ model		: 71
 model name	: Intel(R) Xeon(R) CPU E3-1285L v4 @ 3.40GHz
 stepping	: 1
 microcode	: 0x13
-cpu MHz		: 2400.000
+cpu MHz		: 800.000
 cache size	: 6144 KB
 physical id	: 0
 siblings	: 8
@@ -61,7 +61,7 @@ model		: 71
 model name	: Intel(R) Xeon(R) CPU E3-1285L v4 @ 3.40GHz
 stepping	: 1
 microcode	: 0x13
-cpu MHz		: 2700.000
+cpu MHz		: 800.000
 cache size	: 6144 KB
 physical id	: 0
 siblings	: 8
@@ -89,7 +89,7 @@ model		: 71
 model name	: Intel(R) Xeon(R) CPU E3-1285L v4 @ 3.40GHz
 stepping	: 1
 microcode	: 0x13
-cpu MHz		: 2800.000
+cpu MHz		: 3392.372
 cache size	: 6144 KB
 physical id	: 0
 siblings	: 8
@@ -117,7 +117,7 @@ model		: 71
 model name	: Intel(R) Xeon(R) CPU E3-1285L v4 @ 3.40GHz
 stepping	: 1
 microcode	: 0x13
-cpu MHz		: 3093.025
+cpu MHz		: 3392.242
 cache size	: 6144 KB
 physical id	: 0
 siblings	: 8
@@ -145,7 +145,7 @@ model		: 71
 model name	: Intel(R) Xeon(R) CPU E3-1285L v4 @ 3.40GHz
 stepping	: 1
 microcode	: 0x13
-cpu MHz		: 3092.907
+cpu MHz		: 3393.419
 cache size	: 6144 KB
 physical id	: 0
 siblings	: 8
@@ -173,7 +173,7 @@ model		: 71
 model name	: Intel(R) Xeon(R) CPU E3-1285L v4 @ 3.40GHz
 stepping	: 1
 microcode	: 0x13
-cpu MHz		: 3094.774
+cpu MHz		: 3563.214
 cache size	: 6144 KB
 physical id	: 0
 siblings	: 8
@@ -201,7 +201,7 @@ model		: 71
 model name	: Intel(R) Xeon(R) CPU E3-1285L v4 @ 3.40GHz
 stepping	: 1
 microcode	: 0x13
-cpu MHz		: 800.000
+cpu MHz		: 2500.000
 cache size	: 6144 KB
 physical id	: 0
 siblings	: 8

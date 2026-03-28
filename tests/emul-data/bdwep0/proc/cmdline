@@ -1,1 +1,1 @@
-BOOT_IMAGE=http://powerlab/pxelinux/node/bdwep0/custom-kernel/kernel initrd=http://powerlab/pxelinux/node/bdwep0/custom-kernel/initramfs.img root=UUID=194c7dda-e126-4de2-a060-e6fc7c9ba4c2 ro  msr.allow_writes=on console=ttyS0,115200
+BOOT_IMAGE=http://dystopia/pxelinux/node/bdwep0/fedora43/kernel initrd=http://dystopia/pxelinux/node/bdwep0/fedora43/initramfs.img root=UUID=7a3bc2bc-b966-488a-9f01-cf2b09b9667d ro console=ttyS0,115200 msr.allow_writes=on

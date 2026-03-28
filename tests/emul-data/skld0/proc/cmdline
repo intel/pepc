@@ -1,0 +1,1 @@
+BOOT_IMAGE=http://dystopia/pxelinux/node/skld0/fedora43/kernel initrd=http://dystopia/pxelinux/node/skld0/fedora43/initramfs.img root=UUID=16f4fe76-1571-4103-aa7e-abca1484d912 ro console=ttyS4,115200 msr.allow_writes=on
