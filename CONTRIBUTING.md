@@ -4,17 +4,23 @@ This document provides guidelines for project coding style and conventions.
 
 ## Table of Contents
 
-- [Formatting & Whitespace](#formatting--whitespace)
+- [Line Length & Splitting](#line-length--splitting)
   - [Alignment of Method Signatures](#alignment-of-method-signatures)
   - [Alignment of Function Calls](#alignment-of-function-calls)
   - [Alignment of Log Messages](#alignment-of-log-messages)
+  - [Alignment of Assert Statements](#alignment-of-assert-statements)
+  - [Multi-line Strings](#multi-line-strings)
+- [Whitespace & Formatting](#whitespace--formatting)
   - [Quotes](#quotes)
   - [Spaces Around Operators](#spaces-around-operators)
   - [Blank Lines Between Methods](#blank-lines-between-methods)
   - [Blank Line After Docstring](#blank-line-after-docstring)
-  - [Exception Handling Formatting](#exception-handling-formatting)
   - [Trailing Spaces and Newlines](#trailing-spaces-and-newlines)
   - [Dictionary Format](#dictionary-format)
+- [Exception Handling](#exception-handling)
+  - [Exception Handling Approach](#exception-handling-approach)
+  - [Exception Re-raise Rules](#exception-re-raise-rules)
+  - [Exception Handling Formatting](#exception-handling-formatting)
 - [Documentation](#documentation)
   - [Docstrings Style](#docstrings-style)
   - [Documenting Exceptions in Docstrings](#documenting-exceptions-in-docstrings)
@@ -29,17 +35,15 @@ This document provides guidelines for project coding style and conventions.
   - [Import Statements](#import-statements)
 - [Type Annotations & Type System](#type-annotations--type-system)
   - [Return Type Annotations](#return-type-annotations)
-  - [Importing Types from typing](#importing-types-from-typing)
-  - [Guarding Typing Utilities with TYPE_CHECKING](#guarding-typing-utilities-with-type_checking)
+  - [Guarding Typing Imports with TYPE_CHECKING](#guarding-typing-imports-with-type_checking)
   - [Using TypedDict](#using-typeddict)
 - [API Design & Conventions](#api-design--conventions)
-  - [Prefer Tuple Over List](#prefer-tuple-over-list)
+  - [Prefer Immutable Collections](#prefer-immutable-collections)
   - [Avoid None as Default Value](#avoid-none-as-default-value)
-  - [Prefer Frozenset and Tuples for Immutable Sets/Sequences](#prefer-frozenset-and-tuples-for-immutable-setssequences)
   - [Converting from str to int/float](#converting-from-str-to-intfloat)
   - [Using Keyword Arguments](#using-keyword-arguments)
 
-## Formatting & Whitespace
+## Line Length & Splitting
 
 ### Alignment of Method Signatures
 
@@ -77,29 +81,8 @@ def long_function_name(self,
                     param3: bool = False) -> dict:
 ```
 
-**Algorithm:**
-
-1. Count indentation spaces. Typically it is 0 for top-level functions and 4 for methods inside a
-   class.
-2. Count method name character-by-character (underscore counts as 1 character)
-3. Use formula:
-   `Parameter Indent = Indent Spaces + 4 + Method Name Length + 1`,
-    where 4 is the length of "def ", and 1 is for the opening parenthesis `(`.
-
-**Example 1:**
-
-```python
-    def is_feature_supported(self,
-                             fname: str,
-                             cpus: Iterable[int] | Literal["all"] = "all") -> bool:
-```
-
-The `(` is at column 28, so all parameters start at column 29. Each parameter is on its own line.
-
 If the return type annotation is long, move it to the next line using a backslash `\` continuation.
-Align the return type at an 4-character boundary so it ends near the 100-character line limit.
-
-**Example 2:**
+Align the return type at a 4-character boundary so it ends near the 100-character line limit.
 
 ```python
     def read_multiple_features(self,
@@ -108,117 +91,49 @@ Align the return type at an 4-character boundary so it ends near the 100-charact
                                     Generator[tuple[int, dict[str, FeatureValueType]], None, None]:
 ```
 
-The `(` is at column 29, so all parameters start at column 30. One parameter per line.
-
-Note: Even if all parameters fit on a single line, if the return type annotation is long,
-it's better to break the signature into multiple lines and align the parameters vertically, with
-one parameter per line.
-
-**Example 3:**
-
-```python
-    def check_is_feature_enabled(self,
-                                 fname: str,
-                                 cpus: Iterable[int] | Literal["all"] = "all") -> \
-                                                        Generator[tuple[int, bool], None, None]:
-```
-
 ### Alignment of Function Calls
 
 When a function or method call does not fit on a single line, split it across multiple lines
 following the same alignment rules as method signatures.
 
-Use the opening parenthesis `(` as the anchor point:
+Fit as many arguments as possible on the first line. Continuation lines align at the column of
+`(` + 1.
 
-- Fit as many arguments as possible on the first line without exceeding 100 characters
-- When continuing on the next line, align arguments at the column of `(` + 1
-- All subsequent arguments must align vertically at the same column position
-
-**Algorithm:**
-
-1. Count indentation spaces
-2. Count characters up to and including the opening parenthesis `(`
-3. Argument indent = Indent spaces + Character count to opening parenthesis (inclusive)
-
-**Example 1:**
+**Examples:**
 
 ```python
         modules_iter = sysfs_io.read_paths_int(id_paths, what="module number",
                                                val_if_not_found=None)
-```
 
-The `(` is at column 47, so continuation arguments start at column 48.
-
-**Example 2:**
-
-```python
         for cpu, (path, module), (_, siblings_str) in zip(cpus_to_read, modules_iter,
                                                           siblings_iter):
 ```
 
-The `(` after `zip` is at column 58, so `siblings_iter` starts at column 59.
-
 ### Alignment of Log Messages
 
-Log messages follow the same alignment rules as function calls.
+Log messages follow the same alignment rules as function calls. If everything fits on one line,
+keep it on one line. When splitting, prefer moving all arguments to continuation lines. However,
+keeping some arguments on the first line is acceptable if it saves a line.
 
-If the entire log message (including all arguments) fits on one line within the
-100-character limit, keep it on one line.
-
-Only split the message across multiple lines if it exceeds 100 characters. When splitting, prefer to
-move all arguments to continuation lines, properly aligned. However, if moving all arguments to the
-next line would require an additional line (compared to keeping some on the first line), it's
-acceptable to keep some arguments on the same line as the format string.
-
-**Example 1:**
+**Examples:**
 
 ```python
     # Good: Fits on one line.
     _LOG.debug("Cached: Read: CPU%d: MSR 0x%x%s", cpu, regaddr, self._pman.hostmsg)
 
-    # Bad: Unnecessarily split when it fits on one line.
-    _LOG.debug("Cached: Read: CPU%d: MSR 0x%x%s",
-               cpu, regaddr, self._pman.hostmsg)
-```
-
-**Example 2:**
-
-```python
-    # Good: All arguments on the next line when the message is too long.
+    # Good: All arguments on the next line.
     _LOG.debug("Remote: Read: MSR 0x%x from CPUs %s%s, the command is: %s",
                regaddr, cpus_range, self._pman.hostmsg, cmd)
 
-    # Bad: Some arguments on the same line as format string.
-    _LOG.debug("Remote: Read: MSR 0x%x from CPUs %s%s, the command is: %s", regaddr, cpus_range,
-               self._pman.hostmsg, cmd)
-```
-
-**Example 3:**
-
-```python
-    # Good: Keeps the same number of lines by having some arguments on the first line.
+    # Good: Some arguments on the first line to save a line.
     _LOG.debug("Transaction %d: %s: %s: CPU%d: MSR 0x%x: 0x%x to '%s'%s, command: %s", index,
                transaction_type, operation_type, cpu, addr, regval, path, self._pman.hostmsg, cmd)
-
-    # Bad: Adds an extra line without improving readability.
-    _LOG.debug("Transaction %d: %s: %s: CPU%d: MSR 0x%x: 0x%x to '%s'%s, command: %s",
-               index, transaction_type, operation_type, cpu, addr, regval, path, self._pman.hostmsg,
-               cmd)
 ```
 
 ### Alignment of Assert Statements
 
-When an assert statement with a message does not fit on a single line, split it across multiple
-lines following the same alignment principle used for function calls.
-
-Use the space after the 'assert' keyword as the anchor point. The continuation line with the
-assertion message should align with the first character of the condition (right after 'assert ').
-
-**Algorithm:**
-
-1. Count indentation spaces
-2. Add 7 for 'assert ' (6 characters + 1 space)
-3. Continuation line indent = Indent spaces + 7
+When an assert statement does not fit on one line, the continuation line aligns right after
+'assert ' (indent + 7).
 
 **Examples:**
 
@@ -242,30 +157,40 @@ assertion message should align with the first character of the condition (right 
 
 ### Multi-line Strings
 
-When splitting long strings (f-strings, return statements, string concatenations) across multiple
-lines, aim to keep the first line as close to the 100-character limit as possible. This maximizes
-readability while staying within the line length constraint.
+Keep the first line as close to the 100-character limit as possible. Each continued line should be
+its own f-string, aligned with the opening quote.
 
-Use backslash `\` continuation for multi-line strings. When using f-strings, each line should be its
-own f-string. Align continuation lines with the opening quote of the first string.
+Use `\` continuation only outside parentheses (where omitting it would be a syntax error). Inside
+parentheses, `\` is not needed — Python handles implicit string concatenation automatically.
 
 **Examples:**
 
 ```python
-    # Good: First line close to 100 chars, natural break point.
+    # Good: Outside parens (return without parens), \ is required.
     return f"\nThe '{fpath}' file{self._pman.hostmsg} indicates that the '{opt}' kernel " \
            f"boot parameter is set, this may be the reason"
+
+    # Good: Inside parens (function argument), \ is not needed.
+    raise Error(f"The '{fpath}' file{self._pman.hostmsg} indicates that the '{opt}' kernel "
+                f"boot parameter is set, this may be the reason")
+
     # Bad: First line too short (unnecessarily splits early).
     return f"\nThe '{fpath}' file{self._pman.hostmsg} indicates that " \
            f"the '{opt}' kernel boot parameter is set, this may be the reason"
+
     # Bad: Exceeds 100 characters on one line.
     return f"\nThe '{fpath}' file{self._pman.hostmsg} indicates that the '{opt}' kernel boot parameter is set, this may be the reason"
+
+    # Bad: Using \ inside parentheses (redundant).
+    raise Error(f"The '{fpath}' file{self._pman.hostmsg} indicates that the '{opt}' kernel " \
+                f"boot parameter is set, this may be the reason")
 ```
+
+## Whitespace & Formatting
 
 ### Quotes
 
-Prefer using double quotes whenever possible. Use single quotes only when the string contains double
-quotes that would require escaping. Or when you have to.
+Prefer double quotes. Use single quotes only when the string contains double quotes.
 
 ### Spaces Around Operators
 
@@ -317,30 +242,6 @@ Use one blank line between method definitions within a class. Do not use multipl
 Always include a blank line between a function/method docstring and its body, unless both the
 docstring and body are one-liners, in which case the blank line is optional.
 
-### Exception Handling Formatting
-
-Do not add blank lines before `except:`, `finally:`, or `else:` clauses in try/except blocks.
-
-```python
-# Good
-try:
-    do_something()
-except Error:
-    handle_error()
-finally:
-    cleanup()
-
-# Bad
-try:
-    do_something()
-
-except Error:
-    handle_error()
-
-finally:
-    cleanup()
-```
-
 ### Trailing Spaces and Newlines
 
 Do not include trailing spaces at the end of lines. Ensure that files end with a single newline character.
@@ -374,6 +275,42 @@ Vertical alignment of values is optional. If you choose to align values, add spa
         "cent_os" : _FEDORA_PKGINFO,
     }
 ```
+
+## Exception Handling
+
+### Exception Handling Approach
+
+The project uses only `Error` and its subclasses (defined in `Exceptions.py`) as the exception
+type. Standard Python exceptions like `OSError` are intercepted at the lowest levels and converted
+to `Error` or an appropriate subclass. A non-`Error` exception escaping a pepc method is a bug.
+
+### Exception Re-raise Rules
+
+When re-raising, two cases apply:
+
+**Same semantic type** — use `type(err)(...)` to preserve the exact subclass. `except Error`
+catches subclasses like `ErrorNotFound`; hardcoding `Error(...)` would lose that.
+
+```python
+# Wrong: loses the original subclass.
+except Error as err:
+    raise Error(f"Failed to do X:\n{err.indent(2)}") from err
+
+# Correct: preserves the original subclass.
+except Error as err:
+    raise type(err)(f"Failed to do X:\n{err.indent(2)}") from err
+```
+
+**Deliberate type change** — use the target type directly and document it in `Raises:`.
+
+```python
+except ErrorNotFound as err:
+    raise ErrorNotSupported(f"Feature not available:\n{err.indent(2)}") from err
+```
+
+### Exception Handling Formatting
+
+Do not add blank lines before `except:`, `finally:`, or `else:` clauses.
 
 ## Documentation
 
@@ -453,13 +390,10 @@ def get_cpu_count(self) -> int:
 
 ### Documenting Exceptions in Docstrings
 
-No need to document the 'Error' exception in docstrings, as it is a common base class for all
-exceptions in the project. However, document all other exceptions that a public method can raise. In
-case of private methods, it is not necessary to document exceptions in docstrings, but it is
-recommended to document them if it does not make docstrings too repetitive or if the case is tricky.
+Do not document `Error` itself — it is the common base class. Document subclasses that a public
+method can raise. For private methods, document exceptions when helpful.
 
-**Exception Description Style**: Use declarative statements instead of conditional "if" clauses when
-describing when exceptions are raised.
+Use declarative statements, not conditional "if" clauses:
 
 **Example:**
 
@@ -475,15 +409,8 @@ describing when exceptions are raised.
 
 ### Docstring Continuation Line Alignment
 
-When documenting arguments, exceptions, attributes, return values, or other structured docstring
-elements, continuation lines must align with the text that follows the colon on the first line.
-
-**Alignment Rule**: Find the position of the colon `:`, add 1 to account for the space after the
-colon, and align all continuation lines at that column position.
-
-**Formula**: `Continuation column = colon column + 2` (colon itself + space after colon)
-
-This alignment ensures visual consistency and makes it easier to scan docstrings for information.
+Continuation lines in structured docstring elements (`Args:`, `Raises:`, etc.) align with the text
+after the colon (`continuation column = colon column + 2`).
 
 **Examples:**
 
@@ -525,10 +452,8 @@ def write(self, regaddr: int, regval: int, cpus: Sequence[int]):
 
 ### Imperative Voice
 
-Use imperative voice in docstrings and comments. This style is concise and consistent with Linux
-kernel documentation practices. Start docstrings with imperative verbs like "Provide", "Return",
-"Check", or "Initialize" rather than declarative forms like "This module provides" or "This method
-returns".
+Use imperative voice in docstrings and comments. Start with verbs like "Provide", "Return",
+"Check", "Initialize".
 
 **Examples:**
 
@@ -545,21 +470,15 @@ returns".
 
 ### Comment Punctuation
 
-All comments in the code should end with a period (`.`), even if they are single-line comments
-containing only one sentence. This includes inline comments, standalone comments, and multi-line
-comment blocks.
+All comments should end with a period (`.`).
 
 ### Messages
 
 #### Small vs Capital Letters in Messages
 
-Every log message and exception message should start with a capital letter. One-line messages do
-not need to end with a period, but multi-line messages or messages with multiple sentences should
-use periods.
-
-When a message contains a colon, the text immediately following the colon should also start with a
-capital letter. This applies to all colons in the message, creating a consistent hierarchical
-structure.
+Every log and exception message should start with a capital letter. After each colon in a message,
+the next word should also be capitalized. One-line messages do not need a trailing period; multi-line
+messages should use periods.
 
 **Examples:**
 
@@ -611,13 +530,11 @@ MAX_RETRIES = 5
 
 ### Import Statements
 
-When importing multiple symbols from the same module, prefer using multiple separate `import`
-statements rather than using parentheses for multi-line imports. This makes it easier to grep for
-specific imports and understand dependencies.
+When importing multiple symbols from the same module, use multiple separate `import` statements
+rather than parentheses for multi-line imports. This makes imports easier to grep.
 
-**Rationale**: Separate import statements allow for easy searching with tools like `grep` to find
-where specific symbols are imported from. Each import line is self-contained and can be found with
-a simple text search.
+Pack as many names as fit within the 100-character line limit per statement. When they don't all
+fit, start a new `from X import` statement for the remainder, again packing as many as fit.
 
 **Good:**
 
@@ -633,14 +550,14 @@ from pepclibs.helperlibs.Exceptions import (Error, ErrorNotSupported, ErrorPermi
                                             ErrorPerCPU)
 ```
 
-**Guidelines:**
+**Also bad (one name per line):**
 
-- If all imports fit on one line within the 100-character limit, use a single import statement.
-- If imports don't fit on one line, split them into multiple import statements from the same
-  module.
-- Group related imports together (e.g., base exceptions on one line, specialized exceptions on
-  another).
-- Maintain alphabetical ordering within each import statement when practical.
+```python
+from pepclibs.helperlibs.Exceptions import Error
+from pepclibs.helperlibs.Exceptions import ErrorNotSupported
+from pepclibs.helperlibs.Exceptions import ErrorPermissionDenied
+from pepclibs.helperlibs.Exceptions import ErrorPerCPU
+```
 
 ## Type Annotations & Type System
 
@@ -649,40 +566,17 @@ from pepclibs.helperlibs.Exceptions import (Error, ErrorNotSupported, ErrorPermi
 If a method does not return anything (i.e., it returns `None`), do not include a return type
 annotation at all.
 
-### Importing Types from typing
+### Guarding Typing Imports with TYPE_CHECKING
 
-Import types from `typing` that are used only for type annotations under the `typing.TYPE_CHECKING`
-guard. This prevents runtime overhead and circular import issues.
-
-**Examples:**
-
-```python
-import typing
-
-if typing.TYPE_CHECKING:
-    from typing import Generator, TypedDict
-    from some.module import SomeType
-```
-
-### Guarding Typing Utilities with TYPE_CHECKING
-
-Typing utilities from the `typing` module that are only used for type checking should always be
-imported under the `typing.TYPE_CHECKING` guard. This ensures zero runtime overhead, since these
-utilities are only used by type checkers and not during actual program execution.
-
-Guard all utilities, for example:
-
-- `cast()`: Type casting function
-- `TypedDict`: Base class for typed dictionaries
-- `Generator`, `Sequence`, `Iterable`, etc.: Generic types for annotations
-
-**Examples:**
+Import typing utilities (`cast`, `TypedDict`, `Generator`, `Sequence`, etc.) under the
+`typing.TYPE_CHECKING` guard to avoid runtime overhead.
 
 ```python
 import typing
 
 if typing.TYPE_CHECKING:
     from typing import cast, Generator, TypedDict, Sequence
+    from some.module import SomeType
 
 # Usage of cast in code.
 if typing.TYPE_CHECKING:
@@ -693,25 +587,10 @@ else:
 
 ### Using TypedDict
 
-Prefer using `TypedDict` over plain `dict` when the dictionary structure is well-defined and
-consistent. This provides better type safety and improves code documentation.
+Prefer `TypedDict` over plain `dict` when the structure is well-defined. Name with a `TypedDict`
+suffix. Include a docstring with summary and `Attributes:` section.
 
-Naming Convention: `TypedDict` type names should have the `TypedDict` suffix to clearly indicate
-they are TypedDict types.
-
-**Documentation:**
-
-TypedDict classes must have a docstring with:
-
-- A short summary describing what the TypedDict represents
-- An `Attributes:` section documenting each field
-
-There should be a blank line between the docstring summary and the `Attributes:` section.
-
-**Using `total=False`:**
-
-When building dictionaries key by key, use `total=False` in the TypedDict definition. This is more
-convenient than initializing all keys upfront or using type casting.
+Use `total=False` when building dictionaries key by key.
 
 **Examples:**
 
@@ -738,10 +617,12 @@ if typing.TYPE_CHECKING:
 
 ## API Design & Conventions
 
-### Prefer Tuple Over List
+### Prefer Immutable Collections
 
-One of the patterns is to pass a collection of items to a method. For example, passing one or two CPU
-numbers to a method. In such cases, prefer using a tuple instead of a list. For example:
+Prefer `tuple` over `list` and `frozenset` over `set` for collections that should not be modified
+after creation.
+
+When passing a small collection of items (e.g., CPU numbers), prefer a tuple over a list:
 
 ```python
     def read(self,
@@ -759,14 +640,11 @@ When calling this method only for CPU 0, use a tuple for the `cpus` argument:
 
 ### Avoid None as Default Value
 
-When defining optional parameters with default values, avoid using `None` as the default value if
-it is possible to use a special value of the same type as the parameter.
+Avoid `None` as a default value when a same-type sentinel works:
 
-**Guidelines:**
-
-- For strings: use `""` (empty string) as the default value
-- For integers: use an unused number, such as `-1`
-- For sequences: use an empty tuple `()`
+- Strings: `""`
+- Integers: `-1`
+- Sequences: `()`
 
 **Example:**
 
@@ -780,23 +658,14 @@ it is possible to use a special value of the same type as the parameter.
             cpus = self.get_all_cpus()
 ```
 
-### Prefer Frozenset and Tuples for Immutable Sets/Sequences
-
-When defining a collection of items that should not be modified after creation, prefer using
-`frozenset` instead of `set` and `tuple` instead of `list`.
-
 ### Converting from str to int/float
 
-When converting a string to an integer or float, prefer using `Trivial.str_to_int()`,
-`Trivial.str_to_float()`, or `Trivial.str_to_num()` instead of the built-in `int()` or `float()`.
-These methods provide better error handling and support for different number formats. Use the
-built-in methods only if it is already verified that the string is a valid number and does not
-require special handling.
+Prefer `Trivial.str_to_int()`, `Trivial.str_to_float()`, or `Trivial.str_to_num()` over built-in
+`int()`/`float()`. Use built-ins only when the string is already verified to be valid.
 
 ### Using Keyword Arguments
 
-If a method signature includes keyword arguments, use keyword arguments when calling the method, and
-maintain the same order as in the signature. For example:
+Use keyword arguments when calling methods, in the same order as the signature:
 
 ```python
     def read(self,
@@ -805,7 +674,7 @@ maintain the same order as in the signature. For example:
              verify: bool = False) -> Generator[tuple[int, int], None, None]:
 ```
 
-When calling this method, use keyword arguments in the same order:
+Call with keyword arguments:
 
 ```python
     for cpu, val in self.read(regaddr=0x4E70, cpus=cpus, verify=True):

@@ -117,6 +117,11 @@ class MSR(_SimpleMSR.SimpleMSR):
         self._enable_cache = enable_cache
         self._enable_scope = True
 
+        if typing.TYPE_CHECKING:
+            # Suppress "self._pman may not be initialized" type checker warning for the following
+            # code - it is initialized by the parent class constructor.
+            assert pman is not None
+
         if pman.is_emulated:
             # The emulation layer does not support MSR scope, so disable the scope optimization, and
             # make sure writes go to all CPUs, not just one CPU in the scope.
