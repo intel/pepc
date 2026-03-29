@@ -4,9 +4,9 @@
 # Copyright (C) 2022-2026 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
-# Authors: Antti Laakso <antti.laakso@linux.intel.com>
+# Authors: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
+#          Antti Laakso <antti.laakso@linux.intel.com>
 #          Niklas Neronin <niklas.neronin@intel.com>
-#          Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
 A process manager that emulates a SUT for testing purposes.
@@ -403,12 +403,6 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         mode = self._openb_mode_adjust(mode)
         return self._open(path, mode)
 
-    def mkdir(self, dirpath: str | Path, parents: bool = False, exist_ok: bool = False):
-        """Same as 'ProcessManagerBase.mkdir()', but rebase 'path' to the base directory."""
-
-        dirpath = self._basepath / str(dirpath).lstrip("/")
-        super().mkdir(dirpath, parents=parents, exist_ok=exist_ok)
-
     def lsdir(self,
               path: str | Path,
               sort_by: LsdirSortbyType = "none",
@@ -458,16 +452,3 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
         path = Path(self._basepath / str(path).lstrip("/"))
         return super().is_socket(path)
-
-    def mkdtemp(self, prefix: str = "", basedir: str | Path | None = None) -> Path:
-        """
-        Same as 'ProcessManagerBase.mkdtemp()', but create the temporary directory under the
-        emulated files' base directory.
-        """
-
-        path = self._basepath
-        if basedir:
-            path = path / basedir
-
-        temppath = super().mkdtemp(prefix=prefix, basedir=path)
-        return temppath.relative_to(self._basepath)
