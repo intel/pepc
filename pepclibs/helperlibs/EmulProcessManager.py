@@ -30,7 +30,7 @@ import typing
 import contextlib
 from pathlib import Path
 from pepclibs.helperlibs import Logging, LocalProcessManager, Trivial, YAML
-from pepclibs.helperlibs.Exceptions import Error
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound
 from pepclibs.helperlibs.emul import _EmulFile
 from pepclibs.helperlibs.emul.EmulCommon import EMUL_CONFIG_FNAME
 from pepclibs.msr._SimpleMSR import _CPU_BYTEORDER
@@ -389,7 +389,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         if path in self._emd["files"]:
             return self._emd["files"][path].open(mode)
 
-        return _EmulFile.get_emul_file(path, self._basepath).open(mode)
+        raise ErrorNotFound(f"File '{path}' not found in emulated filesystem{self.hostmsg}")
 
     def open(self, path: str | Path, mode: str) -> IO[str]:
         """Refer to 'ProcessManagerBase.open()'."""
