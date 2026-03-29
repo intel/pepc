@@ -34,7 +34,7 @@ class EmulFileBase:
                  path: Path,
                  basepath: Path,
                  readonly: bool = False,
-                 data: str | bytes | None = None):
+                 data: str | bytes = ""):
         """
         Initialize a class instance.
 
@@ -42,8 +42,7 @@ class EmulFileBase:
             path: Path to the file to emulate.
             basepath: Path to the base directory (where the emulated files are stored).
             readonly: Whether the emulated file is read-only.
-            data: The initial data to populate the emulated file with. Create an empty file if empty
-                  string, do not create an empty file if None.
+            data: The initial data to populate the emulated file with.
         """
 
         self.path = path
@@ -56,15 +55,14 @@ class EmulFileBase:
         # ensures the file is placed under the base path.
         self.fullpath = self.basepath / str(self.path).lstrip("/")
 
-        if data is not None:
-            try:
-                if not self.fullpath.parent.exists():
-                    self.fullpath.parent.mkdir(parents=True)
-                with self._open("w") as fobj:
-                    fobj.write(data)
-            except OSError as err:
-                errmsg = Error(str(err)).indent(2)
-                raise Error(f"Failed to prepare '{self.fullpath}':\n{errmsg}") from err
+        try:
+            if not self.fullpath.parent.exists():
+                self.fullpath.parent.mkdir(parents=True)
+            with self._open("w") as fobj:
+                fobj.write(data)
+        except OSError as err:
+            errmsg = Error(str(err)).indent(2)
+            raise Error(f"Failed to prepare '{self.fullpath}':\n{errmsg}") from err
 
     def _open(self, mode: str) -> IO:
         """

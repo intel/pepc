@@ -29,7 +29,7 @@ if typing.TYPE_CHECKING:
 
 def get_emul_file(path: str,
                   basepath: Path,
-                  data: Any = None,
+                  data: Any = "",
                   readonly: bool = False) -> EmulFileType:
     """
     Create and return an emulated file object for the specified path.
@@ -37,17 +37,12 @@ def get_emul_file(path: str,
     Args:
         path: Path to the file to emulate.
         basepath: Directory where emulated files should be created.
-        data: Optional data to populate the emulated file with. Create an empty file if empty
-              string, do not create the file if None.
+        data: Data to populate the emulated file with.
         readonly: Whether the emulated file should be read-only.
 
     Returns:
         An emulated file object representing the specified file.
     """
-
-    if data is None:
-        # A pre-created file in the base directory.
-        return _EmulFileBase.EmulFileBase(Path(path), basepath, readonly=readonly, data=data)
 
     if path == "/proc/cpuinfo" or path.endswith("/sys/devices/system/cpu/online"):
         return _CPUOnlineEmulFile.CPUOnlineEmulFile(Path(path), basepath, readonly=readonly,

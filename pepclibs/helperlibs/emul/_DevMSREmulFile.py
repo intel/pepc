@@ -62,7 +62,7 @@ class DevMSREmulFile(_EmulFileBase.EmulFileBase):
                   addresses to their byte values.
         """
 
-        super().__init__(path, basepath, readonly=readonly, data=None)
+        super().__init__(path, basepath, readonly=readonly)
 
         assert data is not None
         self._populate_sparse_file(data)
