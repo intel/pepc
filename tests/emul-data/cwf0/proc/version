@@ -1,1 +1,1 @@
-Linux version 6.18.8-200.fc43.x86_64 (mockbuild@cfe40098c4e74ad0a9758e089ab3dc12) (gcc (GCC) 15.2.1 20260123 (Red Hat 15.2.1-7), GNU ld version 2.45.1-4.fc43) #1 SMP PREEMPT_DYNAMIC Fri Jan 30 20:23:28 UTC 2026
+Linux version 7.0.0-rc4-00002-g8ba1fe498f35 (abityuts@futurelab) (gcc (GCC) 15.2.1 20260123 (Red Hat 15.2.1-7), GNU ld version 2.45.1-4.fc43) #24 SMP PREEMPT_DYNAMIC Mon Mar 23 07:46:51 UTC 2026

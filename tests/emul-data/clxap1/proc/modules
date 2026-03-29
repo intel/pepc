@@ -1,0 +1,6 @@
+nvme 73728 3 - Live 0xffffffffc027d000
+nvme_core 286720 4 nvme, Live 0xffffffffc0263000
+nvme_keyring 20480 1 nvme_core, Live 0xffffffffc025e000
+nvme_auth 32768 1 nvme_core, Live 0xffffffffc025f000
+hkdf 12288 1 nvme_auth, Live 0xffffffffc025c000
+sunrpc 962560 1 - Live 0xffffffffc020d000

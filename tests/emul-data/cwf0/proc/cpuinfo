@@ -5,7 +5,7 @@ model		: 221
 model name	: Intel(R) Xeon(R) 6990E+
 stepping	: 1
 microcode	: 0x810000f0
-cpu MHz		: 799.936
+cpu MHz		: 799.933
 cache size	: 589824 KB
 physical id	: 0
 siblings	: 288
@@ -5857,7 +5857,7 @@ model		: 221
 model name	: Intel(R) Xeon(R) 6990E+
 stepping	: 1
 microcode	: 0x810000f0
-cpu MHz		: 800.000
+cpu MHz		: 799.490
 cache size	: 589824 KB
 physical id	: 0
 siblings	: 288
@@ -6025,7 +6025,7 @@ model		: 221
 model name	: Intel(R) Xeon(R) 6990E+
 stepping	: 1
 microcode	: 0x810000f0
-cpu MHz		: 800.000
+cpu MHz		: 799.574
 cache size	: 589824 KB
 physical id	: 0
 siblings	: 288
@@ -6053,7 +6053,7 @@ model		: 221
 model name	: Intel(R) Xeon(R) 6990E+
 stepping	: 1
 microcode	: 0x810000f0
-cpu MHz		: 800.000
+cpu MHz		: 799.952
 cache size	: 589824 KB
 physical id	: 0
 siblings	: 288
@@ -6137,7 +6137,7 @@ model		: 221
 model name	: Intel(R) Xeon(R) 6990E+
 stepping	: 1
 microcode	: 0x810000f0
-cpu MHz		: 800.000
+cpu MHz		: 800.035
 cache size	: 589824 KB
 physical id	: 0
 siblings	: 288
@@ -6249,7 +6249,7 @@ model		: 221
 model name	: Intel(R) Xeon(R) 6990E+
 stepping	: 1
 microcode	: 0x810000f0
-cpu MHz		: 800.000
+cpu MHz		: 798.916
 cache size	: 589824 KB
 physical id	: 0
 siblings	: 288
@@ -8993,7 +8993,7 @@ model		: 221
 model name	: Intel(R) Xeon(R) 6990E+
 stepping	: 1
 microcode	: 0x810000f0
-cpu MHz		: 800.000
+cpu MHz		: 799.896
 cache size	: 589824 KB
 physical id	: 1
 siblings	: 288
@@ -11233,7 +11233,7 @@ model		: 221
 model name	: Intel(R) Xeon(R) 6990E+
 stepping	: 1
 microcode	: 0x810000f0
-cpu MHz		: 800.814
+cpu MHz		: 800.000
 cache size	: 589824 KB
 physical id	: 1
 siblings	: 288
@@ -12689,7 +12689,7 @@ model		: 221
 model name	: Intel(R) Xeon(R) 6990E+
 stepping	: 1
 microcode	: 0x810000f0
-cpu MHz		: 799.512
+cpu MHz		: 800.000
 cache size	: 589824 KB
 physical id	: 1
 siblings	: 288
@@ -12773,7 +12773,7 @@ model		: 221
 model name	: Intel(R) Xeon(R) 6990E+
 stepping	: 1
 microcode	: 0x810000f0
-cpu MHz		: 3206.152
+cpu MHz		: 800.000
 cache size	: 589824 KB
 physical id	: 1
 siblings	: 288
@@ -12885,7 +12885,7 @@ model		: 221
 model name	: Intel(R) Xeon(R) 6990E+
 stepping	: 1
 microcode	: 0x810000f0
-cpu MHz		: 783.512
+cpu MHz		: 800.000
 cache size	: 589824 KB
 physical id	: 1
 siblings	: 288
@@ -12913,7 +12913,7 @@ model		: 221
 model name	: Intel(R) Xeon(R) 6990E+
 stepping	: 1
 microcode	: 0x810000f0
-cpu MHz		: 755.952
+cpu MHz		: 800.000
 cache size	: 589824 KB
 physical id	: 1
 siblings	: 288

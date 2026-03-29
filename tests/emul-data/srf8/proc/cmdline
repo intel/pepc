@@ -1,0 +1,1 @@
+BOOT_IMAGE=http://craftlab/pxelinux/node/srf8/fedora42/kernel initrd=http://craftlab/pxelinux/node/srf8/fedora42/initramfs.img root=UUID=229ae5b1-4bf6-4744-9254-94a6d1f9d869 ro console=ttyS0,115200 msr.allow_writes=on

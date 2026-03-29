@@ -1,5 +1,4 @@
 # Format: <ro|rw>|<sysfs_path>|<value>
-rw|/sys/module/pcie_aspm/parameters/policy|[default] performance powersave powersupersave 
 ro|/sys/devices/system/cpu/cpu0/topology/die_id|0
 ro|/sys/devices/system/cpu/cpu10/topology/die_id|0
 ro|/sys/devices/system/cpu/cpu11/topology/die_id|0
@@ -164,6 +163,7 @@ ro|/sys/devices/system/cpu/online|0-15
 ro|/sys/devices/system/cpu/present|0-15
 ro|/sys/devices/system/node/online|0
 ro|/sys/devices/system/node/node0/cpulist|0-15
+rw|/sys/module/pcie_aspm/parameters/policy|[default] performance powersave powersupersave 
 rw|/sys/devices/system/cpu/cpu10/online|1
 rw|/sys/devices/system/cpu/cpu11/online|1
 rw|/sys/devices/system/cpu/cpu12/online|1
@@ -180,7 +180,7 @@ rw|/sys/devices/system/cpu/cpu7/online|1
 rw|/sys/devices/system/cpu/cpu8/online|1
 rw|/sys/devices/system/cpu/cpu9/online|1
 rw|/sys/devices/system/cpu/cpu0/cpuidle/state0/above|0
-rw|/sys/devices/system/cpu/cpu0/cpuidle/state0/below|891
+rw|/sys/devices/system/cpu/cpu0/cpuidle/state0/below|127
 rw|/sys/devices/system/cpu/cpu0/cpuidle/state0/default_status|enabled
 rw|/sys/devices/system/cpu/cpu0/cpuidle/state0/desc|CPUIDLE CORE POLL IDLE
 rw|/sys/devices/system/cpu/cpu0/cpuidle/state0/disable|0
@@ -189,10 +189,10 @@ rw|/sys/devices/system/cpu/cpu0/cpuidle/state0/name|POLL
 rw|/sys/devices/system/cpu/cpu0/cpuidle/state0/power|4294967295
 rw|/sys/devices/system/cpu/cpu0/cpuidle/state0/rejected|0
 rw|/sys/devices/system/cpu/cpu0/cpuidle/state0/residency|0
-rw|/sys/devices/system/cpu/cpu0/cpuidle/state0/time|19080
-rw|/sys/devices/system/cpu/cpu0/cpuidle/state0/usage|891
-rw|/sys/devices/system/cpu/cpu0/cpuidle/state1/above|39
-rw|/sys/devices/system/cpu/cpu0/cpuidle/state1/below|229
+rw|/sys/devices/system/cpu/cpu0/cpuidle/state0/time|2747
+rw|/sys/devices/system/cpu/cpu0/cpuidle/state0/usage|128
+rw|/sys/devices/system/cpu/cpu0/cpuidle/state1/above|14
+rw|/sys/devices/system/cpu/cpu0/cpuidle/state1/below|290
 rw|/sys/devices/system/cpu/cpu0/cpuidle/state1/default_status|enabled
 rw|/sys/devices/system/cpu/cpu0/cpuidle/state1/desc|MWAIT 0x00
 rw|/sys/devices/system/cpu/cpu0/cpuidle/state1/disable|0
@@ -201,10 +201,10 @@ rw|/sys/devices/system/cpu/cpu0/cpuidle/state1/name|C1
 rw|/sys/devices/system/cpu/cpu0/cpuidle/state1/power|0
 rw|/sys/devices/system/cpu/cpu0/cpuidle/state1/rejected|0
 rw|/sys/devices/system/cpu/cpu0/cpuidle/state1/residency|2
-rw|/sys/devices/system/cpu/cpu0/cpuidle/state1/time|84230
-rw|/sys/devices/system/cpu/cpu0/cpuidle/state1/usage|875
-rw|/sys/devices/system/cpu/cpu0/cpuidle/state2/above|409
-rw|/sys/devices/system/cpu/cpu0/cpuidle/state2/below|240
+rw|/sys/devices/system/cpu/cpu0/cpuidle/state1/time|97144
+rw|/sys/devices/system/cpu/cpu0/cpuidle/state1/usage|4277
+rw|/sys/devices/system/cpu/cpu0/cpuidle/state2/above|523
+rw|/sys/devices/system/cpu/cpu0/cpuidle/state2/below|222
 rw|/sys/devices/system/cpu/cpu0/cpuidle/state2/default_status|enabled
 rw|/sys/devices/system/cpu/cpu0/cpuidle/state2/desc|MWAIT 0x01
 rw|/sys/devices/system/cpu/cpu0/cpuidle/state2/disable|0
@@ -213,21 +213,21 @@ rw|/sys/devices/system/cpu/cpu0/cpuidle/state2/name|C1E
 rw|/sys/devices/system/cpu/cpu0/cpuidle/state2/power|0
 rw|/sys/devices/system/cpu/cpu0/cpuidle/state2/rejected|0
 rw|/sys/devices/system/cpu/cpu0/cpuidle/state2/residency|20
-rw|/sys/devices/system/cpu/cpu0/cpuidle/state2/time|263686
-rw|/sys/devices/system/cpu/cpu0/cpuidle/state2/usage|1422
-rw|/sys/devices/system/cpu/cpu0/cpuidle/state3/above|0
-rw|/sys/devices/system/cpu/cpu0/cpuidle/state3/below|0
+rw|/sys/devices/system/cpu/cpu0/cpuidle/state2/time|349557
+rw|/sys/devices/system/cpu/cpu0/cpuidle/state2/usage|2252
+rw|/sys/devices/system/cpu/cpu0/cpuidle/state3/above|2
+rw|/sys/devices/system/cpu/cpu0/cpuidle/state3/below|6
 rw|/sys/devices/system/cpu/cpu0/cpuidle/state3/default_status|disabled
 rw|/sys/devices/system/cpu/cpu0/cpuidle/state3/desc|MWAIT 0x10
-rw|/sys/devices/system/cpu/cpu0/cpuidle/state3/disable|1
+rw|/sys/devices/system/cpu/cpu0/cpuidle/state3/disable|0
 rw|/sys/devices/system/cpu/cpu0/cpuidle/state3/latency|40
 rw|/sys/devices/system/cpu/cpu0/cpuidle/state3/name|C3
 rw|/sys/devices/system/cpu/cpu0/cpuidle/state3/power|0
 rw|/sys/devices/system/cpu/cpu0/cpuidle/state3/rejected|0
 rw|/sys/devices/system/cpu/cpu0/cpuidle/state3/residency|100
-rw|/sys/devices/system/cpu/cpu0/cpuidle/state3/time|0
-rw|/sys/devices/system/cpu/cpu0/cpuidle/state3/usage|0
-rw|/sys/devices/system/cpu/cpu0/cpuidle/state4/above|3097
+rw|/sys/devices/system/cpu/cpu0/cpuidle/state3/time|4689
+rw|/sys/devices/system/cpu/cpu0/cpuidle/state3/usage|13
+rw|/sys/devices/system/cpu/cpu0/cpuidle/state4/above|5572
 rw|/sys/devices/system/cpu/cpu0/cpuidle/state4/below|0
 rw|/sys/devices/system/cpu/cpu0/cpuidle/state4/default_status|enabled
 rw|/sys/devices/system/cpu/cpu0/cpuidle/state4/desc|MWAIT 0x20
@@ -237,10 +237,10 @@ rw|/sys/devices/system/cpu/cpu0/cpuidle/state4/name|C6
 rw|/sys/devices/system/cpu/cpu0/cpuidle/state4/power|0
 rw|/sys/devices/system/cpu/cpu0/cpuidle/state4/rejected|0
 rw|/sys/devices/system/cpu/cpu0/cpuidle/state4/residency|400
-rw|/sys/devices/system/cpu/cpu0/cpuidle/state4/time|32997594
-rw|/sys/devices/system/cpu/cpu0/cpuidle/state4/usage|9557
+rw|/sys/devices/system/cpu/cpu0/cpuidle/state4/time|309249157
+rw|/sys/devices/system/cpu/cpu0/cpuidle/state4/usage|13773
 rw|/sys/devices/system/cpu/cpu10/cpuidle/state0/above|0
-rw|/sys/devices/system/cpu/cpu10/cpuidle/state0/below|852
+rw|/sys/devices/system/cpu/cpu10/cpuidle/state0/below|30
 rw|/sys/devices/system/cpu/cpu10/cpuidle/state0/default_status|enabled
 rw|/sys/devices/system/cpu/cpu10/cpuidle/state0/desc|CPUIDLE CORE POLL IDLE
 rw|/sys/devices/system/cpu/cpu10/cpuidle/state0/disable|0
@@ -249,10 +249,10 @@ rw|/sys/devices/system/cpu/cpu10/cpuidle/state0/name|POLL
 rw|/sys/devices/system/cpu/cpu10/cpuidle/state0/power|4294967295
 rw|/sys/devices/system/cpu/cpu10/cpuidle/state0/rejected|0
 rw|/sys/devices/system/cpu/cpu10/cpuidle/state0/residency|0
-rw|/sys/devices/system/cpu/cpu10/cpuidle/state0/time|18354
-rw|/sys/devices/system/cpu/cpu10/cpuidle/state0/usage|852
-rw|/sys/devices/system/cpu/cpu10/cpuidle/state1/above|49
-rw|/sys/devices/system/cpu/cpu10/cpuidle/state1/below|159
+rw|/sys/devices/system/cpu/cpu10/cpuidle/state0/time|1927
+rw|/sys/devices/system/cpu/cpu10/cpuidle/state0/usage|30
+rw|/sys/devices/system/cpu/cpu10/cpuidle/state1/above|30
+rw|/sys/devices/system/cpu/cpu10/cpuidle/state1/below|288
 rw|/sys/devices/system/cpu/cpu10/cpuidle/state1/default_status|enabled
 rw|/sys/devices/system/cpu/cpu10/cpuidle/state1/desc|MWAIT 0x00
 rw|/sys/devices/system/cpu/cpu10/cpuidle/state1/disable|0
@@ -261,10 +261,10 @@ rw|/sys/devices/system/cpu/cpu10/cpuidle/state1/name|C1
 rw|/sys/devices/system/cpu/cpu10/cpuidle/state1/power|0
 rw|/sys/devices/system/cpu/cpu10/cpuidle/state1/rejected|0
 rw|/sys/devices/system/cpu/cpu10/cpuidle/state1/residency|2
-rw|/sys/devices/system/cpu/cpu10/cpuidle/state1/time|36141
-rw|/sys/devices/system/cpu/cpu10/cpuidle/state1/usage|472
-rw|/sys/devices/system/cpu/cpu10/cpuidle/state2/above|271
-rw|/sys/devices/system/cpu/cpu10/cpuidle/state2/below|109
+rw|/sys/devices/system/cpu/cpu10/cpuidle/state1/time|54562
+rw|/sys/devices/system/cpu/cpu10/cpuidle/state1/usage|630
+rw|/sys/devices/system/cpu/cpu10/cpuidle/state2/above|530
+rw|/sys/devices/system/cpu/cpu10/cpuidle/state2/below|193
 rw|/sys/devices/system/cpu/cpu10/cpuidle/state2/default_status|enabled
 rw|/sys/devices/system/cpu/cpu10/cpuidle/state2/desc|MWAIT 0x01
 rw|/sys/devices/system/cpu/cpu10/cpuidle/state2/disable|0
@@ -273,13 +273,13 @@ rw|/sys/devices/system/cpu/cpu10/cpuidle/state2/name|C1E
 rw|/sys/devices/system/cpu/cpu10/cpuidle/state2/power|0
 rw|/sys/devices/system/cpu/cpu10/cpuidle/state2/rejected|0
 rw|/sys/devices/system/cpu/cpu10/cpuidle/state2/residency|20
-rw|/sys/devices/system/cpu/cpu10/cpuidle/state2/time|185890
-rw|/sys/devices/system/cpu/cpu10/cpuidle/state2/usage|1138
+rw|/sys/devices/system/cpu/cpu10/cpuidle/state2/time|281498
+rw|/sys/devices/system/cpu/cpu10/cpuidle/state2/usage|1966
 rw|/sys/devices/system/cpu/cpu10/cpuidle/state3/above|0
 rw|/sys/devices/system/cpu/cpu10/cpuidle/state3/below|0
 rw|/sys/devices/system/cpu/cpu10/cpuidle/state3/default_status|disabled
 rw|/sys/devices/system/cpu/cpu10/cpuidle/state3/desc|MWAIT 0x10
-rw|/sys/devices/system/cpu/cpu10/cpuidle/state3/disable|1
+rw|/sys/devices/system/cpu/cpu10/cpuidle/state3/disable|0
 rw|/sys/devices/system/cpu/cpu10/cpuidle/state3/latency|40
 rw|/sys/devices/system/cpu/cpu10/cpuidle/state3/name|C3
 rw|/sys/devices/system/cpu/cpu10/cpuidle/state3/power|0
@@ -287,7 +287,7 @@ rw|/sys/devices/system/cpu/cpu10/cpuidle/state3/rejected|0
 rw|/sys/devices/system/cpu/cpu10/cpuidle/state3/residency|100
 rw|/sys/devices/system/cpu/cpu10/cpuidle/state3/time|0
 rw|/sys/devices/system/cpu/cpu10/cpuidle/state3/usage|0
-rw|/sys/devices/system/cpu/cpu10/cpuidle/state4/above|3354
+rw|/sys/devices/system/cpu/cpu10/cpuidle/state4/above|5362
 rw|/sys/devices/system/cpu/cpu10/cpuidle/state4/below|0
 rw|/sys/devices/system/cpu/cpu10/cpuidle/state4/default_status|enabled
 rw|/sys/devices/system/cpu/cpu10/cpuidle/state4/desc|MWAIT 0x20
@@ -297,10 +297,10 @@ rw|/sys/devices/system/cpu/cpu10/cpuidle/state4/name|C6
 rw|/sys/devices/system/cpu/cpu10/cpuidle/state4/power|0
 rw|/sys/devices/system/cpu/cpu10/cpuidle/state4/rejected|0
 rw|/sys/devices/system/cpu/cpu10/cpuidle/state4/residency|400
-rw|/sys/devices/system/cpu/cpu10/cpuidle/state4/time|33704043
-rw|/sys/devices/system/cpu/cpu10/cpuidle/state4/usage|7683
+rw|/sys/devices/system/cpu/cpu10/cpuidle/state4/time|311724281
+rw|/sys/devices/system/cpu/cpu10/cpuidle/state4/usage|9021
 rw|/sys/devices/system/cpu/cpu11/cpuidle/state0/above|0
-rw|/sys/devices/system/cpu/cpu11/cpuidle/state0/below|211
+rw|/sys/devices/system/cpu/cpu11/cpuidle/state0/below|240
 rw|/sys/devices/system/cpu/cpu11/cpuidle/state0/default_status|enabled
 rw|/sys/devices/system/cpu/cpu11/cpuidle/state0/desc|CPUIDLE CORE POLL IDLE
 rw|/sys/devices/system/cpu/cpu11/cpuidle/state0/disable|0
@@ -309,10 +309,10 @@ rw|/sys/devices/system/cpu/cpu11/cpuidle/state0/name|POLL
 rw|/sys/devices/system/cpu/cpu11/cpuidle/state0/power|4294967295
 rw|/sys/devices/system/cpu/cpu11/cpuidle/state0/rejected|0
 rw|/sys/devices/system/cpu/cpu11/cpuidle/state0/residency|0
-rw|/sys/devices/system/cpu/cpu11/cpuidle/state0/time|4265
-rw|/sys/devices/system/cpu/cpu11/cpuidle/state0/usage|211
-rw|/sys/devices/system/cpu/cpu11/cpuidle/state1/above|28
-rw|/sys/devices/system/cpu/cpu11/cpuidle/state1/below|191
+rw|/sys/devices/system/cpu/cpu11/cpuidle/state0/time|5310
+rw|/sys/devices/system/cpu/cpu11/cpuidle/state0/usage|240
+rw|/sys/devices/system/cpu/cpu11/cpuidle/state1/above|43
+rw|/sys/devices/system/cpu/cpu11/cpuidle/state1/below|403
 rw|/sys/devices/system/cpu/cpu11/cpuidle/state1/default_status|enabled
 rw|/sys/devices/system/cpu/cpu11/cpuidle/state1/desc|MWAIT 0x00
 rw|/sys/devices/system/cpu/cpu11/cpuidle/state1/disable|0
@@ -321,10 +321,10 @@ rw|/sys/devices/system/cpu/cpu11/cpuidle/state1/name|C1
 rw|/sys/devices/system/cpu/cpu11/cpuidle/state1/power|0
 rw|/sys/devices/system/cpu/cpu11/cpuidle/state1/rejected|0
 rw|/sys/devices/system/cpu/cpu11/cpuidle/state1/residency|2
-rw|/sys/devices/system/cpu/cpu11/cpuidle/state1/time|62499
-rw|/sys/devices/system/cpu/cpu11/cpuidle/state1/usage|930
-rw|/sys/devices/system/cpu/cpu11/cpuidle/state2/above|243
-rw|/sys/devices/system/cpu/cpu11/cpuidle/state2/below|184
+rw|/sys/devices/system/cpu/cpu11/cpuidle/state1/time|80910
+rw|/sys/devices/system/cpu/cpu11/cpuidle/state1/usage|3364
+rw|/sys/devices/system/cpu/cpu11/cpuidle/state2/above|755
+rw|/sys/devices/system/cpu/cpu11/cpuidle/state2/below|238
 rw|/sys/devices/system/cpu/cpu11/cpuidle/state2/default_status|enabled
 rw|/sys/devices/system/cpu/cpu11/cpuidle/state2/desc|MWAIT 0x01
 rw|/sys/devices/system/cpu/cpu11/cpuidle/state2/disable|0
@@ -333,13 +333,13 @@ rw|/sys/devices/system/cpu/cpu11/cpuidle/state2/name|C1E
 rw|/sys/devices/system/cpu/cpu11/cpuidle/state2/power|0
 rw|/sys/devices/system/cpu/cpu11/cpuidle/state2/rejected|0
 rw|/sys/devices/system/cpu/cpu11/cpuidle/state2/residency|20
-rw|/sys/devices/system/cpu/cpu11/cpuidle/state2/time|248551
-rw|/sys/devices/system/cpu/cpu11/cpuidle/state2/usage|1296
+rw|/sys/devices/system/cpu/cpu11/cpuidle/state2/time|377504
+rw|/sys/devices/system/cpu/cpu11/cpuidle/state2/usage|2680
 rw|/sys/devices/system/cpu/cpu11/cpuidle/state3/above|0
 rw|/sys/devices/system/cpu/cpu11/cpuidle/state3/below|0
 rw|/sys/devices/system/cpu/cpu11/cpuidle/state3/default_status|disabled
 rw|/sys/devices/system/cpu/cpu11/cpuidle/state3/desc|MWAIT 0x10
-rw|/sys/devices/system/cpu/cpu11/cpuidle/state3/disable|1
+rw|/sys/devices/system/cpu/cpu11/cpuidle/state3/disable|0
 rw|/sys/devices/system/cpu/cpu11/cpuidle/state3/latency|40
 rw|/sys/devices/system/cpu/cpu11/cpuidle/state3/name|C3
 rw|/sys/devices/system/cpu/cpu11/cpuidle/state3/power|0
@@ -347,7 +347,7 @@ rw|/sys/devices/system/cpu/cpu11/cpuidle/state3/rejected|0
 rw|/sys/devices/system/cpu/cpu11/cpuidle/state3/residency|100
 rw|/sys/devices/system/cpu/cpu11/cpuidle/state3/time|0
 rw|/sys/devices/system/cpu/cpu11/cpuidle/state3/usage|0
-rw|/sys/devices/system/cpu/cpu11/cpuidle/state4/above|3305
+rw|/sys/devices/system/cpu/cpu11/cpuidle/state4/above|7246
 rw|/sys/devices/system/cpu/cpu11/cpuidle/state4/below|0
 rw|/sys/devices/system/cpu/cpu11/cpuidle/state4/default_status|enabled
 rw|/sys/devices/system/cpu/cpu11/cpuidle/state4/desc|MWAIT 0x20
@@ -357,10 +357,10 @@ rw|/sys/devices/system/cpu/cpu11/cpuidle/state4/name|C6
 rw|/sys/devices/system/cpu/cpu11/cpuidle/state4/power|0
 rw|/sys/devices/system/cpu/cpu11/cpuidle/state4/rejected|0
 rw|/sys/devices/system/cpu/cpu11/cpuidle/state4/residency|400
-rw|/sys/devices/system/cpu/cpu11/cpuidle/state4/time|32656814
-rw|/sys/devices/system/cpu/cpu11/cpuidle/state4/usage|7014
+rw|/sys/devices/system/cpu/cpu11/cpuidle/state4/time|311681111
+rw|/sys/devices/system/cpu/cpu11/cpuidle/state4/usage|11055
 rw|/sys/devices/system/cpu/cpu12/cpuidle/state0/above|0
-rw|/sys/devices/system/cpu/cpu12/cpuidle/state0/below|25
+rw|/sys/devices/system/cpu/cpu12/cpuidle/state0/below|127
 rw|/sys/devices/system/cpu/cpu12/cpuidle/state0/default_status|enabled
 rw|/sys/devices/system/cpu/cpu12/cpuidle/state0/desc|CPUIDLE CORE POLL IDLE
 rw|/sys/devices/system/cpu/cpu12/cpuidle/state0/disable|0
@@ -369,10 +369,10 @@ rw|/sys/devices/system/cpu/cpu12/cpuidle/state0/name|POLL
 rw|/sys/devices/system/cpu/cpu12/cpuidle/state0/power|4294967295
 rw|/sys/devices/system/cpu/cpu12/cpuidle/state0/rejected|0
 rw|/sys/devices/system/cpu/cpu12/cpuidle/state0/residency|0
-rw|/sys/devices/system/cpu/cpu12/cpuidle/state0/time|518
-rw|/sys/devices/system/cpu/cpu12/cpuidle/state0/usage|25
-rw|/sys/devices/system/cpu/cpu12/cpuidle/state1/above|18
-rw|/sys/devices/system/cpu/cpu12/cpuidle/state1/below|126
+rw|/sys/devices/system/cpu/cpu12/cpuidle/state0/time|4832
+rw|/sys/devices/system/cpu/cpu12/cpuidle/state0/usage|128
+rw|/sys/devices/system/cpu/cpu12/cpuidle/state1/above|58
+rw|/sys/devices/system/cpu/cpu12/cpuidle/state1/below|462
 rw|/sys/devices/system/cpu/cpu12/cpuidle/state1/default_status|enabled
 rw|/sys/devices/system/cpu/cpu12/cpuidle/state1/desc|MWAIT 0x00
 rw|/sys/devices/system/cpu/cpu12/cpuidle/state1/disable|0
@@ -381,10 +381,10 @@ rw|/sys/devices/system/cpu/cpu12/cpuidle/state1/name|C1
 rw|/sys/devices/system/cpu/cpu12/cpuidle/state1/power|0
 rw|/sys/devices/system/cpu/cpu12/cpuidle/state1/rejected|0
 rw|/sys/devices/system/cpu/cpu12/cpuidle/state1/residency|2
-rw|/sys/devices/system/cpu/cpu12/cpuidle/state1/time|36884
-rw|/sys/devices/system/cpu/cpu12/cpuidle/state1/usage|332
-rw|/sys/devices/system/cpu/cpu12/cpuidle/state2/above|190
-rw|/sys/devices/system/cpu/cpu12/cpuidle/state2/below|124
+rw|/sys/devices/system/cpu/cpu12/cpuidle/state1/time|111605
+rw|/sys/devices/system/cpu/cpu12/cpuidle/state1/usage|4861
+rw|/sys/devices/system/cpu/cpu12/cpuidle/state2/above|694
+rw|/sys/devices/system/cpu/cpu12/cpuidle/state2/below|286
 rw|/sys/devices/system/cpu/cpu12/cpuidle/state2/default_status|enabled
 rw|/sys/devices/system/cpu/cpu12/cpuidle/state2/desc|MWAIT 0x01
 rw|/sys/devices/system/cpu/cpu12/cpuidle/state2/disable|0
@@ -393,13 +393,13 @@ rw|/sys/devices/system/cpu/cpu12/cpuidle/state2/name|C1E
 rw|/sys/devices/system/cpu/cpu12/cpuidle/state2/power|0
 rw|/sys/devices/system/cpu/cpu12/cpuidle/state2/rejected|0
 rw|/sys/devices/system/cpu/cpu12/cpuidle/state2/residency|20
-rw|/sys/devices/system/cpu/cpu12/cpuidle/state2/time|173068
-rw|/sys/devices/system/cpu/cpu12/cpuidle/state2/usage|960
+rw|/sys/devices/system/cpu/cpu12/cpuidle/state2/time|490670
+rw|/sys/devices/system/cpu/cpu12/cpuidle/state2/usage|3286
 rw|/sys/devices/system/cpu/cpu12/cpuidle/state3/above|0
 rw|/sys/devices/system/cpu/cpu12/cpuidle/state3/below|0
 rw|/sys/devices/system/cpu/cpu12/cpuidle/state3/default_status|disabled
 rw|/sys/devices/system/cpu/cpu12/cpuidle/state3/desc|MWAIT 0x10
-rw|/sys/devices/system/cpu/cpu12/cpuidle/state3/disable|1
+rw|/sys/devices/system/cpu/cpu12/cpuidle/state3/disable|0
 rw|/sys/devices/system/cpu/cpu12/cpuidle/state3/latency|40
 rw|/sys/devices/system/cpu/cpu12/cpuidle/state3/name|C3
 rw|/sys/devices/system/cpu/cpu12/cpuidle/state3/power|0
@@ -407,7 +407,7 @@ rw|/sys/devices/system/cpu/cpu12/cpuidle/state3/rejected|0
 rw|/sys/devices/system/cpu/cpu12/cpuidle/state3/residency|100
 rw|/sys/devices/system/cpu/cpu12/cpuidle/state3/time|0
 rw|/sys/devices/system/cpu/cpu12/cpuidle/state3/usage|0
-rw|/sys/devices/system/cpu/cpu12/cpuidle/state4/above|3166
+rw|/sys/devices/system/cpu/cpu12/cpuidle/state4/above|6220
 rw|/sys/devices/system/cpu/cpu12/cpuidle/state4/below|0
 rw|/sys/devices/system/cpu/cpu12/cpuidle/state4/default_status|enabled
 rw|/sys/devices/system/cpu/cpu12/cpuidle/state4/desc|MWAIT 0x20
@@ -417,10 +417,10 @@ rw|/sys/devices/system/cpu/cpu12/cpuidle/state4/name|C6
 rw|/sys/devices/system/cpu/cpu12/cpuidle/state4/power|0
 rw|/sys/devices/system/cpu/cpu12/cpuidle/state4/rejected|0
 rw|/sys/devices/system/cpu/cpu12/cpuidle/state4/residency|400
-rw|/sys/devices/system/cpu/cpu12/cpuidle/state4/time|32979750
-rw|/sys/devices/system/cpu/cpu12/cpuidle/state4/usage|6369
+rw|/sys/devices/system/cpu/cpu12/cpuidle/state4/time|310990776
+rw|/sys/devices/system/cpu/cpu12/cpuidle/state4/usage|10200
 rw|/sys/devices/system/cpu/cpu13/cpuidle/state0/above|0
-rw|/sys/devices/system/cpu/cpu13/cpuidle/state0/below|380
+rw|/sys/devices/system/cpu/cpu13/cpuidle/state0/below|483
 rw|/sys/devices/system/cpu/cpu13/cpuidle/state0/default_status|enabled
 rw|/sys/devices/system/cpu/cpu13/cpuidle/state0/desc|CPUIDLE CORE POLL IDLE
 rw|/sys/devices/system/cpu/cpu13/cpuidle/state0/disable|0
@@ -429,10 +429,10 @@ rw|/sys/devices/system/cpu/cpu13/cpuidle/state0/name|POLL
 rw|/sys/devices/system/cpu/cpu13/cpuidle/state0/power|4294967295
 rw|/sys/devices/system/cpu/cpu13/cpuidle/state0/rejected|0
 rw|/sys/devices/system/cpu/cpu13/cpuidle/state0/residency|0
-rw|/sys/devices/system/cpu/cpu13/cpuidle/state0/time|8082
-rw|/sys/devices/system/cpu/cpu13/cpuidle/state0/usage|380
-rw|/sys/devices/system/cpu/cpu13/cpuidle/state1/above|24
-rw|/sys/devices/system/cpu/cpu13/cpuidle/state1/below|227
+rw|/sys/devices/system/cpu/cpu13/cpuidle/state0/time|10880
+rw|/sys/devices/system/cpu/cpu13/cpuidle/state0/usage|483
+rw|/sys/devices/system/cpu/cpu13/cpuidle/state1/above|21
+rw|/sys/devices/system/cpu/cpu13/cpuidle/state1/below|378
 rw|/sys/devices/system/cpu/cpu13/cpuidle/state1/default_status|enabled
 rw|/sys/devices/system/cpu/cpu13/cpuidle/state1/desc|MWAIT 0x00
 rw|/sys/devices/system/cpu/cpu13/cpuidle/state1/disable|0
@@ -441,10 +441,10 @@ rw|/sys/devices/system/cpu/cpu13/cpuidle/state1/name|C1
 rw|/sys/devices/system/cpu/cpu13/cpuidle/state1/power|0
 rw|/sys/devices/system/cpu/cpu13/cpuidle/state1/rejected|0
 rw|/sys/devices/system/cpu/cpu13/cpuidle/state1/residency|2
-rw|/sys/devices/system/cpu/cpu13/cpuidle/state1/time|79444
-rw|/sys/devices/system/cpu/cpu13/cpuidle/state1/usage|511
-rw|/sys/devices/system/cpu/cpu13/cpuidle/state2/above|328
-rw|/sys/devices/system/cpu/cpu13/cpuidle/state2/below|309
+rw|/sys/devices/system/cpu/cpu13/cpuidle/state1/time|60230
+rw|/sys/devices/system/cpu/cpu13/cpuidle/state1/usage|1728
+rw|/sys/devices/system/cpu/cpu13/cpuidle/state2/above|726
+rw|/sys/devices/system/cpu/cpu13/cpuidle/state2/below|238
 rw|/sys/devices/system/cpu/cpu13/cpuidle/state2/default_status|enabled
 rw|/sys/devices/system/cpu/cpu13/cpuidle/state2/desc|MWAIT 0x01
 rw|/sys/devices/system/cpu/cpu13/cpuidle/state2/disable|0
@@ -453,13 +453,13 @@ rw|/sys/devices/system/cpu/cpu13/cpuidle/state2/name|C1E
 rw|/sys/devices/system/cpu/cpu13/cpuidle/state2/power|0
 rw|/sys/devices/system/cpu/cpu13/cpuidle/state2/rejected|0
 rw|/sys/devices/system/cpu/cpu13/cpuidle/state2/residency|20
-rw|/sys/devices/system/cpu/cpu13/cpuidle/state2/time|387729
-rw|/sys/devices/system/cpu/cpu13/cpuidle/state2/usage|1888
+rw|/sys/devices/system/cpu/cpu13/cpuidle/state2/time|363154
+rw|/sys/devices/system/cpu/cpu13/cpuidle/state2/usage|2586
 rw|/sys/devices/system/cpu/cpu13/cpuidle/state3/above|0
 rw|/sys/devices/system/cpu/cpu13/cpuidle/state3/below|0
 rw|/sys/devices/system/cpu/cpu13/cpuidle/state3/default_status|disabled
 rw|/sys/devices/system/cpu/cpu13/cpuidle/state3/desc|MWAIT 0x10
-rw|/sys/devices/system/cpu/cpu13/cpuidle/state3/disable|1
+rw|/sys/devices/system/cpu/cpu13/cpuidle/state3/disable|0
 rw|/sys/devices/system/cpu/cpu13/cpuidle/state3/latency|40
 rw|/sys/devices/system/cpu/cpu13/cpuidle/state3/name|C3
 rw|/sys/devices/system/cpu/cpu13/cpuidle/state3/power|0
@@ -467,7 +467,7 @@ rw|/sys/devices/system/cpu/cpu13/cpuidle/state3/rejected|0
 rw|/sys/devices/system/cpu/cpu13/cpuidle/state3/residency|100
 rw|/sys/devices/system/cpu/cpu13/cpuidle/state3/time|0
 rw|/sys/devices/system/cpu/cpu13/cpuidle/state3/usage|0
-rw|/sys/devices/system/cpu/cpu13/cpuidle/state4/above|2892
+rw|/sys/devices/system/cpu/cpu13/cpuidle/state4/above|6826
 rw|/sys/devices/system/cpu/cpu13/cpuidle/state4/below|0
 rw|/sys/devices/system/cpu/cpu13/cpuidle/state4/default_status|enabled
 rw|/sys/devices/system/cpu/cpu13/cpuidle/state4/desc|MWAIT 0x20
@@ -477,10 +477,10 @@ rw|/sys/devices/system/cpu/cpu13/cpuidle/state4/name|C6
 rw|/sys/devices/system/cpu/cpu13/cpuidle/state4/power|0
 rw|/sys/devices/system/cpu/cpu13/cpuidle/state4/rejected|0
 rw|/sys/devices/system/cpu/cpu13/cpuidle/state4/residency|400
-rw|/sys/devices/system/cpu/cpu13/cpuidle/state4/time|33195494
-rw|/sys/devices/system/cpu/cpu13/cpuidle/state4/usage|6779
+rw|/sys/devices/system/cpu/cpu13/cpuidle/state4/time|312009423
+rw|/sys/devices/system/cpu/cpu13/cpuidle/state4/usage|10978
 rw|/sys/devices/system/cpu/cpu14/cpuidle/state0/above|0
-rw|/sys/devices/system/cpu/cpu14/cpuidle/state0/below|846
+rw|/sys/devices/system/cpu/cpu14/cpuidle/state0/below|272
 rw|/sys/devices/system/cpu/cpu14/cpuidle/state0/default_status|enabled
 rw|/sys/devices/system/cpu/cpu14/cpuidle/state0/desc|CPUIDLE CORE POLL IDLE
 rw|/sys/devices/system/cpu/cpu14/cpuidle/state0/disable|0
@@ -489,10 +489,10 @@ rw|/sys/devices/system/cpu/cpu14/cpuidle/state0/name|POLL
 rw|/sys/devices/system/cpu/cpu14/cpuidle/state0/power|4294967295
 rw|/sys/devices/system/cpu/cpu14/cpuidle/state0/rejected|0
 rw|/sys/devices/system/cpu/cpu14/cpuidle/state0/residency|0
-rw|/sys/devices/system/cpu/cpu14/cpuidle/state0/time|17874
-rw|/sys/devices/system/cpu/cpu14/cpuidle/state0/usage|846
-rw|/sys/devices/system/cpu/cpu14/cpuidle/state1/above|49
-rw|/sys/devices/system/cpu/cpu14/cpuidle/state1/below|155
+rw|/sys/devices/system/cpu/cpu14/cpuidle/state0/time|6216
+rw|/sys/devices/system/cpu/cpu14/cpuidle/state0/usage|275
+rw|/sys/devices/system/cpu/cpu14/cpuidle/state1/above|66
+rw|/sys/devices/system/cpu/cpu14/cpuidle/state1/below|501
 rw|/sys/devices/system/cpu/cpu14/cpuidle/state1/default_status|enabled
 rw|/sys/devices/system/cpu/cpu14/cpuidle/state1/desc|MWAIT 0x00
 rw|/sys/devices/system/cpu/cpu14/cpuidle/state1/disable|0
@@ -501,10 +501,10 @@ rw|/sys/devices/system/cpu/cpu14/cpuidle/state1/name|C1
 rw|/sys/devices/system/cpu/cpu14/cpuidle/state1/power|0
 rw|/sys/devices/system/cpu/cpu14/cpuidle/state1/rejected|0
 rw|/sys/devices/system/cpu/cpu14/cpuidle/state1/residency|2
-rw|/sys/devices/system/cpu/cpu14/cpuidle/state1/time|41849
-rw|/sys/devices/system/cpu/cpu14/cpuidle/state1/usage|579
-rw|/sys/devices/system/cpu/cpu14/cpuidle/state2/above|296
-rw|/sys/devices/system/cpu/cpu14/cpuidle/state2/below|141
+rw|/sys/devices/system/cpu/cpu14/cpuidle/state1/time|124554
+rw|/sys/devices/system/cpu/cpu14/cpuidle/state1/usage|5910
+rw|/sys/devices/system/cpu/cpu14/cpuidle/state2/above|791
+rw|/sys/devices/system/cpu/cpu14/cpuidle/state2/below|197
 rw|/sys/devices/system/cpu/cpu14/cpuidle/state2/default_status|enabled
 rw|/sys/devices/system/cpu/cpu14/cpuidle/state2/desc|MWAIT 0x01
 rw|/sys/devices/system/cpu/cpu14/cpuidle/state2/disable|0
@@ -513,21 +513,21 @@ rw|/sys/devices/system/cpu/cpu14/cpuidle/state2/name|C1E
 rw|/sys/devices/system/cpu/cpu14/cpuidle/state2/power|0
 rw|/sys/devices/system/cpu/cpu14/cpuidle/state2/rejected|0
 rw|/sys/devices/system/cpu/cpu14/cpuidle/state2/residency|20
-rw|/sys/devices/system/cpu/cpu14/cpuidle/state2/time|171454
-rw|/sys/devices/system/cpu/cpu14/cpuidle/state2/usage|1028
+rw|/sys/devices/system/cpu/cpu14/cpuidle/state2/time|321134
+rw|/sys/devices/system/cpu/cpu14/cpuidle/state2/usage|2531
 rw|/sys/devices/system/cpu/cpu14/cpuidle/state3/above|0
 rw|/sys/devices/system/cpu/cpu14/cpuidle/state3/below|0
 rw|/sys/devices/system/cpu/cpu14/cpuidle/state3/default_status|disabled
 rw|/sys/devices/system/cpu/cpu14/cpuidle/state3/desc|MWAIT 0x10
-rw|/sys/devices/system/cpu/cpu14/cpuidle/state3/disable|1
+rw|/sys/devices/system/cpu/cpu14/cpuidle/state3/disable|0
 rw|/sys/devices/system/cpu/cpu14/cpuidle/state3/latency|40
 rw|/sys/devices/system/cpu/cpu14/cpuidle/state3/name|C3
 rw|/sys/devices/system/cpu/cpu14/cpuidle/state3/power|0
 rw|/sys/devices/system/cpu/cpu14/cpuidle/state3/rejected|0
 rw|/sys/devices/system/cpu/cpu14/cpuidle/state3/residency|100
-rw|/sys/devices/system/cpu/cpu14/cpuidle/state3/time|0
-rw|/sys/devices/system/cpu/cpu14/cpuidle/state3/usage|0
-rw|/sys/devices/system/cpu/cpu14/cpuidle/state4/above|3078
+rw|/sys/devices/system/cpu/cpu14/cpuidle/state3/time|3198
+rw|/sys/devices/system/cpu/cpu14/cpuidle/state3/usage|10
+rw|/sys/devices/system/cpu/cpu14/cpuidle/state4/above|3819
 rw|/sys/devices/system/cpu/cpu14/cpuidle/state4/below|0
 rw|/sys/devices/system/cpu/cpu14/cpuidle/state4/default_status|enabled
 rw|/sys/devices/system/cpu/cpu14/cpuidle/state4/desc|MWAIT 0x20
@@ -537,10 +537,10 @@ rw|/sys/devices/system/cpu/cpu14/cpuidle/state4/name|C6
 rw|/sys/devices/system/cpu/cpu14/cpuidle/state4/power|0
 rw|/sys/devices/system/cpu/cpu14/cpuidle/state4/rejected|0
 rw|/sys/devices/system/cpu/cpu14/cpuidle/state4/residency|400
-rw|/sys/devices/system/cpu/cpu14/cpuidle/state4/time|33044660
-rw|/sys/devices/system/cpu/cpu14/cpuidle/state4/usage|6144
+rw|/sys/devices/system/cpu/cpu14/cpuidle/state4/time|311498320
+rw|/sys/devices/system/cpu/cpu14/cpuidle/state4/usage|8799
 rw|/sys/devices/system/cpu/cpu15/cpuidle/state0/above|0
-rw|/sys/devices/system/cpu/cpu15/cpuidle/state0/below|586
+rw|/sys/devices/system/cpu/cpu15/cpuidle/state0/below|493
 rw|/sys/devices/system/cpu/cpu15/cpuidle/state0/default_status|enabled
 rw|/sys/devices/system/cpu/cpu15/cpuidle/state0/desc|CPUIDLE CORE POLL IDLE
 rw|/sys/devices/system/cpu/cpu15/cpuidle/state0/disable|0
@@ -549,10 +549,10 @@ rw|/sys/devices/system/cpu/cpu15/cpuidle/state0/name|POLL
 rw|/sys/devices/system/cpu/cpu15/cpuidle/state0/power|4294967295
 rw|/sys/devices/system/cpu/cpu15/cpuidle/state0/rejected|0
 rw|/sys/devices/system/cpu/cpu15/cpuidle/state0/residency|0
-rw|/sys/devices/system/cpu/cpu15/cpuidle/state0/time|12330
-rw|/sys/devices/system/cpu/cpu15/cpuidle/state0/usage|589
-rw|/sys/devices/system/cpu/cpu15/cpuidle/state1/above|39
-rw|/sys/devices/system/cpu/cpu15/cpuidle/state1/below|228
+rw|/sys/devices/system/cpu/cpu15/cpuidle/state0/time|11242
+rw|/sys/devices/system/cpu/cpu15/cpuidle/state0/usage|493
+rw|/sys/devices/system/cpu/cpu15/cpuidle/state1/above|53
+rw|/sys/devices/system/cpu/cpu15/cpuidle/state1/below|442
 rw|/sys/devices/system/cpu/cpu15/cpuidle/state1/default_status|enabled
 rw|/sys/devices/system/cpu/cpu15/cpuidle/state1/desc|MWAIT 0x00
 rw|/sys/devices/system/cpu/cpu15/cpuidle/state1/disable|0
@@ -561,10 +561,10 @@ rw|/sys/devices/system/cpu/cpu15/cpuidle/state1/name|C1
 rw|/sys/devices/system/cpu/cpu15/cpuidle/state1/power|0
 rw|/sys/devices/system/cpu/cpu15/cpuidle/state1/rejected|0
 rw|/sys/devices/system/cpu/cpu15/cpuidle/state1/residency|2
-rw|/sys/devices/system/cpu/cpu15/cpuidle/state1/time|45198
-rw|/sys/devices/system/cpu/cpu15/cpuidle/state1/usage|599
-rw|/sys/devices/system/cpu/cpu15/cpuidle/state2/above|308
-rw|/sys/devices/system/cpu/cpu15/cpuidle/state2/below|166
+rw|/sys/devices/system/cpu/cpu15/cpuidle/state1/time|86120
+rw|/sys/devices/system/cpu/cpu15/cpuidle/state1/usage|3469
+rw|/sys/devices/system/cpu/cpu15/cpuidle/state2/above|816
+rw|/sys/devices/system/cpu/cpu15/cpuidle/state2/below|218
 rw|/sys/devices/system/cpu/cpu15/cpuidle/state2/default_status|enabled
 rw|/sys/devices/system/cpu/cpu15/cpuidle/state2/desc|MWAIT 0x01
 rw|/sys/devices/system/cpu/cpu15/cpuidle/state2/disable|0
@@ -573,13 +573,13 @@ rw|/sys/devices/system/cpu/cpu15/cpuidle/state2/name|C1E
 rw|/sys/devices/system/cpu/cpu15/cpuidle/state2/power|0
 rw|/sys/devices/system/cpu/cpu15/cpuidle/state2/rejected|0
 rw|/sys/devices/system/cpu/cpu15/cpuidle/state2/residency|20
-rw|/sys/devices/system/cpu/cpu15/cpuidle/state2/time|232080
-rw|/sys/devices/system/cpu/cpu15/cpuidle/state2/usage|1363
+rw|/sys/devices/system/cpu/cpu15/cpuidle/state2/time|363846
+rw|/sys/devices/system/cpu/cpu15/cpuidle/state2/usage|2721
 rw|/sys/devices/system/cpu/cpu15/cpuidle/state3/above|0
 rw|/sys/devices/system/cpu/cpu15/cpuidle/state3/below|0
 rw|/sys/devices/system/cpu/cpu15/cpuidle/state3/default_status|disabled
 rw|/sys/devices/system/cpu/cpu15/cpuidle/state3/desc|MWAIT 0x10
-rw|/sys/devices/system/cpu/cpu15/cpuidle/state3/disable|1
+rw|/sys/devices/system/cpu/cpu15/cpuidle/state3/disable|0
 rw|/sys/devices/system/cpu/cpu15/cpuidle/state3/latency|40
 rw|/sys/devices/system/cpu/cpu15/cpuidle/state3/name|C3
 rw|/sys/devices/system/cpu/cpu15/cpuidle/state3/power|0
@@ -587,7 +587,7 @@ rw|/sys/devices/system/cpu/cpu15/cpuidle/state3/rejected|0
 rw|/sys/devices/system/cpu/cpu15/cpuidle/state3/residency|100
 rw|/sys/devices/system/cpu/cpu15/cpuidle/state3/time|0
 rw|/sys/devices/system/cpu/cpu15/cpuidle/state3/usage|0
-rw|/sys/devices/system/cpu/cpu15/cpuidle/state4/above|3267
+rw|/sys/devices/system/cpu/cpu15/cpuidle/state4/above|4329
 rw|/sys/devices/system/cpu/cpu15/cpuidle/state4/below|0
 rw|/sys/devices/system/cpu/cpu15/cpuidle/state4/default_status|enabled
 rw|/sys/devices/system/cpu/cpu15/cpuidle/state4/desc|MWAIT 0x20
@@ -597,10 +597,10 @@ rw|/sys/devices/system/cpu/cpu15/cpuidle/state4/name|C6
 rw|/sys/devices/system/cpu/cpu15/cpuidle/state4/power|0
 rw|/sys/devices/system/cpu/cpu15/cpuidle/state4/rejected|0
 rw|/sys/devices/system/cpu/cpu15/cpuidle/state4/residency|400
-rw|/sys/devices/system/cpu/cpu15/cpuidle/state4/time|33526919
-rw|/sys/devices/system/cpu/cpu15/cpuidle/state4/usage|7113
+rw|/sys/devices/system/cpu/cpu15/cpuidle/state4/time|311969971
+rw|/sys/devices/system/cpu/cpu15/cpuidle/state4/usage|8442
 rw|/sys/devices/system/cpu/cpu1/cpuidle/state0/above|0
-rw|/sys/devices/system/cpu/cpu1/cpuidle/state0/below|785
+rw|/sys/devices/system/cpu/cpu1/cpuidle/state0/below|108
 rw|/sys/devices/system/cpu/cpu1/cpuidle/state0/default_status|enabled
 rw|/sys/devices/system/cpu/cpu1/cpuidle/state0/desc|CPUIDLE CORE POLL IDLE
 rw|/sys/devices/system/cpu/cpu1/cpuidle/state0/disable|0
@@ -609,10 +609,10 @@ rw|/sys/devices/system/cpu/cpu1/cpuidle/state0/name|POLL
 rw|/sys/devices/system/cpu/cpu1/cpuidle/state0/power|4294967295
 rw|/sys/devices/system/cpu/cpu1/cpuidle/state0/rejected|0
 rw|/sys/devices/system/cpu/cpu1/cpuidle/state0/residency|0
-rw|/sys/devices/system/cpu/cpu1/cpuidle/state0/time|16684
-rw|/sys/devices/system/cpu/cpu1/cpuidle/state0/usage|785
-rw|/sys/devices/system/cpu/cpu1/cpuidle/state1/above|37
-rw|/sys/devices/system/cpu/cpu1/cpuidle/state1/below|285
+rw|/sys/devices/system/cpu/cpu1/cpuidle/state0/time|2250
+rw|/sys/devices/system/cpu/cpu1/cpuidle/state0/usage|109
+rw|/sys/devices/system/cpu/cpu1/cpuidle/state1/above|49
+rw|/sys/devices/system/cpu/cpu1/cpuidle/state1/below|684
 rw|/sys/devices/system/cpu/cpu1/cpuidle/state1/default_status|enabled
 rw|/sys/devices/system/cpu/cpu1/cpuidle/state1/desc|MWAIT 0x00
 rw|/sys/devices/system/cpu/cpu1/cpuidle/state1/disable|0
@@ -621,10 +621,10 @@ rw|/sys/devices/system/cpu/cpu1/cpuidle/state1/name|C1
 rw|/sys/devices/system/cpu/cpu1/cpuidle/state1/power|0
 rw|/sys/devices/system/cpu/cpu1/cpuidle/state1/rejected|0
 rw|/sys/devices/system/cpu/cpu1/cpuidle/state1/residency|2
-rw|/sys/devices/system/cpu/cpu1/cpuidle/state1/time|95717
-rw|/sys/devices/system/cpu/cpu1/cpuidle/state1/usage|730
-rw|/sys/devices/system/cpu/cpu1/cpuidle/state2/above|454
-rw|/sys/devices/system/cpu/cpu1/cpuidle/state2/below|183
+rw|/sys/devices/system/cpu/cpu1/cpuidle/state1/time|116197
+rw|/sys/devices/system/cpu/cpu1/cpuidle/state1/usage|4128
+rw|/sys/devices/system/cpu/cpu1/cpuidle/state2/above|691
+rw|/sys/devices/system/cpu/cpu1/cpuidle/state2/below|272
 rw|/sys/devices/system/cpu/cpu1/cpuidle/state2/default_status|enabled
 rw|/sys/devices/system/cpu/cpu1/cpuidle/state2/desc|MWAIT 0x01
 rw|/sys/devices/system/cpu/cpu1/cpuidle/state2/disable|0
@@ -633,21 +633,21 @@ rw|/sys/devices/system/cpu/cpu1/cpuidle/state2/name|C1E
 rw|/sys/devices/system/cpu/cpu1/cpuidle/state2/power|0
 rw|/sys/devices/system/cpu/cpu1/cpuidle/state2/rejected|0
 rw|/sys/devices/system/cpu/cpu1/cpuidle/state2/residency|20
-rw|/sys/devices/system/cpu/cpu1/cpuidle/state2/time|287896
-rw|/sys/devices/system/cpu/cpu1/cpuidle/state2/usage|1845
+rw|/sys/devices/system/cpu/cpu1/cpuidle/state2/time|439326
+rw|/sys/devices/system/cpu/cpu1/cpuidle/state2/usage|3215
 rw|/sys/devices/system/cpu/cpu1/cpuidle/state3/above|0
-rw|/sys/devices/system/cpu/cpu1/cpuidle/state3/below|0
+rw|/sys/devices/system/cpu/cpu1/cpuidle/state3/below|1
 rw|/sys/devices/system/cpu/cpu1/cpuidle/state3/default_status|disabled
 rw|/sys/devices/system/cpu/cpu1/cpuidle/state3/desc|MWAIT 0x10
-rw|/sys/devices/system/cpu/cpu1/cpuidle/state3/disable|1
+rw|/sys/devices/system/cpu/cpu1/cpuidle/state3/disable|0
 rw|/sys/devices/system/cpu/cpu1/cpuidle/state3/latency|40
 rw|/sys/devices/system/cpu/cpu1/cpuidle/state3/name|C3
 rw|/sys/devices/system/cpu/cpu1/cpuidle/state3/power|0
 rw|/sys/devices/system/cpu/cpu1/cpuidle/state3/rejected|0
 rw|/sys/devices/system/cpu/cpu1/cpuidle/state3/residency|100
-rw|/sys/devices/system/cpu/cpu1/cpuidle/state3/time|0
-rw|/sys/devices/system/cpu/cpu1/cpuidle/state3/usage|0
-rw|/sys/devices/system/cpu/cpu1/cpuidle/state4/above|1743
+rw|/sys/devices/system/cpu/cpu1/cpuidle/state3/time|848
+rw|/sys/devices/system/cpu/cpu1/cpuidle/state3/usage|2
+rw|/sys/devices/system/cpu/cpu1/cpuidle/state4/above|6976
 rw|/sys/devices/system/cpu/cpu1/cpuidle/state4/below|0
 rw|/sys/devices/system/cpu/cpu1/cpuidle/state4/default_status|enabled
 rw|/sys/devices/system/cpu/cpu1/cpuidle/state4/desc|MWAIT 0x20
@@ -657,10 +657,10 @@ rw|/sys/devices/system/cpu/cpu1/cpuidle/state4/name|C6
 rw|/sys/devices/system/cpu/cpu1/cpuidle/state4/power|0
 rw|/sys/devices/system/cpu/cpu1/cpuidle/state4/rejected|0
 rw|/sys/devices/system/cpu/cpu1/cpuidle/state4/residency|400
-rw|/sys/devices/system/cpu/cpu1/cpuidle/state4/time|32520203
-rw|/sys/devices/system/cpu/cpu1/cpuidle/state4/usage|5785
+rw|/sys/devices/system/cpu/cpu1/cpuidle/state4/time|311091825
+rw|/sys/devices/system/cpu/cpu1/cpuidle/state4/usage|13442
 rw|/sys/devices/system/cpu/cpu2/cpuidle/state0/above|0
-rw|/sys/devices/system/cpu/cpu2/cpuidle/state0/below|663
+rw|/sys/devices/system/cpu/cpu2/cpuidle/state0/below|184
 rw|/sys/devices/system/cpu/cpu2/cpuidle/state0/default_status|enabled
 rw|/sys/devices/system/cpu/cpu2/cpuidle/state0/desc|CPUIDLE CORE POLL IDLE
 rw|/sys/devices/system/cpu/cpu2/cpuidle/state0/disable|0
@@ -669,10 +669,10 @@ rw|/sys/devices/system/cpu/cpu2/cpuidle/state0/name|POLL
 rw|/sys/devices/system/cpu/cpu2/cpuidle/state0/power|4294967295
 rw|/sys/devices/system/cpu/cpu2/cpuidle/state0/rejected|0
 rw|/sys/devices/system/cpu/cpu2/cpuidle/state0/residency|0
-rw|/sys/devices/system/cpu/cpu2/cpuidle/state0/time|14501
-rw|/sys/devices/system/cpu/cpu2/cpuidle/state0/usage|664
-rw|/sys/devices/system/cpu/cpu2/cpuidle/state1/above|32
-rw|/sys/devices/system/cpu/cpu2/cpuidle/state1/below|167
+rw|/sys/devices/system/cpu/cpu2/cpuidle/state0/time|4382
+rw|/sys/devices/system/cpu/cpu2/cpuidle/state0/usage|184
+rw|/sys/devices/system/cpu/cpu2/cpuidle/state1/above|36
+rw|/sys/devices/system/cpu/cpu2/cpuidle/state1/below|379
 rw|/sys/devices/system/cpu/cpu2/cpuidle/state1/default_status|enabled
 rw|/sys/devices/system/cpu/cpu2/cpuidle/state1/desc|MWAIT 0x00
 rw|/sys/devices/system/cpu/cpu2/cpuidle/state1/disable|0
@@ -681,10 +681,10 @@ rw|/sys/devices/system/cpu/cpu2/cpuidle/state1/name|C1
 rw|/sys/devices/system/cpu/cpu2/cpuidle/state1/power|0
 rw|/sys/devices/system/cpu/cpu2/cpuidle/state1/rejected|0
 rw|/sys/devices/system/cpu/cpu2/cpuidle/state1/residency|2
-rw|/sys/devices/system/cpu/cpu2/cpuidle/state1/time|41704
-rw|/sys/devices/system/cpu/cpu2/cpuidle/state1/usage|446
-rw|/sys/devices/system/cpu/cpu2/cpuidle/state2/above|323
-rw|/sys/devices/system/cpu/cpu2/cpuidle/state2/below|326
+rw|/sys/devices/system/cpu/cpu2/cpuidle/state1/time|71026
+rw|/sys/devices/system/cpu/cpu2/cpuidle/state1/usage|1156
+rw|/sys/devices/system/cpu/cpu2/cpuidle/state2/above|725
+rw|/sys/devices/system/cpu/cpu2/cpuidle/state2/below|393
 rw|/sys/devices/system/cpu/cpu2/cpuidle/state2/default_status|enabled
 rw|/sys/devices/system/cpu/cpu2/cpuidle/state2/desc|MWAIT 0x01
 rw|/sys/devices/system/cpu/cpu2/cpuidle/state2/disable|0
@@ -693,13 +693,13 @@ rw|/sys/devices/system/cpu/cpu2/cpuidle/state2/name|C1E
 rw|/sys/devices/system/cpu/cpu2/cpuidle/state2/power|0
 rw|/sys/devices/system/cpu/cpu2/cpuidle/state2/rejected|0
 rw|/sys/devices/system/cpu/cpu2/cpuidle/state2/residency|20
-rw|/sys/devices/system/cpu/cpu2/cpuidle/state2/time|426698
-rw|/sys/devices/system/cpu/cpu2/cpuidle/state2/usage|2214
+rw|/sys/devices/system/cpu/cpu2/cpuidle/state2/time|575108
+rw|/sys/devices/system/cpu/cpu2/cpuidle/state2/usage|3753
 rw|/sys/devices/system/cpu/cpu2/cpuidle/state3/above|0
 rw|/sys/devices/system/cpu/cpu2/cpuidle/state3/below|0
 rw|/sys/devices/system/cpu/cpu2/cpuidle/state3/default_status|disabled
 rw|/sys/devices/system/cpu/cpu2/cpuidle/state3/desc|MWAIT 0x10
-rw|/sys/devices/system/cpu/cpu2/cpuidle/state3/disable|1
+rw|/sys/devices/system/cpu/cpu2/cpuidle/state3/disable|0
 rw|/sys/devices/system/cpu/cpu2/cpuidle/state3/latency|40
 rw|/sys/devices/system/cpu/cpu2/cpuidle/state3/name|C3
 rw|/sys/devices/system/cpu/cpu2/cpuidle/state3/power|0
@@ -707,7 +707,7 @@ rw|/sys/devices/system/cpu/cpu2/cpuidle/state3/rejected|0
 rw|/sys/devices/system/cpu/cpu2/cpuidle/state3/residency|100
 rw|/sys/devices/system/cpu/cpu2/cpuidle/state3/time|0
 rw|/sys/devices/system/cpu/cpu2/cpuidle/state3/usage|0
-rw|/sys/devices/system/cpu/cpu2/cpuidle/state4/above|4554
+rw|/sys/devices/system/cpu/cpu2/cpuidle/state4/above|8004
 rw|/sys/devices/system/cpu/cpu2/cpuidle/state4/below|0
 rw|/sys/devices/system/cpu/cpu2/cpuidle/state4/default_status|enabled
 rw|/sys/devices/system/cpu/cpu2/cpuidle/state4/desc|MWAIT 0x20
@@ -717,10 +717,10 @@ rw|/sys/devices/system/cpu/cpu2/cpuidle/state4/name|C6
 rw|/sys/devices/system/cpu/cpu2/cpuidle/state4/power|0
 rw|/sys/devices/system/cpu/cpu2/cpuidle/state4/rejected|0
 rw|/sys/devices/system/cpu/cpu2/cpuidle/state4/residency|400
-rw|/sys/devices/system/cpu/cpu2/cpuidle/state4/time|31791487
-rw|/sys/devices/system/cpu/cpu2/cpuidle/state4/usage|13513
+rw|/sys/devices/system/cpu/cpu2/cpuidle/state4/time|312155270
+rw|/sys/devices/system/cpu/cpu2/cpuidle/state4/usage|14332
 rw|/sys/devices/system/cpu/cpu3/cpuidle/state0/above|0
-rw|/sys/devices/system/cpu/cpu3/cpuidle/state0/below|409
+rw|/sys/devices/system/cpu/cpu3/cpuidle/state0/below|211
 rw|/sys/devices/system/cpu/cpu3/cpuidle/state0/default_status|enabled
 rw|/sys/devices/system/cpu/cpu3/cpuidle/state0/desc|CPUIDLE CORE POLL IDLE
 rw|/sys/devices/system/cpu/cpu3/cpuidle/state0/disable|0
@@ -729,10 +729,10 @@ rw|/sys/devices/system/cpu/cpu3/cpuidle/state0/name|POLL
 rw|/sys/devices/system/cpu/cpu3/cpuidle/state0/power|4294967295
 rw|/sys/devices/system/cpu/cpu3/cpuidle/state0/rejected|0
 rw|/sys/devices/system/cpu/cpu3/cpuidle/state0/residency|0
-rw|/sys/devices/system/cpu/cpu3/cpuidle/state0/time|8445
-rw|/sys/devices/system/cpu/cpu3/cpuidle/state0/usage|440
-rw|/sys/devices/system/cpu/cpu3/cpuidle/state1/above|24
-rw|/sys/devices/system/cpu/cpu3/cpuidle/state1/below|173
+rw|/sys/devices/system/cpu/cpu3/cpuidle/state0/time|4891
+rw|/sys/devices/system/cpu/cpu3/cpuidle/state0/usage|211
+rw|/sys/devices/system/cpu/cpu3/cpuidle/state1/above|49
+rw|/sys/devices/system/cpu/cpu3/cpuidle/state1/below|463
 rw|/sys/devices/system/cpu/cpu3/cpuidle/state1/default_status|enabled
 rw|/sys/devices/system/cpu/cpu3/cpuidle/state1/desc|MWAIT 0x00
 rw|/sys/devices/system/cpu/cpu3/cpuidle/state1/disable|0
@@ -741,10 +741,10 @@ rw|/sys/devices/system/cpu/cpu3/cpuidle/state1/name|C1
 rw|/sys/devices/system/cpu/cpu3/cpuidle/state1/power|0
 rw|/sys/devices/system/cpu/cpu3/cpuidle/state1/rejected|0
 rw|/sys/devices/system/cpu/cpu3/cpuidle/state1/residency|2
-rw|/sys/devices/system/cpu/cpu3/cpuidle/state1/time|45189
-rw|/sys/devices/system/cpu/cpu3/cpuidle/state1/usage|401
-rw|/sys/devices/system/cpu/cpu3/cpuidle/state2/above|222
-rw|/sys/devices/system/cpu/cpu3/cpuidle/state2/below|150
+rw|/sys/devices/system/cpu/cpu3/cpuidle/state1/time|87039
+rw|/sys/devices/system/cpu/cpu3/cpuidle/state1/usage|4032
+rw|/sys/devices/system/cpu/cpu3/cpuidle/state2/above|786
+rw|/sys/devices/system/cpu/cpu3/cpuidle/state2/below|236
 rw|/sys/devices/system/cpu/cpu3/cpuidle/state2/default_status|enabled
 rw|/sys/devices/system/cpu/cpu3/cpuidle/state2/desc|MWAIT 0x01
 rw|/sys/devices/system/cpu/cpu3/cpuidle/state2/disable|0
@@ -753,13 +753,13 @@ rw|/sys/devices/system/cpu/cpu3/cpuidle/state2/name|C1E
 rw|/sys/devices/system/cpu/cpu3/cpuidle/state2/power|0
 rw|/sys/devices/system/cpu/cpu3/cpuidle/state2/rejected|0
 rw|/sys/devices/system/cpu/cpu3/cpuidle/state2/residency|20
-rw|/sys/devices/system/cpu/cpu3/cpuidle/state2/time|198939
-rw|/sys/devices/system/cpu/cpu3/cpuidle/state2/usage|1085
+rw|/sys/devices/system/cpu/cpu3/cpuidle/state2/time|374306
+rw|/sys/devices/system/cpu/cpu3/cpuidle/state2/usage|2641
 rw|/sys/devices/system/cpu/cpu3/cpuidle/state3/above|0
 rw|/sys/devices/system/cpu/cpu3/cpuidle/state3/below|0
 rw|/sys/devices/system/cpu/cpu3/cpuidle/state3/default_status|disabled
 rw|/sys/devices/system/cpu/cpu3/cpuidle/state3/desc|MWAIT 0x10
-rw|/sys/devices/system/cpu/cpu3/cpuidle/state3/disable|1
+rw|/sys/devices/system/cpu/cpu3/cpuidle/state3/disable|0
 rw|/sys/devices/system/cpu/cpu3/cpuidle/state3/latency|40
 rw|/sys/devices/system/cpu/cpu3/cpuidle/state3/name|C3
 rw|/sys/devices/system/cpu/cpu3/cpuidle/state3/power|0
@@ -767,7 +767,7 @@ rw|/sys/devices/system/cpu/cpu3/cpuidle/state3/rejected|0
 rw|/sys/devices/system/cpu/cpu3/cpuidle/state3/residency|100
 rw|/sys/devices/system/cpu/cpu3/cpuidle/state3/time|0
 rw|/sys/devices/system/cpu/cpu3/cpuidle/state3/usage|0
-rw|/sys/devices/system/cpu/cpu3/cpuidle/state4/above|5561
+rw|/sys/devices/system/cpu/cpu3/cpuidle/state4/above|6498
 rw|/sys/devices/system/cpu/cpu3/cpuidle/state4/below|0
 rw|/sys/devices/system/cpu/cpu3/cpuidle/state4/default_status|enabled
 rw|/sys/devices/system/cpu/cpu3/cpuidle/state4/desc|MWAIT 0x20
@@ -777,10 +777,10 @@ rw|/sys/devices/system/cpu/cpu3/cpuidle/state4/name|C6
 rw|/sys/devices/system/cpu/cpu3/cpuidle/state4/power|0
 rw|/sys/devices/system/cpu/cpu3/cpuidle/state4/rejected|0
 rw|/sys/devices/system/cpu/cpu3/cpuidle/state4/residency|400
-rw|/sys/devices/system/cpu/cpu3/cpuidle/state4/time|33334525
-rw|/sys/devices/system/cpu/cpu3/cpuidle/state4/usage|8549
+rw|/sys/devices/system/cpu/cpu3/cpuidle/state4/time|310401655
+rw|/sys/devices/system/cpu/cpu3/cpuidle/state4/usage|10587
 rw|/sys/devices/system/cpu/cpu4/cpuidle/state0/above|0
-rw|/sys/devices/system/cpu/cpu4/cpuidle/state0/below|381
+rw|/sys/devices/system/cpu/cpu4/cpuidle/state0/below|136
 rw|/sys/devices/system/cpu/cpu4/cpuidle/state0/default_status|enabled
 rw|/sys/devices/system/cpu/cpu4/cpuidle/state0/desc|CPUIDLE CORE POLL IDLE
 rw|/sys/devices/system/cpu/cpu4/cpuidle/state0/disable|0
@@ -789,10 +789,10 @@ rw|/sys/devices/system/cpu/cpu4/cpuidle/state0/name|POLL
 rw|/sys/devices/system/cpu/cpu4/cpuidle/state0/power|4294967295
 rw|/sys/devices/system/cpu/cpu4/cpuidle/state0/rejected|0
 rw|/sys/devices/system/cpu/cpu4/cpuidle/state0/residency|0
-rw|/sys/devices/system/cpu/cpu4/cpuidle/state0/time|8089
-rw|/sys/devices/system/cpu/cpu4/cpuidle/state0/usage|381
-rw|/sys/devices/system/cpu/cpu4/cpuidle/state1/above|16
-rw|/sys/devices/system/cpu/cpu4/cpuidle/state1/below|513
+rw|/sys/devices/system/cpu/cpu4/cpuidle/state0/time|2869
+rw|/sys/devices/system/cpu/cpu4/cpuidle/state0/usage|147
+rw|/sys/devices/system/cpu/cpu4/cpuidle/state1/above|51
+rw|/sys/devices/system/cpu/cpu4/cpuidle/state1/below|544
 rw|/sys/devices/system/cpu/cpu4/cpuidle/state1/default_status|enabled
 rw|/sys/devices/system/cpu/cpu4/cpuidle/state1/desc|MWAIT 0x00
 rw|/sys/devices/system/cpu/cpu4/cpuidle/state1/disable|0
@@ -801,10 +801,10 @@ rw|/sys/devices/system/cpu/cpu4/cpuidle/state1/name|C1
 rw|/sys/devices/system/cpu/cpu4/cpuidle/state1/power|0
 rw|/sys/devices/system/cpu/cpu4/cpuidle/state1/rejected|0
 rw|/sys/devices/system/cpu/cpu4/cpuidle/state1/residency|2
-rw|/sys/devices/system/cpu/cpu4/cpuidle/state1/time|73124
-rw|/sys/devices/system/cpu/cpu4/cpuidle/state1/usage|1784
-rw|/sys/devices/system/cpu/cpu4/cpuidle/state2/above|213
-rw|/sys/devices/system/cpu/cpu4/cpuidle/state2/below|213
+rw|/sys/devices/system/cpu/cpu4/cpuidle/state1/time|94559
+rw|/sys/devices/system/cpu/cpu4/cpuidle/state1/usage|1929
+rw|/sys/devices/system/cpu/cpu4/cpuidle/state2/above|730
+rw|/sys/devices/system/cpu/cpu4/cpuidle/state2/below|300
 rw|/sys/devices/system/cpu/cpu4/cpuidle/state2/default_status|enabled
 rw|/sys/devices/system/cpu/cpu4/cpuidle/state2/desc|MWAIT 0x01
 rw|/sys/devices/system/cpu/cpu4/cpuidle/state2/disable|0
@@ -813,13 +813,13 @@ rw|/sys/devices/system/cpu/cpu4/cpuidle/state2/name|C1E
 rw|/sys/devices/system/cpu/cpu4/cpuidle/state2/power|0
 rw|/sys/devices/system/cpu/cpu4/cpuidle/state2/rejected|0
 rw|/sys/devices/system/cpu/cpu4/cpuidle/state2/residency|20
-rw|/sys/devices/system/cpu/cpu4/cpuidle/state2/time|265232
-rw|/sys/devices/system/cpu/cpu4/cpuidle/state2/usage|1353
+rw|/sys/devices/system/cpu/cpu4/cpuidle/state2/time|427321
+rw|/sys/devices/system/cpu/cpu4/cpuidle/state2/usage|2997
 rw|/sys/devices/system/cpu/cpu4/cpuidle/state3/above|0
 rw|/sys/devices/system/cpu/cpu4/cpuidle/state3/below|0
 rw|/sys/devices/system/cpu/cpu4/cpuidle/state3/default_status|disabled
 rw|/sys/devices/system/cpu/cpu4/cpuidle/state3/desc|MWAIT 0x10
-rw|/sys/devices/system/cpu/cpu4/cpuidle/state3/disable|1
+rw|/sys/devices/system/cpu/cpu4/cpuidle/state3/disable|0
 rw|/sys/devices/system/cpu/cpu4/cpuidle/state3/latency|40
 rw|/sys/devices/system/cpu/cpu4/cpuidle/state3/name|C3
 rw|/sys/devices/system/cpu/cpu4/cpuidle/state3/power|0
@@ -827,7 +827,7 @@ rw|/sys/devices/system/cpu/cpu4/cpuidle/state3/rejected|0
 rw|/sys/devices/system/cpu/cpu4/cpuidle/state3/residency|100
 rw|/sys/devices/system/cpu/cpu4/cpuidle/state3/time|0
 rw|/sys/devices/system/cpu/cpu4/cpuidle/state3/usage|0
-rw|/sys/devices/system/cpu/cpu4/cpuidle/state4/above|4999
+rw|/sys/devices/system/cpu/cpu4/cpuidle/state4/above|6935
 rw|/sys/devices/system/cpu/cpu4/cpuidle/state4/below|0
 rw|/sys/devices/system/cpu/cpu4/cpuidle/state4/default_status|enabled
 rw|/sys/devices/system/cpu/cpu4/cpuidle/state4/desc|MWAIT 0x20
@@ -837,10 +837,10 @@ rw|/sys/devices/system/cpu/cpu4/cpuidle/state4/name|C6
 rw|/sys/devices/system/cpu/cpu4/cpuidle/state4/power|0
 rw|/sys/devices/system/cpu/cpu4/cpuidle/state4/rejected|0
 rw|/sys/devices/system/cpu/cpu4/cpuidle/state4/residency|400
-rw|/sys/devices/system/cpu/cpu4/cpuidle/state4/time|32059657
-rw|/sys/devices/system/cpu/cpu4/cpuidle/state4/usage|9460
+rw|/sys/devices/system/cpu/cpu4/cpuidle/state4/time|309873962
+rw|/sys/devices/system/cpu/cpu4/cpuidle/state4/usage|10402
 rw|/sys/devices/system/cpu/cpu5/cpuidle/state0/above|0
-rw|/sys/devices/system/cpu/cpu5/cpuidle/state0/below|832
+rw|/sys/devices/system/cpu/cpu5/cpuidle/state0/below|735
 rw|/sys/devices/system/cpu/cpu5/cpuidle/state0/default_status|enabled
 rw|/sys/devices/system/cpu/cpu5/cpuidle/state0/desc|CPUIDLE CORE POLL IDLE
 rw|/sys/devices/system/cpu/cpu5/cpuidle/state0/disable|0
@@ -849,10 +849,10 @@ rw|/sys/devices/system/cpu/cpu5/cpuidle/state0/name|POLL
 rw|/sys/devices/system/cpu/cpu5/cpuidle/state0/power|4294967295
 rw|/sys/devices/system/cpu/cpu5/cpuidle/state0/rejected|0
 rw|/sys/devices/system/cpu/cpu5/cpuidle/state0/residency|0
-rw|/sys/devices/system/cpu/cpu5/cpuidle/state0/time|17607
-rw|/sys/devices/system/cpu/cpu5/cpuidle/state0/usage|839
-rw|/sys/devices/system/cpu/cpu5/cpuidle/state1/above|36
-rw|/sys/devices/system/cpu/cpu5/cpuidle/state1/below|340
+rw|/sys/devices/system/cpu/cpu5/cpuidle/state0/time|16717
+rw|/sys/devices/system/cpu/cpu5/cpuidle/state0/usage|737
+rw|/sys/devices/system/cpu/cpu5/cpuidle/state1/above|42
+rw|/sys/devices/system/cpu/cpu5/cpuidle/state1/below|401
 rw|/sys/devices/system/cpu/cpu5/cpuidle/state1/default_status|enabled
 rw|/sys/devices/system/cpu/cpu5/cpuidle/state1/desc|MWAIT 0x00
 rw|/sys/devices/system/cpu/cpu5/cpuidle/state1/disable|0
@@ -861,10 +861,10 @@ rw|/sys/devices/system/cpu/cpu5/cpuidle/state1/name|C1
 rw|/sys/devices/system/cpu/cpu5/cpuidle/state1/power|0
 rw|/sys/devices/system/cpu/cpu5/cpuidle/state1/rejected|0
 rw|/sys/devices/system/cpu/cpu5/cpuidle/state1/residency|2
-rw|/sys/devices/system/cpu/cpu5/cpuidle/state1/time|101965
-rw|/sys/devices/system/cpu/cpu5/cpuidle/state1/usage|879
-rw|/sys/devices/system/cpu/cpu5/cpuidle/state2/above|460
-rw|/sys/devices/system/cpu/cpu5/cpuidle/state2/below|274
+rw|/sys/devices/system/cpu/cpu5/cpuidle/state1/time|88310
+rw|/sys/devices/system/cpu/cpu5/cpuidle/state1/usage|2357
+rw|/sys/devices/system/cpu/cpu5/cpuidle/state2/above|765
+rw|/sys/devices/system/cpu/cpu5/cpuidle/state2/below|276
 rw|/sys/devices/system/cpu/cpu5/cpuidle/state2/default_status|enabled
 rw|/sys/devices/system/cpu/cpu5/cpuidle/state2/desc|MWAIT 0x01
 rw|/sys/devices/system/cpu/cpu5/cpuidle/state2/disable|0
@@ -873,13 +873,13 @@ rw|/sys/devices/system/cpu/cpu5/cpuidle/state2/name|C1E
 rw|/sys/devices/system/cpu/cpu5/cpuidle/state2/power|0
 rw|/sys/devices/system/cpu/cpu5/cpuidle/state2/rejected|0
 rw|/sys/devices/system/cpu/cpu5/cpuidle/state2/residency|20
-rw|/sys/devices/system/cpu/cpu5/cpuidle/state2/time|319821
-rw|/sys/devices/system/cpu/cpu5/cpuidle/state2/usage|1777
+rw|/sys/devices/system/cpu/cpu5/cpuidle/state2/time|384502
+rw|/sys/devices/system/cpu/cpu5/cpuidle/state2/usage|2615
 rw|/sys/devices/system/cpu/cpu5/cpuidle/state3/above|0
 rw|/sys/devices/system/cpu/cpu5/cpuidle/state3/below|0
 rw|/sys/devices/system/cpu/cpu5/cpuidle/state3/default_status|disabled
 rw|/sys/devices/system/cpu/cpu5/cpuidle/state3/desc|MWAIT 0x10
-rw|/sys/devices/system/cpu/cpu5/cpuidle/state3/disable|1
+rw|/sys/devices/system/cpu/cpu5/cpuidle/state3/disable|0
 rw|/sys/devices/system/cpu/cpu5/cpuidle/state3/latency|40
 rw|/sys/devices/system/cpu/cpu5/cpuidle/state3/name|C3
 rw|/sys/devices/system/cpu/cpu5/cpuidle/state3/power|0
@@ -887,7 +887,7 @@ rw|/sys/devices/system/cpu/cpu5/cpuidle/state3/rejected|0
 rw|/sys/devices/system/cpu/cpu5/cpuidle/state3/residency|100
 rw|/sys/devices/system/cpu/cpu5/cpuidle/state3/time|0
 rw|/sys/devices/system/cpu/cpu5/cpuidle/state3/usage|0
-rw|/sys/devices/system/cpu/cpu5/cpuidle/state4/above|3416
+rw|/sys/devices/system/cpu/cpu5/cpuidle/state4/above|6254
 rw|/sys/devices/system/cpu/cpu5/cpuidle/state4/below|0
 rw|/sys/devices/system/cpu/cpu5/cpuidle/state4/default_status|enabled
 rw|/sys/devices/system/cpu/cpu5/cpuidle/state4/desc|MWAIT 0x20
@@ -897,10 +897,10 @@ rw|/sys/devices/system/cpu/cpu5/cpuidle/state4/name|C6
 rw|/sys/devices/system/cpu/cpu5/cpuidle/state4/power|0
 rw|/sys/devices/system/cpu/cpu5/cpuidle/state4/rejected|0
 rw|/sys/devices/system/cpu/cpu5/cpuidle/state4/residency|400
-rw|/sys/devices/system/cpu/cpu5/cpuidle/state4/time|32550767
-rw|/sys/devices/system/cpu/cpu5/cpuidle/state4/usage|6545
+rw|/sys/devices/system/cpu/cpu5/cpuidle/state4/time|312187906
+rw|/sys/devices/system/cpu/cpu5/cpuidle/state4/usage|9832
 rw|/sys/devices/system/cpu/cpu6/cpuidle/state0/above|0
-rw|/sys/devices/system/cpu/cpu6/cpuidle/state0/below|385
+rw|/sys/devices/system/cpu/cpu6/cpuidle/state0/below|136
 rw|/sys/devices/system/cpu/cpu6/cpuidle/state0/default_status|enabled
 rw|/sys/devices/system/cpu/cpu6/cpuidle/state0/desc|CPUIDLE CORE POLL IDLE
 rw|/sys/devices/system/cpu/cpu6/cpuidle/state0/disable|0
@@ -909,10 +909,10 @@ rw|/sys/devices/system/cpu/cpu6/cpuidle/state0/name|POLL
 rw|/sys/devices/system/cpu/cpu6/cpuidle/state0/power|4294967295
 rw|/sys/devices/system/cpu/cpu6/cpuidle/state0/rejected|0
 rw|/sys/devices/system/cpu/cpu6/cpuidle/state0/residency|0
-rw|/sys/devices/system/cpu/cpu6/cpuidle/state0/time|8129
-rw|/sys/devices/system/cpu/cpu6/cpuidle/state0/usage|385
-rw|/sys/devices/system/cpu/cpu6/cpuidle/state1/above|23
-rw|/sys/devices/system/cpu/cpu6/cpuidle/state1/below|183
+rw|/sys/devices/system/cpu/cpu6/cpuidle/state0/time|3437
+rw|/sys/devices/system/cpu/cpu6/cpuidle/state0/usage|138
+rw|/sys/devices/system/cpu/cpu6/cpuidle/state1/above|41
+rw|/sys/devices/system/cpu/cpu6/cpuidle/state1/below|438
 rw|/sys/devices/system/cpu/cpu6/cpuidle/state1/default_status|enabled
 rw|/sys/devices/system/cpu/cpu6/cpuidle/state1/desc|MWAIT 0x00
 rw|/sys/devices/system/cpu/cpu6/cpuidle/state1/disable|0
@@ -921,10 +921,10 @@ rw|/sys/devices/system/cpu/cpu6/cpuidle/state1/name|C1
 rw|/sys/devices/system/cpu/cpu6/cpuidle/state1/power|0
 rw|/sys/devices/system/cpu/cpu6/cpuidle/state1/rejected|0
 rw|/sys/devices/system/cpu/cpu6/cpuidle/state1/residency|2
-rw|/sys/devices/system/cpu/cpu6/cpuidle/state1/time|50811
-rw|/sys/devices/system/cpu/cpu6/cpuidle/state1/usage|433
-rw|/sys/devices/system/cpu/cpu6/cpuidle/state2/above|394
-rw|/sys/devices/system/cpu/cpu6/cpuidle/state2/below|192
+rw|/sys/devices/system/cpu/cpu6/cpuidle/state1/time|82236
+rw|/sys/devices/system/cpu/cpu6/cpuidle/state1/usage|2694
+rw|/sys/devices/system/cpu/cpu6/cpuidle/state2/above|673
+rw|/sys/devices/system/cpu/cpu6/cpuidle/state2/below|226
 rw|/sys/devices/system/cpu/cpu6/cpuidle/state2/default_status|enabled
 rw|/sys/devices/system/cpu/cpu6/cpuidle/state2/desc|MWAIT 0x01
 rw|/sys/devices/system/cpu/cpu6/cpuidle/state2/disable|0
@@ -933,13 +933,13 @@ rw|/sys/devices/system/cpu/cpu6/cpuidle/state2/name|C1E
 rw|/sys/devices/system/cpu/cpu6/cpuidle/state2/power|0
 rw|/sys/devices/system/cpu/cpu6/cpuidle/state2/rejected|0
 rw|/sys/devices/system/cpu/cpu6/cpuidle/state2/residency|20
-rw|/sys/devices/system/cpu/cpu6/cpuidle/state2/time|231101
-rw|/sys/devices/system/cpu/cpu6/cpuidle/state2/usage|1402
+rw|/sys/devices/system/cpu/cpu6/cpuidle/state2/time|321960
+rw|/sys/devices/system/cpu/cpu6/cpuidle/state2/usage|2374
 rw|/sys/devices/system/cpu/cpu6/cpuidle/state3/above|0
 rw|/sys/devices/system/cpu/cpu6/cpuidle/state3/below|0
 rw|/sys/devices/system/cpu/cpu6/cpuidle/state3/default_status|disabled
 rw|/sys/devices/system/cpu/cpu6/cpuidle/state3/desc|MWAIT 0x10
-rw|/sys/devices/system/cpu/cpu6/cpuidle/state3/disable|1
+rw|/sys/devices/system/cpu/cpu6/cpuidle/state3/disable|0
 rw|/sys/devices/system/cpu/cpu6/cpuidle/state3/latency|40
 rw|/sys/devices/system/cpu/cpu6/cpuidle/state3/name|C3
 rw|/sys/devices/system/cpu/cpu6/cpuidle/state3/power|0
@@ -947,7 +947,7 @@ rw|/sys/devices/system/cpu/cpu6/cpuidle/state3/rejected|0
 rw|/sys/devices/system/cpu/cpu6/cpuidle/state3/residency|100
 rw|/sys/devices/system/cpu/cpu6/cpuidle/state3/time|0
 rw|/sys/devices/system/cpu/cpu6/cpuidle/state3/usage|0
-rw|/sys/devices/system/cpu/cpu6/cpuidle/state4/above|5674
+rw|/sys/devices/system/cpu/cpu6/cpuidle/state4/above|5272
 rw|/sys/devices/system/cpu/cpu6/cpuidle/state4/below|0
 rw|/sys/devices/system/cpu/cpu6/cpuidle/state4/default_status|enabled
 rw|/sys/devices/system/cpu/cpu6/cpuidle/state4/desc|MWAIT 0x20
@@ -957,10 +957,10 @@ rw|/sys/devices/system/cpu/cpu6/cpuidle/state4/name|C6
 rw|/sys/devices/system/cpu/cpu6/cpuidle/state4/power|0
 rw|/sys/devices/system/cpu/cpu6/cpuidle/state4/rejected|0
 rw|/sys/devices/system/cpu/cpu6/cpuidle/state4/residency|400
-rw|/sys/devices/system/cpu/cpu6/cpuidle/state4/time|33576666
-rw|/sys/devices/system/cpu/cpu6/cpuidle/state4/usage|8658
+rw|/sys/devices/system/cpu/cpu6/cpuidle/state4/time|311840457
+rw|/sys/devices/system/cpu/cpu6/cpuidle/state4/usage|8633
 rw|/sys/devices/system/cpu/cpu7/cpuidle/state0/above|0
-rw|/sys/devices/system/cpu/cpu7/cpuidle/state0/below|850
+rw|/sys/devices/system/cpu/cpu7/cpuidle/state0/below|188
 rw|/sys/devices/system/cpu/cpu7/cpuidle/state0/default_status|enabled
 rw|/sys/devices/system/cpu/cpu7/cpuidle/state0/desc|CPUIDLE CORE POLL IDLE
 rw|/sys/devices/system/cpu/cpu7/cpuidle/state0/disable|0
@@ -969,10 +969,10 @@ rw|/sys/devices/system/cpu/cpu7/cpuidle/state0/name|POLL
 rw|/sys/devices/system/cpu/cpu7/cpuidle/state0/power|4294967295
 rw|/sys/devices/system/cpu/cpu7/cpuidle/state0/rejected|0
 rw|/sys/devices/system/cpu/cpu7/cpuidle/state0/residency|0
-rw|/sys/devices/system/cpu/cpu7/cpuidle/state0/time|18176
-rw|/sys/devices/system/cpu/cpu7/cpuidle/state0/usage|850
-rw|/sys/devices/system/cpu/cpu7/cpuidle/state1/above|34
-rw|/sys/devices/system/cpu/cpu7/cpuidle/state1/below|201
+rw|/sys/devices/system/cpu/cpu7/cpuidle/state0/time|5205
+rw|/sys/devices/system/cpu/cpu7/cpuidle/state0/usage|188
+rw|/sys/devices/system/cpu/cpu7/cpuidle/state1/above|37
+rw|/sys/devices/system/cpu/cpu7/cpuidle/state1/below|474
 rw|/sys/devices/system/cpu/cpu7/cpuidle/state1/default_status|enabled
 rw|/sys/devices/system/cpu/cpu7/cpuidle/state1/desc|MWAIT 0x00
 rw|/sys/devices/system/cpu/cpu7/cpuidle/state1/disable|0
@@ -981,10 +981,10 @@ rw|/sys/devices/system/cpu/cpu7/cpuidle/state1/name|C1
 rw|/sys/devices/system/cpu/cpu7/cpuidle/state1/power|0
 rw|/sys/devices/system/cpu/cpu7/cpuidle/state1/rejected|0
 rw|/sys/devices/system/cpu/cpu7/cpuidle/state1/residency|2
-rw|/sys/devices/system/cpu/cpu7/cpuidle/state1/time|53707
-rw|/sys/devices/system/cpu/cpu7/cpuidle/state1/usage|611
-rw|/sys/devices/system/cpu/cpu7/cpuidle/state2/above|449
-rw|/sys/devices/system/cpu/cpu7/cpuidle/state2/below|254
+rw|/sys/devices/system/cpu/cpu7/cpuidle/state1/time|83709
+rw|/sys/devices/system/cpu/cpu7/cpuidle/state1/usage|1179
+rw|/sys/devices/system/cpu/cpu7/cpuidle/state2/above|851
+rw|/sys/devices/system/cpu/cpu7/cpuidle/state2/below|436
 rw|/sys/devices/system/cpu/cpu7/cpuidle/state2/default_status|enabled
 rw|/sys/devices/system/cpu/cpu7/cpuidle/state2/desc|MWAIT 0x01
 rw|/sys/devices/system/cpu/cpu7/cpuidle/state2/disable|0
@@ -993,13 +993,13 @@ rw|/sys/devices/system/cpu/cpu7/cpuidle/state2/name|C1E
 rw|/sys/devices/system/cpu/cpu7/cpuidle/state2/power|0
 rw|/sys/devices/system/cpu/cpu7/cpuidle/state2/rejected|0
 rw|/sys/devices/system/cpu/cpu7/cpuidle/state2/residency|20
-rw|/sys/devices/system/cpu/cpu7/cpuidle/state2/time|382260
-rw|/sys/devices/system/cpu/cpu7/cpuidle/state2/usage|2207
+rw|/sys/devices/system/cpu/cpu7/cpuidle/state2/time|624538
+rw|/sys/devices/system/cpu/cpu7/cpuidle/state2/usage|3868
 rw|/sys/devices/system/cpu/cpu7/cpuidle/state3/above|0
 rw|/sys/devices/system/cpu/cpu7/cpuidle/state3/below|0
 rw|/sys/devices/system/cpu/cpu7/cpuidle/state3/default_status|disabled
 rw|/sys/devices/system/cpu/cpu7/cpuidle/state3/desc|MWAIT 0x10
-rw|/sys/devices/system/cpu/cpu7/cpuidle/state3/disable|1
+rw|/sys/devices/system/cpu/cpu7/cpuidle/state3/disable|0
 rw|/sys/devices/system/cpu/cpu7/cpuidle/state3/latency|40
 rw|/sys/devices/system/cpu/cpu7/cpuidle/state3/name|C3
 rw|/sys/devices/system/cpu/cpu7/cpuidle/state3/power|0
@@ -1007,7 +1007,7 @@ rw|/sys/devices/system/cpu/cpu7/cpuidle/state3/rejected|0
 rw|/sys/devices/system/cpu/cpu7/cpuidle/state3/residency|100
 rw|/sys/devices/system/cpu/cpu7/cpuidle/state3/time|0
 rw|/sys/devices/system/cpu/cpu7/cpuidle/state3/usage|0
-rw|/sys/devices/system/cpu/cpu7/cpuidle/state4/above|4794
+rw|/sys/devices/system/cpu/cpu7/cpuidle/state4/above|10986
 rw|/sys/devices/system/cpu/cpu7/cpuidle/state4/below|0
 rw|/sys/devices/system/cpu/cpu7/cpuidle/state4/default_status|enabled
 rw|/sys/devices/system/cpu/cpu7/cpuidle/state4/desc|MWAIT 0x20
@@ -1017,10 +1017,10 @@ rw|/sys/devices/system/cpu/cpu7/cpuidle/state4/name|C6
 rw|/sys/devices/system/cpu/cpu7/cpuidle/state4/power|0
 rw|/sys/devices/system/cpu/cpu7/cpuidle/state4/rejected|0
 rw|/sys/devices/system/cpu/cpu7/cpuidle/state4/residency|400
-rw|/sys/devices/system/cpu/cpu7/cpuidle/state4/time|33358209
-rw|/sys/devices/system/cpu/cpu7/cpuidle/state4/usage|8400
+rw|/sys/devices/system/cpu/cpu7/cpuidle/state4/time|311490980
+rw|/sys/devices/system/cpu/cpu7/cpuidle/state4/usage|16514
 rw|/sys/devices/system/cpu/cpu8/cpuidle/state0/above|0
-rw|/sys/devices/system/cpu/cpu8/cpuidle/state0/below|1684
+rw|/sys/devices/system/cpu/cpu8/cpuidle/state0/below|269
 rw|/sys/devices/system/cpu/cpu8/cpuidle/state0/default_status|enabled
 rw|/sys/devices/system/cpu/cpu8/cpuidle/state0/desc|CPUIDLE CORE POLL IDLE
 rw|/sys/devices/system/cpu/cpu8/cpuidle/state0/disable|0
@@ -1029,10 +1029,10 @@ rw|/sys/devices/system/cpu/cpu8/cpuidle/state0/name|POLL
 rw|/sys/devices/system/cpu/cpu8/cpuidle/state0/power|4294967295
 rw|/sys/devices/system/cpu/cpu8/cpuidle/state0/rejected|0
 rw|/sys/devices/system/cpu/cpu8/cpuidle/state0/residency|0
-rw|/sys/devices/system/cpu/cpu8/cpuidle/state0/time|37375
-rw|/sys/devices/system/cpu/cpu8/cpuidle/state0/usage|1684
-rw|/sys/devices/system/cpu/cpu8/cpuidle/state1/above|17
-rw|/sys/devices/system/cpu/cpu8/cpuidle/state1/below|118
+rw|/sys/devices/system/cpu/cpu8/cpuidle/state0/time|5801
+rw|/sys/devices/system/cpu/cpu8/cpuidle/state0/usage|270
+rw|/sys/devices/system/cpu/cpu8/cpuidle/state1/above|55
+rw|/sys/devices/system/cpu/cpu8/cpuidle/state1/below|506
 rw|/sys/devices/system/cpu/cpu8/cpuidle/state1/default_status|enabled
 rw|/sys/devices/system/cpu/cpu8/cpuidle/state1/desc|MWAIT 0x00
 rw|/sys/devices/system/cpu/cpu8/cpuidle/state1/disable|0
@@ -1041,10 +1041,10 @@ rw|/sys/devices/system/cpu/cpu8/cpuidle/state1/name|C1
 rw|/sys/devices/system/cpu/cpu8/cpuidle/state1/power|0
 rw|/sys/devices/system/cpu/cpu8/cpuidle/state1/rejected|0
 rw|/sys/devices/system/cpu/cpu8/cpuidle/state1/residency|2
-rw|/sys/devices/system/cpu/cpu8/cpuidle/state1/time|47294
-rw|/sys/devices/system/cpu/cpu8/cpuidle/state1/usage|849
-rw|/sys/devices/system/cpu/cpu8/cpuidle/state2/above|259
-rw|/sys/devices/system/cpu/cpu8/cpuidle/state2/below|168
+rw|/sys/devices/system/cpu/cpu8/cpuidle/state1/time|101611
+rw|/sys/devices/system/cpu/cpu8/cpuidle/state1/usage|5033
+rw|/sys/devices/system/cpu/cpu8/cpuidle/state2/above|689
+rw|/sys/devices/system/cpu/cpu8/cpuidle/state2/below|242
 rw|/sys/devices/system/cpu/cpu8/cpuidle/state2/default_status|enabled
 rw|/sys/devices/system/cpu/cpu8/cpuidle/state2/desc|MWAIT 0x01
 rw|/sys/devices/system/cpu/cpu8/cpuidle/state2/disable|0
@@ -1053,13 +1053,13 @@ rw|/sys/devices/system/cpu/cpu8/cpuidle/state2/name|C1E
 rw|/sys/devices/system/cpu/cpu8/cpuidle/state2/power|0
 rw|/sys/devices/system/cpu/cpu8/cpuidle/state2/rejected|0
 rw|/sys/devices/system/cpu/cpu8/cpuidle/state2/residency|20
-rw|/sys/devices/system/cpu/cpu8/cpuidle/state2/time|201557
-rw|/sys/devices/system/cpu/cpu8/cpuidle/state2/usage|1057
+rw|/sys/devices/system/cpu/cpu8/cpuidle/state2/time|393812
+rw|/sys/devices/system/cpu/cpu8/cpuidle/state2/usage|2757
 rw|/sys/devices/system/cpu/cpu8/cpuidle/state3/above|0
 rw|/sys/devices/system/cpu/cpu8/cpuidle/state3/below|0
 rw|/sys/devices/system/cpu/cpu8/cpuidle/state3/default_status|disabled
 rw|/sys/devices/system/cpu/cpu8/cpuidle/state3/desc|MWAIT 0x10
-rw|/sys/devices/system/cpu/cpu8/cpuidle/state3/disable|1
+rw|/sys/devices/system/cpu/cpu8/cpuidle/state3/disable|0
 rw|/sys/devices/system/cpu/cpu8/cpuidle/state3/latency|40
 rw|/sys/devices/system/cpu/cpu8/cpuidle/state3/name|C3
 rw|/sys/devices/system/cpu/cpu8/cpuidle/state3/power|0
@@ -1067,7 +1067,7 @@ rw|/sys/devices/system/cpu/cpu8/cpuidle/state3/rejected|0
 rw|/sys/devices/system/cpu/cpu8/cpuidle/state3/residency|100
 rw|/sys/devices/system/cpu/cpu8/cpuidle/state3/time|0
 rw|/sys/devices/system/cpu/cpu8/cpuidle/state3/usage|0
-rw|/sys/devices/system/cpu/cpu8/cpuidle/state4/above|3135
+rw|/sys/devices/system/cpu/cpu8/cpuidle/state4/above|5416
 rw|/sys/devices/system/cpu/cpu8/cpuidle/state4/below|0
 rw|/sys/devices/system/cpu/cpu8/cpuidle/state4/default_status|enabled
 rw|/sys/devices/system/cpu/cpu8/cpuidle/state4/desc|MWAIT 0x20
@@ -1077,10 +1077,10 @@ rw|/sys/devices/system/cpu/cpu8/cpuidle/state4/name|C6
 rw|/sys/devices/system/cpu/cpu8/cpuidle/state4/power|0
 rw|/sys/devices/system/cpu/cpu8/cpuidle/state4/rejected|0
 rw|/sys/devices/system/cpu/cpu8/cpuidle/state4/residency|400
-rw|/sys/devices/system/cpu/cpu8/cpuidle/state4/time|33855821
-rw|/sys/devices/system/cpu/cpu8/cpuidle/state4/usage|5646
+rw|/sys/devices/system/cpu/cpu8/cpuidle/state4/time|310829952
+rw|/sys/devices/system/cpu/cpu8/cpuidle/state4/usage|9838
 rw|/sys/devices/system/cpu/cpu9/cpuidle/state0/above|0
-rw|/sys/devices/system/cpu/cpu9/cpuidle/state0/below|543
+rw|/sys/devices/system/cpu/cpu9/cpuidle/state0/below|142
 rw|/sys/devices/system/cpu/cpu9/cpuidle/state0/default_status|enabled
 rw|/sys/devices/system/cpu/cpu9/cpuidle/state0/desc|CPUIDLE CORE POLL IDLE
 rw|/sys/devices/system/cpu/cpu9/cpuidle/state0/disable|0
@@ -1089,10 +1089,10 @@ rw|/sys/devices/system/cpu/cpu9/cpuidle/state0/name|POLL
 rw|/sys/devices/system/cpu/cpu9/cpuidle/state0/power|4294967295
 rw|/sys/devices/system/cpu/cpu9/cpuidle/state0/rejected|0
 rw|/sys/devices/system/cpu/cpu9/cpuidle/state0/residency|0
-rw|/sys/devices/system/cpu/cpu9/cpuidle/state0/time|11205
-rw|/sys/devices/system/cpu/cpu9/cpuidle/state0/usage|574
-rw|/sys/devices/system/cpu/cpu9/cpuidle/state1/above|18
-rw|/sys/devices/system/cpu/cpu9/cpuidle/state1/below|160
+rw|/sys/devices/system/cpu/cpu9/cpuidle/state0/time|3482
+rw|/sys/devices/system/cpu/cpu9/cpuidle/state0/usage|142
+rw|/sys/devices/system/cpu/cpu9/cpuidle/state1/above|35
+rw|/sys/devices/system/cpu/cpu9/cpuidle/state1/below|387
 rw|/sys/devices/system/cpu/cpu9/cpuidle/state1/default_status|enabled
 rw|/sys/devices/system/cpu/cpu9/cpuidle/state1/desc|MWAIT 0x00
 rw|/sys/devices/system/cpu/cpu9/cpuidle/state1/disable|0
@@ -1101,10 +1101,10 @@ rw|/sys/devices/system/cpu/cpu9/cpuidle/state1/name|C1
 rw|/sys/devices/system/cpu/cpu9/cpuidle/state1/power|0
 rw|/sys/devices/system/cpu/cpu9/cpuidle/state1/rejected|0
 rw|/sys/devices/system/cpu/cpu9/cpuidle/state1/residency|2
-rw|/sys/devices/system/cpu/cpu9/cpuidle/state1/time|34988
-rw|/sys/devices/system/cpu/cpu9/cpuidle/state1/usage|427
-rw|/sys/devices/system/cpu/cpu9/cpuidle/state2/above|255
-rw|/sys/devices/system/cpu/cpu9/cpuidle/state2/below|137
+rw|/sys/devices/system/cpu/cpu9/cpuidle/state1/time|70673
+rw|/sys/devices/system/cpu/cpu9/cpuidle/state1/usage|999
+rw|/sys/devices/system/cpu/cpu9/cpuidle/state2/above|592
+rw|/sys/devices/system/cpu/cpu9/cpuidle/state2/below|157
 rw|/sys/devices/system/cpu/cpu9/cpuidle/state2/default_status|enabled
 rw|/sys/devices/system/cpu/cpu9/cpuidle/state2/desc|MWAIT 0x01
 rw|/sys/devices/system/cpu/cpu9/cpuidle/state2/disable|0
@@ -1113,13 +1113,13 @@ rw|/sys/devices/system/cpu/cpu9/cpuidle/state2/name|C1E
 rw|/sys/devices/system/cpu/cpu9/cpuidle/state2/power|0
 rw|/sys/devices/system/cpu/cpu9/cpuidle/state2/rejected|0
 rw|/sys/devices/system/cpu/cpu9/cpuidle/state2/residency|20
-rw|/sys/devices/system/cpu/cpu9/cpuidle/state2/time|173252
-rw|/sys/devices/system/cpu/cpu9/cpuidle/state2/usage|1037
+rw|/sys/devices/system/cpu/cpu9/cpuidle/state2/time|277987
+rw|/sys/devices/system/cpu/cpu9/cpuidle/state2/usage|2102
 rw|/sys/devices/system/cpu/cpu9/cpuidle/state3/above|0
 rw|/sys/devices/system/cpu/cpu9/cpuidle/state3/below|0
 rw|/sys/devices/system/cpu/cpu9/cpuidle/state3/default_status|disabled
 rw|/sys/devices/system/cpu/cpu9/cpuidle/state3/desc|MWAIT 0x10
-rw|/sys/devices/system/cpu/cpu9/cpuidle/state3/disable|1
+rw|/sys/devices/system/cpu/cpu9/cpuidle/state3/disable|0
 rw|/sys/devices/system/cpu/cpu9/cpuidle/state3/latency|40
 rw|/sys/devices/system/cpu/cpu9/cpuidle/state3/name|C3
 rw|/sys/devices/system/cpu/cpu9/cpuidle/state3/power|0
@@ -1127,7 +1127,7 @@ rw|/sys/devices/system/cpu/cpu9/cpuidle/state3/rejected|0
 rw|/sys/devices/system/cpu/cpu9/cpuidle/state3/residency|100
 rw|/sys/devices/system/cpu/cpu9/cpuidle/state3/time|0
 rw|/sys/devices/system/cpu/cpu9/cpuidle/state3/usage|0
-rw|/sys/devices/system/cpu/cpu9/cpuidle/state4/above|3245
+rw|/sys/devices/system/cpu/cpu9/cpuidle/state4/above|7896
 rw|/sys/devices/system/cpu/cpu9/cpuidle/state4/below|0
 rw|/sys/devices/system/cpu/cpu9/cpuidle/state4/default_status|enabled
 rw|/sys/devices/system/cpu/cpu9/cpuidle/state4/desc|MWAIT 0x20
@@ -1137,227 +1137,228 @@ rw|/sys/devices/system/cpu/cpu9/cpuidle/state4/name|C6
 rw|/sys/devices/system/cpu/cpu9/cpuidle/state4/power|0
 rw|/sys/devices/system/cpu/cpu9/cpuidle/state4/rejected|0
 rw|/sys/devices/system/cpu/cpu9/cpuidle/state4/residency|400
-rw|/sys/devices/system/cpu/cpu9/cpuidle/state4/time|33255701
-rw|/sys/devices/system/cpu/cpu9/cpuidle/state4/usage|5817
-rw|/sys/devices/system/cpu/cpuidle/available_governors|ladder menu teo 
+rw|/sys/devices/system/cpu/cpu9/cpuidle/state4/time|312525501
+rw|/sys/devices/system/cpu/cpu9/cpuidle/state4/usage|10660
+rw|/sys/devices/system/cpu/cpuidle/available_governors|menu 
 rw|/sys/devices/system/cpu/cpuidle/current_driver|intel_idle
 rw|/sys/devices/system/cpu/cpuidle/current_governor|menu
 rw|/sys/devices/system/cpu/cpuidle/current_governor_ro|menu
-rw|/sys/devices/system/cpu/cpu0/power/pm_qos_resume_latency_us|0
-rw|/sys/devices/system/cpu/cpu10/power/pm_qos_resume_latency_us|0
-rw|/sys/devices/system/cpu/cpu11/power/pm_qos_resume_latency_us|0
-rw|/sys/devices/system/cpu/cpu12/power/pm_qos_resume_latency_us|0
-rw|/sys/devices/system/cpu/cpu13/power/pm_qos_resume_latency_us|0
-rw|/sys/devices/system/cpu/cpu14/power/pm_qos_resume_latency_us|0
-rw|/sys/devices/system/cpu/cpu15/power/pm_qos_resume_latency_us|0
-rw|/sys/devices/system/cpu/cpu1/power/pm_qos_resume_latency_us|0
-rw|/sys/devices/system/cpu/cpu2/power/pm_qos_resume_latency_us|0
-rw|/sys/devices/system/cpu/cpu3/power/pm_qos_resume_latency_us|0
-rw|/sys/devices/system/cpu/cpu4/power/pm_qos_resume_latency_us|0
-rw|/sys/devices/system/cpu/cpu5/power/pm_qos_resume_latency_us|0
-rw|/sys/devices/system/cpu/cpu6/power/pm_qos_resume_latency_us|0
-rw|/sys/devices/system/cpu/cpu7/power/pm_qos_resume_latency_us|0
-rw|/sys/devices/system/cpu/cpu8/power/pm_qos_resume_latency_us|0
-rw|/sys/devices/system/cpu/cpu9/power/pm_qos_resume_latency_us|0
-rw|/sys/devices/system/cpu/cpufreq/policy0/affected_cpus|0
-rw|/sys/devices/system/cpu/cpufreq/policy0/cpuinfo_max_freq|2700000
-rw|/sys/devices/system/cpu/cpufreq/policy0/cpuinfo_min_freq|800000
-rw|/sys/devices/system/cpu/cpufreq/policy0/cpuinfo_transition_latency|20000
-rw|/sys/devices/system/cpu/cpufreq/policy0/related_cpus|0
-rw|/sys/devices/system/cpu/cpufreq/policy0/scaling_available_governors|conservative userspace powersave performance schedutil 
-rw|/sys/devices/system/cpu/cpufreq/policy0/scaling_cur_freq|800722
-rw|/sys/devices/system/cpu/cpufreq/policy0/scaling_driver|intel_cpufreq
-rw|/sys/devices/system/cpu/cpufreq/policy0/scaling_governor|schedutil
-rw|/sys/devices/system/cpu/cpufreq/policy0/scaling_max_freq|2700000
-rw|/sys/devices/system/cpu/cpufreq/policy0/scaling_min_freq|800000
-rw|/sys/devices/system/cpu/cpufreq/policy0/scaling_setspeed|<unsupported>
-rw|/sys/devices/system/cpu/cpufreq/policy10/affected_cpus|10
-rw|/sys/devices/system/cpu/cpufreq/policy10/cpuinfo_max_freq|2700000
-rw|/sys/devices/system/cpu/cpufreq/policy10/cpuinfo_min_freq|800000
-rw|/sys/devices/system/cpu/cpufreq/policy10/cpuinfo_transition_latency|20000
-rw|/sys/devices/system/cpu/cpufreq/policy10/related_cpus|10
-rw|/sys/devices/system/cpu/cpufreq/policy10/scaling_available_governors|conservative userspace powersave performance schedutil 
-rw|/sys/devices/system/cpu/cpufreq/policy10/scaling_cur_freq|800208
-rw|/sys/devices/system/cpu/cpufreq/policy10/scaling_driver|intel_cpufreq
-rw|/sys/devices/system/cpu/cpufreq/policy10/scaling_governor|schedutil
-rw|/sys/devices/system/cpu/cpufreq/policy10/scaling_max_freq|2700000
-rw|/sys/devices/system/cpu/cpufreq/policy10/scaling_min_freq|800000
-rw|/sys/devices/system/cpu/cpufreq/policy10/scaling_setspeed|<unsupported>
-rw|/sys/devices/system/cpu/cpufreq/policy11/affected_cpus|11
-rw|/sys/devices/system/cpu/cpufreq/policy11/cpuinfo_max_freq|2700000
-rw|/sys/devices/system/cpu/cpufreq/policy11/cpuinfo_min_freq|800000
-rw|/sys/devices/system/cpu/cpufreq/policy11/cpuinfo_transition_latency|20000
-rw|/sys/devices/system/cpu/cpufreq/policy11/related_cpus|11
-rw|/sys/devices/system/cpu/cpufreq/policy11/scaling_available_governors|conservative userspace powersave performance schedutil 
-rw|/sys/devices/system/cpu/cpufreq/policy11/scaling_cur_freq|800000
-rw|/sys/devices/system/cpu/cpufreq/policy11/scaling_driver|intel_cpufreq
-rw|/sys/devices/system/cpu/cpufreq/policy11/scaling_governor|schedutil
-rw|/sys/devices/system/cpu/cpufreq/policy11/scaling_max_freq|2700000
 rw|/sys/devices/system/cpu/cpufreq/policy11/scaling_min_freq|800000
+rw|/sys/devices/system/cpu/cpufreq/policy11/scaling_available_governors|conservative userspace powersave performance schedutil 
+rw|/sys/devices/system/cpu/cpufreq/policy11/scaling_governor|schedutil
+rw|/sys/devices/system/cpu/cpufreq/policy11/cpuinfo_max_freq|2700000
+rw|/sys/devices/system/cpu/cpufreq/policy11/related_cpus|11
+rw|/sys/devices/system/cpu/cpufreq/policy11/scaling_cur_freq|800000
 rw|/sys/devices/system/cpu/cpufreq/policy11/scaling_setspeed|<unsupported>
-rw|/sys/devices/system/cpu/cpufreq/policy12/affected_cpus|12
-rw|/sys/devices/system/cpu/cpufreq/policy12/cpuinfo_max_freq|2700000
-rw|/sys/devices/system/cpu/cpufreq/policy12/cpuinfo_min_freq|800000
-rw|/sys/devices/system/cpu/cpufreq/policy12/cpuinfo_transition_latency|20000
-rw|/sys/devices/system/cpu/cpufreq/policy12/related_cpus|12
-rw|/sys/devices/system/cpu/cpufreq/policy12/scaling_available_governors|conservative userspace powersave performance schedutil 
-rw|/sys/devices/system/cpu/cpufreq/policy12/scaling_cur_freq|1700000
-rw|/sys/devices/system/cpu/cpufreq/policy12/scaling_driver|intel_cpufreq
-rw|/sys/devices/system/cpu/cpufreq/policy12/scaling_governor|schedutil
-rw|/sys/devices/system/cpu/cpufreq/policy12/scaling_max_freq|2700000
-rw|/sys/devices/system/cpu/cpufreq/policy12/scaling_min_freq|800000
-rw|/sys/devices/system/cpu/cpufreq/policy12/scaling_setspeed|<unsupported>
-rw|/sys/devices/system/cpu/cpufreq/policy13/affected_cpus|13
-rw|/sys/devices/system/cpu/cpufreq/policy13/cpuinfo_max_freq|2700000
-rw|/sys/devices/system/cpu/cpufreq/policy13/cpuinfo_min_freq|800000
-rw|/sys/devices/system/cpu/cpufreq/policy13/cpuinfo_transition_latency|20000
-rw|/sys/devices/system/cpu/cpufreq/policy13/related_cpus|13
-rw|/sys/devices/system/cpu/cpufreq/policy13/scaling_available_governors|conservative userspace powersave performance schedutil 
-rw|/sys/devices/system/cpu/cpufreq/policy13/scaling_cur_freq|1800278
-rw|/sys/devices/system/cpu/cpufreq/policy13/scaling_driver|intel_cpufreq
-rw|/sys/devices/system/cpu/cpufreq/policy13/scaling_governor|schedutil
-rw|/sys/devices/system/cpu/cpufreq/policy13/scaling_max_freq|2700000
-rw|/sys/devices/system/cpu/cpufreq/policy13/scaling_min_freq|800000
-rw|/sys/devices/system/cpu/cpufreq/policy13/scaling_setspeed|<unsupported>
-rw|/sys/devices/system/cpu/cpufreq/policy14/affected_cpus|14
-rw|/sys/devices/system/cpu/cpufreq/policy14/cpuinfo_max_freq|2700000
-rw|/sys/devices/system/cpu/cpufreq/policy14/cpuinfo_min_freq|800000
-rw|/sys/devices/system/cpu/cpufreq/policy14/cpuinfo_transition_latency|20000
-rw|/sys/devices/system/cpu/cpufreq/policy14/related_cpus|14
-rw|/sys/devices/system/cpu/cpufreq/policy14/scaling_available_governors|conservative userspace powersave performance schedutil 
-rw|/sys/devices/system/cpu/cpufreq/policy14/scaling_cur_freq|800000
-rw|/sys/devices/system/cpu/cpufreq/policy14/scaling_driver|intel_cpufreq
-rw|/sys/devices/system/cpu/cpufreq/policy14/scaling_governor|schedutil
-rw|/sys/devices/system/cpu/cpufreq/policy14/scaling_max_freq|2700000
-rw|/sys/devices/system/cpu/cpufreq/policy14/scaling_min_freq|800000
-rw|/sys/devices/system/cpu/cpufreq/policy14/scaling_setspeed|<unsupported>
-rw|/sys/devices/system/cpu/cpufreq/policy15/affected_cpus|15
-rw|/sys/devices/system/cpu/cpufreq/policy15/cpuinfo_max_freq|2700000
-rw|/sys/devices/system/cpu/cpufreq/policy15/cpuinfo_min_freq|800000
-rw|/sys/devices/system/cpu/cpufreq/policy15/cpuinfo_transition_latency|20000
-rw|/sys/devices/system/cpu/cpufreq/policy15/related_cpus|15
-rw|/sys/devices/system/cpu/cpufreq/policy15/scaling_available_governors|conservative userspace powersave performance schedutil 
-rw|/sys/devices/system/cpu/cpufreq/policy15/scaling_cur_freq|1899589
-rw|/sys/devices/system/cpu/cpufreq/policy15/scaling_driver|intel_cpufreq
-rw|/sys/devices/system/cpu/cpufreq/policy15/scaling_governor|schedutil
-rw|/sys/devices/system/cpu/cpufreq/policy15/scaling_max_freq|2700000
-rw|/sys/devices/system/cpu/cpufreq/policy15/scaling_min_freq|800000
-rw|/sys/devices/system/cpu/cpufreq/policy15/scaling_setspeed|<unsupported>
-rw|/sys/devices/system/cpu/cpufreq/policy1/affected_cpus|1
-rw|/sys/devices/system/cpu/cpufreq/policy1/cpuinfo_max_freq|2700000
-rw|/sys/devices/system/cpu/cpufreq/policy1/cpuinfo_min_freq|800000
-rw|/sys/devices/system/cpu/cpufreq/policy1/cpuinfo_transition_latency|20000
-rw|/sys/devices/system/cpu/cpufreq/policy1/related_cpus|1
-rw|/sys/devices/system/cpu/cpufreq/policy1/scaling_available_governors|conservative userspace powersave performance schedutil 
-rw|/sys/devices/system/cpu/cpufreq/policy1/scaling_cur_freq|1799808
-rw|/sys/devices/system/cpu/cpufreq/policy1/scaling_driver|intel_cpufreq
-rw|/sys/devices/system/cpu/cpufreq/policy1/scaling_governor|schedutil
-rw|/sys/devices/system/cpu/cpufreq/policy1/scaling_max_freq|2700000
-rw|/sys/devices/system/cpu/cpufreq/policy1/scaling_min_freq|800000
-rw|/sys/devices/system/cpu/cpufreq/policy1/scaling_setspeed|<unsupported>
-rw|/sys/devices/system/cpu/cpufreq/policy2/affected_cpus|2
-rw|/sys/devices/system/cpu/cpufreq/policy2/cpuinfo_max_freq|2700000
-rw|/sys/devices/system/cpu/cpufreq/policy2/cpuinfo_min_freq|800000
-rw|/sys/devices/system/cpu/cpufreq/policy2/cpuinfo_transition_latency|20000
-rw|/sys/devices/system/cpu/cpufreq/policy2/related_cpus|2
-rw|/sys/devices/system/cpu/cpufreq/policy2/scaling_available_governors|conservative userspace powersave performance schedutil 
-rw|/sys/devices/system/cpu/cpufreq/policy2/scaling_cur_freq|800000
-rw|/sys/devices/system/cpu/cpufreq/policy2/scaling_driver|intel_cpufreq
-rw|/sys/devices/system/cpu/cpufreq/policy2/scaling_governor|schedutil
-rw|/sys/devices/system/cpu/cpufreq/policy2/scaling_max_freq|2700000
-rw|/sys/devices/system/cpu/cpufreq/policy2/scaling_min_freq|800000
-rw|/sys/devices/system/cpu/cpufreq/policy2/scaling_setspeed|<unsupported>
-rw|/sys/devices/system/cpu/cpufreq/policy3/affected_cpus|3
-rw|/sys/devices/system/cpu/cpufreq/policy3/cpuinfo_max_freq|2700000
-rw|/sys/devices/system/cpu/cpufreq/policy3/cpuinfo_min_freq|800000
-rw|/sys/devices/system/cpu/cpufreq/policy3/cpuinfo_transition_latency|20000
-rw|/sys/devices/system/cpu/cpufreq/policy3/related_cpus|3
-rw|/sys/devices/system/cpu/cpufreq/policy3/scaling_available_governors|conservative userspace powersave performance schedutil 
-rw|/sys/devices/system/cpu/cpufreq/policy3/scaling_cur_freq|2100000
-rw|/sys/devices/system/cpu/cpufreq/policy3/scaling_driver|intel_cpufreq
-rw|/sys/devices/system/cpu/cpufreq/policy3/scaling_governor|schedutil
-rw|/sys/devices/system/cpu/cpufreq/policy3/scaling_max_freq|2700000
-rw|/sys/devices/system/cpu/cpufreq/policy3/scaling_min_freq|800000
-rw|/sys/devices/system/cpu/cpufreq/policy3/scaling_setspeed|<unsupported>
-rw|/sys/devices/system/cpu/cpufreq/policy4/affected_cpus|4
-rw|/sys/devices/system/cpu/cpufreq/policy4/cpuinfo_max_freq|2700000
-rw|/sys/devices/system/cpu/cpufreq/policy4/cpuinfo_min_freq|800000
-rw|/sys/devices/system/cpu/cpufreq/policy4/cpuinfo_transition_latency|20000
-rw|/sys/devices/system/cpu/cpufreq/policy4/related_cpus|4
-rw|/sys/devices/system/cpu/cpufreq/policy4/scaling_available_governors|conservative userspace powersave performance schedutil 
-rw|/sys/devices/system/cpu/cpufreq/policy4/scaling_cur_freq|1700688
-rw|/sys/devices/system/cpu/cpufreq/policy4/scaling_driver|intel_cpufreq
-rw|/sys/devices/system/cpu/cpufreq/policy4/scaling_governor|schedutil
-rw|/sys/devices/system/cpu/cpufreq/policy4/scaling_max_freq|2700000
-rw|/sys/devices/system/cpu/cpufreq/policy4/scaling_min_freq|800000
-rw|/sys/devices/system/cpu/cpufreq/policy4/scaling_setspeed|<unsupported>
-rw|/sys/devices/system/cpu/cpufreq/policy5/affected_cpus|5
-rw|/sys/devices/system/cpu/cpufreq/policy5/cpuinfo_max_freq|2700000
-rw|/sys/devices/system/cpu/cpufreq/policy5/cpuinfo_min_freq|800000
-rw|/sys/devices/system/cpu/cpufreq/policy5/cpuinfo_transition_latency|20000
-rw|/sys/devices/system/cpu/cpufreq/policy5/related_cpus|5
-rw|/sys/devices/system/cpu/cpufreq/policy5/scaling_available_governors|conservative userspace powersave performance schedutil 
-rw|/sys/devices/system/cpu/cpufreq/policy5/scaling_cur_freq|800000
-rw|/sys/devices/system/cpu/cpufreq/policy5/scaling_driver|intel_cpufreq
-rw|/sys/devices/system/cpu/cpufreq/policy5/scaling_governor|schedutil
-rw|/sys/devices/system/cpu/cpufreq/policy5/scaling_max_freq|2700000
-rw|/sys/devices/system/cpu/cpufreq/policy5/scaling_min_freq|800000
-rw|/sys/devices/system/cpu/cpufreq/policy5/scaling_setspeed|<unsupported>
-rw|/sys/devices/system/cpu/cpufreq/policy6/affected_cpus|6
-rw|/sys/devices/system/cpu/cpufreq/policy6/cpuinfo_max_freq|2700000
-rw|/sys/devices/system/cpu/cpufreq/policy6/cpuinfo_min_freq|800000
-rw|/sys/devices/system/cpu/cpufreq/policy6/cpuinfo_transition_latency|20000
-rw|/sys/devices/system/cpu/cpufreq/policy6/related_cpus|6
-rw|/sys/devices/system/cpu/cpufreq/policy6/scaling_available_governors|conservative userspace powersave performance schedutil 
-rw|/sys/devices/system/cpu/cpufreq/policy6/scaling_cur_freq|800000
-rw|/sys/devices/system/cpu/cpufreq/policy6/scaling_driver|intel_cpufreq
-rw|/sys/devices/system/cpu/cpufreq/policy6/scaling_governor|schedutil
-rw|/sys/devices/system/cpu/cpufreq/policy6/scaling_max_freq|2700000
-rw|/sys/devices/system/cpu/cpufreq/policy6/scaling_min_freq|800000
-rw|/sys/devices/system/cpu/cpufreq/policy6/scaling_setspeed|<unsupported>
-rw|/sys/devices/system/cpu/cpufreq/policy7/affected_cpus|7
-rw|/sys/devices/system/cpu/cpufreq/policy7/cpuinfo_max_freq|2700000
-rw|/sys/devices/system/cpu/cpufreq/policy7/cpuinfo_min_freq|800000
-rw|/sys/devices/system/cpu/cpufreq/policy7/cpuinfo_transition_latency|20000
-rw|/sys/devices/system/cpu/cpufreq/policy7/related_cpus|7
-rw|/sys/devices/system/cpu/cpufreq/policy7/scaling_available_governors|conservative userspace powersave performance schedutil 
-rw|/sys/devices/system/cpu/cpufreq/policy7/scaling_cur_freq|800000
-rw|/sys/devices/system/cpu/cpufreq/policy7/scaling_driver|intel_cpufreq
-rw|/sys/devices/system/cpu/cpufreq/policy7/scaling_governor|schedutil
-rw|/sys/devices/system/cpu/cpufreq/policy7/scaling_max_freq|2700000
-rw|/sys/devices/system/cpu/cpufreq/policy7/scaling_min_freq|800000
-rw|/sys/devices/system/cpu/cpufreq/policy7/scaling_setspeed|<unsupported>
-rw|/sys/devices/system/cpu/cpufreq/policy8/affected_cpus|8
-rw|/sys/devices/system/cpu/cpufreq/policy8/cpuinfo_max_freq|2700000
-rw|/sys/devices/system/cpu/cpufreq/policy8/cpuinfo_min_freq|800000
-rw|/sys/devices/system/cpu/cpufreq/policy8/cpuinfo_transition_latency|20000
-rw|/sys/devices/system/cpu/cpufreq/policy8/related_cpus|8
-rw|/sys/devices/system/cpu/cpufreq/policy8/scaling_available_governors|conservative userspace powersave performance schedutil 
-rw|/sys/devices/system/cpu/cpufreq/policy8/scaling_cur_freq|800000
-rw|/sys/devices/system/cpu/cpufreq/policy8/scaling_driver|intel_cpufreq
-rw|/sys/devices/system/cpu/cpufreq/policy8/scaling_governor|schedutil
-rw|/sys/devices/system/cpu/cpufreq/policy8/scaling_max_freq|2700000
+rw|/sys/devices/system/cpu/cpufreq/policy11/affected_cpus|11
+rw|/sys/devices/system/cpu/cpufreq/policy11/scaling_max_freq|2700000
+rw|/sys/devices/system/cpu/cpufreq/policy11/cpuinfo_transition_latency|20000
+rw|/sys/devices/system/cpu/cpufreq/policy11/scaling_driver|intel_cpufreq
+rw|/sys/devices/system/cpu/cpufreq/policy11/cpuinfo_min_freq|800000
+rw|/sys/devices/system/cpu/cpufreq/policy11/cpuinfo_avg_freq|800000
 rw|/sys/devices/system/cpu/cpufreq/policy8/scaling_min_freq|800000
+rw|/sys/devices/system/cpu/cpufreq/policy8/scaling_available_governors|conservative userspace powersave performance schedutil 
+rw|/sys/devices/system/cpu/cpufreq/policy8/scaling_governor|schedutil
+rw|/sys/devices/system/cpu/cpufreq/policy8/cpuinfo_max_freq|2700000
+rw|/sys/devices/system/cpu/cpufreq/policy8/related_cpus|8
+rw|/sys/devices/system/cpu/cpufreq/policy8/scaling_cur_freq|800000
 rw|/sys/devices/system/cpu/cpufreq/policy8/scaling_setspeed|<unsupported>
-rw|/sys/devices/system/cpu/cpufreq/policy9/affected_cpus|9
-rw|/sys/devices/system/cpu/cpufreq/policy9/cpuinfo_max_freq|2700000
-rw|/sys/devices/system/cpu/cpufreq/policy9/cpuinfo_min_freq|800000
-rw|/sys/devices/system/cpu/cpufreq/policy9/cpuinfo_transition_latency|20000
-rw|/sys/devices/system/cpu/cpufreq/policy9/related_cpus|9
-rw|/sys/devices/system/cpu/cpufreq/policy9/scaling_available_governors|conservative userspace powersave performance schedutil 
-rw|/sys/devices/system/cpu/cpufreq/policy9/scaling_cur_freq|800000
-rw|/sys/devices/system/cpu/cpufreq/policy9/scaling_driver|intel_cpufreq
-rw|/sys/devices/system/cpu/cpufreq/policy9/scaling_governor|schedutil
-rw|/sys/devices/system/cpu/cpufreq/policy9/scaling_max_freq|2700000
+rw|/sys/devices/system/cpu/cpufreq/policy8/affected_cpus|8
+rw|/sys/devices/system/cpu/cpufreq/policy8/scaling_max_freq|2700000
+rw|/sys/devices/system/cpu/cpufreq/policy8/cpuinfo_transition_latency|20000
+rw|/sys/devices/system/cpu/cpufreq/policy8/scaling_driver|intel_cpufreq
+rw|/sys/devices/system/cpu/cpufreq/policy8/cpuinfo_min_freq|800000
+rw|/sys/devices/system/cpu/cpufreq/policy8/cpuinfo_avg_freq|800000
+rw|/sys/devices/system/cpu/cpufreq/policy6/scaling_min_freq|800000
+rw|/sys/devices/system/cpu/cpufreq/policy6/scaling_available_governors|conservative userspace powersave performance schedutil 
+rw|/sys/devices/system/cpu/cpufreq/policy6/scaling_governor|schedutil
+rw|/sys/devices/system/cpu/cpufreq/policy6/cpuinfo_max_freq|2700000
+rw|/sys/devices/system/cpu/cpufreq/policy6/related_cpus|6
+rw|/sys/devices/system/cpu/cpufreq/policy6/scaling_cur_freq|800000
+rw|/sys/devices/system/cpu/cpufreq/policy6/scaling_setspeed|<unsupported>
+rw|/sys/devices/system/cpu/cpufreq/policy6/affected_cpus|6
+rw|/sys/devices/system/cpu/cpufreq/policy6/scaling_max_freq|2700000
+rw|/sys/devices/system/cpu/cpufreq/policy6/cpuinfo_transition_latency|20000
+rw|/sys/devices/system/cpu/cpufreq/policy6/scaling_driver|intel_cpufreq
+rw|/sys/devices/system/cpu/cpufreq/policy6/cpuinfo_min_freq|800000
+rw|/sys/devices/system/cpu/cpufreq/policy6/cpuinfo_avg_freq|800000
+rw|/sys/devices/system/cpu/cpufreq/schedutil/rate_limit_us|500
+rw|/sys/devices/system/cpu/cpufreq/policy4/scaling_min_freq|800000
+rw|/sys/devices/system/cpu/cpufreq/policy4/scaling_available_governors|conservative userspace powersave performance schedutil 
+rw|/sys/devices/system/cpu/cpufreq/policy4/scaling_governor|schedutil
+rw|/sys/devices/system/cpu/cpufreq/policy4/cpuinfo_max_freq|2700000
+rw|/sys/devices/system/cpu/cpufreq/policy4/related_cpus|4
+rw|/sys/devices/system/cpu/cpufreq/policy4/scaling_cur_freq|800000
+rw|/sys/devices/system/cpu/cpufreq/policy4/scaling_setspeed|<unsupported>
+rw|/sys/devices/system/cpu/cpufreq/policy4/affected_cpus|4
+rw|/sys/devices/system/cpu/cpufreq/policy4/scaling_max_freq|2700000
+rw|/sys/devices/system/cpu/cpufreq/policy4/cpuinfo_transition_latency|20000
+rw|/sys/devices/system/cpu/cpufreq/policy4/scaling_driver|intel_cpufreq
+rw|/sys/devices/system/cpu/cpufreq/policy4/cpuinfo_min_freq|800000
+rw|/sys/devices/system/cpu/cpufreq/policy4/cpuinfo_avg_freq|800000
+rw|/sys/devices/system/cpu/cpufreq/policy2/scaling_min_freq|800000
+rw|/sys/devices/system/cpu/cpufreq/policy2/scaling_available_governors|conservative userspace powersave performance schedutil 
+rw|/sys/devices/system/cpu/cpufreq/policy2/scaling_governor|schedutil
+rw|/sys/devices/system/cpu/cpufreq/policy2/cpuinfo_max_freq|2700000
+rw|/sys/devices/system/cpu/cpufreq/policy2/related_cpus|2
+rw|/sys/devices/system/cpu/cpufreq/policy2/scaling_cur_freq|1182117
+rw|/sys/devices/system/cpu/cpufreq/policy2/scaling_setspeed|<unsupported>
+rw|/sys/devices/system/cpu/cpufreq/policy2/affected_cpus|2
+rw|/sys/devices/system/cpu/cpufreq/policy2/scaling_max_freq|2700000
+rw|/sys/devices/system/cpu/cpufreq/policy2/cpuinfo_transition_latency|20000
+rw|/sys/devices/system/cpu/cpufreq/policy2/scaling_driver|intel_cpufreq
+rw|/sys/devices/system/cpu/cpufreq/policy2/cpuinfo_min_freq|800000
+rw|/sys/devices/system/cpu/cpufreq/policy2/cpuinfo_avg_freq|1182117
+rw|/sys/devices/system/cpu/cpufreq/policy14/scaling_min_freq|800000
+rw|/sys/devices/system/cpu/cpufreq/policy14/scaling_available_governors|conservative userspace powersave performance schedutil 
+rw|/sys/devices/system/cpu/cpufreq/policy14/scaling_governor|schedutil
+rw|/sys/devices/system/cpu/cpufreq/policy14/cpuinfo_max_freq|2700000
+rw|/sys/devices/system/cpu/cpufreq/policy14/related_cpus|14
+rw|/sys/devices/system/cpu/cpufreq/policy14/scaling_cur_freq|800151
+rw|/sys/devices/system/cpu/cpufreq/policy14/scaling_setspeed|<unsupported>
+rw|/sys/devices/system/cpu/cpufreq/policy14/affected_cpus|14
+rw|/sys/devices/system/cpu/cpufreq/policy14/scaling_max_freq|2700000
+rw|/sys/devices/system/cpu/cpufreq/policy14/cpuinfo_transition_latency|20000
+rw|/sys/devices/system/cpu/cpufreq/policy14/scaling_driver|intel_cpufreq
+rw|/sys/devices/system/cpu/cpufreq/policy14/cpuinfo_min_freq|800000
+rw|/sys/devices/system/cpu/cpufreq/policy14/cpuinfo_avg_freq|800151
+rw|/sys/devices/system/cpu/cpufreq/policy0/scaling_min_freq|800000
+rw|/sys/devices/system/cpu/cpufreq/policy0/scaling_available_governors|conservative userspace powersave performance schedutil 
+rw|/sys/devices/system/cpu/cpufreq/policy0/scaling_governor|schedutil
+rw|/sys/devices/system/cpu/cpufreq/policy0/cpuinfo_max_freq|2700000
+rw|/sys/devices/system/cpu/cpufreq/policy0/related_cpus|0
+rw|/sys/devices/system/cpu/cpufreq/policy0/scaling_cur_freq|2000032
+rw|/sys/devices/system/cpu/cpufreq/policy0/scaling_setspeed|<unsupported>
+rw|/sys/devices/system/cpu/cpufreq/policy0/affected_cpus|0
+rw|/sys/devices/system/cpu/cpufreq/policy0/scaling_max_freq|2700000
+rw|/sys/devices/system/cpu/cpufreq/policy0/cpuinfo_transition_latency|20000
+rw|/sys/devices/system/cpu/cpufreq/policy0/scaling_driver|intel_cpufreq
+rw|/sys/devices/system/cpu/cpufreq/policy0/cpuinfo_min_freq|800000
+rw|/sys/devices/system/cpu/cpufreq/policy0/cpuinfo_avg_freq|2000032
+rw|/sys/devices/system/cpu/cpufreq/policy12/scaling_min_freq|800000
+rw|/sys/devices/system/cpu/cpufreq/policy12/scaling_available_governors|conservative userspace powersave performance schedutil 
+rw|/sys/devices/system/cpu/cpufreq/policy12/scaling_governor|schedutil
+rw|/sys/devices/system/cpu/cpufreq/policy12/cpuinfo_max_freq|2700000
+rw|/sys/devices/system/cpu/cpufreq/policy12/related_cpus|12
+rw|/sys/devices/system/cpu/cpufreq/policy12/scaling_cur_freq|800000
+rw|/sys/devices/system/cpu/cpufreq/policy12/scaling_setspeed|<unsupported>
+rw|/sys/devices/system/cpu/cpufreq/policy12/affected_cpus|12
+rw|/sys/devices/system/cpu/cpufreq/policy12/scaling_max_freq|2700000
+rw|/sys/devices/system/cpu/cpufreq/policy12/cpuinfo_transition_latency|20000
+rw|/sys/devices/system/cpu/cpufreq/policy12/scaling_driver|intel_cpufreq
+rw|/sys/devices/system/cpu/cpufreq/policy12/cpuinfo_min_freq|800000
+rw|/sys/devices/system/cpu/cpufreq/policy12/cpuinfo_avg_freq|800000
 rw|/sys/devices/system/cpu/cpufreq/policy9/scaling_min_freq|800000
+rw|/sys/devices/system/cpu/cpufreq/policy9/scaling_available_governors|conservative userspace powersave performance schedutil 
+rw|/sys/devices/system/cpu/cpufreq/policy9/scaling_governor|schedutil
+rw|/sys/devices/system/cpu/cpufreq/policy9/cpuinfo_max_freq|2700000
+rw|/sys/devices/system/cpu/cpufreq/policy9/related_cpus|9
+rw|/sys/devices/system/cpu/cpufreq/policy9/scaling_cur_freq|800000
 rw|/sys/devices/system/cpu/cpufreq/policy9/scaling_setspeed|<unsupported>
-rw|/sys/devices/system/cpu/intel_pstate/max_perf_pct|100
-rw|/sys/devices/system/cpu/intel_pstate/min_perf_pct|29
+rw|/sys/devices/system/cpu/cpufreq/policy9/affected_cpus|9
+rw|/sys/devices/system/cpu/cpufreq/policy9/scaling_max_freq|2700000
+rw|/sys/devices/system/cpu/cpufreq/policy9/cpuinfo_transition_latency|20000
+rw|/sys/devices/system/cpu/cpufreq/policy9/scaling_driver|intel_cpufreq
+rw|/sys/devices/system/cpu/cpufreq/policy9/cpuinfo_min_freq|800000
+rw|/sys/devices/system/cpu/cpufreq/policy9/cpuinfo_avg_freq|800000
+rw|/sys/devices/system/cpu/cpufreq/policy10/scaling_min_freq|800000
+rw|/sys/devices/system/cpu/cpufreq/policy10/scaling_available_governors|conservative userspace powersave performance schedutil 
+rw|/sys/devices/system/cpu/cpufreq/policy10/scaling_governor|schedutil
+rw|/sys/devices/system/cpu/cpufreq/policy10/cpuinfo_max_freq|2700000
+rw|/sys/devices/system/cpu/cpufreq/policy10/related_cpus|10
+rw|/sys/devices/system/cpu/cpufreq/policy10/scaling_cur_freq|800000
+rw|/sys/devices/system/cpu/cpufreq/policy10/scaling_setspeed|<unsupported>
+rw|/sys/devices/system/cpu/cpufreq/policy10/affected_cpus|10
+rw|/sys/devices/system/cpu/cpufreq/policy10/scaling_max_freq|2700000
+rw|/sys/devices/system/cpu/cpufreq/policy10/cpuinfo_transition_latency|20000
+rw|/sys/devices/system/cpu/cpufreq/policy10/scaling_driver|intel_cpufreq
+rw|/sys/devices/system/cpu/cpufreq/policy10/cpuinfo_min_freq|800000
+rw|/sys/devices/system/cpu/cpufreq/policy10/cpuinfo_avg_freq|800000
+rw|/sys/devices/system/cpu/cpufreq/policy7/scaling_min_freq|800000
+rw|/sys/devices/system/cpu/cpufreq/policy7/scaling_available_governors|conservative userspace powersave performance schedutil 
+rw|/sys/devices/system/cpu/cpufreq/policy7/scaling_governor|schedutil
+rw|/sys/devices/system/cpu/cpufreq/policy7/cpuinfo_max_freq|2700000
+rw|/sys/devices/system/cpu/cpufreq/policy7/related_cpus|7
+rw|/sys/devices/system/cpu/cpufreq/policy7/scaling_cur_freq|800000
+rw|/sys/devices/system/cpu/cpufreq/policy7/scaling_setspeed|<unsupported>
+rw|/sys/devices/system/cpu/cpufreq/policy7/affected_cpus|7
+rw|/sys/devices/system/cpu/cpufreq/policy7/scaling_max_freq|2700000
+rw|/sys/devices/system/cpu/cpufreq/policy7/cpuinfo_transition_latency|20000
+rw|/sys/devices/system/cpu/cpufreq/policy7/scaling_driver|intel_cpufreq
+rw|/sys/devices/system/cpu/cpufreq/policy7/cpuinfo_min_freq|800000
+rw|/sys/devices/system/cpu/cpufreq/policy7/cpuinfo_avg_freq|800000
+rw|/sys/devices/system/cpu/cpufreq/policy5/scaling_min_freq|800000
+rw|/sys/devices/system/cpu/cpufreq/policy5/scaling_available_governors|conservative userspace powersave performance schedutil 
+rw|/sys/devices/system/cpu/cpufreq/policy5/scaling_governor|schedutil
+rw|/sys/devices/system/cpu/cpufreq/policy5/cpuinfo_max_freq|2700000
+rw|/sys/devices/system/cpu/cpufreq/policy5/related_cpus|5
+rw|/sys/devices/system/cpu/cpufreq/policy5/scaling_cur_freq|800000
+rw|/sys/devices/system/cpu/cpufreq/policy5/scaling_setspeed|<unsupported>
+rw|/sys/devices/system/cpu/cpufreq/policy5/affected_cpus|5
+rw|/sys/devices/system/cpu/cpufreq/policy5/scaling_max_freq|2700000
+rw|/sys/devices/system/cpu/cpufreq/policy5/cpuinfo_transition_latency|20000
+rw|/sys/devices/system/cpu/cpufreq/policy5/scaling_driver|intel_cpufreq
+rw|/sys/devices/system/cpu/cpufreq/policy5/cpuinfo_min_freq|800000
+rw|/sys/devices/system/cpu/cpufreq/policy5/cpuinfo_avg_freq|800000
+rw|/sys/devices/system/cpu/cpufreq/policy3/scaling_min_freq|800000
+rw|/sys/devices/system/cpu/cpufreq/policy3/scaling_available_governors|conservative userspace powersave performance schedutil 
+rw|/sys/devices/system/cpu/cpufreq/policy3/scaling_governor|schedutil
+rw|/sys/devices/system/cpu/cpufreq/policy3/cpuinfo_max_freq|2700000
+rw|/sys/devices/system/cpu/cpufreq/policy3/related_cpus|3
+rw|/sys/devices/system/cpu/cpufreq/policy3/scaling_cur_freq|800000
+rw|/sys/devices/system/cpu/cpufreq/policy3/scaling_setspeed|<unsupported>
+rw|/sys/devices/system/cpu/cpufreq/policy3/affected_cpus|3
+rw|/sys/devices/system/cpu/cpufreq/policy3/scaling_max_freq|2700000
+rw|/sys/devices/system/cpu/cpufreq/policy3/cpuinfo_transition_latency|20000
+rw|/sys/devices/system/cpu/cpufreq/policy3/scaling_driver|intel_cpufreq
+rw|/sys/devices/system/cpu/cpufreq/policy3/cpuinfo_min_freq|800000
+rw|/sys/devices/system/cpu/cpufreq/policy3/cpuinfo_avg_freq|800000
+rw|/sys/devices/system/cpu/cpufreq/policy15/scaling_min_freq|800000
+rw|/sys/devices/system/cpu/cpufreq/policy15/scaling_available_governors|conservative userspace powersave performance schedutil 
+rw|/sys/devices/system/cpu/cpufreq/policy15/scaling_governor|schedutil
+rw|/sys/devices/system/cpu/cpufreq/policy15/cpuinfo_max_freq|2700000
+rw|/sys/devices/system/cpu/cpufreq/policy15/related_cpus|15
+rw|/sys/devices/system/cpu/cpufreq/policy15/scaling_cur_freq|800000
+rw|/sys/devices/system/cpu/cpufreq/policy15/scaling_setspeed|<unsupported>
+rw|/sys/devices/system/cpu/cpufreq/policy15/affected_cpus|15
+rw|/sys/devices/system/cpu/cpufreq/policy15/scaling_max_freq|2700000
+rw|/sys/devices/system/cpu/cpufreq/policy15/cpuinfo_transition_latency|20000
+rw|/sys/devices/system/cpu/cpufreq/policy15/scaling_driver|intel_cpufreq
+rw|/sys/devices/system/cpu/cpufreq/policy15/cpuinfo_min_freq|800000
+rw|/sys/devices/system/cpu/cpufreq/policy15/cpuinfo_avg_freq|800000
+rw|/sys/devices/system/cpu/cpufreq/policy1/scaling_min_freq|800000
+rw|/sys/devices/system/cpu/cpufreq/policy1/scaling_available_governors|conservative userspace powersave performance schedutil 
+rw|/sys/devices/system/cpu/cpufreq/policy1/scaling_governor|schedutil
+rw|/sys/devices/system/cpu/cpufreq/policy1/cpuinfo_max_freq|2700000
+rw|/sys/devices/system/cpu/cpufreq/policy1/related_cpus|1
+rw|/sys/devices/system/cpu/cpufreq/policy1/scaling_cur_freq|800000
+rw|/sys/devices/system/cpu/cpufreq/policy1/scaling_setspeed|<unsupported>
+rw|/sys/devices/system/cpu/cpufreq/policy1/affected_cpus|1
+rw|/sys/devices/system/cpu/cpufreq/policy1/scaling_max_freq|2700000
+rw|/sys/devices/system/cpu/cpufreq/policy1/cpuinfo_transition_latency|20000
+rw|/sys/devices/system/cpu/cpufreq/policy1/scaling_driver|intel_cpufreq
+rw|/sys/devices/system/cpu/cpufreq/policy1/cpuinfo_min_freq|800000
+rw|/sys/devices/system/cpu/cpufreq/policy1/cpuinfo_avg_freq|800000
+rw|/sys/devices/system/cpu/cpufreq/policy13/scaling_min_freq|800000
+rw|/sys/devices/system/cpu/cpufreq/policy13/scaling_available_governors|conservative userspace powersave performance schedutil 
+rw|/sys/devices/system/cpu/cpufreq/policy13/scaling_governor|schedutil
+rw|/sys/devices/system/cpu/cpufreq/policy13/cpuinfo_max_freq|2700000
+rw|/sys/devices/system/cpu/cpufreq/policy13/related_cpus|13
+rw|/sys/devices/system/cpu/cpufreq/policy13/scaling_cur_freq|800028
+rw|/sys/devices/system/cpu/cpufreq/policy13/scaling_setspeed|<unsupported>
+rw|/sys/devices/system/cpu/cpufreq/policy13/affected_cpus|13
+rw|/sys/devices/system/cpu/cpufreq/policy13/scaling_max_freq|2700000
+rw|/sys/devices/system/cpu/cpufreq/policy13/cpuinfo_transition_latency|20000
+rw|/sys/devices/system/cpu/cpufreq/policy13/scaling_driver|intel_cpufreq
+rw|/sys/devices/system/cpu/cpufreq/policy13/cpuinfo_min_freq|800000
+rw|/sys/devices/system/cpu/cpufreq/policy13/cpuinfo_avg_freq|800028
 rw|/sys/devices/system/cpu/intel_pstate/no_turbo|0
 rw|/sys/devices/system/cpu/intel_pstate/num_pstates|20
 rw|/sys/devices/system/cpu/intel_pstate/status|passive
 rw|/sys/devices/system/cpu/intel_pstate/turbo_pct|31
-rw|/sys/devices/system/cpu/intel_uncore_frequency/package_00_die_00/current_freq_khz|1600000
+rw|/sys/devices/system/cpu/intel_pstate/max_perf_pct|100
+rw|/sys/devices/system/cpu/intel_pstate/min_perf_pct|29
+rw|/sys/devices/system/cpu/intel_uncore_frequency/package_00_die_00/current_freq_khz|2100000
 rw|/sys/devices/system/cpu/intel_uncore_frequency/package_00_die_00/initial_max_freq_khz|2400000
 rw|/sys/devices/system/cpu/intel_uncore_frequency/package_00_die_00/initial_min_freq_khz|1200000
 rw|/sys/devices/system/cpu/intel_uncore_frequency/package_00_die_00/max_freq_khz|2400000
@@ -1378,3 +1379,19 @@ rw|/sys/devices/system/cpu/cpu6/power/energy_perf_bias|6
 rw|/sys/devices/system/cpu/cpu7/power/energy_perf_bias|6
 rw|/sys/devices/system/cpu/cpu8/power/energy_perf_bias|6
 rw|/sys/devices/system/cpu/cpu9/power/energy_perf_bias|6
+rw|/sys/devices/system/cpu/cpu0/power/pm_qos_resume_latency_us|0
+rw|/sys/devices/system/cpu/cpu10/power/pm_qos_resume_latency_us|0
+rw|/sys/devices/system/cpu/cpu11/power/pm_qos_resume_latency_us|0
+rw|/sys/devices/system/cpu/cpu12/power/pm_qos_resume_latency_us|0
+rw|/sys/devices/system/cpu/cpu13/power/pm_qos_resume_latency_us|0
+rw|/sys/devices/system/cpu/cpu14/power/pm_qos_resume_latency_us|0
+rw|/sys/devices/system/cpu/cpu15/power/pm_qos_resume_latency_us|0
+rw|/sys/devices/system/cpu/cpu1/power/pm_qos_resume_latency_us|0
+rw|/sys/devices/system/cpu/cpu2/power/pm_qos_resume_latency_us|0
+rw|/sys/devices/system/cpu/cpu3/power/pm_qos_resume_latency_us|0
+rw|/sys/devices/system/cpu/cpu4/power/pm_qos_resume_latency_us|0
+rw|/sys/devices/system/cpu/cpu5/power/pm_qos_resume_latency_us|0
+rw|/sys/devices/system/cpu/cpu6/power/pm_qos_resume_latency_us|0
+rw|/sys/devices/system/cpu/cpu7/power/pm_qos_resume_latency_us|0
+rw|/sys/devices/system/cpu/cpu8/power/pm_qos_resume_latency_us|0
+rw|/sys/devices/system/cpu/cpu9/power/pm_qos_resume_latency_us|0

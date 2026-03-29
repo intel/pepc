@@ -1,5 +1,5 @@
 /dev/sda3 / ext4 rw,relatime 0 0
-devtmpfs /dev devtmpfs rw,nosuid,size=16229508k,nr_inodes=4057377,mode=755,inode64 0 0
+devtmpfs /dev devtmpfs rw,nosuid,size=16229512k,nr_inodes=4057378,mode=755,inode64 0 0
 tmpfs /dev/shm tmpfs rw,nosuid,nodev,inode64,usrquota 0 0
 devpts /dev/pts devpts rw,nosuid,noexec,relatime,gid=5,mode=600,ptmxmode=000 0 0
 sysfs /sys sysfs rw,nosuid,nodev,noexec,relatime 0 0
@@ -11,13 +11,13 @@ bpf /sys/fs/bpf bpf rw,nosuid,nodev,noexec,relatime,mode=700 0 0
 configfs /sys/kernel/config configfs rw,nosuid,nodev,noexec,relatime 0 0
 proc /proc proc rw,nosuid,nodev,noexec,relatime 0 0
 tmpfs /run tmpfs rw,nosuid,nodev,size=6500344k,nr_inodes=819200,mode=755,inode64 0 0
-systemd-1 /proc/sys/fs/binfmt_misc autofs rw,relatime,fd=42,pgrp=1,timeout=0,minproto=5,maxproto=5,direct,pipe_ino=17619 0 0
-tracefs /sys/kernel/tracing tracefs rw,nosuid,nodev,noexec,relatime 0 0
+systemd-1 /proc/sys/fs/binfmt_misc autofs rw,relatime,fd=42,pgrp=1,timeout=0,minproto=5,maxproto=5,direct,pipe_ino=13573 0 0
 mqueue /dev/mqueue mqueue rw,nosuid,nodev,noexec,relatime 0 0
+tracefs /sys/kernel/tracing tracefs rw,nosuid,nodev,noexec,relatime 0 0
 debugfs /sys/kernel/debug debugfs rw,nosuid,nodev,noexec,relatime 0 0
 hugetlbfs /dev/hugepages hugetlbfs rw,nosuid,nodev,relatime,pagesize=2M 0 0
 tmpfs /run/credentials/systemd-journald.service tmpfs ro,nosuid,nodev,noexec,relatime,nosymfollow,size=1024k,nr_inodes=1024,mode=700,inode64,noswap 0 0
-systemd-1 /var/lib/git/linux autofs rw,relatime,fd=54,pgrp=1,timeout=60,minproto=5,maxproto=5,direct,pipe_ino=6509 0 0
+systemd-1 /var/lib/git/linux autofs rw,relatime,fd=53,pgrp=1,timeout=60,minproto=5,maxproto=5,direct,pipe_ino=10878 0 0
 fusectl /sys/fs/fuse/connections fusectl rw,nosuid,nodev,noexec,relatime 0 0
 tmpfs /tmp tmpfs rw,nosuid,nodev,nr_inodes=1048576,inode64,usrquota 0 0
 /dev/sda1 /boot/efi vfat rw,relatime,fmask=0077,dmask=0077,codepage=437,iocharset=ascii,shortname=winnt,errors=remount-ro 0 0

@@ -1,0 +1,1 @@
+BOOT_IMAGE=http://craftlab/pxelinux/node/clx4s0/custom-kernel/kernel initrd=http://craftlab/pxelinux/node/clx4s0/custom-kernel/initramfs.img root=UUID=ce3b89d7-b167-4d64-8884-1cc2f85d10ed ro console=ttyS0,115200 msr.allow_writes=on

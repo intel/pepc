@@ -33,7 +33,7 @@ model		: 85
 model name	: Intel(R) Xeon(R) D-2146NT CPU @ 2.30GHz
 stepping	: 4
 microcode	: 0x2007006
-cpu MHz		: 999.698
+cpu MHz		: 1000.000
 cache size	: 11264 KB
 physical id	: 0
 siblings	: 16
@@ -61,7 +61,7 @@ model		: 85
 model name	: Intel(R) Xeon(R) D-2146NT CPU @ 2.30GHz
 stepping	: 4
 microcode	: 0x2007006
-cpu MHz		: 2000.000
+cpu MHz		: 1000.000
 cache size	: 11264 KB
 physical id	: 0
 siblings	: 16
@@ -89,7 +89,7 @@ model		: 85
 model name	: Intel(R) Xeon(R) D-2146NT CPU @ 2.30GHz
 stepping	: 4
 microcode	: 0x2007006
-cpu MHz		: 2300.000
+cpu MHz		: 1000.000
 cache size	: 11264 KB
 physical id	: 0
 siblings	: 16
@@ -117,7 +117,7 @@ model		: 85
 model name	: Intel(R) Xeon(R) D-2146NT CPU @ 2.30GHz
 stepping	: 4
 microcode	: 0x2007006
-cpu MHz		: 3000.000
+cpu MHz		: 1000.000
 cache size	: 11264 KB
 physical id	: 0
 siblings	: 16
@@ -145,7 +145,7 @@ model		: 85
 model name	: Intel(R) Xeon(R) D-2146NT CPU @ 2.30GHz
 stepping	: 4
 microcode	: 0x2007006
-cpu MHz		: 2100.000
+cpu MHz		: 999.945
 cache size	: 11264 KB
 physical id	: 0
 siblings	: 16
@@ -229,7 +229,7 @@ model		: 85
 model name	: Intel(R) Xeon(R) D-2146NT CPU @ 2.30GHz
 stepping	: 4
 microcode	: 0x2007006
-cpu MHz		: 1000.000
+cpu MHz		: 2500.000
 cache size	: 11264 KB
 physical id	: 0
 siblings	: 16
@@ -285,7 +285,7 @@ model		: 85
 model name	: Intel(R) Xeon(R) D-2146NT CPU @ 2.30GHz
 stepping	: 4
 microcode	: 0x2007006
-cpu MHz		: 1000.000
+cpu MHz		: 2100.711
 cache size	: 11264 KB
 physical id	: 0
 siblings	: 16
@@ -313,7 +313,7 @@ model		: 85
 model name	: Intel(R) Xeon(R) D-2146NT CPU @ 2.30GHz
 stepping	: 4
 microcode	: 0x2007006
-cpu MHz		: 2497.003
+cpu MHz		: 2000.000
 cache size	: 11264 KB
 physical id	: 0
 siblings	: 16
@@ -369,7 +369,7 @@ model		: 85
 model name	: Intel(R) Xeon(R) D-2146NT CPU @ 2.30GHz
 stepping	: 4
 microcode	: 0x2007006
-cpu MHz		: 2500.000
+cpu MHz		: 2000.000
 cache size	: 11264 KB
 physical id	: 0
 siblings	: 16
@@ -397,7 +397,7 @@ model		: 85
 model name	: Intel(R) Xeon(R) D-2146NT CPU @ 2.30GHz
 stepping	: 4
 microcode	: 0x2007006
-cpu MHz		: 1000.000
+cpu MHz		: 1000.271
 cache size	: 11264 KB
 physical id	: 0
 siblings	: 16
@@ -425,7 +425,7 @@ model		: 85
 model name	: Intel(R) Xeon(R) D-2146NT CPU @ 2.30GHz
 stepping	: 4
 microcode	: 0x2007006
-cpu MHz		: 1000.000
+cpu MHz		: 2299.996
 cache size	: 11264 KB
 physical id	: 0
 siblings	: 16

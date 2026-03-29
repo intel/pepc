@@ -2,14 +2,12 @@ metadata:
   generated_by:
     tool: emulation-data-generator
     version: '0.1'
-    date: '2026-03-28 11:47:26'
+    date: '2026-03-29 10:19:13'
 msr:
   dirname: msr
   filename: msr.txt
 sysfs:
   dirname: sys
   inlinefiles: inlinefiles.txt
-directories:
-- path: /sys/kernel/debug
 procfs:
   dirname: proc

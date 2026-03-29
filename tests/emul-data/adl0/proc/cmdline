@@ -1,1 +1,1 @@
-BOOT_IMAGE=http://powerlab/pxelinux/node/adl0/fedora41/kernel initrd=http://powerlab/pxelinux/node/adl0/fedora41/initramfs.img root=UUID=f702f4c0-a1aa-49cf-9f6d-b7a88d579208 ro console=ttyUSB0,115200 msr.allow_writes=on
+BOOT_IMAGE=http://powerlab/pxelinux/node/adl0/custom-kernel/kernel initrd=http://powerlab/pxelinux/node/adl0/custom-kernel/initramfs.img root=UUID=18edf3dd-587a-4cb6-98f1-4c94e62efb8f ro console=ttyUSB0,115200 msr.allow_writes=on

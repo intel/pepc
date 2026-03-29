@@ -1,0 +1,1 @@
+BOOT_IMAGE=http://powerlab/pxelinux/node/lnl0/custom-kernel/kernel initrd=http://powerlab/pxelinux/node/lnl0/custom-kernel/initramfs.img root=UUID=ed4ee86f-cd76-48cb-a924-ff4c41f742db ro console=ttyUSB0,115200 msr.allow_writes=on

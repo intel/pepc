@@ -89,7 +89,7 @@ model		: 174
 model name	: GENUINE INTEL(R) XEON(R)
 stepping	: 1
 microcode	: 0x810001c3
-cpu MHz		: 800.490
+cpu MHz		: 800.000
 cache size	: 172032 KB
 physical id	: 0
 siblings	: 84
@@ -537,7 +537,7 @@ model		: 174
 model name	: GENUINE INTEL(R) XEON(R)
 stepping	: 1
 microcode	: 0x810001c3
-cpu MHz		: 1100.000
+cpu MHz		: 800.000
 cache size	: 172032 KB
 physical id	: 0
 siblings	: 84
@@ -565,7 +565,7 @@ model		: 174
 model name	: GENUINE INTEL(R) XEON(R)
 stepping	: 1
 microcode	: 0x810001c3
-cpu MHz		: 3499.964
+cpu MHz		: 800.000
 cache size	: 172032 KB
 physical id	: 0
 siblings	: 84
@@ -789,7 +789,7 @@ model		: 174
 model name	: GENUINE INTEL(R) XEON(R)
 stepping	: 1
 microcode	: 0x810001c3
-cpu MHz		: 800.000
+cpu MHz		: 800.195
 cache size	: 172032 KB
 physical id	: 0
 siblings	: 84
@@ -1993,7 +1993,7 @@ model		: 174
 model name	: GENUINE INTEL(R) XEON(R)
 stepping	: 1
 microcode	: 0x810001c3
-cpu MHz		: 800.000
+cpu MHz		: 2200.836
 cache size	: 172032 KB
 physical id	: 0
 siblings	: 84
@@ -2021,7 +2021,7 @@ model		: 174
 model name	: GENUINE INTEL(R) XEON(R)
 stepping	: 1
 microcode	: 0x810001c3
-cpu MHz		: 800.000
+cpu MHz		: 2240.211
 cache size	: 172032 KB
 physical id	: 0
 siblings	: 84
@@ -2049,7 +2049,7 @@ model		: 174
 model name	: GENUINE INTEL(R) XEON(R)
 stepping	: 1
 microcode	: 0x810001c3
-cpu MHz		: 800.000
+cpu MHz		: 3374.767
 cache size	: 172032 KB
 physical id	: 0
 siblings	: 84
@@ -2189,7 +2189,7 @@ model		: 174
 model name	: GENUINE INTEL(R) XEON(R)
 stepping	: 1
 microcode	: 0x810001c3
-cpu MHz		: 800.169
+cpu MHz		: 800.000
 cache size	: 172032 KB
 physical id	: 0
 siblings	: 84

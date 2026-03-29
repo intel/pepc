@@ -1,0 +1,1 @@
+BOOT_IMAGE=http://dystopia/pxelinux/node/clxap1/custom-kernel/kernel initrd=http://dystopia/pxelinux/node/clxap1/custom-kernel/initramfs.img root=UUID=6a32eeab-0292-4a1d-8414-173a41d07f6d ro console=ttyS0,115200 msr.allow_writes=on

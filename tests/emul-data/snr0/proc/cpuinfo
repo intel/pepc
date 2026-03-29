@@ -5,7 +5,7 @@ model		: 134
 model name	: Intel Atom(R) P5362 processor
 stepping	: 7
 microcode	: 0x4c000020
-cpu MHz		: 2200.000
+cpu MHz		: 800.000
 cache size	: 15360 KB
 physical id	: 0
 siblings	: 24
@@ -19,7 +19,7 @@ cpuid level	: 27
 wp		: yes
 flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf tsc_known_freq pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg cx16 xtpr pdcm sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave rdrand lahf_lm 3dnowprefetch cpuid_fault epb cat_l3 cat_l2 cdp_l2 ssbd mba ibrs ibpb stibp ibrs_enhanced tpr_shadow flexpriority ept vpid ept_ad fsgsbase tsc_adjust smep erms cqm rdt_a rdseed smap clflushopt clwb intel_pt sha_ni xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local split_lock_detect dtherm arat pln pts vnmi umip waitpkg gfni rdpid cldemote movdiri movdir64b md_clear flush_l1d arch_capabilities
 vmx flags	: vnmi preemption_timer posted_intr invvpid ept_x_only ept_ad ept_1gb flexpriority apicv tsc_offset vtpr mtf vapic ept vpid unrestricted_guest vapic_reg vid ple shadow_vmcs ept_violation_ve ept_mode_based_exec tsc_scaling usr_wait_pause
-bugs		: spectre_v1 spectre_v2 spec_store_bypass swapgs mmio_stale_data rfds bhi
+bugs		: spectre_v1 spectre_v2 spec_store_bypass swapgs mmio_stale_data rfds bhi spectre_v2_user
 bogomips	: 4400.00
 clflush size	: 64
 cache_alignment	: 64
@@ -33,7 +33,7 @@ model		: 134
 model name	: Intel Atom(R) P5362 processor
 stepping	: 7
 microcode	: 0x4c000020
-cpu MHz		: 800.000
+cpu MHz		: 1600.000
 cache size	: 15360 KB
 physical id	: 0
 siblings	: 24
@@ -47,7 +47,7 @@ cpuid level	: 27
 wp		: yes
 flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf tsc_known_freq pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg cx16 xtpr pdcm sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave rdrand lahf_lm 3dnowprefetch cpuid_fault epb cat_l3 cat_l2 cdp_l2 ssbd mba ibrs ibpb stibp ibrs_enhanced tpr_shadow flexpriority ept vpid ept_ad fsgsbase tsc_adjust smep erms cqm rdt_a rdseed smap clflushopt clwb intel_pt sha_ni xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local split_lock_detect dtherm arat pln pts vnmi umip waitpkg gfni rdpid cldemote movdiri movdir64b md_clear flush_l1d arch_capabilities
 vmx flags	: vnmi preemption_timer posted_intr invvpid ept_x_only ept_ad ept_1gb flexpriority apicv tsc_offset vtpr mtf vapic ept vpid unrestricted_guest vapic_reg vid ple shadow_vmcs ept_violation_ve ept_mode_based_exec tsc_scaling usr_wait_pause
-bugs		: spectre_v1 spectre_v2 spec_store_bypass swapgs mmio_stale_data rfds bhi
+bugs		: spectre_v1 spectre_v2 spec_store_bypass swapgs mmio_stale_data rfds bhi spectre_v2_user
 bogomips	: 4400.00
 clflush size	: 64
 cache_alignment	: 64
@@ -75,7 +75,7 @@ cpuid level	: 27
 wp		: yes
 flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf tsc_known_freq pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg cx16 xtpr pdcm sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave rdrand lahf_lm 3dnowprefetch cpuid_fault epb cat_l3 cat_l2 cdp_l2 ssbd mba ibrs ibpb stibp ibrs_enhanced tpr_shadow flexpriority ept vpid ept_ad fsgsbase tsc_adjust smep erms cqm rdt_a rdseed smap clflushopt clwb intel_pt sha_ni xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local split_lock_detect dtherm arat pln pts vnmi umip waitpkg gfni rdpid cldemote movdiri movdir64b md_clear flush_l1d arch_capabilities
 vmx flags	: vnmi preemption_timer posted_intr invvpid ept_x_only ept_ad ept_1gb flexpriority apicv tsc_offset vtpr mtf vapic ept vpid unrestricted_guest vapic_reg vid ple shadow_vmcs ept_violation_ve ept_mode_based_exec tsc_scaling usr_wait_pause
-bugs		: spectre_v1 spectre_v2 spec_store_bypass swapgs mmio_stale_data rfds bhi
+bugs		: spectre_v1 spectre_v2 spec_store_bypass swapgs mmio_stale_data rfds bhi spectre_v2_user
 bogomips	: 4400.00
 clflush size	: 64
 cache_alignment	: 64
@@ -89,7 +89,7 @@ model		: 134
 model name	: Intel Atom(R) P5362 processor
 stepping	: 7
 microcode	: 0x4c000020
-cpu MHz		: 2200.000
+cpu MHz		: 2100.000
 cache size	: 15360 KB
 physical id	: 0
 siblings	: 24
@@ -103,7 +103,7 @@ cpuid level	: 27
 wp		: yes
 flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf tsc_known_freq pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg cx16 xtpr pdcm sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave rdrand lahf_lm 3dnowprefetch cpuid_fault epb cat_l3 cat_l2 cdp_l2 ssbd mba ibrs ibpb stibp ibrs_enhanced tpr_shadow flexpriority ept vpid ept_ad fsgsbase tsc_adjust smep erms cqm rdt_a rdseed smap clflushopt clwb intel_pt sha_ni xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local split_lock_detect dtherm arat pln pts vnmi umip waitpkg gfni rdpid cldemote movdiri movdir64b md_clear flush_l1d arch_capabilities
 vmx flags	: vnmi preemption_timer posted_intr invvpid ept_x_only ept_ad ept_1gb flexpriority apicv tsc_offset vtpr mtf vapic ept vpid unrestricted_guest vapic_reg vid ple shadow_vmcs ept_violation_ve ept_mode_based_exec tsc_scaling usr_wait_pause
-bugs		: spectre_v1 spectre_v2 spec_store_bypass swapgs mmio_stale_data rfds bhi
+bugs		: spectre_v1 spectre_v2 spec_store_bypass swapgs mmio_stale_data rfds bhi spectre_v2_user
 bogomips	: 4400.00
 clflush size	: 64
 cache_alignment	: 64
@@ -117,7 +117,7 @@ model		: 134
 model name	: Intel Atom(R) P5362 processor
 stepping	: 7
 microcode	: 0x4c000020
-cpu MHz		: 800.000
+cpu MHz		: 1600.000
 cache size	: 15360 KB
 physical id	: 0
 siblings	: 24
@@ -131,7 +131,7 @@ cpuid level	: 27
 wp		: yes
 flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf tsc_known_freq pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg cx16 xtpr pdcm sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave rdrand lahf_lm 3dnowprefetch cpuid_fault epb cat_l3 cat_l2 cdp_l2 ssbd mba ibrs ibpb stibp ibrs_enhanced tpr_shadow flexpriority ept vpid ept_ad fsgsbase tsc_adjust smep erms cqm rdt_a rdseed smap clflushopt clwb intel_pt sha_ni xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local split_lock_detect dtherm arat pln pts vnmi umip waitpkg gfni rdpid cldemote movdiri movdir64b md_clear flush_l1d arch_capabilities
 vmx flags	: vnmi preemption_timer posted_intr invvpid ept_x_only ept_ad ept_1gb flexpriority apicv tsc_offset vtpr mtf vapic ept vpid unrestricted_guest vapic_reg vid ple shadow_vmcs ept_violation_ve ept_mode_based_exec tsc_scaling usr_wait_pause
-bugs		: spectre_v1 spectre_v2 spec_store_bypass swapgs mmio_stale_data rfds bhi
+bugs		: spectre_v1 spectre_v2 spec_store_bypass swapgs mmio_stale_data rfds bhi spectre_v2_user
 bogomips	: 4400.00
 clflush size	: 64
 cache_alignment	: 64
@@ -145,7 +145,7 @@ model		: 134
 model name	: Intel Atom(R) P5362 processor
 stepping	: 7
 microcode	: 0x4c000020
-cpu MHz		: 1700.000
+cpu MHz		: 800.000
 cache size	: 15360 KB
 physical id	: 0
 siblings	: 24
@@ -159,7 +159,7 @@ cpuid level	: 27
 wp		: yes
 flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf tsc_known_freq pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg cx16 xtpr pdcm sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave rdrand lahf_lm 3dnowprefetch cpuid_fault epb cat_l3 cat_l2 cdp_l2 ssbd mba ibrs ibpb stibp ibrs_enhanced tpr_shadow flexpriority ept vpid ept_ad fsgsbase tsc_adjust smep erms cqm rdt_a rdseed smap clflushopt clwb intel_pt sha_ni xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local split_lock_detect dtherm arat pln pts vnmi umip waitpkg gfni rdpid cldemote movdiri movdir64b md_clear flush_l1d arch_capabilities
 vmx flags	: vnmi preemption_timer posted_intr invvpid ept_x_only ept_ad ept_1gb flexpriority apicv tsc_offset vtpr mtf vapic ept vpid unrestricted_guest vapic_reg vid ple shadow_vmcs ept_violation_ve ept_mode_based_exec tsc_scaling usr_wait_pause
-bugs		: spectre_v1 spectre_v2 spec_store_bypass swapgs mmio_stale_data rfds bhi
+bugs		: spectre_v1 spectre_v2 spec_store_bypass swapgs mmio_stale_data rfds bhi spectre_v2_user
 bogomips	: 4400.00
 clflush size	: 64
 cache_alignment	: 64
@@ -187,7 +187,7 @@ cpuid level	: 27
 wp		: yes
 flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf tsc_known_freq pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg cx16 xtpr pdcm sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave rdrand lahf_lm 3dnowprefetch cpuid_fault epb cat_l3 cat_l2 cdp_l2 ssbd mba ibrs ibpb stibp ibrs_enhanced tpr_shadow flexpriority ept vpid ept_ad fsgsbase tsc_adjust smep erms cqm rdt_a rdseed smap clflushopt clwb intel_pt sha_ni xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local split_lock_detect dtherm arat pln pts vnmi umip waitpkg gfni rdpid cldemote movdiri movdir64b md_clear flush_l1d arch_capabilities
 vmx flags	: vnmi preemption_timer posted_intr invvpid ept_x_only ept_ad ept_1gb flexpriority apicv tsc_offset vtpr mtf vapic ept vpid unrestricted_guest vapic_reg vid ple shadow_vmcs ept_violation_ve ept_mode_based_exec tsc_scaling usr_wait_pause
-bugs		: spectre_v1 spectre_v2 spec_store_bypass swapgs mmio_stale_data rfds bhi
+bugs		: spectre_v1 spectre_v2 spec_store_bypass swapgs mmio_stale_data rfds bhi spectre_v2_user
 bogomips	: 4400.00
 clflush size	: 64
 cache_alignment	: 64
@@ -215,7 +215,7 @@ cpuid level	: 27
 wp		: yes
 flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf tsc_known_freq pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg cx16 xtpr pdcm sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave rdrand lahf_lm 3dnowprefetch cpuid_fault epb cat_l3 cat_l2 cdp_l2 ssbd mba ibrs ibpb stibp ibrs_enhanced tpr_shadow flexpriority ept vpid ept_ad fsgsbase tsc_adjust smep erms cqm rdt_a rdseed smap clflushopt clwb intel_pt sha_ni xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local split_lock_detect dtherm arat pln pts vnmi umip waitpkg gfni rdpid cldemote movdiri movdir64b md_clear flush_l1d arch_capabilities
 vmx flags	: vnmi preemption_timer posted_intr invvpid ept_x_only ept_ad ept_1gb flexpriority apicv tsc_offset vtpr mtf vapic ept vpid unrestricted_guest vapic_reg vid ple shadow_vmcs ept_violation_ve ept_mode_based_exec tsc_scaling usr_wait_pause
-bugs		: spectre_v1 spectre_v2 spec_store_bypass swapgs mmio_stale_data rfds bhi
+bugs		: spectre_v1 spectre_v2 spec_store_bypass swapgs mmio_stale_data rfds bhi spectre_v2_user
 bogomips	: 4400.00
 clflush size	: 64
 cache_alignment	: 64
@@ -229,7 +229,7 @@ model		: 134
 model name	: Intel Atom(R) P5362 processor
 stepping	: 7
 microcode	: 0x4c000020
-cpu MHz		: 1500.000
+cpu MHz		: 800.000
 cache size	: 15360 KB
 physical id	: 0
 siblings	: 24
@@ -243,7 +243,7 @@ cpuid level	: 27
 wp		: yes
 flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf tsc_known_freq pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg cx16 xtpr pdcm sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave rdrand lahf_lm 3dnowprefetch cpuid_fault epb cat_l3 cat_l2 cdp_l2 ssbd mba ibrs ibpb stibp ibrs_enhanced tpr_shadow flexpriority ept vpid ept_ad fsgsbase tsc_adjust smep erms cqm rdt_a rdseed smap clflushopt clwb intel_pt sha_ni xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local split_lock_detect dtherm arat pln pts vnmi umip waitpkg gfni rdpid cldemote movdiri movdir64b md_clear flush_l1d arch_capabilities
 vmx flags	: vnmi preemption_timer posted_intr invvpid ept_x_only ept_ad ept_1gb flexpriority apicv tsc_offset vtpr mtf vapic ept vpid unrestricted_guest vapic_reg vid ple shadow_vmcs ept_violation_ve ept_mode_based_exec tsc_scaling usr_wait_pause
-bugs		: spectre_v1 spectre_v2 spec_store_bypass swapgs mmio_stale_data rfds bhi
+bugs		: spectre_v1 spectre_v2 spec_store_bypass swapgs mmio_stale_data rfds bhi spectre_v2_user
 bogomips	: 4400.00
 clflush size	: 64
 cache_alignment	: 64
@@ -271,7 +271,7 @@ cpuid level	: 27
 wp		: yes
 flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf tsc_known_freq pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg cx16 xtpr pdcm sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave rdrand lahf_lm 3dnowprefetch cpuid_fault epb cat_l3 cat_l2 cdp_l2 ssbd mba ibrs ibpb stibp ibrs_enhanced tpr_shadow flexpriority ept vpid ept_ad fsgsbase tsc_adjust smep erms cqm rdt_a rdseed smap clflushopt clwb intel_pt sha_ni xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local split_lock_detect dtherm arat pln pts vnmi umip waitpkg gfni rdpid cldemote movdiri movdir64b md_clear flush_l1d arch_capabilities
 vmx flags	: vnmi preemption_timer posted_intr invvpid ept_x_only ept_ad ept_1gb flexpriority apicv tsc_offset vtpr mtf vapic ept vpid unrestricted_guest vapic_reg vid ple shadow_vmcs ept_violation_ve ept_mode_based_exec tsc_scaling usr_wait_pause
-bugs		: spectre_v1 spectre_v2 spec_store_bypass swapgs mmio_stale_data rfds bhi
+bugs		: spectre_v1 spectre_v2 spec_store_bypass swapgs mmio_stale_data rfds bhi spectre_v2_user
 bogomips	: 4400.00
 clflush size	: 64
 cache_alignment	: 64
@@ -285,7 +285,7 @@ model		: 134
 model name	: Intel Atom(R) P5362 processor
 stepping	: 7
 microcode	: 0x4c000020
-cpu MHz		: 1500.000
+cpu MHz		: 800.000
 cache size	: 15360 KB
 physical id	: 0
 siblings	: 24
@@ -299,7 +299,7 @@ cpuid level	: 27
 wp		: yes
 flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf tsc_known_freq pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg cx16 xtpr pdcm sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave rdrand lahf_lm 3dnowprefetch cpuid_fault epb cat_l3 cat_l2 cdp_l2 ssbd mba ibrs ibpb stibp ibrs_enhanced tpr_shadow flexpriority ept vpid ept_ad fsgsbase tsc_adjust smep erms cqm rdt_a rdseed smap clflushopt clwb intel_pt sha_ni xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local split_lock_detect dtherm arat pln pts vnmi umip waitpkg gfni rdpid cldemote movdiri movdir64b md_clear flush_l1d arch_capabilities
 vmx flags	: vnmi preemption_timer posted_intr invvpid ept_x_only ept_ad ept_1gb flexpriority apicv tsc_offset vtpr mtf vapic ept vpid unrestricted_guest vapic_reg vid ple shadow_vmcs ept_violation_ve ept_mode_based_exec tsc_scaling usr_wait_pause
-bugs		: spectre_v1 spectre_v2 spec_store_bypass swapgs mmio_stale_data rfds bhi
+bugs		: spectre_v1 spectre_v2 spec_store_bypass swapgs mmio_stale_data rfds bhi spectre_v2_user
 bogomips	: 4400.00
 clflush size	: 64
 cache_alignment	: 64
@@ -327,7 +327,7 @@ cpuid level	: 27
 wp		: yes
 flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf tsc_known_freq pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg cx16 xtpr pdcm sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave rdrand lahf_lm 3dnowprefetch cpuid_fault epb cat_l3 cat_l2 cdp_l2 ssbd mba ibrs ibpb stibp ibrs_enhanced tpr_shadow flexpriority ept vpid ept_ad fsgsbase tsc_adjust smep erms cqm rdt_a rdseed smap clflushopt clwb intel_pt sha_ni xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local split_lock_detect dtherm arat pln pts vnmi umip waitpkg gfni rdpid cldemote movdiri movdir64b md_clear flush_l1d arch_capabilities
 vmx flags	: vnmi preemption_timer posted_intr invvpid ept_x_only ept_ad ept_1gb flexpriority apicv tsc_offset vtpr mtf vapic ept vpid unrestricted_guest vapic_reg vid ple shadow_vmcs ept_violation_ve ept_mode_based_exec tsc_scaling usr_wait_pause
-bugs		: spectre_v1 spectre_v2 spec_store_bypass swapgs mmio_stale_data rfds bhi
+bugs		: spectre_v1 spectre_v2 spec_store_bypass swapgs mmio_stale_data rfds bhi spectre_v2_user
 bogomips	: 4400.00
 clflush size	: 64
 cache_alignment	: 64
@@ -341,7 +341,7 @@ model		: 134
 model name	: Intel Atom(R) P5362 processor
 stepping	: 7
 microcode	: 0x4c000020
-cpu MHz		: 1700.000
+cpu MHz		: 800.000
 cache size	: 15360 KB
 physical id	: 0
 siblings	: 24
@@ -355,7 +355,7 @@ cpuid level	: 27
 wp		: yes
 flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf tsc_known_freq pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg cx16 xtpr pdcm sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave rdrand lahf_lm 3dnowprefetch cpuid_fault epb cat_l3 cat_l2 cdp_l2 ssbd mba ibrs ibpb stibp ibrs_enhanced tpr_shadow flexpriority ept vpid ept_ad fsgsbase tsc_adjust smep erms cqm rdt_a rdseed smap clflushopt clwb intel_pt sha_ni xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local split_lock_detect dtherm arat pln pts vnmi umip waitpkg gfni rdpid cldemote movdiri movdir64b md_clear flush_l1d arch_capabilities
 vmx flags	: vnmi preemption_timer posted_intr invvpid ept_x_only ept_ad ept_1gb flexpriority apicv tsc_offset vtpr mtf vapic ept vpid unrestricted_guest vapic_reg vid ple shadow_vmcs ept_violation_ve ept_mode_based_exec tsc_scaling usr_wait_pause
-bugs		: spectre_v1 spectre_v2 spec_store_bypass swapgs mmio_stale_data rfds bhi
+bugs		: spectre_v1 spectre_v2 spec_store_bypass swapgs mmio_stale_data rfds bhi spectre_v2_user
 bogomips	: 4400.00
 clflush size	: 64
 cache_alignment	: 64
@@ -383,7 +383,7 @@ cpuid level	: 27
 wp		: yes
 flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf tsc_known_freq pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg cx16 xtpr pdcm sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave rdrand lahf_lm 3dnowprefetch cpuid_fault epb cat_l3 cat_l2 cdp_l2 ssbd mba ibrs ibpb stibp ibrs_enhanced tpr_shadow flexpriority ept vpid ept_ad fsgsbase tsc_adjust smep erms cqm rdt_a rdseed smap clflushopt clwb intel_pt sha_ni xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local split_lock_detect dtherm arat pln pts vnmi umip waitpkg gfni rdpid cldemote movdiri movdir64b md_clear flush_l1d arch_capabilities
 vmx flags	: vnmi preemption_timer posted_intr invvpid ept_x_only ept_ad ept_1gb flexpriority apicv tsc_offset vtpr mtf vapic ept vpid unrestricted_guest vapic_reg vid ple shadow_vmcs ept_violation_ve ept_mode_based_exec tsc_scaling usr_wait_pause
-bugs		: spectre_v1 spectre_v2 spec_store_bypass swapgs mmio_stale_data rfds bhi
+bugs		: spectre_v1 spectre_v2 spec_store_bypass swapgs mmio_stale_data rfds bhi spectre_v2_user
 bogomips	: 4400.00
 clflush size	: 64
 cache_alignment	: 64
@@ -411,7 +411,7 @@ cpuid level	: 27
 wp		: yes
 flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf tsc_known_freq pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg cx16 xtpr pdcm sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave rdrand lahf_lm 3dnowprefetch cpuid_fault epb cat_l3 cat_l2 cdp_l2 ssbd mba ibrs ibpb stibp ibrs_enhanced tpr_shadow flexpriority ept vpid ept_ad fsgsbase tsc_adjust smep erms cqm rdt_a rdseed smap clflushopt clwb intel_pt sha_ni xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local split_lock_detect dtherm arat pln pts vnmi umip waitpkg gfni rdpid cldemote movdiri movdir64b md_clear flush_l1d arch_capabilities
 vmx flags	: vnmi preemption_timer posted_intr invvpid ept_x_only ept_ad ept_1gb flexpriority apicv tsc_offset vtpr mtf vapic ept vpid unrestricted_guest vapic_reg vid ple shadow_vmcs ept_violation_ve ept_mode_based_exec tsc_scaling usr_wait_pause
-bugs		: spectre_v1 spectre_v2 spec_store_bypass swapgs mmio_stale_data rfds bhi
+bugs		: spectre_v1 spectre_v2 spec_store_bypass swapgs mmio_stale_data rfds bhi spectre_v2_user
 bogomips	: 4400.00
 clflush size	: 64
 cache_alignment	: 64
@@ -425,7 +425,7 @@ model		: 134
 model name	: Intel Atom(R) P5362 processor
 stepping	: 7
 microcode	: 0x4c000020
-cpu MHz		: 1500.000
+cpu MHz		: 800.000
 cache size	: 15360 KB
 physical id	: 0
 siblings	: 24
@@ -439,7 +439,7 @@ cpuid level	: 27
 wp		: yes
 flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf tsc_known_freq pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg cx16 xtpr pdcm sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave rdrand lahf_lm 3dnowprefetch cpuid_fault epb cat_l3 cat_l2 cdp_l2 ssbd mba ibrs ibpb stibp ibrs_enhanced tpr_shadow flexpriority ept vpid ept_ad fsgsbase tsc_adjust smep erms cqm rdt_a rdseed smap clflushopt clwb intel_pt sha_ni xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local split_lock_detect dtherm arat pln pts vnmi umip waitpkg gfni rdpid cldemote movdiri movdir64b md_clear flush_l1d arch_capabilities
 vmx flags	: vnmi preemption_timer posted_intr invvpid ept_x_only ept_ad ept_1gb flexpriority apicv tsc_offset vtpr mtf vapic ept vpid unrestricted_guest vapic_reg vid ple shadow_vmcs ept_violation_ve ept_mode_based_exec tsc_scaling usr_wait_pause
-bugs		: spectre_v1 spectre_v2 spec_store_bypass swapgs mmio_stale_data rfds bhi
+bugs		: spectre_v1 spectre_v2 spec_store_bypass swapgs mmio_stale_data rfds bhi spectre_v2_user
 bogomips	: 4400.00
 clflush size	: 64
 cache_alignment	: 64
@@ -453,7 +453,7 @@ model		: 134
 model name	: Intel Atom(R) P5362 processor
 stepping	: 7
 microcode	: 0x4c000020
-cpu MHz		: 800.000
+cpu MHz		: 1574.751
 cache size	: 15360 KB
 physical id	: 0
 siblings	: 24
@@ -467,7 +467,7 @@ cpuid level	: 27
 wp		: yes
 flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf tsc_known_freq pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg cx16 xtpr pdcm sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave rdrand lahf_lm 3dnowprefetch cpuid_fault epb cat_l3 cat_l2 cdp_l2 ssbd mba ibrs ibpb stibp ibrs_enhanced tpr_shadow flexpriority ept vpid ept_ad fsgsbase tsc_adjust smep erms cqm rdt_a rdseed smap clflushopt clwb intel_pt sha_ni xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local split_lock_detect dtherm arat pln pts vnmi umip waitpkg gfni rdpid cldemote movdiri movdir64b md_clear flush_l1d arch_capabilities
 vmx flags	: vnmi preemption_timer posted_intr invvpid ept_x_only ept_ad ept_1gb flexpriority apicv tsc_offset vtpr mtf vapic ept vpid unrestricted_guest vapic_reg vid ple shadow_vmcs ept_violation_ve ept_mode_based_exec tsc_scaling usr_wait_pause
-bugs		: spectre_v1 spectre_v2 spec_store_bypass swapgs mmio_stale_data rfds bhi
+bugs		: spectre_v1 spectre_v2 spec_store_bypass swapgs mmio_stale_data rfds bhi spectre_v2_user
 bogomips	: 4400.00
 clflush size	: 64
 cache_alignment	: 64
@@ -481,7 +481,7 @@ model		: 134
 model name	: Intel Atom(R) P5362 processor
 stepping	: 7
 microcode	: 0x4c000020
-cpu MHz		: 1400.000
+cpu MHz		: 800.000
 cache size	: 15360 KB
 physical id	: 0
 siblings	: 24
@@ -495,7 +495,7 @@ cpuid level	: 27
 wp		: yes
 flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf tsc_known_freq pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg cx16 xtpr pdcm sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave rdrand lahf_lm 3dnowprefetch cpuid_fault epb cat_l3 cat_l2 cdp_l2 ssbd mba ibrs ibpb stibp ibrs_enhanced tpr_shadow flexpriority ept vpid ept_ad fsgsbase tsc_adjust smep erms cqm rdt_a rdseed smap clflushopt clwb intel_pt sha_ni xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local split_lock_detect dtherm arat pln pts vnmi umip waitpkg gfni rdpid cldemote movdiri movdir64b md_clear flush_l1d arch_capabilities
 vmx flags	: vnmi preemption_timer posted_intr invvpid ept_x_only ept_ad ept_1gb flexpriority apicv tsc_offset vtpr mtf vapic ept vpid unrestricted_guest vapic_reg vid ple shadow_vmcs ept_violation_ve ept_mode_based_exec tsc_scaling usr_wait_pause
-bugs		: spectre_v1 spectre_v2 spec_store_bypass swapgs mmio_stale_data rfds bhi
+bugs		: spectre_v1 spectre_v2 spec_store_bypass swapgs mmio_stale_data rfds bhi spectre_v2_user
 bogomips	: 4400.00
 clflush size	: 64
 cache_alignment	: 64
@@ -509,7 +509,7 @@ model		: 134
 model name	: Intel Atom(R) P5362 processor
 stepping	: 7
 microcode	: 0x4c000020
-cpu MHz		: 1281.780
+cpu MHz		: 800.000
 cache size	: 15360 KB
 physical id	: 0
 siblings	: 24
@@ -523,7 +523,7 @@ cpuid level	: 27
 wp		: yes
 flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf tsc_known_freq pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg cx16 xtpr pdcm sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave rdrand lahf_lm 3dnowprefetch cpuid_fault epb cat_l3 cat_l2 cdp_l2 ssbd mba ibrs ibpb stibp ibrs_enhanced tpr_shadow flexpriority ept vpid ept_ad fsgsbase tsc_adjust smep erms cqm rdt_a rdseed smap clflushopt clwb intel_pt sha_ni xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local split_lock_detect dtherm arat pln pts vnmi umip waitpkg gfni rdpid cldemote movdiri movdir64b md_clear flush_l1d arch_capabilities
 vmx flags	: vnmi preemption_timer posted_intr invvpid ept_x_only ept_ad ept_1gb flexpriority apicv tsc_offset vtpr mtf vapic ept vpid unrestricted_guest vapic_reg vid ple shadow_vmcs ept_violation_ve ept_mode_based_exec tsc_scaling usr_wait_pause
-bugs		: spectre_v1 spectre_v2 spec_store_bypass swapgs mmio_stale_data rfds bhi
+bugs		: spectre_v1 spectre_v2 spec_store_bypass swapgs mmio_stale_data rfds bhi spectre_v2_user
 bogomips	: 4400.00
 clflush size	: 64
 cache_alignment	: 64
@@ -537,7 +537,7 @@ model		: 134
 model name	: Intel Atom(R) P5362 processor
 stepping	: 7
 microcode	: 0x4c000020
-cpu MHz		: 800.000
+cpu MHz		: 1500.000
 cache size	: 15360 KB
 physical id	: 0
 siblings	: 24
@@ -551,7 +551,7 @@ cpuid level	: 27
 wp		: yes
 flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf tsc_known_freq pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg cx16 xtpr pdcm sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave rdrand lahf_lm 3dnowprefetch cpuid_fault epb cat_l3 cat_l2 cdp_l2 ssbd mba ibrs ibpb stibp ibrs_enhanced tpr_shadow flexpriority ept vpid ept_ad fsgsbase tsc_adjust smep erms cqm rdt_a rdseed smap clflushopt clwb intel_pt sha_ni xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local split_lock_detect dtherm arat pln pts vnmi umip waitpkg gfni rdpid cldemote movdiri movdir64b md_clear flush_l1d arch_capabilities
 vmx flags	: vnmi preemption_timer posted_intr invvpid ept_x_only ept_ad ept_1gb flexpriority apicv tsc_offset vtpr mtf vapic ept vpid unrestricted_guest vapic_reg vid ple shadow_vmcs ept_violation_ve ept_mode_based_exec tsc_scaling usr_wait_pause
-bugs		: spectre_v1 spectre_v2 spec_store_bypass swapgs mmio_stale_data rfds bhi
+bugs		: spectre_v1 spectre_v2 spec_store_bypass swapgs mmio_stale_data rfds bhi spectre_v2_user
 bogomips	: 4400.00
 clflush size	: 64
 cache_alignment	: 64
@@ -565,7 +565,7 @@ model		: 134
 model name	: Intel Atom(R) P5362 processor
 stepping	: 7
 microcode	: 0x4c000020
-cpu MHz		: 2200.000
+cpu MHz		: 1700.000
 cache size	: 15360 KB
 physical id	: 0
 siblings	: 24
@@ -579,7 +579,7 @@ cpuid level	: 27
 wp		: yes
 flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf tsc_known_freq pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg cx16 xtpr pdcm sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave rdrand lahf_lm 3dnowprefetch cpuid_fault epb cat_l3 cat_l2 cdp_l2 ssbd mba ibrs ibpb stibp ibrs_enhanced tpr_shadow flexpriority ept vpid ept_ad fsgsbase tsc_adjust smep erms cqm rdt_a rdseed smap clflushopt clwb intel_pt sha_ni xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local split_lock_detect dtherm arat pln pts vnmi umip waitpkg gfni rdpid cldemote movdiri movdir64b md_clear flush_l1d arch_capabilities
 vmx flags	: vnmi preemption_timer posted_intr invvpid ept_x_only ept_ad ept_1gb flexpriority apicv tsc_offset vtpr mtf vapic ept vpid unrestricted_guest vapic_reg vid ple shadow_vmcs ept_violation_ve ept_mode_based_exec tsc_scaling usr_wait_pause
-bugs		: spectre_v1 spectre_v2 spec_store_bypass swapgs mmio_stale_data rfds bhi
+bugs		: spectre_v1 spectre_v2 spec_store_bypass swapgs mmio_stale_data rfds bhi spectre_v2_user
 bogomips	: 4400.00
 clflush size	: 64
 cache_alignment	: 64
@@ -607,7 +607,7 @@ cpuid level	: 27
 wp		: yes
 flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf tsc_known_freq pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg cx16 xtpr pdcm sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave rdrand lahf_lm 3dnowprefetch cpuid_fault epb cat_l3 cat_l2 cdp_l2 ssbd mba ibrs ibpb stibp ibrs_enhanced tpr_shadow flexpriority ept vpid ept_ad fsgsbase tsc_adjust smep erms cqm rdt_a rdseed smap clflushopt clwb intel_pt sha_ni xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local split_lock_detect dtherm arat pln pts vnmi umip waitpkg gfni rdpid cldemote movdiri movdir64b md_clear flush_l1d arch_capabilities
 vmx flags	: vnmi preemption_timer posted_intr invvpid ept_x_only ept_ad ept_1gb flexpriority apicv tsc_offset vtpr mtf vapic ept vpid unrestricted_guest vapic_reg vid ple shadow_vmcs ept_violation_ve ept_mode_based_exec tsc_scaling usr_wait_pause
-bugs		: spectre_v1 spectre_v2 spec_store_bypass swapgs mmio_stale_data rfds bhi
+bugs		: spectre_v1 spectre_v2 spec_store_bypass swapgs mmio_stale_data rfds bhi spectre_v2_user
 bogomips	: 4400.00
 clflush size	: 64
 cache_alignment	: 64
@@ -621,7 +621,7 @@ model		: 134
 model name	: Intel Atom(R) P5362 processor
 stepping	: 7
 microcode	: 0x4c000020
-cpu MHz		: 1400.000
+cpu MHz		: 800.000
 cache size	: 15360 KB
 physical id	: 0
 siblings	: 24
@@ -635,7 +635,7 @@ cpuid level	: 27
 wp		: yes
 flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf tsc_known_freq pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg cx16 xtpr pdcm sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave rdrand lahf_lm 3dnowprefetch cpuid_fault epb cat_l3 cat_l2 cdp_l2 ssbd mba ibrs ibpb stibp ibrs_enhanced tpr_shadow flexpriority ept vpid ept_ad fsgsbase tsc_adjust smep erms cqm rdt_a rdseed smap clflushopt clwb intel_pt sha_ni xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local split_lock_detect dtherm arat pln pts vnmi umip waitpkg gfni rdpid cldemote movdiri movdir64b md_clear flush_l1d arch_capabilities
 vmx flags	: vnmi preemption_timer posted_intr invvpid ept_x_only ept_ad ept_1gb flexpriority apicv tsc_offset vtpr mtf vapic ept vpid unrestricted_guest vapic_reg vid ple shadow_vmcs ept_violation_ve ept_mode_based_exec tsc_scaling usr_wait_pause
-bugs		: spectre_v1 spectre_v2 spec_store_bypass swapgs mmio_stale_data rfds bhi
+bugs		: spectre_v1 spectre_v2 spec_store_bypass swapgs mmio_stale_data rfds bhi spectre_v2_user
 bogomips	: 4400.00
 clflush size	: 64
 cache_alignment	: 64
@@ -649,7 +649,7 @@ model		: 134
 model name	: Intel Atom(R) P5362 processor
 stepping	: 7
 microcode	: 0x4c000020
-cpu MHz		: 800.000
+cpu MHz		: 2200.000
 cache size	: 15360 KB
 physical id	: 0
 siblings	: 24
@@ -663,7 +663,7 @@ cpuid level	: 27
 wp		: yes
 flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf tsc_known_freq pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg cx16 xtpr pdcm sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave rdrand lahf_lm 3dnowprefetch cpuid_fault epb cat_l3 cat_l2 cdp_l2 ssbd mba ibrs ibpb stibp ibrs_enhanced tpr_shadow flexpriority ept vpid ept_ad fsgsbase tsc_adjust smep erms cqm rdt_a rdseed smap clflushopt clwb intel_pt sha_ni xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local split_lock_detect dtherm arat pln pts vnmi umip waitpkg gfni rdpid cldemote movdiri movdir64b md_clear flush_l1d arch_capabilities
 vmx flags	: vnmi preemption_timer posted_intr invvpid ept_x_only ept_ad ept_1gb flexpriority apicv tsc_offset vtpr mtf vapic ept vpid unrestricted_guest vapic_reg vid ple shadow_vmcs ept_violation_ve ept_mode_based_exec tsc_scaling usr_wait_pause
-bugs		: spectre_v1 spectre_v2 spec_store_bypass swapgs mmio_stale_data rfds bhi
+bugs		: spectre_v1 spectre_v2 spec_store_bypass swapgs mmio_stale_data rfds bhi spectre_v2_user
 bogomips	: 4400.00
 clflush size	: 64
 cache_alignment	: 64

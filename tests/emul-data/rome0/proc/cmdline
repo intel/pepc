@@ -1,1 +1,1 @@
-BOOT_IMAGE=http://powerlab/pxelinux/node/rome0/custom-kernel/kernel initrd=http://powerlab/pxelinux/node/rome0/custom-kernel/initramfs.img root=UUID=5387a4eb-e164-4056-a451-6ea493237b86 ro  msr.allow_writes=on console=ttyS0,115200
+BOOT_IMAGE=http://craftlab/pxelinux/node/rome0/fedora42/kernel initrd=http://craftlab/pxelinux/node/rome0/fedora42/initramfs.img root=UUID=328d4b11-cf56-4f6b-ad11-19c080d358aa ro console=ttyS0,115200 msr.allow_writes=on
