@@ -49,7 +49,7 @@ def _mem_write_emul_file_write(self: IO[str], data: str) -> int:
 
     # The value has to be a 32-bit value.
     if value < 0 or value > 0xffffffff:
-        raise Error(f"Bad value for TPMI 'mem_write' file in '{data}': must be a 32-bit integer")
+        raise Error(f"Bad value for TPMI 'mem_write' file in '{data}': Must be a 32-bit integer")
 
     # Format a string for the 'mem_dump' file. The value has to be in hex format, without the 0x
     # prefix, and include exactly 8 digits.
@@ -62,7 +62,7 @@ def _mem_write_emul_file_write(self: IO[str], data: str) -> int:
         with open(md_fullpath, "r+", encoding="utf-8") as fobj:
             fobj.seek(mdmap[instance][offset])
             fobj.write(value_str)
-    except Error as err:
+    except OSError as err:
         errmsg = Error(str(err)).indent(2)
         raise type(err)(f"Failed to update the 'mem_dump' file at {md_fullpath}:\n"
                         f"{errmsg}") from err
@@ -88,7 +88,7 @@ class TPMIEmulFile(_EmulFileBase.EmulFileBase):
                  path: Path,
                  basepath: Path,
                  readonly: bool = False,
-                 data: str | bytes | None = None):
+                 data: str = ""):
         """
         Initialize a class instance.
 
@@ -96,8 +96,7 @@ class TPMIEmulFile(_EmulFileBase.EmulFileBase):
             path: Path to the file to emulate.
             basepath: Path to the base directory (where the emulated files are stored).
             readonly: Whether the emulated file is read-only.
-            data: The initial data to populate the emulated file with. Create an empty file if "",
-                  do not create an empty file if None.
+            data: The initial data to populate the emulated file with.
         """
 
         super().__init__(path, basepath, readonly=readonly, data=data)
@@ -120,6 +119,7 @@ class TPMIEmulFile(_EmulFileBase.EmulFileBase):
 
         mdmap: dict[int, dict[int, int]] = {}
         pos = 0
+        instance = -1
 
         for line in fobj:
             line = line.rstrip()
@@ -131,6 +131,10 @@ class TPMIEmulFile(_EmulFileBase.EmulFileBase):
                 instance = Trivial.str_to_int(match.group(1), what="instance number")
                 mdmap[instance] = {}
             else:
+                if instance == -1:
+                    raise Error(f"Unexpected line in TPMI file '{self._md_fullpath}' before any "
+                                f"instance is defined:\n{line}")
+
                 # Matches two different line formats:
                 #   " 00000020: 013afd40 00004000 2244aacc deadbeef" and
                 #   "[00000020] 013afd40 00004000 2244aacc deadbeef".
@@ -147,7 +151,7 @@ class TPMIEmulFile(_EmulFileBase.EmulFileBase):
                         line_pos += 9
                         offs += 4
                 else:
-                    raise Error(f"Unexpected line in TPMI file '{self._md_fullpath}:\n{line}")
+                    raise Error(f"Unexpected line in TPMI file '{self._md_fullpath}':\n{line}")
 
             pos += len(line) + 1
 
@@ -175,7 +179,7 @@ class TPMIEmulFile(_EmulFileBase.EmulFileBase):
                   'open()' function.
 
         Returns:
-            An emulated file object with a patched `write()` method.
+            An emulated file object with a patched 'write()' method.
         """
 
         fobj = super().open(mode)

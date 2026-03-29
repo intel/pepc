@@ -31,8 +31,11 @@ if typing.TYPE_CHECKING:
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
 # EPB policy names, from the following Linux kernel file: arch/x86/kernel/cpu/intel_epb.c
-_EPB_POLICIES: Final[tuple[str, ...]] = ("performance", "balance-performance", "normal",
-                                         "balance-power", "power")
+EPB_POLICY_NAMES: Final[tuple[str, ...]] = ("performance",
+                                            "balance-performance",
+                                            "normal",
+                                            "balance-power",
+                                            "power")
 
 # The minimum and maximum EPB values.
 _EPB_MIN: Final[int] = 0
@@ -81,7 +84,7 @@ class EPB(_EPBase.EPBase):
 
         self._epbmsr_obj: EnergyPerfBias.EnergyPerfBias | None = None
 
-        # EPB scope is "CPU" on most platforms, but it may be something else of some platforms.
+        # EPB scope is "CPU" on most platforms, but it may be something else on some platforms.
         try:
             self.sname = self._get_epbmsr_obj().features["epb"]["sname"]
         except ErrorNotSupported:
@@ -106,8 +109,8 @@ class EPB(_EPBase.EPBase):
             The CPU number.
         """
 
-        # Path format: /sys/devices/system/cpu/cpu<N>/power/energy_perf_bias
-        # Extract "cpu<N>" from the path
+        # Path format: /sys/devices/system/cpu/cpu<N>/power/energy_perf_bias.
+        # Extract "cpu<N>" from the path.
         dir_name = path.parent.parent.name
         cpu_str = dir_name.replace("cpu", "")
         return Trivial.str_to_int(cpu_str, what=f"CPU number from path '{path}'")
@@ -136,8 +139,8 @@ class EPB(_EPBase.EPBase):
             Trivial.validate_value_in_range(int(val), _EPB_MIN, _EPB_MAX, what="EPB value")
         elif not policy_ok:
             raise ErrorNotSupported(f"EPB value must be an integer within [{_EPB_MIN},{_EPB_MAX}]")
-        elif val not in _EPB_POLICIES:
-            policies = ", ".join(_EPB_POLICIES)
+        elif val not in EPB_POLICY_NAMES:
+            policies = ", ".join(EPB_POLICY_NAMES)
             raise ErrorNotSupported(f"EPB value must be one of the following EPB policies: "
                                     f"{policies}, or integer within [{_EPB_MIN},{_EPB_MAX}]")
 

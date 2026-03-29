@@ -29,7 +29,7 @@ def _generic_sysfs_emul_file_write(self: IO[str], data: str) -> int:
 
     Args:
         self: The file object of the sysfs file to write to.
-        data: The policy name to write to the sysfs file.
+        data: The string to write to the sysfs file.
 
     Returns:
         The number of characters written to the file.

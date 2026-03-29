@@ -23,7 +23,7 @@ from pepclibs.helperlibs.Exceptions import ErrorBadFormat
 from pepclibs.helperlibs.emul import _EmulFileBase
 
 if typing.TYPE_CHECKING:
-    from typing import IO, cast
+    from typing import IO
 
 def _get_online_cpus(basepath: Path) -> list[int]:
     """
@@ -127,7 +127,7 @@ class CPUOnlineEmulFile(_EmulFileBase.EmulFileBase):
                  path: Path,
                  basepath: Path,
                  readonly: bool = False,
-                 data: str | bytes | None = None):
+                 data: str = ""):
         """
         Initialize a class instance.
 
@@ -135,12 +135,10 @@ class CPUOnlineEmulFile(_EmulFileBase.EmulFileBase):
             path: Path to the file to emulate.
             basepath: Path to the base directory (where the emulated files are stored).
             readonly: Whether the emulated file is read-only.
-            data: The initial data to populate the emulated file with. Create an empty file if empty
-                  string, do not create an empty file if None.
+            data: The initial data to populate the emulated file with.
         """
 
         super().__init__(path, basepath, readonly=readonly, data=data)
-
 
         # The '/proc/cpuinfo' consists of blocks of text, one block per CPU. Store these blocks in a
         # dictionary keyed by CPU number in order to quickly generate the contents of the emulated
@@ -148,11 +146,7 @@ class CPUOnlineEmulFile(_EmulFileBase.EmulFileBase):
         self._proc_cpuinfo_blocks: dict[int, str] = {}
 
         if path == Path("/proc/cpuinfo"):
-            if typing.TYPE_CHECKING:
-                _data = cast(str, data)
-            else:
-                _data = data
-            self._init_proc_cpuinfo_blocks(_data)
+            self._init_proc_cpuinfo_blocks(data)
 
     def _init_proc_cpuinfo_blocks(self, data: str) -> None:
         """

@@ -17,9 +17,11 @@ data previously collected from a real SUT using the 'tdgen' tool.
 
 Terminology:
     - Emulation data: The data collected from a real SUT (command outputs, file contents, MSR
-                      values, etc.) used to emulate results of commands and file I/O operations.
+      values, etc.) used to emulate results of commands and file I/O operations.
     - Emulation dataset: A directory containing emulation data for a single SUT. Also referred to as
       just "dataset" when the context is clear.
+    - Base directory: A temporary directory created at initialization. Some emulated files are
+      backed by real files under this directory.
 """
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
@@ -61,8 +63,9 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
     """
     A process manager that emulates a System Under Test (SUT) for testing purposes.
 
-    A mock implementation of a process manager designed for unit testing. Instead of writing the
-    real SUT filesystem, manipulate files and directories in memory or within local filesystem.
+    A mock implementation of a process manager designed for unit testing. Instead of accessing the
+    real SUT filesystem, files are emulated - some are served from a temporary base directory
+    populated with emulation data, while others may be maintained purely in memory.
 
     Note: After creating an instance, call 'init_emul_data()' with a dataset path to load the
           emulation data before using any other methods.
@@ -183,8 +186,6 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
                 raise Error(f"Failed to read '{filepath}':\n{errmsg}") from err
 
             readonly = not any(re.search(regex, proc_path) for regex in rw_patterns)
-            # TODO: Seems silly to read file and pass data - EmulFile could read file itself, or
-            # copy it, which would be more efficient.
             emul_file = _EmulFile.get_emul_file(proc_path, self._basepath, data=data,
                                                 readonly=readonly)
             self._emd["files"][proc_path] = emul_file
@@ -367,9 +368,6 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         emulated filesystem structure in the temporary base directory.
         """
 
-        # TODO: Instead of eagerly building all emulation data up front, construct it lazily and
-        # only for the components that are actually required.
-
         self._dataset_path = dspath
 
         _yml = YAML.load(self._dataset_path / EMUL_CONFIG_FNAME)
@@ -409,9 +407,9 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
               reverse: bool = False) -> Generator[LsdirTypedDict, None, None]:
         """Same as 'ProcessManagerBase.lsdir()', but rebase 'path' to the base directory."""
 
-        emul_path = Path(self._basepath / str(path).lstrip("/"))
+        rebased_path = self._basepath / str(path).lstrip("/")
 
-        for entry in super().lsdir(emul_path, sort_by=sort_by, reverse=reverse):
+        for entry in super().lsdir(rebased_path, sort_by=sort_by, reverse=reverse):
             entry["path"] = entry["path"].relative_to(self._basepath)
             yield entry
 
@@ -422,8 +420,8 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         if path in self._emd["files"]:
             return True
 
-        emul_path = Path(self._basepath / path.lstrip("/"))
-        return super().exists(emul_path)
+        rebased_path = self._basepath / path.lstrip("/")
+        return super().exists(rebased_path)
 
     def is_file(self, path: str | Path) -> bool:
         """Same as 'ProcessManagerBase.is_file()', but rebase 'path' to the base directory."""
@@ -432,23 +430,23 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         if path in self._emd["files"]:
             return True
 
-        emul_path = Path(self._basepath / path.lstrip("/"))
-        return super().is_file(emul_path)
+        rebased_path = self._basepath / path.lstrip("/")
+        return super().is_file(rebased_path)
 
     def is_dir(self, path: str | Path) -> bool:
         """Same as 'ProcessManagerBase.is_dir()', but rebase 'path' to the base directory."""
 
-        path = Path(self._basepath / str(path).lstrip("/"))
-        return super().is_dir(path)
+        rebased_path = self._basepath / str(path).lstrip("/")
+        return super().is_dir(rebased_path)
 
     def is_exe(self, path: str | Path) -> bool:
         """Same as 'ProcessManagerBase.is_exe()', but rebase 'path' to the base directory."""
 
-        path = Path(self._basepath / str(path).lstrip("/"))
-        return super().is_exe(path)
+        rebased_path = self._basepath / str(path).lstrip("/")
+        return super().is_exe(rebased_path)
 
     def is_socket(self, path: str | Path) -> bool:
         """Same as 'ProcessManagerBase.is_socket()', but rebase 'path' to the base directory."""
 
-        path = Path(self._basepath / str(path).lstrip("/"))
-        return super().is_socket(path)
+        rebased_path = self._basepath / str(path).lstrip("/")
+        return super().is_socket(rebased_path)

@@ -13,15 +13,16 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
 from pathlib import Path
-from pepclibs.helperlibs.emul import (_EmulFileBase, _GeneralRWSysfsEmulFile, _CPUOnlineEmulFile,
-                                      _DevMSREmulFile, _EPBEmulFile, _ASPMPolicyEmulFile,
-                                      _TPMIEmulFile)
+from pepclibs.helperlibs.emul import _EmulFileBase, _GeneralRWSysfsEmulFile, _CPUOnlineEmulFile
+from pepclibs.helperlibs.emul import _DevMSREmulFile, _EPBEmulFile, _ASPMPolicyEmulFile
+from pepclibs.helperlibs.emul import _TPMIEmulFile
 
 if typing.TYPE_CHECKING:
     from typing import Any, Union
 
     EmulFileType = Union[_EmulFileBase.EmulFileBase,
                          _CPUOnlineEmulFile.CPUOnlineEmulFile,
+                         _GeneralRWSysfsEmulFile.GeneralRWSysfsEmulFile,
                          _DevMSREmulFile.DevMSREmulFile,
                          _EPBEmulFile.EPBEmulFile,
                          _ASPMPolicyEmulFile.ASPMPolicyEmulFile,
@@ -49,7 +50,6 @@ def get_emul_file(path: str,
                                                     data=data)
     if path.endswith("/energy_perf_bias"):
         return _EPBEmulFile.EPBEmulFile(Path(path), basepath, readonly=readonly, data=data)
-
     if path.endswith("pcie_aspm/parameters/policy"):
         return _ASPMPolicyEmulFile.ASPMPolicyEmulFile(Path(path), basepath, readonly=readonly,
                                                       data=data)
@@ -58,8 +58,6 @@ def get_emul_file(path: str,
     if path.startswith("/sys/"):
         return _GeneralRWSysfsEmulFile.GeneralRWSysfsEmulFile(Path(path), basepath,
                                                               readonly=readonly, data=data)
-
     if path.endswith("/msr"):
         return _DevMSREmulFile.DevMSREmulFile(Path(path), basepath, readonly=readonly, data=data)
-
     return _EmulFileBase.EmulFileBase(Path(path), basepath, readonly=readonly, data=data)

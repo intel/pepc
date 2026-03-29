@@ -44,7 +44,7 @@ def _epb_emul_file_write(self: IO[str], data: str) -> int:
     value = data.strip()
     if value in _EPB_POLICIES:
         data = f"{_EPB_POLICIES[value]}\n"
-    elif not Trivial.is_int(data):
+    elif not Trivial.is_int(value):
         raise Error(f"Invalid EPB value: {data}")
 
     self.truncate(len(data))
@@ -67,7 +67,7 @@ class EPBEmulFile(_EmulFileBase.EmulFileBase):
                   'open()' function.
 
         Returns:
-            An emulated read-only file object with a patched 'write()' method.
+            An emulated file object with a patched 'write()' method.
         """
 
         fobj = super().open(mode)

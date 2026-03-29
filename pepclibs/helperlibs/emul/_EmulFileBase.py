@@ -34,7 +34,7 @@ class EmulFileBase:
                  path: Path,
                  basepath: Path,
                  readonly: bool = False,
-                 data: str | bytes = ""):
+                 data: str = ""):
         """
         Initialize a class instance.
 
@@ -56,8 +56,7 @@ class EmulFileBase:
         self.fullpath = self.basepath / str(self.path).lstrip("/")
 
         try:
-            if not self.fullpath.parent.exists():
-                self.fullpath.parent.mkdir(parents=True)
+            self.fullpath.parent.mkdir(parents=True, exist_ok=True)
             with self._open("w") as fobj:
                 fobj.write(data)
         except OSError as err:
@@ -66,14 +65,14 @@ class EmulFileBase:
 
     def _open(self, mode: str) -> IO:
         """
-        Open the emulated file. The file resides in the temporary directory the base directory.
+        Open the emulated file in the base directory.
 
         Args:
             mode: The mode in which to open the file, similar to 'mode' argument the built-in Python
                   'open()' function.
 
         Returns:
-            An emulated read-only file object.
+            A file object.
         """
 
         encoding: str | None
@@ -122,7 +121,7 @@ class EmulFileBase:
                 _: Ignored.
 
             Raises:
-                ErrorPermissionDenied: If a write operation is attempted on a read-only file.
+                ErrorPermissionDenied: Write to a read-only file.
             """
 
             fullpath: str = getattr(self, "__emul_fullpath", "")

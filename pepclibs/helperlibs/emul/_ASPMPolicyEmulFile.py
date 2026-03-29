@@ -65,7 +65,7 @@ class ASPMPolicyEmulFile(_EmulFileBase.EmulFileBase):
 
     def open(self, mode: str) -> IO[str]:
         """
-        Open the emulated global PCI ASPM polity file.
+        Open the emulated global PCI ASPM policy file.
 
         Args:
             mode: The mode in which to open the file, similar to 'mode' argument the built-in Python
