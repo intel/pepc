@@ -401,6 +401,43 @@ def _get_msr_data(cpuinfo: CPUInfo.CPUInfo,
 
             yield addr, vals
 
+def _copy_tpmi_dir(pman: ProcessManagerType, srcdir: Path, dstdir: Path):
+    """
+    Recursively copy a TPMI debugfs directory from the SUT to 'dstdir'.
+
+    Args:
+        pman: The process manager object that defines the SUT to copy directories from.
+        srcdir: The source directory path on the SUT.
+        dstdir: The local destination directory path.
+
+    Notes:
+        - 'rsync' cannot be used here. TPMI debugfs files like 'mem_dump' are virtual kernel files
+          that report 'size=0' in their 'stat()' output, but produce real content when read
+          sequentially. 'rsync' uses 'stat()' to determine how many bytes to read and transfer, so
+          it reads 0 bytes and creates empty destination files. Instead, this function reads each
+          file using 'cat', which does not rely on 'stat()' and captures the real content.
+    """
+
+    try:
+        os.makedirs(dstdir, exist_ok=True)
+    except OSError as err:
+        raise Error(f"Failed to create directory '{dstdir}':\n{Error(str(err)).indent(2)}") from err
+
+    for entry in pman.lsdir(srcdir):
+        dst = dstdir / entry["name"]
+        if stat.S_ISDIR(entry["mode"]):
+            _copy_tpmi_dir(pman, entry["path"], dst)
+        elif stat.S_ISREG(entry["mode"]):
+            result = pman.run_join(f"cat -- '{entry['path']}'")
+            if result.exitcode != 0:
+                raise Error(f"Failed to read '{entry['path']}'{pman.hostmsg}:\n"
+                            f"{result.stderr.strip()}")
+            try:
+                with open(dst, "w", encoding="utf-8") as fobj:
+                    fobj.write(result.stdout)
+            except OSError as err:
+                raise Error(f"Failed to write '{dst}':\n{Error(str(err)).indent(2)}") from err
+
 def _collect_sysfs_rcopy(pman: ProcessManagerType, basedir: Path) -> Generator[Path, None, None]:
     """
     Recursively copy sysfs directories from the SUT into the output sysfs directory tree.
@@ -424,13 +461,7 @@ def _collect_sysfs_rcopy(pman: ProcessManagerType, basedir: Path) -> Generator[P
         # ignore the first one. E.g., Path("/base") / Path("/sys/kernel/debug/dir0") would result
         # in Path("/sys/kernel/debug/dir0") instead of Path("/base/sys/kernel/debug/dir0").
         dst = basedir / entry["path"].parent.relative_to("/")
-        try:
-            os.makedirs(dst, exist_ok=True)
-        except OSError as err:
-            errmsg = Error(str(err)).indent(2)
-            raise Error(f"Failed to create directory '{dst}':\n{errmsg}") from err
-
-        pman.rsync(entry["path"], dst, remotesrc=True)
+        _copy_tpmi_dir(pman, entry["path"], dst / entry["name"])
 
         yield entry["path"].relative_to(f"/{_SYSFS_SUBDIR}")
 
