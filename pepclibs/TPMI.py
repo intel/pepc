@@ -1039,6 +1039,11 @@ class TPMI(ClassHelpers.SimpleCloseContext):
                 pos += len(line) + 1
 
         self._drop_unimplemented_instances(fname, addr, mdmap, vals)
+
+        if not mdmap:
+            raise Error(f"No valid TPMI instances found for feature '{fname}' at '{path}'"
+                        f"{self._pman.hostmsg}.")
+
         return mdmap
 
     def get_dummy_tpmi_info(self, addr: str, addrs: frozenset[str]) -> tuple[_MDMapType, int]:
@@ -1606,7 +1611,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         offset = regdict["offset"]
         width = regdict["width"]
 
-        if not mdmap:
+        if mdmap is None:
             mdmap = self._get_mdmap(fname, addr)
 
         if width == 32:
