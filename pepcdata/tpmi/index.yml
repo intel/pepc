@@ -20,13 +20,16 @@
 version: "1.0"
 
 vfms:
-  # Note: GNR, GNR-D, SRF, and CWF have identical TPMI spec files.
+  # Note: GNR, GNR-D, GRR, SRF, and CWF have identical TPMI spec files.
   0x6ad:
     subdir: "gnr"
     platform_name: "Granite Rapids Xeon" # (family=6, model=0xAD)
   0x6ae:
     subdir: "gnr"
     platform_name: "Granite Rapids Xeon D" # (family=6, model=0xAE)
+  0x6b6:
+    subdir: "gnr"
+    platform_name: "Grand Ridge" # (family=6, model=0xB6)
   0x6af:
     subdir: "gnr"
     platform_name: "Sierra Forest Xeon" # (family=6, model=0xAF)

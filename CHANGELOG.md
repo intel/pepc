@@ -8,6 +8,7 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
  - Handle HWP systems without EPP support more gracefully.
  - Fix a crash when uncore commands are used for a single CPU.
 ### Added
+ - Fix Grand Ridge TPMI support.
 ### Removed
 ### Changed
  - Improve speed in case of remote systems.

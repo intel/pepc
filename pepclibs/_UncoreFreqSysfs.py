@@ -312,7 +312,7 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
                 instance = die_info["instance"]
                 cluster = die_info["cluster"]
                 if not addr:
-                    raise Error(f"BUG: The new sysfs API is in use{self._pman.hostmsg}, but die "
+                    raise Error(f"The new sysfs API is in use{self._pman.hostmsg}, but die "
                                 f"{die} in package {package} has no TPMI information")
                 topo_unsorted.setdefault(addr, {}).setdefault(instance, {})
                 topo_unsorted[addr][instance][cluster] = (package, die)
