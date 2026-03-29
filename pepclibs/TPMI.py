@@ -378,22 +378,19 @@ def _check_keys(check_keys: Iterable[str],
 
     return ""
 
-def _parse_index_file(specpath: Path, vfm: int) -> SDDTypedDict:
+def _parse_index_file(specpath: Path) -> SDDTypedDict:
     """
-    Parse the 'index.yml' file in a spec directory and return path to the spec files
-    sub-directory containing spec files for the current platform.
+    Parse and validate the 'index.yml' file in a spec directory.
 
     Args:
         specpath: Path to the spec directory to parse the index file for.
-        vfm: The VFM value to match against the index file entries.
 
     Returns:
-        Path to a sub-directory within the spec directory containing spec files for the current
-        platform.
+        The spec directory dictionary (sdd) containing the parsed index information.
 
     Raises:
-        ErrorNotSupported: If the index format version is not supported or if the platform (VFM)
-                           is not supported.
+        Error: If the index file is malformed or has validation errors.
+        ErrorNotSupported: If the index format version is not supported.
     """
 
     def _raise_exc(msg: str) -> NoReturn:
@@ -409,7 +406,7 @@ def _parse_index_file(specpath: Path, vfm: int) -> SDDTypedDict:
 
     idxpath = specpath / "index.yml"
 
-    _LOG.debug("Looking for VFM %d in TPMI spec index file '%s'", vfm, idxpath)
+    _LOG.debug("Parsing TPMI spec index file '%s'", idxpath)
 
     if typing.TYPE_CHECKING:
         idxdict: IdxDictTypedDict = cast(IdxDictTypedDict, YAML.load(idxpath))
@@ -439,19 +436,42 @@ def _parse_index_file(specpath: Path, vfm: int) -> SDDTypedDict:
 
     for _vfm, info in vfms.items():
         keys = frozenset({"subdir", "platform_name"})
-        where = f"in VFM={_vfm} spec definition"
+        where = f"in VFM={_vfm:#x} spec definition"
         msg = _check_keys(info, keys, keys, where)
         if msg:
             _raise_exc(msg)
 
+    return sdd
+
+def _match_vfm_in_index(sdd: SDDTypedDict, vfm: int) -> SDDTypedDict:
+    """
+    Match a VFM value against entries in a parsed index file.
+
+    Args:
+        sdd: The spec directory dictionary containing the parsed index.
+        vfm: The VFM value to match against the index file entries.
+
+    Returns:
+        The updated sdd with the matching VFM entry set.
+
+    Raises:
+        ErrorNotSupported: If the platform (VFM) is not found in the index.
+    """
+
+    idxpath = sdd["idxpath"]
+    vfms: dict[int, IdxDictVFMEntryTypedDict] = sdd["idxdict"]["vfms"]
+
+    _LOG.debug("Looking for VFM %#x in TPMI spec index file '%s'", vfm, idxpath)
+
+    for _vfm in vfms:
         if _vfm == vfm:
             sdd["vfm"] = _vfm
-            _LOG.debug("Found matching VFM %d in index file '%s'", vfm, idxpath)
+            _LOG.debug("Found matching VFM %#x in index file '%s'", vfm, idxpath)
             return sdd
 
-    available_vfms = ", ".join(str(vfm) for vfm in vfms)
-    raise ErrorNotSupported(f"Platform with VFM {vfm} is not supported, no spec files found in "
-                            f"{idxpath}. Available VFMs: {available_vfms}")
+    available_vfms = ", ".join(f"{v:#x}" for v in vfms)
+    raise ErrorNotSupported(f"Platform with VFM {vfm:#x} is not supported, no spec files found in "
+                            f"{idxpath}.\nSupported VFMs: {available_vfms}")
 
 def get_features(specdirs: Iterable[Path] = (),
                  vfm: int = -1) -> tuple[dict[str, SDictTypedDict], dict[Path, SDDTypedDict]]:
@@ -487,7 +507,7 @@ def get_features(specdirs: Iterable[Path] = (),
     """
 
     if vfm == -1:
-        _LOG.debug("No VFM specified, using default VFM %d (%s)",
+        _LOG.debug("No VFM specified, using default VFM %#x (%s)",
                    DEFAULT_VFM, DEFAULT_PLATFORM_NAME)
         vfm = DEFAULT_VFM
 
@@ -516,12 +536,19 @@ def get_features(specdirs: Iterable[Path] = (),
 
         _LOG.debug("Processing TPMI spec directory '%s'", specdir)
 
-        # Parse the index file and get path to the sub-directory containing spec files for the
-        # current platform.
+        # Parse the index file and match VFM to get path to the sub-directory containing spec
+        # files for the current platform.
         try:
-            sdd = _parse_index_file(specdir, vfm=vfm)
+            sdd = _parse_index_file(specdir)
         except Error as err:
             _LOG.warning("Failed to parse TPMI spec index file in directory '%s':\n%s",
+                         specdir, err.indent(2))
+            continue
+
+        try:
+            sdd = _match_vfm_in_index(sdd, vfm)
+        except ErrorNotSupported as err:
+            _LOG.warning("Platform not supported in TPMI spec directory '%s':\n%s",
                          specdir, err.indent(2))
             continue
 
@@ -662,7 +689,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
             self._pman = LocalProcessManager.LocalProcessManager()
 
         if vfm == -1:
-            _LOG.debug("No VFM specified, using default VFM %d (%s)",
+            _LOG.debug("No VFM specified, using default VFM %#x (%s)",
                        DEFAULT_VFM, DEFAULT_PLATFORM_NAME)
             vfm = DEFAULT_VFM
 
@@ -716,7 +743,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         if _LOG.getEffectiveLevel() == Logging.DEBUG:
             _LOG.debug("Found TPMI spec files for the following features:")
             for fname, sdict in self.sdicts.items():
-                _LOG.debug("- %s (ID: 0x%02x) from '%s'", fname, sdict["feature_id"], sdict["path"])
+                _LOG.debug("- %s (ID: %#04x) from '%s'", fname, sdict["feature_id"], sdict["path"])
 
         # The feature ID -> feature name dictionary (supported features only).
         self._fid2fname: dict[int, str] = {}
