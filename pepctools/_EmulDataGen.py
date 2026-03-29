@@ -95,6 +95,7 @@ _PROCFS_FILES: list[Path] = [
     Path("/proc/cmdline"),
     Path("/proc/version"),
     Path("/proc/mounts"),
+    Path("/proc/modules"),
 ]
 
 # The sysfs data sub-directory name in the dataset directory.
