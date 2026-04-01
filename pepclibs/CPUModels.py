@@ -233,13 +233,21 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Nehalem 4S Xeon",
     },
     # Clients.
+    "WILDCATLAKE_L": {
+        "vendor": VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
+        "family": 6,
+        "model": 0xCC,
+        "vfm": _make_intel_vfm(6, 0xD5),
+        "codename": "Wildcat Lake",
+    },
     "PANTHERLAKE_L": {
         "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
         "family": 6,
         "model": 0xCC,
         "vfm": _make_intel_vfm(6, 0xCC),
-        "codename": "Panther Lake mobile",
+        "codename": "Panther Lake",
     },
     "LUNARLAKE_M": {
         "vendor": VENDOR_INTEL,
@@ -255,7 +263,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "family": 6,
         "model": 0xC5,
         "vfm": _make_intel_vfm(6, 0xC5),
-        "codename": "Arrow Lake client",
+        "codename": "Arrow Lake",
     },
     "ARROWLAKE_H": {
         "vendor": VENDOR_INTEL,
@@ -279,7 +287,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "family": 6,
         "model": 0xAC,
         "vfm": _make_intel_vfm(6, 0xAC),
-        "codename": "Meteor Lake client",
+        "codename": "Meteor Lake",
     },
     "METEORLAKE_L": {
         "vendor": VENDOR_INTEL,
@@ -303,7 +311,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "family": 6,
         "model": 0xBF,
         "vfm": _make_intel_vfm(6, 0xBF),
-        "codename": "Raptor Lake client",
+        "codename": "Raptor Lake",
     },
     "RAPTORLAKE": {
         "vendor": VENDOR_INTEL,
@@ -311,7 +319,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "family": 6,
         "model": 0xB7,
         "vfm": _make_intel_vfm(6, 0xB7),
-        "codename": "Raptor Lake client",
+        "codename": "Raptor Lake",
     },
     "ALDERLAKE": {
         "vendor": VENDOR_INTEL,
@@ -319,7 +327,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "family": 6,
         "model": 0x97,
         "vfm": _make_intel_vfm(6, 0x97),
-        "codename": "Alder Lake client",
+        "codename": "Alder Lake",
     },
     "ALDERLAKE_L": {
         "vendor": VENDOR_INTEL,
@@ -343,7 +351,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "family": 6,
         "model": 0xA7,
         "vfm": _make_intel_vfm(6, 0xA7),
-        "codename": "Rocket Lake client",
+        "codename": "Rocket Lake",
     },
     "TIGERLAKE": {
         "vendor": VENDOR_INTEL,
@@ -351,7 +359,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "family": 6,
         "model": 0x8D,
         "vfm": _make_intel_vfm(6, 0x8D),
-        "codename": "Tiger Lake client",
+        "codename": "Tiger Lake",
     },
     "TIGERLAKE_L": {
         "vendor": VENDOR_INTEL,
@@ -367,7 +375,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "family": 6,
         "model": 0x8A,
         "vfm": _make_intel_vfm(6, 0x8A),
-        "codename": "Lakefield client",
+        "codename": "Lakefield",
     },
     "COMETLAKE": {
         "vendor": VENDOR_INTEL,
@@ -375,7 +383,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "family": 6,
         "model": 0xA5,
         "vfm": _make_intel_vfm(6, 0xA5),
-        "codename": "Comet Lake client",
+        "codename": "Comet Lake",
     },
     "COMETLAKE_L": {
         "vendor": VENDOR_INTEL,
@@ -391,7 +399,7 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "family": 6,
         "model": 0x9E,
         "vfm": _make_intel_vfm(6, 0x9E),
-        "codename": "Kaby Lake client",
+        "codename": "Kaby Lake",
     },
     "KABYLAKE_L": {
         "vendor": VENDOR_INTEL,
@@ -682,7 +690,8 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
 #
 CPU_GROUPS: Final[dict[str, tuple[int, ...]]] = {
     "DMR": (MODELS["DIAMONDRAPIDS_X"]["vfm"],),
-    "PANTHERLAKE": (MODELS["PANTHERLAKE_L"]["vfm"],),
+    "PANTHERLAKE": (MODELS["PANTHERLAKE_L"]["vfm"],
+                    MODELS["WILDCATLAKE_L"]["vfm"],),
     "LUNARLAKE": (MODELS["LUNARLAKE_M"]["vfm"],),
     "GNR": (MODELS["GRANITERAPIDS_X"]["vfm"],
             MODELS["GRANITERAPIDS_D"]["vfm"]),
