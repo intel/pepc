@@ -25,6 +25,7 @@ from pepclibs.helperlibs import Trivial
 from pepclibs.helperlibs.Exceptions import ErrorNotSupported, ErrorBadFormat
 from pepclibs.helperlibs.Exceptions import Error, ErrorPath, ErrorNotFound
 from pepclibs.helperlibs.Exceptions import ErrorVerifyFailed, ErrorVerifyFailedPath
+from pepclibs.helperlibs.Exceptions import ErrorPermissionDenied
 
 if typing.TYPE_CHECKING:
     from typing import TypedDict, Generator, Iterable
@@ -281,6 +282,13 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
             with self._pman.open(path, "r+") as fobj:
                 try:
                     fobj.write(val)
+                except ErrorPermissionDenied as err:
+                    what = "" if not what else f" {what}"
+                    val = str(val)
+                    if len(val) > 24:
+                        val = f"{val[:23]}...snip..."
+                    raise type(err)(f"No permissions to write value '{val}' to{what} sysfs file "
+                                    f"'{path}'{self._pman.hostmsg}:\n{err.indent(2)}") from err
                 except Error as err:
                     what = "" if not what else f" {what}"
                     val = str(val)
@@ -375,6 +383,9 @@ for path, (val, verify, retries, sleep) in winfo.items():
     try:
         with open(path, "w") as fobj:
             fobj.write(val)
+    except PermissionError as err:
+        print("ERROR: Permission: '%s': '%s'" % (path, err))
+        raise SystemExit(0)
     except Exception as err:
         print("ERROR: Write: '%s': '%s'" % (path, err))
         raise SystemExit(0)
@@ -386,6 +397,9 @@ for path, (val, verify, retries, sleep) in winfo.items():
         try:
             with open(path, "r") as fobj:
                 new_val = fobj.read().strip()
+        except PermissionError as err:
+            print("ERROR: Permission: '%s': '%s'" % (path, err))
+            raise SystemExit(0)
         except Exception as err:
             print("ERROR: Read: '%s': '%s'" % (path, err))
             raise SystemExit(0)
@@ -429,26 +443,39 @@ for path, (val, verify, retries, sleep) in winfo.items():
             raise Error(generic_errmsg)
 
         stdout = stdout_lines[0].strip()
-        stdout_tokens = stdout.split()
-        if len(stdout_tokens) < 4:
-            raise Error(generic_errmsg)
 
-        # The second line token is the error type, e.g. "Write", "Read", or "Verify".
-        error_type = stdout_tokens[1]
-        if not error_type.endswith(":"):
-            raise Error(generic_errmsg)
-        error_type = error_type[:-1]
+        mobj = re.match(r"ERROR: Permission: '(.+)': '(.+)'", stdout)
+        if mobj:
+            _path = mobj.group(1)
+            if _path not in batch_info:
+                raise Error(f"Unexpected path '{_path}' in the error message:\n{stdout}")
+            path = Path(_path)
+            val_info = batch_info[path]
+            val = val_info["val"]
+            what = val_info["what"]
+            what = "" if not what else f" {what}"
+            raise ErrorPermissionDenied(f"No permissions to access{what} sysfs file '{path}'"
+                                        f"{self._pman.hostmsg}:\n{stdout}")
 
-        if error_type == "Write":
-            regex = r"ERROR: Write: '(.+)': '(.+)'"
-        elif error_type == "Read":
-            regex = r"ERROR: Read: '(.+)': '(.+)'"
-        elif error_type == "Verify":
-            regex = r"ERROR: Verify: '(.+)': Expected '(.+)': Got '(.+)'"
-        else:
-            raise Error(generic_errmsg)
+        mobj = re.match(r"ERROR: (Write|Read): '(.+)': '(.+)'", stdout)
+        if mobj:
+            error_type = mobj.group(1)
+            _path = mobj.group(2)
+            if _path not in batch_info:
+                raise Error(f"Unexpected path '{_path}' in the error message:\n{stdout}")
+            path = Path(_path)
+            val_info = batch_info[path]
+            val = val_info["val"]
+            what = val_info["what"]
+            what = "" if not what else f" {what}"
+            if error_type == "Write":
+                raise ErrorPath(f"Failed to write value '{val}' to{what} sysfs file '{path}'"
+                                f"{self._pman.hostmsg}:\n{stdout}", path=path)
+            raise ErrorPath(f"Failed to read back value from{what} sysfs file '{path}'"
+                            f"{self._pman.hostmsg}:\n{stdout}", path=path)
 
-        mobj = re.match(regex, stdout)
+        regex = re.compile(r"ERROR: Verify: '(.+)': Expected '(.+)': Got '(.+)'")
+        mobj = regex.match(stdout)
         if not mobj:
             raise Error(generic_errmsg)
 
@@ -461,20 +488,12 @@ for path, (val, verify, retries, sleep) in winfo.items():
         val = val_info["val"]
         what = val_info["what"]
         what = "" if not what else f" {what}"
-
-        if error_type == "Write":
-            raise ErrorPath(f"Failed to write value '{val}' to{what} sysfs file '{path}'"
-                            f"{self._pman.hostmsg}:\n{stdout}", path=path)
-        if error_type == "Read":
-            raise ErrorPath(f"Failed to read back value from{what} sysfs file '{path}'"
-                            f"{self._pman.hostmsg}:\n{stdout}", path=path)
-        if error_type == "Verify":
-            expected_val = mobj.group(2)
-            actual_val = mobj.group(3)
-            raise ErrorVerifyFailedPath(f"Failed to write value '{val}' to{what} sysfs file "
-                                        f"'{path}'{self._pman.hostmsg}:\n  Wrote '{expected_val}', "
-                                        f"but read '{actual_val}' back",
-                                        expected=expected_val, actual=actual_val, path=path)
+        expected_val = mobj.group(2)
+        actual_val = mobj.group(3)
+        raise ErrorVerifyFailedPath(f"Failed to write value '{val}' to{what} sysfs file "
+                                    f"'{path}'{self._pman.hostmsg}:\n  Wrote '{expected_val}', "
+                                    f"but read '{actual_val}' back",
+                                    expected=expected_val, actual=actual_val, path=path)
 
     def _write_paths_vals_optimized(self, batch_info: dict[Path, _TransactionItemTypedDict]):
         """
@@ -582,6 +601,7 @@ for path, (val, verify, retries, sleep) in winfo.items():
             The contents of the file as a string.
 
         Raises:
+            ErrorPermissionDenied: No permissions to access the sysfs file.
             ErrorNotSupported: The file does not exist.
             ErrorPath: An I/O error occurred while reading the file (includes path information).
         """
@@ -603,6 +623,10 @@ for path, (val, verify, retries, sleep) in winfo.items():
             with self._pman.open(path, "r") as fobj:
                 try:
                     val = fobj.read().strip()
+                except ErrorPermissionDenied as err:
+                    what = "" if not what else f" {what}"
+                    raise type(err)(f"No permissions to read{what} from '{path}'"
+                                    f"{self._pman.hostmsg}:\n{err.indent(2)}") from err
                 except Error as err:
                     what = "" if not what else f" {what}"
                     raise ErrorPath(f"Failed to read{what} from '{path}'{self._pman.hostmsg}\n"
@@ -630,6 +654,7 @@ for path, (val, verify, retries, sleep) in winfo.items():
             The integer value read from the file.
 
         Raises:
+            ErrorPermissionDenied: No permissions to access the sysfs file.
             ErrorNotSupported: The file does not exist.
             ErrorBadFormat: The file contents cannot be parsed as an integer.
             ErrorPath: An I/O error occurred while reading the file (includes path information).
@@ -678,9 +703,12 @@ for path in paths:
             val = fobj.read().strip()
     except FileNotFoundError:
         val = "{_file_not_found_val}"
+    except PermissionError as err:
+        print("ERROR: Permission: '%s': '%s'" % (path, err))
+        raise SystemExit(0)
     except Exception as err:
-        print("ERROR: Failed to read file '%s': %s" % (path, err))
-        raise SystemExit(1)
+        print("ERROR: General: Read: '%s': '%s'" % (path, err))
+        raise SystemExit(0)
     print(val)
 '"""
 
@@ -696,7 +724,7 @@ for path in paths:
                 raise Error(f"Unexpected output on stderr while reading sysfs files"
                             f"{self._pman.hostmsg}:\n{stderr_str}")
 
-            if len(read_paths) != len(stdout):
+            if len(stdout) > len(read_paths):
                 raise Error(f"BUG: Unexpected number of lines from the optimized read command:\n"
                             f"- Expected: {len(read_paths)}\n"
                             f"- Actual: {len(stdout)}")
@@ -711,10 +739,19 @@ for path in paths:
                         what = "" if not what else f" {what}"
                         raise ErrorNotSupported(f"Failed to read{what} from '{path}'"
                                                 f"{self._pman.hostmsg}")
+                elif val.startswith("ERROR: "):
+                    what_str = "" if not what else f" {what}"
+                    generic_errmsg = (f"Failed to read{what_str} from '{path}'"
+                                      f"{self._pman.hostmsg}:\n  {val}")
+                    regex = re.compile(r"ERROR: (Permission|Read): '(.+)': '(.+)'")
+                    mobj = regex.match(val)
+                    if not mobj:
+                        raise ErrorPath(generic_errmsg, path=path)
+                    if mobj.group(1) == "Permission":
+                        raise ErrorPermissionDenied(f"No permissions to read{what_str} from "
+                                                    f"'{path}'{self._pman.hostmsg}:\n  {val}")
+                    raise ErrorPath(generic_errmsg, path=path)
                 else:
-                    if val.startswith("ERROR: Failed to read file "):
-                        raise ErrorPath(f"Failed to read{what} from '{path}'{self._pman.hostmsg}:\n"
-                                        f"  {val}", path=path)
                     self.cache_add(path, val)
                     read_results[path] = val
         else:
@@ -807,6 +844,7 @@ for path in paths:
             Tuples of (path, value) for each file read.
 
         Raises:
+            ErrorPermissionDenied: No permissions to access the sysfs file.
             ErrorNotSupported: The file does not exist.
             ErrorPath: An I/O error occurred while reading files (includes path information).
 
@@ -854,6 +892,7 @@ for path in paths:
             Tuples of (path, value) for each file read, where value is an integer.
 
         Raises:
+            ErrorPermissionDenied: No permissions to access the sysfs file.
             ErrorNotSupported: The file does not exist.
             ErrorBadFormat: The file contents cannot be parsed as an integer.
             ErrorPath: An I/O error occurred while reading files (includes path information).
@@ -885,6 +924,7 @@ for path in paths:
                   messages.
 
         Raises:
+            ErrorPermissionDenied: No permissions to access the sysfs file.
             ErrorNotSupported: The file does not exist.
             ErrorPath: An I/O error occurred while writing to the file (includes path
                        information).
@@ -911,6 +951,7 @@ for path in paths:
                   messages.
 
         Raises:
+            ErrorPermissionDenied: No permissions to access the sysfs file.
             ErrorNotSupported: The file does not exist.
             ErrorPath: An I/O error occurred while writing to the file (includes path
                        information).
@@ -940,6 +981,7 @@ for path in paths:
             sleep: Number of seconds to sleep between verification retries.
 
         Raises:
+            ErrorPermissionDenied: No permissions to access the sysfs file.
             ErrorNotSupported: The file does not exist.
             ErrorVerifyFailedPath: The value read from the file does not match the value written
                                    (includes path information).
@@ -979,6 +1021,7 @@ for path in paths:
             sleep: Number of seconds to sleep between retries.
 
         Raises:
+            ErrorPermissionDenied: No permissions to access the sysfs file.
             ErrorNotSupported: The sysfs file does not support the requested value.
             ErrorVerifyFailedPath: Verification failed after all retries (includes path
                                    information).
@@ -1034,6 +1077,9 @@ for path in paths:
     try:
         with open(path, "w") as fobj:
             fobj.write("{val}")
+    except PermissionError as err:
+        print("ERROR: Permission: '%s': '%s'" % (path, err))
+        break
     except Exception as err:
         print("ERROR: Write: '%s': '%s'" % (path, err))
         break
@@ -1060,7 +1106,7 @@ for path in paths:
         generic_errmsg = f"Failed to flush transaction for sysfs files{self._pman.hostmsg}:\n" \
                          f"{stdout}"
 
-        if not stdout.startswith("ERROR: Write: "):
+        if not stdout.startswith("ERROR: "):
             raise Error(generic_errmsg)
 
         # Only one line of output is expected, if there are multiple lines, something is wrong with
@@ -1070,16 +1116,20 @@ for path in paths:
             raise Error(generic_errmsg)
         stdout = stdout_lines[0].strip()
 
-        regex = r"ERROR: Write: '(.+)': '(.+)'"
-        mobj = re.match(regex, stdout)
+        regex = re.compile(r"ERROR: (Permission|Write): '(.+)': '(.+)'")
+        mobj = regex.match(stdout)
         if not mobj:
             raise Error(generic_errmsg)
 
-        path = Path(mobj.group(1))
+        errtype = mobj.group(1)
+        path = Path(mobj.group(2))
         if path not in paths:
             raise Error(f"Unexpected path '{path}' in the error message:\n{stdout}")
 
         what = "" if not what else f" {what}"
+        if errtype == "Permission":
+            raise ErrorPermissionDenied(f"No permissions to access{what} sysfs file '{path}'"
+                                        f"{self._pman.hostmsg}:\n{stdout}")
         raise ErrorPath(f"Failed to write value '{val}' to{what} sysfs file '{path}'"
                         f"{self._pman.hostmsg}:\n{stdout}", path=path)
 
@@ -1129,6 +1179,7 @@ for path in paths:
                   messages.
 
         Raises:
+            ErrorPermissionDenied: No permissions to access the sysfs file.
             ErrorNotSupported: Any file does not exist.
             ErrorPath: An I/O error occurred while writing to files (includes path information).
         """
@@ -1172,6 +1223,7 @@ for path in paths:
                   messages.
 
         Raises:
+            ErrorPermissionDenied: No permissions to access the sysfs file.
             ErrorNotSupported: Any file does not exist.
             ErrorPath: An I/O error occurred while writing to files (includes path information).
         """
@@ -1203,6 +1255,7 @@ for path in paths:
             sleep: Number of seconds to sleep between verification retries.
 
         Raises:
+            ErrorPermissionDenied: No permissions to access the sysfs file.
             ErrorVerifyFailedPath: Verification of a write operation failed (includes path
                                    information).
             ErrorPath: An I/O error occurred while writing to files (includes path information).
@@ -1267,6 +1320,7 @@ for path in paths:
             sleep: Number of seconds to sleep between verification retries.
 
         Raises:
+            ErrorPermissionDenied: No permissions to access the sysfs file.
             ErrorVerifyFailedPath: Verification of a write operation failed (includes path
                                    information).
             ErrorPath: An I/O error occurred while writing to files (includes path information).
