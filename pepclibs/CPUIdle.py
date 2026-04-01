@@ -20,6 +20,7 @@ import typing
 from pathlib import Path
 from pepclibs.helperlibs import Logging, LocalProcessManager, Trivial, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorNotFound, ErrorPerCPUPath
+from pepclibs.helperlibs.Exceptions import ErrorPermissionDenied
 from pepclibs import CPUInfo, _PerCPUCache, _SysfsIO
 
 if typing.TYPE_CHECKING:
@@ -294,8 +295,11 @@ try:
 
         try:
             entries = os.listdir(cpuidle_path)
+        except PermissionError as err:
+            print("ERROR: Permission: Path: %s: Error: %s" % (cpuidle_path, err))
+            raise SystemExit(0)
         except Exception as err:
-            print("ERROR: '%s': '%s'" % (cpuidle_path, err))
+            print("ERROR: Listdir: Path: %s: Error: %s" % (cpuidle_path, err))
             raise SystemExit(0)
 
         state_names = []
@@ -336,17 +340,16 @@ except Exception as err:
                 continue
 
             if line.startswith("ERROR:"):
-                # Parse error format similar to _SysfsIO.py.
-                # Format: ERROR: '<path>': '<error>'
+                # Format: ERROR: (Permission|Listdir): Path: <path>: Error: <error>
                 generic_errmsg = f"Failed to list C-state directories{self._pman.hostmsg}:\n" \
                                  f"  {line}"
 
-                mobj = re.match(r"ERROR: '(.+)': '(.+)'", line)
+                mobj = re.match(r"ERROR: (Permission|Listdir): Path: ([^:]+): Error: (.+)", line)
                 if not mobj:
                     raise Error(generic_errmsg)
 
-                path_str = mobj.group(1)
-                error_msg = mobj.group(2)
+                errtype = mobj.group(1)
+                path_str = mobj.group(2)
                 path = Path(path_str)
 
                 # Extract CPU number from path.
@@ -356,8 +359,11 @@ except Exception as err:
                     raise Error(generic_errmsg)
                 cpu = int(cpu_match.group(1))
 
-                raise ErrorPerCPUPath(f"Failed to list C-state directories for CPU {cpu}" \
-                                      f"{self._pman.hostmsg}:\n  {error_msg}",
+                if errtype == "Permission":
+                    raise ErrorPermissionDenied(f"No permissions to list C-state directories for "
+                                                f"CPU {cpu}{self._pman.hostmsg}:\n  {line}")
+                raise ErrorPerCPUPath(f"Failed to list C-state directories for CPU {cpu}"
+                                      f"{self._pman.hostmsg}:\n  {mobj.group(3)}",
                                       path=path, cpu=cpu)
 
             # Parse normal format: <cpu>:<state0,state1,...>
