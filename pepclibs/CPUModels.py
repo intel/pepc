@@ -233,6 +233,22 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
         "codename": "Nehalem 4S Xeon",
     },
     # Clients.
+    "NOVALAKE": {
+        "vendor": VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
+        "family": 6,
+        "model": 0xCC,
+        "vfm": _make_intel_vfm(18, 0x01),
+        "codename": "Nova Lake",
+    },
+    "NOVALAKE_L": {
+        "vendor": VENDOR_INTEL,
+        "vendor_name": "GenuineIntel",
+        "family": 6,
+        "model": 0xCC,
+        "vfm": _make_intel_vfm(18, 0x03),
+        "codename": "Nova Lake Mobile",
+    },
     "WILDCATLAKE_L": {
         "vendor": VENDOR_INTEL,
         "vendor_name": "GenuineIntel",
@@ -690,6 +706,8 @@ MODELS: Final[dict[str, CPUModelTypedDict]] = {
 #
 CPU_GROUPS: Final[dict[str, tuple[int, ...]]] = {
     "DMR": (MODELS["DIAMONDRAPIDS_X"]["vfm"],),
+    "NOVALAKE": (MODELS["NOVALAKE"]["vfm"],
+                 MODELS["NOVALAKE_L"]["vfm"],),
     "PANTHERLAKE": (MODELS["PANTHERLAKE_L"]["vfm"],
                     MODELS["WILDCATLAKE_L"]["vfm"],),
     "LUNARLAKE": (MODELS["LUNARLAKE_M"]["vfm"],),
