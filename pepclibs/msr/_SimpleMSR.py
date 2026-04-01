@@ -211,14 +211,17 @@ class SimpleMSR(ClassHelpers.SimpleCloseContext):
             path = self.format_msr_device_path(cpu)
             _LOG.debug("Local: Read: CPU%d: MSR 0x%x from '%s'%s",
                        cpu, regaddr, path, self._pman.hostmsg)
-            fd = os.open(path, os.O_RDONLY)
             try:
-                regval_bytes = os.pread(fd, self.regbytes, regaddr)
+                with open(path, "rb") as fobj:
+                    regval_bytes = os.pread(fobj.fileno(), self.regbytes, regaddr)
+            except PermissionError as err:
+                errmsg = Error(str(err)).indent(2)
+                raise ErrorPermissionDenied(f"No permissions to read MSR '{regaddr:#x}' from "
+                                            f"file '{path}'{self._pman.hostmsg}:\n"
+                                            f"{errmsg}") from err
             except OSError as err:
                 raise ErrorPerCPUPath(f"Failed to read MSR '{regaddr:#x}' from file '{path}'"
                                       f"{self._pman.hostmsg}: {err}", cpu=cpu, path=path) from err
-            finally:
-                os.close(fd)
             regval = int.from_bytes(regval_bytes, byteorder=_CPU_BYTEORDER)
             yield cpu, regval
 
@@ -255,29 +258,30 @@ cpus = [{cpus_str}]
 for cpu in cpus:
     path = "/dev/cpu/%d/msr" % cpu
     try:
-        fd = os.open(path, os.O_RDONLY)
-        try:
-            regval = os.pread(fd, {self.regbytes}, {regaddr:#x})
+        with open(path, "rb") as fobj:
+            regval = os.pread(fobj.fileno(), {self.regbytes}, {regaddr:#x})
             regval = int.from_bytes(regval, byteorder="{_CPU_BYTEORDER}")
             print("%d,%d" % (cpu, regval))
-        finally:
-            os.close(fd)
+    except PermissionError as err:
+        print("ERROR: Permission: CPU: '%d': Path: '%s': Error: '%s'" % (cpu, path, err))
+        raise SystemExit(0)
     except Exception as err:
-        print("ERROR: CPU: '%d': Path: '%s': Error: '%s'" % (cpu, path, err))
+        print("ERROR: Read: CPU: '%d': Path: '%s': Error: '%s'" % (cpu, path, err))
         raise SystemExit(0)
 '"""
 
         try:
             stdout, stderr = self._pman.run_verify_join(cmd)
         except Error as err:
-            errmsg = err.indent(2)
             raise type(err)(f"Failed to read MSR '{regaddr:#x}' on CPUs {cpus_str}"
-                            f"{self._pman.hostmsg}:\n{errmsg}") from err
+                            f"{self._pman.hostmsg}:\n{err.indent(2)}") from err
 
         if stderr:
             # Nothing is expected on stderr, if there is any output, treat it as an error.
             raise Error(f"Failed to read MSR '{regaddr:#x}' on CPUs {cpus_str}"
                         f"{self._pman.hostmsg}:\nUnexpected output on stderr:\n{stderr}")
+
+        regex = re.compile(r"ERROR: (Permission|Read): CPU: '(\d+)': Path: '(.+)': Error: '(.+)'")
 
         for line in stdout.splitlines():
             line = line.strip()
@@ -290,15 +294,19 @@ for cpu in cpus:
                                   f"{self._pman.hostmsg}:\n{line}")
 
                 # Try to parse the error message to extract CPU, path, and error.
-                regex = r"ERROR: CPU: '(\d+)': Path: '(.+)': Error: '(.+)'"
-                mobj = re.match(regex, line)
+                mobj = regex.match(line)
                 if not mobj:
                     raise Error(generic_errmsg)
 
-                cpu = Trivial.str_to_int(mobj.group(1), what="CPU number")
-                path = Path(mobj.group(2))
-                errmsg = mobj.group(3)
+                errtype = mobj.group(1)
+                cpu = Trivial.str_to_int(mobj.group(2), what="CPU number")
+                path = Path(mobj.group(3))
+                errmsg = mobj.group(4)
 
+                if errtype == "Permission":
+                    raise ErrorPermissionDenied(f"No permissions to read MSR '{regaddr:#x}' from "
+                                                f"CPU {cpu}{self._pman.hostmsg} (file '{path}'):\n"
+                                                f"{Error(errmsg).indent(2)}")
                 raise ErrorPerCPUPath(f"Failed to read MSR '{regaddr:#x}' from CPU {cpu}"
                                       f"{self._pman.hostmsg} (file '{path}'):\n"
                                       f"{Error(errmsg).indent(2)}", cpu=cpu, path=path)
@@ -335,6 +343,10 @@ for cpu in cpus:
                 with self._pman.openb(path, "rb") as fobj:
                     fobj.seek(regaddr)
                     regval_bytes = fobj.read(self.regbytes)
+            except ErrorPermissionDenied as err:
+                raise type(err)(f"No permissions to read MSR '{regaddr:#x}' from "
+                                f"file '{path}'{self._pman.hostmsg}:\n"
+                                f"{err.indent(2)}") from err
             except Error as err:
                 raise type(err)(f"Failed to read MSR '{regaddr:#x}' from file '{path}'"
                                 f"{self._pman.hostmsg}:\n{err.indent(2)}") from err
@@ -358,6 +370,7 @@ for cpu in cpus:
                 regval: Value read from the MSR.
 
         Raises:
+            ErrorPermissionDenied: No permissions to access the MSR device file.
             ErrorPerCPUPath: An I/O error occurred while reading the MSR (includes CPU and path
                              information).
         """
@@ -382,6 +395,7 @@ for cpu in cpus:
             The value of the MSR as an integer.
 
         Raises:
+            ErrorPermissionDenied: No permissions to access the MSR device file.
             ErrorPerCPUPath: An I/O error occurred while reading the MSR (includes CPU and path
                              information).
         """
@@ -441,15 +455,18 @@ for cpu in cpus:
             path = self.format_msr_device_path(cpu)
             _LOG.debug("Local: Write: CPU%d: MSR 0x%x: 0x%x to '%s'%s",
                        cpu, regaddr, regval, path, self._pman.hostmsg)
-            fd = os.open(path, os.O_RDWR)
             try:
-                os.pwrite(fd, regval_bytes, regaddr)
+                with open(path, "r+b") as fobj:
+                    os.pwrite(fobj.fileno(), regval_bytes, regaddr)
+            except PermissionError as err:
+                errmsg = Error(str(err)).indent(2)
+                raise ErrorPermissionDenied(f"No permissions to write '{regval:#x}' to MSR "
+                                            f"'{regaddr:#x}' of CPU {cpu}{self._pman.hostmsg} "
+                                            f"(file '{path}'):\n{errmsg}") from err
             except OSError as err:
                 raise ErrorPerCPUPath(f"Failed to write '{regval:#x}' to MSR '{regaddr:#x}' of CPU "
                                       f"{cpu}{self._pman.hostmsg} (file '{path}'): {err}",
                                       cpu=cpu, path=path) from err
-            finally:
-                os.close(fd)
 
     def _cpus_write_remote(self,
                            regaddr: int,
@@ -479,13 +496,13 @@ regval_bytes = regval.to_bytes({self.regbytes}, byteorder="{_CPU_BYTEORDER}")
 for cpu in cpus:
     path = "/dev/cpu/%d/msr" % cpu
     try:
-        fd = os.open(path, os.O_RDWR)
-        try:
-            os.pwrite(fd, regval_bytes, {regaddr:#x})
-        finally:
-            os.close(fd)
+        with open(path, "r+b") as fobj:
+            os.pwrite(fobj.fileno(), regval_bytes, {regaddr:#x})
+    except PermissionError as err:
+        print("ERROR: Permission: CPU: '%d': Path: '%s': Error: '%s'" % (cpu, path, err))
+        raise SystemExit(0)
     except Exception as err:
-        print("ERROR: CPU: '%d': Path: '%s': Error: '%s'" % (cpu, path, err))
+        print("ERROR: Write: CPU: '%d': Path: '%s': Error: '%s'" % (cpu, path, err))
         raise SystemExit(0)
 '"""
 
@@ -516,15 +533,22 @@ for cpu in cpus:
             raise Error(generic_errmsg)
 
         # Try to parse the error message to extract CPU, path, and error.
-        regex = r"ERROR: CPU: '(\d+)': Path: '(.+)': Error: '(.+)'"
-        mobj = re.match(regex, stdout)
+        # Regex for parsing error lines printed by remote MSR read/write scripts.
+        regex = re.compile(r"ERROR: (Permission|Write): CPU: '(\d+)': Path: '(.+)': Error: '(.+)'")
+
+        mobj = regex.match(stdout)
         if not mobj:
             raise Error(generic_errmsg)
 
-        cpu = Trivial.str_to_int(mobj.group(1), what="CPU number")
-        path = Path(mobj.group(2))
-        errmsg = mobj.group(3)
+        errtype = mobj.group(1)
+        cpu = Trivial.str_to_int(mobj.group(2), what="CPU number")
+        path = Path(mobj.group(3))
+        errmsg = mobj.group(4)
 
+        if errtype == "Permission":
+            raise ErrorPermissionDenied(f"No permissions to write '{regval:#x}' to MSR "
+                                        f"'{regaddr:#x}' of CPU {cpu}{self._pman.hostmsg} "
+                                        f"(file '{path}'):\n{Error(errmsg).indent(2)}")
         raise ErrorPerCPUPath(f"Failed to write '{regval:#x}' to MSR '{regaddr:#x}' of CPU {cpu}"
                               f"{self._pman.hostmsg} (file '{path}'):\n"
                               f"{Error(errmsg).indent(2)}", cpu=cpu, path=path)
@@ -550,6 +574,12 @@ for cpu in cpus:
                     fobj.seek(regaddr)
                     fobj.write(regval_bytes)
                     fobj.flush()
+                except ErrorPermissionDenied as err:
+                    errmsg = err.indent(2)
+                    raise type(err)(f"No permissions to write '{regval:#x}' to MSR "
+                                    f"'{regaddr:#x}' of CPU {cpu}"
+                                    f"{self._pman.hostmsg} (file '{path}'):\n"
+                                    f"{errmsg}") from err
                 except Error as err:
                     raise type(err)(f"Failed to write '{regval:#x}' to MSR '{regaddr:#x}' of CPU "
                                     f"{cpu}{self._pman.hostmsg} (file '{path}'):\n"
@@ -566,6 +596,7 @@ for cpu in cpus:
                   by the caller.
 
         Raises:
+            ErrorPermissionDenied: No permissions to access the MSR device file.
             ErrorPerCPUPath: An I/O error occurred while writing to the MSR (includes CPU and path
                              information).
         """
@@ -587,6 +618,7 @@ for cpu in cpus:
             cpu: CPU number to write the MSR on.
 
         Raises:
+            ErrorPermissionDenied: No permissions to access the MSR device file.
             ErrorPerCPUPath: An I/O error occurred while writing to the MSR (includes CPU and path
                              information).
         """

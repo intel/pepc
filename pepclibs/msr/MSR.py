@@ -22,6 +22,7 @@ from pathlib import Path
 from pepclibs import _PerCPUCache
 from pepclibs.helperlibs import ClassHelpers, Trivial, Logging
 from pepclibs.helperlibs.Exceptions import Error, ErrorPerCPUPath, ErrorVerifyFailedPerCPUPath
+from pepclibs.helperlibs.Exceptions import ErrorPermissionDenied
 from pepclibs.msr import _SimpleMSR
 from pepclibs.msr._SimpleMSR import _CPU_BYTEORDER
 
@@ -242,23 +243,32 @@ class MSR(_SimpleMSR.SimpleMSR):
 
         for cpu, cpus_info in self._transaction_buffer.items():
             path = self.format_msr_device_path(cpu)
-            fd = os.open(path, os.O_RDWR)
             try:
-                for regaddr, regval_info in cpus_info.items():
-                    regval = regval_info["regval"]
-                    _LOG.debug("Transaction: Local: Write: CPU%d: MSR 0x%x: 0x%x to '%s'%s",
-                               cpu, regaddr, regval, path, self._pman.hostmsg)
-                    try:
-                        regval_bytes = regval.to_bytes(self.regbytes, byteorder=_CPU_BYTEORDER)
-                        os.pwrite(fd, regval_bytes, regaddr)
-                    except OSError as err:
-                        errmsg = Error(str(err)).indent(2)
-                        raise ErrorPerCPUPath(f"Failed to write '{regval:#x}' to MSR "
-                                              f"'{regaddr:#x}' of CPU {cpu}{self._pman.hostmsg} "
-                                              f"(file '{path}'):\n{errmsg}",
-                                              cpu=cpu, path=path) from err
-            finally:
-                os.close(fd)
+                with open(path, "r+b") as fobj:
+                    for regaddr, regval_info in cpus_info.items():
+                        regval = regval_info["regval"]
+                        _LOG.debug("Transaction: Local: Write: CPU%d: MSR 0x%x: 0x%x to '%s'%s",
+                                   cpu, regaddr, regval, path, self._pman.hostmsg)
+                        try:
+                            regval_bytes = regval.to_bytes(self.regbytes, byteorder=_CPU_BYTEORDER)
+                            os.pwrite(fobj.fileno(), regval_bytes, regaddr)
+                        except PermissionError as err:
+                            errmsg = Error(str(err)).indent(2)
+                            raise ErrorPermissionDenied(f"No permissions to write '{regval:#x}' to "
+                                                        f"MSR '{regaddr:#x}' of CPU {cpu}"
+                                                        f"{self._pman.hostmsg} (file '{path}'):\n"
+                                                        f"{errmsg}") from err
+                        except OSError as err:
+                            errmsg = Error(str(err)).indent(2)
+                            raise ErrorPerCPUPath(f"Failed to write '{regval:#x}' to MSR "
+                                                  f"'{regaddr:#x}' of CPU {cpu}"
+                                                  f"{self._pman.hostmsg} (file '{path}'):\n"
+                                                  f"{errmsg}", cpu=cpu, path=path) from err
+            except PermissionError as err:
+                errmsg = Error(str(err)).indent(2)
+                raise ErrorPermissionDenied(f"No permissions to write to MSR of CPU {cpu}"
+                                            f"{self._pman.hostmsg} (file '{path}'):\n"
+                                            f"{errmsg}") from err
 
     def _transaction_write_remote(self):
         """
@@ -290,35 +300,41 @@ transaction_buffer = {transaction_buffer_str}
 for cpu, cpus_info in transaction_buffer.items():
     path = "/dev/cpu/%d/msr" % cpu
     try:
-        fd = os.open(path, os.O_RDWR)
-        try:
+        with open(path, "r+b") as fobj:
             for regaddr, regval_info in cpus_info.items():
                 regval = regval_info["regval"]
                 regval_bytes = regval.to_bytes({self.regbytes}, byteorder="{_CPU_BYTEORDER}")
-                os.pwrite(fd, regval_bytes, regaddr)
-        finally:
-            os.close(fd)
+                os.pwrite(fobj.fileno(), regval_bytes, regaddr)
+    except PermissionError as err:
+        print("ERROR: Permission: CPU: %d: Path: %s: Error: %s" % (cpu, path, err))
+        raise SystemExit(0)
     except Exception as err:
-        print("ERROR: CPU: %d: Path: %s: Error: %s" % (cpu, path, err))
+        print("ERROR: Write: CPU: %d: Path: %s: Error: %s" % (cpu, path, err))
         raise SystemExit(0)
 '"""
 
         _LOG.debug("Transaction: Remote: Write: Executing command%s", self._pman.hostmsg)
+
+        regex = re.compile(r"ERROR: (Permission|Write): CPU: (\d+): Path: (.+): Error: (.+)")
 
         stdout, _ = self._pman.run_verify_join(cmd)
         for line in stdout.splitlines():
             if not line.startswith("ERROR: "):
                 continue
 
-            regex = r"ERROR: CPU: (\d+): Path: (.+): Error: (.+)"
-            mobj = re.match(regex, line)
+            mobj = regex.match(line)
             if not mobj:
                 raise Error(f"Failed to parse remote MSR transaction write error:\n"
                             f"{line}")
 
-            cpu = Trivial.str_to_int(mobj.group(1), what="CPU number")
-            path = Path(mobj.group(2))
-            errmsg = Error(mobj.group(3)).indent(2)
+            errtype = mobj.group(1)
+            cpu = Trivial.str_to_int(mobj.group(2), what="CPU number")
+            path = Path(mobj.group(3))
+            errmsg = Error(mobj.group(4)).indent(2)
+
+            if errtype == "Permission":
+                raise ErrorPermissionDenied(f"No permissions to write to MSR of CPU {cpu}"
+                                            f"{self._pman.hostmsg} (file '{path}'):\n{errmsg}")
             raise ErrorPerCPUPath(f"MSR transaction write failed for CPU {cpu} "
                                   f"{self._pman.hostmsg} (file '{path}'):\n{errmsg}",
                                   cpu=cpu, path=path)
@@ -338,6 +354,11 @@ for cpu, cpus_info in transaction_buffer.items():
                         regval_bytes = regval.to_bytes(self.regbytes, byteorder=_CPU_BYTEORDER)
                         fobj.write(regval_bytes)
                         fobj.flush()
+                    except ErrorPermissionDenied as err:
+                        raise type(err)(f"No permissions to write '{regval:#x}' to "
+                                        f"MSR '{regaddr:#x}' of CPU {cpu}"
+                                        f"{self._pman.hostmsg} (file '{path}'):\n"
+                                        f"{err.indent(2)}") from err
                     except Error as err:
                         raise ErrorPerCPUPath(f"Failed to write '{regval:#x}' to MSR "
                                               f"'{regaddr:#x}' of CPU {cpu}{self._pman.hostmsg} "
@@ -505,6 +526,7 @@ for cpu, cpus_info in transaction_buffer.items():
                 regval: Value read from the MSR.
 
         Raises:
+            ErrorPermissionDenied: No permissions to access the MSR device file.
             ErrorPerCPUPath: An I/O error occurred while reading the MSR (includes CPU and path
                              information).
         """
@@ -535,6 +557,7 @@ for cpu, cpus_info in transaction_buffer.items():
             The value read from the specified MSR on the given CPU.
 
         Raises:
+            ErrorPermissionDenied: No permissions to access the MSR device file.
             ErrorPerCPUPath: An I/O error occurred while reading the MSR (includes CPU and path
                              information).
         """
@@ -567,6 +590,11 @@ for cpu, cpus_info in transaction_buffer.items():
             tuple: A tuple (cpu, val), where:
                 cpu: The CPU number the MSR was read from.
                 val: The value of the specified bits from the MSR.
+
+        Raises:
+            ErrorPermissionDenied: No permissions to access the MSR device file.
+            ErrorPerCPUPath: An I/O error occurred while reading the MSR (includes CPU and path
+                             information).
         """
 
         for cpu, regval in self.read(regaddr, cpus, iosname=iosname):
@@ -596,6 +624,7 @@ for cpu, cpus_info in transaction_buffer.items():
             Value of the requested bits from the MSR.
 
         Raises:
+            ErrorPermissionDenied: No permissions to access the MSR device file.
             ErrorPerCPUPath: An I/O error occurred while reading the MSR (includes CPU and path
                              information).
         """
@@ -698,6 +727,7 @@ for cpu, cpus_info in transaction_buffer.items():
             verify: If True, read back and verify the written value.
 
         Raises:
+            ErrorPermissionDenied: No permissions to access the MSR device file.
             ErrorPerCPUPath: An I/O error occurred while writing to the MSR (includes CPU and path
                              information).
             ErrorVerifyFailedPerCPUPath: Verification is enabled and the read-back value does not
@@ -756,6 +786,7 @@ for cpu, cpus_info in transaction_buffer.items():
             verify: If True, read back and verify the written value.
 
         Raises:
+            ErrorPermissionDenied: No permissions to access the MSR device file.
             ErrorPerCPUPath: An I/O error occurred while writing to the MSR (includes CPU and path
                              information).
             ErrorVerifyFailedPerCPUPath: Verification is enabled and the read-back value does not
@@ -785,6 +816,7 @@ for cpu, cpus_info in transaction_buffer.items():
             verify: If True, read back and verify the written value.
 
         Raises:
+            ErrorPermissionDenied: No permissions to access the MSR device file.
             ErrorPerCPUPath: An I/O error occurred while reading or writing the MSR (includes CPU
                              and path information).
             ErrorVerifyFailedPerCPUPath: Verification is enabled and the read-back value does not
@@ -815,12 +847,11 @@ for cpu, cpus_info in transaction_buffer.items():
             try:
                 self.write(regaddr, regval, regval_cpus, iosname=iosname, verify=verify)
             except Error as err:
-                errmsg = err.indent(2)
                 cpus_str = ",".join([str(cpu) for cpu in regval_cpus])
                 bits_str = ":".join([str(bit) for bit in bits])
                 raise type(err)(f"Failed to set bits {bits_str} of MSR 0x{regaddr:x} to value "
                                 f"0x{val:x} on CPUs {cpus_str}{self._pman.hostmsg}:\n"
-                                f"{errmsg}") from err
+                                f"{err.indent(2)}") from err
 
     def write_cpu_bits(self,
                        regaddr: int,
@@ -843,6 +874,7 @@ for cpu, cpus_info in transaction_buffer.items():
             verify: If True, read back and verify the written value.
 
         Raises:
+            ErrorPermissionDenied: No permissions to access the MSR device file.
             ErrorPerCPUPath: An I/O error occurred while reading or writing the MSR (includes CPU
                              and path information).
             ErrorVerifyFailedPerCPUPath: Verification is enabled and the read-back value does not
