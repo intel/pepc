@@ -384,10 +384,10 @@ for path, (val, verify, retries, sleep) in winfo.items():
         with open(path, "w") as fobj:
             fobj.write(val)
     except PermissionError as err:
-        print("ERROR: Permission: '%s': '%s'" % (path, err))
+        print("ERROR: Permission: Path: %s: Error: %s" % (path, err))
         raise SystemExit(0)
     except Exception as err:
-        print("ERROR: Write: '%s': '%s'" % (path, err))
+        print("ERROR: Write: Path: %s: Error: %s" % (path, err))
         raise SystemExit(0)
 
     if not verify:
@@ -398,10 +398,10 @@ for path, (val, verify, retries, sleep) in winfo.items():
             with open(path, "r") as fobj:
                 new_val = fobj.read().strip()
         except PermissionError as err:
-            print("ERROR: Permission: '%s': '%s'" % (path, err))
+            print("ERROR: Permission: Path: %s: Error: %s" % (path, err))
             raise SystemExit(0)
         except Exception as err:
-            print("ERROR: Read: '%s': '%s'" % (path, err))
+            print("ERROR: Read: Path: %s: Error: %s" % (path, err))
             raise SystemExit(0)
 
         if val == new_val:
@@ -409,7 +409,7 @@ for path, (val, verify, retries, sleep) in winfo.items():
 
         retries -= 1
         if retries < 0:
-            print("ERROR: Verify: '%s': Expected '%s': Got '%s'" % (path, val, new_val))
+            print("ERROR: Verify: Path: %s: Expected: %s: Got: %s" % (path, val, new_val))
             raise SystemExit(0)
 
         time.sleep(sleep)
@@ -444,12 +444,11 @@ for path, (val, verify, retries, sleep) in winfo.items():
 
         stdout = stdout_lines[0].strip()
 
-        mobj = re.match(r"ERROR: Permission: '(.+)': '(.+)'", stdout)
+        mobj = re.match(r"ERROR: Permission: Path: ([^:]+): Error: (.+)", stdout)
         if mobj:
-            _path = mobj.group(1)
-            if _path not in batch_info:
-                raise Error(f"Unexpected path '{_path}' in the error message:\n{stdout}")
-            path = Path(_path)
+            path = Path(mobj.group(1))
+            if path not in batch_info:
+                raise Error(f"Unexpected path '{path}' in the error message:\n{stdout}")
             val_info = batch_info[path]
             val = val_info["val"]
             what = val_info["what"]
@@ -457,13 +456,12 @@ for path, (val, verify, retries, sleep) in winfo.items():
             raise ErrorPermissionDenied(f"No permissions to access{what} sysfs file '{path}'"
                                         f"{self._pman.hostmsg}:\n{stdout}")
 
-        mobj = re.match(r"ERROR: (Write|Read): '(.+)': '(.+)'", stdout)
+        mobj = re.match(r"ERROR: (Write|Read): Path: ([^:]+): Error: (.+)", stdout)
         if mobj:
             error_type = mobj.group(1)
-            _path = mobj.group(2)
-            if _path not in batch_info:
-                raise Error(f"Unexpected path '{_path}' in the error message:\n{stdout}")
-            path = Path(_path)
+            path = Path(mobj.group(2))
+            if path not in batch_info:
+                raise Error(f"Unexpected path '{path}' in the error message:\n{stdout}")
             val_info = batch_info[path]
             val = val_info["val"]
             what = val_info["what"]
@@ -474,7 +472,7 @@ for path, (val, verify, retries, sleep) in winfo.items():
             raise ErrorPath(f"Failed to read back value from{what} sysfs file '{path}'"
                             f"{self._pman.hostmsg}:\n{stdout}", path=path)
 
-        regex = re.compile(r"ERROR: Verify: '(.+)': Expected '(.+)': Got '(.+)'")
+        regex = re.compile(r"ERROR: Verify: Path: ([^:]+): Expected: ([^:]+): Got: (.+)")
         mobj = regex.match(stdout)
         if not mobj:
             raise Error(generic_errmsg)
@@ -704,10 +702,10 @@ for path in paths:
     except FileNotFoundError:
         val = "{_file_not_found_val}"
     except PermissionError as err:
-        print("ERROR: Permission: '%s': '%s'" % (path, err))
+        print("ERROR: Permission: Path: %s: Error: %s" % (path, err))
         raise SystemExit(0)
     except Exception as err:
-        print("ERROR: General: Read: '%s': '%s'" % (path, err))
+        print("ERROR: General: Read: Path: %s: Error: %s" % (path, err))
         raise SystemExit(0)
     print(val)
 '"""
@@ -743,7 +741,7 @@ for path in paths:
                     what_str = "" if not what else f" {what}"
                     generic_errmsg = (f"Failed to read{what_str} from '{path}'"
                                       f"{self._pman.hostmsg}:\n  {val}")
-                    regex = re.compile(r"ERROR: (Permission|Read): '(.+)': '(.+)'")
+                    regex = re.compile(r"ERROR: (Permission|Read): Path: ([^:]+): Error: (.+)")
                     mobj = regex.match(val)
                     if not mobj:
                         raise ErrorPath(generic_errmsg, path=path)
@@ -1078,10 +1076,10 @@ for path in paths:
         with open(path, "w") as fobj:
             fobj.write("{val}")
     except PermissionError as err:
-        print("ERROR: Permission: '%s': '%s'" % (path, err))
+        print("ERROR: Permission: Path: %s: Error: %s" % (path, err))
         break
     except Exception as err:
-        print("ERROR: Write: '%s': '%s'" % (path, err))
+        print("ERROR: Write: Path: %s: Error: %s" % (path, err))
         break
 '"""
 
@@ -1116,7 +1114,7 @@ for path in paths:
             raise Error(generic_errmsg)
         stdout = stdout_lines[0].strip()
 
-        regex = re.compile(r"ERROR: (Permission|Write): '(.+)': '(.+)'")
+        regex = re.compile(r"ERROR: (Permission|Write): Path: ([^:]+): Error: (.+)")
         mobj = regex.match(stdout)
         if not mobj:
             raise Error(generic_errmsg)

@@ -263,10 +263,10 @@ for cpu in cpus:
             regval = int.from_bytes(regval, byteorder="{_CPU_BYTEORDER}")
             print("%d,%d" % (cpu, regval))
     except PermissionError as err:
-        print("ERROR: Permission: CPU: '%d': Path: '%s': Error: '%s'" % (cpu, path, err))
+        print("ERROR: Permission: CPU: %d: Path: %s: Error: %s" % (cpu, path, err))
         raise SystemExit(0)
     except Exception as err:
-        print("ERROR: Read: CPU: '%d': Path: '%s': Error: '%s'" % (cpu, path, err))
+        print("ERROR: Read: CPU: %d: Path: %s: Error: %s" % (cpu, path, err))
         raise SystemExit(0)
 '"""
 
@@ -281,7 +281,7 @@ for cpu in cpus:
             raise Error(f"Failed to read MSR '{regaddr:#x}' on CPUs {cpus_str}"
                         f"{self._pman.hostmsg}:\nUnexpected output on stderr:\n{stderr}")
 
-        regex = re.compile(r"ERROR: (Permission|Read): CPU: '(\d+)': Path: '(.+)': Error: '(.+)'")
+        regex = re.compile(r"ERROR: (Permission|Read): CPU: (\d+): Path: ([^:]+): Error: (.+)")
 
         for line in stdout.splitlines():
             line = line.strip()
@@ -499,10 +499,10 @@ for cpu in cpus:
         with open(path, "r+b") as fobj:
             os.pwrite(fobj.fileno(), regval_bytes, {regaddr:#x})
     except PermissionError as err:
-        print("ERROR: Permission: CPU: '%d': Path: '%s': Error: '%s'" % (cpu, path, err))
+        print("ERROR: Permission: CPU: %d: Path: %s: Error: %s" % (cpu, path, err))
         raise SystemExit(0)
     except Exception as err:
-        print("ERROR: Write: CPU: '%d': Path: '%s': Error: '%s'" % (cpu, path, err))
+        print("ERROR: Write: CPU: %d: Path: %s: Error: %s" % (cpu, path, err))
         raise SystemExit(0)
 '"""
 
@@ -534,7 +534,7 @@ for cpu in cpus:
 
         # Try to parse the error message to extract CPU, path, and error.
         # Regex for parsing error lines printed by remote MSR read/write scripts.
-        regex = re.compile(r"ERROR: (Permission|Write): CPU: '(\d+)': Path: '(.+)': Error: '(.+)'")
+        regex = re.compile(r"ERROR: (Permission|Write): CPU: (\d+): Path: ([^:]+): Error: (.+)")
 
         mobj = regex.match(stdout)
         if not mobj:
