@@ -207,9 +207,8 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
         self.hostname = pman.hostname
         self.hostmsg = pman.hostmsg
 
-        # ID of the running process. Should be set by the child class. In some cases may be set to
-        # 'None', which should be interpreted as "unknown".
-        self.pid: int | None = None
+        # ID of the running process. Should be set by the child class. Set to -1 if unknown.
+        self.pid: int = -1
         # Exit code of the process ('None' if it is still running).
         self.exitcode: int | None = None
         # The stdout and stderr streams.
@@ -259,7 +258,7 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
         self.cmd = cmd
         self.real_cmd = real_cmd
 
-        self.pid = None
+        self.pid = -1
         self.exitcode = None
 
         self._threads_exit = False
@@ -674,7 +673,7 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
             pfx = ""
             if self.debug_id:
                 pfx += f"{self.debug_id}: "
-            if self.pid is not None:
+            if self.pid != -1:
                 pfx += f"PID {self.pid}: "
             _LOG.debug(pfx + fmt, *args)
 
