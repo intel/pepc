@@ -61,6 +61,10 @@ class KernelModule(ClassHelpers.SimpleCloseContext):
         self._close_pman = pman is None
         self._close_dmesg_obj = dmesg is None
 
+        if self._pman.is_emulated:
+            # Emulated environment is used for testing, and it doesn't support 'dmesg'.
+            dmesg = False
+
         if dmesg is False:
             self._dmesg_obj = None
         elif isinstance(dmesg, Dmesg.Dmesg):
@@ -137,6 +141,10 @@ class KernelModule(ClassHelpers.SimpleCloseContext):
             'True' if the module is loaded, 'False' otherwise.
         """
 
+        if self._pman.is_emulated:
+            # Assume any module is loaded in the emulated environment.
+            return True
+
         return self._get_usage_count() is not None
 
     def _unload(self):
@@ -148,6 +156,9 @@ class KernelModule(ClassHelpers.SimpleCloseContext):
     def unload(self):
         """Unload the module if it is loaded."""
 
+        if self._pman.is_emulated:
+            return
+
         self._unload()
 
     def load(self, opts: str | None = None, unload: bool = False):
@@ -158,6 +169,9 @@ class KernelModule(ClassHelpers.SimpleCloseContext):
             opts: Options to pass to 'modprobe'.
             unload: If 'True', unload the module first before loading.
         """
+
+        if self._pman.is_emulated:
+            return
 
         if unload:
             self._unload()
