@@ -36,6 +36,7 @@ _COMMON_PKGINFO: Final[dict[str, str]] = {
     "depmod":    "kmod",
     "dmesg":     "util-linux",
     "gcc":       "gcc",
+    "id":        "coreutils",
     "libelf":    "elfutils-libelf-devel",
     "lscpu":     "util-linux",
     "lspci":     "pciutils",
