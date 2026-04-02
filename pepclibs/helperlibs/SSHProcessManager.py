@@ -739,7 +739,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             env: Environment variables to set before executing the command.
 
         Returns:
-            string that prints the PID before executing the original command.
+            Command that prints the PID before executing the original command.
         """
 
         prefix = ""
@@ -878,14 +878,14 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         return acquired
 
-    def _run_async(self,
-                  command: str | Path,
-                  cwd: str | Path | None = None,
-                  intsh: bool = False,
-                  env: dict[str, str] | None = None,
-                  mix_output: bool = False) -> SSHProcess:
+    def _do_run_async(self,
+                      command: str | Path,
+                      cwd: str | Path | None = None,
+                      intsh: bool = False,
+                      env: dict[str, str] | None = None,
+                      mix_output: bool = False) -> SSHProcess:
         """
-        Run a command asynchronously. Implement 'run_async()'.
+        Run a command asynchronously. Implement 'run_async()' without the 'su' argument.
 
         Args:
             command: The command to execute. Can be a string or a 'pathlib.Path' pointing to the
@@ -902,6 +902,15 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         """
 
         command = str(command)
+
+        if _LOG.getEffectiveLevel() == Logging.DEBUG:
+            if cwd:
+                cwd_msg = f"\nWorking directory: {cwd}"
+            else:
+                cwd_msg = ""
+            _LOG.debug("Running the following command asynchronously%s (intsh %s):\n%s%s",
+                       self.hostmsg, str(intsh), command, cwd_msg)
+
         if not intsh:
             return self._run_in_new_session(command, cwd=cwd, env=env, mix_output=mix_output)
 
@@ -947,6 +956,66 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
             return self._run_in_new_session(command, cwd=cwd, env=env, mix_output=mix_output)
 
+    def _check_is_root(self) -> bool:
+        """Refer to 'ProcessManagerBase._check_is_root()'."""
+
+        timeout = 32
+        with self._do_run_async("id -u", intsh=True) as proc:
+            result = proc.wait(timeout=timeout, capture_output=True, join=True)
+
+        if result.exitcode is None:
+            msg = self.get_cmd_failure_msg("id -u", result.stdout, result.stderr,
+                                           result.exitcode, timeout=timeout)
+            raise ErrorTimeOut(f"Failed to check if the user is root{self.hostmsg}:\n{msg}")
+
+        if result.exitcode != 0:
+            msg = self.get_cmd_failure_msg("id -u", result.stdout, result.stderr,
+                                           result.exitcode, timeout=timeout)
+            raise Error(f"Failed to check if the user is root{self.hostmsg}:\n{msg}")
+
+        if typing.TYPE_CHECKING:
+            stdout = cast(str, result.stdout)
+        else:
+            stdout = result.stdout
+        return stdout.strip() == "0"
+
+    def _run_async(self,
+                   command: str | Path,
+                   cwd: str | Path | None = None,
+                   intsh: bool = False,
+                   env: dict[str, str] | None = None,
+                   mix_output: bool = False,
+                   su: bool = False) -> SSHProcess:
+        """
+        Run a command asynchronously. Implement 'run_async()'.
+
+        Args:
+            command: The command to execute. Can be a string or a 'pathlib.Path' pointing to the
+                     file to execute.
+            cwd: The working directory for the process.
+            intsh: Use an existing interactive shell if True, or a new shell if False. The former
+                   requires less time to start a new process, as it does not require creating a new
+                   shell.
+            env: Environment variables for the process.
+            mix_output: If True, combine standard output and error streams into stdout.
+            su: If True, execute the command with superuser privileges.
+
+        Returns:
+            A 'SSHProcess' object representing the executed remote asynchronous process.
+        """
+
+        if not su or self.is_superuser():
+            return self._do_run_async(command=command, cwd=cwd, intsh=intsh, env=env,
+                                      mix_output=mix_output)
+
+        if self.has_passwdless_sudo():
+            sudo_cmd = self._format_sudo_cmd(command, cwd=cwd, env=env)
+            return self._do_run_async(command=sudo_cmd, intsh=intsh, mix_output=mix_output)
+
+        raise ErrorPermissionDenied(f"Cannot run a command with superuser privileges without root "
+                                    f"access or passwordless sudo{self.hostmsg}. The command is:\n"
+                                    f"{command}\n")
+
     def run_async(self,
                   cmd: str | Path,
                   cwd: str | Path | None = None,
@@ -955,7 +1024,8 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
                   stdout: IO | None = None,
                   stderr: IO | None = None,
                   env: dict[str, str] | None = None,
-                  newgrp: bool = False) -> SSHProcess:
+                  newgrp: bool = False,
+                  su: bool = False) -> SSHProcess:
         """Refer to 'ProcessManagerBase.run_async()'."""
 
         # The 'newgrp' argument is ignored, because it makes no sense in a remote host case.
@@ -967,15 +1037,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         cmd = str(cmd)
 
-        if cwd:
-            cwd_msg = f"\nWorking directory: {cwd}"
-        else:
-            cwd_msg = ""
-
-        _LOG.debug("Running the following command asynchronously%s (intsh %s):\n%s%s",
-                   self.hostmsg, str(intsh), cmd, cwd_msg)
-
-        return self._run_async(cmd, cwd=cwd, intsh=intsh, env=env)
+        return self._run_async(cmd, cwd=cwd, intsh=intsh, env=env, su=su)
 
     def run(self,
             cmd: str | Path,
@@ -987,16 +1049,13 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             cwd: str | Path | None = None,
             intsh: bool = True,
             env: dict[str, str] | None = None,
-            newgrp: bool = False) -> ProcWaitResultType:
+            newgrp: bool = False,
+            su: bool = False) -> ProcWaitResultType:
         """Refer to 'ProcessManagerBase.run()'."""
 
-        msg = f"Running the following command{self.hostmsg} (intsh {intsh}):\n{cmd}"
-        if cwd:
-            msg += f"\nWorking directory: {cwd}"
-        _LOG.debug(msg)
-
         # Execute the command on the remote host.
-        with self._run_async(cmd, cwd=cwd, intsh=intsh, env=env, mix_output=mix_output) as proc:
+        with self._run_async(cmd, cwd=cwd, intsh=intsh, env=env, mix_output=mix_output,
+                             su=su) as proc:
             # Wait for the command to finish and handle the time-out situation.
             result = proc.wait(timeout=timeout, capture_output=capture_output,
                                output_fobjs=output_fobjs, join=join)
@@ -1018,12 +1077,13 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
                    cwd: str | Path | None = None,
                    intsh: bool = True,
                    env: dict[str, str] | None = None,
-                   newgrp: bool = False) -> tuple[str | list[str], str | list[str]]:
+                   newgrp: bool = False,
+                   su: bool = False) -> tuple[str | list[str], str | list[str]]:
         """Refer to 'ProcessManagerBase.run_verify()'."""
 
         result = self.run(cmd, timeout=timeout, capture_output=capture_output,
                           mix_output=mix_output, join=join, output_fobjs=output_fobjs, cwd=cwd,
-                          intsh=intsh, env=env)
+                          intsh=intsh, env=env, su=su)
         if result.exitcode == 0:
             return (result.stdout, result.stderr)
 

@@ -16,6 +16,7 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import re
 import queue
+import shlex
 import codecs
 import typing
 import threading
@@ -690,6 +691,84 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         # Path to python interpreter.
         self._python_path: Path | None = None
 
+        # If True, the process manager has root access to the host.
+        self._is_root: bool | None = None
+        # If True, the process manager can execute commands with 'sudo' without a password.
+        self._passwdless_sudo: bool | None = None
+
+    def _check_passwdless_sudo(self) -> bool:
+        """
+        Check if the process manager can execute commands with 'sudo' without a password.
+
+        Returns:
+            True if the process manager can execute commands with 'sudo' without a password, False
+            otherwise.
+        """
+
+        _, _, exitcode = self.run("sudo -n true")
+        return exitcode == 0
+
+    def has_passwdless_sudo(self) -> bool:
+        """
+        Check if the process manager can execute commands with 'sudo' without a password.
+
+        Returns:
+            True if the process manager can execute commands with 'sudo' without a password, False
+            otherwise.
+        """
+
+        if self._passwdless_sudo is None:
+            self._passwdless_sudo = self._check_passwdless_sudo()
+        return self._passwdless_sudo
+
+    def _check_is_root(self) -> bool:
+        """
+        Check if the process manager has root access to the host.
+
+        Returns:
+            True if the process manager has root access, False otherwise.
+        """
+
+        raise NotImplementedError("ProcessManagerBase._check_is_root()")
+
+    def is_superuser(self) -> bool:
+        """
+        Check if the process manager operations run as a superuser.
+
+        Returns:
+            True if the process manager has superuser access, False otherwise.
+        """
+
+        if self._is_root is None:
+            self._is_root = self._check_is_root()
+        return self._is_root
+
+    @staticmethod
+    def _format_sudo_cmd(cmd: str | Path,
+                         cwd: str | Path | None = None,
+                         env: dict[str, str] | None = None) -> str:
+        """
+        Modify the command so that it runs with superuser privileges.
+
+        Args:
+            cmd: The command to be executed.
+            cwd: The working directory to switch to before executing the command.
+            env: Environment variables to set before executing the command.
+
+        Returns:
+            Command that runs the original command with superuser privileges.
+        """
+
+        prefix = ""
+        if env:
+            for key, value in env.items():
+                prefix += f"export {key}={shlex.quote(str(value))}; "
+        if cwd:
+            prefix += f"cd {shlex.quote(str(cwd))} && "
+
+        cmd = prefix + str(cmd)
+        return "sudo sh -c " + shlex.quote(str(cmd))
+
     def run_async(self,
                   cmd: str | Path,
                   cwd: str | Path | None = None,
@@ -698,7 +777,8 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
                   stdout: IO | None = None,
                   stderr: IO | None = None,
                   env: dict[str, str] | None = None,
-                  newgrp: bool = False) -> ProcessBase:
+                  newgrp: bool = False,
+                  su: bool = False) -> ProcessBase:
         """
         Execute a command asynchronously without waiting for it to complete.
 
@@ -716,6 +796,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
             env: Environment variables for the process.
             newgrp: Create a new group for the process, as opposed to using the parent process
                     group.
+            su: If True, execute the command with superuser privileges.
 
         Returns:
             A process object (subclass of 'ProcessBase') representing the asynchronous process.
@@ -733,7 +814,8 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
             cwd: str | Path | None = None,
             intsh: bool = True,
             env: dict[str, str] | None = None,
-            newgrp: bool = False) -> ProcWaitResultType:
+            newgrp: bool = False,
+            su: bool = False) -> ProcWaitResultType:
         """
         Execute a command and wait for it to finish.
 
@@ -756,6 +838,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
             env: Environment variables for the process.
             newgrp: Create a new group for the process, as opposed to using the parent process
                     group.
+            su: If True, execute the command with superuser privileges.
 
         Returns:
             A 'ProcWaitResultType' named tuple with the following elements:
@@ -786,7 +869,8 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
                  cwd: str | Path | None = None,
                  intsh: bool = True,
                  env: dict[str, str] | None = None,
-                 newgrp: bool = False) -> ProcWaitResultJoinType:
+                 newgrp: bool = False,
+                 su: bool = False) -> ProcWaitResultJoinType:
         """
         Same as 'run(join=True)', provided for convenience and more deterministic return type.
 
@@ -796,7 +880,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         res = self.run(cmd, timeout=timeout, capture_output=capture_output,
                        mix_output=mix_output, join=True, output_fobjs=output_fobjs, cwd=cwd,
-                       intsh=intsh, env=env, newgrp=newgrp)
+                       intsh=intsh, env=env, newgrp=newgrp, su=su)
 
         if typing.TYPE_CHECKING:
             stdout = cast(str, res.stdout)
@@ -816,7 +900,8 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
                    cwd: str | Path | None = None,
                    intsh: bool = True,
                    env: dict[str, str] | None = None,
-                   newgrp: bool = False) -> ProcWaitResultNoJoinType:
+                   newgrp: bool = False,
+                   su: bool = False) -> ProcWaitResultNoJoinType:
         """
         Same as 'run(join=False)', provided for convenience and more deterministic return type.
 
@@ -826,7 +911,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         res = self.run(cmd, timeout=timeout, capture_output=capture_output,
                        mix_output=mix_output, join=False, output_fobjs=output_fobjs, cwd=cwd,
-                       intsh=intsh, env=env, newgrp=newgrp)
+                       intsh=intsh, env=env, newgrp=newgrp, su=su)
 
         if typing.TYPE_CHECKING:
             stdout = cast(list[str], res.stdout)
@@ -847,7 +932,8 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
                    cwd: str | Path | None = None,
                    intsh: bool = True,
                    env: dict[str, str] | None = None,
-                   newgrp: bool = False) -> tuple[str | list[str], str | list[str]]:
+                   newgrp: bool = False,
+                   su: bool = False) -> tuple[str | list[str], str | list[str]]:
         """
         Execute a command and wait for it to finish and verify its success. Similar to 'run()', but
         it with a verification step. Refer to the 'run()' method for a more verbose argument
@@ -868,6 +954,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
             env: Environment variables for the process.
             newgrp: Create a new group for the process, as opposed to using the parent process
                     group.
+            su: If True, execute the command with superuser privileges.
 
         Returns
             A tuple of:
@@ -891,7 +978,8 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
                         cwd: str | Path | None = None,
                         intsh: bool = True,
                         env: dict[str, str] | None = None,
-                        newgrp: bool = False) -> tuple[str, str]:
+                        newgrp: bool = False,
+                        su: bool = False) -> tuple[str, str]:
         """
         Same as 'run_verify(join=True)', provided for convenience and more deterministic return
         type.
@@ -902,7 +990,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         res = self.run_verify(cmd, timeout=timeout, capture_output=capture_output,
                               mix_output=mix_output, join=True, output_fobjs=output_fobjs,
-                              cwd=cwd, intsh=intsh, env=env, newgrp=newgrp)
+                              cwd=cwd, intsh=intsh, env=env, newgrp=newgrp, su=su)
         if typing.TYPE_CHECKING:
             return cast(tuple[str, str], res)
         return res
@@ -916,7 +1004,8 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
                           cwd: str | Path | None = None,
                           intsh: bool = True,
                           env: dict[str, str] | None = None,
-                          newgrp: bool = False) -> tuple[list[str], list[str]]:
+                          newgrp: bool = False,
+                          su: bool = False) -> tuple[list[str], list[str]]:
         """
         Same as 'run_verify(join=False)', provided for convenience and more deterministic return
         type.
@@ -927,7 +1016,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         res = self.run_verify(cmd, timeout=timeout, capture_output=capture_output,
                               mix_output=mix_output, join=False, output_fobjs=output_fobjs,
-                              cwd=cwd, intsh=intsh, env=env, newgrp=newgrp)
+                              cwd=cwd, intsh=intsh, env=env, newgrp=newgrp, su=su)
         if typing.TYPE_CHECKING:
             return cast(tuple[list[str], list[str]], res)
         return res

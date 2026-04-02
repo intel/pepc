@@ -144,7 +144,8 @@ class ProcessManagerProtocol(Protocol):
                   stdout: IO | None = ...,
                   stderr: IO | None = ...,
                   env: dict[str, str] | None = ...,
-                  newgrp: bool = ...) -> ProcessProtocol:
+                  newgrp: bool = ...,
+                  su: bool = ...) -> ProcessProtocol:
         """Refer to 'ProcessManagerBase.run_async()'."""
         ...
 
@@ -158,7 +159,8 @@ class ProcessManagerProtocol(Protocol):
             cwd: str | Path | None = ...,
             intsh: bool = ...,
             env: dict[str, str] | None = ...,
-            newgrp: bool = ...) -> ProcWaitResultType:
+            newgrp: bool = ...,
+            su: bool = ...) -> ProcWaitResultType:
         """Refer to 'ProcessManagerBase.run()'."""
         ...
 
@@ -171,7 +173,8 @@ class ProcessManagerProtocol(Protocol):
                  cwd: str | Path | None = ...,
                  intsh: bool = ...,
                  env: dict[str, str] | None = ...,
-                 newgrp: bool = ...) -> ProcWaitResultJoinType:
+                 newgrp: bool = ...,
+                 su: bool = ...) -> ProcWaitResultJoinType:
         """Refer to 'ProcessManagerBase.run_join()'."""
         ...
 
@@ -184,7 +187,8 @@ class ProcessManagerProtocol(Protocol):
                    cwd: str | Path | None = ...,
                    intsh: bool = ...,
                    env: dict[str, str] | None = ...,
-                   newgrp: bool = ...) -> ProcWaitResultNoJoinType:
+                   newgrp: bool = ...,
+                   su: bool = ...) -> ProcWaitResultNoJoinType:
         """Refer to 'ProcessManagerBase.run_nojoin()'."""
         ...
 
@@ -198,7 +202,8 @@ class ProcessManagerProtocol(Protocol):
                    cwd: str | Path | None = ...,
                    intsh: bool = ...,
                    env: dict[str, str] | None = ...,
-                   newgrp: bool = ...) -> tuple[str | list[str], str | list[str]]:
+                   newgrp: bool = ...,
+                   su: bool = ...) -> tuple[str | list[str], str | list[str]]:
         """Refer to 'ProcessManagerBase.run_verify()'."""
         ...
 
@@ -211,7 +216,8 @@ class ProcessManagerProtocol(Protocol):
                         cwd: str | Path | None = ...,
                         intsh: bool = ...,
                         env: dict[str, str] | None = ...,
-                        newgrp: bool = ...) -> tuple[str, str]:
+                        newgrp: bool = ...,
+                        su: bool = ...) -> tuple[str, str]:
         """Refer to 'ProcessManagerBase.run_verify_join()'."""
         ...
 
@@ -224,8 +230,17 @@ class ProcessManagerProtocol(Protocol):
                           cwd: str | Path | None = ...,
                           intsh: bool = ...,
                           env: dict[str, str] | None = ...,
-                          newgrp: bool = ...) -> tuple[list[str], list[str]]:
+                          newgrp: bool = ...,
+                          su: bool = ...) -> tuple[list[str], list[str]]:
         """Refer to 'ProcessManagerBase.run_verify_nojoin()'."""
+        ...
+
+    def is_superuser(self) -> bool:
+        """Refer to 'ProcessManagerBase.is_superuser()'."""
+        ...
+
+    def has_passwdless_sudo(self) -> bool:
+        """Refer to 'ProcessManagerBase.has_passwdless_sudo()'."""
         ...
 
     def rsync(self,

@@ -24,7 +24,7 @@ import typing
 import tempfile
 import subprocess
 from pathlib import Path
-from pepclibs.helperlibs import Logging, _ProcessManagerBase, ClassHelpers
+from pepclibs.helperlibs import Logging, _ProcessManagerBase, ClassHelpers, Trivial
 from pepclibs.helperlibs._ProcessManagerTypes import ProcWaitResultType
 from pepclibs.helperlibs.Exceptions import Error, ErrorTimeOut, ErrorPermissionDenied
 from pepclibs.helperlibs.Exceptions import ErrorNotFound, ErrorExists
@@ -160,6 +160,10 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
     commands locally and remotely.
     """
 
+    def _check_is_root(self) -> bool:
+        """Refer to 'ProcessManagerBase._check_is_root()'."""
+        return Trivial.is_root()
+
     def _run_async(self,
                   command: str | Path,
                   cwd: str | Path | None = None,
@@ -167,7 +171,8 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
                   stdout: IO | int = subprocess.PIPE,
                   stderr: IO | int = subprocess.PIPE,
                   env: dict[str, str] | None = None,
-                  newgrp: bool = False) -> LocalProcess:
+                  newgrp: bool = False,
+                  su: bool = False) -> LocalProcess:
         """
         Run a command asynchronously. Implement 'run_async()' using 'subprocess.Popen()'.
 
@@ -181,15 +186,30 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
             env: Environment variables for the process.
             newgrp: Create a new group for the process, as opposed to using the parent process
                     group.
+            su: If True, execute the command with superuser privileges.
 
         Returns:
             A 'LocalProcess' object representing the executed asynchronous process.
         """
 
         command = str(command)
-        cmd: str | list[str]
 
-        real_cmd = cmd = f"exec sh -c {shlex.quote(command)}"
+        if su and not self.is_superuser():
+            if not self.has_passwdless_sudo():
+                raise ErrorPermissionDenied(f"Cannot run a command with superuser privileges "
+                                            f"without root access or passwordless sudo"
+                                            f"{self.hostmsg}. The command is:\n{command}\n")
+            cmd = self._format_sudo_cmd(command, cwd=cwd, env=env)
+            cwd = env = None
+        else:
+            cmd = f"exec sh -c {shlex.quote(command)}"
+        if _LOG.getEffectiveLevel() == Logging.DEBUG:
+            if cwd:
+                cwd_msg = f"\nWorking directory: {cwd}"
+            else:
+                cwd_msg = ""
+            _LOG.debug("Running the following local command (newgrp %s):\n%s%s",
+                       str(newgrp), cmd, cwd_msg)
 
         try:
             # pylint: disable=consider-using-with
@@ -198,12 +218,12 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         except FileNotFoundError as err:
             raise self._command_not_found(command, str(err))
         except OSError as err:
-            raise Error(f"Cannot execute the following command{self.hostmsg}:\n{real_cmd}\n"
+            raise Error(f"Cannot execute the following command{self.hostmsg}:\n{cmd}\n"
                         f"The error is: {err}") from err
 
         streams = (pobj.stdin, pobj.stdout, pobj.stderr)
 
-        proc = LocalProcess(self, pobj, command, real_cmd, streams)
+        proc = LocalProcess(self, pobj, command, cmd, streams)
         proc.pid = pobj.pid
 
         return proc
@@ -216,7 +236,8 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
                   stdout: IO | None = None,
                   stderr: IO | None = None,
                   env: dict[str, str] | None = None,
-                  newgrp: bool = False) -> LocalProcess:
+                  newgrp: bool = False,
+                  su: bool = False) -> LocalProcess:
         """Refer to 'ProcessManagerBase.run_async()'."""
 
         command = str(cmd)
@@ -234,7 +255,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         popen_stderr: IO | int = stderr if stderr is not None else subprocess.PIPE
 
         return self._run_async(command, cwd=cwd, stdin=popen_stdin, stdout=popen_stdout,
-                               stderr=popen_stderr, env=env, newgrp=newgrp)
+                               stderr=popen_stderr, env=env, newgrp=newgrp, su=su)
 
     def run(self,
             cmd: str | Path,
@@ -246,18 +267,11 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
             cwd: str | Path | None = None,
             intsh: bool | None = None,
             env: dict[str, str] | None = None,
-            newgrp: bool = False) -> ProcWaitResultType:
+            newgrp: bool = False,
+            su: bool = False) -> ProcWaitResultType:
         """Refer to 'ProcessManagerBase.run()'."""
 
         cmd = str(cmd)
-
-        if _LOG.getEffectiveLevel() == Logging.DEBUG:
-            if cwd:
-                cwd_msg = f"\nWorking directory: {cwd}"
-            else:
-                cwd_msg = ""
-            _LOG.debug("Running the following local command (newgrp %s):\n%s%s",
-                       str(newgrp), cmd, cwd_msg)
 
         stdout = subprocess.PIPE
         if mix_output:
@@ -266,7 +280,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
             stderr = subprocess.PIPE
 
         with self._run_async(cmd, stdout=stdout, stderr=stderr, cwd=cwd, env=env,
-                             newgrp=newgrp) as proc:
+                             newgrp=newgrp, su=su) as proc:
             # Wait for the command to finish and handle the time-out situation.
             result = proc.wait(capture_output=capture_output, output_fobjs=output_fobjs,
                                timeout=timeout, join=join)
@@ -288,12 +302,13 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
                    cwd: str | Path | None = None,
                    intsh: bool | None = None,
                    env: dict[str, str] | None = None,
-                   newgrp: bool = False) -> tuple[str | list[str], str | list[str]]:
+                   newgrp: bool = False,
+                   su: bool = False) -> tuple[str | list[str], str | list[str]]:
         """Refer to 'ProcessManagerBase.run_verify()'."""
 
         result = self.run(cmd, timeout=timeout, capture_output=capture_output,
                           mix_output=mix_output, join=join, output_fobjs=output_fobjs,
-                          cwd=cwd, intsh=intsh, env=env, newgrp=newgrp)
+                          cwd=cwd, intsh=intsh, env=env, newgrp=newgrp, su=su)
         if result.exitcode == 0:
             return (result.stdout, result.stderr)
 
