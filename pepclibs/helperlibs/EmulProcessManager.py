@@ -378,6 +378,46 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
         self._init_emul_data(ydict)
 
+    def run_async(self, *args, **kwargs):
+        """Refer to 'ProcessManagerBase.run_async()'."""
+        raise NotImplementedError("EmulProcessManager.run_async()")
+
+    def run(self, *args, **kwargs):
+        """Refer to 'ProcessManagerBase.run()'."""
+        raise NotImplementedError("EmulProcessManager.run()")
+
+    def run_join(self, *args, **kwargs):
+        """Refer to 'ProcessManagerBase.run_join()'."""
+        raise NotImplementedError("EmulProcessManager.run_join()")
+
+    def run_nojoin(self, *args, **kwargs):
+        """Refer to 'ProcessManagerBase.run_nojoin()'."""
+        raise NotImplementedError("EmulProcessManager.run_nojoin()")
+
+    def run_verify(self, *args, **kwargs):
+        """Refer to 'ProcessManagerBase.run_verify()'."""
+        raise NotImplementedError("EmulProcessManager.run_verify()")
+
+    def run_verify_join(self, *args, **kwargs):
+        """Refer to 'ProcessManagerBase.run_verify_join()'."""
+        raise NotImplementedError("EmulProcessManager.run_verify_join()")
+
+    def run_verify_nojoin(self, *args, **kwargs):
+        """Refer to 'ProcessManagerBase.run_verify_nojoin()'."""
+        raise NotImplementedError("EmulProcessManager.run_verify_nojoin()")
+
+    def rsync(self, *args, **kwargs):
+        """Refer to 'ProcessManagerBase.rsync()'."""
+        raise NotImplementedError("EmulProcessManager.rsync()")
+
+    def get(self, src: str | Path, dst: str | Path):
+        """Refer to 'ProcessManagerBase.get()'."""
+        raise NotImplementedError("EmulProcessManager.get()")
+
+    def put(self, src: str | Path, dst: str | Path):
+        """Refer to 'ProcessManagerBase.put()'."""
+        raise NotImplementedError("EmulProcessManager.put()")
+
     def _open(self, path: str | Path, mode: str) -> IO:
         """Implement 'open()'."""
 
@@ -400,6 +440,26 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
         mode = self._openb_mode_adjust(mode)
         return self._open(path, mode)
+
+    def get_python_path(self) -> Path:
+        """Refer to 'ProcessManagerBase.get_python_path()'."""
+        raise NotImplementedError("EmulProcessManager.get_python_path()")
+
+    def time_time(self) -> float:
+        """Refer to 'ProcessManagerBase.time_time()'."""
+        raise NotImplementedError("EmulProcessManager.time_time()")
+
+    def mkdir(self, dirpath: str | Path, parents: bool = False, exist_ok: bool = False):
+        """Refer to 'ProcessManagerBase.mkdir()'."""
+        raise NotImplementedError("EmulProcessManager.mkdir()")
+
+    def mksocket(self, path: str | Path, exist_ok: bool = False):
+        """Refer to 'ProcessManagerBase.mksocket()'."""
+        raise NotImplementedError("EmulProcessManager.mksocket()")
+
+    def mkfifo(self, path: str | Path, exist_ok: bool = False):
+        """Refer to 'ProcessManagerBase.mkfifo()'."""
+        raise NotImplementedError("EmulProcessManager.mkfifo()")
 
     def lsdir(self,
               path: str | Path,
@@ -450,3 +510,35 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
 
         rebased_path = self._basepath / str(path).lstrip("/")
         return super().is_socket(rebased_path)
+
+    def is_fifo(self, path: str | Path) -> bool:
+        """Refer to 'ProcessManagerBase.is_fifo()'."""
+        raise NotImplementedError("EmulProcessManager.is_fifo()")
+
+    def get_mtime(self, path: str | Path) -> float:
+        """Refer to 'ProcessManagerBase.get_mtime()'."""
+        raise NotImplementedError("EmulProcessManager.get_mtime()")
+
+    def unlink(self, path: str | Path):
+        """Refer to 'ProcessManagerBase.unlink()'."""
+        raise NotImplementedError("EmulProcessManager.unlink()")
+
+    def rmtree(self, path: str | Path):
+        """Refer to 'ProcessManagerBase.rmtree()'."""
+        raise NotImplementedError("EmulProcessManager.rmtree()")
+
+    def abspath(self, path: str | Path) -> Path:
+        """Refer to 'ProcessManagerBase.abspath()'."""
+        raise NotImplementedError("EmulProcessManager.abspath()")
+
+    def mkdtemp(self, prefix: str = "", basedir: str | Path | None = None) -> Path:
+        """Refer to 'ProcessManagerBase.mkdtemp()'."""
+        raise NotImplementedError("EmulProcessManager.mkdtemp()")
+
+    def get_envar(self, envar: str) -> str | None:
+        """Refer to 'ProcessManagerBase.get_envar()'."""
+        raise NotImplementedError("EmulProcessManager.get_envar()")
+
+    def which(self, program: str | Path, must_find: bool = True):
+        """Refer to 'ProcessManagerBase.which()'."""
+        raise NotImplementedError("EmulProcessManager.which()")
