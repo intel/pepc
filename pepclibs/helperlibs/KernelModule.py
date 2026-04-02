@@ -178,10 +178,9 @@ class KernelModule(ClassHelpers.SimpleCloseContext):
         elif self.is_loaded():
             return
 
+        cmd = f"modprobe {self.name}"
         if opts:
-            opts = f"{opts}"
-        else:
-            opts = ""
+            cmd += f" {opts}"
         if _LOG.getEffectiveLevel() == Logging.DEBUG:
-            opts += " dyndbg=+pf"
-        self._run_mod_cmd(f"modprobe {self.name} {opts}")
+            cmd += " dyndbg=+pf"
+        self._run_mod_cmd(cmd)
