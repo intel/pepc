@@ -12,7 +12,7 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
 from pepclibs.helperlibs.Exceptions import Error
-from pepclibs.helperlibs import Logging, LocalProcessManager, Dmesg, ClassHelpers
+from pepclibs.helperlibs import Logging, LocalProcessManager, Dmesg, ClassHelpers, Trivial
 
 if typing.TYPE_CHECKING:
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
@@ -25,7 +25,7 @@ class KernelModule(ClassHelpers.SimpleCloseContext):
     def __init__(self,
                  name: str,
                  pman: ProcessManagerType | None = None,
-                 dmesg: Dmesg.Dmesg | bool | None = None):
+                 dmesg: Dmesg.Dmesg | bool = True):
         """
         Initialize a class instance.
 
@@ -59,7 +59,7 @@ class KernelModule(ClassHelpers.SimpleCloseContext):
         self._dmesg_obj: Dmesg.Dmesg | None
 
         self._close_pman = pman is None
-        self._close_dmesg_obj = dmesg is None
+        self._close_dmesg_obj = dmesg is True
 
         if self._pman.is_emulated:
             # Emulated environment is used for testing, and it doesn't support 'dmesg'.
@@ -70,19 +70,18 @@ class KernelModule(ClassHelpers.SimpleCloseContext):
         elif isinstance(dmesg, Dmesg.Dmesg):
             self._dmesg_obj = dmesg
         else:
-            # dmesg is None or True - create a new Dmesg object
             self._dmesg_obj = Dmesg.Dmesg(pman=self._pman)
 
     def close(self):
         """Uninitialize the class instance."""
         ClassHelpers.close(self, close_attrs=("_dmesg_obj", "_pman",))
 
-    def _get_usage_count(self) -> int | None:
+    def _get_usage_count(self) -> int:
         """
-        Return 'None' if module is not loaded, otherwise return the module usage count.
+        Return the module usage count, or '-1' if the module is not loaded.
 
         Returns:
-            The module usage count, or 'None' if the module is not loaded.
+            The module usage count, or '-1' if the module is not loaded.
         """
 
         with self._pman.open("/proc/modules", "r") as fobj:
@@ -92,9 +91,9 @@ class KernelModule(ClassHelpers.SimpleCloseContext):
                     continue
                 name, _, usecnt, _ = line.split(maxsplit=3)
                 if name == self.name:
-                    return int(usecnt)
+                    return Trivial.str_to_int(usecnt, what="module usage count")
 
-        return None
+        return -1
 
     def _get_new_dmesg(self) -> str:
         """
@@ -145,7 +144,7 @@ class KernelModule(ClassHelpers.SimpleCloseContext):
             # Assume any module is loaded in the emulated environment.
             return True
 
-        return self._get_usage_count() is not None
+        return self._get_usage_count() != -1
 
     def _unload(self):
         """Unload the module if it is loaded."""
@@ -161,12 +160,12 @@ class KernelModule(ClassHelpers.SimpleCloseContext):
 
         self._unload()
 
-    def load(self, opts: str | None = None, unload: bool = False):
+    def load(self, opts: str = "", unload: bool = False):
         """
         Load the module.
 
         Args:
-            opts: Options to pass to 'modprobe'.
+            opts: Options to pass to 'modprobe'. No extra options by default.
             unload: If 'True', unload the module first before loading.
         """
 
