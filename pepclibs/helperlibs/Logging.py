@@ -61,8 +61,8 @@ class _MyFormatter(logging.Formatter):
     """
 
     def __init__(self,
-                 prefix: str | None = None,
-                 prefix_debug: str | None = None,
+                 prefix: str = "",
+                 prefix_debug: str = _DEFAULT_DBG_PREFIX,
                  colors: dict[int, str] | None = None):
         """
         Initialize the custom logging formatter.
@@ -89,7 +89,7 @@ class _MyFormatter(logging.Formatter):
 
         self.set_prefix(prefix=prefix, prefix_debug=prefix_debug)
 
-    def set_prefix(self, prefix: str | None = None, prefix_debug: str | None = None):
+    def set_prefix(self, prefix: str = "", prefix_debug: str = _DEFAULT_DBG_PREFIX):
         """
         Set the prefix for messages.
 
@@ -97,6 +97,7 @@ class _MyFormatter(logging.Formatter):
             prefix: Prefix for non-info and non-debug messages. Info messages go without any
                     formatting. By default, the prefix is just the log level name.
             prefix_debug: Prefix for debug messages. The default value is '_DEFAULT_DBG_PREFIX'.
+                          Use an empty string to disable the debug prefix.
         """
 
         def _start(level):
@@ -141,8 +142,6 @@ class _MyFormatter(logging.Formatter):
 
         # Debug messages formatting.
         lvl = DEBUG
-        if prefix_debug is None:
-            prefix_debug = _DEFAULT_DBG_PREFIX
         if not prefix_debug:
             prefix_debug = ""
         else:
@@ -223,7 +222,7 @@ class Logger(logging.Logger):
         - The 'debug_print_stacktrace()' method.
     """
 
-    def __init__(self, name: str | None = None):
+    def __init__(self, name: str = ""):
         """
         Setup and return a configured logger.
 
@@ -262,7 +261,7 @@ class Logger(logging.Logger):
 
     def configure(self,
                   prefix: str | None = None,
-                  level: int | None = None,
+                  level: int = -1,
                   colored: bool | None = None,
                   info_stream: IO[str] = sys.stdout,
                   error_stream: IO[str] = sys.stderr,
@@ -272,8 +271,9 @@ class Logger(logging.Logger):
 
         Args:
             prefix: The prefix for log messages, used for all levels except 'INFO' and 'ERRINFO'.
-            level: The default log level. If not provided, it is automatically detected based on the
-                   presence of '-d' (debug) and '-q' (quiet) command line options.
+            level: The default log level. If not provided (default is '-1'), it is automatically
+                   detected based on the presence of '-d' (debug) and '-q' (quiet) command line
+                   options.
             colored: Whether to use colored output. By default, colored output is used for TTYs and
                      uncolored output for non-TTYs, unless the '--force-color' command line option
                      is specified, in which case colored output is used for non-TTYs as well.
@@ -295,7 +295,7 @@ class Logger(logging.Logger):
 
         self.prefix = prefix
 
-        if not level:
+        if level == -1:
             # Change log level names.
             if "-q" in argv:
                 level = WARNING
@@ -341,7 +341,7 @@ class Logger(logging.Logger):
 
         return self
 
-    def configure_log_file(self, fpath: Path, contents: str | None = None):
+    def configure_log_file(self, fpath: Path, contents: str = ""):
         """
         Configure the logger to mirror all stdout and stderr messages to the specified log file.
 
