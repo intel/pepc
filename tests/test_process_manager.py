@@ -412,6 +412,52 @@ def test_run_async_wait(params: CommonTestParamsTypedDict):
     assert res.stderr == ""
     assert res.exitcode == 0
 
+def test_run_async_cwd_env(params: CommonTestParamsTypedDict):
+    """Test the 'cwd' and 'env' arguments of the 'run_async()' method."""
+
+    pman = params["pman"]
+
+    for intsh in (True, False):
+        # Test 'cwd'.
+        for cwd in ("/", "/etc"):
+            with pman.run_async("pwd", cwd=cwd, intsh=intsh) as proc:
+                res = proc.wait(join=True)
+            assert res.exitcode == 0
+            assert res.stdout == f"{cwd}\n"
+            assert res.stderr == ""
+
+        # Test 'env'.
+        env = {"TEST_ASYNC_VAR": "async_value"}
+        with pman.run_async("echo $TEST_ASYNC_VAR", env=env, intsh=intsh) as proc:
+            res = proc.wait(join=True)
+        assert res.exitcode == 0
+        assert res.stdout == "async_value\n"
+        assert res.stderr == ""
+
+        # Verify the environment variable is not retained across calls.
+        with pman.run_async("echo $TEST_ASYNC_VAR", intsh=intsh) as proc:
+            res = proc.wait(join=True)
+        assert res.stdout == "\n"
+
+        # Test 'env' in a sub-shell.
+        with pman.run_async("sh -c 'echo $TEST_ASYNC_VAR'", env=env, intsh=intsh) as proc:
+            res = proc.wait(join=True)
+        assert res.exitcode == 0
+        assert res.stdout == "async_value\n"
+
+        # Verify not retained across calls.
+        with pman.run_async("sh -c 'echo $TEST_ASYNC_VAR'", intsh=intsh) as proc:
+            res = proc.wait(join=True)
+        assert res.stdout == "\n"
+
+        # Test 'cwd' and 'env' together.
+        cwd = "/etc"
+        with pman.run_async("sh -c 'echo $TEST_ASYNC_VAR; pwd'",
+                            cwd=cwd, env=env, intsh=intsh) as proc:
+            res = proc.wait(join=True)
+        assert res.exitcode == 0
+        assert res.stdout == f"async_value\n{cwd}\n"
+
 def test_mkdir(params: CommonTestParamsTypedDict):
     """Test the 'mkdir()', 'rmtree()', and 'is_dir()' methods."""
 
