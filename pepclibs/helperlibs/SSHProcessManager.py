@@ -566,7 +566,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             except OSError as err:
                 msg = Error(str(err)).indent(2)
                 raise Error(f"'stat()' failed for private SSH key at '{self.privkeypath}':\n"
-                            f"{msg}") from None
+                            f"{msg}") from err
 
             if not stat.S_ISREG(mode):
                 raise Error(f"Private SSH key at '{self.privkeypath}' is not a regular file")
@@ -1166,7 +1166,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
                 except BaseException as err:
                     msg = Error(str(err)).indent(2)
                     errmsg = get_err_prefix(fobj, "read")
-                    raise Error(f"{errmsg}: Failed to decode data after reading:\n{msg}") from None
+                    raise Error(f"{errmsg}: Failed to decode data after reading:\n{msg}") from err
 
             return data
 
@@ -1197,7 +1197,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
                     msg = Error(str(err)).indent(2)
                     errmsg = get_err_prefix(fobj, "write")
                     raise Error(f"{errmsg}:\nFailed to encode data before writing:\n"
-                                f"{msg}") from None
+                                f"{msg}") from err
 
             orig_fwrite = getattr(fobj, "_orig_fwrite_")
             return orig_fwrite(data)
@@ -1225,10 +1225,10 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             fobj = sftp.file(path, mode)
         except PermissionError as err:
             msg = Error(str(err)).indent(2)
-            raise ErrorPermissionDenied(f"{errmsg}\n{msg}") from None
+            raise ErrorPermissionDenied(f"{errmsg}\n{msg}") from err
         except FileNotFoundError as err:
             msg = Error(str(err)).indent(2)
-            raise ErrorNotFound(f"{errmsg}\n{msg}") from None
+            raise ErrorNotFound(f"{errmsg}\n{msg}") from err
         except BaseException as err:
             msg = Error(str(err)).indent(2)
             raise Error(f"{errmsg}\n{msg}") from err
@@ -1441,7 +1441,7 @@ for ent in entries:
             stdout, _ = self.run_verify(cmd)
         except Error as err:
             if "FileNotFoundError" in str(err):
-                raise ErrorNotFound(f"'{path}' does not exist{self.hostmsg}") from None
+                raise ErrorNotFound(f"'{path}' does not exist{self.hostmsg}") from err
             raise
 
         mtime = cast(str, stdout).strip()

@@ -365,13 +365,13 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
                 fobj = open(path, mode, encoding="utf-8")
         except PermissionError as err:
             msg = Error(str(err)).indent(2)
-            raise ErrorPermissionDenied(f"{errmsg}\n{msg}") from None
+            raise ErrorPermissionDenied(f"{errmsg}\n{msg}") from err
         except FileNotFoundError as err:
             msg = Error(str(err)).indent(2)
-            raise ErrorNotFound(f"{errmsg}\n{msg}") from None
+            raise ErrorNotFound(f"{errmsg}\n{msg}") from err
         except BaseException as err:
             msg = Error(str(err)).indent(2)
-            raise Error(f"{errmsg}\n{msg}") from None
+            raise Error(f"{errmsg}\n{msg}") from err
 
         # Make sure all file methods raise only exceptions derived from 'Error'.
         wfobj = ClassHelpers.WrapExceptions(fobj, get_err_prefix=_ProcessManagerBase.get_err_prefix)
@@ -398,19 +398,19 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
             return time.time()
         except OSError as err:
             msg = Error(str(err)).indent(2)
-            raise Error(f"Failed to get the current time:\n{msg}") from None
+            raise Error(f"Failed to get the current time:\n{msg}") from err
 
     def mkdir(self, dirpath: str | Path, parents: bool = False, exist_ok: bool = False):
         """Refer to 'ProcessManagerBase.mkdir()'."""
 
         try:
             Path(dirpath).mkdir(parents=parents, exist_ok=exist_ok)
-        except FileExistsError:
+        except FileExistsError as err:
             if not exist_ok:
-                raise ErrorExists(f"Path '{dirpath}' already exists") from None
+                raise ErrorExists(f"Path '{dirpath}' already exists") from err
         except OSError as err:
             msg = Error(str(err)).indent(2)
-            raise Error(f"Failed to create directory '{dirpath}':\n{msg}") from None
+            raise Error(f"Failed to create directory '{dirpath}':\n{msg}") from err
 
     def mksocket(self, path: str | Path, exist_ok: bool = False):
         """Refer to 'ProcessManagerBase.mksocket()'."""
@@ -421,21 +421,21 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         except OSError as err:
             if err.errno != errno.EADDRINUSE:
                 msg = Error(str(err)).indent(2)
-                raise Error(f"Failed to create socket '{path}':\n{msg}") from None
+                raise Error(f"Failed to create socket '{path}':\n{msg}") from err
             if not exist_ok:
-                raise ErrorExists(f"Path '{path}' already exists") from None
+                raise ErrorExists(f"Path '{path}' already exists") from err
 
     def mkfifo(self, path: str | Path, exist_ok: bool = False):
         """Refer to 'ProcessManagerBase.mkfifo()'."""
 
         try:
             os.mkfifo(path)
-        except FileExistsError:
+        except FileExistsError as err:
             if not exist_ok:
-                raise ErrorExists(f"Path '{path}' already exists") from None
+                raise ErrorExists(f"Path '{path}' already exists") from err
         except OSError as err:
             msg = Error(str(err)).indent(2)
-            raise Error(f"Failed to create named pipe '{path}':\n{msg}") from None
+            raise Error(f"Failed to create named pipe '{path}':\n{msg}") from err
 
     def lsdir(self,
               path: str | Path,
@@ -447,13 +447,13 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         try:
             entries = list(os.listdir(path))
-        except FileNotFoundError:
-            raise ErrorNotFound(f"Directory '{path}' does not exist") from None
-        except PermissionError:
-            raise ErrorPermissionDenied(f"Permission denied to access directory '{path}'") from None
+        except FileNotFoundError as err:
+            raise ErrorNotFound(f"Directory '{path}' does not exist") from err
+        except PermissionError as err:
+            raise ErrorPermissionDenied(f"Permission denied to access directory '{path}'") from err
         except OSError as err:
             msg = Error(str(err)).indent(2)
-            raise Error(f"Failed to get list of files in '{path}':\n{msg}") from None
+            raise Error(f"Failed to get list of files in '{path}':\n{msg}") from err
 
         info: dict[str, LsdirTypedDict] = {}
 
@@ -463,7 +463,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
                 stinfo = path.joinpath(entry).lstat()
             except OSError as err:
                 msg = Error(str(err)).indent(2)
-                raise Error(f"'lstat()' failed for '{entry}':\n{msg}") from None
+                raise Error(f"'lstat()' failed for '{entry}':\n{msg}") from err
 
             info[entry] = {"name": entry,
                            "path": path / entry,
@@ -479,7 +479,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
             return Path(path).exists()
         except OSError as err:
             msg = Error(str(err)).indent(2)
-            raise Error(f"Failed to check if '{path}' exists:\n{msg}") from None
+            raise Error(f"Failed to check if '{path}' exists:\n{msg}") from err
 
     def is_file(self, path: str | Path) -> bool:
         """Refer to 'ProcessManagerBase.is_file()'."""
@@ -489,7 +489,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         except OSError as err:
             msg = Error(str(err)).indent(2)
             raise Error(f"Failed to check if '{path}' exists and it is a regular file:\n{msg}") \
-                        from None
+                        from err
 
     def is_dir(self, path: str | Path) -> bool:
         """Refer to 'ProcessManagerBase.is_dir()'."""
@@ -499,7 +499,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         except OSError as err:
             msg = Error(str(err)).indent(2)
             raise Error(f"Failed to check if '{path}' exists and it is a directory:\n{msg}") \
-                        from None
+                        from err
 
     def is_exe(self, path: str | Path) -> bool:
         """Refer to 'ProcessManagerBase.is_exe()'."""
@@ -509,7 +509,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         except OSError as err:
             msg = Error(str(err)).indent(2)
             raise Error(f"Failed to check if '{path}' exists and it is an executable file:\n"
-                        f"{msg}") from None
+                        f"{msg}") from err
 
     def is_socket(self, path: str | Path) -> bool:
         """Refer to 'ProcessManagerBase.is_socket()'."""
@@ -519,7 +519,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         except OSError as err:
             msg = Error(str(err)).indent(2)
             raise Error(f"Failed to check if '{path}' exists and it is a Unix socket file:\n"
-                        f"{msg}") from None
+                        f"{msg}") from err
 
     def is_fifo(self, path: str | Path) -> bool:
         """Refer to 'ProcessManagerBase.is_fifo()'."""
@@ -529,18 +529,18 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         except OSError as err:
             msg = Error(str(err)).indent(2)
             raise Error(f"Failed to check if '{path}' exists and it is a named pipe (FIFO):\n"
-                        f"{msg}") from None
+                        f"{msg}") from err
 
     def get_mtime(self, path: str | Path) -> float:
         """Refer to 'ProcessManagerBase.get_mtime()'."""
 
         try:
             return Path(path).stat().st_mtime
-        except FileNotFoundError:
-            raise ErrorNotFound(f"'{path}' does not exist") from None
+        except FileNotFoundError as err:
+            raise ErrorNotFound(f"'{path}' does not exist") from err
         except OSError as err:
             msg = Error(str(err)).indent(2)
-            raise Error(f"'stat()' failed for '{path}':\n{msg}") from None
+            raise Error(f"'stat()' failed for '{path}':\n{msg}") from err
 
     def unlink(self, path: str | Path):
         """Refer to 'ProcessManagerBase.unlink()'."""
@@ -549,7 +549,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
             os.unlink(Path(path))
         except OSError as err:
             msg = Error(str(err)).indent(2)
-            raise Error(f"Failed to remove '{path}':\n{msg}") from None
+            raise Error(f"Failed to remove '{path}':\n{msg}") from err
 
     def rmtree(self, path: str | Path):
         """Refer to 'ProcessManagerBase.rmtree()'."""
@@ -582,7 +582,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
             rpath = Path(path).resolve()
         except OSError as err:
             msg = Error(str(err)).indent(2)
-            raise Error(f"Failed to get real path for '{path}':\n{msg}") from None
+            raise Error(f"Failed to get real path for '{path}':\n{msg}") from err
 
         if not rpath.exists():
             raise ErrorNotFound(f"Path '{rpath}' does not exist")
