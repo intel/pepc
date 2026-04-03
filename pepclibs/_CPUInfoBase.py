@@ -906,6 +906,10 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
         no_l3: set[int] = set()
 
         for cpu in cpus:
+            if cpu in has_l3:
+                # Already known to share an L3 cache with a previously checked CPU, skip the read.
+                continue
+
             base = Path(f"{self._cpu_sysfs_base}/cpu{cpu}")
 
             try:
@@ -916,7 +920,7 @@ class CPUInfoBase(ClassHelpers.SimpleCloseContext):
                 has_l3.update(l3_cpus)
 
             if cpus == has_l3 | no_l3:
-                # All online CPUs have been checked, no need to continue.
+                # All online CPUs have been accounted for, no need to continue.
                 break
 
         if not no_l3 or not has_l3:
