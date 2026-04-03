@@ -19,7 +19,7 @@ import typing
 import pytest
 from tests import common
 from pepclibs.helperlibs import Trivial, LocalProcessManager
-from pepclibs.helperlibs.Exceptions import Error, ErrorExists, ErrorNotFound
+from pepclibs.helperlibs.Exceptions import Error, ErrorExists, ErrorNotFound, ErrorPermissionDenied
 
 if typing.TYPE_CHECKING:
     from typing import Generator
@@ -971,3 +971,125 @@ def test_compound_command(params: CommonTestParamsTypedDict):
         assert exitcode != 0, f"intsh={intsh}"
         assert stdout == "", f"intsh={intsh}"
         assert stderr == "", f"intsh={intsh}"
+
+def test_su_available(params: CommonTestParamsTypedDict):
+    """Test that 'su=True' succeeds when root access or passwordless sudo is available."""
+
+    pman = params["pman"]
+
+    # Determine whether 'su=True' is expected to succeed.
+    if not pman.is_remote and Trivial.is_root():
+        su_must_work = True
+    elif pman.is_remote:
+        stdout, _, _ = pman.run_join("id -u")
+        su_must_work = stdout.strip() == "0"
+    else:
+        su_must_work = False
+
+    if not su_must_work:
+        _, _, exitcode = pman.run("sudo -n true")
+        su_must_work = exitcode == 0
+
+    if not su_must_work:
+        pytest.skip("No root access or passwordless sudo available")
+
+    stdout, stderr = pman.run_verify_join("id -u", su=True)
+    assert stdout.strip() == "0"
+    assert stderr == ""
+
+def test_run_verify_su(params: CommonTestParamsTypedDict):
+    """Test the 'su' argument of the 'run_verify_nojoin()' method."""
+
+    pman = params["pman"]
+
+    # 'su=False' should always succeed. Verify both stdout and stderr are captured correctly.
+    cmd = "sh -c 'echo out; echo err >&2'"
+    stdout, stderr = pman.run_verify_join(cmd, su=False)
+    assert stdout == "out\n"
+    assert stderr == "err\n"
+
+    # 'su=True' requires root access or passwordless sudo. If neither is available,
+    # 'ErrorPermissionDenied' is raised. If it succeeds, the process must run as root (UID 0).
+    try:
+        stdout, stderr = pman.run_verify_join("id -u", su=True)
+        assert stdout.strip() == "0"
+        assert stderr == ""
+    except ErrorPermissionDenied as err:
+        pytest.skip(str(err))
+
+    cmd = "sh -c 'echo out; echo err >&2'"
+    stdout, stderr = pman.run_verify_join(cmd, su=True)
+    assert stdout == "out\n"
+    assert stderr == "err\n"
+
+def test_run_su_exitcode(params: CommonTestParamsTypedDict):
+    """Test that exit code propagates correctly for all 'intsh' and 'su' combinations."""
+
+    pman = params["pman"]
+
+    have_superuser = True
+    try:
+        pman.run_verify_join("id -u", su=True)
+    except ErrorPermissionDenied:
+        have_superuser = False
+
+    for intsh in (True, False):
+        for su in (False, True):
+            if su and not have_superuser:
+                continue
+
+            _, _, exitcode = pman.run("false", intsh=intsh, su=su)
+            assert exitcode != 0, f"intsh={intsh}, su={su}"
+
+def test_run_verify_cwd_env(params: CommonTestParamsTypedDict):
+    """Test 'cwd' and 'env' (including special chars) for all 'intsh' and 'su' combinations."""
+
+    pman = params["pman"]
+
+    # Determine whether 'su=True' is available before entering the loop.
+    have_su = True
+    try:
+        pman.run_verify_join("id -u", su=True)
+    except ErrorPermissionDenied:
+        have_su = False
+
+    for intsh in (True, False):
+        for su in (False, True):
+            if su and not have_su:
+                continue
+
+            # Verify 'cwd' works.
+            for cwd in ("/", "/etc"):
+                stdout, stderr = pman.run_verify("pwd", timeout=_TIMEOUT,
+                                                 cwd=cwd, intsh=intsh, su=su)
+                assert stdout == f"{cwd}\n", f"intsh={intsh}, su={su}"
+                assert stderr == "", f"intsh={intsh}, su={su}"
+
+            # Verify a plain env value.
+            env = {"TEST_SU_VAR": "su_value"}
+            stdout, stderr = pman.run_verify("sh -c 'echo $TEST_SU_VAR'", timeout=_TIMEOUT,
+                                             env=env, intsh=intsh, su=su)
+            assert stdout == "su_value\n", f"intsh={intsh}, su={su}"
+            assert stderr == "", f"intsh={intsh}, su={su}"
+
+            # Verify an env value containing a space (tests quoting).
+            env = {"TEST_SU_VAR": "hello world"}
+            stdout, stderr = pman.run_verify("sh -c 'echo $TEST_SU_VAR'", timeout=_TIMEOUT,
+                                             env=env, intsh=intsh, su=su)
+            assert stdout == "hello world\n", f"intsh={intsh}, su={su}"
+            assert stderr == "", f"intsh={intsh}, su={su}"
+
+            # Verify an env value containing a single quote (tests quoting).
+            env = {"TEST_SU_VAR": "it's quoted"}
+            stdout, stderr = pman.run_verify('sh -c \'echo "$TEST_SU_VAR"\'', timeout=_TIMEOUT,
+                                             env=env, intsh=intsh, su=su)
+            assert stdout == "it's quoted\n", f"intsh={intsh}, su={su}"
+            assert stderr == "", f"intsh={intsh}, su={su}"
+
+            # Verify 'cwd' and 'env' work together.
+            cwd = "/etc"
+            env = {"TEST_SU_VAR": "su_value"}
+            stdout, stderr = pman.run_verify("sh -c 'echo $TEST_SU_VAR; pwd'", timeout=_TIMEOUT,
+                                             cwd=cwd, env=env, intsh=intsh, su=su)
+            assert stdout == f"su_value\n{cwd}\n", f"intsh={intsh}, su={su}"
+            assert stderr == "", f"intsh={intsh}, su={su}"
