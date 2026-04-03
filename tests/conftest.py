@@ -15,6 +15,7 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import os
 import typing
+import logging
 from pathlib import Path
 import pytest
 from pepclibs.helperlibs import Logging
@@ -22,10 +23,6 @@ from pepclibs.helperlibs.emul.EmulCommon import EMUL_CONFIG_FNAME
 
 if typing.TYPE_CHECKING:
     from typing import Generator, Final
-
-# Configure the 'main.pepc' logger with an empty argv so the log level defaults to INFO,
-# regardless of how pytest was invoked (e.g., 'pytest -q' would otherwise set it to WARNING).
-Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc").configure(prefix="pepc", argv=[])
 
 # The test modules that are host-agnostic.
 _NOHOST_MODULES: Final[frozenset[str]] = frozenset({
@@ -127,6 +124,16 @@ def pytest_configure(config: pytest.Config):
     Raises:
         pytest.exit: If the specified dataset does not exist.
     """
+
+    # Configure the pepc logger. Read the log level from the pytest config so that
+    # '--log-cli-level=DEBUG' makes pepc emit debug messages.
+    log_level_str = config.getoption("log_cli_level", default=None)
+    if log_level_str and isinstance(log_level_str, str):
+        log_level = getattr(logging, log_level_str.upper(), logging.INFO)
+    else:
+        log_level = logging.INFO
+    Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc").configure(prefix="pepc", level=log_level,
+                                                                    argv=[])
 
     hostname = config.getoption("hostname")
     dataset = config.getoption("dataset")
