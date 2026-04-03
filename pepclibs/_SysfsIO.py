@@ -41,6 +41,7 @@ if typing.TYPE_CHECKING:
             verify: Whether to verify the write operation after execution.
             retries: Number of verification retries.
             sleep: Sleep duration between retries.
+            su: If 'True', write as superuser (root).
         """
 
         val: str
@@ -48,6 +49,7 @@ if typing.TYPE_CHECKING:
         verify: bool
         retries: int
         sleep: int | float
+        su: bool
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
@@ -207,7 +209,8 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
                              what: str,
                              verify: bool = True,
                              retries: int = 0,
-                             sleep: int | float = 0):
+                             sleep: int | float = 0,
+                             su: bool = False):
         """
         Add a write operation to the transaction buffer for later execution.
 
@@ -218,6 +221,7 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
             verify: Whether to verify the write operation after execution.
             retries: Number of verification retries.
             sleep: Sleep duration between retries.
+            su: If 'True', write as superuser (root).
         """
 
         if not self._enable_cache:
@@ -241,12 +245,16 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
         if "sleep" in tinfo and tinfo["sleep"] != sleep:
             raise Error(f"BUG: Inconsistent verification sleep value for file '{path}':\n"
                         f"  old: {tinfo['sleep']}, new: {sleep}.")
+        if "su" in tinfo and tinfo["su"] != su:
+            raise Error(f"BUG: Inconsistent 'su' flag value for file '{path}':\n"
+                        f"  old: {tinfo['su']}, new: {su}.")
 
         tinfo["val"] = val
         tinfo["what"] = what
         tinfo["verify"] = verify
         tinfo["retries"] = retries
         tinfo["sleep"] = sleep
+        tinfo["su"] = su
 
     def start_transaction(self):
         """
@@ -270,7 +278,7 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
 
         self._in_transaction = True
 
-    def _write(self, path: Path, val: str, what: str):
+    def _write(self, path: Path, val: str, what: str, su: bool = False):
         """
         Write a value to a sysfs file at the specified path.
 
@@ -279,6 +287,7 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
             val: Value to write to the file.
             what: Optional description of what is being written, used for logging and error
                   messages.
+            su: If 'True', write as superuser (root).
 
         Raises:
             ErrorNotSupported: If the file is not found.
@@ -366,13 +375,15 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
 
     def _write_paths_vals_optimized_helper(self,
                                             batch_info: dict[Path, _TransactionItemTypedDict],
-                                            winfo: str):
+                                            winfo: str,
+                                            su: bool = False):
         """
         Write multiple paths and values with I/O optimizations for remote hosts.
 
         Args:
             batch_info: The batch write information dictionary.
             winfo: The formatted string of write operations for the Python script.
+            su: If 'True', run the write script as superuser (root).
 
         Raises:
             ErrorVerifyFailed: If verification of any write operation fails.
@@ -425,7 +436,7 @@ for path, (val, verify, retries, sleep) in winfo.items():
 '"""
 
         try:
-            stdout, stderr = self._pman.run_verify_join(cmd)
+            stdout, stderr = self._pman.run_verify_join(cmd, su=su)
         except Error as err:
             errmsg = err.indent(2)
             raise type(err)(f"Failed to write sysfs files{self._pman.hostmsg}:\n"
@@ -519,13 +530,19 @@ for path, (val, verify, retries, sleep) in winfo.items():
         """
 
         # Format a dictionary of write operations as a string for the Python script: winfo, which
-        # stands for "write information".
+        # stands for "write information". Writes are batched by 'su' value: a change in 'su' flushes
+        # the current batch, because 'su=True' writes are executed via sudo, and mixing them with
+        # 'su=False' writes in a single batch would lead to performing non-privileged writes via
+        # sudo, which is not desirable.
         winfo = ""
+        current_su: bool | None = None
+
         for path, val_info in batch_info.items():
             val = val_info["val"]
             verify = val_info["verify"]
             retries = val_info["retries"]
             sleep = val_info["sleep"]
+            su = val_info["su"]
 
             val_quoted = val.replace("'", "\'").replace('"', '\"')
             winfo_line = f"\"{str(path)}\": (\"{val_quoted}\", {verify}, {retries}, {sleep})"
@@ -535,14 +552,23 @@ for path, (val, verify, retries, sleep) in winfo.items():
                             f"{len(winfo_line)}: It exceeds the limit of {_MAX_PATHS_LEN} "
                             f"characters)")
 
-            if len(winfo) + len(winfo_line) < _MAX_PATHS_LEN:
+            if current_su is None:
+                current_su = su
+
+            if len(winfo) + len(winfo_line) < _MAX_PATHS_LEN and su == current_su:
                 winfo += f"{winfo_line},\n"
                 continue
 
-            self._write_paths_vals_optimized_helper(batch_info, winfo)
+            # Either the batch is full, or there is a change in 'su' value. Flush the current batch
+            # and start a new one.
+            self._write_paths_vals_optimized_helper(batch_info, winfo, su=current_su)
+            current_su = su
             winfo = f"{winfo_line},\n"
 
-        self._write_paths_vals_optimized_helper(batch_info, winfo)
+        if winfo:
+            if typing.TYPE_CHECKING:
+                assert current_su is not None
+            self._write_paths_vals_optimized_helper(batch_info, winfo, su=current_su)
 
     def flush_transaction(self):
         """
@@ -565,8 +591,9 @@ for path, (val, verify, retries, sleep) in winfo.items():
         else:
             for path, val_info in self._transaction_buffer.items():
                 val = val_info["val"]
+                su = val_info["su"]
 
-                self._write(path, val, val_info["what"])
+                self._write(path, val, val_info["what"], su=su)
 
                 if val_info["verify"]:
                     what = val_info["what"]
@@ -917,7 +944,7 @@ for path in paths:
                                      f"{self._pman.hostmsg}\n{err.indent(2)}") from err
             yield path, intval
 
-    def write(self, path: Path, val: str, what: str = ""):
+    def write(self, path: Path, val: str, what: str = "", su: bool = False):
         """
         Write a value to a sysfs file and update the cache.
 
@@ -929,6 +956,7 @@ for path in paths:
             val: Value to write to the file.
             what: Optional short description of what is being written, included in exception
                   messages.
+            su: If 'True', write as superuser (root).
 
         Raises:
             ErrorPermissionDenied: No permissions to access the sysfs file.
@@ -942,12 +970,12 @@ for path in paths:
 
         self.cache_remove(path)
         if self._in_transaction:
-            self._add_for_transaction(path, val, what)
+            self._add_for_transaction(path, val, what, su=su)
         else:
-            self._write(path, val, what=what)
+            self._write(path, val, what=what, su=su)
         self.cache_add(path, val)
 
-    def write_int(self, path: Path, val: str | int, what: str = ""):
+    def write_int(self, path: Path, val: str | int, what: str = "", su: bool = False):
         """
         Write an integer value to a sysfs file.
 
@@ -956,6 +984,7 @@ for path in paths:
             val: Value to write to the file.
             what: Optional short description of what is being written, included in exception
                   messages.
+            su: If 'True', write as superuser (root).
 
         Raises:
             ErrorPermissionDenied: No permissions to access the sysfs file.
@@ -965,14 +994,15 @@ for path in paths:
         """
 
         int_val = Trivial.str_to_int(val, what=what)
-        self.write(path, str(int_val), what=what)
+        self.write(path, str(int_val), what=what, su=su)
 
     def write_verify(self,
                      path: Path,
                      val: str,
                      what: str = "",
                      retries: int = 0,
-                     sleep: int | float = 0):
+                     sleep: int | float = 0,
+                     su: bool = False):
         """
         Write a value to a sysfs file and verify that the kernel accepted it.
 
@@ -986,6 +1016,7 @@ for path in paths:
                   messages.
             retries: Number of times to retry verification if it fails.
             sleep: Number of seconds to sleep between verification retries.
+            su: If 'True', write as superuser (root).
 
         Raises:
             ErrorPermissionDenied: No permissions to access the sysfs file.
@@ -1004,9 +1035,10 @@ for path in paths:
         # In case of an ongoing transaction, skip the verification, it'll be done at the end of the
         # transaction.
         if self._in_transaction:
-            self._add_for_transaction(path, val, what, verify=True, retries=retries, sleep=sleep)
+            self._add_for_transaction(path, val, what, verify=True, retries=retries, sleep=sleep,
+                                      su=su)
         else:
-            self._write(path, val, what=what)
+            self._write(path, val, what=what, su=su)
             self._verify(path, val, what, retries, sleep)
 
         self.cache_add(path, val)
@@ -1016,7 +1048,8 @@ for path in paths:
                          val: str | int,
                          what: str = "",
                          retries: int = 0,
-                         sleep: int | float = 0):
+                         sleep: int | float = 0,
+                         su: bool = False):
         """
         Same as 'write_verify()', but write an integer value 'val'.
 
@@ -1026,6 +1059,7 @@ for path in paths:
             what: Optional description of what is being written (used in error messages).
             retries: Number of times to retry verification if the value does not match.
             sleep: Number of seconds to sleep between retries.
+            su: If 'True', write as superuser (root).
 
         Raises:
             ErrorPermissionDenied: No permissions to access the sysfs file.
@@ -1044,9 +1078,10 @@ for path in paths:
         # In case of an ongoing transaction, skip the verification, it'll be done at the end of the
         # transaction.
         if self._in_transaction:
-            self._add_for_transaction(path, val, what, verify=True, retries=retries, sleep=sleep)
+            self._add_for_transaction(path, val, what, verify=True, retries=retries, sleep=sleep,
+                                      su=su)
         else:
-            self._write(path, val, what=what)
+            self._write(path, val, what=what, su=su)
             try:
                 self._verify(path, val, what, retries, sleep)
             except ErrorVerifyFailed as err:
@@ -1172,7 +1207,7 @@ for path in paths:
 
         self._write_paths_optimized_helper(write_paths, val, what=what)
 
-    def write_paths(self, paths: Iterable[Path], val: str, what: str = ""):
+    def write_paths(self, paths: Iterable[Path], val: str, what: str = "", su: bool = False):
         """
         Write a value to multiple sysfs files and update the cache.
 
@@ -1184,6 +1219,7 @@ for path in paths:
             val: The value to write to the files.
             what: Optional short description of what is being written, included in exception
                   messages.
+            su: If 'True', write as superuser (root).
 
         Raises:
             ErrorPermissionDenied: No permissions to access the sysfs file.
@@ -1201,7 +1237,7 @@ for path in paths:
 
         if self._in_transaction:
             for path in paths_list:
-                self._add_for_transaction(path, val, what)
+                self._add_for_transaction(path, val, what, su=su)
         elif self._optimize_io:
             if not VERIFY_IO_OPTIMIZATIONS:
                 self._write_paths_optimized(paths_list, val, what=what)
@@ -1211,12 +1247,13 @@ for path in paths:
                     self._verify(path, val, what=what)
         else:
             for path in paths_list:
-                self._write(path, val, what=what)
+                self._write(path, val, what=what, su=su)
 
         for path in paths_list:
             self.cache_add(path, val)
 
-    def write_paths_int(self, paths: Iterable[Path], val: str | int, what: str = ""):
+    def write_paths_int(self, paths: Iterable[Path], val: str | int, what: str = "",
+                        su: bool = False):
         """
         Write an integer value to multiple sysfs files.
 
@@ -1228,6 +1265,7 @@ for path in paths:
             val: The integer value to write to the files.
             what: Optional short description of what is being written, included in exception
                   messages.
+            su: If 'True', write as superuser (root).
 
         Raises:
             ErrorPermissionDenied: No permissions to access the sysfs file.
@@ -1236,14 +1274,15 @@ for path in paths:
         """
 
         intval = Trivial.str_to_int(val, what=what)
-        self.write_paths(paths, str(intval), what=what)
+        self.write_paths(paths, str(intval), what=what, su=su)
 
     def write_paths_verify(self,
                            paths: Iterable[Path],
                            val: str,
                            what: str = "",
                            retries: int = 0,
-                           sleep: int | float = 0):
+                           sleep: int | float = 0,
+                           su: bool = False):
         """
         Write a value to multiple sysfs files and verify that the kernel accepted it.
 
@@ -1260,6 +1299,7 @@ for path in paths:
                   messages.
             retries: Number of times to retry verification if it fails.
             sleep: Number of seconds to sleep between verification retries.
+            su: If 'True', write as superuser (root).
 
         Raises:
             ErrorPermissionDenied: No permissions to access the sysfs file.
@@ -1277,7 +1317,7 @@ for path in paths:
             for path in paths_list:
                 self.cache_remove(path)
                 self._add_for_transaction(path, val, what, verify=True, retries=retries,
-                                          sleep=sleep)
+                                          sleep=sleep, su=su)
                 self.cache_add(path, val)
         else:
             for path in paths_list:
@@ -1292,12 +1332,13 @@ for path in paths:
                         "what": what,
                         "verify": True,
                         "retries": retries,
-                        "sleep": sleep
+                        "sleep": sleep,
+                        "su": su
                     }
                 self._write_paths_vals_optimized(batch_info)
             else:
                 for path in paths_list:
-                    self._write(path, val, what=what)
+                    self._write(path, val, what=what, su=su)
                     self._verify(path, val, what, retries, sleep)
 
             for path in paths_list:
@@ -1308,7 +1349,8 @@ for path in paths:
                                val: str | int,
                                what: str = "",
                                retries: int = 0,
-                               sleep: int | float = 0):
+                               sleep: int | float = 0,
+                               su: bool = False):
         """
         Write an integer value to multiple sysfs files and verify that the kernel accepted it.
 
@@ -1325,6 +1367,7 @@ for path in paths:
                   messages.
             retries: Number of times to retry verification if it fails.
             sleep: Number of seconds to sleep between verification retries.
+            su: If 'True', write as superuser (root).
 
         Raises:
             ErrorPermissionDenied: No permissions to access the sysfs file.
@@ -1334,4 +1377,4 @@ for path in paths:
         """
 
         intval = Trivial.str_to_int(val, what=what)
-        self.write_paths_verify(paths, str(intval), what=what, retries=retries, sleep=sleep)
+        self.write_paths_verify(paths, str(intval), what=what, retries=retries, sleep=sleep, su=su)
