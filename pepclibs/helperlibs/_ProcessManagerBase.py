@@ -1176,6 +1176,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         if "b" in mode:
             _LOG.warning("Incorrect usage of ProcessManagerBase.open(): the 'mode' argument "
                          "should not include 'b'")
+            _LOG.print_stacktrace(level=Logging.WARNING)
             return mode.replace("b", "")
         return mode
 
