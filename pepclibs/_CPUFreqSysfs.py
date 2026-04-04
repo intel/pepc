@@ -342,7 +342,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             frequency in Hz.
 
         Raises:
-            ErrorNotSupported: If the CPU frequency sysfs file does not exist.
+            ErrorNotSupported: The CPU frequency sysfs file does not exist.
             ErrorPerCPUPath: An I/O error occurred. The exception includes the CPU number and the
                              sysfs path that caused the error.
         """
@@ -362,7 +362,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             frequency in Hz.
 
         Raises:
-            ErrorNotSupported: If the CPU frequency sysfs file does not exist.
+            ErrorNotSupported: The CPU frequency sysfs file does not exist.
             ErrorPerCPUPath: An I/O error occurred. The exception includes the CPU number and the
                              sysfs path that caused the error.
         """
@@ -382,7 +382,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             frequency in Hz.
 
         Raises:
-            ErrorNotSupported: If the CPU frequency sysfs file does not exist.
+            ErrorNotSupported: The CPU frequency sysfs file does not exist.
             ErrorPerCPUPath: An I/O error occurred. The exception includes the CPU number and the
                              sysfs path that caused the error.
         """
@@ -402,7 +402,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             frequency limit in Hz.
 
         Raises:
-            ErrorNotSupported: If the CPU frequency sysfs file does not exist.
+            ErrorNotSupported: The CPU frequency sysfs file does not exist.
             ErrorPerCPUPath: An I/O error occurred. The exception includes the CPU number and the
                              sysfs path that caused the error.
         """
@@ -422,7 +422,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             frequency limit in Hz.
 
         Raises:
-            ErrorNotSupported: If the CPU frequency sysfs file does not exist.
+            ErrorNotSupported: The CPU frequency sysfs file does not exist.
             ErrorPerCPUPath: An I/O error occurred. The exception includes the CPU number and the
                              sysfs path that caused the error.
         """
@@ -439,8 +439,8 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             cpus: CPU numbers to validate the frequency for (the caller must validate CPU numbers).
 
         Raises:
-            ErrorOutOfRange: If the CPU frequency value is outside the allowed range.
-            ErrorBadOrder: If min. CPU frequency is greater than max. CPU frequency and vice versa.
+            ErrorOutOfRange: The CPU frequency value is outside the allowed range.
+            ErrorBadOrder: Min. CPU frequency is greater than max. CPU frequency and vice versa.
         """
 
         # Generate paths for all required reads.
@@ -517,14 +517,14 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             cpus: CPU numbers to set the frequency for.
 
         Raises:
-            ErrorNotSupported: If the CPU frequency sysfs file does not exist.
+            ErrorNotSupported: The CPU frequency sysfs file does not exist.
             ErrorPerCPUPath: An I/O error occurred. The exception includes the CPU number and the
                              sysfs path that caused the error.
             ErrorVerifyFailedPerCPUPath: The frequency could not be set or verified after retries.
                                          The exception includes the CPU number, sysfs path, expected
                                          value, and actual value read from sysfs.
-            ErrorOutOfRange: If the CPU frequency value is outside the allowed range.
-            ErrorBadOrder: If min. CPU frequency is greater than max. CPU frequency and vice versa.
+            ErrorOutOfRange: The CPU frequency value is outside the allowed range.
+            ErrorBadOrder: Min. CPU frequency is greater than max. CPU frequency and vice versa.
         """
 
         try:
@@ -547,14 +547,15 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             cpus: CPU numbers to set the frequency for (the caller must validate CPU numbers).
 
         Raises:
-            ErrorNotSupported: If the CPU frequency sysfs file does not exist.
+            ErrorPermissionDenied: No permissions to set the CPU frequency.
+            ErrorNotSupported: The CPU frequency sysfs file does not exist.
             ErrorPerCPUPath: An I/O error occurred. The exception includes the CPU number and the
                              sysfs path that caused the error.
             ErrorVerifyFailedPerCPUPath: The frequency could not be set or verified after retries.
                                          The exception includes the CPU number, sysfs path, expected
                                          value, and actual value read from sysfs.
-            ErrorOutOfRange: If the CPU frequency value is outside the allowed range.
-            ErrorBadOrder: If min. CPU frequency is greater than max. CPU frequency and vice versa.
+            ErrorOutOfRange: The CPU frequency value is outside the allowed range.
+            ErrorBadOrder: Min. CPU frequency is greater than max. CPU frequency and vice versa.
         """
 
         self._set_freq_sysfs(freq, "min", cpus)
@@ -569,14 +570,15 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             cpus: CPU numbers to set the frequency for (the caller must validate CPU numbers).
 
         Raises:
-            ErrorNotSupported: If the CPU frequency sysfs file does not exist.
+            ErrorPermissionDenied: No permissions to set the CPU frequency.
+            ErrorNotSupported: The CPU frequency sysfs file does not exist.
             ErrorPerCPUPath: An I/O error occurred. The exception includes the CPU number and the
                              sysfs path that caused the error.
             ErrorVerifyFailedPerCPUPath: The frequency could not be set or verified after retries.
                                          The exception includes the CPU number, sysfs path, expected
                                          value, and actual value read from sysfs.
-            ErrorOutOfRange: If the CPU frequency value is outside the allowed range.
-            ErrorBadOrder: If min. CPU frequency is greater than max. CPU frequency and vice versa.
+            ErrorOutOfRange: The CPU frequency value is outside the allowed range.
+            ErrorBadOrder: Min. CPU frequency is greater than max. CPU frequency and vice versa.
         """
 
         self._set_freq_sysfs(freq, "max", cpus)
@@ -621,7 +623,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             list of available frequencies in Hz.
 
         Raises:
-            ErrorNotSupported: If the frequencies sysfs file is not present.
+            ErrorNotSupported: The frequencies sysfs file is not present.
             ErrorPerCPUPath: An I/O error occurred. The exception includes the CPU number and the
                              sysfs path that caused the error.
         """
@@ -722,7 +724,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             frequency in Hz.
 
         Raises:
-            ErrorNotSupported: If the base frequency sysfs files do not exist.
+            ErrorNotSupported: The base frequency sysfs files do not exist.
             ErrorPerCPUPath: An I/O error occurred. The exception includes the CPU number and the
                              sysfs path that caused the error.
         """
@@ -759,7 +761,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             CPU frequency driver name for that CPU.
 
         Raises:
-            ErrorNotSupported: If the driver information cannot be determined.
+            ErrorNotSupported: The driver information cannot be determined.
         """
 
         what = "CPU frequency driver name"
@@ -814,7 +816,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             'intel_pstate' driver mode for that CPU.
 
         Raises:
-            ErrorNotSupported: If the driver is not 'intel_pstate' for a CPU.
+            ErrorNotSupported: The driver is not 'intel_pstate' for a CPU.
         """
 
         what = "'intel_pstate' driver mode"
@@ -843,7 +845,8 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
                   CPU numbers).
 
         Raises:
-            ErrorNotSupported: If the current driver is not 'intel_pstate', or it does not support
+            ErrorPermissionDenied: No permissions to set the 'intel_pstate' driver mode.
+            ErrorNotSupported: The current driver is not 'intel_pstate', or it does not support
                                changing to the specified mode (e.g., if attempting to set the mode
                                to "off" when HWP is enabled).
         """
@@ -890,7 +893,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             indicating the turbo status.
 
         Raises:
-            ErrorNotSupported: If turbo status cannot be determined for a CPU.
+            ErrorNotSupported: Turbo status cannot be determined for a CPU.
         """
 
         what = "turbo on/off status"
@@ -951,7 +954,8 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             cpus: CPU numbers to set the turbo mode for (the caller must validate CPU numbers).
 
         Raises:
-            ErrorNotSupported: If the CPU frequency driver does not support turbo control or if
+            ErrorPermissionDenied: No permissions to set the turbo on/off status.
+            ErrorNotSupported: The CPU frequency driver does not support turbo control or if
                                turbo is not supported in the current driver mode.
         """
 
@@ -1038,7 +1042,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             governor name for that CPU.
 
         Raises:
-            ErrorNotSupported: If the governor information cannot be determined.
+            ErrorNotSupported: The governor information cannot be determined.
             ErrorPerCPUPath: An I/O error occurred. The exception includes the CPU number and the
                              sysfs path that caused the error.
         """
@@ -1078,7 +1082,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             available governor names for that CPU.
 
         Raises:
-            ErrorNotSupported: If the governors sysfs file is not present.
+            ErrorNotSupported: The governors sysfs file is not present.
             ErrorPerCPUPath: An I/O error occurred. The exception includes the CPU number and the
                              sysfs path that caused the error.
         """
@@ -1118,7 +1122,8 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
             cpus: CPU numbers to set the governor for (the caller must validate CPU numbers).
 
         Raises:
-            ErrorNotSupported: If the CPU governors sysfs files do not exist.
+            ErrorPermissionDenied: No permissions to set the CPU frequency governor.
+            ErrorNotSupported: The CPU governors sysfs files do not exist.
             ErrorPerCPUPath: An I/O error occurred. The exception includes the CPU number and the
                              sysfs path that caused the error.
         """

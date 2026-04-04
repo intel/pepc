@@ -715,6 +715,9 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         Returns:
             True if the process manager can execute commands with 'sudo' without a password, False
             otherwise.
+
+        Raises:
+            ErrorTimeOut: Failed to determine whether passwordless 'sudo' is available.
         """
 
         if self._passwdless_sudo is None:
@@ -737,6 +740,9 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         Returns:
             True if the process manager has superuser access, False otherwise.
+
+        Raises:
+            ErrorTimeOut: Failed to determine the superuser status.
         """
 
         if self._is_root is None:
@@ -800,6 +806,10 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         Returns:
             A process object (subclass of 'ProcessBase') representing the asynchronous process.
+
+        Raises:
+            ErrorPermissionDenied: The command cannot be executed with superuser privileges.
+            ErrorTimeOut: Failed to determine the superuser status.
         """
 
         raise NotImplementedError("ProcessManagerBase.run_async()")
@@ -849,6 +859,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
                           line, depending on 'join').
 
         Raises:
+            ErrorPermissionDenied: The command cannot be executed with superuser privileges.
             ErrorTimeOut: The timeout expired before the command completed.
 
         Notes:
@@ -875,6 +886,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         Same as 'run(join=True)', provided for convenience and more deterministic return type.
 
         Raises:
+            ErrorPermissionDenied: The command cannot be executed with superuser privileges.
             ErrorTimeOut: The timeout expired before the command completed.
         """
 
@@ -906,6 +918,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         Same as 'run(join=False)', provided for convenience and more deterministic return type.
 
         Raises:
+            ErrorPermissionDenied: The command cannot be executed with superuser privileges.
             ErrorTimeOut: The timeout expired before the command completed.
         """
 
@@ -964,6 +977,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
                           line, depending on 'join').
 
         Raises:
+            ErrorPermissionDenied: The command cannot be executed with superuser privileges.
             ErrorTimeOut: The timeout expired before the command completed.
         """
 
@@ -985,6 +999,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         type.
 
         Raises:
+            ErrorPermissionDenied: The command cannot be executed with superuser privileges.
             ErrorTimeOut: The timeout expired before the command completed.
         """
 
@@ -1011,6 +1026,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         type.
 
         Raises:
+            ErrorPermissionDenied: The command cannot be executed with superuser privileges.
             ErrorTimeOut: The timeout expired before the command completed.
         """
 

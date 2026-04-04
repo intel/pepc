@@ -290,7 +290,8 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
             su: If 'True', write as superuser (root).
 
         Raises:
-            ErrorNotSupported: If the file is not found.
+            ErrorPermissionDenied: No permissions to write to the sysfs file.
+            ErrorNotSupported: The file is not found.
         """
 
         _LOG.debug("Writing value '%s' to%s sysfs file '%s'%s",
@@ -345,7 +346,8 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
             The value read from the sysfs file if verification succeeds.
 
         Raises:
-            ErrorVerifyFailed: If the value in the file does not match 'val' after all retries.
+            ErrorPermissionDenied: No permissions to read the sysfs file.
+            ErrorVerifyFailed: The value in the file does not match 'val' after all retries.
             ErrorVerifyFailedPath: Specific subclass of ErrorVerifyFailed that includes the file
                                    path information (this is what's actually raised).
         """
@@ -386,7 +388,8 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
             su: If 'True', run the write script as superuser (root).
 
         Raises:
-            ErrorVerifyFailed: If verification of any write operation fails.
+            ErrorPermissionDenied: No permissions to write to a sysfs file.
+            ErrorVerifyFailed: Verification of any write operation fails.
             ErrorVerifyFailedPath: Specific subclass of ErrorVerifyFailed that includes the file
                                    path information (this is what's actually raised).
         """
@@ -524,7 +527,8 @@ for path, (val, verify, retries, sleep) in winfo.items():
             batch_info: The batch write information dictionary.
 
         Raises:
-            ErrorVerifyFailed: If verification of any write operation fails.
+            ErrorPermissionDenied: No permissions to write to a sysfs file.
+            ErrorVerifyFailed: Verification of any write operation fails.
             ErrorVerifyFailedPath: Specific subclass of ErrorVerifyFailed that includes the file
                                    path information (this is what's actually raised).
         """

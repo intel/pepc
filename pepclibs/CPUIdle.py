@@ -252,7 +252,7 @@ class CPUIdle(ClassHelpers.SimpleCloseContext):
               sort, so state0, state1, ..., state9, state10, etc.).
 
         Raises:
-            ErrorPerCPUPath: If there is an error listing C-state directories for a specific CPU.
+            ErrorPerCPUPath: There is an error listing C-state directories for a specific CPU.
         """
 
         # Separate CPUs into cached and uncached.
@@ -408,7 +408,7 @@ except Exception as err:
                 - value: Attribute value as a string.
 
         Raises:
-            ErrorNotFound: If no C-state files are found for the specified CPUs.
+            ErrorNotFound: No C-state files are found for the specified CPUs.
         """
 
         yielded_any = False
@@ -626,7 +626,7 @@ except Exception as err:
             The name of the current Linux CPU idle driver.
 
         Raises:
-            ErrorNotSupported: If no idle driver is found.
+            ErrorNotSupported: No idle driver is found.
         """
 
         path = self._sysfs_base / "cpuidle" / "current_driver"
@@ -657,7 +657,7 @@ except Exception as err:
             Tuples of (CPU number, C-states information dictionary).
 
         Raises:
-            ErrorNotSupported: If there are no requestable C-states available.
+            ErrorNotSupported: There are no requestable C-states available.
         """
 
         # Verify there is an idle driver.
@@ -682,7 +682,7 @@ except Exception as err:
             C-states information dictionary.
 
         Raises:
-            ErrorNotSupported: If there are no requestable C-states available.
+            ErrorNotSupported: There are no requestable C-states available.
         """
 
         csinfo: dict[str, ReqCStateInfoTypedDict] = {}
@@ -698,7 +698,7 @@ except Exception as err:
             The name of the current CPU idle governor.
 
         Raises:
-            ErrorNotSupported: If no idle driver is present.
+            ErrorNotSupported: No idle driver is present.
         """
 
         # Verify there is an idle driver.
@@ -718,7 +718,7 @@ except Exception as err:
             List of available idle governors.
 
         Raises:
-            ErrorNotSupported: If no idle driver is detected.
+            ErrorNotSupported: No idle driver is detected.
         """
 
         # Verify there is an idle driver.
@@ -748,7 +748,7 @@ except Exception as err:
             C-state names.
 
         Raises:
-            ErrorNotSupported: If no idle driver is in use on the target host.
+            ErrorNotSupported: No idle driver is in use on the target host.
         """
 
         # Verify there is an idle driver.
@@ -801,7 +801,8 @@ except Exception as err:
             C-state names.
 
         Raises:
-            ErrorNotSupported: If no idle driver is in use on the target host.
+            ErrorPermissionDenied: No permissions to enable C-states.
+            ErrorNotSupported: No idle driver is in use on the target host.
         """
 
         return self._toggle_cstates(cpus, csnames, True)
@@ -823,7 +824,8 @@ except Exception as err:
             C-state names.
 
         Raises:
-            ErrorNotSupported: If no idle driver is in use on the target host.
+            ErrorPermissionDenied: No permissions to disable C-states.
+            ErrorNotSupported: No idle driver is in use on the target host.
         """
 
         return self._toggle_cstates(cpus, csnames, False)
@@ -836,7 +838,8 @@ except Exception as err:
             governor: Name of the governor to set.
 
         Raises:
-            ErrorNotSupported: If idle governors are not supported on the system.
+            ErrorPermissionDenied: No permissions to set the idle governor.
+            ErrorNotSupported: Idle governors are not supported on the system.
         """
 
         governors = self.get_available_governors()

@@ -172,7 +172,7 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
             Tuple (package, die, value), where 'value' is the uncore frequency in Hz.
 
         Raises:
-            ErrorNotSupported: If the uncore frequency operation is not supported.
+            ErrorNotSupported: The uncore frequency operation is not supported.
         """
 
         raise NotImplementedError("BUG: The sub-class must implement this method")
@@ -191,7 +191,7 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
             specified die in the specified package, in Hz.
 
         Raises:
-            ErrorNotSupported: If the uncore frequency operation is not supported.
+            ErrorNotSupported: The uncore frequency operation is not supported.
         """
 
         yield from self._get_freq_dies("min", dies)
@@ -210,7 +210,7 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
             specified die in the specified package, in Hz.
 
         Raises:
-            ErrorNotSupported: If the uncore frequency operation is not supported.
+            ErrorNotSupported: The uncore frequency operation is not supported.
         """
 
         yield from self._get_freq_dies("max", dies)
@@ -229,7 +229,7 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
             specified die in the specified package, in Hz.
 
         Raises:
-            ErrorNotSupported: If the uncore frequency operation is not supported.
+            ErrorNotSupported: The uncore frequency operation is not supported.
         """
 
         yield from self._get_freq_dies("current", dies)
@@ -249,7 +249,7 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
             the specified die in the specified package, in Hz.
 
         Raises:
-            ErrorNotSupported: If the uncore frequency limit sysfs file does not exist.
+            ErrorNotSupported: The uncore frequency limit sysfs file does not exist.
         """
 
         yield from self._get_freq_dies("min", dies, limit=True)
@@ -269,7 +269,7 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
             the specified die in the specified package, in Hz.
 
         Raises:
-            ErrorNotSupported: If the uncore frequency operation is not supported.
+            ErrorNotSupported: The uncore frequency operation is not supported.
         """
 
         yield from self._get_freq_dies("max", dies, limit=True)
@@ -311,7 +311,7 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
             frequency value for the specified die in the specified package.
 
         Raises:
-            ErrorNotSupported: If the uncore frequency operation is not supported.
+            ErrorNotSupported: The uncore frequency operation is not supported.
         """
 
         yield from self._get_elc_zone_freq_dies("low", "min", dies)
@@ -332,7 +332,7 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
             frequency value for the specified die in the specified package.
 
         Raises:
-            ErrorNotSupported: If the uncore frequency operation is not supported.
+            ErrorNotSupported: The uncore frequency operation is not supported.
         """
 
         yield from self._get_elc_zone_freq_dies("mid", "min", dies)
@@ -359,7 +359,8 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
             dies: Dictionary mapping package numbers to die numbers.
 
         Raises:
-            ErrorNotSupported: If the uncore frequency operation is not supported.
+            ErrorPermissionDenied: No permissions to set the uncore frequency.
+            ErrorNotSupported: The uncore frequency operation is not supported.
         """
 
         self._set_freq_dies(freq, "min", dies)
@@ -373,7 +374,8 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
             dies: Dictionary mapping package numbers to die numbers.
 
         Raises:
-            ErrorNotSupported: If the uncore frequency operation is not supported.
+            ErrorPermissionDenied: No permissions to set the uncore frequency.
+            ErrorNotSupported: The uncore frequency operation is not supported.
         """
 
         self._set_freq_dies(freq, "max", dies)
@@ -408,7 +410,8 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
             dies: Dictionary mapping package numbers to die numbers.
 
         Raises:
-            ErrorNotSupported: If the uncore frequency operation is not supported.
+            ErrorPermissionDenied: No permissions to set the uncore frequency.
+            ErrorNotSupported: The uncore frequency operation is not supported.
         """
 
         self._set_elc_zone_freq_dies(freq, "low", "min", dies)
@@ -423,7 +426,8 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
             dies: Dictionary mapping package numbers to die numbers.
 
         Raises:
-            ErrorNotSupported: If the uncore frequency operation is not supported.
+            ErrorPermissionDenied: No permissions to set the uncore frequency.
+            ErrorNotSupported: The uncore frequency operation is not supported.
         """
 
         self._set_elc_zone_freq_dies(freq, "mid", "min", dies)
@@ -475,7 +479,7 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
             corresponding to 'cpu', in Hz.
 
         Raises:
-            ErrorNotSupported: If the uncore frequency operation is not supported.
+            ErrorNotSupported: The uncore frequency operation is not supported.
         """
 
         yield from self._get_freq_cpus("min", cpus)
@@ -492,7 +496,7 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
             corresponding to 'cpu', in Hz.
 
         Raises:
-            ErrorNotSupported: If the uncore frequency operation is not supported.
+            ErrorNotSupported: The uncore frequency operation is not supported.
         """
 
         yield from self._get_freq_cpus("max", cpus)
@@ -509,7 +513,7 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
             corresponding to 'cpu', in Hz.
 
         Raises:
-            ErrorNotSupported: If the uncore frequency operation is not supported.
+            ErrorNotSupported: The uncore frequency operation is not supported.
         """
 
         yield from self._get_freq_cpus("current", cpus)
@@ -527,7 +531,7 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
             corresponding to 'cpu', in Hz.
 
         Raises:
-            ErrorNotSupported: If the uncore frequency operation is not supported.
+            ErrorNotSupported: The uncore frequency operation is not supported.
         """
 
         yield from self._get_freq_cpus("min", cpus, limit=True)
@@ -545,7 +549,7 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
             corresponding to 'cpu', in Hz.
 
         Raises:
-            ErrorNotSupported: If the uncore frequency operation is not supported.
+            ErrorNotSupported: The uncore frequency operation is not supported.
         """
 
         yield from self._get_freq_cpus("max", cpus, limit=True)
@@ -600,7 +604,7 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
             value for the die corresponding to 'cpu'.
 
         Raises:
-            ErrorNotSupported: If the ELC low zone minimum frequency operation is not supported.
+            ErrorNotSupported: The ELC low zone minimum frequency operation is not supported.
         """
 
         yield from self._get_elc_zone_freq_cpus("low", "min", cpus)
@@ -619,7 +623,7 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
             value for the die corresponding to 'cpu'.
 
         Raises:
-            ErrorNotSupported: If the ELC middle zone minimum frequency operation is not supported.
+            ErrorNotSupported: The ELC middle zone minimum frequency operation is not supported.
         """
 
         yield from self._get_elc_zone_freq_cpus("mid", "min", cpus)
@@ -649,8 +653,8 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
             zname: ELC zone name in case of ELC zone frequency validation.
 
         Raises:
-            ErrorOutOfRange: If the uncore frequency value is outside the allowed range.
-            ErrorBadOrder: If min. uncore frequency is greater than max. uncore frequency.
+            ErrorOutOfRange: The uncore frequency value is outside the allowed range.
+            ErrorBadOrder: Min. uncore frequency is greater than max. uncore frequency.
         """
 
         if freq < min_freq_limit or freq > max_freq_limit:
@@ -714,9 +718,10 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
             cpus: A collection of integer CPU numbers to set the uncore frequency for.
 
         Raises:
-            ErrorNotSupported: If the uncore frequency operation is not supported.
-            ErrorOutOfRange: If the uncore frequency value is outside the allowed range.
-            ErrorBadOrder: If min. uncore frequency is greater than max. uncore frequency.
+            ErrorPermissionDenied: No permissions to set the uncore frequency.
+            ErrorNotSupported: The uncore frequency operation is not supported.
+            ErrorOutOfRange: The uncore frequency value is outside the allowed range.
+            ErrorBadOrder: Min. uncore frequency is greater than max. uncore frequency.
         """
 
         self._set_freq_cpus(freq, "min", cpus)
@@ -730,9 +735,10 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
             cpus: A collection of integer CPU numbers to set the uncore frequency for.
 
         Raises:
-            ErrorNotSupported: If the uncore frequency operation is not supported.
-            ErrorOutOfRange: If the uncore frequency value is outside the allowed range.
-            ErrorBadOrder: If max. uncore frequency is less than min. uncore frequency.
+            ErrorPermissionDenied: No permissions to set the uncore frequency.
+            ErrorNotSupported: The uncore frequency operation is not supported.
+            ErrorOutOfRange: The uncore frequency value is outside the allowed range.
+            ErrorBadOrder: Max. uncore frequency is less than min. uncore frequency.
         """
 
         self._set_freq_cpus(freq, "max", cpus)
@@ -780,7 +786,8 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
             cpus: A collection of integer CPU numbers to set the ELC zone uncore frequency for.
 
         Raises:
-            ErrorNotSupported: If the uncore frequency operation is not supported.
+            ErrorPermissionDenied: No permissions to set the uncore frequency.
+            ErrorNotSupported: The uncore frequency operation is not supported.
         """
 
         self._set_elc_zone_freq_cpus(freq, "low", "min", cpus)
@@ -795,7 +802,8 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
             cpus: A collection of integer CPU numbers to set the ELC zone uncore frequency for.
 
         Raises:
-            ErrorNotSupported: If the uncore frequency operation is not supported.
+            ErrorPermissionDenied: No permissions to set the uncore frequency.
+            ErrorNotSupported: The uncore frequency operation is not supported.
         """
 
         self._set_elc_zone_freq_cpus(freq, "mid", "min", cpus)
@@ -815,7 +823,7 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
             Tuple (package, die, value), where 'value' is the ELC threshold value.
 
         Raises:
-            ErrorNotSupported: If the ELC threshold operation is not supported.
+            ErrorNotSupported: The ELC threshold operation is not supported.
         """
 
         raise NotImplementedError("BUG: The sub-class must implement this method")
@@ -835,7 +843,7 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
             for the specified die in the specified package.
 
         Raises:
-            ErrorNotSupported: If the ELC low threshold operation is not supported.
+            ErrorNotSupported: The ELC low threshold operation is not supported.
         """
 
         yield from self._get_elc_threshold_dies("low", dies)
@@ -855,7 +863,7 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
             for the specified die in the specified package.
 
         Raises:
-            ErrorNotSupported: If the ELC high threshold operation is not supported.
+            ErrorNotSupported: The ELC high threshold operation is not supported.
         """
 
         yield from self._get_elc_threshold_dies("high", dies)
@@ -878,7 +886,7 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
             status.
 
         Raises:
-            ErrorNotSupported: If the ELC threshold operation is not supported.
+            ErrorNotSupported: The ELC threshold operation is not supported.
         """
 
         raise NotImplementedError("BUG: The sub-class must implement this method")
@@ -899,7 +907,7 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
             enabled/disabled status for the specified die in the specified package.
 
         Raises:
-            ErrorNotSupported: If the ELC high threshold status operation is not supported.
+            ErrorNotSupported: The ELC high threshold status operation is not supported.
         """
 
         yield from self._get_elc_threshold_status_dies("high", dies)
@@ -919,8 +927,8 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
             die: Die number to validate the threshold for.
 
         Raises:
-            ErrorOutOfRange: If the ELC threshold value is outside the allowed range.
-            ErrorBadOrder: If ELC low threshold is greater than ELC high threshold.
+            ErrorOutOfRange: The ELC threshold value is outside the allowed range.
+            ErrorBadOrder: ELC low threshold is greater than ELC high threshold.
         """
 
         if threshold < 0 or threshold > 100:
@@ -970,7 +978,8 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
             dies: Dictionary mapping package numbers to sequences of die numbers.
 
         Raises:
-            ErrorNotSupported: If setting the ELC low threshold is not supported.
+            ErrorPermissionDenied: No permissions to set the ELC low threshold.
+            ErrorNotSupported: Setting the ELC low threshold is not supported.
         """
 
         self._set_elc_threshold_dies(threshold, "low", dies)
@@ -985,7 +994,8 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
             dies: Dictionary mapping package numbers to sequences of die numbers.
 
         Raises:
-            ErrorNotSupported: If setting the ELC high threshold is not supported.
+            ErrorPermissionDenied: No permissions to set the ELC high threshold.
+            ErrorNotSupported: Setting the ELC high threshold is not supported.
         """
 
         self._set_elc_threshold_dies(threshold, "high", dies)
@@ -1016,7 +1026,8 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
             dies: Dictionary mapping package numbers to sequences of die numbers.
 
         Raises:
-            ErrorNotSupported: If setting the ELC high threshold status is not supported.
+            ErrorPermissionDenied: No permissions to set the ELC high threshold status.
+            ErrorNotSupported: Setting the ELC high threshold status is not supported.
         """
 
         self._set_elc_threshold_status_dies(status, "high", dies)
@@ -1067,7 +1078,7 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
             'cpu'.
 
         Raises:
-            ErrorNotSupported: If the ELC low threshold operation is not supported.
+            ErrorNotSupported: The ELC low threshold operation is not supported.
         """
 
         yield from self._get_elc_threshold_cpus("low", cpus)
@@ -1085,7 +1096,7 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
             'cpu'.
 
         Raises:
-            ErrorNotSupported: If the ELC high threshold operation is not supported.
+            ErrorNotSupported: The ELC high threshold operation is not supported.
         """
 
         yield from self._get_elc_threshold_cpus("high", cpus)
@@ -1138,7 +1149,7 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
             corresponding to 'cpu'.
 
         Raises:
-            ErrorNotSupported: If the ELC high threshold status operation is not supported.
+            ErrorNotSupported: The ELC high threshold status operation is not supported.
         """
 
         yield from self._get_elc_threshold_status_cpus("high", cpus)
@@ -1183,9 +1194,10 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
             cpus: A collection of integer CPU numbers to set the ELC low threshold for.
 
         Raises:
-            ErrorNotSupported: If the ELC low threshold operation is not supported.
-            ErrorOutOfRange: If the ELC low threshold value is outside the allowed range.
-            ErrorBadOrder: If ELC low threshold is greater than ELC high threshold.
+            ErrorPermissionDenied: No permissions to set the ELC low threshold.
+            ErrorNotSupported: The ELC low threshold operation is not supported.
+            ErrorOutOfRange: The ELC low threshold value is outside the allowed range.
+            ErrorBadOrder: ELC low threshold is greater than ELC high threshold.
         """
 
         self._set_elc_threshold_cpus(threshold, "low", cpus)
@@ -1199,9 +1211,10 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
             cpus: A collection of integer CPU numbers to set the ELC high threshold for.
 
         Raises:
-            ErrorNotSupported: If the ELC high threshold operation is not supported.
-            ErrorOutOfRange: If the ELC high threshold value is outside the allowed range.
-            ErrorBadOrder: If ELC high threshold is less than ELC low threshold.
+            ErrorPermissionDenied: No permissions to set the ELC high threshold.
+            ErrorNotSupported: The ELC high threshold operation is not supported.
+            ErrorOutOfRange: The ELC high threshold value is outside the allowed range.
+            ErrorBadOrder: ELC high threshold is less than ELC low threshold.
         """
 
         self._set_elc_threshold_cpus(threshold, "high", cpus)
@@ -1247,7 +1260,8 @@ class UncoreFreqBase(ClassHelpers.SimpleCloseContext):
             cpus: A collection of integer CPU numbers to set the ELC high threshold status for.
 
         Raises:
-            ErrorNotSupported: If the ELC high threshold status operation is not supported.
+            ErrorPermissionDenied: No permissions to set the ELC high threshold status.
+            ErrorNotSupported: The ELC high threshold status operation is not supported.
         """
 
         self._set_elc_threshold_status_cpus(status, "high", cpus)

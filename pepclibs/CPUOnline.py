@@ -89,7 +89,7 @@ class CPUOnline(ClassHelpers.SimpleCloseContext):
             path: Path to the 'online' sysfs file for the CPU.
 
         Raises:
-            ErrorNotSupported: If the path does not exist, which means that the CPU does not support
+            ErrorNotSupported: The path does not exist, which means that the CPU does not support
                                onlining/offlining.
         """
 
@@ -162,7 +162,7 @@ class CPUOnline(ClassHelpers.SimpleCloseContext):
             skip_unsupported: If True, skip CPUs that do not support hotplugging.
 
         Raises:
-            ErrorNotSupported: If a CPU does not support hotplugging and skip_unsupported is False.
+            ErrorNotSupported: A CPU does not support hotplugging and skip_unsupported is False.
         """
 
         cpuinfo = self._get_cpuinfo()
@@ -232,7 +232,8 @@ class CPUOnline(ClassHelpers.SimpleCloseContext):
                               exception.
 
         Raises:
-            ErrorNotSupported: If a CPU does not support onlining/offlining and 'skip_unsupported'
+            ErrorPermissionDenied: No permissions to online CPUs.
+            ErrorNotSupported: A CPU does not support onlining/offlining and 'skip_unsupported'
                                is False.
         """
 
@@ -248,7 +249,8 @@ class CPUOnline(ClassHelpers.SimpleCloseContext):
                               exception.
 
         Raises:
-            ErrorNotSupported: If a CPU does not support onlining/offlining and 'skip_unsupported'
+            ErrorPermissionDenied: No permissions to offline CPUs.
+            ErrorNotSupported: A CPU does not support onlining/offlining and 'skip_unsupported'
                                is False.
         """
 
@@ -265,7 +267,7 @@ class CPUOnline(ClassHelpers.SimpleCloseContext):
             True if the CPU is online, False otherwise.
 
         Raises:
-            ErrorNotFound: If the CPU path does not exist and is not due to hotplug being disabled.
+            ErrorNotFound: The CPU path does not exist and is not due to hotplug being disabled.
 
         Notes:
             - If the hotplug subsystem is disabled and the "online" file is missing, assume the CPU

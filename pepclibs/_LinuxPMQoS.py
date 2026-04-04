@@ -142,8 +142,8 @@ class LinuxPMQoS(ClassHelpers.SimpleCloseContext):
             Tuples of (cpu, latency_limit) where latency_limit is in seconds.
 
         Raises:
-            ErrorNotSupported: If the CPU PM QoS latency limit sysfs file does not exist.
-            ErrorPerCPUPath: If reading the sysfs file fails with path-related error.
+            ErrorNotSupported: The CPU PM QoS latency limit sysfs file does not exist.
+            ErrorPerCPUPath: Reading the sysfs file fails with path-related error.
         """
 
         try:
@@ -161,7 +161,7 @@ class LinuxPMQoS(ClassHelpers.SimpleCloseContext):
             The global latency limit in seconds.
 
         Raises:
-            ErrorNotSupported: If the PM QoS global latency limit character device node does not
+            ErrorNotSupported: The PM QoS global latency limit character device node does not
                                exist.
         """
 
@@ -200,8 +200,9 @@ class LinuxPMQoS(ClassHelpers.SimpleCloseContext):
             cpus: CPU numbers to set the latency limit for (the caller must validate CPU numbers).
 
         Raises:
-            ErrorPerCPUPath: If writing the sysfs file fails with path-related error.
-            ErrorVerifyFailedPerCPUPath: If the written value doesn't match the expected value.
+            ErrorPermissionDenied: No permissions to set the CPU PM QoS latency limit.
+            ErrorPerCPUPath: Writing the sysfs file fails with path-related error.
+            ErrorVerifyFailedPerCPUPath: The written value doesn't match the expected value.
         """
 
         try:
