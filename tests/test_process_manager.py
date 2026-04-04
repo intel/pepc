@@ -924,3 +924,24 @@ def test_abspath(params: CommonTestParamsTypedDict):
     bogus_path = tmpdir / "bogus"
     with pytest.raises(ErrorNotFound):
         pman.abspath(bogus_path)
+
+def test_no_trailing_newline(params: CommonTestParamsTypedDict):
+    """Test that 'run_verify_nojoin()' captures the last line when it has no trailing newline."""
+
+    pman = params["pman"]
+
+    # Write a file where the last line has no trailing newline.
+    tmpdir = pman.mkdtemp()
+    test_file = tmpdir / "no_newline.txt"
+
+    with pman.open(test_file, "w") as fobj:
+        fobj.write("line1\nline2\nno newline here")
+
+    # Read it back via 'cat', which will output the last line without a trailing newline.
+    for intsh in (True, False):
+        stdout, _ = pman.run_verify_nojoin(f"cat {test_file}", timeout=_TIMEOUT, intsh=intsh)
+        assert stdout == ["line1\n", "line2\n", "no newline here"], \
+               f"Last line without newline was lost or mangled (intsh={intsh})"
+
+    # Cleanup step.
+    pman.rmtree(tmpdir)
