@@ -22,17 +22,15 @@ import contextlib
 from pathlib import Path
 from pepclibs.helperlibs import LocalProcessManager, SSHProcessManager, EmulProcessManager
 # pylint: disable-next=unused-import
-from pepclibs.helperlibs._ProcessManagerBase import ProcWaitResultType
+from pepclibs.helperlibs._ProcessManagerTypes import ProcWaitResultType
 
 if typing.TYPE_CHECKING:
-    from typing import Union, cast
-    from pepclibs.helperlibs._ProcessManagerBase import LsdirTypedDict
+    from typing import cast
+    from pepclibs.helperlibs._ProcessManagerTypes import LsdirTypedDict, LsdirSortbyType
+    from pepclibs.helperlibs._ProcessManagerTypes import ProcessManagerProtocol, ProcessProtocol
 
-    ProcessManagerType = Union[LocalProcessManager.LocalProcessManager,
-                               SSHProcessManager.SSHProcessManager,
-                               EmulProcessManager.EmulProcessManager]
-
-    ProcessType = Union[LocalProcessManager.LocalProcess, SSHProcessManager.SSHProcess]
+    ProcessManagerType = ProcessManagerProtocol
+    ProcessType = ProcessProtocol
 
 def get_pman(hostname: str,
              username: str = "",

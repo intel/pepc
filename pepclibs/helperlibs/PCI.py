@@ -18,8 +18,7 @@ from pepclibs.helperlibs import ProcessManager, LocalProcessManager, ClassHelper
 
 if typing.TYPE_CHECKING:
     from typing import Generator, TypedDict, Literal
-    from pepclibs.helperlibs.ProcessManager import ProcessManagerType
-    from pepclibs.helperlibs._ProcessManagerBase import LsdirTypedDict
+    from pepclibs.helperlibs.ProcessManager import ProcessManagerType, LsdirTypedDict
 
     class PCIInfoTypedDict(TypedDict, total=False):
         """

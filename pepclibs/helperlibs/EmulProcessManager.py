@@ -39,7 +39,7 @@ from pepclibs.msr._SimpleMSR import _CPU_BYTEORDER
 
 if typing.TYPE_CHECKING:
     from typing import Generator, TypedDict, IO, cast, Final
-    from pepclibs.helperlibs._ProcessManagerBase import LsdirTypedDict, LsdirSortbyType
+    from pepclibs.helperlibs._ProcessManagerTypes import LsdirTypedDict, LsdirSortbyType
     from pepclibs.helperlibs.emul.EmulCommon import _EDConfMSRTypedDict, _EDConfSysfsTypedDict
     from pepclibs.helperlibs.emul.EmulCommon import _EDConfProcfsTypedDict, _EDConfTypedDict
 

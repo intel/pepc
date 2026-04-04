@@ -21,80 +21,15 @@ import typing
 import threading
 import contextlib
 from pathlib import Path
-from typing import NamedTuple
 from operator import itemgetter
 from pepclibs.helperlibs import Logging, Human, Trivial, ClassHelpers, ToolChecker
+from pepclibs.helperlibs._ProcessManagerTypes import ProcWaitResultType, ProcWaitResultJoinType
+from pepclibs.helperlibs._ProcessManagerTypes import ProcWaitResultNoJoinType
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound
 
 if typing.TYPE_CHECKING:
-    from typing import IO, Any, cast, Generator, TypedDict, Literal
-
-    class LsdirTypedDict(TypedDict):
-        """
-        A directory entry information dictionary.
-
-        Attributes:
-            name: The name of the directory entry (a file, a directory, etc).
-            path: The full path to the directory entry.
-            mode: The mode (permissions) of the directory entry.
-            ctime: The creation time of the directory entry in seconds since the epoch.
-        """
-
-        name: str
-        path: Path
-        mode: int
-        ctime: float
-
-    LsdirSortbyType = Literal["none", "ctime", "alphabetic", "natural"]
-
-class ProcWaitResultJoinType(NamedTuple):
-    """
-    The result of the 'run_join()' method for a process with joined output lines.
-
-    Attributes:
-        stdout: The standard output of the process as a single string. The tailing newline is
-                not stripped.
-        stderr: The standard error of the process as a single string. The tailing newline is
-                not stripped.
-        exitcode: The exit code of the process. Can be 'None' if the process is still running.
-    """
-
-    stdout: str
-    stderr: str
-    exitcode: int | None
-
-class ProcWaitResultNoJoinType(NamedTuple):
-    """
-    The result of the 'run_nojoin()' method for a process with non-joined output lines.
-
-    Attributes:
-        stdout: The standard output of the process as a list of strings lines. The tailing
-                newline is not stripped.
-        stderr: The standard error of the process as a list of strings lines. The tailing
-                newline is not stripped.
-        exitcode: The exit code of the process. Can be 'None' if the process is still running.
-    """
-
-    stdout: list[str]
-    stderr: list[str]
-    exitcode: int | None
-
-class ProcWaitResultType(NamedTuple):
-    """
-    The result of the 'wait()' method for a process.
-
-    Attributes:
-        stdout: The standard output of the process. Can be a single string or a list of strings
-                lines. The tailing newline is not stripped.
-        stderr: The standard error of the process. Can be a single string or a list of strings
-                lines. The tailing newline is not stripped.
-        exitcode: The exit code of the process. Can be an integer or None if the process is still
-                  running.
-    """
-
-    stdout: str | list[str]
-    stderr: str | list[str]
-    exitcode: int | None
+    from typing import IO, Any, cast, Generator
+    from pepclibs.helperlibs._ProcessManagerTypes import LsdirTypedDict, LsdirSortbyType
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
@@ -172,6 +107,8 @@ def have_enough_lines(output: list[list[str]], lines: tuple[int, int] = (0, 0)) 
 class ProcessBase(ClassHelpers.SimpleCloseContext):
     """
     The base class for representing a processes created and managed by a process manager.
+
+    Subclasses must satisfy the 'ProcessProtocol' protocol defined in '_ProcessManagerTypes'.
     """
 
     def __init__(self,
@@ -727,6 +664,9 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
     Process managers provide an interface for executing commands and managing files and processes.
     The idea is to have the same API for doing these regardless on whether the command is executed
     on the local or remote system.
+
+    Subclasses must satisfy the 'ProcessManagerProtocol' protocol defined in
+    '_ProcessManagerTypes'.
     """
 
     def __init__(self):

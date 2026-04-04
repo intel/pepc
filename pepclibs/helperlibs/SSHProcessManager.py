@@ -38,13 +38,13 @@ except (ModuleNotFoundError, ImportError):
     from pepclibs.helperlibs import DummyParamiko as paramiko  # type: ignore[no-redef]
 from pepclibs.helperlibs import DummyParamiko
 from pepclibs.helperlibs import Logging, _ProcessManagerBase, ClassHelpers, Trivial
-from pepclibs.helperlibs._ProcessManagerBase import ProcWaitResultType
+from pepclibs.helperlibs._ProcessManagerTypes import ProcWaitResultType
 from pepclibs.helperlibs.Exceptions import Error, ErrorPermissionDenied, ErrorTimeOut, ErrorConnect
 from pepclibs.helperlibs.Exceptions import ErrorNotFound, ErrorExists
 
 if typing.TYPE_CHECKING:
     from typing import Generator, IO, Sequence
-    from pepclibs.helperlibs._ProcessManagerBase import LsdirTypedDict, LsdirSortbyType
+    from pepclibs.helperlibs._ProcessManagerTypes import LsdirTypedDict, LsdirSortbyType
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
