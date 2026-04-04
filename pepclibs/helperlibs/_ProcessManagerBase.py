@@ -765,6 +765,9 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
                 - stderr: The standard error of the executed command (either a string or a list of
                           line, depending on 'join').
 
+        Raises:
+            ErrorTimeOut: The timeout expired before the command completed.
+
         Notes:
             - If 'mix_output' is True, the 'stderr' part of the returned tuple will be an empty
               string or list.
@@ -786,6 +789,9 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
                  newgrp: bool = False) -> ProcWaitResultJoinType:
         """
         Same as 'run(join=True)', provided for convenience and more deterministic return type.
+
+        Raises:
+            ErrorTimeOut: The timeout expired before the command completed.
         """
 
         res = self.run(cmd, timeout=timeout, capture_output=capture_output,
@@ -813,6 +819,9 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
                    newgrp: bool = False) -> ProcWaitResultNoJoinType:
         """
         Same as 'run(join=False)', provided for convenience and more deterministic return type.
+
+        Raises:
+            ErrorTimeOut: The timeout expired before the command completed.
         """
 
         res = self.run(cmd, timeout=timeout, capture_output=capture_output,
@@ -866,6 +875,9 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
                           line, depending on 'join').
                 - stderr: The standard error of the executed command (either a string or a list of
                           line, depending on 'join').
+
+        Raises:
+            ErrorTimeOut: The timeout expired before the command completed.
         """
 
         raise NotImplementedError("ProcessManagerBase.run_verify()")
@@ -883,6 +895,9 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         """
         Same as 'run_verify(join=True)', provided for convenience and more deterministic return
         type.
+
+        Raises:
+            ErrorTimeOut: The timeout expired before the command completed.
         """
 
         res = self.run_verify(cmd, timeout=timeout, capture_output=capture_output,
@@ -905,6 +920,9 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         """
         Same as 'run_verify(join=False)', provided for convenience and more deterministic return
         type.
+
+        Raises:
+            ErrorTimeOut: The timeout expired before the command completed.
         """
 
         res = self.run_verify(cmd, timeout=timeout, capture_output=capture_output,
@@ -1136,6 +1154,10 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         Returns:
             A file-like object corresponding to the opened file.
+
+        Raises:
+            ErrorPermissionDenied: Permission denied to open the file.
+            ErrorNotFound: The file does not exist.
         """
 
         if "b" in mode:
@@ -1158,6 +1180,10 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         Returns:
             A file-like object corresponding to the opened file in binary mode.
+
+        Raises:
+            ErrorPermissionDenied: Permission denied to open the file.
+            ErrorNotFound: The file does not exist.
         """
 
         if "b" not in mode:
@@ -1179,7 +1205,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
             The contents of the file as a string
 
         Raises:
-            ErrorNotFound: If the file does not exist.
+            ErrorNotFound: The file does not exist.
         """
 
         try:
@@ -1198,7 +1224,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
             Path: The path to the Python interpreter.
 
         Raises:
-            ErrorNotFound: If no valid Python interpreter is found in the predefined paths.
+            ErrorNotFound: No valid Python interpreter is found in the predefined paths.
         """
 
         if self._python_path:
@@ -1243,6 +1269,9 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
             parents: Create parent directories as needed if True. Otherwise, raise an exception if
                      a parent directory does not exist.
             exist_ok: Do not raise an exception if the directory already exists when True.
+
+        Raises:
+            ErrorExists: The directory already exists and 'exist_ok' is 'False'.
         """
 
         raise NotImplementedError("ProcessManagerBase.mkdir()")
@@ -1254,6 +1283,9 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         Args:
             path: The path where the Unix socket file should be created.
             exist_ok: Do not raise an exception if the unix socket file already exists when True.
+
+        Raises:
+            ErrorExists: The socket file already exists and 'exist_ok' is 'False'.
         """
 
         raise NotImplementedError("ProcessManagerBase.mksocket()")
@@ -1265,6 +1297,9 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
         Args:
             path: The path where the named pipe should be created.
             exist_ok: Do not raise an exception if the named pipe already exists when True.
+
+        Raises:
+            ErrorExists: The named pipe already exists and 'exist_ok' is 'False'.
         """
 
         raise NotImplementedError("ProcessManagerBase.mkfifo()")
@@ -1335,7 +1370,8 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
                     row, row5col0, row5col7, row5col10, row52col7, z
 
         Raises:
-            ErrorNotFound: If the specified path does not exist or is not a directory.
+            ErrorNotFound: The path does not exist or is not a directory.
+            ErrorPermissionDenied: Permission denied to access the directory.
         """
 
         raise NotImplementedError("ProcessManagerBase.lsdir()")
@@ -1427,6 +1463,9 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         Returns:
             The modification time as a floating-point number representing seconds since the epoch.
+
+        Raises:
+            ErrorNotFound: The path does not exist.
         """
 
         raise NotImplementedError("ProcessManagerBase.get_mtime()")
@@ -1460,7 +1499,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
             path: The path to resolve into an absolute real path.
 
         Raises:
-            ErrorNotFound: If the path does not exist or is not a file or directory.
+            ErrorNotFound: The path does not exist.
         """
 
         raise NotImplementedError("ProcessManagerBase.abspath()")
@@ -1500,6 +1539,9 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
             program: Name of the program to locate.
             must_find: If True, raise 'ErrorNotFound' if the program was not found. If False, return
                        None when the program was not found.
+
+        Raises:
+            ErrorNotFound: The program is not found in the search path and 'must_find' is 'True'.
         """
 
         raise NotImplementedError("ProcessManagerBase.which()")
