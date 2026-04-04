@@ -83,8 +83,6 @@ class ProcWaitResultType(NamedTuple):
     """
     The result of the 'wait()' method for a process.
 
-    TODO: Turn this into a TypedDict.
-
     Attributes:
         stdout: The standard output of the process. Can be a single string or a list of strings
                 lines. The tailing newline is not stripped.
