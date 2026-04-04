@@ -1162,23 +1162,21 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         return result
 
-    def _open_mode_adjust(self, mode: str) -> str:
+    def _open(self, path: str | Path, mode: str) -> IO:
         """
-        Adjust the 'mode' argument for the 'open()' method to ensure it does not include 'b'.
+        Open a file at the specified path and return a file-like object.
 
         Args:
-            mode: The mode string to check.
+            path: The path to the file to open.
+            mode: The mode in which to open the file, same as for the built-in Python 'open()'
+                  function. The mode already has the 'b' flag adjusted by the caller ('open()' or
+                  'openb()').
 
         Returns:
-            The mode string, ensuring it does not include 'b' for text mode.
+            A file-like object for the opened file.
         """
 
-        if "b" in mode:
-            _LOG.warning("Incorrect usage of ProcessManagerBase.open(): the 'mode' argument "
-                         "should not include 'b'")
-            _LOG.print_stacktrace(level=Logging.WARNING)
-            return mode.replace("b", "")
-        return mode
+        raise NotImplementedError("ProcessManagerBase._open()")
 
     def open(self, path: str | Path, mode: str) -> IO[str]:
         """
@@ -1194,24 +1192,13 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
             A file-like object corresponding to the opened file.
         """
 
-        raise NotImplementedError("ProcessManagerBase.open()")
+        if "b" in mode:
+            _LOG.warning("Incorrect usage of ProcessManagerBase.open(): the 'mode' argument "
+                         "should not include 'b'")
+            _LOG.print_stacktrace(level=Logging.WARNING)
+            mode = mode.replace("b", "")
 
-    def _openb_mode_adjust(self, mode: str) -> str:
-        """
-        Adjust the 'mode' argument for the 'openb()' method to ensure it includes 'b'.
-
-        Args:
-            mode: The mode string to check.
-
-        Returns:
-            The mode string, ensuring it includes 'b' for binary mode.
-        """
-
-        if "b" not in mode:
-            _LOG.warning("Incorrect usage of ProcessManagerBase.openb(): the 'mode' argument "
-                         "should include 'b'")
-            return mode + "b"
-        return mode
+        return self._open(path, mode)
 
     def openb(self, path: str | Path, mode: str) -> IO[bytes]:
         """
@@ -1227,7 +1214,13 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
             A file-like object corresponding to the opened file in binary mode.
         """
 
-        raise NotImplementedError("ProcessManagerBase.openb()")
+        if "b" not in mode:
+            _LOG.warning("Incorrect usage of ProcessManagerBase.openb(): the 'mode' argument "
+                         "should include 'b'")
+            _LOG.print_stacktrace(level=Logging.WARNING)
+            mode += "b"
+
+        return self._open(path, mode)
 
     def read_file(self, path: Path | str) -> str:
         """

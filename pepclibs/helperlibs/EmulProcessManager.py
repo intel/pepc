@@ -419,7 +419,7 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         raise NotImplementedError("EmulProcessManager.put()")
 
     def _open(self, path: str | Path, mode: str) -> IO:
-        """Implement 'open()'."""
+        """Refer to 'ProcessManagerBase._open()'."""
 
         _LOG.debug("Opening file '%s' with mode '%s'", path, mode)
 
@@ -428,18 +428,6 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
             return self._emd["files"][path].open(mode)
 
         raise ErrorNotFound(f"File '{path}' not found in emulated filesystem{self.hostmsg}")
-
-    def open(self, path: str | Path, mode: str) -> IO[str]:
-        """Refer to 'ProcessManagerBase.open()'."""
-
-        mode = self._open_mode_adjust(mode)
-        return self._open(path, mode)
-
-    def openb(self, path: str | Path, mode: str) -> IO[bytes]:
-        """Refer to 'ProcessManagerBase.openb()'."""
-
-        mode = self._openb_mode_adjust(mode)
-        return self._open(path, mode)
 
     def get_python_path(self) -> Path:
         """Refer to 'ProcessManagerBase.get_python_path()'."""
