@@ -502,10 +502,10 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
         paths_iter = (self._get_cpu_freq_sysfs_path(ftype, cpu) for cpu in cpus)
 
         if not self._verify:
-            self._sysfs_io.write_paths_int(paths_iter, freq // 1000, what=what)
+            self._sysfs_io.write_paths_int(paths_iter, freq // 1000, what=what, su=True)
         else:
             self._sysfs_io.write_paths_verify_int(paths_iter, freq // 1000, what=what,
-                                                   retries=retries, sleep=sleep)
+                                                   retries=retries, sleep=sleep, su=True)
 
     def _set_freq_sysfs(self, freq: int, ftype: _SysfsFileType, cpus: Sequence[int]):
         """
@@ -873,7 +873,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
                                             "when hardware power management (HWP) is enabled")
 
         try:
-            self._sysfs_io.write(path, mode, what=what)
+            self._sysfs_io.write(path, mode, what=what, su=True)
         except Error as err:
             raise type(err)(f"Failed to set 'intel_pstate' driver mode to '{mode}'"
                            f"{self._pman.hostmsg}:\n{err.indent(2)}") from err
@@ -976,7 +976,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
         if driver == "intel_pstate":
             sysfs_val = str(int(not enable))
             try:
-                self._sysfs_io.write(path_intel_pstate, sysfs_val, what=what)
+                self._sysfs_io.write(path_intel_pstate, sysfs_val, what=what, su=True)
             except Error as err:
                 try:
                     mode = ""
@@ -995,7 +995,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
                                         f"driver is in 'off' mode:\n{err.indent(2)}") from err
         elif driver == "acpi-cpufreq":
             sysfs_val = str(int(enable))
-            self._sysfs_io.write(path_acpi_cpufreq, sysfs_val, what=what)
+            self._sysfs_io.write(path_acpi_cpufreq, sysfs_val, what=what, su=True)
         else:
             status = "on" if enable else "off"
             raise ErrorNotSupported(f"Failed to switch turbo {status} for CPU {cpu}"
@@ -1107,7 +1107,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         # Write to all governor files in one batch operation.
         if paths_to_write:
-            self._sysfs_io.write_paths(paths_to_write, governor, what=what)
+            self._sysfs_io.write_paths(paths_to_write, governor, what=what, su=True)
 
     def set_governor(self, governor: str, cpus: Sequence[int]):
         """

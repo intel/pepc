@@ -683,11 +683,11 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
 
                 # Set min. or max. frequency limit via the legacy interface. This should "unlock"
                 # the new sysfs API.
-                self._sysfs_io.write_int(path_legacy, freq_limit_legacy, what=what)
+                self._sysfs_io.write_int(path_legacy, freq_limit_legacy, what=what, su=True)
 
                 # Restore the current min. or max. frequency values via the new API.
                 for die in dies:
-                    self._sysfs_io.write_int(paths_new[die], freqs_new[die], what=what)
+                    self._sysfs_io.write_int(paths_new[die], freqs_new[die], what=what, su=True)
 
         self._new_sysfs_api_unlocked = True
 
@@ -753,7 +753,7 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
             for die in pkg_dies:
                 self._validate_freq(freq, package, die, ftype)
                 path = self._construct_freq_path_die(ftype, package, die)
-                self._sysfs_io.write_int(path, freq // 1000, what=what)
+                self._sysfs_io.write_int(path, freq // 1000, what=what, su=True)
                 _LOG.debug("Set package %d die %d %s to %d Hz, wrote file '%s'",
                            package, die, what, freq, path)
 
@@ -773,7 +773,7 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
             for die in pkg_dies:
                 self._validate_freq(freq, package, die, ftype, ztype=ztype)
                 path = self._construct_elc_zone_freq_path_die(ztype, ftype, package, die)
-                self._sysfs_io.write_int(path, freq // 1000, what=what)
+                self._sysfs_io.write_int(path, freq // 1000, what=what, su=True)
                 _LOG.debug("Set package %d die %d %s to %d Hz, wrote file '%s'",
                            package, die, what, freq, path)
 
@@ -934,7 +934,7 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
                 # Round the threshold up, following the kernel driver approach.
                 _LOG.debug("Setting package %d die %d %s to %d%% via file '%s'",
                            package, die, what, threshold, path)
-                self._sysfs_io.write_int(path, threshold, what=what)
+                self._sysfs_io.write_int(path, threshold, what=what, su=True)
 
     def _set_elc_threshold_status_dies(self,
                                        status: bool,
@@ -953,7 +953,7 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
                                                               suffix="enable")
                 _LOG.debug("Setting package %d die %d %s to %s via file '%s'",
                            package, die, what, status, path)
-                self._sysfs_io.write_int(path, int(status), what=what)
+                self._sysfs_io.write_int(path, int(status), what=what, su=True)
 
     def _fill_dies_info(self, dies_info: dict[int, dict[int, UncoreDieInfoTypedDict]]):
         """

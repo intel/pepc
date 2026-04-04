@@ -187,9 +187,9 @@ class LinuxPMQoS(ClassHelpers.SimpleCloseContext):
             path = self._get_latency_limit_sysfs_path(cpu)
 
             if not self._verify:
-                self._sysfs_io.write_int(path, limit_us, what=what)
+                self._sysfs_io.write_int(path, limit_us, what=what, su=True)
             else:
-                self._sysfs_io.write_verify_int(path, limit_us, what=what)
+                self._sysfs_io.write_verify_int(path, limit_us, what=what, su=True)
 
     def set_latency_limit(self, latency_limit: float, cpus: Sequence[int]):
         """

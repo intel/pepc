@@ -779,7 +779,7 @@ except Exception as err:
 
         if paths:
             try:
-                self._sysfs_io.write_paths_verify(paths, val, what=f"{action} C-state")
+                self._sysfs_io.write_paths_verify(paths, val, what=f"{action} C-state", su=True)
             except Error as err:
                 raise type(err)(f"Failed to {action} C-states:\n{err.indent(2)}") from err
 
@@ -848,7 +848,7 @@ except Exception as err:
 
         path = self._sysfs_base / "cpuidle" / "current_governor"
         try:
-            self._sysfs_io.write_verify(path, governor, what="idle governor")
+            self._sysfs_io.write_verify(path, governor, what="idle governor", su=True)
         except Error as err:
             raise type(err)(f"Failed to set 'governor'{self._pman.hostmsg}:\n"
                             f"{err.indent(2)}") from err
