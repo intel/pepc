@@ -38,7 +38,6 @@ implementation).
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import re
-import math
 import typing
 from pathlib import Path
 
@@ -935,7 +934,7 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
                 # Round the threshold up, following the kernel driver approach.
                 _LOG.debug("Setting package %d die %d %s to %d%% via file '%s'",
                            package, die, what, threshold, path)
-                self._sysfs_io.write_int(path, math.ceil(threshold), what=what)
+                self._sysfs_io.write_int(path, threshold, what=what)
 
     def _set_elc_threshold_status_dies(self,
                                        status: bool,
