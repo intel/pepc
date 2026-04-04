@@ -41,7 +41,7 @@ def get_pman(hostname: str,
     """
     Create and return a process manager object for the specified host.
 
-    Determine the appropriate process manager to use based on the `hostname` argument and return an
+    Determine the appropriate process manager to use based on the 'hostname' argument and return an
     instance of the corresponding process manager class. The following cases are handled:
 
     1. If 'hostname' is "localhost":
