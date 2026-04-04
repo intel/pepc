@@ -98,6 +98,9 @@ print("2: world-x", file=sys.stderr)"""
 _HELLO_WORLD_CMD = _HELLO_WORLD_START + "'"
 _HELLO_WORLD_CMD_EXIT_7 = _HELLO_WORLD_START + "\nraise SystemExit(7)'"
 
+# The timeout for run* and wait() operations in seconds.
+_TIMEOUT = 16
+
 def test_run_verify_join_capture_output(params: CommonTestParamsTypedDict):
     """Test the 'join' and 'capture_output' arguments of the 'run_verify()' method."""
 
@@ -105,23 +108,24 @@ def test_run_verify_join_capture_output(params: CommonTestParamsTypedDict):
     python_path = pman.get_python_path()
     cmd = f"{python_path} {_HELLO_WORLD_CMD}"
 
-    stdout, stderr = pman.run_verify(cmd, join=True, capture_output=True)
+    stdout, stderr = pman.run_verify(cmd, timeout=_TIMEOUT, join=True, capture_output=True)
     assert stdout == "1: hello\n2: world\n"
     assert stderr == "1: hello-x\n2: world-x\n"
 
-    stdout, stderr = pman.run_verify(cmd, join=False, capture_output=True)
+    stdout, stderr = pman.run_verify(cmd, timeout=_TIMEOUT, join=False, capture_output=True)
     assert stdout == ["1: hello\n", "2: world\n"]
     assert stderr == ["1: hello-x\n", "2: world-x\n"]
 
-    stdout, stderr = pman.run_verify(cmd, join=True, capture_output=False)
+    stdout, stderr = pman.run_verify(cmd, timeout=_TIMEOUT, join=True, capture_output=False)
     assert stdout == ""
     assert stderr == ""
 
-    stdout, stderr = pman.run_verify(cmd, join=False, capture_output=False)
+    stdout, stderr = pman.run_verify(cmd, timeout=_TIMEOUT, join=False, capture_output=False)
     assert stdout == []
     assert stderr == []
 
-    stdout, stderr = pman.run_verify(cmd, join=False, capture_output=True, mix_output=True)
+    stdout, stderr = pman.run_verify(cmd, timeout=_TIMEOUT, join=False, capture_output=True,
+                                     mix_output=True)
     assert sorted(stdout) == ["1: hello\n", "1: hello-x\n", "2: world\n", "2: world-x\n"]
     assert stderr == []
 
@@ -136,7 +140,7 @@ def test_run_verify_output_fobjs(params: CommonTestParamsTypedDict, tmp_path: Pa
     stderr_path = tmp_path / "stderr.txt"
     with open(stdout_path, "w+", encoding="utf-8") as stdout_fobj, \
          open(stderr_path, "w+", encoding="utf-8") as stderr_fobj:
-        stdout, stderr = pman.run_verify_join(cmd, mix_output=False,
+        stdout, stderr = pman.run_verify_join(cmd, timeout=_TIMEOUT, mix_output=False,
                                               output_fobjs=(stdout_fobj, stderr_fobj))
         assert stdout == "1: hello\n2: world\n"
         assert stderr == "1: hello-x\n2: world-x\n"
@@ -154,7 +158,7 @@ def test_run_verify_output_fobjs(params: CommonTestParamsTypedDict, tmp_path: Pa
         stderr_fobj.seek(0)
         stderr_fobj.truncate(0)
 
-        _stdout, _stderr = pman.run_verify_nojoin(cmd, mix_output=True,
+        _stdout, _stderr = pman.run_verify_nojoin(cmd, timeout=_TIMEOUT, mix_output=True,
                                                   output_fobjs=(stdout_fobj, stderr_fobj))
         assert sorted(_stdout) == ["1: hello\n", "1: hello-x\n",
                                    "2: world\n", "2: world-x\n"]
@@ -176,17 +180,17 @@ def test_run_verify_cwd(params: CommonTestParamsTypedDict):
 
     for intsh in (True, False):
         cwd = "/"
-        stdout, stderr = pman.run_verify("pwd", cwd=cwd, intsh=intsh)
+        stdout, stderr = pman.run_verify("pwd", timeout=_TIMEOUT, cwd=cwd, intsh=intsh)
         assert stdout == f"{cwd}\n"
         assert stderr == ""
 
         cwd = "/etc"
-        stdout, stderr = pman.run_verify("pwd", cwd=cwd, intsh=intsh)
+        stdout, stderr = pman.run_verify("pwd", timeout=_TIMEOUT, cwd=cwd, intsh=intsh)
         assert stdout == f"{cwd}\n"
         assert stderr == ""
 
         # And verify that 'cwd' is not retained across calls.
-        stdout, _ = pman.run_verify("pwd", intsh=intsh)
+        stdout, _ = pman.run_verify("pwd", timeout=_TIMEOUT, intsh=intsh)
         assert stdout != f"{cwd}\n"
 
 def test_run_verify_env(params: CommonTestParamsTypedDict):
@@ -196,28 +200,31 @@ def test_run_verify_env(params: CommonTestParamsTypedDict):
 
     for intsh in (True, False):
         env = {"TEST_ENV_VAR": "test_value"}
-        stdout, stderr = pman.run_verify("echo $TEST_ENV_VAR", env=env, intsh=intsh)
+        stdout, stderr = pman.run_verify("echo $TEST_ENV_VAR", timeout=_TIMEOUT, env=env,
+                                         intsh=intsh)
         assert stdout == "test_value\n"
         assert stderr == ""
 
         # Verify that the environment variable value is not retained across calls.
-        stdout, stderr = pman.run_verify("echo $TEST_ENV_VAR", intsh=intsh)
+        stdout, stderr = pman.run_verify("echo $TEST_ENV_VAR", timeout=_TIMEOUT, intsh=intsh)
         assert stdout == "\n"
         assert stderr == ""
 
-        stdout, stderr = pman.run_verify("sh -c 'echo $TEST_ENV_VAR'", env=env, intsh=intsh)
+        stdout, stderr = pman.run_verify("sh -c 'echo $TEST_ENV_VAR'",
+                                         timeout=_TIMEOUT, env=env, intsh=intsh)
         assert stdout == "test_value\n"
         assert stderr == ""
 
         # Verify that the environment variable value is not retained across calls.
-        stdout, stderr = pman.run_verify("sh -c 'echo $TEST_ENV_VAR'", intsh=intsh)
+        stdout, stderr = pman.run_verify("sh -c 'echo $TEST_ENV_VAR'",
+                                         timeout=_TIMEOUT, intsh=intsh)
         assert stdout == "\n"
         assert stderr == ""
 
         # And add 'cwd' to test that it works together with 'env'.
         cwd = "/etc"
         stdout, _ = pman.run_verify("sh -c 'echo $TEST_ENV_VAR; pwd'",
-                                    cwd=cwd, env=env, intsh=intsh)
+                                    timeout=_TIMEOUT, cwd=cwd, env=env, intsh=intsh)
         assert stdout == f"test_value\n{cwd}\n"
 
 def test_run_verify_newgrp(params: CommonTestParamsTypedDict):
@@ -231,12 +238,14 @@ def test_run_verify_newgrp(params: CommonTestParamsTypedDict):
     # process will always be different from the PGID of the local process.
 
     for intsh in (True, False):
-        stdout, stderr = pman.run_verify_join("ps -o pgid= -p $$", newgrp=False, intsh=intsh)
+        stdout, stderr = pman.run_verify_join("ps -o pgid= -p $$",
+                                              timeout=_TIMEOUT, newgrp=False, intsh=intsh)
         if not pman.is_remote:
             assert stdout.strip() == str(pgid)
             assert stderr == ""
 
-        stdout, _ = pman.run_verify_join("ps -o pgid= -p $$", newgrp=True, intsh=intsh)
+        stdout, _ = pman.run_verify_join("ps -o pgid= -p $$",
+                                         timeout=_TIMEOUT, newgrp=True, intsh=intsh)
         if not pman.is_remote:
             assert stdout.strip() != str(pgid)
 
@@ -248,13 +257,13 @@ def test_run_verify_fail(params: CommonTestParamsTypedDict):
     cmd = f"{python_path} {_HELLO_WORLD_CMD_EXIT_7}"
 
     with pytest.raises(Error) as excinfo:
-        pman.run_verify(cmd)
+        pman.run_verify(cmd, timeout=_TIMEOUT)
     assert "exit code 7" in str(excinfo.value)
     assert "hello-x" in str(excinfo.value)
 
     cmd = "__this_command_should_not_exist__"
     with pytest.raises(ErrorNotFound):
-        pman.run_verify(cmd)
+        pman.run_verify(cmd, timeout=_TIMEOUT)
 
 def test_run_fail(params: CommonTestParamsTypedDict):
     """Test the 'run()' method. Cover 'get_cmd_failure_msg()' too."""
@@ -266,7 +275,7 @@ def test_run_fail(params: CommonTestParamsTypedDict):
     python_path = pman.get_python_path()
     cmd = f"{python_path} {_HELLO_WORLD_CMD_EXIT_7}"
 
-    stdout, stderr, exitcode = pman.run(cmd)
+    stdout, stderr, exitcode = pman.run(cmd, timeout=_TIMEOUT)
     assert stdout == "1: hello\n2: world\n"
     assert stderr == "1: hello-x\n2: world-x\n"
     assert exitcode == 7
@@ -275,7 +284,7 @@ def test_run_fail(params: CommonTestParamsTypedDict):
     assert errmsg.startswith("Test\n")
 
     # And do the same with "join=False".
-    stdout, stderr, exitcode = pman.run(cmd, join=False)
+    stdout, stderr, exitcode = pman.run(cmd, timeout=_TIMEOUT, join=False)
     assert stdout == ["1: hello\n", "2: world\n"]
     assert stderr == ["1: hello-x\n", "2: world-x\n"]
     assert exitcode == 7
@@ -301,16 +310,16 @@ def test_run_async_wait(params: CommonTestParamsTypedDict):
     for intsh in (True, False):
         proc = pman.run_async(cmd, intsh=intsh)
 
-        res = proc.wait(lines=(1, 1))
+        res = proc.wait(timeout=_TIMEOUT, lines=(1, 1))
         assert res.stdout == "1: hello\n"
         assert res.stderr == "1: hello-x\n"
         assert res.exitcode is None
 
-        res = proc.wait(lines=(1, 1))
+        res = proc.wait(timeout=_TIMEOUT, lines=(1, 1))
         assert res.stdout == "2: world\n"
         assert res.stderr == "2: world-x\n"
 
-        res = proc.wait()
+        res = proc.wait(timeout=_TIMEOUT)
         assert res.stdout == ""
         assert res.stderr == ""
         assert res.exitcode == 0
@@ -318,25 +327,25 @@ def test_run_async_wait(params: CommonTestParamsTypedDict):
 
         proc = pman.run_async(cmd, intsh=intsh)
 
-        res = proc.wait(lines=(1, -1))
+        res = proc.wait(timeout=_TIMEOUT, lines=(1, -1))
         assert res.stdout == "1: hello\n"
         assert res.stderr == ""
         assert res.exitcode is None
 
-        res = proc.wait(lines=(-1, 1))
+        res = proc.wait(timeout=_TIMEOUT, lines=(-1, 1))
         assert res.stdout == ""
         assert res.stderr == "1: hello-x\n"
 
-        res = proc.wait(lines=(1, -1))
+        res = proc.wait(timeout=_TIMEOUT, lines=(1, -1))
         assert res.stdout == "2: world\n"
         assert res.stderr == ""
         assert res.exitcode is None
 
-        res = proc.wait(lines=(-1, 1))
+        res = proc.wait(timeout=_TIMEOUT, lines=(-1, 1))
         assert res.stdout == ""
         assert res.stderr == "2: world-x\n"
 
-        res = proc.wait()
+        res = proc.wait(timeout=_TIMEOUT)
         assert res.stdout == ""
         assert res.stderr == ""
         assert res.exitcode == 0
@@ -345,19 +354,19 @@ def test_run_async_wait(params: CommonTestParamsTypedDict):
         proc = pman.run_async(cmd, intsh=intsh)
 
         stdouts: list[str] = []
-        res = proc.wait(lines=(0, 1), join=False)
+        res = proc.wait(timeout=_TIMEOUT, lines=(0, 1), join=False)
         stdouts += res.stdout
         assert res.stderr == ["1: hello-x\n"]
         if len(stdouts) < 2:
             assert res.exitcode is None
 
-        res = proc.wait(lines=(0, 1), join=False)
+        res = proc.wait(timeout=_TIMEOUT, lines=(0, 1), join=False)
         stdouts += res.stdout
         assert res.stderr == ["2: world-x\n"]
         if len(stdouts) < 2:
             assert res.exitcode is None
 
-        res = proc.wait(join=False)
+        res = proc.wait(timeout=_TIMEOUT, join=False)
         stdouts += res.stdout
         assert res.stderr == []
         assert res.exitcode == 0
@@ -369,45 +378,45 @@ def test_run_async_wait(params: CommonTestParamsTypedDict):
     proc2 = pman.run_async(cmd, intsh=True)
     proc3 = pman.run_async(cmd, intsh=False)
 
-    res = proc1.wait(lines=(1, 1))
+    res = proc1.wait(timeout=_TIMEOUT, lines=(1, 1))
     assert res.stdout == "1: hello\n"
     assert res.stderr == "1: hello-x\n"
     assert res.exitcode is None
 
-    res = proc2.wait(lines=(1, 0), join=False)
+    res = proc2.wait(timeout=_TIMEOUT, lines=(1, 0), join=False)
     assert res.stdout == ["1: hello\n"]
     assert res.exitcode is None
 
-    res = proc3.wait(lines=(0, 1))
+    res = proc3.wait(timeout=_TIMEOUT, lines=(0, 1))
     assert res.stderr == "1: hello-x\n"
     assert res.exitcode is None
 
-    res = proc1.wait()
+    res = proc1.wait(timeout=_TIMEOUT)
     assert res.exitcode == 0
-    res = proc2.wait()
+    res = proc2.wait(timeout=_TIMEOUT)
     assert res.exitcode == 0
-    res = proc3.wait()
+    res = proc3.wait(timeout=_TIMEOUT)
     assert res.exitcode == 0
 
     # Test unusual 'lines' values.
     proc = pman.run_async(cmd)
-    res = proc.wait(lines=(-1, -1))
+    res = proc.wait(timeout=_TIMEOUT, lines=(-1, -1))
     assert res.stdout == ""
     assert res.stderr == ""
     assert res.exitcode is None
 
-    res = proc.wait(lines=(-1, 0))
+    res = proc.wait(timeout=_TIMEOUT, lines=(-1, 0))
     assert res.stdout == ""
     assert res.exitcode is None
 
-    res = proc.wait(lines=(0, -1))
+    res = proc.wait(timeout=_TIMEOUT, lines=(0, -1))
     assert res.stderr == ""
 
-    res = proc.wait()
+    res = proc.wait(timeout=_TIMEOUT)
     assert res.exitcode == 0
 
     # Test running 'wait()' on a finished process.
-    res = proc.wait()
+    res = proc.wait(timeout=_TIMEOUT)
     assert res.stdout == ""
     assert res.stderr == ""
     assert res.exitcode == 0
@@ -421,7 +430,7 @@ def test_run_async_cwd_env(params: CommonTestParamsTypedDict):
         # Test 'cwd'.
         for cwd in ("/", "/etc"):
             with pman.run_async("pwd", cwd=cwd, intsh=intsh) as proc:
-                res = proc.wait(join=True)
+                res = proc.wait(timeout=_TIMEOUT, join=True)
             assert res.exitcode == 0
             assert res.stdout == f"{cwd}\n"
             assert res.stderr == ""
@@ -429,32 +438,32 @@ def test_run_async_cwd_env(params: CommonTestParamsTypedDict):
         # Test 'env'.
         env = {"TEST_ASYNC_VAR": "async_value"}
         with pman.run_async("echo $TEST_ASYNC_VAR", env=env, intsh=intsh) as proc:
-            res = proc.wait(join=True)
+            res = proc.wait(timeout=_TIMEOUT, join=True)
         assert res.exitcode == 0
         assert res.stdout == "async_value\n"
         assert res.stderr == ""
 
         # Verify the environment variable is not retained across calls.
         with pman.run_async("echo $TEST_ASYNC_VAR", intsh=intsh) as proc:
-            res = proc.wait(join=True)
+            res = proc.wait(timeout=_TIMEOUT, join=True)
         assert res.stdout == "\n"
 
         # Test 'env' in a sub-shell.
         with pman.run_async("sh -c 'echo $TEST_ASYNC_VAR'", env=env, intsh=intsh) as proc:
-            res = proc.wait(join=True)
+            res = proc.wait(timeout=_TIMEOUT, join=True)
         assert res.exitcode == 0
         assert res.stdout == "async_value\n"
 
         # Verify not retained across calls.
         with pman.run_async("sh -c 'echo $TEST_ASYNC_VAR'", intsh=intsh) as proc:
-            res = proc.wait(join=True)
+            res = proc.wait(timeout=_TIMEOUT, join=True)
         assert res.stdout == "\n"
 
         # Test 'cwd' and 'env' together.
         cwd = "/etc"
         with pman.run_async("sh -c 'echo $TEST_ASYNC_VAR; pwd'",
                             cwd=cwd, env=env, intsh=intsh) as proc:
-            res = proc.wait(join=True)
+            res = proc.wait(timeout=_TIMEOUT, join=True)
         assert res.exitcode == 0
         assert res.stdout == f"async_value\n{cwd}\n"
 
