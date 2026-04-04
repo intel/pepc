@@ -94,6 +94,15 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
           caching (cache is indexed by file path).
         - Despite the name, this class can be used for reading and writing any files, not just
           sysfs files.
+        - Transactions are not atomic. Their purpose is I/O optimization: multiple writes to
+          distinct paths are batched into a single remote command, and repeated writes to the same
+          path within a transaction collapse to a single write (only the last value is written).
+        - Within a transaction, writes are executed in the order the path was first written. For
+          example, writing A then C to 'min_freq' and B to 'max_freq' results in one write of C to
+          'min_freq' followed by one write of B to 'max_freq' ('min_freq' first because it was
+          written first).
+        - Values written during a transaction are immediately visible to subsequent reads via the
+          cache.
     """
 
     def __init__(self, pman: ProcessManagerType | None = None, enable_cache: bool = True,
