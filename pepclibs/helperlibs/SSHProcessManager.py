@@ -52,6 +52,7 @@ _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 logging.getLogger("paramiko").setLevel(logging.WARNING)
 
 _FAKE_EXIT_CODE = 69696969
+
 class SSHProcess(_ProcessManagerBase.ProcessBase):
     """
     A remote process created and managed by 'SSHProcessManager'.
