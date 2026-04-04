@@ -219,6 +219,7 @@ class Logger(logging.Logger):
         - The NOTICE and ERRINFO log levels.
         - The 'warn_once()' method.
         - The 'error_out()' method.
+        - The 'print_stacktrace()' method.
         - The 'debug_print_stacktrace()' method.
     """
 
@@ -391,12 +392,12 @@ class Logger(logging.Logger):
         for formatter in self._formatters:
             formatter.set_prefix(prefix=prefix)
 
-    def _print_traceback(self, level: int = ERROR):
+    def print_stacktrace(self, level: int = ERRINFO):
         """
         Print an exception or stack traceback.
 
         Args:
-            level: The logging level at which to log the traceback. Defaults to ERROR.
+            level: The logging level at which to log the traceback. Defaults to ERRINFO.
         """
 
         tback = []
@@ -423,10 +424,10 @@ class Logger(logging.Logger):
                 undim = colorama.Style.RESET_ALL
             else:
                 dim = undim = ""
-            self.log(level, "--- Debug trace starts here ---")
+            self.log(level, "--- Stack trace starts here ---")
             tb = "\n".join(tback)
-            self.log(level, "%sAn error occurred, here is the traceback:\n%s%s", dim, tb, undim)
-            self.log(level, "--- Debug trace ends here ---\n")
+            self.log(level, "%sHere is the stack trace:\n%s%s", dim, tb, undim)
+            self.log(level, "--- Stack trace ends here ---\n")
 
     def error_out(self, fmt: str, *args: Any, print_tb: bool = False) -> NoReturn:
         """
@@ -450,7 +451,7 @@ class Logger(logging.Logger):
             errmsg = str(fmt)
 
         if print_tb or self.getEffectiveLevel() == DEBUG:
-            self._print_traceback(level=ERRINFO)
+            self.print_stacktrace(level=ERRINFO)
 
         self.error(errmsg)
 
@@ -460,7 +461,7 @@ class Logger(logging.Logger):
         """Print the stack trace if debugging is enabled."""
 
         if self.getEffectiveLevel() == DEBUG:
-            self._print_traceback(level=DEBUG)
+            self.print_stacktrace(level=DEBUG)
 
     def notice(self, fmt: str, *args: Any):
         """
