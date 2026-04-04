@@ -1226,7 +1226,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
     def time_time(self) -> float:
         """
         Get the current time in seconds since the epoch as a floating-point number (similar to the
-        standard Python `time.time()` function).
+        standard Python 'time.time()' function).
 
         Returns:
             The current time in seconds since the epoch as a floating-point number.
