@@ -543,6 +543,17 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
             # pylint: disable=protected-access
             raise self.pman._command_not_found(self.cmd, errmsg=errmsg)
 
+        if self._process_is_done():
+            exitcode = self.exitcode
+            if self._partial[0]:
+                output[0].append(self._partial[0])
+                self._partial[0] = ""
+            if self._partial[1]:
+                output[1].append(self._partial[1])
+                self._partial[1] = ""
+        else:
+            exitcode = None
+
         if output[0]:
             stdout = output[0]
             if join:
@@ -551,11 +562,6 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
             stderr = output[1]
             if join:
                 stderr = "".join(stderr)
-
-        if self._process_is_done():
-            exitcode = self.exitcode
-        else:
-            exitcode = None
 
         if self.debug:
             sout = "".join(output[0])
