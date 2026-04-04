@@ -212,7 +212,7 @@ class CPUOnline(ClassHelpers.SimpleCloseContext):
             _LOG.log(self._loglevel, "%s CPU%d", action_str, cpu)
 
             try:
-                with self._pman.open(path, "r+") as fobj:
+                with self._pman.open(path, "r+", su=True) as fobj:
                     fobj.write(data)
             except Error as err:
                 raise type(err)(f"Failed to {state_str} CPU{cpu}:\n{err.indent(2)}") from err

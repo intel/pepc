@@ -271,11 +271,11 @@ class ProcessManagerProtocol(Protocol):
         """Refer to 'ProcessManagerBase.get_cmd_failure_msg()'."""
         ...
 
-    def open(self, path: str | Path, mode: str) -> IO[str]:
+    def open(self, path: str | Path, mode: str, su: bool = ...) -> IO[str]:
         """Refer to 'ProcessManagerBase.open()'."""
         ...
 
-    def openb(self, path: str | Path, mode: str) -> IO[bytes]:
+    def openb(self, path: str | Path, mode: str, su: bool = ...) -> IO[bytes]:
         """Refer to 'ProcessManagerBase.openb()'."""
         ...
 

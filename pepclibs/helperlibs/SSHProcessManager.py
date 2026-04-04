@@ -197,8 +197,8 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
             A tuple ('cdata', 'exitcode').
                 - 'cdata': The captured output from the stream, with the marker stripped out. If the
                            marker was not found, 'cdata' contains everything up to and including the
-                           last newline. The partial last line (text after the last newline) is saved
-                           in 'self._ll[streamid]' and prepended on the next call.
+                           last newline. The partial last line (text after the last newline) is
+                           saved in 'self._ll[streamid]' and prepended on the next call.
                 - 'exitcode': The exit code extracted from the marker, or 'None' if the marker was
                               not found.
         """

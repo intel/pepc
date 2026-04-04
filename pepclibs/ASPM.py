@@ -93,7 +93,7 @@ class ASPM(ClassHelpers.SimpleCloseContext):
 
         errmsg = f"Failed to set ASPM policy to '{policy}'{self._pman.hostmsg}:"
         try:
-            with self._pman.open(self._policy_path, "r+") as fobj:
+            with self._pman.open(self._policy_path, "r+", su=True) as fobj:
                 fobj.write(policy)
         except ErrorPermissionDenied as err:
             raise type(err)(f"{errmsg}\n{err.indent(2)}\n  Sometimes booting with "
@@ -214,7 +214,7 @@ class ASPM(ClassHelpers.SimpleCloseContext):
         path = self._sysfs_base / addr / Path("link/l1_aspm")
 
         try:
-            with self._pman.open(path, "w") as fobj:
+            with self._pman.open(path, "w", su=True) as fobj:
                 fobj.write(val)
         except ErrorNotFound as err:
             self._l1_file_not_found(addr, err)

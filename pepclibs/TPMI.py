@@ -1000,7 +1000,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         vals: dict[int, dict[int, int]] = {}
         instance = -1
 
-        with self._pman.open(path, "r") as fobj:
+        with self._pman.open(path, "r", su=True) as fobj:
             for line in fobj:
                 line = line.rstrip()
                 line_pos = 0
@@ -1521,7 +1521,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         if cluster > 0:
             offset = self._adjust_ufs_offset(addr, instance, cluster, offset)
 
-        with self._pman.open(path, "r") as fobj:
+        with self._pman.open(path, "r", su=True) as fobj:
             fobj.seek(mdmap[instance][offset])
             val = fobj.read(8)
 
@@ -1568,7 +1568,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
             raise Error(f"BUG: invalid read length '{read_len}' for 64-bit register '{regname}' "
                         f"(offset '{offset:#x}') of TPMI feature '{fname}'")
 
-        with self._pman.open(path, "r") as fobj:
+        with self._pman.open(path, "r", su=True) as fobj:
             fobj.seek(file_offset0)
             val_str = fobj.read(read_len)
 
@@ -1708,7 +1708,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
         # Unfortunately, the TPMI debugfs interface does not support writing 64-bit values in one
         # go, even for registers that are 64 bits wide. Instead, the value needs to be split into
         # 32-bit parts and written sequentially, starting with the least significant part.
-        with self._pman.open(path, "r+") as fobj:
+        with self._pman.open(path, "r+", su=True) as fobj:
             while True:
                 writeval = value & 0xffffffff
                 data = f"{instance},{offset},{writeval:#x}"

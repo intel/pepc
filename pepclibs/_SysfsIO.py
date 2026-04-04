@@ -297,7 +297,7 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
                    val, "" if not what else f" {what}", path, self._pman.hostmsg)
 
         try:
-            with self._pman.open(path, "r+") as fobj:
+            with self._pman.open(path, "r+", su=su) as fobj:
                 try:
                     fobj.write(val)
                 except ErrorPermissionDenied as err:
@@ -401,7 +401,7 @@ import time
 winfo = {{{winfo}}}
 for path, (val, verify, retries, sleep) in winfo.items():
     try:
-        with open(path, "w") as fobj:
+        with open(path, "r+") as fobj:
             fobj.write(val)
     except PermissionError as err:
         print("ERROR: Permission: Path: %s: Error: %s" % (path, err))
@@ -1117,7 +1117,7 @@ for path in paths:
 paths = [{paths_str}]
 for path in paths:
     try:
-        with open(path, "w") as fobj:
+        with open(path, "r+") as fobj:
             fobj.write("{val}")
     except PermissionError as err:
         print("ERROR: Permission: Path: %s: Error: %s" % (path, err))

@@ -118,6 +118,14 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         with contextlib.suppress(Exception):
             super().close()
 
+    def _check_passwdless_sudo(self) -> bool:
+        """Refer to 'ProcessManagerBase._check_passwdless_sudo()'."""
+        return False
+
+    def _check_is_root(self) -> bool:
+        """Refer to 'ProcessManagerBase._check_is_root()'."""
+        return True
+
     def _get_inlinefile_lines(self, filepath: Path) -> Generator[str, None, None]:
         """
         Iterate over non-empty, non-comment lines in an inlinefile format data file.

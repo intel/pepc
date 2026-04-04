@@ -23,10 +23,10 @@ import threading
 import contextlib
 from pathlib import Path
 from operator import itemgetter
-from pepclibs.helperlibs import Logging, Human, Trivial, ClassHelpers, ToolChecker
+from pepclibs.helperlibs import Logging, Human, Trivial, ClassHelpers, ToolChecker, _SudoIO
 from pepclibs.helperlibs._ProcessManagerTypes import ProcWaitResultType, ProcWaitResultJoinType
 from pepclibs.helperlibs._ProcessManagerTypes import ProcWaitResultNoJoinType
-from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorPermissionDenied
 
 if typing.TYPE_CHECKING:
     from typing import IO, Any, cast, Generator
@@ -1231,7 +1231,21 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
 
         raise NotImplementedError("ProcessManagerBase._open()")
 
-    def open(self, path: str | Path, mode: str) -> IO[str]:
+    def _check_su(self, path: str | Path, su: bool):
+        """
+        Check if the file can be opened with superuser privileges.
+
+        Args:
+            path: The path to the file to check.
+            su: Whether to open the file with superuser privileges.
+        """
+
+        if su and not self.is_superuser() and not self.has_passwdless_sudo():
+            raise ErrorPermissionDenied(f"Cannot open file '{path}' with superuser privileges: "
+                                        f"No superuser access{self.hostmsg} and 'sudo' cannot be "
+                                        f"used without a password")
+
+    def open(self, path: str | Path, mode: str, su: bool = False) -> IO[str]:
         """
         Open a file at the specified path and return the file-like object in text mode with "utf-8"
         encoding.
@@ -1240,6 +1254,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
             path: The path to the file to open.
             mode: The mode in which to open the file, similar to 'mode' argument the built-in Python
                   'open()' function.
+            su: Whether to open the file with superuser privileges.
 
         Returns:
             A file-like object corresponding to the opened file.
@@ -1255,9 +1270,17 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
             _LOG.print_stacktrace(level=Logging.WARNING)
             mode = mode.replace("b", "")
 
+        self._check_su(path, su)
+
+        if su and not self.is_superuser():
+            sudo_io = _SudoIO.SudoFile(self, path, mode)
+            if typing.TYPE_CHECKING:
+                return cast(IO[str], sudo_io)
+            return sudo_io
+
         return self._open(path, mode)
 
-    def openb(self, path: str | Path, mode: str) -> IO[bytes]:
+    def openb(self, path: str | Path, mode: str, su: bool = False) -> IO[bytes]:
         """
         Open a file at the specified path in binary mode and return the file-like object.
 
@@ -1266,6 +1289,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
             mode: The mode in which to open the file, similar to 'mode' argument the built-in Python
                   'open()' function. The "b" character is implied in the mode for this method, so it
                   does not have to be included in the 'mode' argument.
+            su: Whether to open the file with superuser privileges.
 
         Returns:
             A file-like object corresponding to the opened file in binary mode.
@@ -1280,6 +1304,14 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
                          "should include 'b'")
             _LOG.print_stacktrace(level=Logging.WARNING)
             mode += "b"
+
+        self._check_su(path, su)
+
+        if su and not self.is_superuser():
+            sudo_io = _SudoIO.SudoFile(self, path, mode)
+            if typing.TYPE_CHECKING:
+                return cast(IO[bytes], sudo_io)
+            return sudo_io
 
         return self._open(path, mode)
 
