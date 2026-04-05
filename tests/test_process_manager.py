@@ -930,6 +930,8 @@ def test_no_trailing_newline(params: CommonTestParamsTypedDict):
 
     pman = params["pman"]
 
+    have_su = pman.is_superuser() or pman.has_passwdless_sudo()
+
     # Write a file where the last line has no trailing newline.
     tmpdir = pman.mkdtemp()
     test_file = tmpdir / "no_newline.txt"
@@ -939,9 +941,14 @@ def test_no_trailing_newline(params: CommonTestParamsTypedDict):
 
     # Read it back via 'cat', which will output the last line without a trailing newline.
     for intsh in (True, False):
-        stdout, _ = pman.run_verify_nojoin(f"cat {test_file}", timeout=_TIMEOUT, intsh=intsh)
-        assert stdout == ["line1\n", "line2\n", "no newline here"], \
-               f"Last line without newline was lost or mangled (intsh={intsh})"
+        for su in (False, True):
+            if su and not have_su:
+                continue
+
+            stdout, _ = pman.run_verify_nojoin(f"cat {test_file}", timeout=_TIMEOUT,
+                                               intsh=intsh, su=su)
+            assert stdout == ["line1\n", "line2\n", "no newline here"], \
+                   f"Last line without newline was lost or mangled (intsh={intsh}, su={su})"
 
     # Cleanup step.
     pman.rmtree(tmpdir)
@@ -951,26 +958,32 @@ def test_compound_command(params: CommonTestParamsTypedDict):
 
     pman = params["pman"]
 
+    have_su = pman.is_superuser() or pman.has_passwdless_sudo()
+
     for intsh in (True, False):
-        # Two commands separated by ';': both always run.
-        stdout, stderr = pman.run_verify("printf 'abc\\n' ; printf 'def\\n'",
-                                         timeout=_TIMEOUT, intsh=intsh)
-        assert stdout == "abc\ndef\n", f"intsh={intsh}"
-        assert stderr == ""
+        for su in (False, True):
+            if su and not have_su:
+                continue
 
-        # Mix of stdout and stderr across sub-commands, separated by ';'.
-        stdout, stderr = pman.run_verify(
-            "printf 'out1\\n' ; printf 'err1\\n' >&2 ; printf 'out2\\n'",
-            timeout=_TIMEOUT, intsh=intsh)
-        assert stdout == "out1\nout2\n", f"intsh={intsh}"
-        assert stderr == "err1\n", f"intsh={intsh}"
+            # Two commands separated by ';': both always run.
+            stdout, stderr = pman.run_verify("printf 'abc\\n' ; printf 'def\\n'",
+                                             timeout=_TIMEOUT, intsh=intsh, su=su)
+            assert stdout == "abc\ndef\n", f"intsh={intsh}, su={su}"
+            assert stderr == "", f"intsh={intsh}, su={su}"
 
-        # '&&' chain that stops early when the first command fails (exit code propagation).
-        stdout, stderr, exitcode = pman.run("false && printf 'should not print\\n'",
-                                            timeout=_TIMEOUT, intsh=intsh)
-        assert exitcode != 0, f"intsh={intsh}"
-        assert stdout == "", f"intsh={intsh}"
-        assert stderr == "", f"intsh={intsh}"
+            # Mix of stdout and stderr across sub-commands, separated by ';'.
+            stdout, stderr = pman.run_verify(
+                "printf 'out1\\n' ; printf 'err1\\n' >&2 ; printf 'out2\\n'",
+                timeout=_TIMEOUT, intsh=intsh, su=su)
+            assert stdout == "out1\nout2\n", f"intsh={intsh}, su={su}"
+            assert stderr == "err1\n", f"intsh={intsh}, su={su}"
+
+            # '&&' chain that stops early when the first command fails (exit code propagation).
+            stdout, stderr, exitcode = pman.run("false && printf 'should not print\\n'",
+                                                timeout=_TIMEOUT, intsh=intsh, su=su)
+            assert exitcode != 0, f"intsh={intsh}, su={su}"
+            assert stdout == "", f"intsh={intsh}, su={su}"
+            assert stderr == "", f"intsh={intsh}, su={su}"
 
 def test_su_available(params: CommonTestParamsTypedDict):
     """Test that 'su=True' succeeds when root access or passwordless sudo is available."""
@@ -1027,15 +1040,11 @@ def test_run_su_exitcode(params: CommonTestParamsTypedDict):
 
     pman = params["pman"]
 
-    have_superuser = True
-    try:
-        pman.run_verify_join("id -u", su=True)
-    except ErrorPermissionDenied:
-        have_superuser = False
+    have_su = pman.is_superuser() or pman.has_passwdless_sudo()
 
     for intsh in (True, False):
         for su in (False, True):
-            if su and not have_superuser:
+            if su and not have_su:
                 continue
 
             _, _, exitcode = pman.run("false", intsh=intsh, su=su)
@@ -1046,12 +1055,7 @@ def test_run_verify_cwd_env(params: CommonTestParamsTypedDict):
 
     pman = params["pman"]
 
-    # Determine whether 'su=True' is available before entering the loop.
-    have_su = True
-    try:
-        pman.run_verify_join("id -u", su=True)
-    except ErrorPermissionDenied:
-        have_su = False
+    have_su = pman.is_superuser() or pman.has_passwdless_sudo()
 
     for intsh in (True, False):
         for su in (False, True):
