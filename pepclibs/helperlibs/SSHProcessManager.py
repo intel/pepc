@@ -460,7 +460,7 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
 
         self._dbg("SSHProcess._read_pid(): Reading PID for the following command: %s", self.cmd)
 
-        stdout, stderr, _ = self.wait(timeout=60, lines=(1, -1), join=False)
+        stdout, stderr, _ = self.wait(timeout=32, lines=(1, -1), join=False)
 
         msg = f"\nThe command{self.hostmsg} was:\n{self.cmd}" \
               f"\nThe actual (real) command was:\n{self.real_cmd}"

@@ -705,7 +705,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
             otherwise.
         """
 
-        _, _, exitcode = self.run("sudo -n true")
+        _, _, exitcode = self.run("sudo -n true", timeout=32)
         return exitcode == 0
 
     def has_passwdless_sudo(self) -> bool:
