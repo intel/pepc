@@ -1408,55 +1408,13 @@ except OSError as err:
         cmd = f"mkfifo -- '{path}'"
         self.run_verify(cmd)
 
-    def lsdir(self,
-              path: str | Path,
-              sort_by: LsdirSortbyType = "none",
-              reverse: bool = False) -> Generator[LsdirTypedDict, None, None]:
-        """Refer to 'ProcessManagerBase.lsdir()'."""
+    def _lsdir(self,
+               path: Path,
+               sort_by: LsdirSortbyType,
+               reverse: bool) -> Generator[LsdirTypedDict, None, None]:
+        """Refer to 'ProcessManagerBase._lsdir()'."""
 
-        path = Path(path)
-
-        # A small python program to get the list of directories with some metadata.
-        python_path = self.get_python_path()
-        cmd = f"""{python_path} -c 'import os
-import sys
-path = "{path}"
-try:
-    entries = os.listdir(path)
-except FileNotFoundError as err:
-    raise SystemExit(2)
-except OSError as err:
-    print(str(err), file=sys.stderr)
-    raise SystemExit(1)
-for ent in entries:
-    try:
-        stinfo = os.lstat(os.path.join(path, ent))
-    except OSError as err:
-        print(str(err), file=sys.stderr)
-        raise SystemExit(1)
-    print(ent, stinfo.st_mode, stinfo.st_ctime)'"""
-
-        stdout, stderr, exitcode = self.run_join(cmd)
-
-        if exitcode == 2:
-            raise ErrorNotFound(f"Directory '{path}' does not exists{self.hostmsg}") from None
-        if exitcode != 0:
-            raise Error(self.get_cmd_failure_msg(cmd, stdout, stderr, exitcode))
-
-        info: dict[str, LsdirTypedDict] = {}
-
-        for line in stdout.splitlines():
-            entry = Trivial.split_csv_line(line.strip(), sep=" ")
-            if len(entry) != 3:
-                raise Error(f"Failed to list directory '{path}': received the following "
-                            f"unexpected line:\n{line}\nExpected line format: 'entry mode ctime'")
-
-            info[entry[0]] = {"name": entry[0],
-                              "path": path / entry[0],
-                              "ctime": float(entry[2]),
-                              "mode": int(entry[1])}
-
-        yield from self._sort_lsdir_result(info, sort_by, reverse)
+        yield from self._lsdir_cmdl(path, sort_by, reverse)
 
     def exists(self, path: str | Path) -> bool:
         """Refer to 'ProcessManagerBase.exists()'."""

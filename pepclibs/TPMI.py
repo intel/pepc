@@ -796,7 +796,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
 
         debugfs_tpmi_dirs: list[Path] = []
         try:
-            for entry in self._pman.lsdir(self._debugfs_mnt):
+            for entry in self._pman.lsdir(self._debugfs_mnt, su=True):
                 if tpmi_dir_pattern.match(entry["name"]):
                     debugfs_tpmi_dirs.append(entry["path"])
         except ErrorNotFound as err:
@@ -1108,7 +1108,7 @@ class TPMI(ClassHelpers.SimpleCloseContext):
 
         tpmi_dir_pattern = re.compile(r"^tpmi-id-([0-9a-f]+)$")
         for pci_path in self._tpmi_pci_paths:
-            for entry in self._pman.lsdir(pci_path):
+            for entry in self._pman.lsdir(pci_path, su=True):
                 match = re.match(tpmi_dir_pattern, entry["name"])
                 if not match:
                     continue

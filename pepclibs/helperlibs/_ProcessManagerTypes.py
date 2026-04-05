@@ -309,7 +309,8 @@ class ProcessManagerProtocol(Protocol):
     def lsdir(self,
               path: str | Path,
               sort_by: LsdirSortbyType = ...,
-              reverse: bool = ...) -> Generator[LsdirTypedDict, None, None]:
+              reverse: bool = ...,
+              su: bool = ...) -> Generator[LsdirTypedDict, None, None]:
         """Refer to 'ProcessManagerBase.lsdir()'."""
         ...
 

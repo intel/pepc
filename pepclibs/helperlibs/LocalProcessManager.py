@@ -430,13 +430,11 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
             msg = Error(str(err)).indent(2)
             raise Error(f"Failed to create named pipe '{path}':\n{msg}") from err
 
-    def lsdir(self,
-              path: str | Path,
-              sort_by: LsdirSortbyType = "none",
-              reverse: bool = False) -> Generator[LsdirTypedDict, None, None]:
-        """Refer to 'ProcessManagerBase.lsdir()'."""
-
-        path = Path(path)
+    def _lsdir(self,
+               path: Path,
+               sort_by: LsdirSortbyType,
+               reverse: bool) -> Generator[LsdirTypedDict, None, None]:
+        """Refer to 'ProcessManagerBase._lsdir()'."""
 
         try:
             entries = list(os.listdir(path))

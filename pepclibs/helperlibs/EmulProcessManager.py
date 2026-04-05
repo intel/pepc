@@ -457,15 +457,15 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         """Refer to 'ProcessManagerBase.mkfifo()'."""
         raise NotImplementedError("EmulProcessManager.mkfifo()")
 
-    def lsdir(self,
-              path: str | Path,
-              sort_by: LsdirSortbyType = "none",
-              reverse: bool = False) -> Generator[LsdirTypedDict, None, None]:
-        """Same as 'ProcessManagerBase.lsdir()', but rebase 'path' to the base directory."""
+    def _lsdir(self,
+               path: Path,
+               sort_by: LsdirSortbyType,
+               reverse: bool) -> Generator[LsdirTypedDict, None, None]:
+        """Same as 'ProcessManagerBase._lsdir()', but rebase 'path' to the base directory."""
 
         rebased_path = self._basepath / str(path).lstrip("/")
 
-        for entry in super().lsdir(rebased_path, sort_by=sort_by, reverse=reverse):
+        for entry in super()._lsdir(rebased_path, sort_by, reverse):
             entry["path"] = entry["path"].relative_to(self._basepath)
             yield entry
 
