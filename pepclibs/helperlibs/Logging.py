@@ -273,8 +273,7 @@ class Logger(logging.Logger):
         Args:
             prefix: The prefix for log messages, used for all levels except 'INFO' and 'ERRINFO'.
             level: The default log level. If not provided (default is '-1'), it is automatically
-                   detected: '-q' sets 'WARNING', '-d' sets 'DEBUG', otherwise the current logger
-                   level is preserved.
+                   detected: '-q' sets 'WARNING', '-d' sets 'DEBUG', otherwise 'INFO' is used.
             colored: Whether to use colored output. By default, colored output is used for TTYs and
                      uncolored output for non-TTYs, unless the '--force-color' command line option
                      is specified, in which case colored output is used for non-TTYs as well.
@@ -297,13 +296,12 @@ class Logger(logging.Logger):
         self.prefix = prefix
 
         if level == -1:
-            # Change log level names.
             if "-q" in argv:
                 level = WARNING
             elif "-d" in argv:
                 level = DEBUG
             else:
-                level = self.getEffectiveLevel()
+                level = INFO
 
         self.setLevel(level)
 
