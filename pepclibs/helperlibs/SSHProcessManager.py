@@ -729,7 +729,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         prefix += r'printf "%s\n" "$$";'
         if cwd:
             prefix += f""" cd "{cwd}" &&"""
-        return prefix + " exec " + cmd
+        return prefix + " exec sh -c " + shlex.quote(cmd)
 
     def _run_in_new_session(self,
                             command: str,

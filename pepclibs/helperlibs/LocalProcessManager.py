@@ -17,6 +17,7 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 import os
 import time
 import errno
+import shlex
 import shutil
 import socket
 import typing
@@ -188,7 +189,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         command = str(command)
         cmd: str | list[str]
 
-        real_cmd = cmd = f"exec {command}"
+        real_cmd = cmd = f"exec sh -c {shlex.quote(command)}"
 
         try:
             # pylint: disable=consider-using-with
@@ -197,7 +198,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
         except FileNotFoundError as err:
             raise self._command_not_found(command, str(err))
         except OSError as err:
-            raise Error(f"cannot execute the following command{self.hostmsg}:\n{real_cmd}\n"
+            raise Error(f"Cannot execute the following command{self.hostmsg}:\n{real_cmd}\n"
                         f"The error is: {err}") from err
 
         streams = (pobj.stdin, pobj.stdout, pobj.stderr)
