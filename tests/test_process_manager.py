@@ -945,3 +945,29 @@ def test_no_trailing_newline(params: CommonTestParamsTypedDict):
 
     # Cleanup step.
     pman.rmtree(tmpdir)
+
+def test_compound_command(params: CommonTestParamsTypedDict):
+    """Test that compound commands work."""
+
+    pman = params["pman"]
+
+    for intsh in (True, False):
+        # Two commands separated by ';': both always run.
+        stdout, stderr = pman.run_verify("printf 'abc\\n' ; printf 'def\\n'",
+                                         timeout=_TIMEOUT, intsh=intsh)
+        assert stdout == "abc\ndef\n", f"intsh={intsh}"
+        assert stderr == ""
+
+        # Mix of stdout and stderr across sub-commands, separated by ';'.
+        stdout, stderr = pman.run_verify(
+            "printf 'out1\\n' ; printf 'err1\\n' >&2 ; printf 'out2\\n'",
+            timeout=_TIMEOUT, intsh=intsh)
+        assert stdout == "out1\nout2\n", f"intsh={intsh}"
+        assert stderr == "err1\n", f"intsh={intsh}"
+
+        # '&&' chain that stops early when the first command fails (exit code propagation).
+        stdout, stderr, exitcode = pman.run("false && printf 'should not print\\n'",
+                                            timeout=_TIMEOUT, intsh=intsh)
+        assert exitcode != 0, f"intsh={intsh}"
+        assert stdout == "", f"intsh={intsh}"
+        assert stderr == "", f"intsh={intsh}"
