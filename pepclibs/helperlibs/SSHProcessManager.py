@@ -30,7 +30,6 @@ import logging
 import threading
 import contextlib
 from pathlib import Path
-from typing import cast
 from collections.abc import Callable
 try:
     import paramiko
@@ -43,7 +42,7 @@ from pepclibs.helperlibs.Exceptions import Error, ErrorPermissionDenied, ErrorTi
 from pepclibs.helperlibs.Exceptions import ErrorNotFound, ErrorExists
 
 if typing.TYPE_CHECKING:
-    from typing import Generator, IO, Sequence
+    from typing import Generator, IO, Sequence, cast
     from pepclibs.helperlibs._ProcessManagerTypes import LsdirTypedDict, LsdirSortbyType
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
@@ -1323,10 +1322,9 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         """Refer to 'ProcessManagerBase.time_time()'."""
 
         cmd = "date +%s"
-        stdout, _ = self.run_verify(cmd)
-        tt = cast(str, stdout).strip()
+        stdout, _ = self.run_verify_join(cmd)
         what = f"current time on {self.hostname} acquired via SSH using {cmd}"
-        return Trivial.str_to_float(tt, what=what)
+        return Trivial.str_to_float(stdout, what=what)
 
     def _shell_test(self, path: str | Path, opt: str) -> bool:
         """
@@ -1438,7 +1436,7 @@ for ent in entries:
         raise SystemExit(1)
     print(ent, stinfo.st_mode, stinfo.st_ctime)'"""
 
-        stdout, stderr, exitcode = self.run(cmd)
+        stdout, stderr, exitcode = self.run_join(cmd)
 
         if exitcode == 2:
             raise ErrorNotFound(f"Directory '{path}' does not exists{self.hostmsg}") from None
@@ -1447,7 +1445,7 @@ for ent in entries:
 
         info: dict[str, LsdirTypedDict] = {}
 
-        for line in cast(str, stdout).splitlines():
+        for line in stdout.splitlines():
             entry = Trivial.split_csv_line(line.strip(), sep=" ")
             if len(entry) != 3:
                 raise Error(f"Failed to list directory '{path}': received the following "
@@ -1496,13 +1494,13 @@ for ent in entries:
         python_path = self.get_python_path()
         cmd = f"{python_path} -c 'import os; print(os.stat(\"{path}\").st_mtime)'"
         try:
-            stdout, _ = self.run_verify(cmd)
+            stdout, _ = self.run_verify_join(cmd)
         except Error as err:
             if "FileNotFoundError" in str(err):
                 raise ErrorNotFound(f"'{path}' does not exist{self.hostmsg}") from err
             raise
 
-        mtime = cast(str, stdout).strip()
+        mtime = stdout.strip()
         if not Trivial.is_float(mtime):
             raise Error(f"Got erroneous modification time of '{path}'{self.hostmsg}:\n{mtime}")
         return float(mtime)
@@ -1522,9 +1520,9 @@ for ent in entries:
 
         python_path = self.get_python_path()
         cmd = f"{python_path} -c 'from pathlib import Path; print(Path(\"{path}\").resolve())'"
-        stdout, _ = self.run_verify(cmd)
+        stdout, _ = self.run_verify_join(cmd)
 
-        rpath = cast(str, stdout).strip()
+        rpath = stdout.strip()
 
         if not self.exists(rpath):
             raise ErrorNotFound(f"Path '{rpath}' does not exist")
@@ -1538,8 +1536,8 @@ for ent in entries:
         if basedir:
             cmd += f" -p '{basedir}'"
 
-        stdout, _ = self.run_verify(cmd)
-        path = cast(str, stdout).strip()
+        stdout, _ = self.run_verify_join(cmd)
+        path = stdout.strip()
         if not path:
             raise Error(f"Cannot create a temporary directory{self.hostmsg}, the following command "
                         f"returned an empty string:\n{cmd}")
@@ -1551,13 +1549,13 @@ for ent in entries:
         """Refer to 'ProcessManagerBase.get_envar()'."""
 
         try:
-            stdout, _ = self.run_verify(f"echo ${envar}")
+            stdout, _ = self.run_verify_join(f"echo ${envar}")
         except ErrorNotFound:
             # See commentaries in '_shell_test()', this is a similar case.
-            stdout, _ = self.run_verify(f"sh -c -l \"echo ${envar}\"")
+            stdout, _ = self.run_verify_join(f"sh -c -l \"echo ${envar}\"")
 
 
-        result = cast(str, stdout).strip()
+        result = stdout.strip()
         if result:
             return result
         return None
@@ -1595,7 +1593,7 @@ for ent in entries:
 
         if not res.exitcode:
             # Which could return several paths. They may contain aliases.
-            for line in cast(list[str], res.stdout):
+            for line in res.stdout:
                 line = line.strip()
                 if not line.startswith("alias"):
                     return Path(line)
