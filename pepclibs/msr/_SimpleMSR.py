@@ -92,6 +92,14 @@ class SimpleMSR(ClassHelpers.SimpleCloseContext):
             raise ErrorNotSupported(f"MSR access is not supported{self._pman.hostmsg}:\n"
                                     f"{err.indent(2)}") from err
 
+        # Use sudo for privileged MSR I/O when not running as superuser but passwordless sudo is
+        # available. Applies to both local and remote hosts. Not applicable to emulated hosts.
+        if not self._pman.is_emulated:
+            use_sudo = not self._pman.is_superuser() and self._pman.has_passwdless_sudo()
+        else:
+            use_sudo = False
+        self._use_sudo = use_sudo
+
     def close(self):
         """Uninitialize the class object."""
 
@@ -225,18 +233,20 @@ class SimpleMSR(ClassHelpers.SimpleCloseContext):
             regval = int.from_bytes(regval_bytes, byteorder=_CPU_BYTEORDER)
             yield cpu, regval
 
-    def _cpus_read_remote(self,
-                          regaddr: int,
-                          cpus: Iterable[int]) -> Generator[tuple[int, int], None, None]:
+    def _cpus_read_optimized(self,
+                             regaddr: int,
+                             cpus: Iterable[int],
+                             su: bool = False) -> Generator[tuple[int, int], None, None]:
         """
-        Read an MSR from specified CPUs on a remote host.
+        Read an MSR from specified CPUs using optimized I/O.
 
-        Generate and execute a small Python script on the remote host to read the specified MSR for
-        a set of CPUs.
+        Execute a small Python script in a single operation to read the specified MSR for a set of
+        CPUs, instead of opening each MSR device file individually.
 
         Args:
             regaddr: The address of the MSR to read.
             cpus: CPU numbers to read the MSR from.
+            su: If 'True', run the script as superuser (root).
 
         Yields:
             Tuples of (cpu, regval), where 'cpu' is the CPU number and 'regval' is the value read
@@ -249,7 +259,7 @@ class SimpleMSR(ClassHelpers.SimpleCloseContext):
 
         if _LOG.getEffectiveLevel() == Logging.DEBUG:
             cpus_range = Trivial.rangify(cpus_list)
-            _LOG.debug("Remote: Read: MSR 0x%x from CPUs %s%s",
+            _LOG.debug("Optimized: Read: MSR 0x%x from CPUs %s%s",
                        regaddr, cpus_range, self._pman.hostmsg)
 
         cmd = f"""{python_path} -c '
@@ -271,7 +281,7 @@ for cpu in cpus:
 '"""
 
         try:
-            stdout, stderr = self._pman.run_verify_join(cmd)
+            stdout, stderr = self._pman.run_verify_join(cmd, su=su)
         except Error as err:
             raise type(err)(f"Failed to read MSR '{regaddr:#x}' on CPUs {cpus_str}"
                             f"{self._pman.hostmsg}:\n{err.indent(2)}") from err
@@ -377,8 +387,8 @@ for cpu in cpus:
 
         if DISABLE_IO_OPTIMIZATIONS or self._pman.is_emulated:
             yield from self._cpus_read_pman(regaddr, cpus)
-        elif self._pman.is_remote:
-            yield from self._cpus_read_remote(regaddr, cpus)
+        elif self._pman.is_remote or self._use_sudo:
+            yield from self._cpus_read_optimized(regaddr, cpus, su=self._use_sudo)
         else:
             yield from self._cpus_read_local(regaddr, cpus)
 
@@ -468,20 +478,22 @@ for cpu in cpus:
                                       f"{cpu}{self._pman.hostmsg} (file '{path}'): {err}",
                                       cpu=cpu, path=path) from err
 
-    def _cpus_write_remote(self,
-                           regaddr: int,
-                           regval: int,
-                           cpus: Iterable[int]):
+    def _cpus_write_optimized(self,
+                              regaddr: int,
+                              regval: int,
+                              cpus: Iterable[int],
+                              su: bool = False):
         """
-        Write a value to an MSR on specified CPUs on a remote host.
+        Write a value to an MSR on specified CPUs using optimized I/O.
 
-        Generate and execute a small Python script on the remote host to write the specified MSR for
-        a set of CPUs.
+        Execute a small Python script in a single operation to write the specified MSR for a set of
+        CPUs, instead of opening each MSR device file individually.
 
         Args:
             regaddr: The address of the MSR to write to.
             regval: The value to write to the MSR.
             cpus: CPU numbers to write the MSR on.
+            su: If 'True', run the script as superuser (root).
         """
 
         python_path = self._pman.get_python_path()
@@ -506,11 +518,11 @@ for cpu in cpus:
         raise SystemExit(0)
 '"""
 
-        _LOG.debug("Remote: Write: MSR 0x%x: 0x%x%s",
+        _LOG.debug("Optimized: Write: MSR 0x%x: 0x%x%s",
                    regaddr, regval, self._pman.hostmsg)
 
         try:
-            stdout, stderr = self._pman.run_verify_join(cmd)
+            stdout, stderr = self._pman.run_verify_join(cmd, su=su)
         except Error as err:
             errmsg = err.indent(2)
             raise type(err)(f"Failed to write '{regval:#x}' to MSR '{regaddr:#x}' on CPUs "
@@ -603,8 +615,8 @@ for cpu in cpus:
 
         if DISABLE_IO_OPTIMIZATIONS or self._pman.is_emulated:
             self._cpus_write_pman(regaddr, regval, cpus)
-        elif self._pman.is_remote:
-            self._cpus_write_remote(regaddr, regval, cpus)
+        elif self._pman.is_remote or self._use_sudo:
+            self._cpus_write_optimized(regaddr, regval, cpus, su=self._use_sudo)
         else:
             self._cpus_write_local(regaddr, regval, cpus)
 

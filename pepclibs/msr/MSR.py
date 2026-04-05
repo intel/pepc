@@ -270,19 +270,22 @@ class MSR(_SimpleMSR.SimpleMSR):
                                             f"{self._pman.hostmsg} (file '{path}'):\n"
                                             f"{errmsg}") from err
 
-    def _transaction_write_remote(self):
+    def _transaction_write_optimized(self, su: bool = False):
         """
-        Write MSR transactions on a remote host.
+        Write MSR transactions using optimized I/O.
 
-        Generate a small Python script that performs the MSR writes and executes it on the remote
-        host.
+        Generate a small Python script that performs the MSR writes in a single operation, instead
+        of opening each MSR device file individually.
+
+        Args:
+            su: If 'True', run the script as superuser (root).
         """
 
         if _LOG.getEffectiveLevel() == Logging.DEBUG:
             for cpu, cpus_info in self._transaction_buffer.items():
                 for regaddr, regval_info in cpus_info.items():
                     regval = regval_info["regval"]
-                    _LOG.debug("Transaction: Remote: Write: CPU%d: MSR 0x%x: 0x%x%s",
+                    _LOG.debug("Transaction: Optimized: Write: CPU%d: MSR 0x%x: 0x%x%s",
                                cpu, regaddr, regval, self._pman.hostmsg)
 
         python_path = self._pman.get_python_path()
@@ -313,19 +316,18 @@ for cpu, cpus_info in transaction_buffer.items():
         raise SystemExit(0)
 '"""
 
-        _LOG.debug("Transaction: Remote: Write: Executing command%s", self._pman.hostmsg)
+        _LOG.debug("Transaction: Optimized: Write: Executing command%s", self._pman.hostmsg)
 
         regex = re.compile(r"ERROR: (Permission|Write): CPU: (\d+): Path: (.+): Error: (.+)")
 
-        stdout, _ = self._pman.run_verify_join(cmd)
+        stdout, _ = self._pman.run_verify_join(cmd, su=su)
         for line in stdout.splitlines():
             if not line.startswith("ERROR: "):
                 continue
 
             mobj = regex.match(line)
             if not mobj:
-                raise Error(f"Failed to parse remote MSR transaction write error:\n"
-                            f"{line}")
+                raise Error(f"Failed to parse MSR transaction write error:\n{line}")
 
             errtype = mobj.group(1)
             cpu = Trivial.str_to_int(mobj.group(2), what="CPU number")
@@ -387,8 +389,8 @@ for cpu, cpus_info in transaction_buffer.items():
 
         _LOG.debug("Flushing the MSR transaction buffer")
 
-        if self._pman.is_remote:
-            self._transaction_write_remote()
+        if self._pman.is_remote or self._use_sudo:
+            self._transaction_write_optimized(su=self._use_sudo)
         elif self._pman.is_emulated:
             self._transaction_write_emulation()
         else:
@@ -438,15 +440,16 @@ for cpu, cpus_info in transaction_buffer.items():
         else:
             _LOG.debug("MSR transaction has been committed, but it was empty")
 
-    def _read_remote(self,
-                     regaddr: int,
-                     cpus: Sequence[int],
-                     iosname: ScopeNameType) -> Generator[tuple[int, int], None, None]:
+    def _read_optimized(self,
+                        regaddr: int,
+                        cpus: Sequence[int],
+                        iosname: ScopeNameType) -> Generator[tuple[int, int], None, None]:
         """
-        Read an MSR from a remote host.
+        Read an MSR using optimized I/O.
 
-        Generate and execute a small Python script on the remote host to read the specified MSR for
-        a set of CPUs.
+        Execute a Python script in a single operation to read the specified MSR for a set of CPUs,
+        instead of opening each MSR device file individually. Also implements scope-aware caching
+        to skip unnecessary reads of sibling CPUs.
 
         Args:
             regaddr: The address of the MSR to read.
@@ -459,7 +462,7 @@ for cpu, cpus_info in transaction_buffer.items():
         """
 
         if not self._enable_cache:
-            yield from super()._cpus_read_remote(regaddr, cpus)
+            yield from super()._cpus_read_optimized(regaddr, cpus, su=self._use_sudo)
             return
 
         # CPU numbers to read the MSR for (subset of 'cpus').
@@ -495,15 +498,12 @@ for cpu, cpus_info in transaction_buffer.items():
                 yield cpu, regval
             return
 
-        for cpu, regval in super()._cpus_read_remote(regaddr, do_read):
+        for cpu, regval in super()._cpus_read_optimized(regaddr, do_read, su=self._use_sudo):
             self._cache.add(regaddr, cpu, regval, sname=iosname)
 
         for cpu in cpus:
             regval = self._cache.get(regaddr, cpu)
-            if cpu in do_read:
-                # Already logged by parent class
-                pass
-            else:
+            if cpu in dont_read:
                 _LOG.debug("Cached: Read: CPU%d: MSR 0x%x%s", cpu, regaddr, self._pman.hostmsg)
             yield cpu, regval
 
@@ -531,8 +531,8 @@ for cpu, cpus_info in transaction_buffer.items():
                              information).
         """
 
-        if self._pman.is_remote:
-            yield from self._read_remote(regaddr, cpus, iosname)
+        if self._pman.is_remote or self._use_sudo:
+            yield from self._read_optimized(regaddr, cpus, iosname)
             return
 
         for cpu in cpus:
@@ -632,17 +632,18 @@ for cpu, cpus_info in transaction_buffer.items():
         regval = self.read_cpu(regaddr, cpu, iosname=iosname)
         return self.get_bits(regval, bits)
 
-    def _write_remote(self,
-                      regaddr: int,
-                      regval: int,
-                      cpus: Sequence[int],
-                      iosname: ScopeNameType = "CPU",
-                      verify: bool = False):
+    def _write_optimized(self,
+                         regaddr: int,
+                         regval: int,
+                         cpus: Sequence[int],
+                         iosname: ScopeNameType = "CPU",
+                         verify: bool = False):
         """
-        Write a value to an MSR on specified CPUs on a remote host.
+        Write a value to an MSR using optimized I/O.
 
-        Generate and execute a small Python script on the remote host to write the specified MSR for
-        a set of CPUs.
+        Execute a Python script in a single operation to write the specified MSR for a set of CPUs,
+        instead of opening each MSR device file individually. Also implements scope-aware caching
+        to skip unnecessary writes to sibling CPUs.
 
         Args:
             regaddr: The address of the MSR to write to.
@@ -662,7 +663,7 @@ for cpu, cpus_info in transaction_buffer.items():
         """
 
         if not self._enable_cache:
-            super()._cpus_write_remote(regaddr, regval, cpus)
+            super()._cpus_write_optimized(regaddr, regval, cpus, su=self._use_sudo)
             return
 
         # CPU numbers to write the MSR on (subset of 'cpus').
@@ -694,7 +695,7 @@ for cpu, cpus_info in transaction_buffer.items():
         if not do_write:
             return
 
-        super()._cpus_write_remote(regaddr, regval, do_write)
+        super()._cpus_write_optimized(regaddr, regval, do_write, su=self._use_sudo)
 
         for cpu in do_write:
             self._cache.add(regaddr, cpu, regval, sname=iosname)
@@ -738,8 +739,8 @@ for cpu, cpus_info in transaction_buffer.items():
                                          respectively.
         """
 
-        if self._pman.is_remote and not self._in_transaction:
-            self._write_remote(regaddr, regval, cpus, iosname=iosname, verify=verify)
+        if (self._pman.is_remote or self._use_sudo) and not self._in_transaction:
+            self._write_optimized(regaddr, regval, cpus, iosname=iosname, verify=verify)
             return
 
         for cpu in cpus:
