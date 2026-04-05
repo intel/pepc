@@ -566,39 +566,46 @@ def test_open(params: CommonTestParamsTypedDict):
 
     test_file = tmpdir / "test.txt"
 
-    # Test opening a file for writing.
-    with pman.open(test_file, "w") as fobj:
-        fobj.write("Hello, world!")
+    su_vals: tuple[bool, ...]
+    if pman.is_superuser() or pman.has_passwdless_sudo():
+        su_vals = (False, True)
+    else:
+        su_vals = (False,)
+
+    for su in su_vals:
+        # Test opening a file for writing.
+        with pman.open(test_file, "w", su=su) as fobj:
+            fobj.write("Hello, world!")
+            assert pman.is_file(test_file)
+
         assert pman.is_file(test_file)
 
-    assert pman.is_file(test_file)
+        mtime = pman.get_mtime(test_file)
+        assert isinstance(mtime, float)
+        assert mtime > 0
 
-    mtime = pman.get_mtime(test_file)
-    assert isinstance(mtime, float)
-    assert mtime > 0
+        # Test opening a file for reading.
+        with pman.open(test_file, "r", su=su) as fobj:
+            assert fobj.read(6) == "Hello,"
+            assert fobj.read(1) == " "
+            assert fobj.read(6) == "world!"
+            assert fobj.read(1) == ""
+            assert fobj.read() == ""
 
-    # Test opening a file for reading.
-    with pman.open(test_file, "r") as fobj:
-        assert fobj.read(6) == "Hello,"
-        assert fobj.read(1) == " "
-        assert fobj.read(6) == "world!"
-        assert fobj.read(1) == ""
-        assert fobj.read() == ""
+        # Test binary mode.
+        fobjb = pman.openb(test_file, "w+", su=su)
+        fobjb.write(b"Hello, world!")
+        assert pman.is_file(test_file)
+        fobjb.seek(0)
+        assert fobjb.read() == b"Hello, world!"
+        assert fobjb.read() == b""
+        fobjb.close()
 
-    # Test binary mode.
-    fobjb = pman.openb(test_file, "w+")
-    fobjb.write(b"Hello, world!")
-    assert pman.is_file(test_file)
-    fobjb.seek(0)
-    assert fobjb.read() == b"Hello, world!"
-    assert fobjb.read() == b""
-    fobjb.close()
-
-    # Test truncate.
-    with pman.open(test_file, "r+") as fobj:
-        fobj.truncate(6)
-        fobj.seek(0)
-        assert fobj.read() == "Hello,"
+        # Test truncate.
+        with pman.open(test_file, "r+", su=su) as fobj:
+            fobj.truncate(6)
+            fobj.seek(0)
+            assert fobj.read() == "Hello,"
 
     # Cleanup step.
     pman.rmtree(tmpdir)
@@ -1097,3 +1104,119 @@ def test_run_verify_cwd_env(params: CommonTestParamsTypedDict):
                                              cwd=cwd, env=env, intsh=intsh, su=su)
             assert stdout == f"su_value\n{cwd}\n", f"intsh={intsh}, su={su}"
             assert stderr == "", f"intsh={intsh}, su={su}"
+
+def test_open_su(params: CommonTestParamsTypedDict):
+    """Test the 'open()' and 'openb()' methods with 'su=True'."""
+
+    pman = params["pman"]
+
+    # Skip the test if 'su=True' is not available.
+    try:
+        pman.run_verify_join("true", su=True)
+    except ErrorPermissionDenied as err:
+        pytest.skip(str(err))
+
+    tmpdir = pman.mkdtemp()
+    test_file = tmpdir / "test_su.txt"
+
+    # Create the file as root and write initial content.
+    with pman.open(test_file, "w", su=True) as fobj:
+        fobj.write("Hello, su!")
+
+    # Read it back without superuser privileges.
+    with pman.open(test_file, "r", su=False) as fobj:
+        assert fobj.read() == "Hello, su!"
+
+    # Read it back as superuser.
+    with pman.open(test_file, "r", su=True) as fobj:
+        assert fobj.read() == "Hello, su!"
+
+    # Overwrite the file with different content and verify.
+    with pman.open(test_file, "w", su=True) as fobj:
+        fobj.write("Updated content")
+
+    with pman.open(test_file, "r", su=False) as fobj:
+        assert fobj.read() == "Updated content"
+
+    with pman.open(test_file, "r", su=True) as fobj:
+        assert fobj.read() == "Updated content"
+
+    # Test binary mode read and write.
+    with pman.openb(test_file, "w", su=True) as fobj:
+        fobj.write(b"Binary data")
+
+    with pman.openb(test_file, "r", su=False) as fobj:
+        assert fobj.read() == b"Binary data"
+
+    with pman.openb(test_file, "r", su=True) as fobj:
+        assert fobj.read() == b"Binary data"
+
+    # Test seek.
+    with pman.open(test_file, "w", su=True) as fobj:
+        fobj.write("ABCDE")
+
+    with pman.open(test_file, "r", su=True) as fobj:
+        fobj.seek(2)
+        assert fobj.read() == "CDE"
+
+    # Test "r+" mode: write at an offset (splice) and truncate.
+    with pman.open(test_file, "w", su=True) as fobj:
+        fobj.write("Hello, su!")
+
+    with pman.open(test_file, "r+", su=True) as fobj:
+        fobj.seek(7)
+        fobj.write("root!")
+        fobj.seek(0)
+        assert fobj.read() == "Hello, root!"
+
+    with pman.open(test_file, "r+", su=True) as fobj:
+        fobj.truncate(6)
+        fobj.seek(0)
+        assert fobj.read() == "Hello,"
+
+    # Cleanup.
+    pman.rmtree(tmpdir)
+
+def test_read_short(params: CommonTestParamsTypedDict):
+    """Test reading a file char by char, validating that read data matches written data."""
+
+    pman = params["pman"]
+
+    contents = "Hello, short read!"
+    tmpdir = pman.mkdtemp()
+    test_file = tmpdir / "test_short.txt"
+
+    with pman.open(test_file, "w") as fobj:
+        fobj.write(contents)
+
+    su_vals: tuple[bool, ...]
+    if pman.is_superuser() or pman.has_passwdless_sudo():
+        su_vals = (False, True)
+    else:
+        su_vals = (False,)
+
+    for su in su_vals:
+        # Text mode: read char by char.
+        with pman.open(test_file, "r", su=su) as fobj:
+            result = ""
+            while True:
+                ch = fobj.read(1)
+                if not ch:
+                    break
+                result += ch
+
+        assert result == contents, f"Text mode char-by-char read failed (su={su})"
+
+        # Binary mode: read byte by byte.
+        with pman.openb(test_file, "rb", su=su) as fobj:
+            result_bytes = b""
+            while True:
+                byte = fobj.read(1)
+                if not byte:
+                    break
+                result_bytes += byte
+        assert result_bytes == contents.encode("utf-8"), \
+               f"Binary mode byte-by-byte read failed (su={su})"
+
+    # Cleanup.
+    pman.rmtree(tmpdir)
