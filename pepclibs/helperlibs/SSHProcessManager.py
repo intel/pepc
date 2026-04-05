@@ -221,14 +221,23 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
             # Got a new marker suspect. Keep it in 'll', while old 'll' and the rest of
             # 'data' can be returned up for capturing. Set 'check_ll' to 'True' to indicate
             # that 'll' has to be checked for the marker.
+            #
+            # Example: 'data'='stdout1\nstdout2\n', 'll'=''
+            #   'split' = ['stdout1\nstdout2', '']
+            #   -> 'cdata' = 'stdout1\nstdout2\n'  (returned for capturing)
+            #   -> 'll'    = ''                     (empty tail; may be start of marker)
             cdata = ll + split[0] + "\n"
             check_ll = True
             ll = split[1]
         else:
             # Got a continuation of the previous line. The 'check_ll' flag is 'True' when 'll'
             # being a marker is a real possibility. If we already checked 'll' and it starts
-            # with data that is different to the marker, there is not reason to check it again, and
+            # with 'data' that is different to the marker, there is not reason to check it again, and
             # we can send it up for capturing.
+            #
+            # Example: 'data'='--- <hash>, 0 ---' (no newline), 'll'=''
+            #   'split' = ['--- <hash>, 0 ---']
+            #   -> 'll' grows to '--- <hash>, 0 ---', 'cdata'='' (withheld until marker verdict)
             if not ll:
                 check_ll = True
             if check_ll:
@@ -242,10 +251,13 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
             # 'll' is a real suspect, check if it looks like the marker.
             check_ll = ll.startswith(self._marker) or self._marker.startswith(ll)
 
-        # OK, if 'll' is still a real suspect, do a full check using the regex: full marker #
+        # OK, if 'll' is still a real suspect, do a full check using the regex: full marker
         # line should contain not only the hash, but also the exit status.
+        #
+        # Example (stdout): 'll'='--- <hash>, 0 ---'        -> regex matches -> 'exitcode'=0
+        # Example (stderr): 'll'='--- <hash>, 69696969 ---' -> regex matches -> 'exitcode'=69696969
         if check_ll and re.match(self._marker_regex, ll):
-            # Extract the exit code from stdout, the 'll' string should have the following format:
+            # Extract the exit code. The 'll' string has the following format:
             # --- hash, <exitcode> ---
             split = ll.rsplit(", ", 1)
             assert len(split) == 2
@@ -294,33 +306,75 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
 
         exitcode: list[int | None] = [None, None]
 
+        # The interactive shell ('sh -s') is started once and reused across multiple commands. Each
+        # command is sent to the shell's stdin; the shell runs one command at a time.
+        #
+        # The challenge is detecting when a command finishes, since the shell itself keeps running.
+        # The solution: each command is wrapped to print a unique marker to both stdout and stderr
+        # upon completion.
+        #
+        # Both markers must be seen before concluding the command has finished. Seeing only the
+        # stdout marker is not enough: stderr data may still be in flight. Stopping early would
+        # leave the stderr marker in the stream, where the next command - running in the same
+        # interactive shell on the same streams - would see it as its own output.
+        #
+        # Example: command "printf 'out1\nout2\n'; printf 'err1\nerr2\n' >&2"
+        # Stream data in arrival order (interleaving is arbitrary):
+        #   stdout: 'out1\nout2\n'
+        #   stderr: 'err1\nerr2\n'
+        #   stdout: '--- <hash>, 0 ---'          <- stdout marker carrying the real exit code
+        #   stderr: '--- <hash>, <FAKE> ---'     <- stderr marker carrying _FAKE_EXIT_CODE
+        #
+        # Example iteration trace (stderr chunk arrived first):
+        #   Iter 1: (1, 'err1\nerr2\n')           -> 'cdata'='err1\nerr2\n', 'exitcode[1]'=None
+        #   Iter 2: (0, 'out1\nout2\n')           -> 'cdata'='out1\nout2\n', 'exitcode[0]'=None
+        #   Iter 3: (0, '--- <hash>, 0 ---')      -> 'cdata'='',             'exitcode[0]'=0
+        #   Iter 4: (1, '--- <hash>, <FAKE> ---') -> 'cdata'='',             'exitcode[1]'=<FAKE>
+        #
+        # The loop below drains the queue, watching for both markers before concluding.
         while True:
             assert self._queue is not None
 
             self._dbg("SSHProcess._wait_intsh(): New iteration, exitcode[0] %s, exitcode[1], %s",
                       str(exitcode[0]), str(exitcode[1]))
 
+            # The caller might have requested only a limited number of output lines (e.g.
+            # 'lines=(1,-1)', which means one stdout line and any number of stderr lines). Check if
+            # enough lines were captured.
             if _ProcessManagerBase.have_enough_lines(self._output, lines=lines):
-                # Enough lines were captured, return them, but only if no markers were yet found. If
-                # at least one was found, keep waiting for the other one.
+                # Enough lines were captured. Return early only if no markers have been seen yet.
+                # Once the first marker is observed, the process has already exited and the second
+                # marker is in flight. Stopping here would leave the second marker in the stream,
+                # where the next command - running in the same interactive shell on the same streams
+                # - would see it as its own output.
                 if exitcode[0] is None and exitcode[1] is None:
                     self._dbg("SSHProcess._wait_intsh(): Enough lines were captured, stop looping")
                     break
+
                 self._dbg("SSHProcess._wait_intsh(): Enough lines were captured, but waiting "
                           "for the second marker")
 
             if exitcode[0] is not None and exitcode[1] is not None:
+                # Both markers seen. The real exit code is in 'exitcode[0]' (stdout marker).
+                # 'exitcode[1]' is always '_FAKE_EXIT_CODE' and is discarded.
                 self.exitcode = exitcode[0]
+                if self._queue.empty():
+                    self._dbg("SSHProcess._wait_intsh(): Process exited with status %d",
+                              self.exitcode)
+                    break
 
-            if self.exitcode is not None and self._queue.empty():
-                self._dbg("SSHProcess._wait_intsh(): Process exited with status %d", self.exitcode)
-                break
+                # The queue is not empty, which is an error/bug condition, because the process
+                # hasand both markers have been received. Keep draining the queue, the code below
+                # will handle the situation.
 
             streamid, data = self._get_next_queue_item(timeout)
             if streamid == -1:
-                # Note, 'data' is going to be 'None' in this case.
+                # Timeout: nothing arrived in the queue within the timeout period. 'data' is 'None'
+                # in this case.
                 self._dbg("SSHProcess._wait_intsh(): Nothing in the queue for %d seconds", timeout)
             elif data is None:
+                # The stream was closed, meaning the interactive shell itself exited (e.g., crashed
+                # or was killed) before printing the markers.
                 raise Error(f"The interactive shell process{self.hostmsg} closed stream {streamid} "
                             f"while running the following command:\n{self.cmd}")
             else:
@@ -329,14 +383,11 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
                                 f"stream {streamid} was already observed, but new data were "
                                 f"received, the data:\n{data}")
 
-                # The indication that the process has exited are 2 markers, one in stdout (stream 0)
-                # and the other in stderr (stream 1).The goal is to watch for this marker, hide it
-                # from the user, because it does not belong to the output of the process. The marker
-                # always starts at the beginning of line.
-                #
-                # Both markers must be observed before concluding that the command has finished.
-                # Observing the marker only in one stream is not enough to guarantee that the output
-                # from the other stream was fully consumed.
+                # Normal situation: got some output from a stream. Check it for the marker.
+                # '_watch_for_marker()' returns ('cdata', 'exitcode'):
+                #   - No marker:            'cdata' = captured output,  'exitcode' = None
+                #   - Marker only:          'cdata' = '',               'exitcode' = <int>
+                #   - Output before marker: 'cdata' = captured output,  'exitcode' = <int>
                 data, exitcode[streamid] = self._watch_for_marker(data, streamid)
 
             if data is not None:
