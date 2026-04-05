@@ -7,8 +7,8 @@
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
-Provide API for reading and writing sysfs files. Implement transactions, caching and optimized I/O
-operations for remote hosts.
+Provide API for reading and writing sysfs files. Implement transactions, caching, and optimized I/O
+operations.
 
 Note: Despite the name, this module can be used for reading and writing any files, not just sysfs
       files.
@@ -53,9 +53,13 @@ if typing.TYPE_CHECKING:
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
-# A debug option to disable I/O optimizations.
+# A debug option to disable I/O optimizations. When set, reads and writes go through individual
+# 'open()' calls instead of a single Python script that processes files in bulk. The optimized
+# path is used for remote hosts (reduces SSH round-trips) and for the sudo case (reduces the
+# number of sudo invocations).
 DISABLE_IO_OPTIMIZATIONS: bool = False
-# A debug option for self-verifying I/O optimizations.
+# A debug option to enable self-verification of the optimized I/O path: both the direct I/O path
+# and the optimized I/O path are executed, and their results are compared.
 VERIFY_IO_OPTIMIZATIONS: bool = False
 
 # The maximum total length of file paths for the optimized I/O operations.
@@ -96,9 +100,12 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
           caching (cache is indexed by file path).
         - Despite the name, this class can be used for reading and writing any files, not just
           sysfs files.
+        - Optimized I/O: bulk read/write operations run a small Python script that reads or writes
+          all files in a single operation, rather than opening each file individually. This is used
+          for remote hosts (fewer SSH round-trips) and for the sudo case (fewer sudo invocations).
         - Transactions are not atomic. Their purpose is I/O optimization: multiple writes to
-          distinct paths are batched into a single remote command, and repeated writes to the same
-          path within a transaction collapse to a single write (only the last value is written).
+          distinct paths are batched into a single command, and repeated writes to the same path
+          within a transaction collapse to a single write (only the last value is written).
         - Within a transaction, writes are executed in the order the path was first written. For
           example, writing A then C to 'min_freq' and B to 'max_freq' results in one write of C to
           'min_freq' followed by one write of B to 'max_freq' ('min_freq' first because it was
@@ -380,12 +387,13 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
                                             winfo: str,
                                             su: bool = False):
         """
-        Write multiple paths and values with I/O optimizations for remote hosts.
+        Write multiple paths and values using optimized I/O.
 
         Args:
-            batch_info: The batch write information dictionary.
-            winfo: The formatted string of write operations for the Python script.
-            su: If 'True', run the write script as superuser (root).
+            batch_info: The batch write information dictionary, same format as the transaction
+                        buffer.
+            winfo: The formatted write information string for the Python script.
+            su: If 'True', run the script as superuser (root).
 
         Raises:
             ErrorPermissionDenied: No permissions to write to a sysfs file.
@@ -396,7 +404,7 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
 
         python_path = self._pman.get_python_path()
 
-        _LOG.debug("Remote: Write: %d sysfs files with verification%s",
+        _LOG.debug("Optimized: Write: %d sysfs files with verification%s",
                    len(batch_info), self._pman.hostmsg)
 
         cmd = f"""{python_path} -c '
@@ -518,7 +526,7 @@ for path, (val, verify, retries, sleep) in winfo.items():
 
     def _write_paths_vals_optimized(self, batch_info: dict[Path, _TransactionItemTypedDict]):
         """
-        Write multiple paths and values with I/O optimizations for remote hosts.
+        Write multiple paths and values using optimized I/O.
 
         The input argument is the batch write information dictionary in the same format as the
         transaction buffer.
@@ -590,7 +598,10 @@ for path, (val, verify, retries, sleep) in winfo.items():
         for path in self._transaction_buffer:
             self.cache_remove(path)
 
-        if self._optimize_io:
+        su_operations_present = any(item["su"] for item in self._transaction_buffer.values())
+        use_sudo = not self._pman.is_superuser() and self._pman.has_passwdless_sudo()
+        optimize = self._optimize_io or (su_operations_present and use_sudo)
+        if optimize:
             self._write_paths_vals_optimized(self._transaction_buffer)
         else:
             for path, val_info in self._transaction_buffer.items():
@@ -713,8 +724,8 @@ for path, (val, verify, retries, sleep) in winfo.items():
                                      val_if_not_found: str | None = None) -> \
                                                             Generator[tuple[Path, str], None, None]:
         """
-        Read the specified list of paths in a single SSH command. The arguments are the same as for
-        'read_paths()'.
+        Read the specified list of paths in a single optimized I/O operation. The arguments are
+        the same as for 'read_paths()'.
 
         Yields:
             Tuples of (path, value) for each successfully read path.
@@ -728,7 +739,7 @@ for path, (val, verify, retries, sleep) in winfo.items():
         if read_paths:
             if _LOG.getEffectiveLevel() == Logging.DEBUG:
                 paths_range = Trivial.rangify(list(range(len(read_paths))))
-                _LOG.debug("Remote: Read: %d sysfs files (indices %s)%s",
+                _LOG.debug("Optimized: Read: %d sysfs files (indices %s)%s",
                            len(read_paths), paths_range, self._pman.hostmsg)
 
             paths_str = ",\n".join(f"\"{str(path)}\"" for path in read_paths)
@@ -808,13 +819,11 @@ for path in paths:
                               val_if_not_found: str | None = None) -> \
                                                             Generator[tuple[Path, str], None, None]:
         """
-        Implement 'read_paths()' with I/O optimizations for remote hosts. The arguments are the same
-        as for 'read_paths()'.
+        Implement 'read_paths()' with optimized I/O. The arguments are the same as for
+        'read_paths()'.
 
-        In case of a remote host, reading each sysfs file involves a separate SSH command, which can
-        be very slow. To optimize this, we read multiple files in a single SSH command by running a
-        Python script on the remote host that reads all the specified files and prints their
-        contents.
+        Instead of opening each sysfs file individually, read multiple files in a single operation
+        by running a Python script that reads all the specified files and prints their contents.
 
         Yields:
             Tuples of (path, value) for each successfully read path.
@@ -855,8 +864,8 @@ for path in paths:
                     what: str = "",
                     val_if_not_found: str | None = None) -> Generator[tuple[Path, str], None, None]:
         """
-        Implement 'read_paths()' without I/O optimizations for remote hosts. The arguments are the
-        same as for 'read_paths()'.
+        Implement 'read_paths()' without optimized I/O. The arguments are the same as for
+        'read_paths()'.
 
         Yields:
             Tuples of (path, value) for each successfully read path.
@@ -1100,20 +1109,22 @@ for path in paths:
     def _write_paths_optimized_helper(self,
                                       paths: list[Path],
                                       val: str,
-                                      what: str = ""):
+                                      what: str = "",
+                                      su: bool = False):
         """
-        Write a value to multiple sysfs files with I/O optimizations for remote hosts.
+        Write a value to multiple sysfs files using optimized I/O.
 
         Args:
             paths: List of file paths to write to.
             val: The value to write to the files.
             what: Optional short description of what is being written, included in exception
                   messages.
+            su: If 'True', run the script as superuser (root).
         """
 
         python_path = self._pman.get_python_path()
 
-        _LOG.debug("Remote: Write: Value '%s' to %d sysfs files%s",
+        _LOG.debug("Optimized: Write: Value '%s' to %d sysfs files%s",
                    val, len(paths), self._pman.hostmsg)
 
         paths_str = ",\n".join(f"\"{str(path)}\"" for path in paths)
@@ -1132,7 +1143,7 @@ for path in paths:
 '"""
 
         try:
-            stdout, stderr = self._pman.run_verify_join(cmd)
+            stdout, stderr = self._pman.run_verify_join(cmd, su=su)
         except Error as err:
             what = "" if not what else f" {what}"
             errmsg = err.indent(2)
@@ -1179,14 +1190,14 @@ for path in paths:
         raise ErrorPath(f"Failed to write value '{val}' to{what} sysfs file '{path}'"
                         f"{self._pman.hostmsg}:\n{stdout}", path=path)
 
-    def _write_paths_optimized(self, paths: Iterable[Path], val: str, what: str = ""):
+    def _write_paths_optimized(self, paths: Iterable[Path], val: str, what: str = "",
+                               su: bool = False):
         """
-        Implement 'write_paths()' with I/O optimizations for remote hosts. The arguments are the
-        same as for 'write_paths()'.
+        Implement 'write_paths()' with optimized I/O. The arguments are the same as for
+        'write_paths()'.
 
-        In case of a remote host, writing to each sysfs file involves a separate SSH command, which
-        can be very slow. To optimize this, we write to multiple files in a single SSH command by
-        running a Python script on the remote host.
+        Instead of opening each sysfs file individually, write to multiple files in a single
+        operation by running a Python script.
         """
 
         _LOG.debug("Writing to multiple sysfs files with I/O optimizations")
@@ -1205,11 +1216,11 @@ for path in paths:
                 paths_len += path_len
                 continue
 
-            self._write_paths_optimized_helper(write_paths, val, what=what)
+            self._write_paths_optimized_helper(write_paths, val, what=what, su=su)
             write_paths = [path]
             paths_len = path_len
 
-        self._write_paths_optimized_helper(write_paths, val, what=what)
+        self._write_paths_optimized_helper(write_paths, val, what=what, su=su)
 
     def write_paths(self, paths: Iterable[Path], val: str, what: str = "", su: bool = False):
         """
@@ -1239,14 +1250,17 @@ for path in paths:
         for path in paths_list:
             self.cache_remove(path)
 
+        use_sudo = not self._pman.is_superuser() and self._pman.has_passwdless_sudo()
+        optimize = self._optimize_io or (su and use_sudo)
+
         if self._in_transaction:
             for path in paths_list:
                 self._add_for_transaction(path, val, what, su=su)
-        elif self._optimize_io:
+        elif optimize:
             if not VERIFY_IO_OPTIMIZATIONS:
-                self._write_paths_optimized(paths_list, val, what=what)
+                self._write_paths_optimized(paths_list, val, what=what, su=su)
             else:
-                self._write_paths_optimized(paths_list, val, what=what)
+                self._write_paths_optimized(paths_list, val, what=what, su=su)
                 for path in paths_list:
                     self._verify(path, val, what=what)
         else:
@@ -1327,7 +1341,9 @@ for path in paths:
             for path in paths_list:
                 self.cache_remove(path)
 
-            if self._optimize_io:
+            use_sudo = not self._pman.is_superuser() and self._pman.has_passwdless_sudo()
+            optimize = self._optimize_io or (su and use_sudo)
+            if optimize:
                 # Prepare the batch buffer.
                 batch_info: dict[Path, _TransactionItemTypedDict] = {}
                 for path in paths_list:
