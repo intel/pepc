@@ -297,8 +297,8 @@ def test_read_register(params: _TestParamsTypedDict):
                     assert isinstance(bfval, int)
 
                     # Skip bit-fields that may change their value at any time, such as
-                    # 'CURRENT_RATIO'.
-                    if "CURRENT" in bfname:
+                    # 'CURRENT_RATIO' or 'THROTTLE_COUNTER'.
+                    if "CURRENT" in bfname or "COUNTER" in bfname:
                         continue
 
                     # Validate 'get_bitfield()' method as well.
