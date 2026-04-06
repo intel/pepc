@@ -198,7 +198,7 @@ class EPB(_EPBase.EPBase):
         sysfs_io = self._get_sysfs_io()
         paths_iter = (Path(self._sysfs_epb_path % cpu) for cpu in cpus)
 
-        sysfs_io.write_paths(paths_iter, str(val).strip(), what="EPB")
+        sysfs_io.write_paths(paths_iter, str(val).strip(), what="EPB", su=True)
 
     def _write_to_sysfs(self, val: str | int, cpus: Sequence[int]):
         """

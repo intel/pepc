@@ -389,7 +389,7 @@ class EPP(_EPBase.EPBase):
         if cpus_to_write:
             sysfs_io = self._get_sysfs_io()
             paths_iter = (Path(self._sysfs_epp_path % cpu) for cpu in cpus_to_write)
-            sysfs_io.write_paths(paths_iter, val_str, what="EPP")
+            sysfs_io.write_paths(paths_iter, val_str, what="EPP", su=True)
 
     def _write_to_sysfs(self, val: str | int, cpus: Sequence[int]):
         """
