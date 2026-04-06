@@ -282,7 +282,11 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
         if self.exitcode is not None:
             self._dbg("SSHProcess._wait_intsh(): Process already exited with status %d, "
                       "returning buffered output", self.exitcode)
-            return self._get_lines_to_return(lines)
+            result = self._get_lines_to_return(lines)
+            if self._process_is_done():
+                # pylint: disable=protected-access
+                self.pman._release_intsh_lock(self.cmd)
+            return result
 
         # The interactive shell ('sh -s') is started once and reused across multiple commands. Each
         # command is sent to the shell's stdin. The shell runs one command at a time.
@@ -383,12 +387,7 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
         if self._process_is_done():
             # Mark the interactive shell process as vacant.
             # pylint: disable=protected-access
-            acquired = self.pman._acquire_intsh_lock(self.cmd)
-            if not acquired:
-                _LOG.warning("Failed to mark the interactive shell process as free")
-            else:
-                self.pman._intsh_busy = False
-                self.pman._intsh_lock.release()
+            self.pman._release_intsh_lock(self.cmd)
 
         return result
 
@@ -563,10 +562,13 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         # The interactive shell session.
         self._intsh: SSHProcess | None = None
-        # Whether we already run a process in the interactive shell.
+        # True while a command is running in the interactive shell, False when the shell is idle.
+        # Protected by '_intsh_lock': callers must hold the lock when reading or writing this flag.
+        # The lock is released immediately after the flag is updated, so it is never held during
+        # the actual command execution.
         self._intsh_busy = False
-        # A lock protecting 'self._intsh_busy' and 'self._intsh'. Basically this lock makes sure we
-        # always run exactly one process in the interactive shell.
+        # A short-lived mutex protecting '_intsh_busy'. It is held only for the brief moment of
+        # reading and writing the flag, never for the duration of a running command.
         self._intsh_lock = threading.Lock()
 
         if ipaddr:
@@ -925,18 +927,34 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             True if the lock was successfully acquired, False otherwise.
         """
 
-        timeout = 5
+        timeout = 10
         acquired = self._intsh_lock.acquire(timeout=timeout) # pylint: disable=consider-using-with
         if not acquired:
             msg = "Failed to acquire the interactive shell lock"
             if command:
-                msg += f" for for the following command:\n{command}\n"
+                msg += f" for the following command:\n{command}\n"
             else:
                 msg += "."
             msg += f"Waited for {timeout} seconds."
             _LOG.warning(msg)
 
         return acquired
+
+    def _release_intsh_lock(self, command: str | None = None):
+        """
+        Mark the interactive shell as free.
+
+        Args:
+            command: Optional command string. Used for logging purposes if the lock cannot be
+                     acquired.
+        """
+
+        acquired = self._acquire_intsh_lock(command)
+        if not acquired:
+            _LOG.warning("Failed to mark the interactive shell process as free")
+        else:
+            self._intsh_busy = False
+            self._intsh_lock.release()
 
     def _do_run_async(self,
                       command: str | Path,
