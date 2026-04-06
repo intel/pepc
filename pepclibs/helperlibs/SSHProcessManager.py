@@ -275,6 +275,15 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
 
         exitcode: list[int | None] = [None, None]
 
+        # If both markers were already consumed by a prior 'wait()' call (e.g. '_read_pid()' called
+        # 'wait()' with 'lines=(1,-1)' and drained the entire queue including the markers), the
+        # process is already done. Return the buffered output immediately. Entering the loop would
+        # block indefinitely on '_get_next_queue_item()'.
+        if self.exitcode is not None:
+            self._dbg("SSHProcess._wait_intsh(): Process already exited with status %d, "
+                      "returning buffered output", self.exitcode)
+            return self._get_lines_to_return(lines)
+
         # The interactive shell ('sh -s') is started once and reused across multiple commands. Each
         # command is sent to the shell's stdin. The shell runs one command at a time.
         #
