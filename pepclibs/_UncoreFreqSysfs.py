@@ -368,6 +368,9 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
             Error: If validation fails (missing directories, mismatched package IDs, etc.).
         """
 
+        # First pass: build a list of uncore frequency sysfs directory names in the order they
+        # appear in the sysfs base.
+        dirnames: list[str] = []
         index = -1
         for dirname in sorted(sysfs_base_lsdir):
             match = re.match(r"^uncore(\d+)$", dirname)
@@ -388,14 +391,19 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
                 raise Error(f"Unexpected uncore frequency sysfs directory '{path}' found"
                             f"{self._pman.hostmsg}")
 
-            with self._pman.open(path / "package_id", "r") as fobj:
-                pkg_sysfs_str = fobj.read().strip()
-                pkg_sysfs = Trivial.str_to_int(pkg_sysfs_str, base=10,
-                                               what=f"package ID from '{dirname}'")
+            dirnames.append(dirname)
 
-            package, die , die_info = dirname2die_info[dirname]
-            if package != pkg_sysfs:
-                raise Error(f"Package ID {pkg_sysfs} read from '{path}/package_id' does not match "
+        package_id_paths = (self._sysfs_base / dirname / "package_id" for dirname in dirnames)
+        package_id_iterator = self._sysfs_io.read_paths_int(package_id_paths, what="package ID")
+
+        # Second pass: validate that sysfs package IDs and agent types match the expected package
+        # IDs and agent types for each die, and save the validated data.
+        for dirname, (_, pkg_id) in zip(dirnames, package_id_iterator):
+            path = self._sysfs_base / dirname
+            package, die, die_info = dirname2die_info[dirname]
+
+            if package != pkg_id:
+                raise Error(f"Package ID {pkg_id} read from '{path}/package_id' does not match "
                             f"the expected package ID {package}{self._pman.hostmsg}")
 
             # Detect die type corresponding to this uncore directory.
