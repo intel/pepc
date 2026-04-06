@@ -98,8 +98,8 @@ if typing.TYPE_CHECKING:
 
         Attributes:
             hostname: The remote host name or IP address (-H option). Default is "localhost".
-            username: The user name for logging into the remote host (-U option). Default is "root"
-                      in case of a remote host and "" (empty string) for the local host.
+            username: The user name for logging into the remote host (-U option). Default is ""
+                      (empty string).
             privkey: The path to the private SSH key (-K option). Default is an empty string (no
                      private SSH key).
             timeout: The timeout for establishing an SSH connection in seconds (-T option). Default
@@ -130,7 +130,9 @@ SSH_OPTIONS: list[ArgTypedDict] = [
         "kwargs" : {
             "dest" : "username",
             "default" : "",
-            "help" : "User name for logging into the remote host over SSH. Defaults to 'root'."
+            "help" : "User name for logging into the remote host over SSH. By default, look "
+                      "up the user name in SSH configuration files. If not found, use the "
+                      "current user name."
         },
     },
     {
@@ -249,8 +251,6 @@ def format_ssh_args(args: argparse.Namespace) -> SSHArgsTypedDict:
         if timeout:
             raise Error("The '--timeout' option requires the '--host' option")
     else:
-        if not username:
-            username = "root"
         if timeout:
             timeout = Trivial.str_to_num(getattr(args, "timeout"), what="--timeout option value")
         else:
