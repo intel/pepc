@@ -34,21 +34,26 @@ if typing.TYPE_CHECKING:
         hostname: str
         pman: ProcessManagerType
 
-def get_test_data_path(testpath: str) -> Path:
+def get_prj_src_path() -> Path:
     """
-    Get the path to the test data for the specified test.
-
-    Args:
-        testpath: Path to the test for which to retrieve the data path. The intention is that the
-                  caller passes __file__ as the argument.
+    Return the path to the pepc project source tree root directory.
 
     Returns:
-        Path to the test data directory for the specified test.
+        Path to the project source tree root directory.
     """
 
-    path = Path(testpath).resolve()
-    # Test name is the file name without the '.py' suffix.
-    return path.parent / "test-data" / path.stem
+    return Path(__file__).parent.parent.resolve()
+
+def get_test_data_base() -> Path:
+    """
+    Return the path to the test data base directory. Test data are not the same as emulation
+    datasets.
+
+    Returns:
+        Path to the test data base directory.
+    """
+
+    return get_prj_src_path() / "tests" / "test-data"
 
 def _get_emul_data_path(dataset: str) -> Path:
     """
@@ -109,7 +114,6 @@ def build_params(pman: ProcessManagerType) -> CommonTestParamsTypedDict:
 
     return {"hostname": pman.hostname, "pman": pman}
 
-# TODO: Most if not all tests should use this, to stress-test the online/offline handling.
 def get_cpuinfos(pman: ProcessManagerType) -> Generator[CPUInfo.CPUInfo, None, None]:
     """
     Yield 'CPUInfo' objects for testing based on the host type.

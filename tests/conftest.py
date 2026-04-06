@@ -34,7 +34,8 @@ _NOHOST_MODULES: Final[frozenset[str]] = frozenset({
 })
 
 # The test modules that work only on the local host or a remote host, but not emulation.
-_NOEMULATION_MODULES: Final[frozenset[str]] = frozenset({"tests.test_process_manager"})
+_NOEMULATION_MODULES: Final[frozenset[str]] = frozenset({"tests.test_process_manager",
+                                                          "tests.test_python_prj_installer"})
 
 # The special '--dataset' option value meaning "run tests on all available datasets".
 _ALL_DATASETS: Final[str] = "all"

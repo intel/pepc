@@ -1,0 +1,18 @@
+#!/usr/bin/python3
+#
+# -*- coding: utf-8 -*-
+# vim: ts=4 sw=4 tw=100 et ai si
+#
+# Copyright (C) 2026 Intel Corporation
+# SPDX-License-Identifier: BSD-3-Clause
+#
+# Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
+
+"""
+install-pepc - install 'pepc' on the local or remote host.
+"""
+
+from pepctools._InstallPepc import main
+
+if __name__ == "__main__":
+    raise SystemExit(main())

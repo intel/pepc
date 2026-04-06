@@ -36,7 +36,7 @@ def _get_tpmi_instance() -> TPMI.TPMI:
     Create and return a TPMI instance for the test debugfs dump.
     """
 
-    debugfs_dump_path = common.get_test_data_path(__file__) / Path("debugfs-dump")
+    debugfs_dump_path = common.get_test_data_base() / "test_tpmi_nohost" / "debugfs-dump"
     tpmi = TPMI.TPMI(base=debugfs_dump_path)
     return tpmi
 
@@ -210,7 +210,7 @@ def test_no_tpmi_info(tmp_path: Path):
     """
 
     # Create a copy of the debugfs dump without the 'tpmi_info' feature.
-    debugfs_dump_path = common.get_test_data_path(__file__) / Path("debugfs-dump")
+    debugfs_dump_path = common.get_test_data_base() / "test_tpmi_nohost" / "debugfs-dump"
     test_dump_path = tmp_path / Path("debugfs-dump-no-tpmi_info")
 
     shutil.copytree(debugfs_dump_path, test_dump_path)

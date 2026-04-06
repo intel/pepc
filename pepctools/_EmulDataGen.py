@@ -38,13 +38,14 @@ except ImportError:
 from pepclibs import CPUModels, CPUInfo, CPUOnline, CStates, PStates, Uncore
 import pepclibs.msr as _msr_pkg
 from pepclibs.msr import _FeaturedMSR, MSR
-from pepclibs.helperlibs import Logging, ArgParse, ProcessManager, YAML, Trivial
+from pepclibs.helperlibs import Logging, ArgParse, ProcessManager, YAML
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs.helperlibs.emul.EmulCommon import EMUL_CONFIG_FNAME
 
 if typing.TYPE_CHECKING:
     import argparse
     from typing import Final, TypedDict, Generator
+    from pepclibs.helperlibs.ArgParse import SSHArgsTypedDict
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepclibs.helperlibs.emul.EmulCommon import _EDConfTypedDict
 
@@ -60,23 +61,16 @@ if typing.TYPE_CHECKING:
         command: str
         readonly: bool
 
-    class _CmdlineArgsTypedDict(TypedDict, total=False):
+    class _CmdlineArgsTypedDict(SSHArgsTypedDict, total=False):
         """
-        A typed dictionary for command-line arguments of this tool.
+        A typed dictionary for command-line arguments of this tool. Includes all attributes from
+        'SSHArgsTypedDict', plus the following:
 
         Attributes:
-            hostname: The hostname of the target system.
-            username: The username to use for SSH connections.
-            privkey: The private key file to use for SSH authentication.
-            timeout: The timeout value for SSH connections.
             outdir: Path to the output directory.
             replace: If True, remove the output directory contents before proceeding.
         """
 
-        hostname: str
-        username: str
-        privkey: str
-        timeout: int | float
         outdir: Path
         replace: bool
 
@@ -247,36 +241,10 @@ def _get_cmdline_args(args: argparse.Namespace) -> _CmdlineArgsTypedDict:
         A dictionary containing the parsed command-line arguments.
     """
 
-    hostname: str = getattr(args, "hostname", "localhost")
-    username: str = getattr(args, "username", "")
-    privkey: str = getattr(args, "privkey", "")
-    _timeout: str = getattr(args, "timeout", "")
-    timeout: int | float = 8
-
-    if hostname == "localhost":
-        if username:
-            raise Error("The '--username' option requires the '--host' option")
-        if privkey:
-            raise Error("The '--priv-key' option requires the '--host' option")
-        if _timeout:
-            raise Error("The '--timeout' option requires the '--host' option")
-    else:
-        if not username:
-            username = "root"
-        if _timeout:
-            timeout = Trivial.str_to_num(_timeout, what="--timeout option value")
-
-    cmdl: _CmdlineArgsTypedDict = {}
-    cmdl["hostname"] = hostname
-    cmdl["username"] = username
-    cmdl["privkey"] = privkey
-    cmdl["timeout"] = timeout
+    cmdl: _CmdlineArgsTypedDict = {**ArgParse.format_ssh_args(args)}
 
     outdir = getattr(args, "outdir")
-    if outdir:
-        cmdl["outdir"] = outdir
-    else:
-        cmdl["outdir"] = Path(hostname)
+    cmdl["outdir"] = outdir if outdir else Path(cmdl["hostname"])
 
     cmdl["replace"] = getattr(args, "replace", False)
 
@@ -631,7 +599,7 @@ def _prepare(pman: ProcessManagerType, cpuinfo: CPUInfo.CPUInfo):
         except ErrorNotSupported:
             pass
 
-def _do_main(pman: ProcessManagerType, outdir: Path, cpuinfo: CPUInfo.CPUInfo) -> int:
+def _do_main(pman: ProcessManagerType, outdir: Path, cpuinfo: CPUInfo.CPUInfo):
     """
     The main body of the tool.
 
@@ -639,9 +607,6 @@ def _do_main(pman: ProcessManagerType, outdir: Path, cpuinfo: CPUInfo.CPUInfo) -
         pman: The process manager object that defines the SUT to collect data from.
         outdir: Path to the output directory to store the collected data at.
         cpuinfo: CPU information object for the SUT.
-
-    Returns:
-        The program exit code.
     """
 
     _prepare(pman, cpuinfo)
@@ -656,8 +621,6 @@ def _do_main(pman: ProcessManagerType, outdir: Path, cpuinfo: CPUInfo.CPUInfo) -
     _collect_procfs(pman, outdir, config_yml)
 
     _generate_config_file(outdir / EMUL_CONFIG_FNAME, config_yml)
-
-    return 0
 
 def main() -> int:
     """
@@ -683,7 +646,7 @@ def main() -> int:
                                      privkeypath=cmdl["privkey"],
                                      timeout=cmdl["timeout"]) as pman, \
              CPUInfo.CPUInfo(pman=pman) as cpuinfo:
-            return _do_main(pman, cmdl["outdir"], cpuinfo)
+            _do_main(pman, cmdl["outdir"], cpuinfo)
     except KeyboardInterrupt:
         _LOG.info("\nInterrupted, exiting")
     except Error as err:
