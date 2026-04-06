@@ -71,6 +71,10 @@ def get_params(hostspec: str, username: str) -> Generator[_TestParamsTypedDict, 
         params["cpuonline"] = cpuonline
         params["cpuinfo"] = cpuinfo
 
+        # Online all CPUs before capturing the topology, so test parameters reflect the complete
+        # CPU set regardless of the initial system state.
+        cpuonline.online(cpus="all")
+
         params["cpus"] = cpuinfo.get_cpus()
         params["packages"] = cpuinfo.get_packages()
         params["cores"] = {}

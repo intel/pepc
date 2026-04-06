@@ -17,7 +17,7 @@ import typing
 import pytest
 from tests import common, props_cmdl_common
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
-from pepclibs import CPUInfo, CStates
+from pepclibs import CPUInfo, CPUOnline, CStates
 from pepclibs.CStates import ErrorTryAnotherMechanism
 
 if typing.TYPE_CHECKING:
@@ -59,6 +59,10 @@ def get_params(hostspec: str, username: str) -> Generator[PropsCmdlTestParamsTyp
     with common.get_pman(hostspec, username=username) as pman, \
          CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
          CStates.CStates(pman=pman, cpuinfo=cpuinfo) as pobj:
+        with CPUOnline.CPUOnline(pman=pman, cpuinfo=cpuinfo) as cpuonline:
+            # Online all CPUs before capturing the topology, so test parameters reflect the
+            # complete CPU set regardless of the initial system state.
+            cpuonline.online(cpus="all")
         params = common.build_params(pman)
         _params = props_cmdl_common.extend_params(params, pobj, cpuinfo)
 
