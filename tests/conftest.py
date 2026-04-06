@@ -42,13 +42,14 @@ _ALL_DATASETS: Final[str] = "all"
 def pytest_addoption(parser: pytest.Parser):
     """Add custom command-line options for pytest."""
 
-    text = """Name of the host to run the test on. The default value is "emulation", which means
-              running on emulated system. Emulation requires a dataset, and there are many datasets
-              available in the "emul-data" subdirectory."""
+    text = """Name of the host to run the tests on. By default, tests run against all available
+              emulation datasets in the "emul-data" subdirectory. Use '-D' to run against a single
+              dataset. Provide a hostname to run the tests on a real remote host instead."""
     parser.addoption("-H", "--host", dest="hostname", default="emulation", help=text)
 
-    text = """Name of the user to use for logging into the remote host over SSH. The default user
-              name is 'root'."""
+    text = """Name of the user to use for logging into the remote host over SSH. By default,
+              the user name is looked up in SSH configuration files, and if not found, the
+              current user name is used."""
     parser.addoption("-U", "--username", dest="username", default="", help=text)
 
     text = """This option specifies the dataset to use for emulation. By default, all datasets are
@@ -90,13 +91,8 @@ def pytest_generate_tests(metafunc: pytest.Metafunc):
     assert isinstance(username, str)
     assert isinstance(dataset, str)
 
-    if username and hostname == "emulation":
-        raise pytest.UsageError("The '--username' option can only be used with real hosts")
-
     if hostname != "emulation":
         metafunc.parametrize("hostspec", [hostname], scope="module")
-        if not username:
-            username = "root"
         metafunc.parametrize("username", [username], scope="module")
     elif metafunc.module.__name__ in _NOEMULATION_MODULES:
         # This is the emulation case, but the test is supposed to run with the local process
