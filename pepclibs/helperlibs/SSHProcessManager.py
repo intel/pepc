@@ -515,8 +515,8 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
                       variable. If 'USER' is not set, use the current user name from the system.
             password: Password for the specified username. Defaults to None (no password).
             privkeypath: Optional path to the private key for authentication. If no private key path
-                         is provided, the method attempts to locate one using SSH configuration
-                         files.
+                         is provided, the method attempts to locate all configured paths from SSH
+                         configuration files.
             timeout: Timeout value for the establishing the SSH connection in seconds. Defaults to
                      60 seconds.
 
@@ -545,7 +545,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         self.username = username
 
         self.password = password
-        self.privkeypath: str = str(privkeypath)
+        self.privkeypaths: list[str] = [str(privkeypath)] if privkeypath else []
 
         # The command to use for figuring out full paths in the 'which()' method.
         self._which_cmd: str | None = None
@@ -571,45 +571,52 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             else:
                 self._vhostname = connhost = hostname
 
-        if not self.privkeypath:
+        if not self.privkeypaths:
             try:
-                self.privkeypath = self._lookup_privkey(hostname, self.username)
+                self.privkeypaths = self._lookup_privkeys(hostname, self.username)
             except Exception as err: # pylint: disable=broad-except
                 msg = Error(str(err)).indent(2)
                 _LOG.debug(f"Private key lookup failed:\n{msg}")
 
-        if self.privkeypath:
+        for privkeypath in self.privkeypaths:
             # Private SSH key sanity checks.
             try:
-                mode = os.stat(self.privkeypath).st_mode
+                mode = os.stat(privkeypath).st_mode
             except OSError as err:
                 msg = Error(str(err)).indent(2)
-                raise Error(f"'stat()' failed for private SSH key at '{self.privkeypath}':\n"
+                raise Error(f"'stat()' failed for private SSH key at '{privkeypath}':\n"
                             f"{msg}") from err
 
             if not stat.S_ISREG(mode):
-                raise Error(f"Private SSH key at '{self.privkeypath}' is not a regular file")
+                raise Error(f"Private SSH key at '{privkeypath}' is not a regular file")
 
             if mode & (stat.S_IROTH | stat.S_IWOTH | stat.S_IXOTH):
-                raise Error(f"Private SSH key at '{self.privkeypath}' permissions are too wide: "
+                raise Error(f"Private SSH key at '{privkeypath}' permissions are too wide: "
                             f"Make sure 'others' cannot read/write/execute it")
-            look_for_keys = False
-        else:
-            look_for_keys = True
+        look_for_keys = not self.privkeypaths
 
         _LOG.debug("Establishing SSH connection to %s, port %d, username '%s', timeout '%s', "
-                   "password '%s', priv. key '%s', look_for_keys '%s', SSH pman object ID: %s",
+                   "password '%s', priv. keys '%s', look_for_keys '%s'",
                    self._vhostname, port, self.username, self.connection_timeout, self.password,
-                   self.privkeypath, look_for_keys, id(self))
+                   self.privkeypaths, look_for_keys)
 
         try:
             self.ssh = paramiko.SSHClient()
             auto_add_policy = paramiko.AutoAddPolicy()
             if not isinstance(auto_add_policy, DummyParamiko.AutoAddPolicy):
                 self.ssh.set_missing_host_key_policy(auto_add_policy)
-            # We expect to be authenticated either with the key or via the SSH agent.
+
+            # Paramiko accepts a list of private key paths via 'key_filename' argument. But mypy
+            # does not know about this, here is a workaround.
+            if self.privkeypaths:
+                if typing.TYPE_CHECKING:
+                    key_filename = cast(str, self.privkeypaths)
+                else:
+                    key_filename = self.privkeypaths
+            else:
+                key_filename = None
             self.ssh.connect(username=self.username, hostname=connhost, port=port,
-                             key_filename=self.privkeypath or None, timeout=self.connection_timeout,
+                             key_filename=key_filename, timeout=self.connection_timeout,
                              password=self.password, allow_agent=True, look_for_keys=look_for_keys)
         except paramiko.AuthenticationException as err:
             msg = Error(str(err)).indent(2)
@@ -623,9 +630,8 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
     def close(self):
         """Close the SSH connection."""
 
-        _LOG.debug("Closing SSH connection to %s (port %d, username '%s', priv. key '%s', SSH pman "
-                   "object ID: %s", self._vhostname, self.port, self.username, self.privkeypath,
-                   id(self))
+        _LOG.debug("Closing SSH connection to %s (port %d, username '%s', priv. keys '%s'",
+                   self._vhostname, self.port, self.username, self.privkeypaths)
 
         if self._intsh:
             with contextlib.suppress(BaseException):
@@ -635,19 +641,17 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         super().close()
 
-    def _get_ssh_cfg_host_opt(self,
-                              hostalias: str,
-                              optname: str,
-                              cfgfiles: Sequence[str] = ()) -> str:
+    def _get_ssh_cfg_host_opts(self,
+                               hostalias: str,
+                               optname: str,
+                               cfgfiles: Sequence[str] = ()) -> Generator[str, None, None]:
         """
-        Look up a 'Host' block option in SSH config files.
+        Yield all values of a 'Host' block option from SSH config files.
 
         SSH config files (e.g. '~/.ssh/config') contain 'Host' blocks that map host aliases to
-        connection parameters. Read those blocks and return the value of the requested option (e.g.
-        'HostName', 'User', 'IdentityFile') for the given hostname alias.
-
-        For options that allow multiple values (e.g. 'IdentityFile'), return the first value.
-        Return an empty string when the option is not found.
+        connection parameters. Read those blocks and yield values of the requested option (e.g.
+        'HostName', 'User', 'IdentityFile') for the given hostname alias. For multi-value options
+        (e.g. 'IdentityFile'), yield each configured value individually.
 
         Args:
             hostalias: The alias to look up in SSH config 'Host' blocks (e.g. 'Host <hostalias>').
@@ -655,8 +659,8 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
                      'IdentityFile'). Case-insensitive.
             cfgfiles: The SSH configuration file paths to search in. Use standard paths by default.
 
-        Returns:
-            The option value, or an empty string when the option is not found.
+        Yields:
+            Option values found across all SSH configuration files.
 
         Examples:
             Given the following SSH config snippet:
@@ -664,10 +668,12 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
                 Host myserver
                     User alice
                     IdentityFile ~/.ssh/alice_rsa
+                    IdentityFile ~/.ssh/alice_ed25519
 
-            _get_ssh_cfg_host_opt("myserver", "User")         -> "alice"
-            _get_ssh_cfg_host_opt("myserver", "IdentityFile") -> "~/.ssh/alice_rsa"
-            _get_ssh_cfg_host_opt("myserver", "Port")         -> ""
+            list(_get_ssh_cfg_host_opts("myserver", "IdentityFile")) -> ["~/.ssh/alice_rsa",
+                                                                          "~/.ssh/alice_ed25519"]
+            list(_get_ssh_cfg_host_opts("myserver", "User"))         -> ["alice"]
+            list(_get_ssh_cfg_host_opts("myserver", "Port"))         -> []
         """
 
         optname = optname.lower()
@@ -694,39 +700,50 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             # Option names are lowercased. Values are strings or lists (for multi-value options).
             cfg = config.lookup(hostalias)
             if optname in cfg:
-                val = cfg[optname]
-                val = val[0] if isinstance(val, list) else val
-                # Paramiko's 'lookup()' always injects 'hostname' into the result dict, using
-                # the input alias as the default value. This happens even when no 'Host' block in
-                # the file matched the alias at all. As a result, '"hostname" in cfg' is always
-                # 'True', making it impossible to tell from the key alone whether an explicit
-                # 'HostName' directive was found. A real 'HostName' directive would produce a
-                # value different from the alias (e.g. '10.54.97.143'), while the paramiko
-                # default produces the alias itself (e.g. 'wcl'). Skip the latter and continue
-                # to the next file in 'cfgfiles', which may have the real directive.
-                if optname != "hostname" or val != hostalias:
-                    return val
+                vals = cfg[optname]
+                vals_list: list[str]
+                if isinstance(vals, list):
+                    vals_list = vals
+                else:
+                    vals_list = [vals]
+                for val in vals_list:
+                    # Paramiko's 'lookup()' always injects 'hostname' into the result dict, using
+                    # the input alias as the default value. This happens even when no 'Host' block
+                    # in the file matched the alias at all. As a result, '"hostname" in cfg' is
+                    # always 'True', making it impossible to tell from the key alone whether an
+                    # explicit 'HostName' directive was found. A real 'HostName' directive would
+                    # produce a value different from the alias (e.g. '10.54.97.143'), while the
+                    # paramiko default produces the alias itself (e.g. 'wcl'). Skip the latter and
+                    # continue to the next file in 'cfgfiles', which may have the real directive.
+                    if optname != "hostname" or val != hostalias:
+                        yield val
 
             if "include" in cfg:
                 # The include directive may contain wildcards. Expand them. Sort the resulting
                 # list to have a deterministic order.
                 include_cfgfiles = sorted(glob.glob(cfg["include"]))
                 if include_cfgfiles:
-                    optval = self._get_ssh_cfg_host_opt(hostalias, optname,
-                                                        cfgfiles=include_cfgfiles)
-                    if optval:
-                        return optval
+                    yield from self._get_ssh_cfg_host_opts(hostalias, optname,
+                                                           cfgfiles=include_cfgfiles)
 
+    def _get_ssh_cfg_host_opt(self,
+                              hostalias: str,
+                              optname: str,
+                              cfgfiles: Sequence[str] = ()) -> str:
+        """
+        Return the first value yielded by '_get_ssh_cfg_host_opts()', or an empty string.
+        """
+
+        for val in self._get_ssh_cfg_host_opts(hostalias, optname, cfgfiles=cfgfiles):
+            return val
         return ""
 
-    def _lookup_privkey(self,
-                        hostalias: str,
-                        username: str,
-                        cfgfiles: Sequence[str] = ()) -> str:
+    def _lookup_privkeys(self,
+                         hostalias: str,
+                         username: str,
+                         cfgfiles: Sequence[str] = ()) -> list[str]:
         """
-        Look up the private SSH key for a given host alias and user in SSH config files.
-
-        If multiple 'IdentityFile' entries are configured for the host, return the first one.
+        Look up all private SSH keys for a given host alias and user in SSH config files.
 
         Args:
             hostalias: The alias to look up in SSH config 'Host' blocks (e.g. 'Host <hostalias>').
@@ -734,7 +751,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             cfgfiles: The SSH configuration files to search in. Use standard files by default.
 
         Returns:
-            The path to the private key, or an empty string if no key is found.
+            A list of private key paths. Returns an empty list if no keys are found.
 
         Notes:
             SSH config files support the '%u' token in 'IdentityFile' paths (e.g.
@@ -746,14 +763,15 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         saved_user = os.getenv("USER")
         try:
             os.environ["USER"] = username or saved_user or Trivial.get_username()
-            privkeypath = self._get_ssh_cfg_host_opt(hostalias, "IdentityFile", cfgfiles=cfgfiles)
+            privkeypaths = list(self._get_ssh_cfg_host_opts(hostalias, "IdentityFile",
+                                                            cfgfiles=cfgfiles))
         finally:
             if saved_user:
                 os.environ["USER"] = saved_user
             else:
                 os.environ.pop("USER", None)
 
-        return privkeypath
+        return privkeypaths
 
     @staticmethod
     def _format_cmd(cmd: str,
@@ -1134,8 +1152,8 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         """
 
         ssh_opts = f"-o \"Port={self.port}\" -o \"User={self.username}\""
-        if self.privkeypath:
-            ssh_opts += f" -o \"IdentityFile={self.privkeypath}\""
+        for privkeypath in self.privkeypaths:
+            ssh_opts += f" -o \"IdentityFile={privkeypath}\""
         return ssh_opts
 
     def rsync(self,
