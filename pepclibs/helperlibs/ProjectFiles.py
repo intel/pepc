@@ -244,7 +244,6 @@ def search_project_data(tpath: str | Path,
                 yield_count += 1
                 yield candidate
 
-            # Check the system directories.
             candidate = Path(f"/usr/share/{prjname}/{tpath}")
             candidates.append(candidate)
             if wpman.exists(candidate):
@@ -327,6 +326,7 @@ def get_project_data_search_descr(prjname: str, tpath: str | Path) -> str:
 
     paths += [f"$VIRTUAL_ENV/share/{prjname}/{tpath}",
               f"$HOME/.local/share/{prjname}/{tpath}",
+              f"$HOME/share/{prjname}/{tpath}",
               f"/usr/local/share/{prjname}/{tpath}",
               f"/usr/share/{prjname}/{tpath}"]
 
@@ -345,8 +345,8 @@ def find_project_helper(prjname: str, helper: str, pman: ProcessManagerType | No
            exists and is executable, return the path).
         3. '$VIRTUAL_ENV/bin/', if the environment variable is set.
         4. Directories listed in the 'PATH' environment variable.
-        4. '$HOME/.local/bin/'.
-        5. '$HOME/bin/'.
+        5. '$HOME/.local/bin/'.
+        6. '$HOME/bin/'.
         7. '/usr/local/bin/'.
         8. '/usr/bin'.
 
@@ -372,11 +372,11 @@ def find_project_helper(prjname: str, helper: str, pman: ProcessManagerType | No
 
         # Check the directory specified by the environment variable.
         envar = get_project_helpers_envar(prjname)
-        path = wpman.get_envar(envar)
-        if not path:
-            path = os.environ.get(envar)
-        if path:
-            candidate = Path(path) / helper
+        path_str = wpman.get_envar(envar)
+        if not path_str:
+            path_str = os.environ.get(envar)
+        if path_str:
+            candidate = Path(path_str) / helper
             candidates.append(candidate)
             if wpman.is_exe(candidate):
                 return candidate
