@@ -1271,6 +1271,3 @@ def main() -> int:
         _LOG.error_out(str(_err))
 
     return 0
-
-if __name__ == "__main__":
-    raise SystemExit(main())
