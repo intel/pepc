@@ -659,7 +659,7 @@ def _do_main(pman: ProcessManagerType, outdir: Path, cpuinfo: CPUInfo.CPUInfo) -
 
     return 0
 
-def main():
+def main() -> int:
     """
     The entry point of the tool.
 
