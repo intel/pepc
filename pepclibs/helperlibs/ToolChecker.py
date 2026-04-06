@@ -4,8 +4,8 @@
 # Copyright (C) 2020-2026 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
-# Authors: Antti Laakso <antti.laakso@intel.com>
-#          Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
+# Authors: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
+#          Antti Laakso <antti.laakso@intel.com>
 
 """
 Provide a capability of checking if a tool is installed on a Linux host, and generate a meaningful
@@ -21,9 +21,8 @@ from pepclibs.helperlibs import Logging, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound
 
 if typing.TYPE_CHECKING:
-    from typing import Final, Union
+    from typing import Final, Iterable
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
-    from pepclibs.helperlibs._ProcessManagerBase import ProcessManagerBase
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
@@ -56,6 +55,7 @@ _FEDORA_PKGINFO: Final[dict[str, str]] = {
     "tc":         "iproute-tc",
     "bpftool":    "bpftool",
     "libbpf":     "libbpf-devel",
+    "virtualenv": "python3-virtualenv",
     "sch_etf.ko": "kernel-modules-extra",
 }
 
@@ -65,6 +65,7 @@ _UBUNTU_PKGINFO: Final[dict[str, str]] = {
     "tc":         "iproute2",
     "bpftool":    "linux-tools-common",
     "libbpf":     "libbpf-dev",
+    "virtualenv": "python3-venv",
     "sch_etf.ko": "linux-modules",
 }
 
@@ -74,6 +75,7 @@ _DEBIAN_PKGINFO: Final[dict[str, str]] = {
     "tc":         "iproute2",
     "bpftool":    "bpftool",
     "libbpf":     "libbpf-dev",
+    "virtualenv": "python3-venv",
     "sch_etf.ko": "linux-modules",
 }
 
@@ -88,13 +90,31 @@ _PKGINFO: Final[dict[str, dict[str, str]]] = {
     "debian": _DEBIAN_PKGINFO,
 }
 
+# Maps OS IDs to the package manager installer command.
+_PKG_INSTALLER: Final[dict[str, str]] = {
+    "fedora": "dnf",
+    "centos": "dnf",
+    "rhel":   "dnf",
+    "ubuntu": "apt",
+    "debian": "apt",
+}
+
+# Maps supported OS IDs to human-readable OS names.
+SUPPORTED_OSIDS: Final[dict[str, str]] = {
+    "fedora": "Fedora",
+    "centos": "CentOS",
+    "rhel":   "Red Hat Enterprise Linux",
+    "ubuntu": "Ubuntu",
+    "debian": "Debian",
+}
+
 class ToolChecker(ClassHelpers.SimpleCloseContext):
     """
     Provide a capability of checking if a tool is installed on a Linux host, and generate a
     meaningful suggestion if the OS package is not installed.
     """
 
-    def __init__(self, pman: Union[ProcessManagerType, ProcessManagerBase]):
+    def __init__(self, pman: ProcessManagerType):
         """
         Initialize a class instance.
 
@@ -138,7 +158,7 @@ class ToolChecker(ClassHelpers.SimpleCloseContext):
 
                         split_line = line.split("=")
                         if len(split_line) != 2:
-                            _LOG.warning("Unexpected line in '%s'%s:\n%s\nExpected lines have have "
+                            _LOG.warning("Unexpected line in '%s'%s:\n%s\nExpected lines have "
                                          "'key=value' format.", path, self._pman.hostmsg, line)
                             continue
 
@@ -160,40 +180,39 @@ class ToolChecker(ClassHelpers.SimpleCloseContext):
             self._osinfo = self._read_os_release()
         return self._osinfo
 
-    def get_osname(self) -> str:
+    def get_os_name(self) -> str:
         """
         Return name of the OS running on the target system. The name is read from the
-        '/etc/os-release' file. Return '<unknown_OS_NAME>' if OS name could not be determined.
+        '/etc/os-release' file. Examples: 'Fedora Linux', 'Ubuntu', 'Debian GNU/Linux'.
+
+        Raises:
+            ErrorNotFound: If the OS name could not be determined.
         """
 
-        try:
-            osinfo = self._get_osinfo()
-        except ErrorNotFound as err:
-            _LOG.debug(err)
-            return "<unknown_OS_NAME>"
+        osinfo = self._get_osinfo()
 
         if "NAME" in osinfo:
             return osinfo["NAME"]
         if "ID" in osinfo:
             return osinfo["ID"].capitalize()
-        return "<unknown_OS_NAME>"
+
+        raise ErrorNotFound(f"Cannot determine OS name{self._pman.hostmsg}.")
 
     def get_osid(self) -> str:
         """
         Return ID of the OS running on the target system. The ID is read from the
-        '/etc/os-release' file. Return '<unknown_OS_ID>' if OS ID could not be determined.
+        '/etc/os-release' file. Examples: 'fedora', 'ubuntu', 'debian'.
+
+        Raises:
+            ErrorNotFound: If the OS ID could not be determined.
         """
 
-        try:
-            osinfo = self._get_osinfo()
-        except ErrorNotFound as err:
-            _LOG.debug(err)
-            return "<unknown_OS_ID>"
+        osinfo = self._get_osinfo()
 
         if "ID" in osinfo:
             return osinfo["ID"]
 
-        return "<unknown_OS_ID>"
+        raise ErrorNotFound(f"Cannot determine OS ID{self._pman.hostmsg}.")
 
     def tool_to_pkg(self, tool: str, osid: str = "") -> str:
         """
@@ -206,6 +225,9 @@ class ToolChecker(ClassHelpers.SimpleCloseContext):
         Returns:
             Name of the OS package that provides 'tool'. Return an empty string if package name was
             not found.
+
+        Raises:
+            ErrorNotFound: If 'osid' is not provided and the OS ID could not be determined.
         """
 
         if not osid:
@@ -218,17 +240,19 @@ class ToolChecker(ClassHelpers.SimpleCloseContext):
 
     def check_tool(self, tool: str) -> Path:
         """
-        Check if tool 'tool' is available on the target system. Return tool path if it is available,
-        raise an 'ErrorNotFound' exception otherwise.
+        Check if tool 'tool' is available on the target system.
 
         Args:
             tool: Name of the tool to check for.
 
         Returns:
-            Path to the tool if it is available.
+            Path to the tool.
+
+        Raises:
+            ErrorNotFound: The tool is not found on the target system.
         """
 
-        if tool is self._cache:
+        if tool in self._cache:
             return self._cache[tool]
 
         path = self._pman.which(tool, must_find=False)
@@ -236,13 +260,40 @@ class ToolChecker(ClassHelpers.SimpleCloseContext):
             self._cache[tool] = path
             return path
 
-        msg = f"Failed to find tool '{tool}'{self._pman.hostmsg}"
+        msg = f"Failed to find tool '{tool}'{self._pman.hostmsg}."
 
-        osid = self.get_osid()
-
-        pkgname = self.tool_to_pkg(Path(tool).name, osid=osid)
-        if pkgname:
-            osname = self.get_osname()
-            msg += f".\nTry to install the '{osname}' OS package '{pkgname}'{self._pman.hostmsg}."
+        with contextlib.suppress(ErrorNotFound):
+            osid = self.get_osid()
+            pkgname = self.tool_to_pkg(Path(tool).name, osid=osid)
+            if pkgname:
+                osname = self.get_os_name()
+                cmd = self.get_os_packages_install_cmd([pkgname], osid=osid)
+                msg += f"\nTry to install the '{osname}' OS package '{pkgname}' using the " \
+                       f"following command{self._pman.hostmsg}:\n{cmd}"
 
         raise ErrorNotFound(msg)
+
+    def get_os_packages_install_cmd(self, pkgnames: Iterable[str], osid: str = "") -> str:
+        """
+        Return the OS command for installing the given packages on the target system.
+
+        Args:
+            pkgnames: Names of the OS packages to install.
+            osid: Optional OS ID (will be automatically discovered by default).
+
+        Returns:
+            The install command string, e.g. 'dnf install pkg1 pkg2'. Returns an empty string if
+            the OS is not recognized.
+
+        Raises:
+            ErrorNotFound: If 'osid' is not provided and the OS ID could not be determined.
+        """
+
+        if not osid:
+            osid = self.get_osid()
+
+        installer = _PKG_INSTALLER.get(osid, "")
+        if not installer:
+            return ""
+
+        return f"{installer} install {' '.join(pkgnames)}"
