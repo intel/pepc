@@ -394,7 +394,8 @@ class UncoreFreqSysfs(_UncoreFreqBase.UncoreFreqBase):
             dirnames.append(dirname)
 
         package_id_paths = (self._sysfs_base / dirname / "package_id" for dirname in dirnames)
-        package_id_iterator = self._sysfs_io.read_paths_int(package_id_paths, what="package ID")
+        package_id_iterator = self._sysfs_io.read_paths_int(package_id_paths, what="package ID",
+                                                            su=True)
 
         # Second pass: validate that sysfs package IDs and agent types match the expected package
         # IDs and agent types for each die, and save the validated data.

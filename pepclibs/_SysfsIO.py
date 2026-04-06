@@ -636,7 +636,11 @@ for path, (val, verify, retries, sleep) in winfo.items():
         self._in_transaction = False
         _LOG.debug("Transaction in SysfsIO has been committed")
 
-    def read(self, path: Path, what: str = "", val_if_not_found: str | None = None) -> str:
+    def read(self,
+             path: Path,
+             what: str = "",
+             val_if_not_found: str | None = None,
+             su: bool = False) -> str:
         """
         Read the contents of a sysfs file at the specified path.
 
@@ -645,6 +649,7 @@ for path, (val, verify, retries, sleep) in winfo.items():
             what: Optional short description of what is being read, included in exception messages.
             val_if_not_found: Value to return if the file is not found instead of raising an
                               exception.
+            su: If 'True', read as superuser (root).
 
         Returns:
             The contents of the file as a string.
@@ -669,7 +674,7 @@ for path, (val, verify, retries, sleep) in winfo.items():
             _LOG.debug("%s: Read: Sysfs file '%s'%s", msg_prefix, path, self._pman.hostmsg)
 
         try:
-            with self._pman.open(path, "r") as fobj:
+            with self._pman.open(path, "r", su=su) as fobj:
                 try:
                     val = fobj.read().strip()
                 except ErrorPermissionDenied as err:
@@ -689,7 +694,11 @@ for path, (val, verify, retries, sleep) in winfo.items():
 
         return self.cache_add(path, val)
 
-    def read_int(self, path: Path, what: str = "", val_if_not_found: str | None = None) -> int:
+    def read_int(self,
+                 path: Path,
+                 what: str = "",
+                 val_if_not_found: str | None = None,
+                 su: bool = False) -> int:
         """
         Read a sysfs file and return its contents as an integer.
 
@@ -698,6 +707,7 @@ for path, (val, verify, retries, sleep) in winfo.items():
             what: Optional short description of what is being read, included in exception messages.
             val_if_not_found: Value to return if the file is not found instead of raising an
                               exception.
+            su: If 'True', read as superuser (root).
 
         Returns:
             The integer value read from the file.
@@ -709,7 +719,7 @@ for path, (val, verify, retries, sleep) in winfo.items():
             ErrorPath: An I/O error occurred while reading the file (includes path information).
         """
 
-        val = self.read(path, what=what, val_if_not_found=val_if_not_found)
+        val = self.read(path, what=what, val_if_not_found=val_if_not_found, su=su)
 
         try:
             return Trivial.str_to_int(val, what=what)
@@ -721,8 +731,8 @@ for path, (val, verify, retries, sleep) in winfo.items():
     def _read_paths_optimized_helper(self,
                                      paths: list[Path],
                                      what: str = "",
-                                     val_if_not_found: str | None = None) -> \
-                                                            Generator[tuple[Path, str], None, None]:
+                                     val_if_not_found: str | None = None,
+                                     su: bool = False) -> Generator[tuple[Path, str], None, None]:
         """
         Read the specified list of paths in a single optimized I/O operation. The arguments are
         the same as for 'read_paths()'.
@@ -762,7 +772,7 @@ for path in paths:
 '"""
 
             try:
-                stdout, stderr = self._pman.run_verify_nojoin(cmd)
+                stdout, stderr = self._pman.run_verify_nojoin(cmd, su=su)
             except Error as err:
                 errmsg = err.indent(2)
                 raise type(err)(f"Failed to read sysfs files{self._pman.hostmsg}:\n"
@@ -816,8 +826,8 @@ for path in paths:
     def _read_paths_optimized(self,
                               paths: Iterable[Path],
                               what: str = "",
-                              val_if_not_found: str | None = None) -> \
-                                                            Generator[tuple[Path, str], None, None]:
+                              val_if_not_found: str | None = None,
+                              su: bool = False) -> Generator[tuple[Path, str], None, None]:
         """
         Implement 'read_paths()' with optimized I/O. The arguments are the same as for
         'read_paths()'.
@@ -850,19 +860,20 @@ for path in paths:
                 continue
 
             yield from self._read_paths_optimized_helper(read_paths, what=what,
-                                                         val_if_not_found=val_if_not_found)
+                                                         val_if_not_found=val_if_not_found, su=su)
 
             read_paths = [path]
             read_paths_len = path_len
 
         if read_paths:
             yield from self._read_paths_optimized_helper(read_paths, what=what,
-                                                         val_if_not_found=val_if_not_found)
+                                                         val_if_not_found=val_if_not_found, su=su)
 
     def _read_paths(self,
                     paths: Iterable[Path],
                     what: str = "",
-                    val_if_not_found: str | None = None) -> Generator[tuple[Path, str], None, None]:
+                    val_if_not_found: str | None = None,
+                    su: bool = False) -> Generator[tuple[Path, str], None, None]:
         """
         Implement 'read_paths()' without optimized I/O. The arguments are the same as for
         'read_paths()'.
@@ -872,13 +883,14 @@ for path in paths:
         """
 
         for path in paths:
-            val = self.read(path, what=what, val_if_not_found=val_if_not_found)
+            val = self.read(path, what=what, val_if_not_found=val_if_not_found, su=su)
             yield path, val
 
     def read_paths(self,
                    paths: Iterable[Path],
                    what: str = "",
-                   val_if_not_found: str | None = None) -> Generator[tuple[Path, str], None, None]:
+                   val_if_not_found: str | None = None,
+                   su: bool = False) -> Generator[tuple[Path, str], None, None]:
         """
         Read multiple sysfs files and yield their paths and contents.
 
@@ -886,6 +898,7 @@ for path in paths:
             paths: Paths to the sysfs files to read.
             what: Optional short description of what is being read, included in exception messages.
             val_if_not_found: Value to return for missing files instead of raising an exception.
+            su: If 'True', read as superuser (root).
 
         Yields:
             Tuples of (path, value) for each file read.
@@ -899,17 +912,20 @@ for path in paths:
             - The order of yielded results matches the order of input paths.
         """
 
-        if self._optimize_io:
+        use_sudo = not self._pman.is_superuser() and self._pman.has_passwdless_sudo()
+        optimize = self._optimize_io or (su and use_sudo)
+
+        if optimize:
             if not VERIFY_IO_OPTIMIZATIONS:
                 yield from self._read_paths_optimized(paths, what=what,
-                                                      val_if_not_found=val_if_not_found)
+                                                      val_if_not_found=val_if_not_found, su=su)
             else:
                 # Materialize paths list since we need to iterate it twice for verification.
                 paths_list = list(paths)
                 iterator1 = self._read_paths(paths_list, what=what,
-                                             val_if_not_found=val_if_not_found)
+                                             val_if_not_found=val_if_not_found, su=su)
                 iterator2 = self._read_paths_optimized(paths_list, what=what,
-                                                       val_if_not_found=val_if_not_found)
+                                                       val_if_not_found=val_if_not_found, su=su)
 
                 for (path1, val1), (path2, val2) in zip(iterator1, iterator2):
                     if path1 != path2 or val1 != val2:
@@ -920,13 +936,14 @@ for path in paths:
                                     f"- Optimized value: '{val2}'")
                     yield path1, val1
         else:
-            yield from self._read_paths(paths, what=what, val_if_not_found=val_if_not_found)
+            yield from self._read_paths(paths, what=what, val_if_not_found=val_if_not_found,
+                                        su=su)
 
     def read_paths_int(self,
                        paths: Iterable[Path],
                        what: str = "",
-                       val_if_not_found: str | None = None) -> \
-                                                        Generator[tuple[Path, int], None, None]:
+                       val_if_not_found: str | None = None,
+                       su: bool = False) -> Generator[tuple[Path, int], None, None]:
         """
         Read multiple sysfs files and yield their paths and contents as integers.
 
@@ -934,6 +951,7 @@ for path in paths:
             paths: Paths to the sysfs files to read.
             what: Optional short description of what is being read, included in exception messages.
             val_if_not_found: Value to return for missing files instead of raising an exception.
+            su: If 'True', read as superuser (root).
 
         Yields:
             Tuples of (path, value) for each file read, where value is an integer.
@@ -948,7 +966,8 @@ for path in paths:
             - The order of yielded results matches the order of input paths.
         """
 
-        for path, val in self.read_paths(paths, what=what, val_if_not_found=val_if_not_found):
+        for path, val in self.read_paths(paths, what=what, val_if_not_found=val_if_not_found,
+                                         su=su):
             try:
                 intval = Trivial.str_to_int(val, what=what)
             except Error as err:
