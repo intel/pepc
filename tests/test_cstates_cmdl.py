@@ -231,7 +231,8 @@ def test_cstates_config_bad(params: TestParamsTypedDict):
     for opt in _get_bad_config_opts():
         for cpu_opt in props_cmdl_common.get_good_optarget_opts(params, sname="package"):
             props_cmdl_common.run_pepc(f"cstates config {opt} {cpu_opt}", pman, exp_exc=Error)
-        break
+            break
 
-    for cpu_opt in props_cmdl_common.get_bad_optarget_opts(params):
-        props_cmdl_common.run_pepc(f"cstates config {opt} {cpu_opt}", pman, exp_exc=Error)
+        for cpu_opt in props_cmdl_common.get_bad_optarget_opts(params):
+            props_cmdl_common.run_pepc(f"cstates config {opt} {cpu_opt}", pman, exp_exc=Error)
+        break
