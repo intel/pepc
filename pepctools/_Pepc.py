@@ -54,7 +54,7 @@ _DATASET_OPTION: Final[ArgTypedDict] = {
     },
 }
 
-_SUPPORTED_OPTIMIZATIONS: Final[set[str]] = {"MSR:IO", "sysfs:IO"}
+_SUPPORTED_OPTIMIZATIONS: Final[frozenset[str]] = frozenset({"MSR:IO", "sysfs:IO"})
 
 _DISABLE_OPTIMIZATIONS_OPTION: Final[ArgTypedDict] = {
     "short": None,
@@ -83,7 +83,7 @@ _OVERRIDE_CPU_OPTION: Final[ArgTypedDict] = {
     },
 }
 
-_MECHANISMS_OPTIONS: Final[list[ArgTypedDict]] = [
+_MECHANISMS_OPTIONS: Final[tuple[ArgTypedDict, ...]] = (
     {
         "short": None,
         "long": "--list-mechanisms",
@@ -105,9 +105,9 @@ _MECHANISMS_OPTIONS: Final[list[ArgTypedDict]] = [
                        available mechanism is used.""",
         },
     },
-]
+)
 
-_COMMON_TPMI_OPTIONS: Final[list[ArgTypedDict]] = [
+_COMMON_TPMI_OPTIONS: Final[tuple[ArgTypedDict, ...]] = (
     {
         "short": "-B",
         "long": "--base",
@@ -132,7 +132,7 @@ _COMMON_TPMI_OPTIONS: Final[list[ArgTypedDict]] = [
                        captured from.""",
         },
     }
-]
+)
 
 def _add_target_cpus_arguments(subpars: ArgParse.ArgsParser, fmt: str, exclude: set | None = None):
     """
@@ -316,10 +316,10 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
                tool."""
     parser.add_argument("--print-man-path", action=_PrintManPathAction, nargs=0, help=text)
 
-    ssh_options = ArgParse.SSH_OPTIONS + [_DATASET_OPTION]
-    ssh_and_mechanisms_options = ssh_options + _MECHANISMS_OPTIONS
-    disable_optimizations_options = [_DISABLE_OPTIMIZATIONS_OPTION]
-    override_cpu_options = [_OVERRIDE_CPU_OPTION]
+    ssh_options = (*ArgParse.SSH_OPTIONS, _DATASET_OPTION)
+    ssh_and_mechanisms_options = (*ssh_options, *_MECHANISMS_OPTIONS)
+    disable_optimizations_options = (_DISABLE_OPTIMIZATIONS_OPTION,)
+    override_cpu_options = (_OVERRIDE_CPU_OPTION,)
 
     #
     # Create parser for the 'pstates' command.
