@@ -127,7 +127,7 @@ def pytest_configure(config: pytest.Config):
 
     # Configure the pepc logger. Read the log level from the pytest config so that
     # '--log-cli-level=DEBUG' makes pepc emit debug messages.
-    log_level_str = config.getoption("log_cli_level", default=None)
+    log_level_str = config.getoption("log_cli_level")
     if log_level_str and isinstance(log_level_str, str):
         log_level = getattr(logging, log_level_str.upper(), logging.INFO)
     else:
