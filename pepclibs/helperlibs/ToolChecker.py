@@ -35,6 +35,7 @@ _COMMON_PKGINFO: Final[dict[str, str]] = {
     "depmod":    "kmod",
     "dmesg":     "util-linux",
     "gcc":       "gcc",
+    "git":       "git",
     "id":        "coreutils",
     "libelf":    "elfutils-libelf-devel",
     "lscpu":     "util-linux",
@@ -42,10 +43,14 @@ _COMMON_PKGINFO: Final[dict[str, str]] = {
     "make":      "make",
     "modprobe":  "kmod",
     "phc2sys":   "linuxptp",
+    "pip3":      "python3-pip",
+    "rm":        "coreutils",
     "rmmod":     "kmod",
     "rsync":     "rsync",
     "sync":      "coreutils",
     "systemctl": "systemd",
+    "uname":     "coreutils",
+    "unlink":    "coreutils",
     "xargs":     "findutils",
 }
 
@@ -55,8 +60,9 @@ _FEDORA_PKGINFO: Final[dict[str, str]] = {
     "tc":         "iproute-tc",
     "bpftool":    "bpftool",
     "libbpf":     "libbpf-devel",
-    "virtualenv": "python3-virtualenv",
+    "ps":         "procps-ng",
     "sch_etf.ko": "kernel-modules-extra",
+    "virtualenv": "python3-virtualenv",
 }
 
 # Ubuntu.
@@ -65,8 +71,9 @@ _UBUNTU_PKGINFO: Final[dict[str, str]] = {
     "tc":         "iproute2",
     "bpftool":    "linux-tools-common",
     "libbpf":     "libbpf-dev",
-    "virtualenv": "python3-venv",
+    "ps":         "procps",
     "sch_etf.ko": "linux-modules",
+    "virtualenv": "python3-venv",
 }
 
 # Debian.
@@ -75,8 +82,9 @@ _DEBIAN_PKGINFO: Final[dict[str, str]] = {
     "tc":         "iproute2",
     "bpftool":    "bpftool",
     "libbpf":     "libbpf-dev",
-    "virtualenv": "python3-venv",
+    "ps":         "procps",
     "sch_etf.ko": "linux-modules",
+    "virtualenv": "python3-venv",
 }
 
 #
@@ -123,6 +131,7 @@ class ToolChecker(ClassHelpers.SimpleCloseContext):
         """
 
         self._pman = pman
+
         self._osinfo: dict[str, str] = {}
         # Tools name to tool path cache.
         self._cache: dict[str, Path] = {}
@@ -156,7 +165,7 @@ class ToolChecker(ClassHelpers.SimpleCloseContext):
                         if line.startswith("#"):
                             continue
 
-                        split_line = line.split("=")
+                        split_line = line.split("=", 1)
                         if len(split_line) != 2:
                             _LOG.warning("Unexpected line in '%s'%s:\n%s\nExpected lines have "
                                          "'key=value' format.", path, self._pman.hostmsg, line)
@@ -223,20 +232,25 @@ class ToolChecker(ClassHelpers.SimpleCloseContext):
             osid: Optional OS ID (will be automatically discovered by default).
 
         Returns:
-            Name of the OS package that provides 'tool'. Return an empty string if package name was
-            not found.
+            Name of the OS package that provides 'tool'.
 
         Raises:
-            ErrorNotFound: If 'osid' is not provided and the OS ID could not be determined.
+            ErrorNotFound: If the package name could not be found, or if 'osid' is not provided
+                           and the OS ID could not be determined.
         """
 
         if not osid:
             osid = self.get_osid()
 
         if osid not in _PKGINFO:
-            return ""
+            raise ErrorNotFound(f"Cannot find OS package for tool '{tool}'{self._pman.hostmsg}: "
+                                f"Unsupported OS '{osid}'.")
 
-        return _PKGINFO[osid].get(tool, "")
+        pkg = _PKGINFO[osid].get(tool, "")
+        if not pkg:
+            raise ErrorNotFound(f"Cannot find OS package for tool '{tool}'{self._pman.hostmsg}")
+
+        return pkg
 
     def check_tool(self, tool: str) -> Path:
         """
@@ -265,11 +279,10 @@ class ToolChecker(ClassHelpers.SimpleCloseContext):
         with contextlib.suppress(ErrorNotFound):
             osid = self.get_osid()
             pkgname = self.tool_to_pkg(Path(tool).name, osid=osid)
-            if pkgname:
-                osname = self.get_os_name()
-                cmd = self.get_os_packages_install_cmd([pkgname], osid=osid)
-                msg += f"\nTry to install the '{osname}' OS package '{pkgname}' using the " \
-                       f"following command{self._pman.hostmsg}:\n{cmd}"
+            osname = self.get_os_name()
+            cmd = self.get_os_packages_install_cmd([pkgname], osid=osid)
+            msg += f"\nTry to install the '{osname}' OS package '{pkgname}' using the " \
+                   f"following command{self._pman.hostmsg}:\n{cmd}"
 
         raise ErrorNotFound(msg)
 
@@ -297,3 +310,36 @@ class ToolChecker(ClassHelpers.SimpleCloseContext):
             return ""
 
         return f"{installer} install {' '.join(pkgnames)}"
+
+    def ensure_tools_available(self, tools: Iterable[str]):
+        """
+        Ensure that the specified tools are available on the target system.
+
+        Args:
+            tools: An iterable of tool names to check for.
+        """
+
+        packages: set[str] = set()
+        missed_tools: list[str] = []
+
+        for tool in tools:
+            try:
+                self.check_tool(tool)
+            except ErrorNotFound:
+                try:
+                    packages.add(self.tool_to_pkg(tool))
+                except ErrorNotFound:
+                    missed_tools.append(tool)
+
+        if missed_tools:
+            raise ErrorNotFound(f"Failed to determine OS packages for the following tools"
+                                f"{self._pman.hostmsg}:\n{', '.join(missed_tools)}")
+
+        if packages:
+            cmd = self.get_os_packages_install_cmd(packages)
+            _LOG.info("Installing OS packages by running%s:\n%s", self._pman.hostmsg, cmd)
+            try:
+                self._pman.run_verify(cmd, su=True)
+            except Error as err:
+                raise type(err)(f"Failed to install OS packages{self._pman.hostmsg}:\n"
+                                f"{err}") from err
