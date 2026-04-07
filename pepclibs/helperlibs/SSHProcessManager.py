@@ -42,7 +42,7 @@ from pepclibs.helperlibs.Exceptions import Error, ErrorPermissionDenied, ErrorTi
 from pepclibs.helperlibs.Exceptions import ErrorNotFound, ErrorExists
 
 if typing.TYPE_CHECKING:
-    from typing import Generator, IO, Sequence, cast
+    from typing import Generator, IO, Iterable, Sequence, cast
     from pepclibs.helperlibs._ProcessManagerTypes import LsdirTypedDict, LsdirSortbyType
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
@@ -264,7 +264,7 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
     def _wait_intsh(self,
                     timeout: int | float = 0,
                     capture_output: bool = True,
-                    output_fobjs: tuple[IO[str] | None, IO[str] | None] = (None, None),
+                    output_fobjs: Sequence[IO[str] | None] = (None, None),
                     lines: tuple[int, int] = (0, 0)) -> list[list[str]]:
         """Implement '_wait()' for the interactive shell case. Refer to 'ProcessBase._wait()'."""
 
@@ -394,7 +394,7 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
     def _wait_nointsh(self,
                       timeout: int | float = 0,
                       capture_output: bool = True,
-                      output_fobjs: tuple[IO[str] | None, IO[str] | None] = (None, None),
+                      output_fobjs: Sequence[IO[str] | None] = (None, None),
                       lines: tuple[int, int] = (0, 0)) -> list[list[str]]:
         """Implement '_wait()' for the new SSH session case. Refer to 'ProcessBase._wait()'."""
 
@@ -443,7 +443,7 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
     def _wait(self,
               timeout: int | float = 0,
               capture_output: bool = True,
-              output_fobjs: tuple[IO[str] | None, IO[str] | None] = (None, None),
+              output_fobjs: Sequence[IO[str] | None] = (None, None),
               lines: tuple[int, int] = (0, 0)) -> list[list[str]]:
         """Refer to 'ProcessBase._wait()'."""
 
@@ -1123,7 +1123,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             capture_output: bool = True,
             mix_output: bool = False,
             join: bool = True,
-            output_fobjs: tuple[IO[str] | None, IO[str] | None] = (None, None),
+            output_fobjs: Sequence[IO[str] | None] = (None, None),
             cwd: str | Path | None = None,
             intsh: bool = True,
             env: dict[str, str] | None = None,
@@ -1151,7 +1151,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
                    capture_output: bool = True,
                    mix_output: bool = False,
                    join: bool = True,
-                   output_fobjs: tuple[IO[str] | None, IO[str] | None] = (None, None),
+                   output_fobjs: Sequence[IO[str] | None] = (None, None),
                    cwd: str | Path | None = None,
                    intsh: bool = True,
                    env: dict[str, str] | None = None,
@@ -1186,16 +1186,19 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
     def rsync(self,
               src: str | Path,
               dst: str | Path,
-              opts: str = "-rlD",
+              opts: str = _ProcessManagerBase.DEFAULT_RSYNC_OPTS,
               remotesrc: bool = False,
-              remotedst: bool = False):
+              remotedst: bool = False,
+              exclude: Iterable[str] = (),
+              output_fobjs: Sequence[IO[str] | None] = (None, None)):
         """Refer to 'ProcessManagerBase.rsync()'."""
 
         opts = self._rsync_add_debug_opts(opts)
+        exclude_opts = "".join(f" --exclude='{p}'" for p in exclude)
 
         if remotesrc and remotedst:
-            cmd = f"rsync {opts} -- '{src}' '{dst}'"
-            result = self.run(cmd)
+            cmd = f"rsync {opts}{exclude_opts} -- '{src}' '{dst}'"
+            result = self.run(cmd, output_fobjs=output_fobjs)
             is_local = False
         else:
             from pepclibs.helperlibs import LocalProcessManager # pylint: disable=import-outside-toplevel
@@ -1209,8 +1212,8 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
             else:
                 dst = str(dst)
 
-            cmd = f"rsync {opts} -e 'ssh {self.get_ssh_opts()}' -- '{src}' '{dst}'"
-            result = LocalProcessManager.LocalProcessManager().run(cmd)
+            cmd = f"rsync {opts}{exclude_opts} -e 'ssh {self.get_ssh_opts()}' -- '{src}' '{dst}'"
+            result = LocalProcessManager.LocalProcessManager().run(cmd, output_fobjs=output_fobjs)
             is_local = True
 
         if result.exitcode == 0:

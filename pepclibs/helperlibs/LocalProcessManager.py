@@ -30,7 +30,7 @@ from pepclibs.helperlibs.Exceptions import Error, ErrorTimeOut, ErrorPermissionD
 from pepclibs.helperlibs.Exceptions import ErrorNotFound, ErrorExists
 
 if typing.TYPE_CHECKING:
-    from typing import Generator, cast, IO
+    from typing import Generator, cast, IO, Iterable, Sequence
     from pepclibs.helperlibs._ProcessManagerTypes import LsdirTypedDict, LsdirSortbyType
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
@@ -102,7 +102,7 @@ class LocalProcess(_ProcessManagerBase.ProcessBase):
     def _wait(self,
               timeout: int | float = 0,
               capture_output: bool = True,
-              output_fobjs: tuple[IO[str] | None, IO[str] | None] = (None, None),
+              output_fobjs: Sequence[IO[str] | None] = (None, None),
               lines: tuple[int, int] = (0, 0)) -> list[list[str]]:
         """Refer to 'ProcessBase._wait()'."""
 
@@ -263,7 +263,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
             capture_output: bool = True,
             mix_output: bool = False,
             join: bool = True,
-            output_fobjs: tuple[IO[str] | None, IO[str] | None] = (None, None),
+            output_fobjs: Sequence[IO[str] | None] = (None, None),
             cwd: str | Path | None = None,
             intsh: bool | None = None,
             env: dict[str, str] | None = None,
@@ -298,7 +298,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
                    capture_output: bool = True,
                    mix_output: bool = False,
                    join: bool = True,
-                   output_fobjs: tuple[IO[str] | None, IO[str] | None] = (None, None),
+                   output_fobjs: Sequence[IO[str] | None] = (None, None),
                    cwd: str | Path | None = None,
                    intsh: bool | None = None,
                    env: dict[str, str] | None = None,
@@ -319,9 +319,11 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
     def rsync(self,
               src: str | Path,
               dst: str | Path,
-              opts: str = "-rlD",
+              opts: str = _ProcessManagerBase.DEFAULT_RSYNC_OPTS,
               remotesrc: bool = False,
-              remotedst: bool = False):
+              remotedst: bool = False,
+              exclude: Iterable[str] = (),
+              output_fobjs: Sequence[IO[str] | None] = (None, None)):
         """Refer to 'ProcessManagerBase.rsync()'."""
 
         for arg in ("remotesrc", "remotedst"):
@@ -330,10 +332,11 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
                             f"from/to a remote host: the {arg} argument must be 'False'")
 
         opts = self._rsync_add_debug_opts(opts)
+        exclude_opts = "".join(f" --exclude='{p}'" for p in exclude)
 
-        cmd = f"rsync {opts} -- '{src}' '{dst}'"
+        cmd = f"rsync {opts}{exclude_opts} -- '{src}' '{dst}'"
         try:
-            stdout, _ = self.run_verify(cmd)
+            stdout, _ = self.run_verify(cmd, output_fobjs=output_fobjs)
         except Error as err:
             msg = Error(str(err)).indent(2)
             raise type(err)(f"Failed to copy files '{src}' to '{dst}':\n{msg}") from err

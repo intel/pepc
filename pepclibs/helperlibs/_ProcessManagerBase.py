@@ -14,7 +14,6 @@ the command is executed on the local or remote system.
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
-import re
 import queue
 import shlex
 import codecs
@@ -29,13 +28,16 @@ from pepclibs.helperlibs._ProcessManagerTypes import ProcWaitResultNoJoinType
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorPermissionDenied
 
 if typing.TYPE_CHECKING:
-    from typing import IO, Any, cast, Generator
+    from typing import IO, Any, cast, Generator, Iterable, Sequence, Final
     from pepclibs.helperlibs._ProcessManagerTypes import LsdirTypedDict, LsdirSortbyType
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
 # The default process timeout in seconds.
-TIMEOUT = 24 * 60 * 60
+TIMEOUT: Final[int] = 24 * 60 * 60
+
+# Default options for the 'rsync' command.
+DEFAULT_RSYNC_OPTS: Final[str] = "-rlD"
 
 def get_err_prefix(fobj: IO, method_name: str) -> str:
     """
@@ -52,28 +54,30 @@ def get_err_prefix(fobj: IO, method_name: str) -> str:
 
     return f"Method '{method_name}()' failed for '{fobj.name}'"
 
-def extract_full_lines(text: str) -> tuple[list[str], str]:
+def extract_full_lines(text: str, keepends: bool = True) -> tuple[list[str], str]:
     """
-    Extract full lines and the last partial line from a piece of output of a process.
+    Extract full lines and the last partial line from a piece of text.
 
     Args:
         text: The input string to process.
+        keepends: If True (default), each returned full line includes its line terminator. If
+                  False, line terminators are stripped from the returned full lines.
 
     Returns:
         A tuple containing:
         - A list of full lines extracted from the input string.
-        - A string representing the last partial line, or an empty string if there is no partial
-          line.
+        - A string representing the last partial line (no line terminator), or an empty string if
+          there is no partial line.
     """
 
-    full: list[str] = []
-    partial = ""
+    lines = text.splitlines(keepends=True)
+    if not lines or lines[-1].endswith(("\n", "\r")):
+        full, partial = lines, ""
+    else:
+        full, partial = lines[:-1], lines[-1]
 
-    for line_match in re.finditer("(.*[\n\r])|(.+$)", text):
-        if line_match.group(2):
-            partial = line_match.group(2)
-            break
-        full.append(line_match.group(1))
+    if not keepends:
+        full = [line.rstrip("\r\n") for line in full]
 
     return (full, partial)
 
@@ -317,7 +321,7 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
                            streamid: int,
                            data: str,
                            capture_output: bool = True,
-                           output_fobjs: tuple[IO[str] | None, IO[str] | None] = (None, None)):
+                           output_fobjs: Sequence[IO[str] | None] = (None, None)):
         """
         Handle a queue item returned by '_get_next_queue_item()'.
 
@@ -418,7 +422,7 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
     def _wait(self,
               timeout: int | float = 0,
               capture_output: bool = True,
-              output_fobjs: tuple[IO[str] | None, IO[str] | None] = (None, None),
+              output_fobjs: Sequence[IO[str] | None] = (None, None),
               lines: tuple[int, int] = (0, 0)) -> list[list[str]]:
         """
         Wait for the process to complete and optionally capture its output.
@@ -441,7 +445,7 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
     def wait(self,
              timeout: int | float | None = None,
              capture_output: bool = True,
-             output_fobjs: tuple[IO[str] | None, IO[str] | None] = (None, None),
+             output_fobjs: Sequence[IO[str] | None] = (None, None),
              lines: tuple[int, int] = (0, 0),
              join: bool = True) -> ProcWaitResultType:
         """
@@ -820,7 +824,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
             capture_output: bool = True,
             mix_output: bool = False,
             join: bool = True,
-            output_fobjs: tuple[IO[str] | None, IO[str] | None] = (None, None),
+            output_fobjs: Sequence[IO[str] | None] = (None, None),
             cwd: str | Path | None = None,
             intsh: bool = True,
             env: dict[str, str] | None = None,
@@ -876,7 +880,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
                  timeout: int | float | None = None,
                  capture_output: bool = True,
                  mix_output: bool = False,
-                 output_fobjs: tuple[IO[str] | None, IO[str] | None] = (None, None),
+                 output_fobjs: Sequence[IO[str] | None] = (None, None),
                  cwd: str | Path | None = None,
                  intsh: bool = True,
                  env: dict[str, str] | None = None,
@@ -908,7 +912,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
                    timeout: int | float | None = None,
                    capture_output: bool = True,
                    mix_output: bool = False,
-                   output_fobjs: tuple[IO[str] | None, IO[str] | None] = (None, None),
+                   output_fobjs: Sequence[IO[str] | None] = (None, None),
                    cwd: str | Path | None = None,
                    intsh: bool = True,
                    env: dict[str, str] | None = None,
@@ -941,7 +945,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
                    capture_output: bool = True,
                    mix_output: bool = False,
                    join: bool = True,
-                   output_fobjs: tuple[IO[str] | None, IO[str] | None] = (None, None),
+                   output_fobjs: Sequence[IO[str] | None] = (None, None),
                    cwd: str | Path | None = None,
                    intsh: bool = True,
                    env: dict[str, str] | None = None,
@@ -988,7 +992,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
                         timeout: int | float | None = None,
                         capture_output: bool = True,
                         mix_output: bool = False,
-                        output_fobjs: tuple[IO[str] | None, IO[str] | None] = (None, None),
+                        output_fobjs: Sequence[IO[str] | None] = (None, None),
                         cwd: str | Path | None = None,
                         intsh: bool = True,
                         env: dict[str, str] | None = None,
@@ -1015,7 +1019,7 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
                           timeout: int | float | None = None,
                           capture_output: bool = True,
                           mix_output: bool = False,
-                          output_fobjs: tuple[IO[str] | None, IO[str] | None] = (None, None),
+                          output_fobjs: Sequence[IO[str] | None] = (None, None),
                           cwd: str | Path | None = None,
                           intsh: bool = True,
                           env: dict[str, str] | None = None,
@@ -1077,9 +1081,11 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
     def rsync(self,
               src: str | Path,
               dst: str | Path,
-              opts: str = "-rlD",
+              opts: str = DEFAULT_RSYNC_OPTS,
               remotesrc: bool = False,
-              remotedst: bool = False):
+              remotedst: bool = False,
+              exclude: Iterable[str] = (),
+              output_fobjs: Sequence[IO[str] | None] = (None, None)):
         """
         Copy data from the source path to the destination path using the 'rsync' tool.
 
@@ -1089,6 +1095,10 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
             opts: Options for the 'rsync' tool. Defaults to "-rlD".
             remotesrc: Set to True if the source path is on the remote host.
             remotedst: Set to True if the destination path is on the remote host.
+            exclude: Rsync exclude patterns. Each pattern is passed as a separate '--exclude'
+                     option to 'rsync'. Refer to the 'Exclude patterns' note below for details.
+            output_fobjs: A tuple of two file-like objects to echo stdout and stderr of the
+                          underlying 'rsync' process. Passed as-is to 'run_verify()'.
 
         Notes:
             - Refer to the 'rsync' tool documentation for a detailed description of the options.
@@ -1100,6 +1110,17 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
                 * r: Recursive copy.
                 * l: Copy symlinks as symlinks.
                 * D: Preserve device nodes and other special files.
+            - Exclude patterns: a pattern without '/' or '**' matches only the final path
+              component, otherwise the full transfer path is matched. Wildcards: '?' matches any
+              non-slash character, '*' matches any non-slash characters, '**' matches any
+              characters including '/'. See 'rsync(1)' for details.
+
+        Examples:
+            - Exclude all '.pyc' files:
+                pman.rsync(src, dst, exclude=("*.pyc",))
+            - Exclude the '.git' directory at the top of the source tree (use a leading '/' to
+              anchor the pattern to the root of the transfer):
+                pman.rsync(src_path + "/", dst, exclude=("/.git",))
         """
 
         raise NotImplementedError("ProcessManagerBase.rsync()")

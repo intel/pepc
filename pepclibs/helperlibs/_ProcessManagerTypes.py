@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import NamedTuple, Protocol
 
 if typing.TYPE_CHECKING:
-    from typing import IO, Generator, Literal, TypedDict
+    from typing import IO, Generator, Iterable, Literal, Sequence, TypedDict
 
     class LsdirTypedDict(TypedDict):
         """
@@ -100,7 +100,7 @@ class ProcessProtocol(Protocol):
     def wait(self,
              timeout: int | float | None = ...,
              capture_output: bool = ...,
-             output_fobjs: tuple[IO[str] | None, IO[str] | None] = ...,
+             output_fobjs: Sequence[IO[str] | None] = ...,
              lines: tuple[int, int] = ...,
              join: bool = ...) -> ProcWaitResultType:
         """Refer to 'ProcessBase.wait()'."""
@@ -159,7 +159,7 @@ class ProcessManagerProtocol(Protocol):
             capture_output: bool = ...,
             mix_output: bool = ...,
             join: bool = ...,
-            output_fobjs: tuple[IO[str] | None, IO[str] | None] = ...,
+            output_fobjs: Sequence[IO[str] | None] = ...,
             cwd: str | Path | None = ...,
             intsh: bool = ...,
             env: dict[str, str] | None = ...,
@@ -173,7 +173,7 @@ class ProcessManagerProtocol(Protocol):
                  timeout: int | float | None = ...,
                  capture_output: bool = ...,
                  mix_output: bool = ...,
-                 output_fobjs: tuple[IO[str] | None, IO[str] | None] = ...,
+                 output_fobjs: Sequence[IO[str] | None] = ...,
                  cwd: str | Path | None = ...,
                  intsh: bool = ...,
                  env: dict[str, str] | None = ...,
@@ -187,7 +187,7 @@ class ProcessManagerProtocol(Protocol):
                    timeout: int | float | None = ...,
                    capture_output: bool = ...,
                    mix_output: bool = ...,
-                   output_fobjs: tuple[IO[str] | None, IO[str] | None] = ...,
+                   output_fobjs: Sequence[IO[str] | None] = ...,
                    cwd: str | Path | None = ...,
                    intsh: bool = ...,
                    env: dict[str, str] | None = ...,
@@ -202,7 +202,7 @@ class ProcessManagerProtocol(Protocol):
                    capture_output: bool = ...,
                    mix_output: bool = ...,
                    join: bool = ...,
-                   output_fobjs: tuple[IO[str] | None, IO[str] | None] = ...,
+                   output_fobjs: Sequence[IO[str] | None] = ...,
                    cwd: str | Path | None = ...,
                    intsh: bool = ...,
                    env: dict[str, str] | None = ...,
@@ -216,7 +216,7 @@ class ProcessManagerProtocol(Protocol):
                         timeout: int | float | None = ...,
                         capture_output: bool = ...,
                         mix_output: bool = ...,
-                        output_fobjs: tuple[IO[str] | None, IO[str] | None] = ...,
+                        output_fobjs: Sequence[IO[str] | None] = ...,
                         cwd: str | Path | None = ...,
                         intsh: bool = ...,
                         env: dict[str, str] | None = ...,
@@ -230,7 +230,7 @@ class ProcessManagerProtocol(Protocol):
                           timeout: int | float | None = ...,
                           capture_output: bool = ...,
                           mix_output: bool = ...,
-                          output_fobjs: tuple[IO[str] | None, IO[str] | None] = ...,
+                          output_fobjs: Sequence[IO[str] | None] = ...,
                           cwd: str | Path | None = ...,
                           intsh: bool = ...,
                           env: dict[str, str] | None = ...,
@@ -252,7 +252,9 @@ class ProcessManagerProtocol(Protocol):
               dst: str | Path,
               opts: str = ...,
               remotesrc: bool = ...,
-              remotedst: bool = ...) -> None:
+              remotedst: bool = ...,
+              exclude: Iterable[str] = ...,
+              output_fobjs: Sequence[IO[str] | None] = ...) -> None:
         """Refer to 'ProcessManagerBase.rsync()'."""
         ...
 

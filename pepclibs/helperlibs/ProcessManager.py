@@ -18,9 +18,12 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 import typing
 import contextlib
 from pathlib import Path
-from pepclibs.helperlibs import LocalProcessManager, SSHProcessManager, EmulProcessManager
+from pepclibs.helperlibs import LocalProcessManager, SSHProcessManager, EmulProcessManager, Logging
+
 # pylint: disable-next=unused-import
 from pepclibs.helperlibs._ProcessManagerTypes import ProcWaitResultType
+# pylint: disable-next=unused-import
+from pepclibs.helperlibs._ProcessManagerBase import DEFAULT_RSYNC_OPTS
 
 if typing.TYPE_CHECKING:
     from typing import cast
@@ -29,6 +32,8 @@ if typing.TYPE_CHECKING:
 
     ProcessManagerType = ProcessManagerProtocol
     ProcessType = ProcessProtocol
+
+_LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
 def get_pman(hostname: str,
              username: str = "",
