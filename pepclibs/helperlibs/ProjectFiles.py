@@ -11,7 +11,9 @@
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import os
+import shutil
 import sys
+import tempfile
 import typing
 import contextlib
 from pathlib import Path
@@ -32,6 +34,9 @@ else:
     _importlib_resources_files = importlib.resources.files
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
+
+# Cache of extracted package paths for zipapp mode: {pkgname: Path}.
+_zipapp_pkg_paths: dict[str, Path] = {}
 
 def get_project_data_envar(prjname: str) -> str:
     """
@@ -75,17 +80,74 @@ def _get_project_data_package_name(prjname: str) -> str:
 
     return prjname.replace("-", "") + "data"
 
+def _extract_zipapp_package(pkgname: str, zipapp_path: Path) -> Path:
+    """
+    Extract a package from a zipapp archive to a temporary directory and return the path to the
+    extracted package. Register cleanup of the temporary directory on process exit.
+
+    Args:
+        pkgname: The name of the package to extract.
+        zipapp_path: Path to the zipapp archive.
+
+    Returns:
+        Path to the extracted package directory.
+    """
+
+    # pylint: disable-next=import-outside-toplevel
+    import atexit
+    # pylint: disable-next=import-outside-toplevel
+    import zipfile
+
+    if not zipapp_path.is_file() or not zipfile.is_zipfile(zipapp_path):
+        raise Error(f"Python package '{pkgname}' was found by the import system but its path does "
+                    f"not exist on the filesystem, and '{zipapp_path}' is not a zipapp archive")
+
+    try:
+        tmpdir = Path(tempfile.mkdtemp(prefix=f"{pkgname}-"))
+    except OSError as err:
+        msg = Error(str(err)).indent(2)
+        raise Error(f"Failed to create a temporary directory for '{pkgname}':\n{msg}") from err
+
+    try:
+        atexit.register(shutil.rmtree, tmpdir, ignore_errors=True)
+    except Exception as err:
+        msg = Error(str(err)).indent(2)
+        raise Error(f"Failed to register cleanup for '{tmpdir}':\n{msg}") from err
+
+    try:
+        with zipfile.ZipFile(zipapp_path) as zf:
+            pkg_prefix = f"{pkgname}/"
+            members = [m for m in zf.namelist() if m.startswith(pkg_prefix)]
+            for member in members:
+                zf.extract(member, tmpdir)
+    except OSError as err:
+        msg = Error(str(err)).indent(2)
+        raise Error(f"Failed to extract '{pkgname}' from '{zipapp_path}':\n{msg}") from err
+
+    return tmpdir / pkgname
+
 def _get_python_data_package_path(pkgname: str) -> Path | None:
     """
-    Return the full path to a python package. The path is in the standard python "site-packages"
-    directory of the running program.
+    Return the full path to a python package in the standard Python "site-packages" directory of
+    the running program.
 
     Args:
         pkgname: Python package name.
 
     Returns:
-        Path to the package directory.
+        Path to the package directory, or 'None' if the package was not found.
+
+    Notes:
+        When running as a zipapp (a standalone executable Python zip archive), the package is
+        embedded inside the zip file. In that case, 'importlib.resources' returns a virtual path
+        that does not point to a real directory on the filesystem. This function detects this
+        situation and extracts the package to a temporary directory, which is removed on process
+        exit. Subsequent calls for the same package name return the cached path without
+        re-extracting.
     """
+
+    if pkgname in _zipapp_pkg_paths:
+        return _zipapp_pkg_paths[pkgname]
 
     pkgpath: Path | None = None
     try:
@@ -97,12 +159,23 @@ def _get_python_data_package_path(pkgname: str) -> Path | None:
             multiplexed_path = _importlib_resources_files(pkgname)
             pkgpath = Path(str(multiplexed_path.joinpath(f"../{pkgname}")))
         if pkgpath:
-            return pkgpath.resolve()
+            pkgpath = pkgpath.resolve()
     except OSError as err:
         msg = Error(str(err)).indent(2)
         raise Error(f"Failed to find the python package directory for '{pkgname}':{msg}") from err
 
-    return None
+    if not pkgpath:
+        return None
+
+    if pkgpath.is_dir():
+        return pkgpath
+
+    # The path does not exist on the filesystem. This happens when running as a zipapp: the package
+    # is embedded in the zip but 'importlib.resources' returns a virtual path that cannot be used
+    # as a real filesystem path. Extract the package to a temporary directory.
+    extracted = _extract_zipapp_package(pkgname, Path(sys.argv[0]))
+    _zipapp_pkg_paths[pkgname] = extracted
+    return extracted
 
 def search_project_data(tpath: str | Path,
                         prjname: str = "",
