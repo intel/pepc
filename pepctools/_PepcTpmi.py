@@ -216,15 +216,11 @@ def _initialize_common_options(args: argparse.Namespace, cmdl: _CommonCmdlineArg
         base = None
 
     if args.vfm:
-        mdict = CPUModels.parse_user_vfm(args.vfm)
-    else:
-        mdict = {}
-
-    if mdict and not base:
-        raise Error("'--vfm' requires '--base' to be specified")
+        cmdl["mdict"] = CPUModels.parse_user_vfm(args.vfm)
+        if not base:
+            raise Error("'--vfm' requires '--base' to be specified")
 
     cmdl["base"] = base
-    cmdl["mdict"] = mdict
 
 def _get_ls_cmdline_args(args: argparse.Namespace) -> _LsCmdlineArgsTypedDict:
     """
@@ -594,7 +590,7 @@ def _get_tpmi(cmdl: _CommonCmdlineArgsTypedDict,
     else:
         assert pman is None
 
-        if cmdl["mdict"]:
+        if "mdict" in cmdl:
             vfm = cmdl["mdict"]["vfm"]
         else:
             vfm = TPMI.DEFAULT_VFM
