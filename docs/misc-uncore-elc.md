@@ -163,7 +163,7 @@ pepc uncore config --elc-low-zone-min-freq <value> --elc-mid-zone-min-freq <valu
 ```
 
 For more details, refer to the
-[manual page](https://github.com/intel/pepc/blob/main/docs/man/pepc-uncore.rst).
+[manual page](https://github.com/intel/pepc/blob/main/docs/man/pepc-uncore.md).
 
 ## Examples
 

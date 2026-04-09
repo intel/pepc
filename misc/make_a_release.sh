@@ -27,14 +27,14 @@ CHANGELOG_FILE="$BASEDIR/CHANGELOG.md"
 
 # Documentation directory and files.
 MAN_DIR="$BASEDIR/pepcdata/man/man1"
-RST_FILES="$BASEDIR/docs/man/pepc-pstates.rst
-           $BASEDIR/docs/man/pepc-cstates.rst
-           $BASEDIR/docs/man/pepc-uncore.rst
-           $BASEDIR/docs/man/pepc-cpu-hotplug.rst
-           $BASEDIR/docs/man/pepc-topology.rst
-           $BASEDIR/docs/man/pepc-pmqos.rst
-           $BASEDIR/docs/man/pepc-tpmi.rst
-           $BASEDIR/docs/man/pepc-aspm.rst"
+MD_FILES="$BASEDIR/docs/man/pepc-pstates.md
+          $BASEDIR/docs/man/pepc-cstates.md
+          $BASEDIR/docs/man/pepc-uncore.md
+          $BASEDIR/docs/man/pepc-cpu-hotplug.md
+          $BASEDIR/docs/man/pepc-topology.md
+          $BASEDIR/docs/man/pepc-pmqos.md
+          $BASEDIR/docs/man/pepc-tpmi.md
+          $BASEDIR/docs/man/pepc-aspm.md"
 
 # Path to the script that prepares CHANGELOG.md for the release.
 PREPARE_CHENGELOG_MD="$BASEDIR/misc/prepare_changelog_md"
@@ -113,9 +113,13 @@ sed -i -e "s/^version = \"$VERSION_REGEX\"$/version = \"$new_ver\"/" "$PYPROJECT
 sed -i -e "s/^Version:\(\s\+\)$VERSION_REGEX$/Version:\1$new_ver/" "$SPEC_FILE"
 
 # Update the man pages.
-for file in $RST_FILES; do
-    manfile="${MAN_DIR}/$(basename "$file" ".rst").1"
-    pandoc -f rst -s "$file" -t man -o "$manfile"
+for file in $MD_FILES; do
+    fname="${file##*/}"
+    stem="${fname%.md}"
+    manfile="${MAN_DIR}/${stem}.1"
+    title="$(printf '%s' "$stem" | tr 'a-z' 'A-Z')"
+    pandoc -f markdown_strict+definition_lists -s -M title="$title" -M section=1 \
+           "$file" -t man -o "$manfile"
     git add "$manfile"
 done
 

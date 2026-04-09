@@ -27,7 +27,7 @@ except ImportError:
 
 from typing import cast
 from pepclibs import PMQoSVars, CStatesVars, PStatesVars, UncoreVars, CPUInfoVars, TPMIVars
-from pepclibs.helperlibs import ArgParse, Human, Logging, ProjectFiles, Trivial
+from pepclibs.helperlibs import ArgParse, Human, Logging, ProjectFiles
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs._PropsClassBase import MECHANISMS
 

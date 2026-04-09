@@ -68,14 +68,14 @@ Please refer to the [User Guide](docs/guide-main.md) document.
 Here are the manual pages for all `pepc` features. They are also installed along with `pepc` and can
 be accessed via the `man` command (e.g., `man pepc-cstates`).
 
-- CPU P-states: [man page](docs/man/pepc-pstates.rst)
-- CPU C-states: [man page](docs/man/pepc-cstates.rst)
-- Uncore properties: [man page](docs/man/pepc-uncore.rst)
-- CPU onlining and offlining: [man page](docs/man/pepc-cpu-hotplug.rst)
-- CPU topology: [man page](docs/man/pepc-topology.rst)
-- PM QoS: [man page](docs/man/pepc-pmqos.rst)
-- TPMI: [man page](docs/man/pepc-tpmi.rst)
-- ASPM: [man page](docs/man/pepc-aspm.rst)
+- CPU P-states: [man page](docs/man/pepc-pstates.md)
+- CPU C-states: [man page](docs/man/pepc-cstates.md)
+- Uncore properties: [man page](docs/man/pepc-uncore.md)
+- CPU onlining and offlining: [man page](docs/man/pepc-cpu-hotplug.md)
+- CPU topology: [man page](docs/man/pepc-topology.md)
+- PM QoS: [man page](docs/man/pepc-pmqos.md)
+- TPMI: [man page](docs/man/pepc-tpmi.md)
+- ASPM: [man page](docs/man/pepc-aspm.md)
 
 Some features are hardware-agnostic, while others depend on specific hardware capabilities.
 
