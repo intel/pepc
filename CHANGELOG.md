@@ -9,9 +9,13 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
  - Fix a crash when uncore commands are used for a single CPU.
 ### Added
  - Fix Grand Ridge TPMI support.
+ - Add 'install-pepc' tool, replacing old sctipt.
+ - Add 'make-standalone' tool.
+ - Add built-in sudo support.
 ### Removed
 ### Changed
  - Improve speed in case of remote systems.
+ - Improve documentation.
 
 ## [1.6.26] - 2026-03-04
 ### Changed
