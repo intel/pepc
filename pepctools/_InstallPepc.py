@@ -32,6 +32,7 @@ if typing.TYPE_CHECKING:
     from typing import Final
     from pepclibs.helperlibs.ArgParse import SSHArgsTypedDict
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
+    from pepctools.PythonPrjInstaller import SudoAliasStyle
 
     class _CmdlineArgsTypedDict(SSHArgsTypedDict, total=False):
         """
@@ -47,6 +48,7 @@ if typing.TYPE_CHECKING:
                               checks.
             no_sudo_alias: Prevent adding the 'sudo' alias, skipping the automatic privilege
                            checks.
+            sudo_alias_style: The style of the 'sudo' alias to add. One of 'refresh' or 'wrap'.
         """
 
         install_path: Path
@@ -55,6 +57,7 @@ if typing.TYPE_CHECKING:
         no_rcfile: bool
         force_sudo_alias: bool
         no_sudo_alias: bool
+        sudo_alias_style: SudoAliasStyle
 
 _VERSION: Final[str] = "0.1"
 _TOOLNAME: Final[str] = "install-pepc"
@@ -119,6 +122,14 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
                    checks."""
     parser.add_argument("--no-sudo-alias", action="store_true", help=text_off)
 
+    text = """The style of the 'sudo' alias to add when one is needed. 'refresh' pre-authorizes
+              'sudo' credentials before each invocation and lets 'pepc' escalate privileges
+              internally as needed ('alias pepc="sudo -v && pepc"'). 'wrap' runs the entire
+              'pepc' process under 'sudo' ('alias pepc="sudo ... pepc"'). This requires virtual
+              environment configuration to be preserved across 'sudo'. Default: 'refresh'."""
+    parser.add_argument("--sudo-alias-style", choices=["refresh", "wrap"], default="",
+                        help=text)
+
     if argcomplete is not None:
         getattr(argcomplete, "autocomplete")(parser)
 
@@ -161,6 +172,22 @@ def _get_cmdline_args(args: argparse.Namespace) -> _CmdlineArgsTypedDict:
     cmdl["force_sudo_alias"] = getattr(args, "force_sudo_alias")
     cmdl["no_sudo_alias"] = getattr(args, "no_sudo_alias")
 
+    sudo_alias_style = getattr(args, "sudo_alias_style")
+    if sudo_alias_style and cmdl["no_sudo_alias"]:
+        raise Error("The '--no-sudo-alias' and '--sudo-alias-style' options are mutually "
+                    "exclusive")
+
+    for optname in ("force_sudo_alias", "no_sudo_alias"):
+        if cmdl["no_rcfile"] and cmdl[optname]:
+            raise Error(f"The '--{optname.replace('_', '-')}' and '--no-rcfile' options are "
+                        f"mutually exclusive")
+
+    if cmdl["force_sudo_alias"] and cmdl["no_sudo_alias"]:
+        raise Error("The '--force-sudo-alias' and '--no-sudo-alias' options are mutually "
+                    "exclusive")
+
+    cmdl["sudo_alias_style"] = sudo_alias_style or "refresh"
+
     return cmdl
 
 def _main(pman: ProcessManagerType, cmdl: _CmdlineArgsTypedDict):
@@ -182,9 +209,9 @@ def _main(pman: ProcessManagerType, cmdl: _CmdlineArgsTypedDict):
 
     if not cmdl["no_rcfile"] and not cmdl["no_sudo_alias"]:
         if cmdl["force_sudo_alias"]:
-            installer.add_sudo_aliases(("pepc",))
+            installer.add_sudo_aliases(("pepc",), style=cmdl["sudo_alias_style"])
         elif not pman.is_superuser() and not pman.has_passwdless_sudo():
-            installer.add_sudo_aliases(("pepc",))
+            installer.add_sudo_aliases(("pepc",), style=cmdl["sudo_alias_style"])
 
     if not cmdl["no_rcfile"]:
         installer.hookup_rc_file()
@@ -202,14 +229,6 @@ def main():
 
     args = _parse_arguments()
     cmdl = _get_cmdline_args(args)
-
-    for optname in ("force_sudo_alias", "no_sudo_alias"):
-        if cmdl["no_rcfile"] and cmdl[optname]:
-            raise Error(f"The '--{optname.replace('_', '-')}' and '--no-rcfile' options are "
-                        f"mutually exclusive")
-
-    if cmdl["force_sudo_alias"] and cmdl["no_sudo_alias"]:
-        raise Error("The '--force-sudo-alias' and '--no-sudo-alias' options are mutually exclusive")
 
     try:
         with ProcessManager.get_pman(cmdl["hostname"], username=cmdl["username"],

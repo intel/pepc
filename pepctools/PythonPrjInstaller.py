@@ -25,8 +25,10 @@ from pepclibs.helperlibs.Exceptions import Error
 
 if typing.TYPE_CHECKING:
     import zipfile
-    from typing import Final, Sequence
+    from typing import Final, Literal, Sequence
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
+
+    SudoAliasStyle = Literal["refresh", "wrap"]
 
 _LOG = Logging.getLogger(Logging.MAIN_LOGGER_NAME)
 
@@ -234,7 +236,7 @@ export MANPATH="$MANPATH:$($VENV_BIN/{self._prjname} --print-man-path)"
 
         return rcfile_path
 
-    def add_sudo_aliases(self, toolnames: Sequence[str]):
+    def add_sudo_aliases(self, toolnames: Sequence[str], style: SudoAliasStyle = "wrap"):
         """
         Append 'sudo' aliases for the project's tools to the RC file.
 
@@ -243,6 +245,10 @@ export MANPATH="$MANPATH:$($VENV_BIN/{self._prjname} --print-man-path)"
 
         Args:
             toolnames: Names of the tools to create 'sudo' aliases for.
+            style: The alias style. Use 'wrap' to run the entire tool process under 'sudo'
+                   (e.g. 'alias pepc="sudo ... pepc"'). Use 'refresh' to pre-authorize 'sudo'
+                   credentials before each invocation so that 'pepc' can escalate privileges
+                   internally as needed (e.g. 'alias pepc="sudo -v && pepc"').
         """
 
         rcfile_path = self.rcfile_path
@@ -252,8 +258,13 @@ export MANPATH="$MANPATH:$($VENV_BIN/{self._prjname} --print-man-path)"
         with self._pman.open(rcfile_path, "a") as fobj:
             fobj.write(f"\n# The '{self._prjname}' tools require superuser privileges.\n")
             for toolname in toolnames:
-                fobj.write(f'alias {toolname}="sudo PATH=$PATH VIRTUAL_ENV=$VENV '
-                           f'$VENV_BIN/{toolname}"\n')
+                if style == "wrap":
+                    fobj.write(f'alias {toolname}="sudo PATH=$PATH VIRTUAL_ENV=$VENV '
+                               f'$VENV_BIN/{toolname}"\n')
+                elif style == "refresh":
+                    fobj.write(f'alias {toolname}="sudo -v && {toolname}"\n')
+                else:
+                    raise Error(f"Unknown sudo alias style '{style}'")
 
     def hookup_rc_file(self):
         """
