@@ -29,6 +29,10 @@ This document provides guidelines for project coding style and conventions.
   - [Comment Punctuation](#comment-punctuation)
   - [Messages](#messages)
     - [Small vs Capital Letters in Messages](#small-vs-capital-letters-in-messages)
+- [Markdown Documentation](#markdown-documentation)
+  - [Backtick Usage](#backtick-usage)
+  - [Backtick Span Wrapping](#backtick-span-wrapping)
+  - [Link Wrapping](#link-wrapping)
 - [Code Organization](#code-organization)
   - [Class Layout](#class-layout)
   - [Private vs Public Symbols](#private-vs-public-symbols)
@@ -321,14 +325,20 @@ Use Google style for docstrings.
 **Structure:**
 
 - **First paragraph**: Summary of the method's purpose, written in imperative voice. Can be a
+
   single line or multiple lines. Start with an imperative verb (e.g., "Return", "Check", "Yield",
   "Test").
+
 - **Subsequent paragraphs** (rarely needed): Additional descriptive paragraphs should be rarely
+
   needed. Use structured sections (`Args:`, `Returns:`, `Yields:`, `Notes:`, `Examples:`) instead,
   as they provide better organization and readability. Only add additional paragraphs if the
   information cannot be properly expressed in structured sections.
+
 - **Notes section** (optional): Use `Notes:` (plural) for additional details formatted as a bullet
+
   list. Common uses:
+
   - Validation requirements (e.g., "Methods do not validate the 'cpus' argument")
   - Thread-safety information
   - Performance considerations
@@ -338,6 +348,7 @@ Use Google style for docstrings.
   - `Returns:` is mandatory if the method returns a value (other than `None`)
   - `Yields:` is mandatory if the method is a generator
   - `Raises:` is mandatory for public methods that raise exceptions (except the base `Error`
+
     class), optional for private methods
 
 **Guidelines:**
@@ -346,12 +357,19 @@ Use Google style for docstrings.
 - For multi-line docstrings, put the closing `"""` on a separate line
 - Do not repeat information that is already clear from the function signature and summary
 - Prefer putting additional details in the `Notes:` section as bullet points rather than in
+
   paragraph form
+
 - Skip detailed description paragraphs if the summary and Args/Returns/Notes sections are
+
   sufficient
+
 - Use single quotes (not backticks) to reference variable names, function names, and similar
+
   identifiers in docstrings. Example: "See 'close()' for details" or "Returns the 'cpu' value".
+
 - For helper functions that implement or wrap another function, reference the main function's
+
   arguments instead of repeating them when appropriate. Example: "Arguments are the same as in
   'main_function()'." This avoids repetition when argument lists are long or obvious from context.
 
@@ -490,6 +508,50 @@ messages should use periods.
 
     # Bad: Lowercase after colons.
     _LOG.debug("Local: read: CPU%d: msr 0x%x: 0x%x", cpu, regaddr, val)
+```
+
+## Markdown Documentation
+
+### Backtick Usage
+
+Use backticks for:
+
+- **Tool and command names**: `pepc`, `git`, `pip3`, `uv`.
+- **Subcommand names**: `pepc pstates`, `pepc cstates`.
+- **Option names**: `--cpus`, `--max-freq`, `-H`.
+- **File and directory paths**: `~/.bashrc`, `tests/emul-data/`, `/sys/devices/...`.
+- **Environment variable names**: `PATH`, `MANPATH`.
+- **Code identifiers**: function names, class names, and similar symbols, e.g., `read_msr()`,
+
+  `ErrorNotFound`.
+
+### Backtick Span Wrapping
+
+Do not split a backtick-quoted span across lines. Keep the opening and closing backtick on the
+same line. If adding the span would push the line past 100 characters, break the line before the
+opening backtick.
+
+### Link Wrapping
+
+Do not split a `[text](url)` link across lines. After the link ends, continue text on the same
+line and only break when the line would exceed 100 characters. If the link itself already reaches
+or exceeds 100 characters, break the line immediately before or after the link.
+
+**Correct:**
+
+```markdown
+Refer to the
+[Performance Level to Frequency Mapping](#performance-level-to-frequency-mapping) section.
+
+See [Pepc User Guide: Uncore](guide-uncore.md)
+for details.
+```
+
+**Incorrect:**
+
+```markdown
+Refer to the [Performance Level to
+Frequency Mapping](#performance-level-to-frequency-mapping) section.
 ```
 
 ## Code Organization
