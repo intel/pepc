@@ -1,0 +1,12 @@
+{
+    // Project uses 100-character line limit; override the default 80.
+    // Code blocks are excluded: command output and paths can't always be wrapped.
+    "MD013": { "line_length": 100, "code_blocks": false },
+
+    // Bold text is used as sub-section labels within sections (not as headings).
+    "MD036": false,
+
+    // Allow duplicate headings across different parent sections (e.g., multiple "Examples"
+    // subsections under different top-level sections). Only flag true siblings.
+    "MD024": { "siblings_only": true }
+}
