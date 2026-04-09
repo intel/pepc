@@ -10,7 +10,7 @@ Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 # C-state Namespaces
 
-- Author: Artem Bityutskiy \<dedekind1@gmail.com\>
+- Author: Artem Bityutskiy <dedekind1@gmail.com>
 - Date: May, 2025
 
 ## Table of Contents
@@ -57,9 +57,11 @@ These C-states range from the shallowest, C1, which offers lower power savings b
 to the deepest, C6P, which provides maximum power savings at the cost of higher latency.
 
 Notes:
+
 - In some configurations, such as when the `cpuidle` subsystem is disabled, Linux uses the HLT
   instruction to enter an idle state on Intel CPUs. The HLT instruction typically corresponds to the
   hardware CC1 C-state.
+
 - Linux supports a POLL idle state, implemented as a loop that includes NOP instructions. Unlike other
   C-states, POLL has no corresponding hardware C-state, and in the POLL state the CPU continues
   executing instructions without halting.
@@ -83,6 +85,7 @@ If Linux requests C6P, the hardware can keep the core in CC6, and enter PC6 only
 cores have entered CC6.
 
 The hardware may choose a shallower C-state than requested for various reasons, such as:
+
 - A deeper C-state is blocked, e.g., an active core prevents entering PC6.
 - CPU power management features like C1 demotion prioritize keeping the core in CC1 over entering
   CC6.
@@ -113,10 +116,12 @@ Hardware C-states, however, have scope. Here are some of the hardware C-state sc
 - **Core scope**: A core consists of one or more execution units and an L1 cache. Hardware C-state
   power-saving actions, such as clock-gating, voltage reduction, or power-gating, apply to a single
   core. Examples include CC1 and CC6.
+
 - **Module scope**: A module includes multiple cores and a shared L2 cache, as on the SRF platform.
   Module-wide power-saving actions, such as lowering L2 cache voltage, occur when all cores in the
   module enter a required core hardware C-state. For instance, on SRF, MC6 (module C6) is triggered
   when all cores enter CC6. This happens when the OS requests C6S or C6SP on all module cores.
+
 - **Package scope**: A package includes multiple cores/modules, the L3 cache, and components like
   memory controllers, I/O controllers, and interconnects. Package-wide power actions, such as
   clock-gating the interconnect or lowering L3 voltage, occur when all cores/modules in the package
@@ -145,8 +150,10 @@ depending on the idle driver:
 
 - **intel_idle (native mode):** Uses built-in, platform-specific C-states tables to determine
   requestable C-states. Exposes the names of these requestable C-states to user-space.
+
 - **intel_idle (ACPI mode):** Uses C-states defined in the ACPI \_CST table. Exposes these C-states
   to user-space with an "ACPI_" prefix added to their names.
+
 - **acpi_idle:** Uses C-states from the ACPI \_CST table. Exposes the ACPI-defined names to users.
 
 Here is an example for the Intel Sierra Forest platform.
@@ -191,9 +198,11 @@ Source: Model Specific Register (MSR)
 ```
 
 There are 2 idle states (excluding POLL).
+
 - **C1_ACPI**: Mapped to the requestable C1 (MWAIT 0x0). However, due to the "C1 autopromote"
   feature being enabled, the platform re-maps all C1 requests to C1E requests. Therefore,
   effectively, C1_ACPI is mapped to the requestable C1E.
+
 - **C2_ACPI**: Mapped to the requestable C6P (MWAIT 0x21). However, since the package C-state limit
   is set to PC0, PC6 is disabled. As a result, the deepest hardware C-state for C6P will be CC6
   (core C6).
@@ -234,8 +243,10 @@ Source: Model Specific Register (MSR)
 ```
 
 There are 4 idle states (excluding POLL):
+
 - **C1**: Mapped to requestable C1. The deepest hardware C-state is CC1. The `intel_idle` driver in
   native mode disables C1E autopromotion, so it does not matter if it is enabled in the BIOS or not.
+
 - **C1E**: Mapped to requestable C1E. The deepest hardware C-state is CC1E.
 - **C6**: Mapped to requestable C6. The deepest hardware C-state is CC6.
 - **C6P**: Mapped to requestable C6P. The deepest hardware C-state is PC6.

@@ -10,7 +10,7 @@ Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 # TSC, APERF, and MPERF Counters
 
-- Author: Artem Bityutskiy \<dedekind1@gmail.com\>
+- Author: Artem Bityutskiy <dedekind1@gmail.com>
 - Date: December, 2025
 
 ## Table of Contents
@@ -190,6 +190,7 @@ SDM:
 - APERF and MPERF are incrementing in C0 state only.
   - If a logical CPU runs HLT or requests a C-state via MWAIT, both APERF and MPERF stop
     incrementing.
+
 - MPERF increments at a constant rate, regardless of actual CPU frequency.
 - APERF increments at a rate proportional to actual CPU frequency.
 - There is no architecturally defined meaning for APERF and MPERF, other than their ratio.

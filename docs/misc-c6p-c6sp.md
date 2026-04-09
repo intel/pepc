@@ -10,7 +10,7 @@ Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 # Xeon C6P and C6SP Idle States
 
-- Author: Artem Bityutskiy \<dedekind1@gmail.com\>
+- Author: Artem Bityutskiy <dedekind1@gmail.com>
 - Date: Aug, 2025
 
 ## Table of Contents
@@ -42,12 +42,14 @@ Lake, Cooper Lake, Cascade Lake, Skylake Xeons.
 When the OS requests C6 on a core, the core may enter one of the following hardware C-states:
 
 - **Core C1, aka CC1**: The CPU may spend some time in CC1 prior to entering CC6, for example due to
-  the C1 demotion feature. The precise behavior depends on the platform and platform configuration, but
-  the general idea is to keep the CPU in CC1 when it is likely to be woken up again soon. The CPU
-  may be promoted to CC6 after spending enough time in CC1.
+  the C1 demotion feature. The precise behavior depends on the platform and platform configuration,
+  but the general idea is to keep the CPU in CC1 when it is likely to be woken up again soon. The
+  CPU may be promoted to CC6 after spending enough time in CC1.
+
 - **Core C6, aka CC6**: The deepest core-level hardware C-state, where the core is powered off.
   Before power-gating the core, the platform saves the core state (such as registers), restoring it
   upon wake-up.
+
 - **Package C6, aka PC6**: Package C6 has global system scope on Intel Xeons.  It is entered only
   when all CPUs across all sockets (packages) have transitioned to CC6. PC6 is entered only when the
   system is profoundly idle and offers maximum power savings by putting some global components, such
@@ -88,14 +90,16 @@ the discussion will focus on C6.
 
 The issue with C6 is that it encompasses hardware C-states with significantly different
 characteristics:
+
 - **CC6**: Lower exit latency compared to PC6 (e.g., ~200µs at 99.99th percentile on Sapphire
   Rapids Xeon) and no impact on DMA latency.
+
 - **PC6**: Higher exit latency (e.g., ~300µs at 99.99th percentile on Sapphire Rapids Xeon) and
   significantly increased DMA latency. Better power savings compared to CC6.
 
 The OS cannot distinguish between these two hardware C-states when it requests C6, and it has no way
-to express a preference for one over the other. The Linux `intel_idle` driver addresses the problem by
-assuming the "worst case" situation, which means it treats C6 as if it always results in PC6.
+to express a preference for one over the other. The Linux `intel_idle` driver addresses the problem
+by assuming the "worst case" situation, which means it treats C6 as if it always results in PC6.
 
 Whenever a CPU becomes idle, Linux selects which C-state to request based on characteristics such as
 exit latency and target residency. For example, if an application on Sapphire Rapids sets a maximum
@@ -123,6 +127,7 @@ On Granite Rapids Xeon:
 
 - **C6 requestable C-state**: may result in CC1 or CC6, but *not* PC6. This means it behaves like C6
   on previous generations, except it prevents entry into PC6.
+
 - **C6P requestable C-state**: may result in CC1, CC6, or PC6. This is functionally equivalent to
   the original C6 behavior on earlier platforms.
 

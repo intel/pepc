@@ -10,7 +10,7 @@ Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 # Pepc User Guide
 
-- Author: Artem Bityutskiy \<dedekind1@gmail.com\>
+- Author: Artem Bityutskiy <dedekind1@gmail.com>
 
 ## Table of Contents
 
@@ -48,22 +48,22 @@ different subcommands.
 ### Target CPU Options
 
 By default, most `pepc` commands and subcommands operate on all CPUs. But you can limit the
-operation target CPUs ('--cpus'), cores ('--cores'), modules ('--modules'), dies ('--dies'),
-packages ('--packages') or NUMA nodes ('--nodes'). You also can limit the operation to specific core
-siblings ('--core-siblings') or module siblings ('--module-siblings').
+operation target CPUs (`--cpus`), cores (`--cores`), modules (`--modules`), dies (`--dies`),
+packages (`--packages`) or NUMA nodes (`--nodes`). You also can limit the operation to specific core
+siblings (`--core-siblings`) or module siblings (`--module-siblings`).
 
 ### Debug Options
 
-When you run into problems using `pepc`, you can enable debug output by adding the '-d' or
-'--debug' option to any command. This will print additional debug information that may help
+When you run into problems using `pepc`, you can enable debug output by adding the `-d` or
+`--debug` option to any command. This will print additional debug information that may help
 diagnose the problem, or just give you more insight into what `pepc` is doing behind the scenes.
 
 You can limit the debug output to specific Python module names by using
-'--debug-modules <module-names>'.
+`--debug-modules <module-names>`.
 
 ### YAML Output
 
-The 'info' subcommand of most commands supports the '--yaml' option that prints the output in YAML
+The 'info' subcommand of most commands supports the `--yaml` option that prints the output in YAML
 format, instead of the human-readable format. This is useful for scripting and automated parsing of
 the output.
 
@@ -78,9 +78,9 @@ the 'pepc uncore info --min-freq' option supports two mechanisms - 'sysfs' and '
 `pepc` tries to use the first mechanism in the list of supported mechanisms, and if it fails, it
 tries the next one, and so on.
 
-You can force `pepc` to use a specific mechanism or mechanisms with the '--mechanisms
-<mechanism-name>' option.
-For example, to read the minimum uncore frequency using the 'tpmi' mechanism, use:
+You can force `pepc` to use a specific mechanism or mechanisms with the
+`--mechanisms <mechanism-name>` option. For example, to read the minimum uncore frequency using
+the `tpmi` mechanism, use:
 
 ```bash
 pepc uncore info --min-freq --mechanisms tpmi
@@ -89,8 +89,8 @@ pepc uncore info --min-freq --mechanisms tpmi
 The list of supported mechanisms for each option is documented in the corresponding manual page.
 
 Some options that sound similar but use different mechanisms are implemented as separate options.
-For example, '--cppc-guaranteed-perf' and '--hwp-guaranteed-perf' are implemented as 2 different
-options, instead of a single '--guaranteed-perf' option with multiple mechanisms.
+For example, `--cppc-guaranteed-perf` and `--hwp-guaranteed-perf` are implemented as 2 different
+options, instead of a single `--guaranteed-perf` option with multiple mechanisms.
 
 What is the criterion? The CPPC guaranteed performance and HWP guaranteed performance have similar
 names, but they do not have to have the same value. Therefore, they are 2 separate options. On the
@@ -102,7 +102,7 @@ because the minimum uncore frequency is supposed to be the same when read via sy
 
 ### Getting Help
 
-Each command and subcommand supports the '-h' or '--help' option that prints the help text for that
+Each command and subcommand supports the `-h` or `--help` option that prints the help text for that
 command or subcommand. For example, to get help about the 'pepc pstates config' subcommand, run:
 
 ```bash
@@ -123,7 +123,7 @@ man pepc-uncore
 ```
 
 Also remember, there are multiple articles about Linux and Intel CPU power management concepts
-in the miscellaneous documentation files in the `pepc` repository (see [here](.)).
+in the miscellaneous documentation files in the `pepc` repository.
 
 ### Remote Usage Model
 
@@ -132,17 +132,18 @@ also be used to configure remote SUTs over SSH. This is helpful when a single co
 used to manage multiple SUTs in a lab environment.
 
 The remote usage scenario is as follows:
- - Install `pepc` on the control machine.
- - Configure passwordless root SSH access from the control machine to SUTs.
- - Run `pepc` with the '-H <SUT-name-or-IP>' option.
+
+- Install `pepc` on the control machine.
+- Configure passwordless root SSH access from the control machine to SUTs.
+- Run `pepc` with the `-H SUT-name-or-IP` option.
 
 For example,
 
 ```bash
-pepc pstates config -H <SUT-name-or-IP> --max-freq 2.0GHz
+pepc pstates config -H SUT-name-or-IP --max-freq 2.0GHz
 ```
 
-will log into '<SUT-name-or-IP>' over SSH as root and set the maximum CPU frequency limit to 2.0GHz on
+will log into 'SUT-name-or-IP' over SSH as root and set the maximum CPU frequency limit to 2.0GHz on
 that SUT.
 
 ### SUT Emulation
@@ -154,10 +155,10 @@ SUT emulation is useful for development and testing purposes, because it allows 
 without real hardware access. SUT emulation is based on pre-recorded data from real systems.
 
 The `pepc` repository includes emulation data for many types of server and client systems under the
-'tests/emul-data/' subdirectory. For example, 'tests/emul-data/rpl0' includes emulation data for
+`tests/emul-data/` subdirectory. For example, `tests/emul-data/rpl0` includes emulation data for
 a Raptor Lake client system.
 
-To run a `pepc` command on an emulated Raptor Lake system, use the '-D rpl0' option. Keep in
+To run a `pepc` command on an emulated Raptor Lake system, use the `-D rpl0` option. Keep in
 mind, however, that emulation data are not installed along with `pepc`. Therefore, you need to clone
 the `pepc` git repository and run `pepc` from there to use emulated SUTs.
 
@@ -171,15 +172,16 @@ Max. CPU frequency: 3.40GHz for CPUs 8-15 (E-cores)
 
 The `emulation-data-generator` tool, which is available in the `pepc` git repository, can be used
 to collect and save emulation data from a real system. The emulation data should be placed under the
-'tests/emul-data/' subdirectory of the `pepc` git repository.
+`tests/emul-data/` subdirectory of the `pepc` git repository.
 
 ## P-states
 
 The `pepc pstates` command groups operations related to CPU performance states (P-states). For
 example, it supports reading and changing CPU frequency limits.
 
-If you are new to Intel CPU P-states, the [Intel CPU Base Frequency
-Explained](misc-cpu-base-freq.md) article explains many concepts related to CPU performance scaling.
+If you are new to Intel CPU P-states, the
+[Intel CPU Base Frequency Explained](misc-cpu-base-freq.md)
+article explains many concepts related to CPU performance scaling.
 
 ### Examples
 
@@ -334,6 +336,7 @@ demotion" feature.
 
 If you are new to Linux and Intel CPU C-states, the following articles available in the `pepc` repository
 may be helpful:
+
 - [Intel C-state namespaces](misc-cstate-namespaces.md) - explains C-state naming conventions.
 - [Xeon C6P and C6SP Idle States](misc-c6p-c6sp.md) - explains the C6P and C6SP idle states on
   Intel Xeon platforms.
@@ -462,7 +465,7 @@ frequency is per-die.
 
 Dies that include CPU cores are referred to as compute dies. Some Intel CPUs enumerate compute dies
 via the `CPUID` instruction, and Linux exposes this information via sysfs (e.g.,
-'/sys/devices/system/cpu/cpu179/topology/die_cpus_list'). Some Intel CPUs do not enumerate
+`/sys/devices/system/cpu/cpu179/topology/die_cpus_list`). Some Intel CPUs do not enumerate
 compute dies via `CPUID`, so Linux does not expose any die-related information in sysfs. In such
 cases, `pepc` uses platform-specific methods to figure out the die topology. For example, on
 Granite Rapids Xeon, `pepc` uses MSR 0x54 (`MSR_PM_LOGICAL_ID`) to figure out which CPUs belong to
@@ -634,7 +637,7 @@ the second CPU (hyperthread) of that core (index 0 is the first CPU of the core,
 second CPU of the core).
 
 ```bash
-$ pepc cpu-hotplug offline --cpus all --core-siblings 1
+pepc cpu-hotplug offline --cpus all --core-siblings 1
 ```
 
 **Hint**: use 'pepc topology info --columns core,cpu' to figure out the relation between core and
@@ -646,14 +649,14 @@ On multi-socket systems there are multiple CPU packages. You can offline all CPU
 of a package to effectively "disable" it. Here is how to do it for package 1.
 
 ```bash
-$ pepc cpu-hotplug offline --packages 1
+pepc cpu-hotplug offline --packages 1
 ```
 
 ## CPU Topology
 
 The `pepc topology` command groups operations related to CPU topology, including non-compute die
-details. This command is covered in a separate document: [Pepc User Guide:
-Topology](guide-topology.md).
+details. This command is covered in a separate document:
+[Pepc User Guide: Topology](guide-topology.md).
 
 ## PM QoS
 

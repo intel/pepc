@@ -10,7 +10,7 @@ Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 # Pepc User Guide: Uncore
 
-- Author: Artem Bityutskiy \<dedekind1@gmail.com\>
+- Author: Artem Bityutskiy <dedekind1@gmail.com>
 
 ## Table of Contents
 
@@ -47,8 +47,10 @@ are explained in [Uncore ELC and Frequency Scaling](misc-uncore-elc.md).
 
 The `pepc uncore` command supports two mechanisms for reading and changing uncore frequency
 and ELC settings:
+
 - 'sysfs': Uses the Linux sysfs file-system interface to read and change uncore frequency
   and ELC settings. Supports both legacy sysfs API and the new sysfs API.
+
 - 'tpmi': Uses the TPMI (Topology Aware Register and PM Capsule Interface), bypassing Linux and
   talking directly to the hardware.
 
@@ -63,10 +65,10 @@ For detailed information about TPMI and low-level TPMI register operations, refe
 The legacy sysfs API for uncore frequency scaling was used for older platforms, for example
 Sky Lake and Cascade Lake Xeons. To be more precise, the legacy sysfs API is available on platforms
 that support MSR 0x620 (MSR_UNCORE_RATIO_LIMIT). Example of a legacy sysfs path for package 0, die 1
-is: '/sys/devices/system/cpu/intel_uncore_frequency/package_0_die_1'
+is: `/sys/devices/system/cpu/intel_uncore_frequency/package_0_die_1`
 
 For all platforms that support TPMI, the Linux uncore frequency driver provides the new sysfs API.
-Example of a new sysfs path is: '/sys/devices/system/cpu/intel_uncore_frequency/uncore00'.
+Example of a new sysfs path is: `/sys/devices/system/cpu/intel_uncore_frequency/uncore00`.
 
 On Granite Rapids and Sierra Forest Xeon platforms, both new and legacy sysfs APIs are available.
 However, the legacy sysfs API is very limited: it is effectively per-package, not per-die. So pepc
@@ -88,11 +90,11 @@ and no non-compute dies. Finally, newer server CPUs (e.g., Granite Rapids Xeon a
 Xeon) may have multiple compute dies and multiple non-compute dies.
 
 Use `pepc topology info` to discover die topology on your system. For detailed information about
-die topology, die enumeration methods, and die IDs, refer to the [Pepc User Guide:
-Topology](guide-topology.md).
+die topology, die enumeration methods, and die IDs, refer to the
+[Pepc User Guide: Topology](guide-topology.md).
 
-To get detailed information about dies and how they map to uncore frequency driver sysfs paths and TPMI UFS
-feature addresses, use the `--dies-info` option of the `pepc uncore info` command.
+To get detailed information about dies and how they map to uncore frequency driver sysfs paths and
+TPMI UFS feature addresses, use the `--dies-info` option of the `pepc uncore info` command.
 
 ## Examples
 
@@ -181,8 +183,8 @@ instance, and cluster.
 On Granite Rapids Xeon there are 2 I/O dies per package. However, future Intel platforms may have
 more die types, for example a memory die.
 
-For information about die IDs and how they are assigned, see the [Pepc User Guide:
-Topology](guide-topology.md).
+For information about die IDs and how they are assigned, see the
+[Pepc User Guide: Topology](guide-topology.md).
 
 ### ELC Examples
 
@@ -247,7 +249,7 @@ the second CPU (hyperthread) of that core (index 0 is the first CPU of the core,
 second CPU of the core).
 
 ```bash
-$ pepc cpu-hotplug offline --cpus all --core-siblings 1
+pepc cpu-hotplug offline --cpus all --core-siblings 1
 ```
 
 **Hint**: use 'pepc topology info --columns core,cpu' to figure out the relation between core and
@@ -259,14 +261,14 @@ On multi-socket systems there are multiple CPU packages. You can offline all CPU
 of a package to effectively "disable" it. Here is how to do it for package 1.
 
 ```bash
-$ pepc cpu-hotplug offline --packages 1
+pepc cpu-hotplug offline --packages 1
 ```
 
 ## CPU Topology
 
 The `pepc topology` command groups operations related to CPU topology, including non-compute die
-details. This command is covered in a separate document: [Pepc User Guide:
-Topology](guide-topology.md).
+details. This command is covered in a separate document:
+[Pepc User Guide: Topology](guide-topology.md).
 
 ## PM QoS
 

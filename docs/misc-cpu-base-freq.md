@@ -10,7 +10,7 @@ Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 # Intel CPU Base Frequency Explained: Definitions and Performance Scaling Fundamentals
 
-- Author: Artem Bityutskiy \<dedekind1@gmail.com\>
+- Author: Artem Bityutskiy <dedekind1@gmail.com>
 - Date: January, 2026
 
 ## Introduction
@@ -24,6 +24,7 @@ Today, however, the situation has become more complex:
 - Intel no longer uses this term consistently in CPU specifications and marketing materials
 - The base frequency referenced in the Intel SDM differs from what the Linux kernel reports in the
   `base_frequency` sysfs file
+
 - The term is easily confused with other related terms such as "guaranteed performance"
 - In general, the notion of base frequency has become less relevant for modern Intel CPUs and not
   very useful for software
@@ -168,8 +169,8 @@ ACPI CPPC introduces terminology for several key performance levels.
 
 #### Nominal Performance
 
-Chapter 8 of the [ACPI specification v6.6](https://uefi.org/specs/ACPI/6.6/) defines nominal performance
-as follows:
+Chapter 8 of the [ACPI specification v6.6](https://uefi.org/specs/ACPI/6.6/)
+defines nominal performance as follows:
 
 > Nominal Performance is the maximum sustained performance level of the processor, assuming ideal
 > operating conditions. In absence of an external constraint (power, thermal, etc.) this is the
@@ -183,8 +184,8 @@ limited durations.
 Some Intel platforms also provide **nominal frequency**, an optional CPPC field that specifies the
 CPU frequency corresponding to the nominal performance level. The `intel_pstate` Linux kernel driver
 uses this value to calculate the performance-level-to-frequency scaling factor on some platforms
-(discussed in more detail in the [Performance Level to Frequency Mapping](#performance-level-to-frequency-mapping)
-section).
+(discussed in more detail in the
+[Performance Level to Frequency Mapping](#performance-level-to-frequency-mapping) section).
 
 #### Guaranteed Performance
 
@@ -323,6 +324,7 @@ scaling registers rather than invoking ACPI methods. In other words, the driver
 
 - Linux provides a frequency-based CPU performance scaling API via sysfs, while modern Intel CPUs use
   abstract performance levels.
+
 - The `intel_pstate` driver is the default CPU frequency scaling driver for modern Intel platforms:
   - Translates between performance levels and frequencies when needed.
   - Directly programs CPU registers, largely bypassing ACPI methods.
@@ -344,6 +346,7 @@ around 2004.
 
 - **Enumeration**: CPUID.1.ECX[7] (CPUID instruction, leaf 1, bit 7 of the ECX register). The bit is
   called "EIST", which stands for Enhanced Intel SpeedStep Technology.
+
 - **Enable/Disable**: The feature can be enabled/disabled via IA32_MISC_ENABLE[16] (MSR 0x1A0, bit
   16).
 
@@ -471,6 +474,7 @@ levels and what SDM says about them:
       Profile) interface.
     - External agent, such as a BMC (Baseboard Management Controller), modifies platform power
       settings.
+
 - **Most Efficient Performance**: Most energy-efficient performance level.
   - Sweet spot for performance-per-watt.
   - Practical lower limit for operation.
@@ -482,8 +486,8 @@ levels and what SDM says about them:
 While Intel HWP and ACPI CPPC use different terminology, there is a conceptual mapping between their
 performance levels. Based on the performance level definitions and empirical data from existing
 hybrid Intel client platforms
-(see [Appendix: CPPC vs HWP Performance Levels](#appendix-cppc-vs-hwp-performance-levels) for details),
-the following mapping can be derived:
+(see [Appendix: CPPC vs HWP Performance Levels](#appendix-cppc-vs-hwp-performance-levels)
+for details), the following mapping can be derived:
 
 | Intel HWP Performance Level | ACPI CPPC Performance Level                               | Match Quality                                                         |
 |-----------------------------|-----------------------------------------------------------|-----------------------------------------------------------------------|
@@ -504,6 +508,7 @@ the following mapping can be derived:
    - **Hybrid CPUs**: Different scaling factors per core type
 
 3. **The `intel_pstate` driver** handles performance-level-to-frequency translation to implement
+
    Linux's frequency-based ABI.
    - The mapping has been linear so far, but future hybrid architectures may use more complex
      mappings.
@@ -566,11 +571,16 @@ Over time, Intel client CPUs evolved such that the traditional concept of base f
 harder to apply. Here are some reasons:
 
 1. **Variable cooling**: Ultrabooks and mobile devices have limited cooling that varies with power
+
    mode (plugged vs. battery, silent vs. performance). This makes "indefinitely sustainable"
    frequency context-dependent.
+
 2. **Integrated components**: Graphics, AI accelerators, and media engines share the power and thermal
+
    budget, making it hard to define a CPU base frequency independent of other components.
+
 3. **Heterogeneous cores**: All modern Intel clients are hybrid and include different core types
+
    (P-cores, E-cores, LPE-cores), which have different performance characteristics, making it hard
    to define a single base frequency value.
 
@@ -606,11 +616,17 @@ This trend adds to the reasons why base frequency is becoming less useful for mo
 ### Key Takeaways
 
 1. **Traditional meaning**: Base frequency is the guaranteed frequency all cores can sustain
+
    indefinitely with adequate cooling. Still generally applicable to server processors.
+
 2. **Modern client CPUs**: Base frequency is difficult to define due to variable cooling, integrated
+
    components sharing power/thermal budget, and heterogeneous cores with different characteristics.
+
 3. **Marketing evolution**: Intel has phased out base frequency from mobile client CPU specifications
+
    (since Alder Lake 2021) and CPU branding strings, though it remains for server and some desktop CPUs.
+
 4. **Declining relevance**: Base frequency is becoming less meaningful as a performance metric.
 
 ## Base Frequency: Definitions
@@ -621,6 +637,7 @@ However, if the term must be used, be sure to clarify which definition is meant.
 
 - CPUID.16H.EBX[15:0] or MSR_PLATFORM_INFO base frequency (Intel SDM, referred to as
   fixed base frequency in this document)
+
 - `/sys/devices/system/cpu/cpuN/cpufreq/base_frequency` (Linux kernel definition, referred to as
   sysfs base frequency in this document)
 
@@ -755,10 +772,11 @@ In other words, the algorithm to determine sysfs base frequency is as follows:
 3. Else:
    - Sysfs base frequency = HWP Guaranteed Performance Level × Scaling Factor
 
-The CPPC and HWP performance levels are discussed in the [Key CPPC Performance Levels](#key-cppc-performance-levels)
+The CPPC and HWP performance levels are discussed in the
+[Key CPPC Performance Levels](#key-cppc-performance-levels)
 and [Key HWP Performance Levels](#key-hwp-performance-levels) sections. Scaling factor determination
-is discussed in the [Performance Level to Frequency Mapping](#performance-level-to-frequency-mapping)
-section.
+is discussed in the
+[Performance Level to Frequency Mapping](#performance-level-to-frequency-mapping) section.
 
 This is a specific algorithm used by the `intel_pstate` driver and not documented or defined
 elsewhere. Hence the term "sysfs base frequency" used in this document.
@@ -799,6 +817,7 @@ distinction helps avoid confusion:
 - **Fixed Base Frequency**: CPUID.16H or MSR_PLATFORM_INFO definition, it is simply the default
   MPERF counter rate, same for all core types, static. Does not represent sustainable frequency.
   Most probably not very useful for software.
+
 - **Sysfs Base Frequency**: Linux kernel definition, derived from ACPI CPPC or HWP guaranteed
   performance level, differs between core types, dynamic. Represents platform's best estimate of
   sustainable frequency, but not guaranteed. Depending on thermal and power conditions, the
@@ -840,6 +859,7 @@ Challenges:
   which differ significantly on hybrid CPUs. In general, sysfs base frequency seems to be more
   useful than fixed base frequency, although the base frequency concept's overall usefulness is
   questionable.
+
 - **Declining relevance**: The "base frequency" concept in general struggles with variable cooling,
   integrated components sharing power budgets, and heterogeneous architectures. Intel has phased out
   base frequency from mobile client CPU specifications and branding strings since Alder Lake (2021).

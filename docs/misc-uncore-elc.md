@@ -10,7 +10,7 @@ Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 # Intel Xeon Uncore ELC (Efficiency Latency Control)
 
-- Author: Artem Bityutskiy \<dedekind1@gmail.com\>
+- Author: Artem Bityutskiy <dedekind1@gmail.com>
 - Date: Sep, 2025
 
 ## Table of Contents
@@ -46,10 +46,13 @@ to this article.
 
 - **Uncore**: Processor components excluding the cores themselves, such as the inter-core fabric,
   memory controllers, last-level cache (LLC), and PCIe/CXL controllers.
+
 - **Uncore Frequency Scaling (UFS)**: Intel's algorithm for dynamically adjusting uncore frequency
   based on workload demands.
+
 - **Efficiency Latency Control (ELC)**: A UFS feature for configurable trade-offs between energy
   efficiency, performance, and latency.
+
 - **Thermal Design Power (TDP)**: The maximum amount of power the processor is allowed to consume.
 
 ## UFS Overview
@@ -89,14 +92,19 @@ thresholds. These thresholds represent aggregate die utilization percentages, wi
 less than or equal to the high threshold.
 
 The thresholds define three per-die ELC zones:
+
 1. **ELC Low Zone**: Aggregate die utilization is within (0%, low threshold].
 1. **ELC Middle Zone**: Aggregate die utilization is within (low threshold, high threshold).
 1. **ELC High Zone**: Aggregate die utilization is within [high threshold, 100%].
 
 ELC also introduces two user-configurable minimum uncore frequency settings:
+
 1. **ELC Low Zone Minimum Uncore Frequency**: Specifies the lowest allowed uncore frequency (in Hz)
+
    when the die is operating in the ELC low zone.
+
 1. **ELC Middle Zone Minimum Uncore Frequency**: Specifies the lowest allowed uncore frequency (in Hz)
+
    when the die is operating in the ELC middle zone.
 
 The ELC low and middle zone minimum uncore frequencies provide a way to ensure that even under low
@@ -236,7 +244,7 @@ global minimum frequency overrides the ELC low zone minimum frequency for comput
 Let's run a CPU stress test to simulate a 70% busy system and observe the uncore frequency behavior.
 
 ```bash
-$ stress-ng --cpu $(nproc) --cpu-load 70 --timeout 3600 --cpu-method bitops
+stress-ng --cpu $(nproc) --cpu-load 70 --timeout 3600 --cpu-method bitops
 ```
 
 Measure the system with `turbostat`:
@@ -278,12 +286,11 @@ unavailable (for example, if the uncore Linux kernel driver is not loaded), `pep
 falls back to 'tpmi'.
 
 The 'sysfs' mechanism uses the Linux 'sysfs' interface to read and write uncore properties. For
-example, the '--elc-low-zone-min-freq' option corresponds to the following 'sysfs' path:
-'/sys/devices/system/cpu/intel_uncore_frequency/uncore<NUMBER>/elc_floor_freq_khz'.
+example, the `--elc-low-zone-min-freq` option corresponds to the following 'sysfs' path:
+`/sys/devices/system/cpu/intel_uncore_frequency/uncore<NUMBER>/elc_floor_freq_khz`.
 
-When users specify package and die numbers using the '--packages' and '--dies' options, `pepc`
-automatically maps them to the corresponding uncore frequency domain number ("<NUMBER>") in the
-'sysfs' path.
+When users specify package and die numbers using the `--packages` and `--dies` options, `pepc`
+automatically maps them to the corresponding uncore frequency domain number in the 'sysfs' path.
 
 The 'tpmi' mechanism utilizes TPMI (Topology Aware Register and PM Capsule Interface), a hardware
 interface to access and modify uncore properties. TPMI is Intel's standardized solution for exposing
@@ -299,8 +306,8 @@ pepc uncore config --elc-high-threshold-status off --mechanisms tpmi,sysfs
 pepc uncore config --elc-high-threshold-status off --mechanisms tpmi
 ```
 
-**Note:** the '--elc-mid-zone-min-freq' option is supported only when using the 'tpmi' mechanism, as the
-Linux kernel uncore driver does not provide a 'sysfs' interface for this property.
+**Note:** the `--elc-mid-zone-min-freq` option is supported only when using the 'tpmi' mechanism, as
+the Linux kernel uncore driver does not provide a 'sysfs' interface for this property.
 
 ### TPMI Mechanism
 
@@ -309,8 +316,10 @@ TPMI driver maps the MMIO regions of these TPMI PCIe devices into kernel memory 
 accessible to user space via the Linux 'debugfs' file system.
 
 The TPMI mechanism offers two key benefits:
+
 1. Uncore properties remain accessible even when the Linux uncore kernel driver is disabled.
 2. It enables direct access to TPMI registers that are not exposed by the Linux kernel (check out
+
    the `pepc` 'tpmi' command).
 
 However, in the current implementation, `pepc` relies on both the 'debugfs' file system and the TPMI

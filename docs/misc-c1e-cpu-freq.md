@@ -10,7 +10,7 @@ Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 # Measured CPU Frequency and C-states
 
-- Author: Artem Bityutskiy \<dedekind1@gmail.com\>
+- Author: Artem Bityutskiy <dedekind1@gmail.com>
 - Date: Aug, 2025
 
 ## Table of Contents
@@ -30,8 +30,10 @@ two variants of C6. Each idle state offers a distinct balance between power savi
 
 - **C1** is the shallowest C-state, providing the least amount of power savings but lowest latency
   (~1μs).
+
 - **C1E** is a deeper C-state, offering more power savings at the cost of increased latency, ~4μs
   on modern Intel Xeon platforms, such as Granite Rapids and Emerald Rapids.
+
 - **C6** and its variants provide substantially greater power savings, but with much higher latency,
   typically > ~100μs. The latency depends on the specific C6 variant and the platform.
 
@@ -68,13 +70,13 @@ a standard tool available on Linux systems. `turbostat` is part of the Linux ker
 For example, [this link](https://github.com/torvalds/linux/tree/v6.16/tools/power/x86/turbostat)
 points to the Linux kernel v6.16 `turbostat` source code.
 
-At a high level, `turbostat` periodically wakes up (every 5 seconds by default), captures snapshots of
-various counters, computes the difference between consecutive snapshots, and reports metrics such as
-CPU frequency and C-state residency.
+At a high level, `turbostat` periodically wakes up (every 5 seconds by default), captures snapshots
+of various counters, computes the difference between consecutive snapshots, and reports metrics such
+as CPU frequency and C-state residency.
 
 Below is a simplified example of `turbostat` output.
 
-```
+```text
 Busy% Bzy_MHz TSC_MHz  IPC  IRQ    NMI SMI POLL%  C1%   C1E%  C6%
 24.81 3680    2600     2.41 303428 0   0   0.00   1.00  4.02  70.20
 ```
@@ -150,7 +152,7 @@ The APERF and MPERF counters are two separate MSRs, which means that they are re
 another, and there is always a time interval between APERF and MPERF read operations.
 
 Depending on system configuration, `turbostat` reads APERF and MPERF either through the Linux kernel
-MSR driver ('/dev/cpu/cpu*/msr') or via the perf subsystem. When using the MSR driver, APERF and
+MSR driver (`/dev/cpu/cpu*/msr`) or via the perf subsystem. When using the MSR driver, APERF and
 MPERF are read with two separate syscalls. When using the Linux perf subsystem, `turbostat` can read
 both counters in a single syscall by leveraging perf's event grouping feature.
 
@@ -164,11 +166,16 @@ This can introduce substantial inaccuracies in the reported busy CPU frequency.
 ## Conclusions
 
 1. When C1E is enabled and the system is less than 3-5% busy, Linux tools like `turbostat` may report
+
    lower-than-expected CPU frequencies due to the short, transient frequency ramps associated with
    C1E.
+
 1. When C1E is enabled and the system is 5-10% busy, the reported CPU frequency aligns with the
+
    expected value, as the transient effects of C1E become negligible.
+
 1. On systems that are profoundly idle, CPU frequency measurements may be inaccurate due to
+
    increased measurement errors.
 
 Finally, the author of this article considers the practice of measuring CPU frequency on a

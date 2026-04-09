@@ -10,7 +10,7 @@ Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 # Pepc User Guide: Topology
 
-- Author: Artem Bityutskiy \<dedekind1@gmail.com\>
+- Author: Artem Bityutskiy <dedekind1@gmail.com>
 
 ## Table of Contents
 
@@ -29,24 +29,27 @@ including non-compute die details.
 
 There is only one subcommand available: `info` - it displays the CPU topology table. By default, the
 table includes all scopes relevant to the system. For example:
+
 - On a non-hybrid client system with a single package, no modules or dies, the output will include
    only CPU, core, and NUMA node scopes.
+
 - On a hybrid system, the output will also include the "hybrid" column to distinguish between core
   types (E-core, P-core, etc.).
+
 - On a multi-package Granite Rapids Xeon system, the output will also include package and
   die scopes. It will also include the "DieType" column to distinguish between compute and
   non-compute dies (I/O dies on Granite Rapids Xeon do not have CPUs, but have PCIe controllers and
   uncore control).
 
 But you can customize the output by specifying which scopes to include or exclude using the
-'--columns' option.
+`--columns` option.
 
 The order of the columns in the output table follows the hierarchy of scopes from the most
 fine-grained (CPU) to the most coarse-grained (Package). The 'Hybrid' and 'DieType' columns are always
-displayed at the end of the table. Use the '--order' option to change the order of the columns.
+displayed at the end of the table. Use the `--order` option to change the order of the columns.
 
 Additionally, you can limit the output to certain CPUs, cores, modules, dies, packages, and
-NUMA nodes using one of the target scope selection options: '--cpus', '--cores', etc.
+NUMA nodes using one of the target scope selection options: `--cpus`, `--cores`, etc.
 
 ## Die Topology and Die IDs
 
@@ -57,9 +60,11 @@ on the CPU package.
 
 Dies that include CPU cores are called compute dies. Intel CPUs may enumerate compute dies using
 different methods:
+
 - `CPUID` instruction: Some Intel CPUs expose die information via the `CPUID` instruction.
   Linux provides this information in sysfs (e.g.,
-  '/sys/devices/system/cpu/cpu0/topology/die_cpus_list').
+  `/sys/devices/system/cpu/cpu0/topology/die_cpus_list`).
+
 - MSR: Some Intel CPUs (e.g., Granite Rapids Xeon) do not expose die
   information via `CPUID`. In such cases, `pepc` uses MSR 0x54 (`MSR_PM_LOGICAL_ID`) to determine
   which CPUs belong to which compute die. The "domain ID" field from this MSR is used as the die ID.
@@ -69,8 +74,10 @@ In both cases, compute die IDs come from hardware and have specific hardware mea
 ### Non-Compute Dies
 
 Some dies do not include CPU cores but still have uncore frequency control. For example:
+
 - I/O dies: On Granite Rapids and Sierra Forest Xeon, I/O dies include PCIe and CXL controllers
   and have their own uncore frequency control.
+
 - Future Intel platforms may include memory dies or other specialized die types with uncore
   control.
 
@@ -86,11 +93,14 @@ device addresses and uncore frequency control sysfs paths.
 ### Die Topology Examples
 
 Typical die configurations on Intel CPUs:
+
 - Client CPUs (e.g., Raptor Lake, Alder Lake): Single compute die, no non-compute dies.
 - Single-die server CPUs (e.g., Ice Lake Xeon, Sapphire Rapids Xeon): Single compute die, no
   non-compute dies.
+
 - Multi-die server CPUs without I/O dies (e.g., Cascade Lake-AP): Multiple compute dies, no
   non-compute dies.
+
 - Multi-die server CPUs with I/O dies (e.g., Granite Rapids Xeon, Sierra Forest Xeon): Multiple
   compute dies and multiple non-compute dies (I/O dies).
 

@@ -43,20 +43,6 @@ class SimpleMSR(ClassHelpers.SimpleCloseContext):
     Provide a capability to read and write CPU Model Specific Registers.
     """
 
-    @staticmethod
-    def format_msr_device_path(cpu: int) -> Path:
-        """
-        Format the MSR device path for a given CPU.
-
-        Args:
-            cpu: CPU number.
-
-        Returns:
-            Path to the MSR device file for the specified CPU.
-        """
-
-        return Path(f"/dev/cpu/{cpu}/msr")
-
     def __init__(self, pman: ProcessManagerType | None = None):
         """
         Initialize a class instance.
@@ -111,6 +97,20 @@ class SimpleMSR(ClassHelpers.SimpleCloseContext):
 
         close_attrs = ("_pman", "_msr_drv")
         ClassHelpers.close(self, close_attrs=close_attrs)
+
+    @staticmethod
+    def format_msr_device_path(cpu: int) -> Path:
+        """
+        Format the MSR device path for a given CPU.
+
+        Args:
+            cpu: CPU number.
+
+        Returns:
+            Path to the MSR device file for the specified CPU.
+        """
+
+        return Path(f"/dev/cpu/{cpu}/msr")
 
     def _ensure_dev_msr(self):
         """
