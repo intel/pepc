@@ -27,14 +27,14 @@ CHANGELOG_FILE="$BASEDIR/CHANGELOG.md"
 
 # Documentation directory and files.
 MAN_DIR="$BASEDIR/pepcdata/man/man1"
-RST_FILES="$BASEDIR/docs/pepc-pstates.rst
-           $BASEDIR/docs/pepc-cstates.rst
-           $BASEDIR/docs/pepc-uncore.rst
-           $BASEDIR/docs/pepc-cpu-hotplug.rst
-           $BASEDIR/docs/pepc-topology.rst
-           $BASEDIR/docs/pepc-pmqos.rst
-           $BASEDIR/docs/pepc-tpmi.rst
-           $BASEDIR/docs/pepc-aspm.rst"
+RST_FILES="$BASEDIR/docs/man/pepc-pstates.rst
+           $BASEDIR/docs/man/pepc-cstates.rst
+           $BASEDIR/docs/man/pepc-uncore.rst
+           $BASEDIR/docs/man/pepc-cpu-hotplug.rst
+           $BASEDIR/docs/man/pepc-topology.rst
+           $BASEDIR/docs/man/pepc-pmqos.rst
+           $BASEDIR/docs/man/pepc-tpmi.rst
+           $BASEDIR/docs/man/pepc-aspm.rst"
 
 # Path to the script that prepares CHANGELOG.md for the release.
 PREPARE_CHENGELOG_MD="$BASEDIR/misc/prepare_changelog_md"
