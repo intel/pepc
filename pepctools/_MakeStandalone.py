@@ -152,10 +152,10 @@ def main():
         The program exit code.
     """
 
-    args = _parse_arguments()
-    cmdl = _get_cmdline_args(args)
-
     try:
+        args = _parse_arguments()
+        cmdl = _get_cmdline_args(args)
+
         with LocalProcessManager.LocalProcessManager() as lpman:
             tmpdir = lpman.mkdtemp(prefix=f"{_TOOLNAME}-")
             try:

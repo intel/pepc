@@ -630,11 +630,11 @@ def main() -> int:
         The program exit code.
     """
 
-    args = _parse_arguments()
-    cmdl = _get_cmdline_args(args)
-
     exitcode = 1
     try:
+        args = _parse_arguments()
+        cmdl = _get_cmdline_args(args)
+
         outdir = cmdl["outdir"]
         if outdir.exists() and any(outdir.iterdir()):
             if not cmdl["replace"]:

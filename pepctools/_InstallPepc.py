@@ -227,10 +227,10 @@ def main():
         The program exit code.
     """
 
-    args = _parse_arguments()
-    cmdl = _get_cmdline_args(args)
-
     try:
+        args = _parse_arguments()
+        cmdl = _get_cmdline_args(args)
+
         with ProcessManager.get_pman(cmdl["hostname"], username=cmdl["username"],
                                      privkeypath=cmdl["privkey"]) as pman:
             _main(pman, cmdl)
