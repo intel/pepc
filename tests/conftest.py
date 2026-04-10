@@ -28,6 +28,7 @@ if typing.TYPE_CHECKING:
 _NOHOST_MODULES: Final[frozenset[str]] = frozenset({
     "tests.test_human",
     "tests.test_kernel_version",
+    "tests.test_logging_cmdl",
     "tests.test_tpmi_nohost",
     "tests.test_wrap_exceptions",
     "tests.test_yaml",
@@ -35,7 +36,7 @@ _NOHOST_MODULES: Final[frozenset[str]] = frozenset({
 
 # The test modules that work only on the local host or a remote host, but not emulation.
 _NOEMULATION_MODULES: Final[frozenset[str]] = frozenset({"tests.test_process_manager",
-                                                          "tests.test_python_prj_installer"})
+                                                         "tests.test_python_prj_installer"})
 
 # The special '--dataset' option value meaning "run tests on all available datasets".
 _ALL_DATASETS: Final[str] = "all"

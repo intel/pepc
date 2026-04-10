@@ -84,6 +84,11 @@ def run_tool(tool: ModuleType,
 
     Returns:
         Tuple of (stdout, stderr) strings. Returns empty strings when 'capture_output' is False.
+
+    Notes:
+        - When 'capture_output' is True, stdout and stderr are redirected to 'StringIO' buffers.
+          'StringIO.isatty()' returns 'False', so the logger treats output as non-TTY and
+          suppresses ANSI color codes unless '--force-color' is specified.
     """
 
     if not ignore:
