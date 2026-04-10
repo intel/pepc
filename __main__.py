@@ -18,14 +18,14 @@ import zipfile
 import tempfile
 from pathlib import Path
 from pepclibs.helperlibs import ProjectFiles
-from pepctools._Pepc import main
+from pepctools import _Pepc
 
 if __name__ == "__main__":
     basepath = Path(__file__).parent
 
     # If the parent is not a regular file, not a zipapp archive.
     if not basepath.is_file():
-        sys.exit(main())
+        sys.exit(_Pepc.main())
 
     # This is a zipapp archive. It includes the python code and the data. In order for the data to
     # be found by the tool, it should be extracted somewhere and made accessible to the tool via the
@@ -34,7 +34,7 @@ if __name__ == "__main__":
     envar = ProjectFiles.get_project_data_envar("pepc")
     if envar in os.environ:
         # The environment variable is already set, assume the test data are there, nothing to do.
-        sys.exit(main())
+        sys.exit(_Pepc.main())
 
     # Create a temporary directory and extract tool data there.
     zipapp_path = Path(__file__).parent
@@ -45,4 +45,4 @@ if __name__ == "__main__":
                 zf.extract(path, tmpdir)
 
         os.environ[envar] = tmpdir
-        sys.exit(main())
+        sys.exit(_Pepc.main())

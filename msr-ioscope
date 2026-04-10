@@ -14,7 +14,7 @@ Detect I/O scope of a writable Model-Specific Register (MSR). Refer to 'docs/mis
 more information about MSR I/O scope.
 """
 
-from pepctools._MSRIOScope import main
+from pepctools import _MSRIOScope
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(_MSRIOScope.main())

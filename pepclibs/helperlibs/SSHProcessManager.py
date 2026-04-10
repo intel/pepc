@@ -589,20 +589,20 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
                 msg = Error(str(err)).indent(2)
                 _LOG.debug(f"Private key lookup failed:\n{msg}")
 
-        for privkeypath in self.privkeypaths:
+        for path in self.privkeypaths:
             # Private SSH key sanity checks.
             try:
                 mode = os.stat(privkeypath).st_mode
             except OSError as err:
                 msg = Error(str(err)).indent(2)
-                raise Error(f"'stat()' failed for private SSH key at '{privkeypath}':\n"
+                raise Error(f"'stat()' failed for private SSH key at '{path}':\n"
                             f"{msg}") from err
 
             if not stat.S_ISREG(mode):
-                raise Error(f"Private SSH key at '{privkeypath}' is not a regular file")
+                raise Error(f"Private SSH key at '{path}' is not a regular file")
 
             if mode & (stat.S_IROTH | stat.S_IWOTH | stat.S_IXOTH):
-                raise Error(f"Private SSH key at '{privkeypath}' permissions are too wide: "
+                raise Error(f"Private SSH key at '{path}' permissions are too wide: "
                             f"Make sure 'others' cannot read/write/execute it")
         look_for_keys = not self.privkeypaths
 

@@ -12,7 +12,7 @@
 make-standalone - create a standalone version of 'pepc' that can be run without installation.
 """
 
-from pepctools._MakeStandalone import main
+from pepctools import _MakeStandalone
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(_MakeStandalone.main())
