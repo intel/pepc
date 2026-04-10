@@ -66,7 +66,6 @@ if typing.TYPE_CHECKING:
             hostname: The hostname of the target system.
             username: The username to use for SSH connections.
             privkey: The private key file to use for SSH authentication.
-            timeout: The timeout value for SSH connections.
             addr: The MSR address to run I/O scope detection on.
             all_msrs: If True, run the I/O scope detection procedure for all writable MSRs supported
                       by the 'pepc' project and the target host.
@@ -78,7 +77,6 @@ if typing.TYPE_CHECKING:
         hostname: str
         username: str
         privkey: str
-        timeout: int | float
         addr: int
         all_msrs: bool
         bits: list[int]
@@ -523,21 +521,15 @@ def _get_cmdline_args(args: argparse.Namespace) -> _CmdlineArgsTypedDict:
     hostname: str = getattr(args, "hostname", "localhost")
     username: str = getattr(args, "username", "")
     privkey: str = getattr(args, "privkey", "")
-    _timeout: str = getattr(args, "timeout", "")
-    timeout: int | float = 8
 
     if hostname == "localhost":
         if username:
             raise Error("The '--username' option requires the '--host' option")
         if privkey:
             raise Error("The '--priv-key' option requires the '--host' option")
-        if _timeout:
-            raise Error("The '--timeout' option requires the '--host' option")
     else:
         if not username:
             username = "root"
-        if _timeout:
-            timeout = Trivial.str_to_num(_timeout, what="--timeout option value")
 
     if args.addr == "all":
         all_msrs = True
@@ -593,7 +585,6 @@ def _get_cmdline_args(args: argparse.Namespace) -> _CmdlineArgsTypedDict:
     cmdl["hostname"] = hostname
     cmdl["username"] = username
     cmdl["privkey"] = privkey
-    cmdl["timeout"] = timeout
     cmdl["addr"] = addr
     cmdl["all_msrs"] = all_msrs
     cmdl["bits"] = bits
@@ -616,7 +607,7 @@ def main():
 
         with contextlib.ExitStack() as stack:
             pman = ProcessManager.get_pman(cmdl["hostname"], username=cmdl["username"],
-                                           privkeypath=cmdl["privkey"], timeout=cmdl["timeout"])
+                                           privkeypath=cmdl["privkey"])
             stack.enter_context(pman)
 
             cpuinfo = CPUInfo.CPUInfo(pman=pman)

@@ -78,10 +78,6 @@ spec-files-generator' tool available in the 'pepc' source code repository.
 :   Path to the private SSH key for logging into the remote host. Defaults to keys in standard paths
     like `$HOME/.ssh`.
 
-**-T** *TIMEOUT*, **--timeout** *TIMEOUT*
-
-:   Timeout for establishing an SSH connection in seconds. Defaults to 8.
-
 **-D** *DATASET*, **--dataset** *DATASET*
 
 :   This option is for debugging and testing. It specifies the dataset to use for emulating the host

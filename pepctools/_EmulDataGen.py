@@ -643,8 +643,7 @@ def main() -> int:
             shutil.rmtree(outdir)
 
         with ProcessManager.get_pman(cmdl["hostname"], username=cmdl["username"],
-                                     privkeypath=cmdl["privkey"],
-                                     timeout=cmdl["timeout"]) as pman, \
+                                     privkeypath=cmdl["privkey"]) as pman, \
              CPUInfo.CPUInfo(pman=pman) as cpuinfo:
             _do_main(pman, cmdl["outdir"], cpuinfo)
     except KeyboardInterrupt:

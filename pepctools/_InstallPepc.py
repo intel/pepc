@@ -232,7 +232,7 @@ def main():
 
     try:
         with ProcessManager.get_pman(cmdl["hostname"], username=cmdl["username"],
-                                     privkeypath=cmdl["privkey"], timeout=cmdl["timeout"]) as pman:
+                                     privkeypath=cmdl["privkey"]) as pman:
             _main(pman, cmdl)
     except KeyboardInterrupt:
         _LOG.info("\nInterrupted, exiting")

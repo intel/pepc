@@ -102,14 +102,11 @@ if typing.TYPE_CHECKING:
                       (empty string).
             privkey: The path to the private SSH key (-K option). Default is an empty string (no
                      private SSH key).
-            timeout: The timeout for establishing an SSH connection in seconds (-T option). Default
-                     is 8 seconds for remote hosts and None for the local host.
         """
 
         hostname: str
         username: str
         privkey: str | Path
-        timeout: int | float | None
 
 SSH_OPTIONS: list[ArgTypedDict] = [
     {
@@ -144,16 +141,6 @@ SSH_OPTIONS: list[ArgTypedDict] = [
             "default" : "",
             "help" : "Path to the private SSH key for logging into the remote host. Defaults to "
                      "standard paths like '$HOME/.ssh'."
-        },
-    },
-    {
-        "short" : "-T",
-        "long" : "--timeout",
-        "argcomplete" : None,
-        "kwargs" : {
-            "dest" : "timeout",
-            "default" : "",
-            "help" : "SSH connection timeout in seconds. Defaults to 8."
         },
     },
 ]
@@ -241,25 +228,16 @@ def format_ssh_args(args: argparse.Namespace) -> SSHArgsTypedDict:
     hostname: str = getattr(args, "hostname", "localhost")
     username: str = getattr(args, "username", "")
     privkey: str | Path = getattr(args, "privkey", "")
-    timeout: int | float | None = getattr(args, "timeout", None)
 
     if hostname == "localhost":
         if username:
             raise Error("The '--username' option requires the '--host' option")
         if privkey:
             raise Error("The '--priv-key' option requires the '--host' option")
-        if timeout:
-            raise Error("The '--timeout' option requires the '--host' option")
-    else:
-        if timeout:
-            timeout = Trivial.str_to_num(getattr(args, "timeout"), what="--timeout option value")
-        else:
-            timeout = 8
 
     cmdl: SSHArgsTypedDict = {"hostname": hostname,
                               "username": username,
-                              "privkey": privkey,
-                              "timeout": timeout}
+                              "privkey": privkey}
     return cmdl
 
 class OrderedArg(argparse.Action):
