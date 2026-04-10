@@ -44,8 +44,9 @@ pandoc definition list syntax to produce proper option entries in the man output
 
 **-K** *PRIVKEY*, **--priv-key** *PRIVKEY*
 
-:   Path to the private SSH key for logging into the remote host. Defaults to keys in standard paths
-    like `$HOME/.ssh`.
+:   Path to the private SSH key for logging into the remote host. If not specified, keys
+    configured for the host in SSH configuration files (e.g. `~/.ssh/config`) are used. If no keys
+    are configured there, standard key files (e.g. `~/.ssh/id_rsa`) and the SSH agent are tried.
 
 **-D** *DATASET*, **--dataset** *DATASET*
 
@@ -57,8 +58,8 @@ pandoc definition list syntax to produce proper option entries in the man output
 
     1. `./tests/emul-data` in the program's directory
     2. `$PEPC_DATA_PATH/tests/emul-data`
-    3. `$HOME/.local/share/pepc/tests/emul-data`
-    4. `$VIRTUAL_ENV/share/tests/emul-data`
+    3. `$VIRTUAL_ENV/share/pepc/tests/emul-data`
+    4. `$HOME/.local/share/pepc/tests/emul-data`
     5. `/usr/local/share/pepc/tests/emul-data`
     6. `/usr/share/pepc/tests/emul-data`
 
@@ -143,7 +144,7 @@ cores, dies, or packages.
 :   Retrieve the per-CPU Linux PM QoS limit. This limit affects C-state selection by restricting the
     kernel from using C-states with latencies exceeding the specified limit. For example, a 50us
     limit ensures the kernel only selects C-states with latencies ≤ 50us. The limit is read from
-    `/sys/devices/system/cpu/cpu<NUMBER>/power/pm_qos_resume_latency_us`.
+    `/sys/devices/system/cpu/cpu<N>/power/pm_qos_resume_latency_us`.
 
 **--global-latency-limit**
 
@@ -175,7 +176,7 @@ subset of CPUs, cores, dies, or packages.
 :   Set the per-CPU Linux PM QoS limit, which restricts the kernel from using C-states with
     latencies exceeding the specified value. For example, a 50us limit ensures the kernel selects
     only C-states with latencies ≤ 50us. The limit is configured via
-    `/sys/devices/system/cpu/cpu<NUMBER>/power/pm_qos_resume_latency_us`. The default unit is 'us'
+    `/sys/devices/system/cpu/cpu<N>/power/pm_qos_resume_latency_us`. The default unit is 'us'
     (microseconds), but 'ns', 'ms', and 's' units are also supported (e.g., '1ms'). Value 0 disables
     the limit.
 

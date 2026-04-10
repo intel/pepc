@@ -139,8 +139,10 @@ SSH_OPTIONS: list[ArgTypedDict] = [
         "kwargs" : {
             "dest" : "privkey",
             "default" : "",
-            "help" : "Path to the private SSH key for logging into the remote host. Defaults to "
-                     "standard paths like '$HOME/.ssh'."
+            "help" : "Path to the private SSH key for logging into the remote host. If not "
+                     "specified, keys configured for the host in SSH configuration files "
+                     "(e.g. '~/.ssh/config') are used. If no keys are configured there, "
+                     "standard key files (e.g. '~/.ssh/id_rsa') and the SSH agent are tried."
         },
     },
 ]

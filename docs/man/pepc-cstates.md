@@ -44,8 +44,9 @@ pandoc definition list syntax to produce proper option entries in the man output
 
 **-K** *PRIVKEY*, **--priv-key** *PRIVKEY*
 
-:   Path to the private SSH key for logging into the remote host. Defaults to keys in standard paths
-    like `$HOME/.ssh`.
+:   Path to the private SSH key for logging into the remote host. If not specified, keys
+    configured for the host in SSH configuration files (e.g. `~/.ssh/config`) are used. If no keys
+    are configured there, standard key files (e.g. `~/.ssh/id_rsa`) and the SSH agent are tried.
 
 **-D** *DATASET*, **--dataset** *DATASET*
 
@@ -57,8 +58,8 @@ pandoc definition list syntax to produce proper option entries in the man output
 
     1. `./tests/emul-data` in the program's directory
     2. `$PEPC_DATA_PATH/tests/emul-data`
-    3. `$HOME/.local/share/pepc/tests/emul-data`
-    4. `$VIRTUAL_ENV/share/tests/emul-data`
+    3. `$VIRTUAL_ENV/share/pepc/tests/emul-data`
+    4. `$HOME/.local/share/pepc/tests/emul-data`
     5. `/usr/local/share/pepc/tests/emul-data`
     6. `/usr/share/pepc/tests/emul-data`
 
@@ -153,7 +154,8 @@ target CPU specification options to define a subset of CPUs, cores, dies, or pac
     Use 'all' to include all available Linux C-states (default). Linux C-states (e.g., C6) are
     requests Linux can make, while hardware C-states (e.g., Core C6 or Package C6 on Intel
     platforms) are platform-specific states entered upon such requests. See
-    https://github.com/intel/pepc/blob/main/docs/misc-cstate-namespaces.md for details.
+    https://github.com/intel/pepc/blob/main/docs/misc-cstate-namespaces.md for details. Reads
+    C-state information from `/sys/devices/system/cpu/cpu<N>/cpuidle/state<M>/`.
 
 **--pkg-cstate-limit**
 
@@ -189,12 +191,12 @@ target CPU specification options to define a subset of CPUs, cores, dies, or pac
 **--idle-driver**
 
 :   Retrieve the idle driver name. The idle driver enumerates available C-states and issues C-state
-    requests. Read from `/sys/devices/system/cpu/cpuidle/current_governor`.
+    requests. Read from `/sys/devices/system/cpu/cpuidle/current_driver`.
 
 **--governor**
 
 :   Retrieve the idle governor name, which determines the C-state to request for an idle CPU. Read
-    from `/sys/devices/system/cpu/cpuidle/scaling_governor`.
+    from `/sys/devices/system/cpu/cpuidle/current_governor`.
 
 **--governors**
 
@@ -229,11 +231,13 @@ packages.
     C-states (default). Linux C-states (e.g., C6) are requests Linux can make, while hardware
     C-states (e.g., Core C6 or Package C6 on Intel platforms) are platform-specific states entered
     upon such requests. See https://github.com/intel/pepc/blob/main/docs/misc-cstate-namespaces.md
-    for details.
+    for details. Enables a C-state by writing '0' to
+    `/sys/devices/system/cpu/cpu<N>/cpuidle/state<M>/disable`.
 
 **--disable** *[CSTATES]*
 
-:   Similar to '--enable', but specifies the C-states to disable.
+:   Similar to '--enable', but specifies the C-states to disable. Disables a C-state by writing '1'
+    to `/sys/devices/system/cpu/cpu<N>/cpuidle/state<M>/disable`.
 
 **--pkg-cstate-limit** *[PKG_CSTATE_LIMIT]*
 
@@ -267,4 +271,4 @@ packages.
 **--governor** *[GOVERNOR]*
 
 :   Configure the idle governor, which decides the C-state to request for an idle CPU. Updates
-    `/sys/devices/system/cpu/cpuidle/scaling_governor`.
+    `/sys/devices/system/cpu/cpuidle/current_governor`.

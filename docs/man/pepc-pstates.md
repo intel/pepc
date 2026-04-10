@@ -44,8 +44,9 @@ pandoc definition list syntax to produce proper option entries in the man output
 
 **-K** *PRIVKEY*, **--priv-key** *PRIVKEY*
 
-:   Path to the private SSH key for logging into the remote host. Defaults to keys in standard paths
-    like `$HOME/.ssh`.
+:   Path to the private SSH key for logging into the remote host. If not specified, keys
+    configured for the host in SSH configuration files (e.g. `~/.ssh/config`) are used. If no keys
+    are configured there, standard key files (e.g. `~/.ssh/id_rsa`) and the SSH agent are tried.
 
 **-D** *DATASET*, **--dataset** *DATASET*
 
@@ -57,8 +58,8 @@ pandoc definition list syntax to produce proper option entries in the man output
 
     1. `./tests/emul-data` in the program's directory
     2. `$PEPC_DATA_PATH/tests/emul-data`
-    3. `$HOME/.local/share/pepc/tests/emul-data`
-    4. `$VIRTUAL_ENV/share/tests/emul-data`
+    3. `$VIRTUAL_ENV/share/pepc/tests/emul-data`
+    4. `$HOME/.local/share/pepc/tests/emul-data`
     5. `/usr/local/share/pepc/tests/emul-data`
     6. `/usr/share/pepc/tests/emul-data`
 
@@ -150,22 +151,22 @@ Use target CPU specification options to define a subset of CPUs, cores, dies, or
 **--min-freq**
 
 :   Retrieve the minimum CPU frequency from
-    `/sys/devices/system/cpu/cpu<NUMBER>/cpufreq/scaling_min_freq`.
+    `/sys/devices/system/cpu/cpu<N>/cpufreq/scaling_min_freq`.
 
 **--max-freq**
 
 :   Retrieve the maximum CPU frequency from
-    `/sys/devices/system/cpu/cpu<NUMBER>/cpufreq/scaling_max_freq`.
+    `/sys/devices/system/cpu/cpu<N>/cpufreq/scaling_max_freq`.
 
 **--min-freq-limit**
 
 :   Retrieve the minimum supported CPU frequency from
-    `/sys/devices/system/cpu/cpu<NUMBER>/cpufreq/cpuinfo_min_freq`.
+    `/sys/devices/system/cpu/cpu<N>/cpufreq/cpuinfo_min_freq`.
 
 **--max-freq-limit**
 
 :   Retrieve the maximum supported CPU frequency from
-    `/sys/devices/system/cpu/cpu<NUMBER>/cpufreq/cpuinfo_max_freq`.
+    `/sys/devices/system/cpu/cpu<N>/cpufreq/cpuinfo_max_freq`.
 
 **--hwp**
 
@@ -176,7 +177,7 @@ Use target CPU specification options to define a subset of CPUs, cores, dies, or
 **--frequencies**
 
 :   List CPU frequencies supported by the Linux kernel for '--min-freq' and '--max-freq' options. If
-    `/sys/devices/system/cpu/cpufreq/policy<NUMBER>/scaling_available_frequencies` is available
+    `/sys/devices/system/cpu/cpufreq/policy<N>/scaling_available_frequencies` is available
     (usually the case with the 'acpi_cpufreq' driver), retrieve the data from there. Otherwise, in
     the case of an Intel platform, assume that all frequencies from '--min-freq-limit' to
     '--max-freq-limit' are available with a step equal to '--bus-clock'.
@@ -184,8 +185,8 @@ Use target CPU specification options to define a subset of CPUs, cores, dies, or
 **--base-freq**
 
 :   Retrieve the base CPU frequency from
-    `/sys/devices/system/cpu/cpu<NUMBER>/cpufreq/base_frequency`. If the file is unavailable, it
-    falls back to `/sys/devices/system/cpu/cpu<NUMBER>/cpufreq/bios_limit`.
+    `/sys/devices/system/cpu/cpu<N>/cpufreq/base_frequency`. If the file is unavailable, it
+    falls back to `/sys/devices/system/cpu/cpu<N>/cpufreq/bios_limit`.
 
 **--fixed-base-freq**
 
@@ -211,7 +212,7 @@ Use target CPU specification options to define a subset of CPUs, cores, dies, or
     'sysfs' mechanisms are supported with values ranging from 0-255 (maximum energy efficiency to
     maximum performance) or policy names ('sysfs' mechanism only). On AMD CPUs, only 'sysfs' is
     supported with policy names only. The 'sysfs' mechanism reads
-    `/sys/devices/system/cpu/cpufreq/policy<NUMBER>/energy_performance_preference`, while the 'msr'
+    `/sys/devices/system/cpu/cpufreq/policy<N>/energy_performance_preference`, while the 'msr'
     mechanism reads `MSR_HWP_REQUEST` (0x774), bits 31:24.
 
 **--epb**
@@ -219,13 +220,13 @@ Use target CPU specification options to define a subset of CPUs, cores, dies, or
 :   Retrieve EPB (Energy Performance Bias) using 'sysfs' (preferred) or 'msr' mechanisms. EPB is a
     hint to the CPU on energy efficiency versus performance. The value ranges from 0-15 (maximum
     performance to maximum energy efficiency) or can be a policy name (supported by 'sysfs' only).
-    The 'sysfs' mechanism reads `/sys/devices/system/cpu/cpu<NUMBER>/power/energy_perf_bias`, while
+    The 'sysfs' mechanism reads `/sys/devices/system/cpu/cpu<N>/power/energy_perf_bias`, while
     the 'msr' mechanism reads `MSR_ENERGY_PERF_BIAS` (0x1B0), bits 3:0.
 
 **--driver**
 
 :   Retrieve the CPU frequency driver name. The driver enumerates and manages CPU P-states on the
-    platform. The name is read from `/sys/devices/system/cpu/cpufreq/policy<NUMBER>/scaling_driver`.
+    platform. The name is read from `/sys/devices/system/cpu/cpufreq/policy<N>/scaling_driver`.
     While sysfs provides a per-CPU API, Intel platforms typically use a single driver.
 
 **--intel-pstate-mode**
@@ -238,44 +239,44 @@ Use target CPU specification options to define a subset of CPUs, cores, dies, or
 
 :   Retrieve the CPU frequency governor, which determines the P-state based on CPU load and other
     factors. The governor name is read from
-    `/sys/devices/system/cpu/cpufreq/policy<NUMBER>/scaling_governor`.
+    `/sys/devices/system/cpu/cpufreq/policy<N>/scaling_governor`.
 
 **--governors**
 
 :   Retrieve the list of available CPU frequency governors. Governors determine the P-state of a CPU
     based on its activity and other factors, each implementing a unique selection policy. Available
     governors are listed in
-    `/sys/devices/system/cpu/cpufreq/policy<NUMBER>/scaling_available_governors`.
+    `/sys/devices/system/cpu/cpufreq/policy<N>/scaling_available_governors`.
 
 **--cppc-lowest-perf**
 
 :   Retrieve the ACPI CPPC lowest performance level value for specified CPUs from
-    `/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/lowest_perf`.
+    `/sys/devices/system/cpu/cpu<N>/acpi_cppc/lowest_perf`.
 
 **--cppc-lowest-nonlinear-perf**
 
 :   Retrieve the ACPI CPPC lowest nonlinear performance level value for specified CPUs from
-    `/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/lowest_nonlinear_perf`.
+    `/sys/devices/system/cpu/cpu<N>/acpi_cppc/lowest_nonlinear_perf`.
 
 **--cppc-guaranteed-perf**
 
 :   Retrieve the ACPI CPPC guaranteed performance level value for specified CPUs from
-    `/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/guaranteed_perf`.
+    `/sys/devices/system/cpu/cpu<N>/acpi_cppc/guaranteed_perf`.
 
 **--cppc-nominal-perf**
 
 :   Retrieve the ACPI CPPC nominal performance level value for specified CPUs from
-    `/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/nominal_perf`.
+    `/sys/devices/system/cpu/cpu<N>/acpi_cppc/nominal_perf`.
 
 **--cppc-highest-perf**
 
 :   Retrieve the ACPI CPPC highest performance level value for specified CPUs from
-    `/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/highest_perf`.
+    `/sys/devices/system/cpu/cpu<N>/acpi_cppc/highest_perf`.
 
 **--cppc-nominal-freq**
 
 :   Retrieve the ACPI CPPC nominal frequency for specified CPUs from
-    `/sys/devices/system/cpu/cpu<NUMBER>/acpi_cppc/nominal_freq`.
+    `/sys/devices/system/cpu/cpu<N>/acpi_cppc/nominal_freq`.
 
 **--hwp-lowest-perf**
 
@@ -322,7 +323,7 @@ packages.
 **--min-freq** *[MIN_FREQ]*
 
 :   Set the minimum CPU frequency via
-    `/sys/devices/system/cpu/cpu<NUMBER>/cpufreq/scaling_min_freq`. The default unit is 'Hz', but
+    `/sys/devices/system/cpu/cpu<N>/cpufreq/scaling_min_freq`. The default unit is 'Hz', but
     'kHz', 'MHz', and 'GHz' can also be used (for example "900MHz").
 
     The following special values can also be used: **min** Minimum frequency supported by the Linux
@@ -333,7 +334,7 @@ packages.
 **--max-freq** *[MAX_FREQ]*
 
 :   Similar to '--min-freq', but sets the maximum CPU frequency via
-    `/sys/devices/system/cpu/cpu<NUMBER>/cpufreq/scaling_max_freq`.
+    `/sys/devices/system/cpu/cpu<N>/cpufreq/scaling_max_freq`.
 
 **--turbo** *[on|off]*
 
@@ -348,7 +349,7 @@ packages.
     hint to the CPU on energy efficiency versus performance. The value ranges from 0-255 (maximum
     energy efficiency to maximum performance) or can be a policy name (supported by 'sysfs' only).
     The 'sysfs' mechanism writes to
-    `/sys/devices/system/cpu/cpufreq/policy<NUMBER>/energy_performance_preference`, while the 'msr'
+    `/sys/devices/system/cpu/cpufreq/policy<N>/energy_performance_preference`, while the 'msr'
     mechanism writes to `MSR_HWP_REQUEST` (0x774), bits 31:24.
 
 **--epb** *[EPB]*
@@ -356,7 +357,7 @@ packages.
 :   Set EPB (Energy Performance Bias) using 'sysfs' (preferred) or 'msr' mechanisms. EPB is a hint
     to the CPU on energy efficiency versus performance. The value ranges from 0-15 (maximum
     performance to maximum energy efficiency) or can be a policy name (supported by 'sysfs' only).
-    The 'sysfs' mechanism writes to `/sys/devices/system/cpu/cpu<NUMBER>/power/energy_perf_bias`,
+    The 'sysfs' mechanism writes to `/sys/devices/system/cpu/cpu<N>/power/energy_perf_bias`,
     while the 'msr' mechanism writes to `MSR_ENERGY_PERF_BIAS` (0x1B0), bits 3:0.
 
 **--intel-pstate-mode** *[INTEL_PSTATE_MODE]*
@@ -368,4 +369,4 @@ packages.
 **--governor** *[GOVERNOR]*
 
 :   Set the CPU frequency governor, which determines the P-state based on CPU load and other
-    factors. Writes to `/sys/devices/system/cpu/cpufreq/policy<NUMBER>/scaling_governor`.
+    factors. Writes to `/sys/devices/system/cpu/cpufreq/policy<N>/scaling_governor`.

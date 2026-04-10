@@ -75,8 +75,9 @@ spec-files-generator' tool available in the 'pepc' source code repository.
 
 **-K** *PRIVKEY*, **--priv-key** *PRIVKEY*
 
-:   Path to the private SSH key for logging into the remote host. Defaults to keys in standard paths
-    like `$HOME/.ssh`.
+:   Path to the private SSH key for logging into the remote host. If not specified, keys
+    configured for the host in SSH configuration files (e.g. `~/.ssh/config`) are used. If no keys
+    are configured there, standard key files (e.g. `~/.ssh/id_rsa`) and the SSH agent are tried.
 
 **-D** *DATASET*, **--dataset** *DATASET*
 
@@ -88,8 +89,8 @@ spec-files-generator' tool available in the 'pepc' source code repository.
 
     1. `./tests/emul-data` in the program's directory
     2. `$PEPC_DATA_PATH/tests/emul-data`
-    3. `$HOME/.local/share/pepc/tests/emul-data`
-    4. `$VIRTUAL_ENV/share/tests/emul-data`
+    3. `$VIRTUAL_ENV/share/pepc/tests/emul-data`
+    4. `$HOME/.local/share/pepc/tests/emul-data`
     5. `/usr/local/share/pepc/tests/emul-data`
     6. `/usr/share/pepc/tests/emul-data`
 
@@ -104,14 +105,16 @@ spec-files-generator' tool available in the 'pepc' source code repository.
 
 ## Subcommand *'ls'*
 
-Display supported TPMI features.
+Display supported TPMI features. Discovers features by listing
+`/sys/kernel/debug/tpmi-<PCI-addr>/tpmi-id-<ID>` directories in debugfs. When '--topology' is
+used, also reads `/sys/kernel/debug/tpmi-<PCI-addr>/tpmi-id-<ID>/mem_dump` to enumerate instances.
 
 **-B** *BASE*, **--base** *BASE*
 
-:   Path to a copy of the TPMI debugfs contents. By default, pepc uses 'Granite Rapids Xeon' and
-    searches for `tpmi-<PCI address>` subdirectories within it. This option replaces the default
-    'Granite Rapids Xeon' directory with a custom path. Intended for decoding TPMI debugfs dumps
-    captured from a different system.
+:   Path to a copy of the TPMI debugfs contents (a debugfs dump directory). By default, pepc reads
+    from the live system's debugfs at `/sys/kernel/debug`, searching for `tpmi-<PCI-addr>`
+    subdirectories within it. This option overrides the default with a custom path, intended for
+    decoding TPMI debugfs dumps captured from a different system.
 
 **--vfm** *VFM*
 
@@ -142,14 +145,17 @@ Display supported TPMI features.
 :   Comma-separated list of TPMI feature names to include in the output. Defaults to all supported
     features.
 
-Read one or more TPMI registers.
+## Subcommand *'read'*
+
+Read one or more TPMI registers. Reads TPMI data from
+`/sys/kernel/debug/tpmi-<PCI-addr>/tpmi-id-<ID>/mem_dump`.
 
 **-B** *BASE*, **--base** *BASE*
 
-:   Path to a copy of the TPMI debugfs contents. By default, pepc uses 'Granite Rapids Xeon' and
-    searches for `tpmi-<PCI address>` subdirectories within it. This option replaces the default
-    'Granite Rapids Xeon' directory with a custom path. Intended for decoding TPMI debugfs dumps
-    captured from a different system.
+:   Path to a copy of the TPMI debugfs contents (a debugfs dump directory). By default, pepc reads
+    from the live system's debugfs at `/sys/kernel/debug`, searching for `tpmi-<PCI-addr>`
+    subdirectories within it. This option overrides the default with a custom path, intended for
+    decoding TPMI debugfs dumps captured from a different system.
 
 **--vfm** *VFM*
 
@@ -203,14 +209,16 @@ Read one or more TPMI registers.
 
 ## Subcommand *'write'*
 
-Write a value to a TPMI register or its bit field.
+Write a value to a TPMI register or its bit field. Reads and writes TPMI data via
+`/sys/kernel/debug/tpmi-<PCI-addr>/tpmi-id-<ID>/mem_dump` (reads) and
+`/sys/kernel/debug/tpmi-<PCI-addr>/tpmi-id-<ID>/mem_write` (writes).
 
 **-B** *BASE*, **--base** *BASE*
 
-:   Path to a copy of the TPMI debugfs contents. By default, pepc uses 'Granite Rapids Xeon' and
-    searches for `tpmi-<PCI address>` subdirectories within it. This option replaces the default
-    'Granite Rapids Xeon' directory with a custom path. Intended for decoding TPMI debugfs dumps
-    captured from a different system.
+:   Path to a copy of the TPMI debugfs contents (a debugfs dump directory). By default, pepc reads
+    from the live system's debugfs at `/sys/kernel/debug`, searching for `tpmi-<PCI-addr>`
+    subdirectories within it. This option overrides the default with a custom path, intended for
+    decoding TPMI debugfs dumps captured from a different system.
 
 **--vfm** *VFM*
 

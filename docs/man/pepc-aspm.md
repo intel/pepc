@@ -44,8 +44,9 @@ pandoc definition list syntax to produce proper option entries in the man output
 
 **-K** *PRIVKEY*, **--priv-key** *PRIVKEY*
 
-:   Path to the private SSH key for logging into the remote host. Defaults to keys in standard paths
-    like `$HOME/.ssh`.
+:   Path to the private SSH key for logging into the remote host. If not specified, keys
+    configured for the host in SSH configuration files (e.g. `~/.ssh/config`) are used. If no keys
+    are configured there, standard key files (e.g. `~/.ssh/id_rsa`) and the SSH agent are tried.
 
 **-D** *DATASET*, **--dataset** *DATASET*
 
@@ -57,8 +58,8 @@ pandoc definition list syntax to produce proper option entries in the man output
 
     1. `./tests/emul-data` in the program's directory
     2. `$PEPC_DATA_PATH/tests/emul-data`
-    3. `$HOME/.local/share/pepc/tests/emul-data`
-    4. `$VIRTUAL_ENV/share/tests/emul-data`
+    3. `$VIRTUAL_ENV/share/pepc/tests/emul-data`
+    4. `$HOME/.local/share/pepc/tests/emul-data`
     5. `/usr/local/share/pepc/tests/emul-data`
     6. `/usr/share/pepc/tests/emul-data`
 
