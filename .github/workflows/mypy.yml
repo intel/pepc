@@ -77,7 +77,14 @@ jobs:
       - name: "Run mypy for type checking on modified files"
         run: |
           # TODO: add --strict flag and remove --follow-imports=silent once the code is fully typed.
-          xargs -a .tmp/modified-files -r mypy --follow-imports=silent -- > .tmp/mypy.results || retcode=1
+          # Pass all .py files together in one invocation (efficient, no name conflicts).
+          # Run extensionless scripts one-by-one to avoid "duplicate module" errors: mypy maps
+          # them all to '__main__', conflicting with each other and with '__main__.py'.
+          grep '\.py$' .tmp/modified-files | \
+            xargs -r mypy --follow-imports=silent -- >> .tmp/mypy.results || retcode=1
+          for f in $(grep -v '\.py$' .tmp/modified-files); do
+            mypy --follow-imports=silent -- "$f" >> .tmp/mypy.results || retcode=1
+          done
 
           echo "$retcode" > .tmp/mypy.retcode
 
