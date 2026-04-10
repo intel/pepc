@@ -54,21 +54,6 @@ _DATASET_OPTION: Final[ArgTypedDict] = {
     },
 }
 
-_SUPPORTED_OPTIMIZATIONS: Final[frozenset[str]] = frozenset({"MSR:IO", "sysfs:IO"})
-
-_DISABLE_OPTIMIZATIONS_OPTION: Final[ArgTypedDict] = {
-    "short": None,
-    "long": "--disable-optimizations",
-    "argcomplete": None,
-    "kwargs": {
-        "metavar": "OPTIONS",
-        "dest": "disable_optimizations",
-        "help": f"""Comma-separated list of optimizations to disable. Supported values:
-                    {', '.join(_SUPPORTED_OPTIMIZATIONS)}. By default, all optimizations are
-                    enabled. This option is intended for debugging and testing."""
-    }
-}
-
 _OVERRIDE_CPU_OPTION: Final[ArgTypedDict] = {
     "short": None,
     "long": "--override-cpu-model",
@@ -318,7 +303,6 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
 
     ssh_options = (*ArgParse.SSH_OPTIONS, _DATASET_OPTION)
     ssh_and_mechanisms_options = (*ssh_options, *_MECHANISMS_OPTIONS)
-    disable_optimizations_options = (_DISABLE_OPTIMIZATIONS_OPTION,)
     override_cpu_options = (_OVERRIDE_CPU_OPTION,)
 
     #
@@ -343,7 +327,6 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     subpars2.set_defaults(func=_pstates_info_command)
 
     ArgParse.add_options(subpars2, ssh_and_mechanisms_options)
-    ArgParse.add_options(subpars2, disable_optimizations_options)
     ArgParse.add_options(subpars2, override_cpu_options)
 
     _add_target_cpus_arguments(subpars2, "List of %s to get information about.")
@@ -364,7 +347,6 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     subpars2.set_defaults(func=_pstates_config_command)
 
     ArgParse.add_options(subpars2, ssh_and_mechanisms_options)
-    ArgParse.add_options(subpars2, disable_optimizations_options)
     ArgParse.add_options(subpars2, override_cpu_options)
 
     _add_target_cpus_arguments(subpars2, "List of %s to configure P-states for.")
@@ -395,7 +377,6 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     subpars2.set_defaults(func=_cstates_info_command)
 
     ArgParse.add_options(subpars2, ssh_and_mechanisms_options)
-    ArgParse.add_options(subpars2, disable_optimizations_options)
     ArgParse.add_options(subpars2, override_cpu_options)
 
     _add_target_cpus_arguments(subpars2, "List of %s to get information about.")
@@ -421,7 +402,6 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     subpars2.set_defaults(func=_cstates_config_command)
 
     ArgParse.add_options(subpars2, ssh_and_mechanisms_options)
-    ArgParse.add_options(subpars2, disable_optimizations_options)
     ArgParse.add_options(subpars2, override_cpu_options)
 
     _add_target_cpus_arguments(subpars2, "List of %s to configure.")
@@ -458,7 +438,6 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     subpars2.set_defaults(func=_uncore_info_command)
 
     ArgParse.add_options(subpars2, ssh_and_mechanisms_options)
-    ArgParse.add_options(subpars2, disable_optimizations_options)
     ArgParse.add_options(subpars2, override_cpu_options)
 
     _add_target_cpus_arguments(subpars2, "List of %s to get information about.")
@@ -482,7 +461,6 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     subpars2.set_defaults(func=_uncore_config_command)
 
     ArgParse.add_options(subpars2, ssh_and_mechanisms_options)
-    ArgParse.add_options(subpars2, disable_optimizations_options)
     ArgParse.add_options(subpars2, override_cpu_options)
 
     _add_target_cpus_arguments(subpars2, "List of %s to configure uncore for.")
@@ -573,7 +551,7 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     text = """Include only online CPUs. By default, both online and offline CPUs are included."""
     subpars2.add_argument("--online-only", action="store_true", help=text)
 
-    columns = ", ".join(list(CPUInfoVars.SCOPE_NAMES) + ["hybrid"])
+    columns = ", ".join(list(CPUInfoVars.SCOPE_NAMES) + ["hybrid", "dtype"])
     text = f"""Comma-separated list of topology columns to display. Available columns: {columns}.
                Example: --columns Package,Core,CPU."""
     subpars2.add_argument("--columns", help=text)
@@ -1163,28 +1141,6 @@ def _list_mechanisms(args: argparse.Namespace):
 
     _LOG.info("* %s", "\n* ".join(info))
 
-def _disable_optimizations(args: argparse.Namespace):
-    """
-    Implement the '--disable-optimizations' option.
-    """
-
-    opts_str: str = getattr(args, "disable_optimizations", "")
-    opts: list[str] = Trivial.split_csv_line(opts_str)
-
-    for opt in opts:
-        if opt == "MSR:IO":
-            # pylint: disable-next=import-outside-toplevel
-            from pepclibs.msr import _SimpleMSR
-
-            _SimpleMSR.DISABLE_IO_OPTIMIZATIONS = True
-        elif opt == "sysfs:IO":
-            # pylint: disable-next=import-outside-toplevel
-            from pepclibs import _SysfsIO
-
-            _SysfsIO.DISABLE_IO_OPTIMIZATIONS = True
-        else:
-            raise Error(f"Unknown optimization '{opt}' in '--disable-optimizations' option")
-
 def do_main(pman: ProcessManagerType | None = None):
     """
     Implement the tool.
@@ -1202,9 +1158,6 @@ def do_main(pman: ProcessManagerType | None = None):
     if getattr(args, "list_mechanisms", None):
         _list_mechanisms(args)
         return
-
-    if getattr(args, "disable_optimizations", None):
-        _disable_optimizations(args)
 
     dataset: str | None = getattr(args, "dataset", None)
     cmdl = ArgParse.format_ssh_args(args)

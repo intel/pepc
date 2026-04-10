@@ -113,7 +113,7 @@ Display supported TPMI features.
 **-B** *BASE*, **--base** *BASE*
 
 :   Path to a copy of the TPMI debugfs contents. By default, pepc uses 'Granite Rapids Xeon' and
-    searches for 'tpmi-<PCI address>' subdirectories within it. This option replaces the default
+    searches for `tpmi-<PCI address>` subdirectories within it. This option replaces the default
     'Granite Rapids Xeon' directory with a custom path. Intended for decoding TPMI debugfs dumps
     captured from a different system.
 
@@ -151,7 +151,7 @@ Read one or more TPMI registers.
 **-B** *BASE*, **--base** *BASE*
 
 :   Path to a copy of the TPMI debugfs contents. By default, pepc uses 'Granite Rapids Xeon' and
-    searches for 'tpmi-<PCI address>' subdirectories within it. This option replaces the default
+    searches for `tpmi-<PCI address>` subdirectories within it. This option replaces the default
     'Granite Rapids Xeon' directory with a custom path. Intended for decoding TPMI debugfs dumps
     captured from a different system.
 
@@ -212,7 +212,7 @@ Write a value to a TPMI register or its bit field.
 **-B** *BASE*, **--base** *BASE*
 
 :   Path to a copy of the TPMI debugfs contents. By default, pepc uses 'Granite Rapids Xeon' and
-    searches for 'tpmi-<PCI address>' subdirectories within it. This option replaces the default
+    searches for `tpmi-<PCI address>` subdirectories within it. This option replaces the default
     'Granite Rapids Xeon' directory with a custom path. Intended for decoding TPMI debugfs dumps
     captured from a different system.
 

@@ -53,17 +53,8 @@ if typing.TYPE_CHECKING:
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
-# A debug option to disable I/O optimizations. When set, reads and writes go through individual
-# 'open()' calls instead of a single Python script that processes files in bulk. The optimized
-# path is used for remote hosts (reduces SSH round-trips) and for the sudo case (reduces the
-# number of sudo invocations).
-DISABLE_IO_OPTIMIZATIONS: bool = False
-# A debug option to enable self-verification of the optimized I/O path: both the direct I/O path
-# and the optimized I/O path are executed, and their results are compared.
-VERIFY_IO_OPTIMIZATIONS: bool = False
-
 # The maximum total length of file paths for the optimized I/O operations.
-_MAX_PATHS_LEN = 16000
+_MAX_PATHS_LEN = 32000
 
 class SysfsIO(ClassHelpers.SimpleCloseContext):
     """
@@ -137,19 +128,10 @@ class SysfsIO(ClassHelpers.SimpleCloseContext):
         else:
             self._pman = pman
 
-        if DISABLE_IO_OPTIMIZATIONS and VERIFY_IO_OPTIMIZATIONS:
-            _LOG.warning("I/O optimizations are disabled, but their verification is enabled")
-
         if self._pman.is_emulated:
             self._optimize_io = False
         else:
-            if DISABLE_IO_OPTIMIZATIONS:
-                self._optimize_io = False
-            elif VERIFY_IO_OPTIMIZATIONS:
-                # Run optimized I/O even for local hosts when verification is enabled.
-                self._optimize_io = True
-            else:
-                self._optimize_io = self._pman.is_remote
+            self._optimize_io = self._pman.is_remote
 
         # The write-through data cache, indexed by the file path.
         self._cache: dict[Path, str] = {}
@@ -916,25 +898,8 @@ for path in paths:
         optimize = self._optimize_io or (su and use_sudo)
 
         if optimize:
-            if not VERIFY_IO_OPTIMIZATIONS:
-                yield from self._read_paths_optimized(paths, what=what,
-                                                      val_if_not_found=val_if_not_found, su=su)
-            else:
-                # Materialize paths list since we need to iterate it twice for verification.
-                paths_list = list(paths)
-                iterator1 = self._read_paths(paths_list, what=what,
-                                             val_if_not_found=val_if_not_found, su=su)
-                iterator2 = self._read_paths_optimized(paths_list, what=what,
-                                                       val_if_not_found=val_if_not_found, su=su)
-
-                for (path1, val1), (path2, val2) in zip(iterator1, iterator2):
-                    if path1 != path2 or val1 != val2:
-                        raise Error(f"BUG: I/O optimization verification failed!\n"
-                                    f"- Unoptimized path: '{path1}'\n"
-                                    f"- Unoptimized value: '{val1}'\n"
-                                    f"- Optimized path: '{path2}'\n"
-                                    f"- Optimized value: '{val2}'")
-                    yield path1, val1
+            yield from self._read_paths_optimized(paths, what=what,
+                                                  val_if_not_found=val_if_not_found, su=su)
         else:
             yield from self._read_paths(paths, what=what, val_if_not_found=val_if_not_found,
                                         su=su)
@@ -1276,12 +1241,7 @@ for path in paths:
             for path in paths_list:
                 self._add_for_transaction(path, val, what, su=su)
         elif optimize:
-            if not VERIFY_IO_OPTIMIZATIONS:
-                self._write_paths_optimized(paths_list, val, what=what, su=su)
-            else:
-                self._write_paths_optimized(paths_list, val, what=what, su=su)
-                for path in paths_list:
-                    self._verify(path, val, what=what)
+            self._write_paths_optimized(paths_list, val, what=what, su=su)
         else:
             for path in paths_list:
                 self._write(path, val, what=what, su=su)

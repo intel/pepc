@@ -35,9 +35,6 @@ _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
 _CPU_BYTEORDER: Final[Literal["little", "big"]] = "little"
 
-# A debug option to disable I/O optimizations.
-DISABLE_IO_OPTIMIZATIONS: bool = False
-
 class SimpleMSR(ClassHelpers.SimpleCloseContext):
     """
     Provide a capability to read and write CPU Model Specific Registers.
@@ -385,7 +382,7 @@ for cpu in cpus:
                              information).
         """
 
-        if DISABLE_IO_OPTIMIZATIONS or self._pman.is_emulated:
+        if self._pman.is_emulated:
             yield from self._cpus_read_pman(regaddr, cpus)
         elif self._pman.is_remote or self._use_sudo:
             yield from self._cpus_read_optimized(regaddr, cpus, su=self._use_sudo)
@@ -613,7 +610,7 @@ for cpu in cpus:
                              information).
         """
 
-        if DISABLE_IO_OPTIMIZATIONS or self._pman.is_emulated:
+        if self._pman.is_emulated:
             self._cpus_write_pman(regaddr, regval, cpus)
         elif self._pman.is_remote or self._use_sudo:
             self._cpus_write_optimized(regaddr, regval, cpus, su=self._use_sudo)
