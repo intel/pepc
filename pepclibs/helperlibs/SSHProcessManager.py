@@ -592,7 +592,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         for path in self.privkeypaths:
             # Private SSH key sanity checks.
             try:
-                mode = os.stat(privkeypath).st_mode
+                mode = os.stat(path).st_mode
             except OSError as err:
                 msg = Error(str(err)).indent(2)
                 raise Error(f"'stat()' failed for private SSH key at '{path}':\n"
