@@ -495,8 +495,8 @@ All comments should end with a period (`.`).
 #### Small vs Capital Letters in Messages
 
 Every log and exception message should start with a capital letter. After each colon in a message,
-the next word should also be capitalized. One-line messages do not need a trailing period; multi-line
-messages should use periods.
+the next word should also be capitalized. One-line messages should not have a trailing period;
+multi-line messages should use periods.
 
 **Examples:**
 

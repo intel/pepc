@@ -14,7 +14,7 @@ Compact reference for AI code generation. Human docs: [CONTRIBUTING.md](../CONTR
 - [ ] Imports: multiple statements, no parentheses; pack as many names per line as fit in 100 chars
 - [ ] Multi-line strings: first line near 100 chars
 - [ ] TypedDict: `total=False` when building key-by-key
-- [ ] Module constants: `frozenset()`/`tuple()`, not `set()`/`list()`
+- [ ] Module constants: `frozenset()`/`tuple()`, not `set()`/`list()`; prefer immutable collections generally
 - [ ] pepclibs file I/O: `_sysfs_io` methods only
 - [ ] Blank line after multi-line docstring before body
 - [ ] One blank line between class methods
@@ -25,7 +25,6 @@ Compact reference for AI code generation. Human docs: [CONTRIBUTING.md](../CONTR
 - [ ] No blank lines before `except:`/`finally:`/`else:`
 - [ ] `Trivial.str_to_int()`/`str_to_num()` instead of `int()`/`float()`
 - [ ] Default values: `""` not `None`, `()` not `None`, `-1` not `None`
-- [ ] Prefer tuples over lists for small collections
 
 ---
 
@@ -90,17 +89,46 @@ _LOG.debug("Remote: Read: MSR 0x%x from CPUs %s%s, the command is: %s",
 Maximize first line length (~95-100 chars). Each continuation is its own f-string. Align with
 opening quote.
 
-- Outside parens → `\` required.
-- Inside parens → no `\`.
+- Outside parens → `\` required (syntax error otherwise).
+- Inside parens → no `\`; Python handles implicit concatenation.
 
 ```python
-# Outside parens
-msg = f"Long message text that goes up to natural break point near column 100 " \
-      f"continuation here"
+# Outside parens (\  required)
+return f"Long message text that goes up to natural break point near column 100 " \
+       f"continuation here"
 
 # Inside parens (no \)
 raise Error(f"Long message text that goes up to natural break point near column 100 "
             f"continuation here")
+
+# Bad: \ inside parens (redundant)
+raise Error(f"Long message text near column 100 " \
+            f"continuation here")
+```
+
+---
+
+## Exception Re-raise
+
+Two cases:
+
+**Same semantic type** — use `type(err)(...)` to preserve the exact subclass.
+
+```python
+# Wrong: loses the original subclass.
+except Error as err:
+    raise Error(f"Failed to do X:\n{err.indent(2)}") from err
+
+# Correct: preserves the subclass.
+except Error as err:
+    raise type(err)(f"Failed to do X:\n{err.indent(2)}") from err
+```
+
+**Deliberate type change** — use the target type directly, document in `Raises:`.
+
+```python
+except ErrorNotFound as err:
+    raise ErrorNotSupported(f"Feature not available:\n{err.indent(2)}") from err
 ```
 
 ---
@@ -126,7 +154,7 @@ Violation regex: `^\s*#[^#].*[^.]$`
 
 ## Messages
 
-Capital letter at start and after every `:`. One-line: period optional. Multi-line: use periods.
+Capital letter at start and after every `:`. One-line: no period. Multi-line: use periods.
 
 ```python
 _LOG.debug("Local: Read: CPU%d: MSR 0x%x", cpu, addr)    # RIGHT
@@ -173,11 +201,26 @@ Raises:
 
 ---
 
-## Blank Lines
+## Type Annotations
 
-- One blank line between class methods.
-- No blank lines before `except:`/`finally:`/`else:`.
-- Blank line between multi-line docstring and body.
+Import typing utilities under `TYPE_CHECKING`. Use `import typing` then `if typing.TYPE_CHECKING:`.
+For `cast`, guard the call site too.
+
+```python
+import typing
+
+if typing.TYPE_CHECKING:
+    from typing import cast, Generator, Sequence
+    from some.module import SomeType
+
+# cast usage at call site:
+if typing.TYPE_CHECKING:
+    value = cast(int, some_value)
+else:
+    value = some_value
+```
+
+If a method returns `None`, omit the return type annotation entirely.
 
 ---
 
@@ -196,119 +239,4 @@ Spaces AFTER `:`, never before. Extra spaces after `:` for alignment OK.
 {"key": value}          # RIGHT
 {"key":  value}         # RIGHT (aligned)
 {"key" : value}         # WRONG
-```
-
----
-
-## Exceptions
-
-Only `Error` and subclasses from `Exceptions.py`. Non-`Error` escaping a pepc method = bug.
-
-### Re-raise
-
-Same type → `type(err)(...)`. Deliberate type change → target type directly, document in `Raises:`.
-
-```python
-# Same type: preserves subclass.
-except Error as err:
-    raise type(err)(f"Failed:\n{err.indent(2)}") from err
-
-# Deliberate change.
-except ErrorNotFound as err:
-    raise ErrorNotSupported(f"Not available:\n{err.indent(2)}") from err
-```
-
-### Formatting
-
-No blank lines before `except:`/`finally:`/`else:`.
-
----
-
-## Types
-
-- Return type annotation: omit if `None`.
-- `typing` imports under `TYPE_CHECKING` guard.
-- `cast()`, `TypedDict`, `Generator`, etc. under `TYPE_CHECKING`.
-- TypedDict names: `...TypedDict` suffix. Docstring with `Attributes:` section.
-- `total=False` when building dict key-by-key.
-- Private types start with `_`.
-
----
-
-## Collections
-
-Module-level constants: `frozenset()` not `set()`, `tuple()` not `list()`.
-
-```python
-_NAMES: Final[frozenset[str]] = frozenset({
-    "a",
-    "b",
-})
-```
-
----
-
-## Imports
-
-Multiple statements, no parentheses. If > 100 chars → split into multiple `from X import` lines.
-
-```python
-# RIGHT
-from module import A, B, C
-from module import D, E
-
-# WRONG
-from module import (A, B, C,
-                    D, E)
-```
-
----
-
-## File I/O (pepclibs)
-
-All via `self._sysfs_io`: `.read()`, `.write_verify()`, `.read_paths()`.
-Never `open()` or `pman.read_file()`.
-
----
-
-## API Conventions
-
-- Prefer tuples over lists for small collections: `cpus=(0,)`.
-- Defaults: `""` not `None`, `()` not `None`, `-1` not `None`.
-- `Trivial.str_to_int()`/`str_to_float()`/`str_to_num()` instead of `int()`/`float()`.
-- Keyword args when calling; same order as signature.
-- Prefer double quotes. Single quotes only to avoid escaping.
-
----
-
-## Class Layout
-
-`__init__` → `__del__`/`__enter__`/`__exit__` → inner methods → outer methods (callees before
-callers). Private symbols start with `_`.
-
----
-
-## Violation Regexes
-
-```
-Comment without period:          ^\s*#[^#].*[^.]$
-Lowercase after colon in msg:    ["'].*:\s+[a-z]
-Space before dict colon:         {\s*["'][^"']+["']\s+:
-Multi-param on same line:        def \w+\([^,]+,\s*[^,]+,
-Parenthesized import:            from .* import \(
-```
-
----
-
-## Decision Tree
-
-```
-line > 100 chars?
-├─ NO → one line
-└─ YES
-    ├─ signature → one param/line, aligned
-    ├─ call → align at ( + 1
-    ├─ log → all args on continuation (or keep some if saves a line)
-    ├─ string → max first line ~100, continue with own f-string
-    └─ assert → align at indent + 7
 ```
