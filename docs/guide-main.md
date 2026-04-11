@@ -274,6 +274,8 @@ The `emulation-data-generator` tool, which is available in the `pepc` git reposi
 to collect and save emulation data from a real system. The emulation data should be placed under the
 `tests/emul-data/` subdirectory of the `pepc` git repository.
 
+For information on running the `pepc` test suite, see [Pepc Tests Guide](guide-tests.md).
+
 ## P-states
 
 The `pepc pstates` command groups operations related to CPU performance states (P-states). This

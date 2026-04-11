@@ -18,6 +18,8 @@ Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 - [Requirements](#requirements)
 - [Installation](#installation)
 - [User Guide](#user-guide)
+- [Repository Tools](#repository-tools)
+- [Contributing](#contributing)
 - [Man pages](#man-pages)
 - [Helpful resources](#helpful-resources)
 - [FAQ](#faq)
@@ -46,7 +48,7 @@ privileges (root). This depends on the specific operation and the underlying mec
 reading CPU frequency limits from sysfs does not need root, therefore `pepc pstates info --min-freq`
 can be run as a normal user. On the other hand, reading an MSR (Model Specific Register) needs
 superuser privileges, so something like `pepc cstates info --pkg-cstate-limit` needs to be run as
-root.
+root. See [Superuser Privileges](docs/guide-main.md#superuser-privileges) for more details.
 
 ## Requirements
 
@@ -62,6 +64,27 @@ Please refer to the [Installation Guide](docs/guide-install.md) document.
 ## User Guide
 
 Please refer to the [User Guide](docs/guide-main.md) document.
+
+## Repository Tools
+
+Only `pepc` itself is installed. The remaining tools are development and maintenance utilities that
+must be run from the repository.
+
+- `pepc`: the main tool, the only one that gets installed.
+- `install-pepc`: installs `pepc` on a local or remote host into a Python virtual environment.
+- `emulation-data-generator`: collects data from a real system to produce emulation datasets for
+  testing. See [Emulation Data](docs/guide-main.md#emulation-data) and
+  [Tests Guide](docs/guide-tests.md).
+- `msr-ioscope`: determines the I/O scope (package, die, core, CPU) of MSR bits on a real system.
+  See [MSR Scope](docs/misc-msr-scope.md).
+- `make-standalone`: packages `pepc` and its dependencies into a single standalone executable.
+- `tpmi-spec-files-generator`: generates TPMI specification XML files from raw data.
+- `make-a-release`: prepares a new `pepc` release (changelog, version bump, commit, tag).
+
+## Contributing
+
+Coding style and conventions are documented in [CONTRIBUTING.md](CONTRIBUTING.md). An
+AI-assistant-oriented condensed version is available in [ai-style.md](ai-style.md).
 
 ## Man pages
 
