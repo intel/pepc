@@ -79,7 +79,7 @@ PEPC_DEPENDENCIES: Final[tuple[str, ...]] = (
     "modprobe")
 
 # Directories and files to exclude when copying pepc project sources to a remote host.
-PEPC_COPY_EXCLUDE: Final[tuple[str, ...]] = ("/tests", "/docs", "/misc", "**/*.md", ".*")
+PEPC_COPY_EXCLUDE: Final[tuple[str, ...]] = ("/tests", "/docs", "**/*.md", ".*")
 
 def _build_arguments_parser() -> ArgParse.ArgsParser:
     """
