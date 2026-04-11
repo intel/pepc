@@ -626,9 +626,13 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
                     key_filename = self.privkeypaths
             else:
                 key_filename = None
+            # Paramiko requires password='' (empty string) to attempt "none" authentication.
+            # If password is None, paramiko will not try "none" auth and will fail on servers
+            # that use it (e.g., some lab systems with passwordless root).
+            password = self.password if self.password is not None else ''
             self.ssh.connect(username=self.username, hostname=connhost, port=port,
                              key_filename=key_filename, timeout=self.connection_timeout,
-                             password=self.password, allow_agent=True, look_for_keys=look_for_keys)
+                             password=password, allow_agent=True, look_for_keys=look_for_keys)
         except paramiko.AuthenticationException as err:
             msg = Error(str(err)).indent(2)
             raise ErrorConnect(f"SSH authentication failed when connecting to {self._vhostname} as "
