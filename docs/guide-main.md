@@ -171,8 +171,8 @@ virtual environment activation. There are two ways to address this:
   alias pepc='sudo VIRTUAL_ENV=/path/to/venv pepc'
   ```
 
-The `install-pepc` script in the `pepc` git repository configures everything necessary for this
-scenario automatically. The [installation guide](guide-install.md) covers the details.
+The `tools/install-pepc` script in the `pepc` git repository configures everything necessary
+for this scenario automatically. The [installation guide](guide-install.md) covers the details.
 
 ### Remote Usage Model
 
@@ -187,9 +187,9 @@ runs entirely on the control machine and connects to the SUT over SSH only to pe
 operations (for example, to read a sysfs file or write an MSR). This means `pepc` does not need
 to be installed on the SUT.
 
-If you do want to install `pepc` on a SUT (for example, to run it in local mode directly on that
-system), use the `install-pepc` tool available in the `pepc` git repository. It installs `pepc`
-to a remote host from the control machine over SSH.
+If you do want to install `pepc` on a SUT (for example, to run it in local mode directly on
+that system), use the `tools/install-pepc` tool available in the `pepc` git repository. It
+installs `pepc` to a remote host from the control machine over SSH.
 
 **SSH Requirements**
 
@@ -270,9 +270,9 @@ Max. CPU frequency: 4.60GHz for CPUs 0-7 (P-cores)
 Max. CPU frequency: 3.40GHz for CPUs 8-15 (E-cores)
 ```
 
-The `emulation-data-generator` tool, which is available in the `pepc` git repository, can be used
-to collect and save emulation data from a real system. The emulation data should be placed under the
-`tests/emul-data/` subdirectory of the `pepc` git repository.
+The `tools/emulation-data-generator` tool, which is available in the `pepc` git repository,
+can be used to collect and save emulation data from a real system. The emulation data should be
+placed under the `tests/emul-data/` subdirectory of the `pepc` git repository.
 
 For information on running the `pepc` test suite, see [Pepc Tests Guide](guide-tests.md).
 

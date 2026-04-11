@@ -424,5 +424,5 @@ Package C-state limit: 'PC0' for CPUs 1-35,37-71,73-107,109-143
 
 This warning is highly beneficial and has saved several users significant troubleshooting time.
 
-The `msr-ioscope` tool in the `pepc` repository can be used to determine the I/O scope of MSR bits
-on a real system. See [Repository Tools](guide-main.md#repository-tools).
+The `tools/msr-ioscope` tool in the `pepc` repository can be used to determine the I/O scope of
+MSR bits on a real system. See [Repository Tools](guide-main.md#repository-tools).

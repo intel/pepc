@@ -187,7 +187,7 @@ registers and register bit fields, including a description for each field.
 
 The TPMI spec file format is specific to `pepc` and was created by the `pepc` developers. It is not
 an official Intel format. These files are generated from Intel internal TPMI XML descriptions using
-the `tpmi-spec-files-generator` tool available in the `pepc` git repository.
+the `tools/tpmi-spec-files-generator` tool available in the `pepc` git repository.
 
 **Note:** The `pepc` git repository provides TPMI spec files only for selected features (e.g., UFS
 and SST). While the most important features are covered, not all TPMI features are supported.

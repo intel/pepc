@@ -71,15 +71,16 @@ Only `pepc` itself is installed. The remaining tools are development and mainten
 must be run from the repository.
 
 - `pepc`: the main tool, the only one that gets installed.
-- `install-pepc`: installs `pepc` on a local or remote host into a Python virtual environment.
-- `emulation-data-generator`: collects data from a real system to produce emulation datasets for
-  testing. See [Emulation Data](docs/guide-main.md#emulation-data) and
+- `tools/install-pepc`: installs `pepc` on a local or remote host into a Python virtual environment.
+- `tools/emulation-data-generator`: collects data from a real system to produce emulation datasets
+  for testing. See [Emulation Data](docs/guide-main.md#emulation-data) and
   [Tests Guide](docs/guide-tests.md).
-- `msr-ioscope`: determines the I/O scope (package, die, core, CPU) of MSR bits on a real system.
+- `tools/msr-ioscope`: determines the I/O scope (package, die, core, CPU) of MSR bits on a real
+  system.
   See [MSR Scope](docs/misc-msr-scope.md).
-- `make-standalone`: packages `pepc` and its dependencies into a single standalone executable.
-- `tpmi-spec-files-generator`: generates TPMI specification XML files from raw data.
-- `make-a-release`: prepares a new `pepc` release (changelog, version bump, commit, tag).
+- `tools/make-standalone`: packages `pepc` and its dependencies into a single standalone executable.
+- `tools/tpmi-spec-files-generator`: generates TPMI specification XML files from raw data.
+- `tools/make-a-release`: prepares a new `pepc` release (changelog, version bump, commit, tag).
 
 ## Contributing
 

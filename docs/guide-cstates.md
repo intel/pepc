@@ -170,9 +170,9 @@ Max. CPU frequency: 4.60GHz for CPUs 0-7 (P-cores)
 Max. CPU frequency: 3.40GHz for CPUs 8-15 (E-cores)
 ```
 
-The `emulation-data-generator` tool, which is available in the `pepc` git repository, can be used
-to collect and save emulation data from a real system. The emulation data should be placed under the
-`tests/emul-data/` subdirectory of the `pepc` git repository.
+The `tools/emulation-data-generator` tool, which is available in the `pepc` git repository,
+can be used to collect and save emulation data from a real system. The emulation data should be
+placed under the `tests/emul-data/` subdirectory of the `pepc` git repository.
 
 ## P-states
 

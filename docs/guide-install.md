@@ -49,9 +49,9 @@ recommended: it configures shell tab completions and man pages, so commands like
 
 ## Installation Script
 
-The `install-pepc` script is the simplest way to install `pepc`. It takes care of everything:
-installing OS dependencies, creating the Python virtual environment, configuring shell tab
-completions, man pages, and adding a `sudo` alias if needed.
+The `tools/install-pepc` script is the simplest way to install `pepc`. It takes care of
+everything: installing OS dependencies, creating the Python virtual environment, configuring
+shell tab completions, man pages, and adding a `sudo` alias if needed.
 
 First, clone the repository to get the script.
 
@@ -62,11 +62,11 @@ cd pepc
 
 **Install the latest release from GitHub**
 
-Run `install-pepc` without arguments. It fetches and installs the latest `pepc` release directly
-from GitHub. No additional options needed.
+Run `tools/install-pepc` without arguments. It fetches and installs the latest `pepc` release
+directly from GitHub. No additional options needed.
 
 ```bash
-./install-pepc
+./tools/install-pepc
 ```
 
 **Install from a local clone**
@@ -74,7 +74,7 @@ from GitHub. No additional options needed.
 Use `--src-path` with the path to the cloned repository to install from local sources instead.
 
 ```bash
-./install-pepc --src-path /path/to/pepc
+./tools/install-pepc --src-path /path/to/pepc
 ```
 
 The script adds `pepc` configuration to your `~/.bashrc`. Re-login or source `~/.bashrc` to apply
@@ -84,14 +84,14 @@ the changes.
 . ~/.bashrc
 ```
 
-`install-pepc` has additional options to tune the installation (e.g. the installation path), install
-`pepc` on a remote host over SSH, and control `sudo` alias creation and style. See
-[guide-main.md](guide-main.md) for a discussion of `sudo` usage with `pepc`. Run
-`./install-pepc --help` to see all available options.
+`tools/install-pepc` has additional options to tune the installation (e.g. the installation
+path), install `pepc` on a remote host over SSH, and control `sudo` alias creation and style.
+See [guide-main.md](guide-main.md) for a discussion of `sudo` usage with `pepc`. Run
+`./tools/install-pepc --help` to see all available options.
 
 ## Standalone Executable
 
-The `make-standalone` script creates a standalone `pepc` zipapp: a single self-contained
+The `tools/make-standalone` script creates a standalone `pepc` zipapp: a single self-contained
 executable file that bundles `pepc` and all its Python dependencies. No installation, virtual
 environment, or `PATH` changes are required to run it.
 
@@ -102,12 +102,12 @@ Like running from source, the standalone executable does not configure shell tab
 pages, so `man pepc-cstates` and tab completion will not work. It is best suited for short-term or
 one-off use. For regular use, a proper installation is recommended.
 
-Clone the repository and run `make-standalone` to create the executable.
+Clone the repository and run `tools/make-standalone` to create the executable.
 
 ```bash
 git clone https://github.com/intel/pepc.git
 cd pepc
-./make-standalone
+./tools/make-standalone
 ```
 
 This produces a `pepc-standalone` file in the current directory. Copy it to the target machine
@@ -117,13 +117,13 @@ and run it directly.
 ./pepc-standalone --help
 ```
 
-`make-standalone` accepts the same `--src-path` option as `install-pepc`, so you can build a
-standalone from a local clone or a specific Git URL. Run `./make-standalone --help` for all
-options.
+`tools/make-standalone` accepts the same `--src-path` option as `tools/install-pepc`, so you can
+build a standalone from a local clone or a specific Git URL. Run `./tools/make-standalone --help`
+for all options.
 
 ## Manual Installation
 
-The following sections describe how to install `pepc` manually, without using the `install-pepc`
+The following sections describe how to install `pepc` manually, without using the `tools/install-pepc`
 script. This is useful if you want full control over the installation, use a custom environment, or
 prefer a different package manager.
 

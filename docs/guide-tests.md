@@ -19,7 +19,7 @@ Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
   - [Against Emulated Hosts](#against-emulated-hosts)
   - [Against a Local Host](#against-a-local-host)
   - [Against a Remote Host](#against-a-remote-host)
-- [Local-only Tests](#local-only-tests)
+- [Non-Emulated Tests](#non-emulated-tests)
 - [Debug Messages](#debug-messages)
 - [Special Dataset Notes](#special-dataset-notes)
 
@@ -87,10 +87,10 @@ user name if needed.
 
 Do not use `-n` for parallel execution against a real host.
 
-## Local-only Tests
+## Non-Emulated Tests
 
-A small number of test modules do not support emulation. They run only against the local or remote
-host:
+A small number of test modules do not support emulation. They require a real host (local or
+remote) to run:
 
 - `test_process_manager.py`
 - `test_python_prj_installer.py`
