@@ -12,7 +12,7 @@
 install-pepc - install 'pepc' on the local or remote host.
 """
 
-from pepctools import _InstallPepc
+from pepctools import InstallPepc
 
 if __name__ == "__main__":
-    raise SystemExit(_InstallPepc.main())
+    raise SystemExit(InstallPepc.main())

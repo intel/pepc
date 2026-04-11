@@ -25,7 +25,7 @@ except ImportError:
 
 from pepclibs.helperlibs import LocalProcessManager, ArgParse, Logging
 from pepclibs.helperlibs.Exceptions import Error
-from pepctools import PythonPrjInstaller, _InstallPepc
+from pepctools import PythonPrjInstaller, InstallPepc
 
 if typing.TYPE_CHECKING:
     import argparse
@@ -73,7 +73,7 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     parser.add_argument("-o", "--output", type=Path, help=text)
 
     text = f"""Installation source: a local directory path or a Git URL
-               (default: '{_InstallPepc.PEPC_GIT_INSTALL_SRC}')."""
+               (default: '{InstallPepc.PEPC_GIT_INSTALL_SRC}')."""
     parser.add_argument("-s", "--src-path", help=text)
 
     text = """Do not install missing OS packages required for 'pepc' to work."""
@@ -114,7 +114,7 @@ def _get_cmdline_args(args: argparse.Namespace) -> _CmdlineArgsTypedDict:
     cmdl["output"] = output if output else Path(f"./{_DEFAULT_PEPC_STANDALONE_NAME}")
 
     src_path = getattr(args, "src_path")
-    cmdl["src_path"] = src_path if src_path else _InstallPepc.PEPC_GIT_INSTALL_SRC
+    cmdl["src_path"] = src_path if src_path else InstallPepc.PEPC_GIT_INSTALL_SRC
 
     cmdl["no_pkg_install"] = getattr(args, "no_pkg_install")
 
@@ -136,10 +136,10 @@ def _main(lpman: LocalProcessManager.LocalProcessManager,
                                                       install_path=tmpdir / "pepc", logging=True)
 
     if not cmdl["no_pkg_install"]:
-        installer.install_dependencies(_InstallPepc.PEPC_DEPENDENCIES)
+        installer.install_dependencies(InstallPepc.PEPC_DEPENDENCIES)
 
     # Install the project to the temporary directory.
-    installer.install(exclude=_InstallPepc.PEPC_COPY_EXCLUDE)
+    installer.install(exclude=InstallPepc.PEPC_COPY_EXCLUDE)
 
     # Create the standalone executable from the installed project.
     installer.create_standalone("pepc", cmdl["output"])

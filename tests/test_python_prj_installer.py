@@ -18,7 +18,7 @@ import subprocess
 from pathlib import Path
 import pytest
 from tests import common
-from pepctools import PythonPrjInstaller, _InstallPepc
+from pepctools import PythonPrjInstaller, InstallPepc
 
 if typing.TYPE_CHECKING:
     from typing import Final, Generator
@@ -59,7 +59,7 @@ def get_params(hostspec: str, username: str) -> Generator[_TestParamsTypedDict, 
             inst = PythonPrjInstaller.PythonPrjInstaller("pepc", str(common.get_prj_src_path()),
                                                           pman=pman, install_path=install_path,
                                                           logging=True)
-            inst.install(exclude=_InstallPepc.PEPC_COPY_EXCLUDE)
+            inst.install(exclude=InstallPepc.PEPC_COPY_EXCLUDE)
 
             if pman.is_remote:
                 # Copy the TPMI test data to the remote host for use in tests.

@@ -7,7 +7,10 @@
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
-install-pepc - install 'pepc' on the local or remote host into a Python virtual environment.
+Implement the 'install-pepc' tool and provide a public 'install_pepc()' API.
+
+The 'install_pepc()' function can be imported by other projects that depend on 'pepc' (e.g.
+'stats-collect') to install 'pepc' as part of their own installation flow.
 """
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
@@ -161,18 +164,18 @@ def _get_cmdline_args(args: argparse.Namespace) -> _CmdlineArgsTypedDict:
 
     cmdl: _CmdlineArgsTypedDict = {**ArgParse.format_ssh_args(args)}
 
-    install_path = getattr(args, "install_path")
+    install_path = args.install_path
     cmdl["install_path"] = install_path if install_path else PythonPrjInstaller.DEFAULT_INSTALL_PATH
 
-    src_path = getattr(args, "src_path")
+    src_path = args.src_path
     cmdl["src_path"] = src_path if src_path else PEPC_GIT_INSTALL_SRC
 
-    cmdl["no_pkg_install"] = getattr(args, "no_pkg_install")
-    cmdl["no_rcfile"] = getattr(args, "no_rcfile")
-    cmdl["force_sudo_alias"] = getattr(args, "force_sudo_alias")
-    cmdl["no_sudo_alias"] = getattr(args, "no_sudo_alias")
+    cmdl["no_pkg_install"] = args.no_pkg_install
+    cmdl["no_rcfile"] = args.no_rcfile
+    cmdl["force_sudo_alias"] = args.force_sudo_alias
+    cmdl["no_sudo_alias"] = args.no_sudo_alias
 
-    sudo_alias_style = getattr(args, "sudo_alias_style")
+    sudo_alias_style = args.sudo_alias_style
     if sudo_alias_style and cmdl["no_sudo_alias"]:
         raise Error("The '--no-sudo-alias' and '--sudo-alias-style' options are mutually "
                     "exclusive")
@@ -190,6 +193,47 @@ def _get_cmdline_args(args: argparse.Namespace) -> _CmdlineArgsTypedDict:
 
     return cmdl
 
+def install_pepc(pman: ProcessManagerType,
+                 src: str,
+                 install_path: Path = PythonPrjInstaller.DEFAULT_INSTALL_PATH,
+                 no_pkg_install: bool = False,
+                 no_rcfile: bool = False,
+                 force_sudo_alias: bool = False,
+                 no_sudo_alias: bool = False,
+                 sudo_alias_style: SudoAliasStyle = "refresh") -> None:
+    """
+    Install 'pepc' on the target host into a Python virtual environment.
+
+    Args:
+        pman: The process manager object that defines the target host.
+        src: Installation source: a local directory path or a Git URL.
+        install_path: Installation directory on the target host.
+        no_pkg_install: Do not install missing OS packages.
+        no_rcfile: Do not modify the user's shell RC file.
+        force_sudo_alias: Force adding a 'sudo' alias to the RC file.
+        no_sudo_alias: Prevent adding a 'sudo' alias to the RC file.
+        sudo_alias_style: The style of the 'sudo' alias ('refresh' or 'wrap').
+    """
+
+    installer = PythonPrjInstaller.PythonPrjInstaller("pepc", src, pman=pman,
+                                                      install_path=install_path, logging=True)
+    if not no_pkg_install:
+        installer.install_dependencies(PEPC_DEPENDENCIES)
+
+    installer.install(exclude=PEPC_COPY_EXCLUDE)
+
+    if not no_rcfile and not no_sudo_alias:
+        if force_sudo_alias:
+            installer.add_sudo_aliases(("pepc",), style=sudo_alias_style)
+        elif not pman.is_superuser() and not pman.has_passwdless_sudo():
+            installer.add_sudo_aliases(("pepc",), style=sudo_alias_style)
+
+    if not no_rcfile:
+        installer.hookup_rc_file()
+    else:
+        _LOG.info("Skipping shell RC file hookup%s, run '. %s' to configure "
+                  "the 'pepc' environment manually.", pman.hostmsg, installer.rcfile_path)
+
 def _main(pman: ProcessManagerType, cmdl: _CmdlineArgsTypedDict):
     """
     The main body of the tool.
@@ -199,29 +243,16 @@ def _main(pman: ProcessManagerType, cmdl: _CmdlineArgsTypedDict):
         cmdl: The command-line arguments description dictionary.
     """
 
-    installer = PythonPrjInstaller.PythonPrjInstaller("pepc", cmdl["src_path"], pman=pman,
-                                                      install_path=cmdl["install_path"],
-                                                      logging=True)
-    if not cmdl["no_pkg_install"]:
-        installer.install_dependencies(PEPC_DEPENDENCIES)
-
-    installer.install(exclude=PEPC_COPY_EXCLUDE)
-
-    if not cmdl["no_rcfile"] and not cmdl["no_sudo_alias"]:
-        if cmdl["force_sudo_alias"]:
-            installer.add_sudo_aliases(("pepc",), style=cmdl["sudo_alias_style"])
-        elif not pman.is_superuser() and not pman.has_passwdless_sudo():
-            installer.add_sudo_aliases(("pepc",), style=cmdl["sudo_alias_style"])
-
-    if not cmdl["no_rcfile"]:
-        installer.hookup_rc_file()
-    else:
-        _LOG.info("Skipping shell RC file hookup%s, run '. %s' to configure "
-                  "the 'pepc' environment manually.", pman.hostmsg, installer.rcfile_path)
+    install_pepc(pman, cmdl["src_path"], install_path=cmdl["install_path"],
+                 no_pkg_install=cmdl["no_pkg_install"],
+                 no_rcfile=cmdl["no_rcfile"],
+                 force_sudo_alias=cmdl["force_sudo_alias"],
+                 no_sudo_alias=cmdl["no_sudo_alias"],
+                 sudo_alias_style=cmdl["sudo_alias_style"])
 
 def main():
     """
-    The entry point of the tool.
+    The 'install-pepc' tool entry point. Parse command-line arguments and install 'pepc'.
 
     Returns:
         The program exit code.
