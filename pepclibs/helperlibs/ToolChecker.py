@@ -309,7 +309,7 @@ class ToolChecker(ClassHelpers.SimpleCloseContext):
         if not installer:
             return ""
 
-        return f"{installer} install {' '.join(pkgnames)}"
+        return f"{installer} install -y {' '.join(pkgnames)}"
 
     def ensure_tools_available(self, tools: Iterable[str]):
         """
