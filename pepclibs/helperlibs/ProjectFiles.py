@@ -65,7 +65,7 @@ def get_project_helpers_envar(prjname: str) -> str:
     """
 
     name = prjname.replace("-", "_").upper()
-    return f"{name}_HELPERSPATH"
+    return f"{name}_HELPERS_PATH"
 
 def _get_project_data_package_name(prjname: str) -> str:
     """
