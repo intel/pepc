@@ -16,8 +16,11 @@ import typing
 import stat
 import subprocess
 from pathlib import Path
+
 import pytest
+
 from tests import common
+
 from pepctools import PythonPrjInstaller, InstallPepc
 
 if typing.TYPE_CHECKING:

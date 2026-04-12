@@ -14,7 +14,23 @@ Detect I/O scope of a writable Model-Specific Register (MSR). Refer to 'docs/mis
 more information about MSR I/O scope.
 """
 
-from pepctools import _MSRIOScope
+import sys
+from pathlib import Path
+
+try:
+    from pepctools import _MSRIOScope
+except ImportError:
+    # The script may be run directly from source. Add the pepc project root to the module search
+    # path and retry.
+    _prjroot = Path(__file__).parent.parent.resolve()
+    sys.path.insert(0, str(_prjroot))
+
+    # Python may have already cached the system-installed 'pepctools' package in 'sys.modules'
+    # during the failed import above. Pop it so the next import re-resolves the package from
+    # the updated 'sys.path', picking up the source tree instead.
+    sys.modules.pop("pepctools", None)
+
+    from pepctools import _MSRIOScope
 
 if __name__ == "__main__":
     raise SystemExit(_MSRIOScope.main())
