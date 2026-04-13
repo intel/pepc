@@ -405,17 +405,25 @@ def get_project_data_search_descr(prjname: str, tpath: str | Path) -> str:
 
     return ", ".join(paths)
 
-def find_project_helper(prjname: str, helper: str, pman: ProcessManagerType | None = None) -> Path:
+def find_project_helper(prjname: str,
+                        helper: str,
+                        tpath: str | Path = "",
+                        pman: ProcessManagerType | None = None) -> Path:
     """
     Search for a helper program 'helper' belonging to a specified project in a predefined set of
     locations and return the first found path.
 
     The search order is as follows:
-        1. Local host only: the directory of the running program (e.g., if the program is
-           '/bar/baz/foo', check '/bar/baz/<helper>', if it exists and executable, return the path).
-        2. The directory specified by the '<prjname>_DATA_PATH' environment variable. (e.g., if the
-           environment variable from is set to '/foo/bar/', check '/foo/bar/<helper>', and if it
-           exists and is executable, return the path).
+        1. Local host only: the directory of the running program. For example, if the program is
+           '/bar/baz/foo':
+           - Check '/bar/baz/<tpath>/<helper>' (if 'tpath' is non-empty), if it exists and is
+             executable, return the path.
+           - Check '/bar/baz/<helper>', if it exists and is executable, return the path.
+        2. The directory specified by the '<prjname>_HELPERS_PATH' environment variable. For
+           example, if set to '/foo/bar/':
+           - Check '/foo/bar/<tpath>/<helper>' (if 'tpath' is non-empty), if it exists and is
+             executable, return the path.
+           - Check '/foo/bar/<helper>', if it exists and is executable, return the path.
         3. '$VIRTUAL_ENV/bin/', if the environment variable is set.
         4. Directories listed in the 'PATH' environment variable.
         5. '$HOME/.local/bin/'.
@@ -426,6 +434,10 @@ def find_project_helper(prjname: str, helper: str, pman: ProcessManagerType | No
     Args:
         prjname: Name of the project the helper program belongs to.
         helper: Name of the helper program to find.
+        tpath: An optional sub-path inserted between the search root and the helper name for the
+               project-specific search locations (steps 1 and 2). Defaults to an empty string
+               (no sub-path). For example, if 'tpath' is 'workloads', the search will check
+               '<root>/workloads/<helper>' before '<root>/<helper>'.
         pman: Process manager object for the host to search on (defaults to local host).
 
     Returns:
@@ -438,6 +450,11 @@ def find_project_helper(prjname: str, helper: str, pman: ProcessManagerType | No
     candidates = []
     with ProcessManager.pman_or_local(pman) as wpman:
         if not wpman.is_remote:
+            if tpath:
+                candidate = Path(sys.argv[0]).parent / tpath / helper
+                candidates.append(candidate)
+                if wpman.is_exe(candidate):
+                    return candidate
             candidate = Path(sys.argv[0]).parent / helper
             candidates.append(candidate)
             if wpman.is_exe(candidate):
@@ -449,6 +466,11 @@ def find_project_helper(prjname: str, helper: str, pman: ProcessManagerType | No
         if not path_str:
             path_str = os.environ.get(envar)
         if path_str:
+            if tpath:
+                candidate = Path(path_str) / tpath / helper
+                candidates.append(candidate)
+                if wpman.is_exe(candidate):
+                    return candidate
             candidate = Path(path_str) / helper
             candidates.append(candidate)
             if wpman.is_exe(candidate):
@@ -498,25 +520,36 @@ def find_project_helper(prjname: str, helper: str, pman: ProcessManagerType | No
         raise ErrorNotFound(f"Cannot find the '{helper}' program{wpman.hostmsg}, searched in the "
                             f"following locations:\n{searched}")
 
-def get_project_helpers_search_descr(prjname: str) -> str:
+def get_project_helpers_search_descr(prjname: str, tpath: str | Path = "") -> str:
     """
     Return a human-readable description of the search locations for project helpers.
 
     Args:
         prjname: The project name, whose helper is being searched for.
+        tpath: An optional sub-path that is inserted between the search root and the helper name
+               for the project-specific search locations. Defaults to an empty string (no
+               sub-path). If non-empty, the '<root>/<tpath>/<helper>' paths are listed before
+               the '<root>/<helper>' paths.
 
     Returns:
         A comma-separated string describing the search locations for project helpers.
     """
 
     envar = get_project_helpers_envar(prjname)
-    paths = (f"{Path(sys.argv[0]).parent}",
-             f"${envar}",
-             "$VIRTUAL_ENV/bin",
-             "All paths in $PATH",
-             "$HOME/.local/bin",
-             "$HOME/bin",
-             "/usr/local/bin",
-             "/usr/bin")
+    progdir = str(Path(sys.argv[0]).parent)
+
+    paths: list[str] = []
+    if tpath:
+        paths.append(f"{progdir}/{tpath}")
+    paths.append(progdir)
+    if tpath:
+        paths.append(f"${envar}/{tpath}")
+    paths.append(f"${envar}")
+    paths += ["$VIRTUAL_ENV/bin",
+              "All paths in $PATH",
+              "$HOME/.local/bin",
+              "$HOME/bin",
+              "/usr/local/bin",
+              "/usr/bin"]
 
     return ", ".join(paths)
