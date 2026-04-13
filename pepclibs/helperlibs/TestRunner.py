@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Authors: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
-#                Antti Laakso <antti.laakso@intel.com>
+#          Antti Laakso <antti.laakso@intel.com>
 
 """Helper functions for running tools in tests."""
 
