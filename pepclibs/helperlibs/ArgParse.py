@@ -24,7 +24,7 @@ except ImportError:
     # We can live without argcomplete, we only lose tab completions.
     argcomplete = None
 
-from pepclibs.helperlibs import DamerauLevenshtein, Trivial, Logging
+from pepclibs.helperlibs import DamerauLevenshtein, Trivial
 from pepclibs.helperlibs.Exceptions import Error
 
 if typing.TYPE_CHECKING:
@@ -369,11 +369,7 @@ class ArgsParser(argparse.ArgumentParser):
         """
 
         _args = super().parse_args(*args, **kwargs)
-
-        cmdl = format_common_args(_args)
-        if cmdl["debug_modules"] is not None:
-            Logging.DEBUG_MODULE_NAMES = set(cmdl["debug_modules"])
-
+        format_common_args(_args)
         return _args
 
     def add_subparsers(self, *args: Any, **kwargs: Any) -> SubParsersType:

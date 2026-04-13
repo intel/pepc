@@ -27,13 +27,10 @@ except ImportError:
     colorama = None
 
 from pepclibs.helperlibs.Exceptions import Error
+from pepclibs.helperlibs import Trivial
 
 if typing.TYPE_CHECKING:
     from typing import NoReturn, Any, IO, cast, Sequence, Final
-
-# Names of the modules to accept debug log messages from. Can be set by the user. All modules are
-# accepted by default.
-DEBUG_MODULE_NAMES: set[str] = set()
 
 # Log levels.
 #   * INFO: No prefixes, just the message.
@@ -53,6 +50,30 @@ MAIN_LOGGER_NAME: Final[str] = "main"
 
 # The default prefix for debug messages.
 _DEFAULT_DBG_PREFIX: Final[str] = "[%(created)f] [%(asctime)s] [%(module)s,%(lineno)d]"
+
+def _parse_debug_modules(argv: Sequence[str]) -> set[str]:
+    """
+    Parse the '--debug-modules' option from 'argv' and return the module names as a set.
+
+    Args:
+        argv: Command-line arguments to search for '--debug-modules'.
+
+    Returns:
+        A set of module names specified via '--debug-modules', or an empty set if the option is
+        not present.
+    """
+
+    for idx, arg in enumerate(argv):
+        # Space form: --debug-modules a,b,c
+        # argv: ['--debug-modules', 'a,b,c']
+        if arg == "--debug-modules" and idx + 1 < len(argv):
+            return set(Trivial.split_csv_line(argv[idx + 1]))
+        # Equals form: --debug-modules=a,b,c
+        # argv: ['--debug-modules=a,b,c']
+        if arg.startswith("--debug-modules="):
+            return set(Trivial.split_csv_line(arg.split("=", 1)[1]))
+
+    return set()
 
 class _MyFormatter(logging.Formatter):
     """
@@ -175,17 +196,20 @@ class _MyFormatter(logging.Formatter):
 class _MyFilter(logging.Filter):
     """A custom filter which allows only certain log levels to go through."""
 
-    def __init__(self, let_go: Sequence[int]):
+    def __init__(self, let_go: Sequence[int], logger: logging.Logger | None = None):
         """
         Initialize the logging filter.
 
         Args:
             let_go: A list of logging levels to let go through the filter.
+            logger: The logger instance to read 'debug_module_names' from. If 'None', debug
+                    messages from all modules are allowed through.
         """
 
         logging.Filter.__init__(self)
 
         self._let_go: set[int] = set(let_go)
+        self._logger = logger
 
     def filter(self, record):
         """
@@ -200,12 +224,14 @@ class _MyFilter(logging.Filter):
         """
 
         if record.levelno in self._let_go:
-            if DEBUG_MODULE_NAMES and record.levelno == DEBUG:
-                # Example of a record name: "main.pepc.pepclibs._PropsClassBase".
-                modname = record.name.rsplit(".", maxsplit=1)[-1]
-                if modname in DEBUG_MODULE_NAMES:
-                    return True
-                return False
+            if record.levelno == DEBUG:
+                debug_module_names: set[str] = getattr(self._logger, "debug_module_names", set())
+                if debug_module_names:
+                    # Example of a record name: "main.pepc.pepclibs._PropsClassBase".
+                    modname = record.name.rsplit(".", maxsplit=1)[-1]
+                    if modname in debug_module_names:
+                        return True
+                    return False
             return True
         return False
 
@@ -235,6 +261,7 @@ class Logger(logging.Logger):
         self.colored = True
         self.info_stream = sys.stdout
         self.error_stream = sys.stderr
+        self.debug_module_names: set[str] = set()
 
         self._colors: dict[int, str] = {}
         self._seen_msgs: set = set()
@@ -290,6 +317,8 @@ class Logger(logging.Logger):
         if argv is None:
             argv = sys.argv
 
+        self.debug_module_names = _parse_debug_modules(argv)
+
         if not prefix:
             prefix = ""
 
@@ -335,7 +364,7 @@ class Logger(logging.Logger):
 
         stream_handler = logging.StreamHandler(error_stream)
         stream_handler.setFormatter(formatter)
-        stream_handler.addFilter(_MyFilter([DEBUG, WARNING, NOTICE, ERROR, ERRINFO, CRITICAL]))
+        stream_handler.addFilter(_MyFilter([DEBUG, WARNING, NOTICE, ERROR, ERRINFO, CRITICAL], logger=self))
         self.addHandler(stream_handler)
 
         return self
@@ -367,7 +396,7 @@ class Logger(logging.Logger):
 
         file_handler = logging.FileHandler(str(fpath))
         file_handler.setFormatter(formatter)
-        file_handler.addFilter(_MyFilter([DEBUG, WARNING, NOTICE, ERROR, ERRINFO, CRITICAL]))
+        file_handler.addFilter(_MyFilter([DEBUG, WARNING, NOTICE, ERROR, ERRINFO, CRITICAL], logger=self))
         self.addHandler(file_handler)
 
         file_handler = logging.FileHandler(str(fpath))
@@ -556,7 +585,7 @@ class Logger(logging.Logger):
         formatter = _MyFormatter(prefix=self.prefix, colors=self._colors if self.colored else {})
         handler = logging.StreamHandler(stream)
         handler.setFormatter(formatter)
-        handler.addFilter(_MyFilter([DEBUG, WARNING, NOTICE, ERROR, ERRINFO, CRITICAL]))
+        handler.addFilter(_MyFilter([DEBUG, WARNING, NOTICE, ERROR, ERRINFO, CRITICAL], logger=self))
         self.addHandler(handler)
         self._extra_error_handlers[stream] = handler
 
