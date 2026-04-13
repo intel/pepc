@@ -28,7 +28,7 @@ dependencies = [
 ]
 
 [tool.setuptools.packages.find]
-exclude = ["tests*", "misc*"]
+exclude = ["tests*"]
 
 [tool.setuptools.package-data]
 pepcdata = ["tpmi/**/*.yml", "man/**/*.1"]
