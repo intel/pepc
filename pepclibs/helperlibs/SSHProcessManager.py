@@ -33,7 +33,7 @@ from pathlib import Path
 from collections.abc import Callable
 try:
     import paramiko
-except (ModuleNotFoundError, ImportError):
+except ImportError:
     from pepclibs.helperlibs import DummyParamiko as paramiko  # type: ignore[no-redef]
 from pepclibs.helperlibs import DummyParamiko
 from pepclibs.helperlibs import Logging, _ProcessManagerBase, ClassHelpers, Trivial
