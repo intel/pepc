@@ -20,6 +20,7 @@ This document provides guidelines for project coding style and conventions.
 - [Exception Handling](#exception-handling)
   - [Exception Handling Approach](#exception-handling-approach)
   - [Exception Re-raise Rules](#exception-re-raise-rules)
+  - [Bug Sentinel Errors](#bug-sentinel-errors)
   - [Exception Handling Formatting](#exception-handling-formatting)
 - [Documentation](#documentation)
   - [Docstrings Style](#docstrings-style)
@@ -46,6 +47,10 @@ This document provides guidelines for project coding style and conventions.
   - [Avoid None as Default Value](#avoid-none-as-default-value)
   - [Converting from str to int/float](#converting-from-str-to-intfloat)
   - [Using Keyword Arguments](#using-keyword-arguments)
+  - [Exiting the Process](#exiting-the-process)
+  - [Paths: pathlib vs os](#paths-pathlib-vs-os)
+  - [Avoid next() on Generators](#avoid-next-on-generators)
+  - [Using ClassHelpers.close()](#using-classhelpersclose)
 
 ## Line Length & Splitting
 
@@ -165,7 +170,7 @@ Keep the first line as close to the 100-character limit as possible. Each contin
 its own f-string, aligned with the opening quote.
 
 Use `\` continuation only outside parentheses (where omitting it would be a syntax error). Inside
-parentheses, `\` is not needed — Python handles implicit string concatenation automatically.
+parentheses, `\` is not needed. Python handles implicit string concatenation automatically.
 
 **Examples:**
 
@@ -292,7 +297,7 @@ to `Error` or an appropriate subclass. A non-`Error` exception escaping a pepc m
 
 When re-raising, two cases apply:
 
-**Same semantic type** — use `type(err)(...)` to preserve the exact subclass. `except Error`
+**Same semantic type**: use `type(err)(...)` to preserve the exact subclass. `except Error`
 catches subclasses like `ErrorNotFound`; hardcoding `Error(...)` would lose that.
 
 ```python
@@ -305,11 +310,20 @@ except Error as err:
     raise type(err)(f"Failed to do X:\n{err.indent(2)}") from err
 ```
 
-**Deliberate type change** — use the target type directly and document it in `Raises:`.
+**Deliberate type change**: use the target type directly and document it in `Raises:`.
 
 ```python
 except ErrorNotFound as err:
     raise ErrorNotSupported(f"Feature not available:\n{err.indent(2)}") from err
+```
+
+### Bug Sentinel Errors
+
+When an error condition should never occur during correct program execution and its presence
+indicates a programming bug, prefix the exception message with `BUG:`.
+
+```python
+raise Error(f"BUG: Unexpected state '{state}'")
 ```
 
 ### Exception Handling Formatting
@@ -335,6 +349,9 @@ Use Google style for docstrings.
   as they provide better organization and readability. Only add additional paragraphs if the
   information cannot be properly expressed in structured sections.
 
+  Prefer a short `Notes:` bullet list over a prose paragraph, or add an `Examples:` section.
+  A few concrete examples are often clearer to readers than a lengthy description.
+
 - **Notes section** (optional): Use `Notes:` (plural) for additional details formatted as a bullet
 
   list. Common uses:
@@ -354,8 +371,10 @@ Use Google style for docstrings.
 **Guidelines:**
 
 - For one-line docstrings, keep the closing `"""` on the same line (e.g., `"""Return the value."""`)
-- For multi-line docstrings, put the closing `"""` on a separate line
+- For multi-line docstrings, put both the opening and closing `"""` on their own separate lines
 - Do not repeat information that is already clear from the function signature and summary
+- Do not repeat the type in `Args:`, `Returns:`, or `Yields:` sections. The type is already
+  expressed in the function signature annotations.
 - Prefer putting additional details in the `Notes:` section as bullet points rather than in
 
   paragraph form
@@ -408,7 +427,7 @@ def get_cpu_count(self) -> int:
 
 ### Documenting Exceptions in Docstrings
 
-Do not document `Error` itself — it is the common base class. Document subclasses that a public
+Do not document `Error` itself, it is the common base class. Document subclasses that a public
 method can raise. For private methods, document exceptions when helpful.
 
 Use declarative statements, not conditional "if" clauses:
@@ -488,7 +507,32 @@ Use imperative voice in docstrings and comments. Start with verbs like "Provide"
 
 ### Comment Punctuation
 
-All comments should end with a period (`.`).
+All comments should end with a period (`.`). Do not use semicolons (`;`) as punctuation in
+comments or messages. Use a comma (`,`) or a period (`.`) instead.
+
+Comments should explain **why**, not **what**. The code itself shows what happens. Only describe
+the how when it is non-obvious.
+
+Prefer placing comments on a separate line **before** the code they describe, rather than appending
+them to the end of a code line. Short TODO/note annotations on `from __future__` imports or similar
+one-off markers are fine inline.
+
+```python
+# WRONG: restates what the code already says.
+# Flush the file to disk.
+fobj.flush()
+
+# RIGHT: explains why.
+# Paranoid flush to minimise the chance of data loss on crash.
+fobj.flush()
+
+# OK: TODO-style annotation on a special import line.
+from __future__ import annotations # Remove when switching to Python 3.10+.
+```
+
+When referring to a function, method, or other identifier in a comment, use single quotes with
+parentheses for callables: `'configure()'`, `'close()'`. For non-callables, use single quotes
+without parentheses: `'outdir'`, `'_pman'`.
 
 ### Messages
 
@@ -559,8 +603,10 @@ Frequency Mapping](#performance-level-to-frequency-mapping) section.
 ### Class Layout
 
 The `__init__()` method should be defined at the top of the class, immediately after the class
-docstring. The destructor and other special methods (e.g., `__enter__`, `__exit__`) should go after
-`__init__()`. Regular methods should be defined after the special methods.
+docstring. The `close()` method and other special methods (e.g., `__enter__`, `__exit__`) should
+go after `__init__()`. Regular methods should be defined after the special methods.
+
+Avoid `__del__()`. See [Resource Cleanup](#resource-cleanup) for details.
 
 The general order of methods in a class should be that the inner methods are defined before the
 outer methods. For example, if a method A calls method B, then method B should be defined before
@@ -592,6 +638,40 @@ MAX_RETRIES = 5
 
 ### Import Statements
 
+#### Prefer module imports over symbol imports
+
+Prefer importing a module and referencing its symbols via the module name rather than importing
+individual symbols with `from X import Y`. This makes the origin of each symbol obvious at the
+call site and avoids ambiguity.
+
+**Good:**
+
+```python
+from pepclibs.helperlibs import Logging
+
+_LOG = Logging.getLogger(...)
+```
+
+**Bad:**
+
+```python
+from pepclibs.helperlibs.Logging import getLogger
+
+_LOG = getLogger(...)
+```
+
+**Exceptions:**
+
+- `from X import Error, ErrorNotSupported`: exception classes are always imported by name,
+  because writing `Exceptions.Error` at every raise/catch site is noisy.
+- `from typing import IO, Generator, Sequence`: typing symbols are always imported by name,
+  never use `typing.IO`, `typing.Generator`, etc.
+- Established ecosystem conventions, e.g. `import pandas as pd` / `pd.DataFrame`, are fine.
+- Do not rename modules on import (e.g. `from X import _Mod as mod`) unless there is a specific
+  reason. Use the real module name at the call site.
+
+#### Multiple symbols per statement
+
 When importing multiple symbols from the same module, use multiple separate `import` statements
 rather than parentheses for multi-line imports. This makes imports easier to grep.
 
@@ -622,6 +702,17 @@ from pepclibs.helperlibs.Exceptions import ErrorPerCPU
 ```
 
 ## Type Annotations & Type System
+
+### Collection Types in Annotations
+
+For function/method parameters, prefer the least restrictive type that is sufficient:
+
+- Use `Iterable[T]` when the parameter is only iterated once.
+- Use `Sequence[T]` when random access or multiple iterations are needed.
+- Use `list[T]` or `tuple[T, ...]` only when mutation or a concrete type is required.
+
+Avoid annotating parameters as `list` when `Iterable` or `Sequence` would work, it unnecessarily
+restricts callers.
 
 ### Return Type Annotations
 
@@ -741,4 +832,165 @@ Call with keyword arguments:
 ```python
     for cpu, val in self.read(regaddr=0x4E70, cpus=cpus, verify=True):
         ...
+```
+
+### Exiting the Process
+
+Use `raise SystemExit(code)` instead of `sys.exit()`. Always pass the exit code explicitly:
+
+```python
+# Wrong.
+sys.exit(0)
+
+# Right.
+raise SystemExit(0)
+```
+
+### Paths: pathlib vs os
+
+Prefer `pathlib.Path` for path manipulation over the `os` and `os.path` modules. Use `Path`
+methods directly where possible:
+
+```python
+# Prefer.
+path = Path("/some/dir") / "file.txt"
+if path.is_dir():
+    path.mkdir(parents=True)
+
+# Avoid.
+path = os.path.join("/some/dir", "file.txt")
+if os.path.isdir(path):
+    os.makedirs(path)
+```
+
+This is not a hard rule. When `pathlib.Path` is not the clearest choice, for example when a
+library requires plain strings, or when manipulating a path with regex is simpler, prefer
+whichever approach is cleaner.
+
+### Resource Cleanup
+
+Use `close()` for resource cleanup, not `__del__()`. `__del__()` is timing non-deterministic,
+silently swallows exceptions, and may run during interpreter shutdown in an undefined state. Only
+use it when there is a specific, well-justified reason. Document the justification in a comment.
+
+```python
+# Wrong.
+class Reader:
+    def __init__(self):
+        self._fobj: IO[str] | None = open("data.txt")
+
+    def __del__(self):
+        if getattr(self, "_fobj", None):
+            self._fobj.close()
+            self._fobj = None
+
+# Right.
+class Reader:
+    def __init__(self):
+        self._fobj: IO[str] | None = open("data.txt")
+
+    def close(self):
+        if self._fobj is not None:
+            self._fobj.close()
+            self._fobj = None
+```
+
+### Context Managers
+
+Inherit from `ClassHelpers.SimpleCloseContext` (from `pepclibs`) instead of defining
+`__enter__()` and `__exit__()` manually. It implements them by calling `close()`, so defining
+`close()` is all that is needed.
+
+```python
+# Wrong.
+class Reader:
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *_):
+        self.close()
+
+# Right.
+class Reader(ClassHelpers.SimpleCloseContext):
+    pass  # __enter__ and __exit__ are provided by SimpleCloseContext.
+```
+
+### Avoid next() on Generators
+
+Avoid calling `next()` directly on generators. It raises `StopIteration` if the generator is
+exhausted, and unhandled `StopIteration` propagates silently in unexpected ways.
+
+For extracting a single value from a generator, use a `for` loop with `return` and a trailing
+`raise`:
+
+```python
+# Wrong: raises StopIteration if the generator yields nothing.
+_, val, mname = next(self._get_epp_or_epb((cpu,), mnames))
+return val, mname
+
+# Right: explicit failure path.
+for _, val, mname in self._get_epp_or_epb((cpu,), mnames):
+    return val, mname
+raise Error(f"BUG: No EPP/EPB value yielded for CPU {cpu}")
+```
+
+When an empty iterator should simply return a default or bail out (no error), use
+`for/break/else` — the `else` block executes only when no `break` was hit (i.e., the iterator
+was empty):
+
+```python
+for _, driver in self._get_driver(cpus, mnames):
+    break
+else:
+    return ""  # Iterator was empty.
+if driver != "intel_pstate":
+    return ""
+```
+
+If `next()` is unavoidable, either pass a default value as the second argument
+(`next(it, None)`) and check the result, or catch `StopIteration` explicitly.
+
+### Using ClassHelpers.close()
+
+Use `ClassHelpers.close()` in `close()` methods to release owned and borrowed attributes.
+
+- **`close_attrs`**: attributes the class *owns*. Their `close()` is called, then the attribute is
+  set to `None`.
+- **`unref_attrs`**: attributes the class *borrows* (created externally). Only set to `None`,
+  no `close()` called.
+
+**Benefits over open-coded cleanup:**
+
+- Tolerates attributes that were never set (`__init__` raised partway through): uses
+  `getattr(..., None)` internally.
+- The `_close_{attr}` flag lets you suppress `close()` for a specific attribute without changing
+  the call site, which is useful when ownership is conditional.
+- Logs a warning if an attribute name is not found on the object, catching typos at cleanup time.
+
+**Drawback:** attribute names are plain strings, so IDEs and static analysis tools cannot follow
+them.
+
+For simple classes, open-coded cleanup is often just as clear. Use `ClassHelpers.close()` anyway.
+The project follows this pattern consistently, and consistency has its own value.
+
+```python
+import typing
+from pepclibs.helperlibs import LocalProcessManager
+
+if typing.TYPE_CHECKING:
+    from pepclibs.helperlibs.ProcessManager import ProcessManagerType
+
+class Reader(ClassHelpers.SimpleCloseContext):
+    def __init__(self, pman: ProcessManagerType | None = None):
+        # When 'pman' is 'None', create a local process manager and own it (close on exit).
+        # When provided by the caller, borrow it (do not close on exit).
+        self._close_pman = pman is None
+        if pman:
+            self._pman = pman
+        else:
+            self._pman = LocalProcessManager.LocalProcessManager()
+
+    def close(self):
+        # '_close_pman' controls whether 'ClassHelpers.close()' calls 'self._pman.close()'.
+        ClassHelpers.close(self, close_attrs=("_pman",))
 ```

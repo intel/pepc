@@ -85,7 +85,8 @@ must be run from the repository.
 ## Contributing
 
 Coding style and conventions are documented in [CONTRIBUTING.md](CONTRIBUTING.md). An
-AI-assistant-oriented condensed version is available in [ai-style.md](ai-style.md).
+AI-assistant-oriented condensed version is available in
+[copilot-instructions.md](.github/copilot-instructions.md).
 
 ## Man pages
 
