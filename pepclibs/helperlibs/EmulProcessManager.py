@@ -535,6 +535,6 @@ class EmulProcessManager(LocalProcessManager.LocalProcessManager):
         """Refer to 'ProcessManagerBase.get_envar()'."""
         raise NotImplementedError("EmulProcessManager.get_envar()")
 
-    def which(self, program: str | Path, must_find: bool = True):
+    def which(self, program: str | Path) -> Path:
         """Refer to 'ProcessManagerBase.which()'."""
         raise NotImplementedError("EmulProcessManager.which()")

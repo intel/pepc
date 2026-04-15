@@ -17,14 +17,14 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 import typing
 import contextlib
 import pytest
-from tests import common, props_cmdl_common
+from tests import _Common, PropsCommonCmdl
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs import CPUInfo, CPUOnline
 
 if typing.TYPE_CHECKING:
     from typing import Generator, cast
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
-    from tests.common import CommonTestParamsTypedDict
+    from tests._Common import CommonTestParamsTypedDict
 
     class _TestParamsTypedDict(CommonTestParamsTypedDict, total=False):
         """
@@ -60,10 +60,10 @@ def get_params(hostspec: str, username: str) -> Generator[_TestParamsTypedDict, 
         A dictionary containing test parameters.
     """
 
-    with common.get_pman(hostspec, username=username) as pman, \
+    with _Common.get_pman(hostspec, username=username) as pman, \
          CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
          CPUOnline.CPUOnline(pman=pman, cpuinfo=cpuinfo) as cpuonline:
-        params = common.build_params(pman)
+        params = _Common.build_params(pman)
 
         if typing.TYPE_CHECKING:
             params = cast(_TestParamsTypedDict, params)
@@ -91,7 +91,7 @@ def _online_all_cpus(pman: ProcessManagerType):
         pman: The process manager for the target system.
     """
 
-    props_cmdl_common.run_pepc("cpu-hotplug online --cpus all", pman)
+    PropsCommonCmdl.run_pepc("cpu-hotplug online --cpus all", pman)
 
 def test_cpuhotplug_info(params: _TestParamsTypedDict):
     """
@@ -103,7 +103,7 @@ def test_cpuhotplug_info(params: _TestParamsTypedDict):
 
     pman = params["pman"]
     _online_all_cpus(pman)
-    props_cmdl_common.run_pepc("cpu-hotplug info", pman)
+    PropsCommonCmdl.run_pepc("cpu-hotplug info", pman)
 
 def _test_cpuhotplug(params: _TestParamsTypedDict):
     """
@@ -122,7 +122,7 @@ def _test_cpuhotplug(params: _TestParamsTypedDict):
         for core in cores:
             if core % 2 == 0:
                 cmd = f"cpu-hotplug offline --packages {pkg} --cores {core}"
-                props_cmdl_common.run_pepc(cmd, pman)
+                PropsCommonCmdl.run_pepc(cmd, pman)
 
     # Offline every 3nd core.
     for pkg, cores in params["cores"].items():
@@ -136,10 +136,10 @@ def _test_cpuhotplug(params: _TestParamsTypedDict):
 
         cores_str = ",".join([str(core) for core in cores_to_offline])
         cmd = f"cpu-hotplug offline --packages {pkg} --cores {cores_str}"
-        props_cmdl_common.run_pepc(cmd, pman)
+        PropsCommonCmdl.run_pepc(cmd, pman)
 
     # Make sure the 'info' sub-command works.
-    props_cmdl_common.run_pepc("cpu-hotplug info", pman)
+    PropsCommonCmdl.run_pepc("cpu-hotplug info", pman)
 
     # Online every 2nd core.
     cpus_to_online = []
@@ -149,7 +149,7 @@ def _test_cpuhotplug(params: _TestParamsTypedDict):
                 cpus_to_online += cpuinfo.cores_to_cpus(cores=(core,), packages=(pkg,))
 
     cpus_str = ",".join([str(cpu) for cpu in cpus_to_online])
-    props_cmdl_common.run_pepc(f"cpu-hotplug online --cpus {cpus_str}", pman)
+    PropsCommonCmdl.run_pepc(f"cpu-hotplug online --cpus {cpus_str}", pman)
 
     # Verify that the expected cores are offline, other cores are online.
     offline_cpus: list[int] = []
@@ -176,14 +176,14 @@ def _test_cpuhotplug(params: _TestParamsTypedDict):
     # Offline / online every package separately.
     for pkg in params["packages"]:
         # Offline all CPUs in the package.
-        props_cmdl_common.run_pepc(f"cpu-hotplug offline --packages {pkg}", pman)
+        PropsCommonCmdl.run_pepc(f"cpu-hotplug offline --packages {pkg}", pman)
 
         # Make sure the 'info' sub-command works.
-        props_cmdl_common.run_pepc("cpu-hotplug info", pman)
+        PropsCommonCmdl.run_pepc("cpu-hotplug info", pman)
 
         # Online all CPUs in the package.
         cpus_str = ",".join(str(cpu) for cpu in cpuinfo.package_to_cpus(pkg))
-        props_cmdl_common.run_pepc(f"cpu-hotplug online --cpus {cpus_str}", pman)
+        PropsCommonCmdl.run_pepc(f"cpu-hotplug online --cpus {cpus_str}", pman)
 
 def test_cpuhotplug(params: _TestParamsTypedDict):
     """
@@ -216,7 +216,7 @@ def test_cpuhotplug_online_bad(params: _TestParamsTypedDict):
            f"--cpus {params['cpus'][-1] + 1}"]
 
     for option in bad:
-        props_cmdl_common.run_pepc(f"cpu-hotplug online {option}", pman, exp_exc=Error)
+        PropsCommonCmdl.run_pepc(f"cpu-hotplug online {option}", pman, exp_exc=Error)
 
 def test_cpuhotplug_offline_bad(params: _TestParamsTypedDict):
     """
@@ -233,4 +233,4 @@ def test_cpuhotplug_offline_bad(params: _TestParamsTypedDict):
            f"--cpus {params['cpus'][-1] + 1}"]
 
     for option in bad:
-        props_cmdl_common.run_pepc(f"cpu-hotplug offline {option}", pman, exp_exc=Error)
+        PropsCommonCmdl.run_pepc(f"cpu-hotplug offline {option}", pman, exp_exc=Error)

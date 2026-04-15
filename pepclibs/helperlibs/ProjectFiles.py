@@ -484,7 +484,7 @@ def find_project_helper(prjname: str,
             if wpman.is_exe(candidate):
                 return candidate
 
-        path = wpman.which(helper, must_find=False)
+        path = wpman.which_or_none(helper)
         if path:
             # Check the directories listed in the 'PATH' environment variable.
             candidate = Path(path)

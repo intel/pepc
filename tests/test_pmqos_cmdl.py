@@ -14,13 +14,13 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
 import pytest
-from tests import common, props_cmdl_common
+from tests import _Common, PropsCommonCmdl
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs import CPUInfo, PMQoS
 
 if typing.TYPE_CHECKING:
     from typing import Generator, cast
-    from tests.common import CommonTestParamsTypedDict
+    from tests._Common import CommonTestParamsTypedDict
 
     class _TestParamsTypedDict(CommonTestParamsTypedDict, total=False):
         """
@@ -52,10 +52,10 @@ def get_params(hostspec: str, username: str) -> Generator[_TestParamsTypedDict, 
         A dictionary containing test parameters.
     """
 
-    with common.get_pman(hostspec, username=username) as pman, \
+    with _Common.get_pman(hostspec, username=username) as pman, \
          CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
          PMQoS.PMQoS(pman=pman, cpuinfo=cpuinfo) as pobj:
-        params = common.build_params(pman)
+        params = _Common.build_params(pman)
 
         if typing.TYPE_CHECKING:
             params = cast(_TestParamsTypedDict, params)
@@ -78,8 +78,8 @@ def test_pmqos_info(params: _TestParamsTypedDict):
 
     pman = params["pman"]
 
-    props_cmdl_common.run_pepc("pmqos info", pman)
-    props_cmdl_common.run_pepc("pmqos info --cpus 0", pman)
+    PropsCommonCmdl.run_pepc("pmqos info", pman)
+    PropsCommonCmdl.run_pepc("pmqos info --cpus 0", pman)
 
 def _get_good_config_opts(params: _TestParamsTypedDict) -> Generator[str, None, None]:
     """
@@ -123,7 +123,7 @@ def test_pmqos_config_good(params: _TestParamsTypedDict):
 
     for opt in _get_good_config_opts(params):
         cmd = f"pmqos config {opt} --cpus 0"
-        props_cmdl_common.run_pepc(cmd, pman)
+        PropsCommonCmdl.run_pepc(cmd, pman)
 
 def test_pmqos_config_bad(params: _TestParamsTypedDict):
     """
@@ -136,5 +136,5 @@ def test_pmqos_config_bad(params: _TestParamsTypedDict):
     pman = params["pman"]
 
     for opt in _get_bad_config_opts():
-        props_cmdl_common.run_pepc(f"pmqos config {opt}", pman, exp_exc=Error)
-        props_cmdl_common.run_pepc(f"pmqos config --cpus 0 {opt}", pman, exp_exc=Error)
+        PropsCommonCmdl.run_pepc(f"pmqos config {opt}", pman, exp_exc=Error)
+        PropsCommonCmdl.run_pepc(f"pmqos config --cpus 0 {opt}", pman, exp_exc=Error)

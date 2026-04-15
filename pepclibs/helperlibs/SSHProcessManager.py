@@ -1600,15 +1600,8 @@ except OSError as err:
             return result
         return None
 
-    def which(self, program: str | Path, must_find: bool = True):
+    def which(self, program: str | Path) -> Path:
         """Refer to 'ProcessManagerBase.which()'."""
-
-        def raise_or_return(): # pylint: disable=useless-return
-            """Handle the situation when 'program' program was not found."""
-
-            if must_find:
-                raise ErrorNotFound(f"Program '{program}' was not found in $PATH{self.hostmsg}")
-            return None
 
         which_cmds: tuple[str, ...]
         if self._which_cmd is None:
@@ -1629,7 +1622,7 @@ except OSError as err:
             self._which_cmd = which_cmd
             break
         else:
-            return raise_or_return()
+            raise ErrorNotFound(f"Program '{program}' was not found in $PATH{self.hostmsg}")
 
         if not res.exitcode:
             # Which could return several paths. They may contain aliases.
@@ -1637,11 +1630,11 @@ except OSError as err:
                 line = line.strip()
                 if not line.startswith("alias"):
                     return Path(line)
-            return raise_or_return()
+            raise ErrorNotFound(f"Program '{program}' was not found in $PATH{self.hostmsg}")
 
         # The 'which' tool exits with status 1 when the program is not found. Any other error code
-        # is an real failure.
+        # is a real failure.
         if res.exitcode != 1:
             raise Error(self.get_cmd_failure_msg(cmd, res.stdout, res.stderr, res.exitcode))
 
-        return raise_or_return()
+        raise ErrorNotFound(f"Program '{program}' was not found in $PATH{self.hostmsg}")

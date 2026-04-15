@@ -272,7 +272,7 @@ class ToolChecker(ClassHelpers.SimpleCloseContext):
         if tool in self._cache:
             return self._cache[tool]
 
-        path = self._pman.which(tool, must_find=False)
+        path = self._pman.which_or_none(tool)
         if path:
             self._cache[tool] = path
             return path

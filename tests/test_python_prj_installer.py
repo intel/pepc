@@ -19,13 +19,13 @@ from pathlib import Path
 
 import pytest
 
-from tests import common
+from tests import _Common
 
 from pepctools import PythonPrjInstaller, InstallPepc
 
 if typing.TYPE_CHECKING:
     from typing import Final, Generator
-    from tests.common import CommonTestParamsTypedDict
+    from tests._Common import CommonTestParamsTypedDict
 
     class _TestParamsTypedDict(CommonTestParamsTypedDict, total=False):
         """
@@ -40,7 +40,7 @@ if typing.TYPE_CHECKING:
         tpmi_debugfs: Path
 
 # Path to the TPMI debugfs dump used for data-file verification tests.
-_TPMI_DEBUGFS_DUMP: Final[Path] = common.get_test_data_base() / "test_tpmi_nohost" / "debugfs-dump"
+_TPMI_DEBUGFS_DUMP: Final[Path] = _Common.get_test_data_base() / "test_tpmi_nohost" / "debugfs-dump"
 
 @pytest.fixture(name="params", scope="module")
 def get_params(hostspec: str, username: str) -> Generator[_TestParamsTypedDict, None, None]:
@@ -55,11 +55,11 @@ def get_params(hostspec: str, username: str) -> Generator[_TestParamsTypedDict, 
         A dictionary with test parameters including the installer and TPMI test data path.
     """
 
-    with common.get_pman(hostspec, username=username) as pman:
+    with _Common.get_pman(hostspec, username=username) as pman:
         install_path = pman.mkdtemp(prefix="pepc-venv-")
         tpmi_base: Path | None = None
         try:
-            inst = PythonPrjInstaller.PythonPrjInstaller("pepc", str(common.get_prj_src_path()),
+            inst = PythonPrjInstaller.PythonPrjInstaller("pepc", str(_Common.get_prj_src_path()),
                                                           pman=pman, install_path=install_path,
                                                           logging=True)
             inst.install(exclude=InstallPepc.PEPC_COPY_EXCLUDE)
@@ -73,7 +73,7 @@ def get_params(hostspec: str, username: str) -> Generator[_TestParamsTypedDict, 
             else:
                 tpmi_debugfs = _TPMI_DEBUGFS_DUMP
 
-            params: _TestParamsTypedDict = {**common.build_params(pman),  # type: ignore[misc]
+            params: _TestParamsTypedDict = {**_Common.build_params(pman),  # type: ignore[misc]
                                             "installer": inst,
                                             "tpmi_debugfs": tpmi_debugfs}
             yield params

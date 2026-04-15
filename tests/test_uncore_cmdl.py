@@ -15,7 +15,7 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 import typing
 from typing import cast
 import pytest
-from tests import common, props_cmdl_common
+from tests import _Common, PropsCommonCmdl
 from pepclibs.helperlibs import Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorBadOrder, ErrorNotSupported, ErrorOutOfRange
 
@@ -24,7 +24,7 @@ from pepclibs.Uncore import ErrorTryAnotherMechanism
 
 if typing.TYPE_CHECKING:
     from typing import Final, Generator
-    from tests.props_cmdl_common import PropsCmdlTestParamsTypedDict
+    from tests.PropsCommonCmdl import PropsCmdlTestParamsTypedDict
     from pepclibs.helperlibs.Exceptions import ExceptionTypeType
     from pepclibs.CPUInfoTypes import ScopeNameType
 
@@ -46,14 +46,14 @@ def get_params(hostspec: str, username: str) -> Generator[PropsCmdlTestParamsTyp
         A dictionary containing test parameters.
     """
 
-    with common.get_pman(hostspec, username=username) as pman, \
+    with _Common.get_pman(hostspec, username=username) as pman, \
          CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
          Uncore.Uncore(pman=pman, cpuinfo=cpuinfo) as pobj:
         with CPUOnline.CPUOnline(pman=pman, cpuinfo=cpuinfo) as online:
             # Online all CPUs.
             online.online()
-        params = common.build_params(pman)
-        yield props_cmdl_common.extend_params(params, pobj, cpuinfo)
+        params = _Common.build_params(pman)
+        yield PropsCommonCmdl.extend_params(params, pobj, cpuinfo)
 
 def _get_good_info_opts() -> Generator[str, None, None]:
     """
@@ -86,16 +86,16 @@ def test_uncore_info(params: PropsCmdlTestParamsTypedDict):
     pman = params["pman"]
 
     for opt in _get_good_info_opts():
-        for mopt in props_cmdl_common.get_mechanism_opts(params):
-            for cpu_opt in props_cmdl_common.get_good_optarget_opts(params, sname="global"):
+        for mopt in PropsCommonCmdl.get_mechanism_opts(params):
+            for cpu_opt in PropsCommonCmdl.get_good_optarget_opts(params, sname="global"):
                 cmd = f"uncore info {opt} {cpu_opt} {mopt}"
-                props_cmdl_common.run_pepc(cmd, pman, ignore=_IGNORE)
+                PropsCommonCmdl.run_pepc(cmd, pman, ignore=_IGNORE)
 
-    for cpu_opt in props_cmdl_common.get_bad_optarget_opts(params):
-        props_cmdl_common.run_pepc(f"uncore info {cpu_opt}", pman, exp_exc=Error)
+    for cpu_opt in PropsCommonCmdl.get_bad_optarget_opts(params):
+        PropsCommonCmdl.run_pepc(f"uncore info {cpu_opt}", pman, exp_exc=Error)
 
     # Cover '--list-mechanisms'.
-    props_cmdl_common.run_pepc("uncore info --list-mechanisms", pman)
+    PropsCommonCmdl.run_pepc("uncore info --list-mechanisms", pman)
 
 def _get_good_config_opts() -> Generator[str, None, None]:
     """
@@ -138,17 +138,17 @@ def test_uncore_config_good(params: PropsCmdlTestParamsTypedDict):
     pman = params["pman"]
 
     for opt in _get_good_config_opts():
-        for mopt in props_cmdl_common.get_mechanism_opts(params, allow_readonly=True):
-            for cpu_opt in props_cmdl_common.get_good_optarget_opts(params, sname="global"):
+        for mopt in PropsCommonCmdl.get_mechanism_opts(params, allow_readonly=True):
+            for cpu_opt in PropsCommonCmdl.get_good_optarget_opts(params, sname="global"):
                 cmd = f"uncore config {opt} {cpu_opt} {mopt}"
-                props_cmdl_common.run_pepc(cmd, pman, ignore=_IGNORE)
+                PropsCommonCmdl.run_pepc(cmd, pman, ignore=_IGNORE)
 
-            for cpu_opt in props_cmdl_common.get_bad_optarget_opts(params):
-                props_cmdl_common.run_pepc(f"uncore config {opt} {cpu_opt} {mopt}", pman,
+            for cpu_opt in PropsCommonCmdl.get_bad_optarget_opts(params):
+                PropsCommonCmdl.run_pepc(f"uncore config {opt} {cpu_opt} {mopt}", pman,
                                            exp_exc=Error)
 
-            for cpu_opt in props_cmdl_common.get_bad_optarget_opts(params):
-                props_cmdl_common.run_pepc(f"uncore config {opt} {cpu_opt} {mopt}", pman,
+            for cpu_opt in PropsCommonCmdl.get_bad_optarget_opts(params):
+                PropsCommonCmdl.run_pepc(f"uncore config {opt} {cpu_opt} {mopt}", pman,
                                            exp_exc=Error)
 
 def _get_bad_config_freq_opts() -> Generator[str, None, None]:
@@ -188,15 +188,15 @@ def test_uncore_config_freq_bad(params: PropsCmdlTestParamsTypedDict):
         return
 
     if min_limit != max_limit:
-        props_cmdl_common.run_pepc("uncore config --min-freq max --max-freq min",
+        PropsCommonCmdl.run_pepc("uncore config --min-freq max --max-freq min",
                                    pman, exp_exc=ErrorBadOrder)
 
     for opt in _get_bad_config_freq_opts():
-        props_cmdl_common.run_pepc(f"uncore config {opt}", pman, exp_exc=Error)
+        PropsCommonCmdl.run_pepc(f"uncore config {opt}", pman, exp_exc=Error)
 
     for opt in _get_good_config_opts():
-        for cpu_opt in props_cmdl_common.get_bad_optarget_opts(params):
-            props_cmdl_common.run_pepc(f"uncore config {opt} {cpu_opt}", pman, exp_exc=Error)
+        for cpu_opt in PropsCommonCmdl.get_bad_optarget_opts(params):
+            PropsCommonCmdl.run_pepc(f"uncore config {opt} {cpu_opt}", pman, exp_exc=Error)
 
 def test_uncore_set_range(params: PropsCmdlTestParamsTypedDict):
     """
@@ -224,11 +224,11 @@ def test_uncore_set_range(params: PropsCmdlTestParamsTypedDict):
 
     # Only the "sysfs" mechanism validates against the min. and max. supported uncore frequency.
     cmd = f"uncore config --mechanisms sysfs --min-freq {bad_min_freq}"
-    props_cmdl_common.run_pepc(cmd, pman, exp_exc=ErrorOutOfRange, ignore=_IGNORE)
+    PropsCommonCmdl.run_pepc(cmd, pman, exp_exc=ErrorOutOfRange, ignore=_IGNORE)
     cmd = f"uncore config --mechanisms sysfs --max-freq {bad_max_freq}"
-    props_cmdl_common.run_pepc(cmd, pman, exp_exc=ErrorOutOfRange, ignore=_IGNORE)
+    PropsCommonCmdl.run_pepc(cmd, pman, exp_exc=ErrorOutOfRange, ignore=_IGNORE)
     cmd = f"uncore config --mechanisms sysfs --elc-low-zone-min-freq {bad_min_freq}"
-    props_cmdl_common.run_pepc(cmd, pman, exp_exc=ErrorOutOfRange, ignore=_IGNORE)
+    PropsCommonCmdl.run_pepc(cmd, pman, exp_exc=ErrorOutOfRange, ignore=_IGNORE)
 
 def _set_freq_pairs(params: PropsCmdlTestParamsTypedDict,
                     min_pname: str,
@@ -260,15 +260,15 @@ def _set_freq_pairs(params: PropsCmdlTestParamsTypedDict,
 
     # [Min ------------------ Max ----------------------------------------------------------]
     freq_opts = f"{min_opt} {val1} {max_opt} {val2}"
-    props_cmdl_common.run_pepc(f"uncore config {cpus_opt} {freq_opts}", pman)
+    PropsCommonCmdl.run_pepc(f"uncore config {cpus_opt} {freq_opts}", pman)
 
     # [-------------------------------------------------------- Min -------------------- Max]
     freq_opts = f"{min_opt} {val3} {max_opt} {val4}"
-    props_cmdl_common.run_pepc(f"uncore config {cpus_opt} {freq_opts}", pman)
+    PropsCommonCmdl.run_pepc(f"uncore config {cpus_opt} {freq_opts}", pman)
 
     # [Min ------------------ Max ----------------------------------------------------------]
     freq_opts = f"{min_opt} {val1} {max_opt} {val2}"
-    props_cmdl_common.run_pepc(f"uncore config {cpus_opt} {freq_opts}", pman)
+    PropsCommonCmdl.run_pepc(f"uncore config {cpus_opt} {freq_opts}", pman)
 
 def test_uncore_set_order(params: PropsCmdlTestParamsTypedDict):
     """
@@ -338,19 +338,19 @@ def test_uncore_cpus_option(params: PropsCmdlTestParamsTypedDict):
     # Test 1: Single CPU from a die should fail validation (incomplete die).
     single_cpu = die_cpus[0]
     cmd = f"uncore config --max-freq max --cpus {single_cpu}"
-    props_cmdl_common.run_pepc(cmd, pman, exp_exc=Error, ignore=_IGNORE)
+    PropsCommonCmdl.run_pepc(cmd, pman, exp_exc=Error, ignore=_IGNORE)
 
     # Test 2: Multiple CPUs from same die (but not all) should fail if it doesn't cover all
     # CPUs.
     if len(die_cpus) > 2:
         partial_cpus = f"{die_cpus[0]},{die_cpus[1]}"
         cmd = f"uncore config --max-freq max --cpus {partial_cpus}"
-        props_cmdl_common.run_pepc(cmd, pman, exp_exc=Error, ignore=_IGNORE)
+        PropsCommonCmdl.run_pepc(cmd, pman, exp_exc=Error, ignore=_IGNORE)
 
     # Test 3: All CPUs from a die should succeed.
     all_die_cpus = Trivial.rangify(die_cpus)
     cmd = f"uncore config --max-freq max --cpus {all_die_cpus}"
-    props_cmdl_common.run_pepc(cmd, pman, ignore=_IGNORE)
+    PropsCommonCmdl.run_pepc(cmd, pman, ignore=_IGNORE)
 
     # Test 4: CPUs from multiple complete dies should succeed.
     if len(dies) > 1:
@@ -360,4 +360,4 @@ def test_uncore_cpus_option(params: PropsCmdlTestParamsTypedDict):
             all_cpus = die_cpus + die2_cpus
             all_cpus_str = Trivial.rangify(all_cpus)
             cmd = f"uncore config --max-freq max --cpus {all_cpus_str}"
-            props_cmdl_common.run_pepc(cmd, pman, ignore=_IGNORE)
+            PropsCommonCmdl.run_pepc(cmd, pman, ignore=_IGNORE)

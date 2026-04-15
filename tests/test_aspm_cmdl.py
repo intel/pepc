@@ -15,13 +15,13 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
 import pytest
-from tests import common, props_cmdl_common
+from tests import _Common, PropsCommonCmdl
 from pepclibs.helperlibs.Exceptions import Error, ErrorPermissionDenied
 
 if typing.TYPE_CHECKING:
     from typing import Generator
     from pepclibs.helperlibs.Exceptions import ExceptionTypeType
-    from tests.common import CommonTestParamsTypedDict
+    from tests._Common import CommonTestParamsTypedDict
 
 @pytest.fixture(name="params", scope="module")
 def get_params(hostspec: str, username: str) -> Generator[CommonTestParamsTypedDict, None, None]:
@@ -39,8 +39,8 @@ def get_params(hostspec: str, username: str) -> Generator[CommonTestParamsTypedD
         A dictionary containing test parameters.
     """
 
-    with common.get_pman(hostspec, username=username) as pman:
-        params = common.build_params(pman)
+    with _Common.get_pman(hostspec, username=username) as pman:
+        params = _Common.build_params(pman)
         yield params
 
 def test_aspm_info(params: CommonTestParamsTypedDict):
@@ -58,7 +58,7 @@ def test_aspm_info(params: CommonTestParamsTypedDict):
         "--policy --policies"]
 
     for option in good:
-        props_cmdl_common.run_pepc(f"aspm info {option}", params["pman"])
+        PropsCommonCmdl.run_pepc(f"aspm info {option}", params["pman"])
 
 def test_aspm_config(params):
     """
@@ -85,6 +85,6 @@ def test_aspm_config(params):
         ignore = { ErrorPermissionDenied : "aspm config --policy " }
 
     for option in good:
-        props_cmdl_common.run_pepc(f"aspm config {option}", pman, ignore=ignore)
+        PropsCommonCmdl.run_pepc(f"aspm config {option}", pman, ignore=ignore)
 
-    props_cmdl_common.run_pepc("aspm config --policy badpolicyname", pman, exp_exc=Error)
+    PropsCommonCmdl.run_pepc("aspm config --policy badpolicyname", pman, exp_exc=Error)

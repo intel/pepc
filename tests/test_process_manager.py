@@ -17,13 +17,13 @@ import time
 from pathlib import Path
 import typing
 import pytest
-from tests import common
+from tests import _Common
 from pepclibs.helperlibs import Trivial, LocalProcessManager
 from pepclibs.helperlibs.Exceptions import Error, ErrorExists, ErrorNotFound, ErrorPermissionDenied
 
 if typing.TYPE_CHECKING:
     from typing import Generator
-    from tests.common import CommonTestParamsTypedDict
+    from tests._Common import CommonTestParamsTypedDict
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
 @pytest.fixture(name="params", scope="module")
@@ -42,8 +42,8 @@ def get_params(hostspec: str, username: str) -> Generator[CommonTestParamsTypedD
         A dictionary containing test parameters.
     """
 
-    with common.get_pman(hostspec, username=username) as pman:
-        params = common.build_params(pman)
+    with _Common.get_pman(hostspec, username=username) as pman:
+        params = _Common.build_params(pman)
         yield params
 
 def test_get_envar(params: CommonTestParamsTypedDict):
@@ -67,9 +67,9 @@ def test_which(params: CommonTestParamsTypedDict):
 
     # Test the 'must_find' argument.
     with pytest.raises(ErrorNotFound):
-        pman.which("_bogus_777", must_find=True)
+        pman.which("_bogus_777")
 
-    assert pman.which("_bogus_777", must_find=False) is None
+    assert pman.which_or_none("_bogus_777") is None
 
 def test_get_python_path(params: CommonTestParamsTypedDict):
     """Test the 'get_python_path()', 'is_exe()' and 'exists()' methods."""

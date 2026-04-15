@@ -137,7 +137,7 @@ class ProcessProtocol(Protocol):
         """Refer to 'ProcessBase.get_cmd_failure_msg()'."""
         ...
 
-    def close(self) -> None:
+    def close(self):
         """Refer to 'ProcessBase.close()'."""
         ...
 
@@ -145,7 +145,7 @@ class ProcessProtocol(Protocol):
         """Refer to 'ProcessBase.__enter__()'."""
         ...
 
-    def __exit__(self, *args: object) -> None:
+    def __exit__(self, *args: object):
         """Refer to 'ProcessBase.__exit__()'."""
         ...
 
@@ -271,15 +271,15 @@ class ProcessManagerProtocol(Protocol):
               remotesrc: bool = ...,
               remotedst: bool = ...,
               exclude: Iterable[str] = ...,
-              output_fobjs: Sequence[IO[str] | None] = ...) -> None:
+              output_fobjs: Sequence[IO[str] | None] = ...):
         """Refer to 'ProcessManagerBase.rsync()'."""
         ...
 
-    def get(self, src: str | Path, dst: str | Path) -> None:
+    def get(self, src: str | Path, dst: str | Path):
         """Refer to 'ProcessManagerBase.get()'."""
         ...
 
-    def put(self, src: str | Path, dst: str | Path) -> None:
+    def put(self, src: str | Path, dst: str | Path):
         """Refer to 'ProcessManagerBase.put()'."""
         ...
 
@@ -314,18 +314,15 @@ class ProcessManagerProtocol(Protocol):
         """Refer to 'ProcessManagerBase.time_time()'."""
         ...
 
-    def mkdir(self,
-              dirpath: str | Path,
-              parents: bool = ...,
-              exist_ok: bool = ...) -> None:
+    def mkdir(self, dirpath: str | Path, parents: bool = ..., exist_ok: bool = ...):
         """Refer to 'ProcessManagerBase.mkdir()'."""
         ...
 
-    def mksocket(self, path: str | Path, exist_ok: bool = ...) -> None:
+    def mksocket(self, path: str | Path, exist_ok: bool = ...):
         """Refer to 'ProcessManagerBase.mksocket()'."""
         ...
 
-    def mkfifo(self, path: str | Path, exist_ok: bool = ...) -> None:
+    def mkfifo(self, path: str | Path, exist_ok: bool = ...):
         """Refer to 'ProcessManagerBase.mkfifo()'."""
         ...
 
@@ -365,11 +362,11 @@ class ProcessManagerProtocol(Protocol):
         """Refer to 'ProcessManagerBase.get_mtime()'."""
         ...
 
-    def unlink(self, path: str | Path) -> None:
+    def unlink(self, path: str | Path):
         """Refer to 'ProcessManagerBase.unlink()'."""
         ...
 
-    def rmtree(self, path: str | Path) -> None:
+    def rmtree(self, path: str | Path):
         """Refer to 'ProcessManagerBase.rmtree()'."""
         ...
 
@@ -377,9 +374,7 @@ class ProcessManagerProtocol(Protocol):
         """Refer to 'ProcessManagerBase.abspath()'."""
         ...
 
-    def mkdtemp(self,
-                prefix: str = ...,
-                basedir: str | Path | None = ...) -> Path:
+    def mkdtemp(self, prefix: str = ..., basedir: str | Path | None = ...) -> Path:
         """Refer to 'ProcessManagerBase.mkdtemp()'."""
         ...
 
@@ -387,13 +382,15 @@ class ProcessManagerProtocol(Protocol):
         """Refer to 'ProcessManagerBase.get_envar()'."""
         ...
 
-    def which(self,
-              program: str | Path,
-              must_find: bool = ...) -> Path | None:
+    def which(self, program: str | Path) -> Path:
         """Refer to 'ProcessManagerBase.which()'."""
         ...
 
-    def close(self) -> None:
+    def which_or_none(self, program: str | Path) -> Path | None:
+        """Refer to 'ProcessManagerBase.which_or_none()'."""
+        ...
+
+    def close(self):
         """Refer to 'ProcessManagerBase.close()'."""
         ...
 
@@ -401,6 +398,6 @@ class ProcessManagerProtocol(Protocol):
         """Refer to 'ProcessManagerBase.__enter__()'."""
         ...
 
-    def __exit__(self, *args: object) -> None:
+    def __exit__(self, *args: object):
         """Refer to 'ProcessManagerBase.__exit__()'."""
         ...

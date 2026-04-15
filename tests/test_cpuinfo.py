@@ -16,13 +16,13 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 import typing
 import random
 import pytest
-from tests import common
+from tests import _Common
 from pepclibs import CPUInfoVars
 from pepclibs.helperlibs import Trivial
 
 if typing.TYPE_CHECKING:
     from typing import Generator, cast, TypedDict
-    from tests.common import CommonTestParamsTypedDict
+    from tests._Common import CommonTestParamsTypedDict
     from pepclibs import CPUInfo
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepclibs.CPUInfoTypes import AbsNumsType, RelNumsType, ScopeNameType
@@ -62,8 +62,8 @@ def get_params(hostspec: str, username: str) -> Generator[CommonTestParamsTypedD
         A dictionary with test parameters.
     """
 
-    with common.get_pman(hostspec, username=username) as pman:
-        params = common.build_params(pman)
+    with _Common.get_pman(hostspec, username=username) as pman:
+        params = _Common.build_params(pman)
         yield params
 
 def _get_scope_nums(sname: ScopeNameType,
@@ -306,7 +306,7 @@ def test_cpuinfo_get(params: CommonTestParamsTypedDict):
         params: The test parameters.
     """
 
-    for cpuinfo in common.get_cpuinfos(params["pman"]):
+    for cpuinfo in _Common.get_cpuinfos(params["pman"]):
         _test_get_good(cpuinfo)
 
 def test_cpuinfo_get_count(params: CommonTestParamsTypedDict):
@@ -317,7 +317,7 @@ def test_cpuinfo_get_count(params: CommonTestParamsTypedDict):
         params: The test parameters.
     """
 
-    for cpuinfo in common.get_cpuinfos(params["pman"]):
+    for cpuinfo in _Common.get_cpuinfos(params["pman"]):
         for sname, nums in _get_snames_and_nums(cpuinfo):
             if sname in ("core", "die"):
                 if typing.TYPE_CHECKING:
@@ -391,7 +391,7 @@ def test_cpuinfo_convert(params: CommonTestParamsTypedDict):
         params: The test parameters.
     """
 
-    for cpuinfo in common.get_cpuinfos(params["pman"]):
+    for cpuinfo in _Common.get_cpuinfos(params["pman"]):
         _test_convert_good(cpuinfo)
 
 def _test_normalize_good(cpuinfo: CPUInfo.CPUInfo):
@@ -458,7 +458,7 @@ def test_cpuinfo_normalize(params: CommonTestParamsTypedDict):
         params: The test parameters.
     """
 
-    for cpuinfo in common.get_cpuinfos(params["pman"]):
+    for cpuinfo in _Common.get_cpuinfos(params["pman"]):
         _test_normalize_good(cpuinfo)
 
 def _is_globally_numbered(sname: ScopeNameType) -> bool:
@@ -603,7 +603,7 @@ def test_cpuinfo_div(params: CommonTestParamsTypedDict):
         params: The test parameters.
     """
 
-    for cpuinfo in common.get_cpuinfos(params["pman"]):
+    for cpuinfo in _Common.get_cpuinfos(params["pman"]):
         _test_cpuinfo_div(cpuinfo)
 
 def test_core_siblings(params: CommonTestParamsTypedDict):
@@ -614,7 +614,7 @@ def test_core_siblings(params: CommonTestParamsTypedDict):
         params: The test parameters.
     """
 
-    for cpuinfo in common.get_cpuinfos(params["pman"]):
+    for cpuinfo in _Common.get_cpuinfos(params["pman"]):
         topology = cpuinfo.get_topology(order="core")
 
         # We get the CPU siblings count for the first core in the topology list. Depending on how
@@ -666,7 +666,7 @@ def test_delayed_init(params: CommonTestParamsTypedDict):
 
     # pylint: disable=protected-access
 
-    for cpuinfo in common.get_cpuinfos(params["pman"]):
+    for cpuinfo in _Common.get_cpuinfos(params["pman"]):
         # A newly created 'CPUInfo' object should not have any topology initialized.
         assert "CPU" not in cpuinfo._initialized_snames, "'CPU' scope should not be initialized"
         assert "die" not in cpuinfo._initialized_snames, "'die' scope should not be initialized"
@@ -718,7 +718,7 @@ def test_cpuinfo_order(params: CommonTestParamsTypedDict):
         params: The test parameters.
     """
 
-    for cpuinfo in common.get_cpuinfos(params["pman"]):
+    for cpuinfo in _Common.get_cpuinfos(params["pman"]):
         # Get all CPUs in different orders.
         cpus_cpu_order = cpuinfo.get_cpus(order="CPU")
         cpus_pkg_order = cpuinfo.get_cpus(order="package")
@@ -779,7 +779,7 @@ def test_cpuinfo_noncomp_dies(params: CommonTestParamsTypedDict):
         params: The test parameters.
     """
 
-    for cpuinfo in common.get_cpuinfos(params["pman"]):
+    for cpuinfo in _Common.get_cpuinfos(params["pman"]):
         # Get all dies including non-compute (I/O) dies.
         all_dies = cpuinfo.get_all_dies()
         compute_dies = cpuinfo.get_compute_dies()

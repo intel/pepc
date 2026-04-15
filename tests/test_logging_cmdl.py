@@ -14,13 +14,13 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import re
 from pathlib import Path
-from tests import common
+from tests import _Common
 from pepclibs.helperlibs import TestRunner
 from pepclibs.helperlibs.Exceptions import Error
 from pepctools import _Pepc
 
 # Path to the TPMI debugfs dump test data directory.
-_TPMI_DEBUGFS_DUMP: Path = common.get_test_data_base() / "test_tpmi_nohost" / "debugfs-dump"
+_TPMI_DEBUGFS_DUMP: Path = _Common.get_test_data_base() / "test_tpmi_nohost" / "debugfs-dump"
 
 # Debug messages use the default prefix: [timestamp] [time] [module,lineno].
 # Example: "[1745987654.12] [12:34:56] [TPMI,226] ..."
@@ -46,7 +46,7 @@ def _run(options: str = "",
 
     Notes:
         - 'tpmi ls --base' is used as the test vehicle because it does not require root access,
-          a real host, or emulation — it reads from a local debugfs dump directory.
+          a real host, or emulation. It reads from a local debugfs dump directory.
     """
 
     cmd = f"tpmi ls --base {_TPMI_DEBUGFS_DUMP}"

@@ -20,13 +20,13 @@ import shutil
 from pathlib import Path
 
 import pytest
-from tests import common
+from tests import _Common
 from pepclibs import CPUInfo, TPMI
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorPermissionDenied
 
 if typing.TYPE_CHECKING:
     from typing import Generator, cast, Final
-    from tests.common import CommonTestParamsTypedDict
+    from tests._Common import CommonTestParamsTypedDict
 
     class _TestParamsTypedDict(CommonTestParamsTypedDict, total=False):
         """
@@ -54,9 +54,9 @@ def get_params(hostspec: str, username: str) -> Generator[_TestParamsTypedDict, 
         A dictionary with test parameters.
     """
 
-    with common.get_pman(hostspec, username=username) as pman, \
+    with _Common.get_pman(hostspec, username=username) as pman, \
          CPUInfo.CPUInfo(pman=pman) as cpuinfo:
-        params = common.build_params(pman)
+        params = _Common.build_params(pman)
 
         if typing.TYPE_CHECKING:
             params = cast(_TestParamsTypedDict, params)

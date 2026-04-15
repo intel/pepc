@@ -1440,9 +1440,9 @@ class ProcessManagerBase(ClassHelpers.SimpleCloseContext):
                 continue
 
             if not path.startswith("/"):
-                path = self.which(path, must_find=True)
-
-            self._python_path = Path(path)
+                self._python_path = self.which(path)
+            else:
+                self._python_path = Path(path)
             return self._python_path
 
         paths_descr = "\n * " + "\n * ".join(paths)
@@ -1793,20 +1793,35 @@ for ent in entries:
 
         raise NotImplementedError("ProcessManagerBase.get_envar()")
 
-    def which(self, program: str | Path, must_find: bool = True) -> Path | None:
+    def which(self, program: str | Path) -> Path:
         """
         Locate the full path of a program by searching in PATH.
 
         Args:
             program: Name of the program to locate.
-            must_find: If True, raise 'ErrorNotFound' if the program was not found. If False, return
-                       None when the program was not found.
 
         Returns:
-            The full path to the program, or None if not found and 'must_find' is False.
+            The full path to the program.
 
         Raises:
-            ErrorNotFound: The program is not found in the search path and 'must_find' is 'True'.
+            ErrorNotFound: The program is not found in the search path.
         """
 
         raise NotImplementedError("ProcessManagerBase.which()")
+
+    def which_or_none(self, program: str | Path) -> Path | None:
+        """
+        Same as 'which()', but return None instead of raising an exception when the program is not
+        found.
+
+        Args:
+            program: Name of the program to locate.
+
+        Returns:
+            The full path to the program, or None if not found.
+        """
+
+        try:
+            return self.which(program)
+        except ErrorNotFound:
+            return None

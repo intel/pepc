@@ -22,7 +22,7 @@ from pepctools import _Pepc
 if typing.TYPE_CHECKING:
     from typing import Generator, Mapping, cast
     from pepclibs import CPUInfo
-    from tests.common import CommonTestParamsTypedDict
+    from tests._Common import CommonTestParamsTypedDict
     from pepclibs.CPUInfoTypes import ScopeNameType
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepclibs.helperlibs.Exceptions import ExceptionTypeType

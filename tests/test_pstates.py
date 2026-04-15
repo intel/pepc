@@ -19,15 +19,15 @@ import typing
 from typing import cast
 import contextlib
 import pytest
-from tests import common, props_common
+from tests import _Common, _PropsCommon
 from pepclibs import CPUInfo, PStates
 from pepclibs.helperlibs.Exceptions import ErrorNotSupported
 
 if typing.TYPE_CHECKING:
     from typing import Generator
-    from tests.props_common import PropsTestParamsTypedDict
+    from tests._PropsCommon import PropsTestParamsTypedDict
 
-@pytest.fixture(name="params", scope="module", params=props_common.get_enable_cache_param())
+@pytest.fixture(name="params", scope="module", params=_PropsCommon.get_enable_cache_param())
 def get_params(hostspec: str,
                username: str,
                request: pytest.FixtureRequest) -> Generator[PropsTestParamsTypedDict, None, None]:
@@ -46,11 +46,11 @@ def get_params(hostspec: str,
 
     enable_cache = request.param
 
-    with common.get_pman(hostspec, username=username) as pman, \
+    with _Common.get_pman(hostspec, username=username) as pman, \
          CPUInfo.CPUInfo(pman=pman) as cpuinfo, \
          PStates.PStates(pman=pman, cpuinfo=cpuinfo, enable_cache=enable_cache) as pobj:
-        params = common.build_params(pman)
-        yield props_common.extend_params(params, pobj, cpuinfo)
+        params = _Common.build_params(pman)
+        yield _PropsCommon.extend_params(params, pobj, cpuinfo)
 
 def _get_set_and_verify_data(params: PropsTestParamsTypedDict,
                              cpu: int) -> Generator[tuple[str, str | int], None, None]:
@@ -110,7 +110,7 @@ def test_pstates_set_and_verify(params: PropsTestParamsTypedDict):
     """
 
     props_vals = _get_set_and_verify_data(params, 0)
-    props_common.set_and_verify(params, props_vals, 0)
+    _PropsCommon.set_and_verify(params, props_vals, 0)
 
 def test_pstates_get_all_props(params: PropsTestParamsTypedDict):
     """
@@ -120,7 +120,7 @@ def test_pstates_get_all_props(params: PropsTestParamsTypedDict):
         params: The test parameters.
     """
 
-    props_common.verify_get_all_props(params, 0)
+    _PropsCommon.verify_get_all_props(params, 0)
 
 def test_pstates_set_props_mechanisms_bool(params: PropsTestParamsTypedDict):
     """
@@ -131,7 +131,7 @@ def test_pstates_set_props_mechanisms_bool(params: PropsTestParamsTypedDict):
         params: The test parameters.
     """
 
-    props_common.verify_set_bool_props(params, 0)
+    _PropsCommon.verify_set_bool_props(params, 0)
 
 def test_freq_msr_vs_sysfs(params: PropsTestParamsTypedDict):
     """

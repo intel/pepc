@@ -15,13 +15,13 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 import typing
 import pytest
 
-from tests import common
+from tests import _Common
 
 from pepclibs import ProcCpuinfo, CPUModels, _DieInfo, CPUInfo
 
 if typing.TYPE_CHECKING:
     from typing import Generator, cast
-    from tests.common import CommonTestParamsTypedDict
+    from tests._Common import CommonTestParamsTypedDict
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
     class _TestParamsTypedDict(CommonTestParamsTypedDict, total=False):
@@ -48,13 +48,13 @@ def get_params(hostspec: str, username: str) -> Generator[_TestParamsTypedDict, 
         A dictionary with test parameters.
     """
 
-    with common.get_pman(hostspec, username=username) as pman:
+    with _Common.get_pman(hostspec, username=username) as pman:
         proc_cpuinfo = ProcCpuinfo.get_proc_cpuinfo(pman)
         if proc_cpuinfo["vfm"] not in CPUModels.MODELS_WITH_NONCOMP_DIES:
             pytest.skip(f"The CPU model '{proc_cpuinfo['vfm']}' does not support non-compute dies")
             # TODO: Cover compute dies as well
 
-        params = common.build_params(pman)
+        params = _Common.build_params(pman)
         if typing.TYPE_CHECKING:
             params = cast(_TestParamsTypedDict, params)
 

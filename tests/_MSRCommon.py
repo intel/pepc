@@ -18,7 +18,7 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 import typing
 from importlib import import_module
 import pytest
-from tests import common
+from tests import _Common
 from pepclibs.helperlibs.Exceptions import ErrorNotSupported
 from pepclibs.msr import MSR
 from pepclibs import CPUInfo
@@ -27,7 +27,7 @@ if typing.TYPE_CHECKING:
     from typing import Final, Generator, cast, Literal
     from pepclibs.msr import _FeaturedMSR
     from pepclibs.msr._FeaturedMSR import FeatureTypedDict
-    from tests.common import CommonTestParamsTypedDict
+    from tests._Common import CommonTestParamsTypedDict
 
     class FeaturedMSRTestParamsTypedDict(CommonTestParamsTypedDict, total=False):
         """
@@ -79,9 +79,9 @@ def get_params(hostspec: str,
         A dictionary containing test parameters.
     """
 
-    with common.get_pman(hostspec, username=username) as pman, \
+    with _Common.get_pman(hostspec, username=username) as pman, \
          CPUInfo.CPUInfo(pman=pman) as cpuinfo:
-        params = common.build_params(pman)
+        params = _Common.build_params(pman)
 
         if typing.TYPE_CHECKING:
             params = cast(FeaturedMSRTestParamsTypedDict, params)

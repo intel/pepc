@@ -13,13 +13,12 @@ Provide python API to the systemctl tool.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
-from typing import cast
 from pathlib import Path
 from pepclibs.helperlibs import Logging, LocalProcessManager, Trivial, ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorNotFound
 
 if typing.TYPE_CHECKING:
-    from typing import Iterable, Literal
+    from typing import Iterable, Literal, cast
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
     _UnitActions = Literal["start", "stop", "restart"]
@@ -53,11 +52,11 @@ class Systemctl(ClassHelpers.SimpleCloseContext):
             raise ErrorNotSupported("Systemctl API is not supported for emulated hosts")
 
         try:
-            path = self._pman.which("systemctl", must_find=True)
+            path = self._pman.which("systemctl")
         except ErrorNotFound as err:
             raise ErrorNotSupported(f"'systemctl' tool is not found{self._pman.hostmsg}") from err
 
-        self._systemctl_path: Path = cast(Path, path)
+        self._systemctl_path: Path = path
 
         self._saved_timers: list[str] = []
         self._saved_ntp_services: list[str] = []

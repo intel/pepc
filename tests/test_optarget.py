@@ -14,14 +14,14 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
 import pytest
-from tests import common
+from tests import _Common
 from pepclibs import CPUInfo, CPUOnline
 from pepctools import _OpTarget
 from pepctools._OpTarget import ErrorNoTarget, Error
 
 if typing.TYPE_CHECKING:
     from typing import Generator, cast, Sequence
-    from tests.common import CommonTestParamsTypedDict
+    from tests._Common import CommonTestParamsTypedDict
 
     class _TestParamsTypedDict(CommonTestParamsTypedDict, total=False):
         """
@@ -49,9 +49,9 @@ def get_params(hostspec: str, username: str) -> Generator[_TestParamsTypedDict, 
         A dictionary containing test parameters.
     """
 
-    with common.get_pman(hostspec, username=username) as pman, \
+    with _Common.get_pman(hostspec, username=username) as pman, \
          CPUInfo.CPUInfo(pman=pman) as cpuinfo:
-        params = common.build_params(pman)
+        params = _Common.build_params(pman)
 
         if typing.TYPE_CHECKING:
             params = cast(_TestParamsTypedDict, params)

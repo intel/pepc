@@ -600,7 +600,7 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         return os.environ.get(envar)
 
-    def which(self, program: str | Path, must_find: bool = True) -> Path | None:
+    def which(self, program: str | Path) -> Path:
         """Refer to 'ProcessManagerBase.which()'."""
 
         if os.access(program, os.F_OK | os.X_OK) and Path(program).is_file():
@@ -613,7 +613,4 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
             if os.access(candidate, os.F_OK | os.X_OK) and candidate.is_file():
                 return candidate
 
-        if must_find:
-            raise ErrorNotFound(f"Program '{program}' was not found in $PATH ({envpaths})")
-
-        return None
+        raise ErrorNotFound(f"Program '{program}' was not found in $PATH ({envpaths})")

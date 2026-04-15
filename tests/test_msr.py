@@ -15,8 +15,8 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
 import pytest
-from tests import msr_common
-from tests.msr_common import get_params # pylint: disable=unused-import
+from tests import _MSRCommon
+from tests._MSRCommon import get_params # pylint: disable=unused-import
 
 from pepclibs.msr.TurboRatioLimit import MSR_TURBO_RATIO_LIMIT
 from pepclibs.msr.TurboRatioLimit1 import MSR_TURBO_RATIO_LIMIT1
@@ -25,7 +25,7 @@ from pepclibs.helperlibs.Exceptions import Error
 if typing.TYPE_CHECKING:
     from typing import TypedDict, Generator
     from pepclibs.CPUInfoTypes import ScopeNameType
-    from tests.msr_common import FeaturedMSRTestParamsTypedDict
+    from tests._MSRCommon import FeaturedMSRTestParamsTypedDict
 
     class _MSRTestParamsTypedDict(TypedDict, total=False):
         """
@@ -97,7 +97,7 @@ def test_msr_read_good(params: FeaturedMSRTestParamsTypedDict):
         params: The test parameters dictionary.
     """
 
-    for msr in msr_common.get_msr_objs(params):
+    for msr in _MSRCommon.get_msr_objs(params):
         for tp in _get_msr_test_params(params):
             for cpu, _ in msr.read(tp["addr"], params["testcpus"], iosname=tp["sname"]):
                 assert cpu in params["testcpus"]
@@ -116,7 +116,7 @@ def test_msr_write_good(params: FeaturedMSRTestParamsTypedDict):
         params: The test parameters dictionary.
     """
 
-    for msr in msr_common.get_msr_objs(params):
+    for msr in _MSRCommon.get_msr_objs(params):
         for tp in _get_msr_test_params(params, include_ro=False):
             val = msr.read_cpu(tp["addr"], params["testcpus"][0], iosname=tp["sname"])
             mask = _bits_to_mask(tp["bits"])
@@ -146,7 +146,7 @@ def test_msr_write_bad(params: FeaturedMSRTestParamsTypedDict):
     if params["pman"].is_emulated:
         return
 
-    for msr in msr_common.get_msr_objs(params):
+    for msr in _MSRCommon.get_msr_objs(params):
         for tp in _get_msr_test_params(params, include_rw=False):
             # Writes to Turbo MSRs go through, even thought they are really R/O, skip them.
             if tp["addr"] in (MSR_TURBO_RATIO_LIMIT, MSR_TURBO_RATIO_LIMIT1):
@@ -165,7 +165,7 @@ def test_msr_read_cpu_good(params: FeaturedMSRTestParamsTypedDict):
         params: The test parameters dictionary.
     """
 
-    for msr in msr_common.get_msr_objs(params):
+    for msr in _MSRCommon.get_msr_objs(params):
         for tp in _get_msr_test_params(params):
             for cpu in params["testcpus"]:
                 msr.read_cpu(tp["addr"], cpu=cpu, iosname=tp["sname"])
@@ -178,7 +178,7 @@ def test_msr_write_cpu_good(params: FeaturedMSRTestParamsTypedDict):
         params: The test parameters dictionary.
     """
 
-    for msr in msr_common.get_msr_objs(params):
+    for msr in _MSRCommon.get_msr_objs(params):
         for tp in _get_msr_test_params(params, include_ro=False):
             mask = _bits_to_mask(tp["bits"])
             for cpu in params["testcpus"]:
@@ -195,7 +195,7 @@ def test_msr_read_bits_good(params: FeaturedMSRTestParamsTypedDict):
         params: The test parameters dictionary.
     """
 
-    for msr in msr_common.get_msr_objs(params):
+    for msr in _MSRCommon.get_msr_objs(params):
         for tp in _get_msr_test_params(params, include_ro=False):
             for cpu, _ in msr.read_bits(tp["addr"], tp["bits"], params["testcpus"],
                                         iosname=tp["sname"]):
@@ -222,7 +222,7 @@ def test_msr_read_bits_bad(params: FeaturedMSRTestParamsTypedDict):
     cpu = params["testcpus"][0]
 
     for tp in _get_msr_test_params(params):
-        for msr in msr_common.get_msr_objs(params):
+        for msr in _MSRCommon.get_msr_objs(params):
             bad_bits = (msr.regbits + 1, 0)
             with pytest.raises(Error):
                 for cpu1, _ in msr.read_bits(tp["addr"], bad_bits, [cpu], iosname=tp["sname"]):
@@ -237,7 +237,7 @@ def test_msr_write_bits_good(params: FeaturedMSRTestParamsTypedDict):
         params: The test parameters dictionary.
     """
 
-    for msr in msr_common.get_msr_objs(params):
+    for msr in _MSRCommon.get_msr_objs(params):
         for tp in _get_msr_test_params(params, include_ro=False):
             mask = _bits_to_mask(tp["bits"])
 
@@ -266,7 +266,7 @@ def test_msr_write_bits_bad(params: FeaturedMSRTestParamsTypedDict):
     cpu = params["testcpus"][0]
 
     for tp in _get_msr_test_params(params):
-        for msr in msr_common.get_msr_objs(params):
+        for msr in _MSRCommon.get_msr_objs(params):
             for cpu, val in msr.read(tp["addr"], [cpu], iosname=tp["sname"]):
                 break
             else:
@@ -293,7 +293,7 @@ def test_msr_read_cpu_bits_good(params: FeaturedMSRTestParamsTypedDict):
         params: The test parameters dictionary.
     """
 
-    for msr in msr_common.get_msr_objs(params):
+    for msr in _MSRCommon.get_msr_objs(params):
         for tp in _get_msr_test_params(params):
             for cpu in params["testcpus"]:
                 msr.read_cpu_bits(tp["addr"], tp["bits"], cpu, iosname=tp["sname"])
@@ -309,7 +309,7 @@ def test_msr_read_cpu_bits_bad(params: FeaturedMSRTestParamsTypedDict):
     cpu = params["testcpus"][0]
 
     for tp in _get_msr_test_params(params):
-        for msr in msr_common.get_msr_objs(params):
+        for msr in _MSRCommon.get_msr_objs(params):
             bad_bits = (msr.regbits + 1, 0)
             with pytest.raises(Error):
                 msr.read_cpu_bits(tp["addr"], bad_bits, cpu, iosname=tp["sname"])
@@ -326,7 +326,7 @@ def test_msr_write_cpu_bits_good(params: FeaturedMSRTestParamsTypedDict):
         params: The test parameters dictionary.
     """
 
-    for msr in msr_common.get_msr_objs(params):
+    for msr in _MSRCommon.get_msr_objs(params):
         for tp in _get_msr_test_params(params, include_ro=False):
             mask = _bits_to_mask(tp["bits"])
             for cpu in params["testcpus"]:
@@ -348,7 +348,7 @@ def test_msr_write_cpu_bits_bad(params: FeaturedMSRTestParamsTypedDict):
     cpu = params["testcpus"][0]
 
     for tp in _get_msr_test_params(params):
-        for msr in msr_common.get_msr_objs(params):
+        for msr in _MSRCommon.get_msr_objs(params):
             val = msr.read_cpu_bits(tp["addr"], tp["bits"], cpu, iosname=tp["sname"])
 
             bits_cnt = (tp["bits"][0] - tp["bits"][1]) + 1

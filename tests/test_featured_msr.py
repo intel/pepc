@@ -15,8 +15,8 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
 import pytest
-from tests import msr_common
-from tests.msr_common import get_params # pylint: disable=unused-import
+from tests import _MSRCommon
+from tests._MSRCommon import get_params # pylint: disable=unused-import
 
 from pepclibs.msr import MSR
 from pepclibs.helperlibs.Exceptions import Error, ErrorVerifyFailed
@@ -25,7 +25,7 @@ if typing.TYPE_CHECKING:
     from typing import Generator, cast
     from pepclibs.msr import _FeaturedMSR
     from pepclibs.msr._FeaturedMSR import FeatureTypedDict, FeatureValueType
-    from tests.msr_common import FeaturedMSRTestParamsTypedDict
+    from tests._MSRCommon import FeaturedMSRTestParamsTypedDict
 
 def _get_fmsr(params: FeaturedMSRTestParamsTypedDict) -> \
                                             Generator[_FeaturedMSR.FeaturedMSR, None, None]:
@@ -84,7 +84,7 @@ def _get_msr_feature_test_params(fmsr: _FeaturedMSR.FeaturedMSR,
                fmsr.is_cpu_feature_enabled("pkg_cstate_limit_lock", 0):
                 continue
 
-        if not msr_common.is_safe_to_set(name, params["hostname"]):
+        if not _MSRCommon.is_safe_to_set(name, params["hostname"]):
             continue
 
         yield name, finfo
@@ -196,7 +196,7 @@ def test_msr_read_feature_bad(params: FeaturedMSRTestParamsTypedDict):
                     _check_feature_val_and_type(val, name, fmsr)
                     assert cpu in params["testcpus"]
             with pytest.raises(Error):
-                for bad_cpus in msr_common.get_bad_cpus_nums(params):
+                for bad_cpus in _MSRCommon.get_bad_cpus_nums(params):
                     bad_cpus_norm = params["cpuinfo"].normalize_cpus(bad_cpus)
                     for cpu, val in fmsr.read_feature(name, cpus=bad_cpus_norm):
                         _check_feature_val_and_type(val, name, fmsr)
