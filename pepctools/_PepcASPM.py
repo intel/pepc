@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 tw=100 et ai si
 #
-# Copyright (C) 2020-2021 Intel Corporation
+# Copyright (C) 2020-2026 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
@@ -10,56 +10,82 @@
 Implement the 'pepc aspm' command.
 """
 
-# TODO: annotate and modernize this module. Define a type for 'args'.
+from __future__ import annotations # Remove when switching to Python 3.10+.
 
+import typing
 from pepclibs.helperlibs import Logging
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs import ASPM
 
+if typing.TYPE_CHECKING:
+    import argparse
+    from typing import TypedDict
+    from pepclibs.helperlibs.ProcessManager import ProcessManagerType
+
+    class _CmdlineArgsTypedDict(TypedDict, total=False):
+        """
+        A typed dictionary for command-line arguments of the 'pepc aspm info' and 'pepc aspm
+        config' commands.
+
+        Attributes:
+            device: PCI device address (e.g., '0000:00:02.0'), or 'None' if not specified.
+            oargs: Ordered command-line arguments dictionary. Keys are option names, values are
+                   the option values, or 'None' for options that take no value.
+        """
+
+        device: str | None
+        oargs: dict[str, str | None]
+
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
-def _print_l1_state(args, aspm):
+def _get_cmdline_args(args: argparse.Namespace) -> _CmdlineArgsTypedDict:
     """
-    Print the L1 ASPM status for the device specified via the '--device' option.
-    """
+    Format 'pepc aspm' command-line arguments into a typed dictionary.
 
-    state = "enabled" if aspm.is_l1_enabled(args.device) else "disabled"
-    _LOG.info("L1 ASPM: %s for device '%s'", state, args.device)
+    Args:
+        args: Command-line arguments namespace.
 
-def aspm_info_command(args, pman):
-    """
-    Implement the 'aspm info' command. The arguments are as follows.
-      * args - the command line arguments.
-      * pman - the process manager object that defines the host to get ASPM info for.
+    Returns:
+        A dictionary containing the parsed command-line arguments.
     """
 
-    opt = []
-    if hasattr(args, "oargs"):
-        opt = args.oargs
+    cmdl: _CmdlineArgsTypedDict = {}
+    cmdl["device"] = getattr(args, "device", None)
+    cmdl["oargs"] = getattr(args, "oargs", {})
 
-    with ASPM.ASPM(pman=pman) as aspm:
-        if "l1_aspm" in opt or args.device:
-            if args.device:
-                _print_l1_state(args, aspm)
-            else:
-                raise Error("please, provide a valid PCI device using the '--device' option")
+    return cmdl
 
-        if "policy" in opt or not opt:
-            cur_policy = aspm.get_policy()
-            _LOG.info("ASPM policy: %s", cur_policy)
+def _print_l1_state(device: str, aspm: ASPM.ASPM):
+    """
+    Print the L1 ASPM status for the specified PCI device.
 
-        if "policies" in opt or not opt:
-            available_policies = ", ".join(aspm.get_policies())
-            _LOG.info("Available policies: %s", available_policies)
+    Args:
+        device: PCI device address.
+        aspm: ASPM object.
+    """
 
-def _handle_policy_option(args, aspm, pman, name):
-    """Handle the '--policy' option of the "config" command."""
+    state = "enabled" if aspm.is_l1_enabled(device) else "disabled"
+    _LOG.info("L1 ASPM: %s for device '%s'", state, device)
 
-    opts = getattr(args, "oargs", {})
+def _handle_policy_option(cmdl: _CmdlineArgsTypedDict,
+                          aspm: ASPM.ASPM,
+                          pman: ProcessManagerType,
+                          name: str | None):
+    """
+    Handle the '--policy' option of the 'pepc aspm config' command.
+
+    Args:
+        cmdl: Parsed command-line arguments dictionary.
+        aspm: ASPM object.
+        pman: Process manager object for the target host.
+        name: Policy name to set, or 'None' to only display the current policy.
+    """
+
+    opts = cmdl.get("oargs", {})
     opts_copy = opts.copy()
-    opts_copy.pop("policy")
+    opts_copy.pop("policy", None)
 
-    if args.device and not bool(opts_copy):
+    if cmdl.get("device") and not opts_copy:
         raise Error("'--device' option is not applicable to the --policy option")
 
     cur_policy = aspm.get_policy()
@@ -76,40 +102,83 @@ def _handle_policy_option(args, aspm, pman, name):
     else:
         _LOG.info("ASPM policy: '%s'%s", cur_policy, pman.hostmsg)
 
-def _handle_1l_aspm_options(args, aspm, pman, state):
-    """Handle the '--l1-aspm' option for the "config" command."""
+def _handle_l1_aspm_option(cmdl: _CmdlineArgsTypedDict,
+                            aspm: ASPM.ASPM,
+                            pman: ProcessManagerType,
+                            state: str | None):
+    """
+    Handle the '--l1-aspm' option of the 'pepc aspm config' command.
 
-    device = args.device
+    Args:
+        cmdl: Parsed command-line arguments dictionary.
+        aspm: ASPM object.
+        pman: Process manager object for the target host.
+        state: L1 ASPM state to set (e.g., 'on', 'off'), or 'None' to only display the state.
+    """
+
+    device = cmdl.get("device")
     if not device:
-        raise Error("please, provide a valid PCI device using the '--device' option")
+        raise Error("Please, provide a valid PCI device using the '--device' option")
 
     if not state:
-        _print_l1_state(args, aspm)
+        _print_l1_state(device, aspm)
         return
 
     state = state.lower()
-    valid_vals = ["false", "true", "off", "on", "disable", "enable"]
+    valid_vals = ("false", "true", "off", "on", "disable", "enable")
     if state not in valid_vals:
-        valid_vals = ", ".join(valid_vals)
-        raise Error(f"bad L1 ASPM state value '{state}', use one of: {valid_vals}")
+        vals_str = ", ".join(valid_vals)
+        raise Error(f"Bad L1 ASPM state value '{state}', use one of: {vals_str}")
 
-    enable = state in ["true", "on", "enable"]
+    enable = state in ("true", "on", "enable")
     aspm.toggle_l1_state(device, enable)
     _LOG.info("Changed L1 ASPM to '%s'%s for device '%s'", state, pman.hostmsg, device)
 
-def aspm_config_command(args, pman):
+def aspm_info_command(args: argparse.Namespace, pman: ProcessManagerType):
     """
-    Implement the 'aspm config' command. The arguments are as follows.
-      * args - the command line arguments.
-      * pman - the process manager object that defines the host to configure ASPM info for.
+    Implement the 'pepc aspm info' command.
+
+    Args:
+        args: Parsed command-line arguments.
+        pman: Process manager object for the target host.
     """
 
-    if not hasattr(args, "oargs"):
-        raise Error("please, provide a configuration option")
+    cmdl = _get_cmdline_args(args)
+    oargs = cmdl.get("oargs", {})
+    device = cmdl.get("device")
 
     with ASPM.ASPM(pman=pman) as aspm:
-        opts = getattr(args, "oargs", {})
-        if "policy" in opts:
-            _handle_policy_option(args, aspm, pman, opts["policy"])
-        if "l1_aspm" in opts:
-            _handle_1l_aspm_options(args, aspm, pman, opts["l1_aspm"])
+        if "l1_aspm" in oargs or device:
+            if device:
+                _print_l1_state(device, aspm)
+            else:
+                raise Error("Please, provide a valid PCI device using the '--device' option")
+
+        if "policy" in oargs or not oargs:
+            cur_policy = aspm.get_policy()
+            _LOG.info("ASPM policy: %s", cur_policy)
+
+        if "policies" in oargs or not oargs:
+            available_policies = ", ".join(aspm.get_policies())
+            _LOG.info("Available policies: %s", available_policies)
+
+def aspm_config_command(args: argparse.Namespace, pman: ProcessManagerType):
+    """
+    Implement the 'pepc aspm config' command.
+
+    Args:
+        args: Parsed command-line arguments.
+        pman: Process manager object for the target host.
+    """
+
+    cmdl = _get_cmdline_args(args)
+    oargs = cmdl.get("oargs", {})
+
+    if not oargs:
+        raise Error("Please, provide a configuration option")
+
+    with ASPM.ASPM(pman=pman) as aspm:
+        if "policy" in oargs:
+            _handle_policy_option(cmdl, aspm, pman, oargs.get("policy"))
+        if "l1_aspm" in oargs:
+            _handle_l1_aspm_option(cmdl, aspm, pman, oargs.get("l1_aspm"))
