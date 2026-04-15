@@ -14,100 +14,104 @@ users.
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
-from typing import TypedDict, Literal, Union
-from pepclibs.CPUInfoTypes import ScopeNameType
+import typing
 
-class MechanismTypedDict(TypedDict):
-    """
-    Type for the mechanism description dictionary.
+if typing.TYPE_CHECKING:
+    from typing import TypedDict, Literal, Union
+    from pepclibs.CPUInfoTypes import ScopeNameType
 
-    Attributes:
-        short: A short name or identifier for the mechanism.
-        long: A more descriptive name for the mechanism (but still a one-liner).
-        writable: Whether the mechanism property is writable.
-    """
+    class MechanismTypedDict(TypedDict):
+        """
+        Type for the mechanism description dictionary.
 
-    short: str
-    long: str
-    writable: bool
+        Attributes:
+            short: A short name or identifier for the mechanism.
+            long: A more descriptive name for the mechanism (but still a one-liner).
+            writable: Whether the mechanism property is writable.
+        """
 
-MechanismNameType = Literal["sysfs", "tpmi", "cdev", "msr", "cppc", "doc"]
+        short: str
+        long: str
+        writable: bool
 
-PropertyTypeType = Literal["int", "float", "bool", "str", "list[str]", "list[int]"]
+    MechanismNameType = Literal["sysfs", "tpmi", "cdev", "msr", "cppc", "doc"]
 
-class PropertyTypedDict(TypedDict, total=False):
-    """
-    Type for the property description dictionary.
+    PropertyTypeType = Literal["int", "float", "bool", "str", "list[str]", "list[int]"]
 
-    Attributes:
-        name: The name of the property.
-        unit: The unit of the property value (e.g., "Hz", "W").
-        type: The type of the property value (e.g., "int", "float", "bool").
-        sname: The scope name of the property (e.g., "CPU", "core", "package").
-        iosname: The I/O scope name of the property.
-        mnames: A tuple of mechanism names supported by the property.
-        writable: Whether the property is writable.
-        special_vals: A frozenset of special values for the property.
-        subprops: A tuple of sub-properties related to this property.
-    """
+    class PropertyTypedDict(TypedDict, total=False):
+        """
+        Type for the property description dictionary.
 
-    name: str
-    unit: str
-    type: PropertyTypeType
-    sname: ScopeNameType | None
-    mnames: tuple[MechanismNameType, ...]
-    writable: bool
-    special_vals: frozenset[str]
-    subprops: tuple[str, ...]
+        Attributes:
+            name: The name of the property.
+            unit: The unit of the property value (e.g., "Hz", "W").
+            type: The type of the property value (e.g., "int", "float", "bool").
+            sname: The scope name of the property (e.g., "CPU", "core", "package").
+            iosname: The I/O scope name of the property.
+            mnames: A tuple of mechanism names supported by the property.
+            writable: Whether the property is writable.
+            special_vals: A frozenset of special values for the property.
+            subprops: A tuple of sub-properties related to this property.
+        """
 
-PropertyValueType = Union[int, float, bool, str, list[str], list[int]]
+        name: str
+        unit: str
+        type: PropertyTypeType
+        sname: ScopeNameType | None
+        mnames: tuple[MechanismNameType, ...]
+        writable: bool
+        special_vals: frozenset[str]
+        subprops: tuple[str, ...]
 
-class _PVInfoTypedDictBase(TypedDict, total=False):
-    """
-    Base type for the property value dictionary (pvinfo).
+    PropertyValueType = Union[int, float, bool, str, list[str], list[int]]
 
-    Attributes:
-        cpu: The CPU number.
-        die: The die number.
-        package: The package number.
-        pname: The name of the property.
-        mname: The name of the mechanism used to retrieve the property.
-    """
+    class _PVInfoTypedDictBase(TypedDict, total=False):
+        """
+        Base type for the property value dictionary (pvinfo).
 
-    cpu: int
-    die: int
-    package: int
-    pname: str
-    mname: MechanismNameType
-class PVInfoTypedDict(_PVInfoTypedDictBase, total=False):
-    """
-    Type for the property value dictionary (pvinfo).
+        Attributes:
+            cpu: The CPU number.
+            die: The die number.
+            package: The package number.
+            pname: The name of the property.
+            mname: The name of the mechanism used to retrieve the property.
+        """
 
-    Attributes:
-        *: All attributes from _PVInfoTypedDictBase.
-        val: The value of the property.
-    """
+        cpu: int
+        die: int
+        package: int
+        pname: str
+        mname: MechanismNameType
 
-    val: PropertyValueType
+    class PVInfoTypedDict(_PVInfoTypedDictBase, total=False):
+        """
+        Type for the property value dictionary (pvinfo).
 
-class PVInfoTypedDictInt(_PVInfoTypedDictBase, total=False):
-    """
-    Type for the property value dictionary (pvinfo) with integer value.
+        Attributes:
+            *: All attributes from _PVInfoTypedDictBase.
+            val: The value of the property.
+        """
 
-    Attributes:
-        *: All attributes from _PVInfoTypedDictBase.
-        val: The value of the property.
-    """
+        val: PropertyValueType
 
-    val: int
+    class PVInfoTypedDictInt(_PVInfoTypedDictBase, total=False):
+        """
+        Type for the property value dictionary (pvinfo) with integer value.
 
-class PVInfoTypedDictFloat(_PVInfoTypedDictBase, total=False):
-    """
-    Type for the property value dictionary (pvinfo) with float value.
+        Attributes:
+            *: All attributes from _PVInfoTypedDictBase.
+            val: The value of the property.
+        """
 
-    Attributes:
-        *: All attributes from _PVInfoTypedDictBase.
-        val: The value of the property.
-    """
+        val: int
 
-    val: float
+    class PVInfoTypedDictFloat(_PVInfoTypedDictBase, total=False):
+        """
+        Type for the property value dictionary (pvinfo) with float value.
+
+        Attributes:
+            *: All attributes from _PVInfoTypedDictBase.
+            val: The value of the property.
+        """
+
+        val: float

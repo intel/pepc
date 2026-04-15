@@ -16,7 +16,6 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import sys
 import typing
-from typing import Literal, get_args, cast
 from pepctools import _PepcCommon
 from pepctools._OpTarget import ErrorNoCPUTarget
 from pepclibs import CPUInfo
@@ -24,10 +23,9 @@ from pepclibs.helperlibs import Logging, ClassHelpers, Human, YAML, Trivial
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorPermissionDenied
 from pepclibs._PropsClassBase import ErrorUsePerCPU, ErrorTryAnotherMechanism
 
-PrintFormatType = Literal["human", "yaml"]
-
 if typing.TYPE_CHECKING:
-    from typing import TypedDict, Iterable, Sequence, IO, Iterator, Union, Generator
+    from typing import TypedDict, Iterable, Sequence, IO, Iterator, Union, Generator, Literal, cast
+    from typing import Final
     from pepctools import _OpTarget
     from pepclibs import CStates, PStates, Uncore, PMQoS
     from pepclibs.CPUIdle import ReqCStateInfoTypedDict, ReqCStateInfoValuesType
@@ -116,12 +114,16 @@ if typing.TYPE_CHECKING:
     # Type for the requestable C-state aggregate properties dictionary for YAML output.
     _YAMLRCAggrPinfoType = dict[str, _YAMLRCAggrSubPinfoTypedDict]
 
+    PrintFormatType = Literal["human", "yaml"]
+
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
 # A special property value indicating that the property is not supported.
-_UNSUPPORTED_PROP = "not supported"
+_UNSUPPORTED_PROP: Final[str] = "not supported"
 # A special property value indicating that permission is denied to access the property.
-_PERMISSION_DENIED = "permission denied"
+_PERMISSION_DENIED: Final[str] = "permission denied"
+
+SUPPORTED_PRINT_FORMATS: Final[frozenset[str]] = frozenset({"human", "yaml"})
 
 class _PropsPrinter(ClassHelpers.SimpleCloseContext):
     """
@@ -149,9 +151,8 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         self._fobj = fobj
         self._fmt = fmt
 
-        names = get_args(PrintFormatType)
-        if self._fmt not in names:
-            formats = ", ".join(names)
+        if self._fmt not in SUPPORTED_PRINT_FORMATS:
+            formats = ", ".join(SUPPORTED_PRINT_FORMATS)
             raise Error(f"Unsupported format '{self._fmt}', supported formats are: {formats}")
 
     def close(self):
@@ -309,12 +310,16 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
 
         raise Error(f"BUG: Unexpected scope name {sname} for message formatting")
 
-    def _format_value_human(self, _, prop: PropertyTypedDict, val: _AggrPropertyValueType) -> str:
+    # pylint: disable-next=unused-argument
+    def _format_value_human(self,
+                            pname: str,
+                            prop: PropertyTypedDict,
+                            val: _AggrPropertyValueType) -> str:
         """
         Format a property value into a human-readable string based on its type and metadata.
 
         Args:
-            _ : Unused parameter.
+            pname: The name of the property.
             prop: The property description dictionary containing metadata about the property (e.g.,
                   name, type, unit).
             val: The value of the property to format.
@@ -379,7 +384,11 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         result = ""
 
         if prop["type"] == "list[str]":
-            result = ", ".join(cast(list[str], val))
+            if typing.TYPE_CHECKING:
+                lval = cast(list[str], val)
+            else:
+                lval = val
+            result = ", ".join(lval)
         elif prop["type"] == "list[int]":
             if typing.TYPE_CHECKING:
                 cval = cast(list[int], val)
@@ -587,11 +596,17 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
 
                     if sname != "die":
                         ragified_str = Trivial.rangify(cast(list[int], nums))
-                        sname_wa = cast(Literal["CPU"], sname)
+                        if typing.TYPE_CHECKING:
+                            sname_wa = cast(Literal["CPU"], sname)
+                        else:
+                            sname_wa = sname
                         yaml_pinfo[pname]["values"].append({"value": val, sname_wa: ragified_str})
                     else:
                         rangified_dict: dict[int, str] = {}
-                        nums_dict = cast(dict[int, list[int]], nums)
+                        if typing.TYPE_CHECKING:
+                            nums_dict = cast(dict[int, list[int]], nums)
+                        else:
+                            nums_dict = nums
                         for pkg, dies in nums_dict.items():
                             rangified_dict[pkg] = Trivial.rangify(dies)
                         yaml_pinfo[pname]["values"].append({"value": val, sname: rangified_dict})
@@ -781,14 +796,20 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
                     val_key = val
 
             num_tuple: tuple[int, int]
-            num_int: int
+            num_int = -1
 
             if sname == "die":
-                num_tuple = cast(tuple[int, int], num)
+                if typing.TYPE_CHECKING:
+                    num_tuple = cast(tuple[int, int], num)
+                else:
+                    num_tuple = num
                 package, die = num_tuple
             else:
                 package, die = -1, -1
-                num_int = cast(int, num)
+                if typing.TYPE_CHECKING:
+                    num_int = cast(int, num)
+                else:
+                    num_int = num
 
             if mname not in apinfo:
                 apinfo[mname] = {}

@@ -12,11 +12,14 @@ Types for users of property modules (e.g., 'PStates') for property module users.
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
-from typing import Union
+import typing
 
-# pylint: disable=wildcard-import,unused-wildcard-import
-from pepclibs._PropsTypes import *  # noqa: F403
+if typing.TYPE_CHECKING:
+    from typing import Union
 
-from pepclibs import CStates, PStates, Uncore, PMQoS
+    # pylint: disable=wildcard-import,unused-wildcard-import
+    from pepclibs._PropsTypes import *  # noqa: F403
 
-PropsClassType = Union[CStates.CStates, PStates.PStates, Uncore.Uncore, PMQoS.PMQoS]
+    from pepclibs import CStates, PStates, Uncore, PMQoS
+
+    PropsClassType = Union[CStates.CStates, PStates.PStates, Uncore.Uncore, PMQoS.PMQoS]

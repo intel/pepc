@@ -14,13 +14,9 @@ This module contains shared definitions used by both the emulation data generato
 """
 import typing
 from pathlib import Path
-from typing import Final
-
-# The name of the main configuration file in each emulation dataset directory.
-EMUL_CONFIG_FNAME: Final[str] = "config.yml"
 
 if typing.TYPE_CHECKING:
-    from typing import TypedDict
+    from typing import TypedDict, Final
 
     class _EDConfMSRTypedDict(TypedDict, total=False):
         """
@@ -115,3 +111,6 @@ if typing.TYPE_CHECKING:
         msr: _EDConfMSRTypedDict
         sysfs: _EDConfSysfsTypedDict
         procfs: _EDConfProcfsTypedDict
+
+# The name of the main configuration file in each emulation dataset directory.
+EMUL_CONFIG_FNAME: Final[str] = "config.yml"

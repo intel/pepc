@@ -15,30 +15,30 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 import re
 import typing
 from pathlib import Path
-from typing import TypedDict
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs.helperlibs import ProcessManager
 
 if typing.TYPE_CHECKING:
+    from typing import TypedDict
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
-class SplitKernelVersionTypedDict(TypedDict):
-    """
-    Split kernel version components.
+    class SplitKernelVersionTypedDict(TypedDict):
+        """
+        Split kernel version components.
 
-    Attributes:
-        major: Major version number (e.g., 4 in "4.18.1").
-        minor: Minor version number (e.g., 18 in "4.18.1").
-        stable: Stable version number (e.g., 1 in "4.18.1"). If not present, it is 0.
-        rc: Release candidate version number (e.g., 2 in "5.0-rc2"). If not present, it is 0.
-        localver: Local version string (e.g., "-build0" in "4.18.1-build0"). An empty string if not
-                  present.
-    """
-    major: int
-    minor: int
-    stable: int
-    rc: int
-    localver: str
+        Attributes:
+            major: Major version number (e.g., 4 in "4.18.1").
+            minor: Minor version number (e.g., 18 in "4.18.1").
+            stable: Stable version number (e.g., 1 in "4.18.1"). If not present, it is 0.
+            rc: Release candidate version number (e.g., 2 in "5.0-rc2"). If not present, it is 0.
+            localver: Local version string (e.g., "-build0" in "4.18.1-build0"). An empty string if
+                      not present.
+        """
+        major: int
+        minor: int
+        stable: int
+        rc: int
+        localver: str
 
 def _fetch_rc(localver: str) -> tuple[int, str]:
     """

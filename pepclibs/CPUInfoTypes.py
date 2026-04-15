@@ -12,28 +12,30 @@ Provide types related to the 'CPUInfo' module.
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
-from typing import TypedDict, Literal, Sequence, Mapping
+import typing
 
-# pylint: disable-next=unused-import
-from pepclibs._DieInfo import DieInfoTypedDict, AgentTypes
+if typing.TYPE_CHECKING:
+    from typing import TypedDict, Literal, Sequence, Mapping
+    from pepclibs._DieInfo import DieInfoTypedDict, AgentTypes
 
-# The type for absolute topology numbers: CPU, module, node, package numbers.
-AbsNumsType = Sequence[int]
-# The type for topology numbers that are relative to the package: core and die numbers.
-RelNumsType = Mapping[int, AbsNumsType]
+    # The type for absolute topology numbers: CPU, module, node, package numbers.
+    AbsNumsType = Sequence[int]
+    # The type for topology numbers that are relative to the package: core and die numbers.
+    RelNumsType = Mapping[int, AbsNumsType]
 
-ScopeNameType = Literal["CPU", "core", "module", "die", "node", "package", "global"]
+    ScopeNameType = Literal["CPU", "core", "module", "die", "node", "package", "global"]
 
-HybridCPUKeyType = Literal["pcore", "ecore", "lpecore"]
+    HybridCPUKeyType = Literal["pcore", "ecore", "lpecore"]
 
-class HybridCPUKeyInfoType(TypedDict, total=False):
-    """
-    Type for the hybrid CPUs key information dictionary.
+    class HybridCPUKeyInfoType(TypedDict, total=False):
+        """
+        Type for the hybrid CPUs key information dictionary.
 
-    Attributes:
-        name: The name of the hybrid CPU type (e.g., E-core, P-core).
-        title: Longer title for the hybrid CPU type (e.g., "Efficient core", "Performance core").
-    """
+        Attributes:
+            name: The name of the hybrid CPU type (e.g., E-core, P-core).
+            title: Longer title for the hybrid CPU type (e.g., "Efficient core", "Performance
+                   core").
+        """
 
-    name: str
-    title: str
+        name: str
+        title: str
