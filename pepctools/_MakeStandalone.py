@@ -156,12 +156,9 @@ def main():
         args = _parse_arguments()
         cmdl = _get_cmdline_args(args)
 
-        with LocalProcessManager.LocalProcessManager() as lpman:
-            tmpdir = lpman.mkdtemp(prefix=f"{_TOOLNAME}-")
-            try:
-                _main(lpman, cmdl, tmpdir)
-            finally:
-                lpman.rmtree(tmpdir)
+        with LocalProcessManager.LocalProcessManager() as lpman, \
+             lpman.mkdtemp_ctx(prefix=f"{_TOOLNAME}-") as tmpdir:
+            _main(lpman, cmdl, tmpdir)
     except KeyboardInterrupt:
         _LOG.info("\nInterrupted, exiting")
     except Error as err:
