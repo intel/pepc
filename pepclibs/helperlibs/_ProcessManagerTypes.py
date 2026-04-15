@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import NamedTuple, Protocol
 
 if typing.TYPE_CHECKING:
-    from typing import IO, Generator, Iterable, Literal, Sequence, TypedDict
+    from typing import IO, ContextManager, Generator, Iterable, Literal, Sequence, TypedDict
 
     class LsdirTypedDict(TypedDict):
         """
@@ -376,6 +376,12 @@ class ProcessManagerProtocol(Protocol):
 
     def mkdtemp(self, prefix: str = ..., basedir: str | Path | None = ...) -> Path:
         """Refer to 'ProcessManagerBase.mkdtemp()'."""
+        ...
+
+    def mkdtemp_ctx(self,
+                    prefix: str = ...,
+                    basedir: str | Path | None = ...) -> ContextManager[Path]:
+        """Refer to 'ProcessManagerBase.mkdtemp_ctx()'."""
         ...
 
     def get_envar(self, envar: str) -> str | None:

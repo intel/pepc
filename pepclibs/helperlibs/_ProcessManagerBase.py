@@ -1780,6 +1780,28 @@ for ent in entries:
 
         raise NotImplementedError("ProcessManagerBase.mkdtemp()")
 
+    @contextlib.contextmanager
+    def mkdtemp_ctx(self,
+                    prefix: str = "",
+                    basedir: str | Path | None = None) -> Generator[Path, None, None]:
+        """
+        Create a temporary directory and yield its path. Remove the directory recursively on
+        context exit.
+
+        Args:
+            prefix: A prefix for the temporary directory name.
+            basedir: The base directory where the temporary directory should be created.
+
+        Yields:
+            The path to the created temporary directory.
+        """
+
+        tmpdir = self.mkdtemp(prefix=prefix, basedir=basedir)
+        try:
+            yield tmpdir
+        finally:
+            self.rmtree(tmpdir)
+
     def get_envar(self, envar: str) -> str | None:
         """
         Get the value of an environment variable.
