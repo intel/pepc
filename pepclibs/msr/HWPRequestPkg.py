@@ -16,7 +16,6 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import copy
 import typing
-from typing import cast
 from pepclibs import CPUInfo
 from pepclibs.msr import _FeaturedMSR, PMEnable
 
@@ -111,8 +110,9 @@ class HWPRequestPkg(_FeaturedMSR.FeaturedMSR):
             # Make sure the CPU supports HWP and has HWP is enabled.
             cpuflags = proc_percpuinfo["flags"][cpus[0]]
             if "hwp" in cpuflags:
-                if self._msr.read_cpu_bits(PMEnable.MSR_PM_ENABLE,
-                                           cast(tuple[int, int], PMEnable.FEATURES["hwp"]["bits"]),
+                if typing.TYPE_CHECKING:
+                    assert PMEnable.FEATURES["hwp"]["bits"] is not None
+                if self._msr.read_cpu_bits(PMEnable.MSR_PM_ENABLE, PMEnable.FEATURES["hwp"]["bits"],
                                            cpus[0]):
                     continue
 

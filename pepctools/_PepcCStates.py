@@ -269,19 +269,19 @@ def cstates_config_command(args: argparse.Namespace, pman: ProcessManagerType):
             setter = _PepcSetter.CStatesSetter(pman, pobj, cpuinfo, printer, msr=msr)
             stack.enter_context(setter)
 
-        if enable_opts:
-            for optname, optval in enable_opts.items():
-                csnames: list[str] | Literal["all"]
-                if optval == "all":
-                    csnames = "all"
-                else:
-                    csnames = Trivial.split_csv_line(optval)
-                enable = optname == "enable"
-                setter.set_cstates(csnames, cpus=optar.get_cpus(), enable=enable,
-                                   mnames=mnames)
+            if enable_opts:
+                for optname, optval in enable_opts.items():
+                    csnames: list[str] | Literal["all"]
+                    if optval == "all":
+                        csnames = "all"
+                    else:
+                        csnames = Trivial.split_csv_line(optval)
+                    enable = optname == "enable"
+                    setter.set_cstates(csnames, cpus=optar.get_cpus(), enable=enable,
+                                       mnames=mnames)
 
-        if spinfo:
-            setter.set_props(spinfo, optar)
+            if spinfo:
+                setter.set_props(spinfo, optar)
 
     if enable_opts or spinfo:
         _PepcCommon.check_tuned_presence(pman)
