@@ -13,12 +13,11 @@ Tests for the 'ClassHelpers.WrapExceptions' class.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
-from typing import cast
 from pepclibs.helperlibs import ClassHelpers
 from pepclibs.helperlibs.Exceptions import Error, ErrorPermissionDenied, ErrorNotFound
 
 if typing.TYPE_CHECKING:
-    from typing import Any, Final
+    from typing import Any, Final, cast
 
 _TEST_VALUE: Final[int] = 42
 
@@ -86,7 +85,11 @@ def test_base_functionality():
     """Test the 'WrapExceptions' class base functionality."""
 
     test_obj = _TestClass()
-    wrapped_obj = cast(_TestClass, ClassHelpers.WrapExceptions(test_obj))
+    _wrapped_obj = ClassHelpers.WrapExceptions(test_obj)
+    if typing.TYPE_CHECKING:
+        wrapped_obj = cast(_TestClass, _wrapped_obj)
+    else:
+        wrapped_obj = _wrapped_obj
 
     assert wrapped_obj.no_exceptions() == _TEST_VALUE, \
            f"Expected no exceptions to be raised and return {_TEST_VALUE}."
@@ -122,7 +125,11 @@ def test_iterator():
     """Test that 'WrapExceptions' class wraps exceptions from iterables."""
 
     test_obj = _TestClass()
-    wrapped_obj = cast(_TestClass, ClassHelpers.WrapExceptions(test_obj))
+    _wrapped_obj = ClassHelpers.WrapExceptions(test_obj)
+    if typing.TYPE_CHECKING:
+        wrapped_obj = cast(_TestClass, _wrapped_obj)
+    else:
+        wrapped_obj = _wrapped_obj
 
     iterable = iter(wrapped_obj)
     for idx, val in enumerate(iterable):
@@ -131,7 +138,11 @@ def test_iterator():
 
     # Test that exceptions from the iterable are wrapped correctly.
     test_obj = _TestClass(raise_iter=True)
-    wrapped_obj = cast(_TestClass, ClassHelpers.WrapExceptions(test_obj))
+    _wrapped_obj = ClassHelpers.WrapExceptions(test_obj)
+    if typing.TYPE_CHECKING:
+        wrapped_obj = cast(_TestClass, _wrapped_obj)
+    else:
+        wrapped_obj = _wrapped_obj
 
     try:
         for idx, val in enumerate(wrapped_obj):
@@ -147,7 +158,11 @@ def test_context():
     """Test that 'WrapExceptions' class wraps exceptions from context managers."""
 
     test_obj = _TestClass()
-    wrapped_obj = cast(_TestClass, ClassHelpers.WrapExceptions(test_obj))
+    _wrapped_obj = ClassHelpers.WrapExceptions(test_obj)
+    if typing.TYPE_CHECKING:
+        wrapped_obj = cast(_TestClass, _wrapped_obj)
+    else:
+        wrapped_obj = _wrapped_obj
 
     try:
         with wrapped_obj:

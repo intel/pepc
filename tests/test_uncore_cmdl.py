@@ -13,7 +13,6 @@
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
-from typing import cast
 import pytest
 from tests import _Common, PropsCommonCmdl
 from pepclibs.helperlibs import Trivial
@@ -23,7 +22,7 @@ from pepclibs import CPUInfo, Uncore, _UncoreFreqTPMI, CPUOnline
 from pepclibs.Uncore import ErrorTryAnotherMechanism
 
 if typing.TYPE_CHECKING:
-    from typing import Final, Generator
+    from typing import Final, Generator, cast
     from tests.PropsCommonCmdl import PropsCmdlTestParamsTypedDict
     from pepclibs.helperlibs.Exceptions import ExceptionTypeType
     from pepclibs.CPUInfoTypes import ScopeNameType
@@ -216,8 +215,9 @@ def test_uncore_set_range(params: PropsCmdlTestParamsTypedDict):
     except ErrorNotSupported:
         return
 
-    min_limit = cast(int, min_limit)
-    max_limit = cast(int, max_limit)
+    if typing.TYPE_CHECKING:
+        min_limit = cast(int, min_limit)
+        max_limit = cast(int, max_limit)
 
     bad_min_freq = min_limit - _UncoreFreqTPMI.RATIO_MULTIPLIER
     bad_max_freq = max_limit + _UncoreFreqTPMI.RATIO_MULTIPLIER
@@ -287,8 +287,9 @@ def test_uncore_set_order(params: PropsCmdlTestParamsTypedDict):
         min_limit = pobj.get_cpu_prop("min_freq_limit", cpu)["val"]
         max_limit = pobj.get_cpu_prop("max_freq_limit", cpu)["val"]
 
-        min_limit = cast(int, min_limit)
-        max_limit = cast(int, max_limit)
+        if typing.TYPE_CHECKING:
+            min_limit = cast(int, min_limit)
+            max_limit = cast(int, max_limit)
 
         delta = (max_limit - min_limit) // 4
         delta -= delta % _UncoreFreqTPMI.RATIO_MULTIPLIER

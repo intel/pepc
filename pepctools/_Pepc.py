@@ -25,14 +25,13 @@ except ImportError:
     # We can live without argcomplete, we only lose tab completions.
     argcomplete = None
 
-from typing import cast
 from pepclibs import PMQoSVars, CStatesVars, PStatesVars, UncoreVars, CPUInfoVars, TPMIVars
 from pepclibs.helperlibs import ArgParse, Human, Logging, ProjectFiles
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs._PropsClassBase import MECHANISMS
 
 if typing.TYPE_CHECKING:
-    from typing import Sequence, Any, Final, Iterable
+    from typing import Sequence, Any, Final, Iterable, cast
     from pepclibs.helperlibs import EmulProcessManager
     from pepclibs.helperlibs.ArgParse import ArgTypedDict, ArgKwargsTypedDict
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
@@ -312,7 +311,8 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     man_msg = "Refer to 'pepc-pstates' manual page for more information."
     descr = "Various commands related to P-states (CPU performance states). " + man_msg
     subpars = subparsers.add_parser("pstates", help=text, description=descr)
-    subpars = cast(ArgParse.ArgsParser, subpars)
+    if typing.TYPE_CHECKING:
+        subpars = cast(ArgParse.ArgsParser, subpars)
     subparsers2 = subpars.add_subparsers(title="Further sub-commands")
     subparsers2.required = True
 
@@ -323,7 +323,8 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     descr = """Get P-states information for specified CPUs. By default, print all information for
                all CPUs. """ + man_msg
     subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
-    subpars2 = cast(ArgParse.ArgsParser, subpars2)
+    if typing.TYPE_CHECKING:
+        subpars2 = cast(ArgParse.ArgsParser, subpars2)
     subpars2.set_defaults(func=_pstates_info_command)
 
     ArgParse.add_options(subpars2, ssh_and_mechanisms_options)
@@ -343,7 +344,8 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     descr = """Configure P-states on specified CPUs. All options can be used without a parameter,
                in which case the currently configured value(s) will be printed. """ + man_msg
     subpars2 = subparsers2.add_parser("config", help=text, description=descr, epilog=man_msg)
-    subpars2 = cast(ArgParse.ArgsParser, subpars2)
+    if typing.TYPE_CHECKING:
+        subpars2 = cast(ArgParse.ArgsParser, subpars2)
     subpars2.set_defaults(func=_pstates_config_command)
 
     ArgParse.add_options(subpars2, ssh_and_mechanisms_options)
@@ -360,7 +362,8 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     man_msg = "Refer to 'pepc-cstates' manual page for more information."
     descr = "Various commands related to CPU C-states. " + man_msg
     subpars = subparsers.add_parser("cstates", help=text, description=descr)
-    subpars = cast(ArgParse.ArgsParser, subpars)
+    if typing.TYPE_CHECKING:
+        subpars = cast(ArgParse.ArgsParser, subpars)
     subparsers2 = subpars.add_subparsers(title="Further sub-commands")
     subparsers2.required = True
 
@@ -373,7 +376,8 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     text = "Get CPU C-states information."
     descr = "Get information about C-states on specified CPUs. " + man_msg
     subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
-    subpars2 = cast(ArgParse.ArgsParser, subpars2)
+    if typing.TYPE_CHECKING:
+        subpars2 = cast(ArgParse.ArgsParser, subpars2)
     subpars2.set_defaults(func=_cstates_info_command)
 
     ArgParse.add_options(subpars2, ssh_and_mechanisms_options)
@@ -398,7 +402,8 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     descr = """Configure C-states on specified CPUs. All options can be used without a parameter,
                in which case the currently configured value(s) will be printed. """ + man_msg
     subpars2 = subparsers2.add_parser("config", help=text, description=descr, epilog=man_msg)
-    subpars2 = cast(ArgParse.ArgsParser, subpars2)
+    if typing.TYPE_CHECKING:
+        subpars2 = cast(ArgParse.ArgsParser, subpars2)
     subpars2.set_defaults(func=_cstates_config_command)
 
     ArgParse.add_options(subpars2, ssh_and_mechanisms_options)
@@ -423,7 +428,8 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     man_msg = "Refer to 'pepc-uncore' manual page for more information."
     descr = "Various commands related to uncore. " + man_msg
     subpars = subparsers.add_parser("uncore", help=text, description=descr)
-    subpars = cast(ArgParse.ArgsParser, subpars)
+    if typing.TYPE_CHECKING:
+        subpars = cast(ArgParse.ArgsParser, subpars)
     subparsers2 = subpars.add_subparsers(title="Further sub-commands")
     subparsers2.required = True
 
@@ -434,7 +440,8 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     descr = """Get uncore information for specified uncore domains (e.g., package). By default,
                print all information for all uncore domains of the processors. """ + man_msg
     subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
-    subpars2 = cast(ArgParse.ArgsParser, subpars2)
+    if typing.TYPE_CHECKING:
+        subpars2 = cast(ArgParse.ArgsParser, subpars2)
     subpars2.set_defaults(func=_uncore_info_command)
 
     ArgParse.add_options(subpars2, ssh_and_mechanisms_options)
@@ -457,7 +464,8 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     descr = """Configure uncore. All options can be used without a parameter, in which case the
                currently configured value(s) will be printed. """ + man_msg
     subpars2 = subparsers2.add_parser("config", help=text, description=descr, epilog=man_msg)
-    subpars2 = cast(ArgParse.ArgsParser, subpars2)
+    if typing.TYPE_CHECKING:
+        subpars2 = cast(ArgParse.ArgsParser, subpars2)
     subpars2.set_defaults(func=_uncore_config_command)
 
     ArgParse.add_options(subpars2, ssh_and_mechanisms_options)
@@ -474,7 +482,8 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     man_msg = """Refer to 'pepc-cpu-hotplug' manual page for more information."""
     descr = "CPU online/offline commands. " + man_msg
     subpars = subparsers.add_parser("cpu-hotplug", help=text, description=descr)
-    subpars = cast(ArgParse.ArgsParser, subpars)
+    if typing.TYPE_CHECKING:
+        subpars = cast(ArgParse.ArgsParser, subpars)
     subparsers2 = subpars.add_subparsers(title="Further sub-commands")
     subparsers2.required = True
 
@@ -484,7 +493,8 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     text = "Display the list of online and offline CPUs."
     descr = "Display the list of online and offline CPUs. " + man_msg
     subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
-    subpars2 = cast(ArgParse.ArgsParser, subpars2)
+    if typing.TYPE_CHECKING:
+        subpars2 = cast(ArgParse.ArgsParser, subpars2)
     subpars2.set_defaults(func=_cpu_hotplug_info_command)
 
     ArgParse.add_options(subpars2, ssh_options)
@@ -495,7 +505,8 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     text = """Bring CPUs online."""
     descr = "Bring specified CPUs online. " + man_msg
     subpars2 = subparsers2.add_parser("online", help=text, description=descr, epilog=man_msg)
-    subpars2 = cast(ArgParse.ArgsParser, subpars2)
+    if typing.TYPE_CHECKING:
+        subpars2 = cast(ArgParse.ArgsParser, subpars2)
     subpars2.set_defaults(func=_cpu_hotplug_online_command)
 
     ArgParse.add_options(subpars2, ssh_options)
@@ -510,7 +521,8 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     text = """Bring CPUs offline."""
     descr = "Bring specified CPUs offline. " + man_msg
     subpars2 = subparsers2.add_parser("offline", help=text, description=descr, epilog=man_msg)
-    subpars2 = cast(ArgParse.ArgsParser, subpars2)
+    if typing.TYPE_CHECKING:
+        subpars2 = cast(ArgParse.ArgsParser, subpars2)
     subpars2.set_defaults(func=_cpu_hotplug_offline_command)
 
     ArgParse.add_options(subpars2, ssh_options)
@@ -524,7 +536,8 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     man_msg = "Refer to 'pepc-topology' manual page for more information."
     descr = "Various commands related to CPU topology. " + man_msg
     subpars = subparsers.add_parser("topology", help=text, description=descr)
-    subpars = cast(ArgParse.ArgsParser, subpars)
+    if typing.TYPE_CHECKING:
+        subpars = cast(ArgParse.ArgsParser, subpars)
     subparsers2 = subpars.add_subparsers(title="Further sub-commands")
     subparsers2.required = True
 
@@ -536,7 +549,8 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
                CPUs may be unavailable. In these cases the number will be substituted with "?".
                Refer to 'pepc-topology' manual page for more information."""
     subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
-    subpars2 = cast(ArgParse.ArgsParser, subpars2)
+    if typing.TYPE_CHECKING:
+        subpars2 = cast(ArgParse.ArgsParser, subpars2)
     subpars2.set_defaults(func=_topology_info_command)
 
     ArgParse.add_options(subpars2, ssh_options)
@@ -563,7 +577,8 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     man_msg = "Refer to 'pepc-pmqos' manual page for more information."
     descr = "Various commands related to PM QoS (Power Management Quality of Service). " + man_msg
     subpars = subparsers.add_parser("pmqos", help=text, description=descr)
-    subpars = cast(ArgParse.ArgsParser, subpars)
+    if typing.TYPE_CHECKING:
+        subpars = cast(ArgParse.ArgsParser, subpars)
     subparsers2 = subpars.add_subparsers(title="Further sub-commands")
     subparsers2.required = True
 
@@ -574,7 +589,8 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     descr = """Get PM QoS information for specified CPUs. By default, print all information for
                all CPUs. """ + man_msg
     subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
-    subpars2 = cast(ArgParse.ArgsParser, subpars2)
+    if typing.TYPE_CHECKING:
+        subpars2 = cast(ArgParse.ArgsParser, subpars2)
     subpars2.set_defaults(func=_pmqos_info_command)
 
     ArgParse.add_options(subpars2, ssh_and_mechanisms_options)
@@ -593,7 +609,8 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     descr = """Configure PM QoS on specified CPUs. All options can be used without a parameter,
                in which case the currently configured value(s) will be printed. """ + man_msg
     subpars2 = subparsers2.add_parser("config", help=text, description=descr, epilog=man_msg)
-    subpars2 = cast(ArgParse.ArgsParser, subpars2)
+    if typing.TYPE_CHECKING:
+        subpars2 = cast(ArgParse.ArgsParser, subpars2)
     subpars2.set_defaults(func=_pmqos_config_command)
 
     ArgParse.add_options(subpars2, ssh_and_mechanisms_options)
@@ -610,7 +627,8 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     descr = """Read, write, and discover TPMI (Topology Aware Register and PM Capsule Interface)
                registers. """ + man_msg
     subpars = subparsers.add_parser("tpmi", help=text, description=descr)
-    subpars = cast(ArgParse.ArgsParser, subpars)
+    if typing.TYPE_CHECKING:
+        subpars = cast(ArgParse.ArgsParser, subpars)
 
     subparsers2 = subpars.add_subparsers(title="Further sub-commands")
     subparsers2.required = True
@@ -621,7 +639,8 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     text = "List available TPMI features."
     descr = """List TPMI features supported by the target system. """ + man_msg
     subpars2 = subparsers2.add_parser("ls", help=text, description=descr, epilog=man_msg)
-    subpars2 = cast(ArgParse.ArgsParser, subpars2)
+    if typing.TYPE_CHECKING:
+        subpars2 = cast(ArgParse.ArgsParser, subpars2)
     subpars2.set_defaults(func=_tpmi_ls_command)
 
     ArgParse.add_options(subpars2, ssh_options)
@@ -655,7 +674,8 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     text = "Read TPMI registers."
     descr = """Read TPMI registers. """ + man_msg
     subpars2 = subparsers2.add_parser("read", help=text, description=descr, epilog=man_msg)
-    subpars2 = cast(ArgParse.ArgsParser, subpars2)
+    if typing.TYPE_CHECKING:
+        subpars2 = cast(ArgParse.ArgsParser, subpars2)
     subpars2.set_defaults(func=_tpmi_read_command)
 
     ArgParse.add_options(subpars2, ssh_options)
@@ -703,7 +723,8 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     text = "Write TPMI registers."
     descr = """Write to a TPMI register. """ + man_msg
     subpars2 = subparsers2.add_parser("write", help=text, description=descr, epilog=man_msg)
-    subpars2 = cast(ArgParse.ArgsParser, subpars2)
+    if typing.TYPE_CHECKING:
+        subpars2 = cast(ArgParse.ArgsParser, subpars2)
     subpars2.set_defaults(func=_tpmi_write_command)
 
     ArgParse.add_options(subpars2, ssh_options)
@@ -748,7 +769,8 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     man_msg = "Refer to 'pepc-aspm' manual page for more information."
     descr = "Manage Active State Power Management configuration. " + man_msg
     subpars = subparsers.add_parser("aspm", help=text, description=descr)
-    subpars = cast(ArgParse.ArgsParser, subpars)
+    if typing.TYPE_CHECKING:
+        subpars = cast(ArgParse.ArgsParser, subpars)
     subparsers2 = subpars.add_subparsers(title="Further sub-commands")
     subparsers2.required = True
 
@@ -758,7 +780,8 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     text = "Get PCI ASPM information."
     descr = "Get information about current PCI ASPM configuration. " + man_msg
     subpars2 = subparsers2.add_parser("info", help=text, description=descr, epilog=man_msg)
-    subpars2 = cast(ArgParse.ArgsParser, subpars2)
+    if typing.TYPE_CHECKING:
+        subpars2 = cast(ArgParse.ArgsParser, subpars2)
     subpars2.set_defaults(func=_aspm_info_command)
 
     ArgParse.add_options(subpars2, ssh_options)
@@ -782,7 +805,8 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     text = "Change PCI ASPM configuration."
     descr = "Change PCI ASPM configuration. " + man_msg
     subpars2 = subparsers2.add_parser("config", help=text, description=descr, epilog=man_msg)
-    subpars2 = cast(ArgParse.ArgsParser, subpars2)
+    if typing.TYPE_CHECKING:
+        subpars2 = cast(ArgParse.ArgsParser, subpars2)
     subpars2.set_defaults(func=_aspm_config_command)
 
     ArgParse.add_options(subpars2, ssh_options)

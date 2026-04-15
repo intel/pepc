@@ -16,7 +16,6 @@ Test for the 'PStates' module.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
-from typing import cast
 import contextlib
 import pytest
 from tests import _Common, _PropsCommon
@@ -24,7 +23,7 @@ from pepclibs import CPUInfo, PStates
 from pepclibs.helperlibs.Exceptions import ErrorNotSupported
 
 if typing.TYPE_CHECKING:
-    from typing import Generator
+    from typing import Generator, cast
     from tests._PropsCommon import PropsTestParamsTypedDict
 
 @pytest.fixture(name="params", scope="module", params=_PropsCommon.get_enable_cache_param())
@@ -91,7 +90,9 @@ def _get_set_and_verify_data(params: PropsTestParamsTypedDict,
 
     with contextlib.suppress(ErrorNotSupported):
         pvinfo = pobj.get_cpu_prop("governors", cpu)
-        governors = cast(list[str], pvinfo["val"])
+        governors = pvinfo["val"]
+        if typing.TYPE_CHECKING:
+            governors = cast(list[str], governors)
         yield "governor", governors[0]
         yield "governor", governors[-1]
 
@@ -150,8 +151,9 @@ def test_freq_msr_vs_sysfs(params: PropsTestParamsTypedDict):
             min_freq_sysfs = pobj.get_cpu_prop("min_freq_limit", cpu, mnames=("sysfs",))["val"]
             min_freq_msr = pobj.get_cpu_prop("min_freq_limit", cpu, mnames=("msr",))["val"]
 
-            min_freq_sysfs = cast(int, min_freq_sysfs)
-            min_freq_msr = cast(int, min_freq_msr)
+            if typing.TYPE_CHECKING:
+                min_freq_sysfs = cast(int, min_freq_sysfs)
+                min_freq_msr = cast(int, min_freq_msr)
 
             if cpuinfo.is_hybrid():
                 assert min_freq_sysfs == min_freq_msr, \
@@ -173,7 +175,8 @@ def test_freq_msr_vs_sysfs(params: PropsTestParamsTypedDict):
                 continue
 
             max_freq_sysfs = pobj.get_cpu_prop("max_freq_limit", cpu, mnames=("sysfs",))["val"]
-            max_freq_sysfs = cast(int, max_freq_sysfs)
+            if typing.TYPE_CHECKING:
+                max_freq_sysfs = cast(int, max_freq_sysfs)
 
             turbo = pobj.get_cpu_prop("turbo", cpu)["val"]
 
@@ -192,7 +195,8 @@ def test_freq_msr_vs_sysfs(params: PropsTestParamsTypedDict):
                 if base_freq is None:
                     continue
 
-                base_freq = cast(int, base_freq)
+                if typing.TYPE_CHECKING:
+                    base_freq = cast(int, base_freq)
 
                 assert max_freq_sysfs == base_freq, \
                     f"'max_freq_limit' ({max_freq_sysfs}) and 'base_freq' ({base_freq})' " \
@@ -204,8 +208,9 @@ def test_freq_msr_vs_sysfs(params: PropsTestParamsTypedDict):
             base_freq_sysfs = pobj.get_cpu_prop("base_freq", cpu, mnames=("sysfs",))["val"]
             base_freq_msr = pobj.get_cpu_prop("base_freq", cpu, mnames=("msr",))["val"]
 
-            base_freq_sysfs = cast(int, base_freq_sysfs)
-            base_freq_msr = cast(int, base_freq_msr)
+            if typing.TYPE_CHECKING:
+                base_freq_sysfs = cast(int, base_freq_sysfs)
+                base_freq_msr = cast(int, base_freq_msr)
 
             assert base_freq_sysfs == base_freq_msr, \
                 f"'base_freq' ({base_freq_sysfs}) and 'base_freq' ({base_freq_msr})' mismatch " \
