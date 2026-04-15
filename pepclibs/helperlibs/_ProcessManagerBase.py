@@ -576,6 +576,48 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
 
         return ProcWaitResultType(stdout=stdout, stderr=stderr, exitcode=exitcode)
 
+    def wait_join(self,
+                  timeout: int | float | None = None,
+                  capture_output: bool = True,
+                  output_fobjs: Sequence[IO[str] | None] = (None, None),
+                  lines: tuple[int, int] = (0, 0)) -> ProcWaitResultJoinType:
+        """
+        Same as 'wait(join=True)', provided for convenience and more deterministic return type.
+        """
+
+        res = self.wait(timeout=timeout, capture_output=capture_output, output_fobjs=output_fobjs,
+                        lines=lines, join=True)
+
+        if typing.TYPE_CHECKING:
+            stdout = cast(str, res.stdout)
+            stderr = cast(str, res.stderr)
+        else:
+            stdout = res.stdout
+            stderr = res.stderr
+
+        return ProcWaitResultJoinType(stdout=stdout, stderr=stderr, exitcode=res.exitcode)
+
+    def wait_nojoin(self,
+                    timeout: int | float | None = None,
+                    capture_output: bool = True,
+                    output_fobjs: Sequence[IO[str] | None] = (None, None),
+                    lines: tuple[int, int] = (0, 0)) -> ProcWaitResultNoJoinType:
+        """
+        Same as 'wait(join=False)', provided for convenience and more deterministic return type.
+        """
+
+        res = self.wait(timeout=timeout, capture_output=capture_output, output_fobjs=output_fobjs,
+                        lines=lines, join=False)
+
+        if typing.TYPE_CHECKING:
+            stdout = cast(list[str], res.stdout)
+            stderr = cast(list[str], res.stderr)
+        else:
+            stdout = res.stdout
+            stderr = res.stderr
+
+        return ProcWaitResultNoJoinType(stdout=stdout, stderr=stderr, exitcode=res.exitcode)
+
     def get_cmd_failure_msg(self,
                             stdout: str | list[str],
                             stderr: str | list[str],
@@ -1751,7 +1793,7 @@ for ent in entries:
 
         raise NotImplementedError("ProcessManagerBase.get_envar()")
 
-    def which(self, program: str | Path, must_find: bool = True):
+    def which(self, program: str | Path, must_find: bool = True) -> Path | None:
         """
         Locate the full path of a program by searching in PATH.
 
@@ -1759,6 +1801,9 @@ for ent in entries:
             program: Name of the program to locate.
             must_find: If True, raise 'ErrorNotFound' if the program was not found. If False, return
                        None when the program was not found.
+
+        Returns:
+            The full path to the program, or None if not found and 'must_find' is False.
 
         Raises:
             ErrorNotFound: The program is not found in the search path and 'must_find' is 'True'.

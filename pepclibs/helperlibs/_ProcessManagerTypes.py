@@ -39,7 +39,7 @@ if typing.TYPE_CHECKING:
 
 class ProcWaitResultJoinType(NamedTuple):
     """
-    The result of the 'run_join()' method for a process with joined output lines.
+    The result of the 'run_join()' and 'wait_join()' methods for a process with joined output.
 
     Attributes:
         stdout: The standard output of the process as a single string. The tailing newline is
@@ -55,7 +55,8 @@ class ProcWaitResultJoinType(NamedTuple):
 
 class ProcWaitResultNoJoinType(NamedTuple):
     """
-    The result of the 'run_nojoin()' method for a process with non-joined output lines.
+    The result of the 'run_nojoin()' and 'wait_nojoin()' methods for a process with non-joined
+    output lines.
 
     Attributes:
         stdout: The standard output of the process as a list of strings lines. The tailing
@@ -104,6 +105,22 @@ class ProcessProtocol(Protocol):
              lines: tuple[int, int] = ...,
              join: bool = ...) -> ProcWaitResultType:
         """Refer to 'ProcessBase.wait()'."""
+        ...
+
+    def wait_join(self,
+                  timeout: int | float | None = ...,
+                  capture_output: bool = ...,
+                  output_fobjs: Sequence[IO[str] | None] = ...,
+                  lines: tuple[int, int] = ...) -> ProcWaitResultJoinType:
+        """Refer to 'ProcessBase.wait_join()'."""
+        ...
+
+    def wait_nojoin(self,
+                    timeout: int | float | None = ...,
+                    capture_output: bool = ...,
+                    output_fobjs: Sequence[IO[str] | None] = ...,
+                    lines: tuple[int, int] = ...) -> ProcWaitResultNoJoinType:
+        """Refer to 'ProcessBase.wait_nojoin()'."""
         ...
 
     def poll(self) -> int | None:

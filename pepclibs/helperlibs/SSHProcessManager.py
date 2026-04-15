@@ -467,7 +467,7 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
 
         self._dbg("SSHProcess._read_pid(): Reading PID for the following command: %s", self.cmd)
 
-        stdout, stderr, _ = self.wait(timeout=32, lines=(1, -1), join=False)
+        stdout, stderr, _ = self.wait_nojoin(timeout=32, lines=(1, -1))
 
         msg = f"\nThe command{self.hostmsg} was:\n{self.cmd}" \
               f"\nThe actual (real) command was:\n{self.real_cmd}"
@@ -1043,7 +1043,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         timeout = 32
         with self._do_run_async("id -u", intsh=True) as proc:
-            result = proc.wait(timeout=timeout, capture_output=True, join=True)
+            result = proc.wait_join(timeout=timeout, capture_output=True)
 
         if result.exitcode is None:
             msg = self.get_cmd_failure_msg("id -u", result.stdout, result.stderr,
@@ -1055,11 +1055,7 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
                                            result.exitcode, timeout=timeout)
             raise Error(f"Failed to check if the user is root{self.hostmsg}:\n{msg}")
 
-        if typing.TYPE_CHECKING:
-            stdout = cast(str, result.stdout)
-        else:
-            stdout = result.stdout
-        return stdout.strip() == "0"
+        return result.stdout.strip() == "0"
 
     def _run_async(self,
                    command: str | Path,

@@ -173,8 +173,8 @@ class Systemctl(ClassHelpers.SimpleCloseContext):
             True if the unit's state matches the specified state, False otherwise.
         """
 
-        output, _, _ = self._pman.run(f"{self._systemctl_path} is-{what} -- '{unit}'")
-        output = cast(str, output).strip()
+        output, _, _ = self._pman.run_join(f"{self._systemctl_path} is-{what} -- '{unit}'")
+        output = output.strip()
 
         return output == what
 

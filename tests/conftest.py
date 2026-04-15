@@ -143,5 +143,3 @@ def pytest_configure(config: pytest.Config):
 
         if not path.exists():
             raise pytest.exit(f"Did not find dataset '{dataset}'.")
-
-    print(f"Test parameters: hostname: {hostname}, dataset: '{dataset}'")
