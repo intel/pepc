@@ -28,7 +28,7 @@ from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported, ErrorPermis
 from pepclibs.helperlibs.Exceptions import ErrorPerCPUPath
 
 if typing.TYPE_CHECKING:
-    from typing import Literal, Generator, Final, Iterable
+    from typing import Literal, Generator, Final, Iterable, Sequence
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
@@ -147,22 +147,25 @@ class SimpleMSR(ClassHelpers.SimpleCloseContext):
             self._msr_drv = None
             raise type(err)(f"{msg}\n{err.indent(2)}") from err
 
-    def _normalize_bits(self, bits: tuple[int, int] | list[int]) -> tuple[int, int]:
+    def _normalize_bits(self, bits: Sequence[int]) -> tuple[int, int]:
         """
         Validate and normalize a bits range.
 
         Args:
-            bits: A tuple or list of two integers (msb, lsb) specifying the bit range to extract;
-                  msb is the most significant bit and lsb is the least significant bit.
+            bits: A sequence of two integers (msb, lsb) specifying the bit range to extract,
+                  where msb is the most significant bit and lsb is the least significant bit.
 
         Returns:
             A tuple of two integers representing the normalized bit range.
         """
 
         orig_bits = bits
+        if len(orig_bits) != 2:
+            raise Error(f"Bad bits range '{bits}', must be a sequence of 2 integers")
+
         try:
             if not Trivial.is_int(orig_bits[0]) or not Trivial.is_int(orig_bits[1]):
-                raise Error(f"Bad bits range '{bits}', must be a list or tuple of 2 integers")
+                raise Error(f"Bad bits range '{bits}', must be a sequence of 2 integers")
 
             bits = (int(orig_bits[0]), int(orig_bits[1]))
 
@@ -175,18 +178,18 @@ class SimpleMSR(ClassHelpers.SimpleCloseContext):
                 raise Error(f"Too many bits in ({bits[0]}, {bits[1]}), MSRs only have "
                             f"{self.regbits} bits")
         except TypeError:
-            raise Error(f"Bad bits range '{bits}', must be a list or tuple of 2 integers") from None
+            raise Error(f"Bad bits range '{bits}', must be a sequence of 2 integers") from None
 
         return bits
 
-    def get_bits(self, regval: int, bits: tuple[int, int] | list[int]) -> int:
+    def get_bits(self, regval: int, bits: Sequence[int]) -> int:
         """
         Extract a range of bits from an MSR value.
 
         Args:
             regval: The MSR value to extract bits from.
-            bits: A tuple or list of two integers (msb, lsb) specifying the bit range to extract;
-                  msb is the most significant bit and lsb is the least significant bit.
+            bits: A sequence of two integers (msb, lsb) specifying the bit range to extract,
+                  where msb is the most significant bit and lsb is the least significant bit.
 
         Returns:
             The integer value represented by the specified bit range, right-aligned to bit 0.
@@ -414,14 +417,14 @@ for cpu in cpus:
         raise ErrorPerCPUPath(f"Failed to read MSR '{regaddr:#x}' from CPU {cpu}"
                               f"{self._pman.hostmsg}", cpu=cpu, path=path)
 
-    def set_bits(self, regval: int, bits: tuple[int, int] | list[int], val: int) -> int:
+    def set_bits(self, regval: int, bits: Sequence[int], val: int) -> int:
         """
         Set a range of bits in an MSR value to a specified value and return the modified result.
 
         Args:
             regval: The MSR value in which to set the bits.
-            bits: A tuple or list of two integers (msb, lsb) specifying the bit range to set;
-                  msb is the most significant bit and lsb is the least significant bit.
+            bits: A sequence of two integers (msb, lsb) specifying the bit range to set,
+                  where msb is the most significant bit and lsb is the least significant bit.
             val: The value to set in the bits range to.
 
         Returns:
