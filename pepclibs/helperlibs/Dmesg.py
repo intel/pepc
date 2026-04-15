@@ -13,7 +13,6 @@ Provide API to the Linux 'dmesg' tool.
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
-from typing import cast
 import itertools
 import difflib
 from pepclibs.helperlibs import Logging
@@ -51,32 +50,23 @@ class Dmesg(ClassHelpers.SimpleCloseContext):
 
         ClassHelpers.close(self, close_attrs=("_pman",))
 
-    def run(self, join: bool = True, strip: bool = False, capture: bool = False) -> str | list[str]:
+    def run(self, strip: bool = False, capture: bool = False) -> list[str]:
         """
-        Run the 'dmesg' command and return its output.
+        Run the 'dmesg' command and return its output as a list of lines.
 
         Args:
-            join: If True, return the output as a single string, otherwise, return as a list of
-                  lines.
-            strip: If True, remove trailing newlines from the output.
+            strip: If True, strip leading and trailing whitespace from each line.
             capture: If True, save the output in the 'captured' attribute for later use (e.g.,
                      generating diffs).
 
         Returns:
-            The output of the 'dmesg' command, either as a single string or a list of lines,
-            depending on 'join'.
+            The output of the 'dmesg' command as a list of lines.
         """
 
         output, _ = self._pman.run_verify_nojoin("dmesg")
 
         if capture:
             self.captured = output
-
-        if join:
-            joined_output = "".join(output)
-            if strip:
-                return joined_output.strip()
-            return joined_output
 
         if strip:
             return [line.strip() for line in output]
@@ -100,7 +90,7 @@ class Dmesg(ClassHelpers.SimpleCloseContext):
             New 'dmesg' messages as a single string (if join is True) or as a list of lines.
         """
 
-        new_output = cast(list[str], self.run(join=False, strip=False, capture=False))
+        new_output = self.run(strip=False, capture=False)
 
         new_lines: list[str] = []
         diff = difflib.unified_diff(self.captured, new_output, n=0,
