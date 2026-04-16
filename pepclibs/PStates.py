@@ -261,8 +261,9 @@ class PStates(_PropsClassBase.PropsClassBase):
             Bus clock speed in Hz.
         """
 
-        _, val = next(self._get_bclks_cpus((cpu,)))
-        return val
+        for _, val in self._get_bclks_cpus((cpu,)):
+            return val
+        raise Error(f"BUG: No bus clock value yielded for CPU {cpu}")
 
     def _get_epp(self,
                  cpus: AbsNumsType,
@@ -1016,16 +1017,30 @@ class PStates(_PropsClassBase.PropsClassBase):
             return ""
 
         cpus = [err.cpu]
-        _, driver = next(self._get_prop_cpus_mnames("driver", cpus,
-                                                    self._props["driver"]["mnames"]))
+
+        for _, driver in self._get_prop_cpus_mnames("driver", cpus,
+                                                    self._props["driver"]["mnames"]):
+            break
+        else:
+            return ""
+
         if driver != "intel_pstate":
             return ""
-        _, mode = next(self._get_prop_cpus_mnames("intel_pstate_mode", cpus,
-                                                  self._props["intel_pstate_mode"]["mnames"]))
+
+        for _, mode in self._get_prop_cpus_mnames("intel_pstate_mode", cpus,
+                                                  self._props["intel_pstate_mode"]["mnames"]):
+            break
+        else:
+            return ""
+
         if mode != "active":
             return ""
-        _, governor = next(self._get_prop_cpus_mnames("governor", cpus,
-                                                      self._props["governor"]["mnames"]))
+        for _, governor in self._get_prop_cpus_mnames("governor", cpus,
+                                                      self._props["governor"]["mnames"]):
+            break
+        else:
+            return ""
+
         if governor != "performance":
             return ""
 

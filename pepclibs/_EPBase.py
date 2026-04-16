@@ -394,8 +394,9 @@ class EPBase(ClassHelpers.SimpleCloseContext):
             Tuple of (value, mname).
         """
 
-        _, val, mname = next(self._get_epp_or_epb((cpu,), mnames))
-        return val, mname
+        for _, val, mname in self._get_epp_or_epb((cpu,), mnames):
+            return val, mname
+        raise Error(f"BUG: No EPP/EPB value yielded for CPU {cpu}")
 
     def set_vals(self,
                  val: str | int,

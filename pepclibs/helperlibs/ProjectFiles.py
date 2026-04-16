@@ -362,8 +362,10 @@ def find_project_data(prjname: str,
     envar = get_project_data_envar(prjname)
 
     try:
-        return next(search_project_data(tpath, prjname=prjname, pman=pman, what=what,
-                                        envars=(envar,)))
+        for path in search_project_data(tpath, prjname=prjname, pman=pman, what=what,
+                                        envars=(envar,)):
+            return path
+        raise Error("BUG: 'search_project_data()' yielded nothing without raising 'ErrorNotFound'")
     except ErrorNotFound as err:
         if not what:
             what = f"'{prjname}' project data '{tpath}'"
