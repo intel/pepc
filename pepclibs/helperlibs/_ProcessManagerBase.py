@@ -209,23 +209,41 @@ class ProcessBase(ClassHelpers.SimpleCloseContext):
         """Class destructor."""
 
         with contextlib.suppress(BaseException):
-            self._dbg("ProcessBase: __del__()")
+            self._dbg("ProcessBase.__del__()")
 
         if hasattr(self, "_threads_exit"):
             # Increase chances of threads exiting if something went wrong (resilience).
             self._threads_exit = True
 
     def close(self):
-        """Free allocated resources."""
+        """
+        Free allocated resources.
+
+        If the process is still running, kill it before freeing resources. Delegates to
+        'self._kill()', which must be implemented by the subclass.
+        """
 
         self._dbg("ProcessBase.close()")
 
         if hasattr(self, "_threads_exit"):
-            # Make sure the threads exit.
+            # Make sure the threads exit before killing the process.
             self._threads_exit = True
+
+        if self.exitcode is None and self.pid != -1:
+            self._kill()
 
         unref_attrs = ("pman", "pobj", "_streams", "stdin", "_threads")
         ClassHelpers.close(self, unref_attrs=unref_attrs)
+
+    def _kill(self):
+        """
+        Kill the process.
+
+        Subclasses must implement this method. The implementation should kill 'self.pid' using
+        whatever strategy is appropriate for the process type.
+        """
+
+        raise NotImplementedError("ProcessBase._kill()")
 
     def _fetch_stream_data(self, streamid: int, size: int) -> bytes:
         """

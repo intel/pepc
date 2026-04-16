@@ -18,6 +18,7 @@ import os
 import time
 import errno
 import shlex
+import signal
 import shutil
 import socket
 import typing
@@ -53,6 +54,11 @@ class LocalProcess(_ProcessManagerBase.ProcessBase):
         self.stdin: IO[bytes]
         self.streams: list[IO[bytes]]
 
+        # Whether the process was started in a new process group.
+        self.newgrp = False
+        # Whether the process was started with a 'sudo' prefix.
+        self.sudo = False
+
     def _fetch_stream_data(self, streamid: int, size: int) -> bytes:
         """Refer to 'ProcessBase._fetch_stream_data()'."""
 
@@ -70,6 +76,45 @@ class LocalProcess(_ProcessManagerBase.ProcessBase):
                 raise
 
         raise Error(f"Received 'EAGAIN' error {retries} times")
+
+    def _kill(self):
+        """Refer to 'ProcessBase._kill()'."""
+
+        if not self.sudo:
+            # Enough permissions to signal the process directly.
+            if self.newgrp:
+                self._dbg("LocalProcess._kill(): Killing process group of PID %d", self.pid)
+
+                try:
+                    # Signal the entire process group to also kill process children.
+                    os.killpg(os.getpgid(self.pid), signal.SIGKILL)
+                except OSError as err:
+                    self._dbg("LocalProcess._kill(): Failed to kill process group of PID %d: %s",
+                              self.pid, err)
+            else:
+                self._dbg("LocalProcess._kill(): Killing PID %d", self.pid)
+
+                try:
+                    self.pobj.kill()
+                except OSError as err:
+                    self._dbg("LocalProcess._kill(): Failed to kill PID %d: %s", self.pid, err)
+        else:
+            # The process runs as root and no permission to signal it directly. Run an external
+            # command with superuser privileges to kill the process.
+            if self.newgrp:
+                # Signal the entire process group to also kill process children.
+                cmd = f"pkill -9 -g $(ps -o pgid= -p {self.pid})"
+            else:
+                # Signalling the process group would be a suicide.
+                cmd = f"kill -9 {self.pid}"
+
+            self._dbg("LocalProcess._kill(): sudo: %s", cmd)
+
+            try:
+                self.pman.run(cmd, su=True, intsh=False)
+            except Error as err:
+                self._dbg("LocalProcess._kill(): Failed to kill PID %d with sudo: %s",
+                          self.pid, err)
 
     def _wait_timeout(self, timeout: int | float) -> int | None:
         """
@@ -225,6 +270,8 @@ class LocalProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         proc = LocalProcess(self, pobj, command, cmd, streams)
         proc.pid = pobj.pid
+        proc.newgrp = newgrp
+        proc.sudo = su and not self.is_superuser()
 
         return proc
 

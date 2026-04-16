@@ -102,6 +102,9 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
         # Prior complete lines were already checked and flushed.
         self._ll = ["", ""]
 
+        # Whether the process was started with a 'sudo' prefix.
+        self.sudo = False
+
         self._read_pid()
 
     def _reinit_marker(self):
@@ -128,12 +131,35 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
     def close(self):
         """Free allocated resources."""
 
-        self._dbg("SSHProcessManager.close()")
+        self._dbg("SSHProcess.close()")
 
-        # If this is the an interactive shell process - do not close it. It'll be closed in
-        # 'SSHProcessManager.close()' instead.
-        if not self._marker:
+        if self._marker:
+            # Intsh process: kill only the command's PID (not the interactive shell), then release
+            # the intsh lock so the shell remains usable. Do not call 'super().close()', the
+            # channel belongs to the interactive shell and must stay open.
+            if self.exitcode is None and self.pid != -1:
+                self._kill()
+            # pylint: disable=protected-access
+            self.pman._mark_intsh_idle(self.cmd)
+        else:
             super().close()
+
+    def _kill(self):
+        """Refer to 'ProcessBase._kill()'."""
+
+        if self._marker:
+            # Intsh process: kill only the command PID, not the interactive shell.
+            cmd = f"kill -9 {self.pid}"
+        else:
+            # Non-intsh process: kill the entire process group.
+            cmd = f"pkill -9 -g $(ps -o pgid= -p {self.pid})"
+
+        self._dbg("SSHProcess._kill(): %s", cmd)
+
+        try:
+            self.pman.run(cmd, su=self.sudo, intsh=False)
+        except Error as err:
+            self._dbg("SSHProcess._kill(): Failed to kill PID %d: %s", self.pid, err)
 
     def _fetch_stream_data(self, streamid, size):
         """Fetch up to 'size' bytes from stdout or stderr of the process."""
@@ -285,7 +311,7 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
             result = self._get_lines_to_return(lines)
             if self._process_is_done():
                 # pylint: disable=protected-access
-                self.pman._release_intsh_lock(self.cmd)
+                self.pman._mark_intsh_idle(self.cmd)
             return result
 
         # The interactive shell ('sh -s') is started once and reused across multiple commands. Each
@@ -387,7 +413,7 @@ class SSHProcess(_ProcessManagerBase.ProcessBase):
         if self._process_is_done():
             # Mark the interactive shell process as vacant.
             # pylint: disable=protected-access
-            self.pman._release_intsh_lock(self.cmd)
+            self.pman._mark_intsh_idle(self.cmd)
 
         return result
 
@@ -944,9 +970,9 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
 
         return acquired
 
-    def _release_intsh_lock(self, command: str | None = None):
+    def _mark_intsh_idle(self, command: str | None = None):
         """
-        Mark the interactive shell as free.
+        Mark the interactive shell as idle and available for the next command.
 
         Args:
             command: Optional command string. Used for logging purposes if the lock cannot be
@@ -1083,12 +1109,16 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         """
 
         if not su or self.is_superuser():
-            return self._do_run_async(command=command, cwd=cwd, intsh=intsh, env=env,
+            proc = self._do_run_async(command=command, cwd=cwd, intsh=intsh, env=env,
                                       mix_output=mix_output)
+            proc.sudo = False
+            return proc
 
         if self.has_passwdless_sudo():
             sudo_cmd = self._format_sudo_cmd(command, cwd=cwd, env=env)
-            return self._do_run_async(command=sudo_cmd, intsh=intsh, mix_output=mix_output)
+            proc = self._do_run_async(command=sudo_cmd, intsh=intsh, mix_output=mix_output)
+            proc.sudo = True
+            return proc
 
         raise ErrorPermissionDenied(f"Cannot run a command with superuser privileges without root "
                                     f"access or passwordless sudo{self.hostmsg}. The command is:\n"
