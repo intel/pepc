@@ -23,7 +23,7 @@ import typing
 from collections import deque
 from pathlib import Path
 from pepclibs.helperlibs import ClassHelpers, Logging
-from pepclibs.helperlibs.Exceptions import Error
+from pepclibs.helperlibs.Exceptions import Error, ErrorPermissionDenied
 
 if typing.TYPE_CHECKING:
     from typing import cast
@@ -152,7 +152,13 @@ class SudoFile(ClassHelpers.SimpleCloseContext):
             file_content = stdout[:self._offset] + str_data + stdout[end:]
             cmd = f"printf '%s' {shlex.quote(file_content)} > {path_quoted}"
 
-        self._pman.run_verify(cmd, su=True)
+        try:
+            self._pman.run_verify(cmd, su=True)
+        except Error as err:
+            errmsg = str(err).lower()
+            if "permission denied" in errmsg or "operation not permitted" in errmsg:
+                raise ErrorPermissionDenied(str(err)) from err
+            raise
 
         self._offset += write_len
         return len(data)
