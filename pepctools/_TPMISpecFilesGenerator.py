@@ -30,9 +30,9 @@ from pepctools import _TPMIXMLConvert
 
 if typing.TYPE_CHECKING:
     import argparse
-    from typing import Final, Sequence
+    from typing import Final, Sequence, TypedDict
 
-    class _CmdlineArgsTypedDict(typing.TypedDict, total=False):
+    class _CmdlineArgsTypedDict(TypedDict, total=False):
         """
         Typed dictionary for command-line arguments dictionary.
 

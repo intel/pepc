@@ -25,7 +25,7 @@ from pepclibs.helperlibs.Exceptions import Error
 
 if typing.TYPE_CHECKING:
     import zipfile
-    from typing import Final, Literal, Sequence
+    from typing import Final, IO, Literal, Sequence
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
     SudoAliasStyle = Literal["refresh", "wrap"]
@@ -190,7 +190,7 @@ class PythonPrjInstaller(ClassHelpers.SimpleCloseContext):
         cmd = f"python3 -m venv '{self.install_path}' && " \
               f"'{self.install_path}/bin/python3' -m pip install --upgrade '{src}'"
 
-        output_fobjs: tuple[typing.IO | None, typing.IO | None]
+        output_fobjs: tuple[IO | None, IO | None]
         if self._logging:
             pfx = "  [pip] "
             output_fobjs = (LoggerFile.LoggerFile(prefix=pfx), LoggerFile.LoggerFile(prefix=pfx))
@@ -341,7 +341,7 @@ export MANPATH="$MANPATH:$($VENV_BIN/{self._prjname} --print-man-path)"
                 # Exclude unnecessary directories and files.
                 all_excludes = ("**/*.pyc", "__pycache__", "build", "*.egg-info") + tuple(exclude)
 
-                output_fobjs: tuple[typing.IO | None, typing.IO | None]
+                output_fobjs: tuple[IO | None, IO | None]
                 if self._logging:
                     pfx = "  [rsync] "
                     output_fobjs = (LoggerFile.LoggerFile(prefix=pfx),

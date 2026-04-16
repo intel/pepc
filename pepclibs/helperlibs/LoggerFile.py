@@ -14,6 +14,7 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import io
 import typing
+from typing import IO
 from pepclibs.helperlibs import Logging, _ProcessManagerBase
 
 if typing.TYPE_CHECKING:
@@ -22,7 +23,7 @@ if typing.TYPE_CHECKING:
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
-class LoggerFile(typing.TextIO):
+class LoggerFile(IO[str]):
     """
     A write-only file-like object that routes data to the logger.
 
@@ -75,7 +76,7 @@ class LoggerFile(typing.TextIO):
         return self._closed
 
     @property
-    def buffer(self) -> typing.BinaryIO:
+    def buffer(self) -> IO[bytes]:
         """The underlying binary buffer."""
         raise io.UnsupportedOperation("buffer")
 
@@ -143,7 +144,7 @@ class LoggerFile(typing.TextIO):
         self._closed = True
         self.flush()
 
-    def __enter__(self) -> typing.TextIO:
+    def __enter__(self) -> IO[str]:
         """Enter the runtime context."""
         return self
 

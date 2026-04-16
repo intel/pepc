@@ -310,7 +310,6 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
 
         raise Error(f"BUG: Unexpected scope name {sname} for message formatting")
 
-    # pylint: disable-next=unused-argument
     def _format_value_human(self,
                             pname: str,
                             prop: PropertyTypedDict,
@@ -327,6 +326,8 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
         Returns:
             Human-readable representation of the value.
         """
+
+        # pylint: disable=unused-argument
 
         def _detect_progression(vals: list[int], min_len: int) -> int | None:
             """
@@ -825,12 +826,18 @@ class _PropsPrinter(ClassHelpers.SimpleCloseContext):
                     pinfo["vals"][val_key] = [num_int]
             else:
                 if sname == "die":
-                    dies = cast(dict[int, list[int]], pinfo["vals"][val_key])
+                    if typing.TYPE_CHECKING:
+                        dies = cast(dict[int, list[int]], pinfo["vals"][val_key])
+                    else:
+                        dies = pinfo["vals"][val_key]
                     if package not in dies:
                         dies[package] = []
                     dies[package].append(die)
                 else:
-                    nums = cast(list[int], pinfo["vals"][val_key])
+                    if typing.TYPE_CHECKING:
+                        nums = cast(list[int], pinfo["vals"][val_key])
+                    else:
+                        nums = pinfo["vals"][val_key]
                     nums.append(num_int)
 
             if sname != pinfo["sname"]:
