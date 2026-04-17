@@ -78,6 +78,8 @@ PEPC_DEPENDENCIES: Final[tuple[str, ...]] = (
     "cat",
     "dmesg",
     "id",
+    "kill",
+    "pkill",
     "uname",
     "modprobe")
 
