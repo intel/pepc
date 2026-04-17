@@ -49,6 +49,7 @@ _COMMON_PKGINFO: Final[dict[str, str]] = {
     "rsync":     "rsync",
     "sync":      "coreutils",
     "systemctl": "systemd",
+    "taskset":   "util-linux",
     "uname":     "coreutils",
     "unlink":    "coreutils",
     "xargs":     "findutils",
