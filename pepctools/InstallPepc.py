@@ -223,6 +223,7 @@ def install_pepc(pman: ProcessManagerType,
         installer.install_dependencies(PEPC_DEPENDENCIES)
 
     installer.install(exclude=PEPC_COPY_EXCLUDE)
+    installer.create_rc_file()
 
     if not no_rcfile and not no_sudo_alias:
         if force_sudo_alias:

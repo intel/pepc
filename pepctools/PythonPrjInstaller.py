@@ -53,6 +53,7 @@ class PythonPrjInstaller(ClassHelpers.SimpleCloseContext):
     Public methods overview:
         - 'install_dependencies()' - install OS packages required by the project.
         - 'install()' - create the virtual environment and install the project.
+        - 'create_rc_file()' - create the shell RC file for the project.
         - 'add_sudo_aliases()' - append 'sudo' aliases for the project's tools to the RC file.
         - 'hookup_rc_file()' - source the project RC file from the user's shell RC file.
     """
@@ -199,12 +200,16 @@ class PythonPrjInstaller(ClassHelpers.SimpleCloseContext):
 
         self._pman.run_verify(cmd, output_fobjs=output_fobjs)
 
-    def _create_rc_file(self) -> Path:
+    def create_rc_file(self, argcomplete_tools: Sequence[str] = ()) -> Path:
         """
         Create a shell RC file for the project in the installation directory.
 
         The file is intended to be sourced from the user's shell RC file (e.g. '.bashrc'). It
         sets up the PATH, tab completions, and man pages.
+
+        Args:
+            argcomplete_tools: Names of the tools to register for tab completion. Defaults to
+                               the project name.
 
         Returns:
             The path to the created RC file on the target host.
@@ -215,6 +220,10 @@ class PythonPrjInstaller(ClassHelpers.SimpleCloseContext):
         if self._logging:
             _LOG.info("Creating a configuration file '%s'%s", rcfile_path, self._pman.hostmsg)
 
+        tools = argcomplete_tools if argcomplete_tools else (self._prjname,)
+        argcomplete_lines = "".join(
+            f'eval "$($VENV_BIN/register-python-argcomplete {t})"\n' for t in tools)
+
         contents = f""" \
 # === {self._prjname} settings ===
 VENV="{self.install_path}"
@@ -224,8 +233,7 @@ VENV_BIN="$VENV/bin"
 export PATH="$PATH:$VENV_BIN"
 
 # Enable tab completion for {self._prjname}.
-eval "$($VENV_BIN/register-python-argcomplete {self._prjname})"
-
+{argcomplete_lines}
 # Enable man pages.
 export MANPATH="$MANPATH:$($VENV_BIN/{self._prjname} --print-man-path)"
 # === end of {self._prjname} settings ===
@@ -361,8 +369,6 @@ export MANPATH="$MANPATH:$($VENV_BIN/{self._prjname} --print-man-path)"
         finally:
             if tmpdir:
                 self._pman.rmtree(tmpdir)
-
-        self._create_rc_file()
 
     def _find_site_packages(self) -> Path:
         """
