@@ -937,8 +937,11 @@ class SSHProcessManager(_ProcessManagerBase.ProcessManagerBase):
         cmd += f'; printf "%s, %d ---" "{proc._marker}" "$?"'
         cmd += f'; printf "%s, {_FAKE_EXIT_CODE} ---" "{proc._marker}" 1>&2\n'
 
-        # Run the command.
-        proc.pobj.send(cmd.encode())
+        # Run the command. Use 'sendall()' instead of 'send()' to ensure the full command is
+        # delivered. 'send()' may return without sending all bytes when the SSH send window is
+        # full, silently dropping the rest of the command (including the terminating newline).
+        # The remote shell then hangs waiting for more input, and 'wait()' times out.
+        proc.pobj.sendall(cmd.encode())
 
         # Re-initialize the interactive shell process object to match the new command.
         proc._reinit(command, cmd)
