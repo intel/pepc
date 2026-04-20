@@ -53,7 +53,7 @@ The `tools/install-pepc` script is the simplest way to install `pepc`. It takes 
 everything: installing OS dependencies, creating the Python virtual environment, configuring
 shell tab completions, man pages, and adding a `sudo` alias if needed.
 
-First, clone the repository to get the script.
+Clone the repository to get the installation script:
 
 ```bash
 git clone https://github.com/intel/pepc.git
@@ -63,7 +63,7 @@ cd pepc
 **Install the latest release from GitHub**
 
 Run `tools/install-pepc` without arguments. It fetches and installs the latest `pepc` release
-directly from GitHub. No additional options needed.
+directly from GitHub. The local clone is only used to run the script.
 
 ```bash
 ./tools/install-pepc
@@ -71,10 +71,10 @@ directly from GitHub. No additional options needed.
 
 **Install from a local clone**
 
-Use `--src-path` with the path to the cloned repository to install from local sources instead.
+Use `--src-path` to install from the local clone instead.
 
 ```bash
-./tools/install-pepc --src-path /path/to/pepc
+./tools/install-pepc --src-path .
 ```
 
 The script adds `pepc` configuration to your `~/.bashrc`. Re-login or source `~/.bashrc` to apply
