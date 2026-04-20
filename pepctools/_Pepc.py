@@ -37,7 +37,7 @@ if typing.TYPE_CHECKING:
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepclibs.PropsTypes import PropertyTypedDict
 
-_VERSION: Final[str] = "2.0.0"
+_VERSION: Final[str] = "2.0.1"
 TOOLNAME: Final[str] = "pepc"
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc")

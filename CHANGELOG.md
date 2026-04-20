@@ -5,6 +5,12 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
+### Added
+### Removed
+### Changed
+
+## [2.0.1] - 2026-04-20
+### Fixed
  - Fix crash with python 3.10 due to missing import.
 ### Added
 ### Removed
