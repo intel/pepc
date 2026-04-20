@@ -5,6 +5,7 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
+ - Fix crash with python 3.10 due to missing import.
 ### Added
 ### Removed
 ### Changed
@@ -15,7 +16,7 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
  - Fix a crash when uncore commands are used for a single CPU.
 ### Added
  - Fix Grand Ridge TPMI support.
- - Add 'install-pepc' tool, replacing old sctipt.
+ - Add 'install-pepc' tool, replacing old script.
  - Add 'make-standalone' tool.
  - Add built-in sudo support.
 ### Removed
@@ -25,11 +26,11 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [1.6.26] - 2026-03-04
 ### Changed
- - Greatly improve operations by improvein MSR I/O speed.
+ - Greatly improve operations by improving MSR I/O speed.
 
 ## [1.6.25] - 2026-03-03
 ### Fixed
- - pepc installation: Fix TMPI spec files installation issue.
+ - pepc installation: Fix TPMI spec files installation issue.
 
 ## [1.6.24] - 2026-02-09
 ### Fixed
@@ -37,7 +38,7 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [1.6.23] - 2026-02-04
 ### Fixed
- - Fix sysfs uncore directores matching to die IDs.
+ - Fix sysfs uncore directories matching to die IDs.
 ### Changed
  - Move '--dies-info' option to 'pepc uncore info'.
  - Improve users guide.

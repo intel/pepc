@@ -12,6 +12,9 @@ Shared constants and type definitions for emulation data configuration.
 This module contains shared definitions used by both the emulation data generator
 (_EmulDataGen.py) and the emulation process manager (EmulProcessManager.py).
 """
+
+from __future__ import annotations # Remove when switching to Python 3.10+.
+
 import typing
 from pathlib import Path
 
