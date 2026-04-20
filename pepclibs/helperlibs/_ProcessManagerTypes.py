@@ -94,6 +94,7 @@ class ProcWaitResultType(NamedTuple):
 class ProcessProtocol(Protocol):
     """Protocol describing the public interface of a process object."""
 
+    pid: int
     exitcode: int | None
     cmd: str
     real_cmd: str
