@@ -194,11 +194,11 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [1.5.39] - 2025-06-06
 ### Fixed
- - Fix hybrid core type detiction in 'pepc topology info'.
+ - Fix hybrid core type detection in 'pepc topology info'.
  - Fix 'pepc print pstates --mechanisms msr,cppc' and similar use-cases.
 ### Added
  - Add LPE cores support.
- - Improve output on hybryd systems: specify core types.
+ - Improve output on hybrid systems: specify core types.
 ### Removed
  - Remove 'pepc power' command.
  - Remove package C-state aliases output.
@@ -225,7 +225,7 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [1.5.35] - 2025-05-16
 ### Fixed
- - Remove forgotted debug print.
+ - Remove forgotten debug print.
 
 ## [1.5.34] - 2025-05-16
 ### Fixed
@@ -324,7 +324,7 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
  - Improve 'pepc topology info' output and avoid printing identical lines many
    times.
  - Improve '--cores' and '--dies' options handling: do not require '--packages'
-   option if there is no abiguity.
+   option if there is no ambiguity.
 
 ## [1.5.14] - 2024-04-25
 ### Changed
@@ -333,7 +333,7 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [1.5.13] - 2024-04-11
 ### Fixed
- - Critical fix: address incorrect 'pepc pastates config --min-uncore-freq'
+ - Critical fix: address incorrect 'pepc pstates config --min-uncore-freq'
    behavior on Grand Ridge, Sierra Forest and Granite Rapids platforms.
 
 ## [1.5.12] - 2024-04-09
@@ -359,7 +359,7 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [1.5.8] - 2024-03-08
 ### Changed
- - Dummy release, no changes comparing to 1.5.8.
+ - Dummy release, no changes compared to 1.5.7.
 
 ## [1.5.7] - 2024-03-08
 ### Added
@@ -367,7 +367,7 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [1.5.6] - 2024-02-19
 ### Fixed
- - Workaround for connecting to remote hosts becaulse of paramiko failing in
+ - Workaround for connecting to remote hosts because of paramiko failing in
    Fedora 39.
 
 ## [1.5.5] - 2024-02-09
@@ -413,7 +413,7 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [1.4.43] - 2023-12-20
 ### Fixed
- - Fix C-state printing with '--yaml' opiton.
+ - Fix C-state printing with '--yaml' option.
  - Fix 'pepc pstates config' failing with 'mdl' CPU and uncore frequency value.
 ### Changed
  - Refer to packages and dies when printing about per-package and per-die
@@ -425,7 +425,7 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [1.4.41] - 2023-11-22
 ### Fixed
-  - Fix 'pepc power config --ppl2' faling on some system with a "PPL2 value out
+  - Fix 'pepc power config --ppl2' failing on some system with a "PPL2 value out
     of range" error message.
 
 ## [1.4.40] - 2023-11-20
@@ -508,12 +508,12 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Fixed
  - Fix typo in 'pepc' tool sub-option 'config/info's help text.
 ### Changed
- - Group propeties by source only when printing all properties. This
+ - Group properties by source only when printing all properties. This
    partially reverts grouping introduced in version 1.4.28.
  - Change '--cstates' option output format, the properties are now
    grouped by their source.
  - Move "governors" from '--governor' option, to it own option '--governors'.
- - Move package C-state limit lock, limits and alises from option
+ - Move package C-state limit lock, limits and aliases from option
    '--pkg-cstate-limit', to their own options: '--pkg-cstate-limit-lock',
    '--pkg-cstate-limits' and '--pkg-cstate-limit-aliases'.
 
@@ -524,7 +524,7 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [1.4.27] - 2023-07-06
 ### Fixed
- - Fix crash intoduced in v1.4.26, which occurred when running 'pepc'
+ - Fix crash introduced in v1.4.26, which occurred when running 'pepc'
    commands on hybrid CPUs.
 
 ## [1.4.26] - 2023-07-06
