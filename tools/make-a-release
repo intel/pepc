@@ -15,20 +15,27 @@ make-a-release - make a project release.
 import sys
 from pathlib import Path
 
-try:
-    from pepctools import _MakeARelease
-except ImportError:
-    # The script may be run directly from source. Add the pepc project root to the module search
-    # path and retry.
-    _prjroot = Path(__file__).parent.parent.resolve()
+_prjroot = Path(__file__).parent.parent.resolve()
+
+# This script can be run in two ways:
+#   1. From a source tree - 'pepctools' resides in the project root.
+#   2. From an installation - the script is installed (e.g., under '/usr/bin'), and 'pepctools'
+#      is installed as a regular Python package.
+#
+# In case 1, we need to add the project root to 'sys.path' before importing anything, so that
+# Python resolves 'pepctools' from the source tree. This must be done upfront - before any import -
+# to prevent Python from finding and partially importing a system-installed version first, and then
+# mixing it with the source version.
+if (_prjroot / "pepctools").is_dir():
     sys.path.insert(0, str(_prjroot))
 
-    # Python may have already cached the system-installed 'pepctools' package in 'sys.modules'
-    # during the failed import above. Pop it so the next import re-resolves the package from
-    # the updated 'sys.path', picking up the source tree instead.
-    sys.modules.pop("pepctools", None)
-
+try:
     from pepctools import _MakeARelease
+except ImportError as err:
+    print(f"Error: Cannot import 'pepctools': {err}", file=sys.stderr)
+    print("Make sure 'pepctools' is installed, or run the script from its source tree",
+          file=sys.stderr)
+    raise SystemExit(1) from None
 
 if __name__ == "__main__":
     raise SystemExit(_MakeARelease.main())
