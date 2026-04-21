@@ -23,6 +23,7 @@ Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
   - [Against a Local Host](#against-a-local-host)
   - [Against a Remote Host](#against-a-remote-host)
   - [Combining a Real Host and Emulation](#combining-a-real-host-and-emulation)
+- [GitHub CI](#github-ci)
 - [Real-Host-Only Tests](#real-host-only-tests)
 - [Debug Messages](#debug-messages)
 - [Special Dataset Notes](#special-dataset-notes)
@@ -145,6 +146,18 @@ This is useful for comparing real-host behavior against emulation in a single ru
 
 For real-host-only tests `-D` is silently ignored when `-H` is also provided, because those tests
 never run on emulation.
+
+## GitHub CI
+
+CI here refers to GitHub Actions, the automated workflows in `.github/workflows/`. The main test
+workflow is `.github/workflows/pytest.yml`, triggered on every push by two orchestrating workflows:
+
+- `.github/workflows/ci-public.yml`: runs on the public GitHub repository (`intel/pepc`).
+- `.github/workflows/ci-innersource.yml`: runs on the innersource (Intel-internal) repository
+  (`intel-innersource/applications.validation.server-powerlab.pepc`).
+
+The CI test run uses only emulation datasets. It does not have access to real hardware, so
+real-host-only tests are skipped.
 
 ## Real-Host-Only Tests
 
