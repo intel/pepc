@@ -35,6 +35,11 @@ jobs:
             from="${{ github.event.before }}" ||
             from="${{ github.event.pull_request.base.sha }}"
 
+          # 'from' may not exist in this repo (e.g. first push to a new remote).
+          # Fall back to the parent of the oldest commit in this push.
+          git cat-file -e "${from}^{commit}" 2>/dev/null ||
+            from=$(git rev-list --topo-order HEAD | tail -1)^@
+
           printf "DEBUG: github.event_name='%s'\n" "${{ github.event_name }}"
           printf "DEBUG: from='%s'\n" "$from"
 
@@ -62,6 +67,11 @@ jobs:
           [ "${{ github.event_name }}" = "push" ] &&
             from="${{ github.event.before }}" ||
             from="${{ github.event.pull_request.base.sha }}"
+
+          # 'from' may not exist in this repo (e.g. first push to a new remote).
+          # Fall back to the parent of the oldest commit in this push.
+          git cat-file -e "${from}^{commit}" 2>/dev/null ||
+            from=$(git rev-list --topo-order HEAD | tail -1)^@
 
           printf "DEBUG: github.event_name='%s'\n" "${{ github.event_name }}"
           printf "DEBUG: from='%s'\n" "$from"
