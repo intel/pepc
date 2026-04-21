@@ -33,7 +33,7 @@ model		: 106
 model name	: Intel(R) Xeon(R) Silver 4309Y CPU @ 2.80GHz
 stepping	: 6
 microcode	: 0xd0003d1
-cpu MHz		: 800.171
+cpu MHz		: 800.000
 cache size	: 12288 KB
 physical id	: 1
 siblings	: 16
@@ -201,7 +201,7 @@ model		: 106
 model name	: Intel(R) Xeon(R) Silver 4309Y CPU @ 2.80GHz
 stepping	: 6
 microcode	: 0xd0003d1
-cpu MHz		: 800.000
+cpu MHz		: 800.225
 cache size	: 12288 KB
 physical id	: 1
 siblings	: 16
@@ -257,7 +257,7 @@ model		: 106
 model name	: Intel(R) Xeon(R) Silver 4309Y CPU @ 2.80GHz
 stepping	: 6
 microcode	: 0xd0003d1
-cpu MHz		: 1020.563
+cpu MHz		: 800.000
 cache size	: 12288 KB
 physical id	: 1
 siblings	: 16
@@ -369,7 +369,7 @@ model		: 106
 model name	: Intel(R) Xeon(R) Silver 4309Y CPU @ 2.80GHz
 stepping	: 6
 microcode	: 0xd0003d1
-cpu MHz		: 800.086
+cpu MHz		: 800.000
 cache size	: 12288 KB
 physical id	: 1
 siblings	: 16
@@ -537,7 +537,7 @@ model		: 106
 model name	: Intel(R) Xeon(R) Silver 4309Y CPU @ 2.80GHz
 stepping	: 6
 microcode	: 0xd0003d1
-cpu MHz		: 2399.975
+cpu MHz		: 800.000
 cache size	: 12288 KB
 physical id	: 1
 siblings	: 16
@@ -705,7 +705,7 @@ model		: 106
 model name	: Intel(R) Xeon(R) Silver 4309Y CPU @ 2.80GHz
 stepping	: 6
 microcode	: 0xd0003d1
-cpu MHz		: 800.000
+cpu MHz		: 2800.000
 cache size	: 12288 KB
 physical id	: 1
 siblings	: 16

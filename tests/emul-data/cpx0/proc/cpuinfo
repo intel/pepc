@@ -89,7 +89,7 @@ model		: 85
 model name	: Intel(R) Xeon(R) Gold 5318H CPU @ 2.50GHz
 stepping	: 11
 microcode	: 0x7000020
-cpu MHz		: 2399.998
+cpu MHz		: 1000.000
 cache size	: 25344 KB
 physical id	: 0
 siblings	: 36
@@ -117,7 +117,7 @@ model		: 85
 model name	: Intel(R) Xeon(R) Gold 5318H CPU @ 2.50GHz
 stepping	: 11
 microcode	: 0x7000020
-cpu MHz		: 1000.443
+cpu MHz		: 1000.000
 cache size	: 25344 KB
 physical id	: 0
 siblings	: 36
@@ -593,7 +593,7 @@ model		: 85
 model name	: Intel(R) Xeon(R) Gold 5318H CPU @ 2.50GHz
 stepping	: 11
 microcode	: 0x7000020
-cpu MHz		: 1000.000
+cpu MHz		: 1000.026
 cache size	: 25344 KB
 physical id	: 1
 siblings	: 36
@@ -1041,7 +1041,7 @@ model		: 85
 model name	: Intel(R) Xeon(R) Gold 5318H CPU @ 2.50GHz
 stepping	: 11
 microcode	: 0x7000020
-cpu MHz		: 999.993
+cpu MHz		: 1000.000
 cache size	: 25344 KB
 physical id	: 0
 siblings	: 36
@@ -1069,7 +1069,7 @@ model		: 85
 model name	: Intel(R) Xeon(R) Gold 5318H CPU @ 2.50GHz
 stepping	: 11
 microcode	: 0x7000020
-cpu MHz		: 1000.470
+cpu MHz		: 1000.000
 cache size	: 25344 KB
 physical id	: 0
 siblings	: 36
@@ -1657,7 +1657,7 @@ model		: 85
 model name	: Intel(R) Xeon(R) Gold 5318H CPU @ 2.50GHz
 stepping	: 11
 microcode	: 0x7000020
-cpu MHz		: 1000.000
+cpu MHz		: 3600.003
 cache size	: 25344 KB
 physical id	: 1
 siblings	: 36

@@ -5,7 +5,7 @@ model		: 85
 model name	: Genuine Intel(R) CPU 0000%@
 stepping	: 6
 microcode	: 0x4000026
-cpu MHz		: 1000.031
+cpu MHz		: 1000.000
 cache size	: 36608 KB
 physical id	: 0
 siblings	: 96
@@ -59,7 +59,7 @@ model		: 85
 model name	: Genuine Intel(R) CPU 0000%@
 stepping	: 6
 microcode	: 0x4000026
-cpu MHz		: 1000.237
+cpu MHz		: 1000.000
 cache size	: 36608 KB
 physical id	: 0
 siblings	: 96
@@ -86,7 +86,7 @@ model		: 85
 model name	: Genuine Intel(R) CPU 0000%@
 stepping	: 6
 microcode	: 0x4000026
-cpu MHz		: 1299.998
+cpu MHz		: 1000.000
 cache size	: 36608 KB
 physical id	: 0
 siblings	: 96
@@ -545,7 +545,7 @@ model		: 85
 model name	: Genuine Intel(R) CPU 0000%@
 stepping	: 6
 microcode	: 0x4000026
-cpu MHz		: 1000.021
+cpu MHz		: 1000.000
 cache size	: 36608 KB
 physical id	: 0
 siblings	: 96
@@ -788,7 +788,7 @@ model		: 85
 model name	: Genuine Intel(R) CPU 0000%@
 stepping	: 6
 microcode	: 0x4000026
-cpu MHz		: 1000.000
+cpu MHz		: 1000.133
 cache size	: 36608 KB
 physical id	: 0
 siblings	: 96
@@ -815,7 +815,7 @@ model		: 85
 model name	: Genuine Intel(R) CPU 0000%@
 stepping	: 6
 microcode	: 0x4000026
-cpu MHz		: 1000.000
+cpu MHz		: 1500.004
 cache size	: 36608 KB
 physical id	: 0
 siblings	: 96
@@ -1004,7 +1004,7 @@ model		: 85
 model name	: Genuine Intel(R) CPU 0000%@
 stepping	: 6
 microcode	: 0x4000026
-cpu MHz		: 1000.000
+cpu MHz		: 1000.042
 cache size	: 36608 KB
 physical id	: 0
 siblings	: 96
@@ -3461,7 +3461,7 @@ model		: 85
 model name	: Genuine Intel(R) CPU 0000%@
 stepping	: 6
 microcode	: 0x4000026
-cpu MHz		: 1000.000
+cpu MHz		: 1000.126
 cache size	: 36608 KB
 physical id	: 0
 siblings	: 96
@@ -3812,7 +3812,7 @@ model		: 85
 model name	: Genuine Intel(R) CPU 0000%@
 stepping	: 6
 microcode	: 0x4000026
-cpu MHz		: 1000.000
+cpu MHz		: 999.996
 cache size	: 36608 KB
 physical id	: 0
 siblings	: 96

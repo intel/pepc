@@ -1,0 +1,5 @@
+platform_profile 24576 0 - Live 0xffffffffc0b16000
+kvm_intel 438272 0 - Live 0xffffffffc0ae2000
+kvm 1507328 1 kvm_intel, Live 0xffffffffc0a50000
+irqbypass 16384 1 kvm, Live 0xffffffffc0a4f000
+sunrpc 962560 1 - Live 0xffffffffc0a00000
