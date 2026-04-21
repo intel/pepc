@@ -63,6 +63,7 @@ def get_params(hostspec: str, username: str) -> Generator[_TestParamsTypedDict, 
                                                           pman=pman, install_path=install_path,
                                                           logging=True)
             inst.install(exclude=InstallPepc.PEPC_COPY_EXCLUDE)
+            inst.create_rc_file()
 
             if pman.is_remote:
                 # Copy the TPMI test data to the remote host for use in tests.
