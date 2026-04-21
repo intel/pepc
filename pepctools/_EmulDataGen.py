@@ -77,6 +77,10 @@ if typing.TYPE_CHECKING:
 _TOOLNAME: Final[str] = "emulation-data-generator"
 _VERSION: Final[str] = "0.1"
 
+# Default base directory for emulation datasets, relative to the current working directory.
+# The tool is intended to be run from the project root.
+_EMUL_DATA_DIR: Final[Path] = Path("tests") / "emul-data"
+
 # Note, logger name is the project name, not the tool name.
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc").configure(prefix=_TOOLNAME)
 
@@ -134,6 +138,10 @@ _SYSFS_INLINE_CMDS: list[_SysfsInlineCmdTypedDict] = [
     # ASPM policy.
     {"command": r"grep -Z -H '.*' "
                 r"/sys/module/pcie_aspm/parameters/policy",
+     "readonly": False},
+    # Per-device L1 ASPM state. The glob matches only devices that have the file.
+    {"command": r"grep -Z -H '.*' "
+                r"/sys/bus/pci/devices/*/link/l1_aspm",
      "readonly": False},
     # Per-CPU online state.
     {"command": r"grep -Z -H '.*' "
@@ -203,8 +211,10 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
     parser = ArgParse.ArgsParser(description=text, prog=_TOOLNAME, ver=_VERSION)
     ArgParse.add_ssh_options(parser)
 
-    text = """Path to the directory to store the output of the commands at. Default value is the
-              name of the host the command is run on. See the '-H' option."""
+    text = """Path to the directory to store the output of the commands at. Defaults to
+              'tests/emul-data/<hostname>' relative to the current working directory if that
+              directory exists, otherwise defaults to './<hostname>'. If '-H' is not specified,
+              '<hostname>' is 'localhost'. See the '-H' option."""
     parser.add_argument("-o", "--outdir", type=Path, help=text)
 
     text = """If the output directory already exists and is not empty, remove its contents before
@@ -244,7 +254,12 @@ def _get_cmdline_args(args: argparse.Namespace) -> _CmdlineArgsTypedDict:
     cmdl: _CmdlineArgsTypedDict = {**ArgParse.format_ssh_args(args)}
 
     outdir = getattr(args, "outdir")
-    cmdl["outdir"] = outdir if outdir else Path(cmdl["hostname"])
+    if outdir:
+        cmdl["outdir"] = outdir
+    elif _EMUL_DATA_DIR.exists():
+        cmdl["outdir"] = _EMUL_DATA_DIR / cmdl["hostname"]
+    else:
+        cmdl["outdir"] = Path(cmdl["hostname"])
 
     cmdl["replace"] = getattr(args, "replace", False)
 
