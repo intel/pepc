@@ -100,6 +100,9 @@ _DEFAULT_DATASETS: Final[dict[str, tuple[str, ...]]] = {
     # Use one single-package topology and one larger topology with dies for the CPU hotplug
     # command tests.
     "tests.test_cpuhotplug_cmdl": ("bdwup0", "cpx0"),
+    # Use a hybrid client platform and an SRF platform (which has modules) for the 'CPUOnline'
+    # module tests. These cover different topologies than 'test_cpuhotplug_cmdl'.
+    "tests.test_cpuonline": ("adl0", "srf2"),
 }
 
 def pytest_addoption(parser: pytest.Parser):
