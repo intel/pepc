@@ -94,7 +94,7 @@ jobs:
           git diff-tree --diff-filter=d --no-commit-id --name-status -r "$from..HEAD" | \
             cut -f2- | xargs -r file -Ni -- | \
             sed -n -e 's#: text/x-script.python;.*##p' | \
-            grep -v '\.md$' > .tmp/modified-files;
+            { grep -v '\.md$' || true; } > .tmp/modified-files
 
       - name: "Print modified files"
         run: |
