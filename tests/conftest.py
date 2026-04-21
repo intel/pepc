@@ -103,6 +103,21 @@ _DEFAULT_DATASETS: Final[dict[str, tuple[str, ...]]] = {
     # Use a hybrid client platform and an SRF platform (which has modules) for the 'CPUOnline'
     # module tests. These cover different topologies than 'test_cpuhotplug_cmdl'.
     "tests.test_cpuonline": ("adl0", "srf2"),
+    # '_OpTarget' maps CLI options to CPU sets based on topology shape, not CPU architecture. Four
+    # datasets cover all meaningful shapes: simple single-package server, hybrid client, globally
+    # unique die IDs (clxap1, unlike the per-package die IDs on cpx0/gnr0), and module topology
+    # (srf2). 'clxap1' and 'srf2' are shared with 'test_topology_cmdl'.
+    "tests.test_optarget": ("bdwup0", "adl0", "clxap1", "srf2"),
+    # 'pepc topology' displays topology, not CPU-architecture features. Same reasoning as
+    # 'test_optarget'. Uses different datasets where possible: multi-package with sysfs die IDs
+    # (cpx0) and multi-package with MSR-enumerated die IDs that are not globally unique (gnr0),
+    # plus the two shared quirk datasets.
+    "tests.test_topology_cmdl": ("cpx0", "gnr0", "clxap1", "srf2"),
+    # 'PerCPUCache' caches by CPU scope in pure Python. One simple and one complex topology
+    # are enough: 'bdwup0' (single-package, no dies or modules) and 'srf2' (modules present).
+    "tests.test_percpucache": ("bdwup0", "srf2"),
+    # PM QoS is a Linux kernel feature, not CPU-architecture specific. One dataset is enough.
+    "tests.test_pmqos_cmdl": ("bdwup0",),
 }
 
 def pytest_addoption(parser: pytest.Parser):
