@@ -57,6 +57,9 @@ arg-type-hints-in-docstring = false
 check-return-types = false
 skip-checking-raises = true
 
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
 [tool.mypy]
 check_untyped_defs = true
 
