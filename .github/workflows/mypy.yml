@@ -42,6 +42,11 @@ jobs:
             from="${{ github.event.pull_request.base.sha }}"
 
           printf "DEBUG: from='%s'\n" "$from"
+          printf "DEBUG: HEAD='%s'\n" "$(git rev-parse HEAD)"
+          printf "DEBUG: refs/remotes/origin follows\n"
+          git for-each-ref --format='DEBUG: %(refname)' refs/remotes/origin || true
+          printf "DEBUG: verifying from ref follows\n"
+          git rev-parse --verify "$from"
 
           # List all commits in the range and display them
           git rev-list --pretty=oneline "$from..HEAD" --
@@ -75,6 +80,11 @@ jobs:
             from="${{ github.event.pull_request.base.sha }}"
 
           printf "DEBUG: from='%s'\n" "$from"
+          printf "DEBUG: HEAD='%s'\n" "$(git rev-parse HEAD)"
+          printf "DEBUG: refs/remotes/origin follows\n"
+          git for-each-ref --format='DEBUG: %(refname)' refs/remotes/origin || true
+          printf "DEBUG: verifying from ref follows\n"
+          git rev-parse --verify "$from"
 
           mkdir -- .tmp
           touch .tmp/modified-files
