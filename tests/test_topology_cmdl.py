@@ -20,7 +20,7 @@ from pepclibs.helperlibs import Trivial
 from pepclibs.helperlibs.Exceptions import Error
 from pepctools import _PepcTopology
 
-from tests import _Common, PropsCommonCmdl
+from tests import _Common, _PropsCommonCmdl as PropsCommonCmdl
 
 if typing.TYPE_CHECKING:
     from typing import Generator, cast, Sequence
