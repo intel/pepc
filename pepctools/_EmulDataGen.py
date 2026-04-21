@@ -645,7 +645,6 @@ def main() -> int:
         The program exit code.
     """
 
-    exitcode = 1
     try:
         args = _parse_arguments()
         cmdl = _get_cmdline_args(args)
@@ -663,7 +662,8 @@ def main() -> int:
             _do_main(pman, cmdl["outdir"], cpuinfo)
     except KeyboardInterrupt:
         _LOG.info("\nInterrupted, exiting")
+        return -1
     except Error as err:
         _LOG.error_out(str(err))
 
-    return exitcode
+    return 0
