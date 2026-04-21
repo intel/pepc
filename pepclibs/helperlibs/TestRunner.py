@@ -16,6 +16,7 @@ import typing
 from io import StringIO
 
 from pepclibs.helperlibs import Logging
+from pepclibs.helperlibs.Exceptions import Error
 
 if typing.TYPE_CHECKING:
     from types import ModuleType
@@ -28,7 +29,8 @@ def _run_tool(tool: ModuleType,
               arguments: str,
               pman: ProcessManagerType | None,
               exp_exc: type[Exception] | None,
-              ignore: dict[type[Exception], str]):
+              ignore: dict[type[Exception], str],
+              re_raise: bool):
     """
     Run the tool and handle exceptions.
 
@@ -46,19 +48,22 @@ def _run_tool(tool: ModuleType,
             _LOG.debug(msg)
             return
 
+        if re_raise:
+            raise
+
         if exp_exc is None:
-            assert False, msg
+            raise AssertionError(msg) from err
 
         if isinstance(err, exp_exc):
             return
 
-        assert False, f"Command '{toolname} {arguments}' raised the following exception:\n" \
-                      f"- {type(err).__name__}({err})\nbut it was expected to raise the following" \
-                      f"exception:\n- {exp_exc.__name__}"
+        raise AssertionError(f"Command '{toolname} {arguments}' raised the following exception:\n"
+                             f"- {type(err).__name__}({err})\nbut it was expected to raise the "
+                             f"following exception:\n- {exp_exc.__name__}") from err
 
     if exp_exc is not None:
-        assert False, f"Command '{toolname} {arguments}' did not raise the following " \
-                      f"exception type:\n- {exp_exc.__name__}"
+        raise AssertionError(f"Command '{toolname} {arguments}' did not raise the following "
+                             f"exception type:\n- {exp_exc.__name__}")
 
 def run_tool(tool: ModuleType,
              toolname: str,
@@ -66,30 +71,43 @@ def run_tool(tool: ModuleType,
              pman: ProcessManagerType | None = None,
              exp_exc: type[Exception] | None = None,
              ignore: dict[type[Exception], str] | None = None,
-             capture_output: bool = False) -> tuple[str, str]:
+             capture_output: bool = False,
+             re_raise: bool = False) -> tuple[str, str]:
     """
-    Run a tool with specified arguments and verify the outcome.
+    Run a tool and validate the outcome.
 
     Args:
         tool: The main Python module of the tool to run.
         toolname: The tool name used in error messages.
-        arguments: Command-line arguments to pass to the tool (e.g., 'pstate info --cpus 0-43').
-        pman: Process manager object specifying the host to run the tool on. Uses local host if not
-              provided.
-        exp_exc: Expected exception type. If provided, the test fails if the tool does not raise
-                 this exception. If not provided, any exception is considered a test failure.
-        ignore: Dictionary mapping exception types to command argument substrings. Exceptions
-                matching both the type and substring are ignored.
+        arguments: Command-line arguments to pass to the tool, for example,
+                   'pstate info --cpus 0-43'.
+        pman: The process manager object specifying the host to run the tool on. Use the local
+              host when not provided.
+        exp_exc: The expected exception type. When provided, the test fails if the tool does not
+                 raise this exception. When not provided, any exception is considered a test
+                 failure unless 're_raise' is enabled.
+        ignore: Dictionary mapping exception types to command argument substrings. Ignore
+                exceptions matching both the type and substring.
         capture_output: Whether to capture and return stdout and stderr.
+        re_raise: Whether to re-raise unexpected exceptions as-is instead of converting them to
+                  test assertions. This mode cannot be combined with 'exp_exc' or 'ignore'.
 
     Returns:
-        Tuple of (stdout, stderr) strings. Returns empty strings when 'capture_output' is False.
+        Tuple of (stdout, stderr) strings. Return empty strings when 'capture_output' is 'False'.
+
+    Raises:
+        AssertionError: The tool raised an unexpected exception, or it did not raise the
+                        exception type specified by 'exp_exc', and 're_raise' is 'False'.
 
     Notes:
         - When 'capture_output' is True, stdout and stderr are redirected to 'StringIO' buffers.
           'StringIO.isatty()' returns 'False', so the logger treats output as non-TTY and
           suppresses ANSI color codes unless '--force-color' is specified.
+        - Combining 're_raise' with 'exp_exc' or 'ignore' is a programming error.
     """
+
+    if re_raise and (exp_exc is not None or ignore):
+        raise Error("BUG: 're_raise=True' cannot be combined with 'exp_exc' or 'ignore'")
 
     if not ignore:
         ignore = {}
@@ -120,7 +138,7 @@ def run_tool(tool: ModuleType,
             log.add_info_stream(stdout_buf)
             log.add_error_stream(stderr_buf)
 
-        _run_tool(tool, toolname, arguments, pman, exp_exc, ignore)
+        _run_tool(tool, toolname, arguments, pman, exp_exc, ignore, re_raise)
     finally:
         sys.argv = saved_argv
         if capture_output and log and stdout_buf and stderr_buf:

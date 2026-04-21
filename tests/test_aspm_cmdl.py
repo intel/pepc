@@ -17,7 +17,7 @@ import typing
 from pathlib import Path
 import pytest
 from tests import _Common, _PropsCommonCmdl as PropsCommonCmdl
-from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound
+from pepclibs.helperlibs.Exceptions import Error, ErrorNotFound, ErrorPermissionDenied
 
 if typing.TYPE_CHECKING:
     from typing import Generator
@@ -99,7 +99,15 @@ def test_aspm_config(params):
         pytest.skip("Superuser or passwordless sudo access is required")
 
     for option in good:
-        PropsCommonCmdl.run_pepc(f"aspm config {option}", pman)
+        try:
+            PropsCommonCmdl.run_pepc(f"aspm config {option}", pman, re_raise=True)
+        except ErrorPermissionDenied as err:
+            # Quirk: some real hosts reject global ASPM policy sysfs writes even for root.
+            # In that case the test cannot validate policy changes, so skip it.
+            if not pman.is_emulated and "pcie_aspm/parameters/policy" in str(err):
+                pytest.skip(f"The host kernel rejects ASPM policy sysfs writes even for root:\n"
+                            f"{err}")
+            raise
 
 def _get_l1_devices(pman: ProcessManagerType) -> Generator[str, None, None]:
     """
@@ -136,6 +144,9 @@ def _get_l1_device(pman: ProcessManagerType) -> str:
         return device
 
     pytest.skip("No PCI devices with L1 ASPM support found")
+    # The return is here just to silence pylint about missing return statements, but pytest.skip()
+    # will always raise an exception and never return.
+    return ""
 
 def test_aspm_info_l1(params: CommonTestParamsTypedDict):
     """
@@ -170,11 +181,11 @@ def test_aspm_config_l1(params: CommonTestParamsTypedDict):
 
     # Error paths that need a device address but not superuser or passwordless sudo.
     PropsCommonCmdl.run_pepc(f"aspm config --l1-aspm badval --device {device}", pman,
-                              exp_exc=Error)
+                             exp_exc=Error)
     PropsCommonCmdl.run_pepc("aspm config --l1-aspm on --device bad:dev:addr.0", pman,
-                              exp_exc=Error)
+                             exp_exc=Error)
     PropsCommonCmdl.run_pepc(f"aspm config --policy performance --device {device}", pman,
-                              exp_exc=Error)
+                             exp_exc=Error)
     PropsCommonCmdl.run_pepc(f"aspm config --policy performance --l1-aspm badval --device "
                              f"{device}", pman, exp_exc=Error)
 

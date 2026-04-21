@@ -91,26 +91,29 @@ def run_pepc(arguments: str,
              pman: ProcessManagerType,
              exp_exc: ExceptionTypeType | None = None,
              ignore: Mapping[ExceptionTypeType, str] | None = None,
-             capture_output: bool = False) -> tuple[str, str]:
+             capture_output: bool = False,
+             re_raise: bool = False) -> tuple[str, str]:
     """
-    Execute the 'pepc' command and validate its outcome.
+    Run the 'pepc' command and validate the outcome.
 
     Args:
-        arguments: The command-line arguments to execute the 'pepc' command with, e.g.,
-                   'pstate info --cpus 0-43'.
-        pman: The process manager object that specifies the host to run the command on.
-        exp_exc: The expected exception. If set, the test fails if the command does not raise the
-                 expected exception. By default, any exception is considered a failure.
-        ignore: A dictionary mapping error types to command argument strings. Can be used for
-                ignoring certain exceptions.
-        capture_output: If True, capture and return stdout and stderr as strings. If False, return
-                        empty strings.
+        arguments: The command-line arguments to execute, for example, 'pstate info --cpus 0-43'.
+        pman: The process manager object specifying the host to run the command on.
+        exp_exc: The expected exception type. When provided, the test fails if the command does
+                 not raise this exception. When not provided, any exception is considered a test
+                 failure unless 're_raise' is enabled.
+        ignore: Dictionary mapping exception types to command argument substrings. Ignore exceptions
+                matching both the type and substring.
+        capture_output: Whether to capture and return stdout and stderr.
+        re_raise: Whether to re-raise unexpected exceptions as-is instead of converting them to
+                  test assertions.
 
     Returns:
-        A tuple of (stdout, stderr) strings. Empty strings if capture_output is False.
+        Tuple of (stdout, stderr) strings. Return empty strings when 'capture_output' is 'False'.
 
     Raises:
-        AssertionError: If the command execution does not match the expected outcome.
+        AssertionError: The command raised an unexpected exception, or it did not raise the
+                        exception type specified by 'exp_exc', and 're_raise' is 'False'.
     """
 
     if typing.TYPE_CHECKING:
@@ -118,7 +121,7 @@ def run_pepc(arguments: str,
     else:
         _ignore = ignore
     return TestRunner.run_tool(_Pepc, _Pepc.TOOLNAME, arguments, pman=pman, exp_exc=exp_exc,
-                               ignore=_ignore, capture_output=capture_output)
+                               ignore=_ignore, capture_output=capture_output, re_raise=re_raise)
 
 def get_mechanism_opts(params: PropsCmdlTestParamsTypedDict,
                        allow_readonly: bool = True) -> Generator[str, None, None]:
@@ -130,7 +133,7 @@ def get_mechanism_opts(params: PropsCmdlTestParamsTypedDict,
         allow_readonly: Whether to include read-only mechanisms.
 
     Yields:
-        str: Command-line option string for each mechanism.
+        Command-line option string for each mechanism.
     """
 
     for mname, minfo in params["pobj"].mechanisms.items():
@@ -145,7 +148,7 @@ def get_good_optarget_opts(params: PropsCmdlTestParamsTypedDict,
     '--packages', etc.
 
     Args:
-        params: The test paramet
+        params: The test parameters dictionary.
         sname: Scope name indicating the topology level for which to generate options.
 
     Yields:
@@ -165,10 +168,8 @@ def get_good_optarget_opts(params: PropsCmdlTestParamsTypedDict,
             Package scope command-line option string for the specified package.
         """
 
-        opts = [f"--packages {pkg}",
-                f"--packages {pkg}-{params['packages'][-1]}"]
-
-        yield from opts
+        yield f"--packages {pkg}"
+        yield f"--packages {pkg}-{params['packages'][-1]}"
 
     def _get_die_opts(params: PropsCmdlTestParamsTypedDict, pkg: int) -> Generator[str, None, None]:
         """
@@ -179,7 +180,7 @@ def get_good_optarget_opts(params: PropsCmdlTestParamsTypedDict,
             pkg: The package number for which to generate die options.
 
         Yields:
-            str: Command-line option string for the specified die within the package.
+            Command-line option string for the specified die within the package.
         """
 
         first_die = params["dies"][pkg][0]
@@ -200,7 +201,7 @@ def get_good_optarget_opts(params: PropsCmdlTestParamsTypedDict,
             pkg: The package number for which to generate module options.
 
         Yields:
-            str: Command-line option string for the specified module within the package.
+            Command-line option string for the specified module within the package.
         """
 
         first_module = params["modules"][pkg][0]
@@ -228,7 +229,7 @@ def get_good_optarget_opts(params: PropsCmdlTestParamsTypedDict,
     if sname == "global":
         opts = ["",
                 "--packages all --dies all --modules all --cores all",
-                f"--cpus  0-{params['cpus'][-1]}"]
+                f"--cpus 0-{params['cpus'][-1]}"]
         yield from opts
         return
 

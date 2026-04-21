@@ -60,7 +60,6 @@ The "no option" behavior and '-D all' differ as follows.
 
 from __future__ import annotations # Remove when switching to Python 3.10+.
 
-import os
 import typing
 import logging
 from pathlib import Path
@@ -134,10 +133,9 @@ def _get_all_datasets() -> Generator[str, None, None]:
     """
 
     basepath = Path(__file__).parent.resolve() / "emul-data"
-    for dirname in os.listdir(basepath):
-        datapath = Path(f"{basepath}/{dirname}")
+    for datapath in basepath.iterdir():
         if datapath.is_dir() and (datapath / EMUL_CONFIG_FNAME).exists():
-            yield dirname
+            yield datapath.name
 
 def pytest_generate_tests(metafunc: pytest.Metafunc):
     """
@@ -179,8 +177,8 @@ def pytest_generate_tests(metafunc: pytest.Metafunc):
         hostspecs = [hostname]
 
         if dataset == _ALL_DATASETS:
-            for dataset in _get_all_datasets():
-                hostspecs.append(f"emulation:{dataset}")
+            for dset in _get_all_datasets():
+                hostspecs.append(f"emulation:{dset}")
         elif dataset != _NO_DATASET:
             hostspecs.append(f"emulation:{dataset}")
 
@@ -201,16 +199,16 @@ def pytest_generate_tests(metafunc: pytest.Metafunc):
             params: list[str] = []
 
             if default_datasets:
-                for dataset in default_datasets:
-                    params.append(f"emulation:{dataset}")
+                for dset in default_datasets:
+                    params.append(f"emulation:{dset}")
             else:
-                for dataset in _get_all_datasets():
-                    params.append(f"emulation:{dataset}")
+                for dset in _get_all_datasets():
+                    params.append(f"emulation:{dset}")
         elif dataset == _ALL_DATASETS:
             # The '-D all' case: run on all datasets.
             params = []
-            for dataset in _get_all_datasets():
-                params.append(f"emulation:{dataset}")
+            for dset in _get_all_datasets():
+                params.append(f"emulation:{dset}")
         else:
             # The specified dataset case.
             params = [f"emulation:{dataset}"]
@@ -227,7 +225,7 @@ def pytest_configure(config: pytest.Config):
         config: The pytest configuration object.
 
     Raises:
-        pytest.exit: If the specified dataset does not exist.
+        pytest.exit: The specified dataset does not exist.
     """
 
     # Configure the pepc logger. Read the log level from the pytest config so that
