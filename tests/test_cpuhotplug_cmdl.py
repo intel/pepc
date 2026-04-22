@@ -35,6 +35,8 @@ if typing.TYPE_CHECKING:
             cpus: All CPU numbers in the system.
             packages: All package numbers in the system.
             cores: A mapping of package numbers to lists of core numbers in the package.
+            modules: All module numbers in the system.
+            dies: A mapping of package numbers to lists of compute die numbers in the package.
         """
 
         cpuonline: CPUOnline.CPUOnline
@@ -42,6 +44,8 @@ if typing.TYPE_CHECKING:
         cpus: list[int]
         packages: list[int]
         cores: dict[int, list[int]]
+        modules: list[int]
+        dies: dict[int, list[int]]
 
 @pytest.fixture(name="params", scope="module")
 def get_params(hostspec: str, username: str) -> Generator[_TestParamsTypedDict, None, None]:
@@ -79,6 +83,8 @@ def get_params(hostspec: str, username: str) -> Generator[_TestParamsTypedDict, 
         params["cores"] = {}
         for pkg in params["packages"]:
             params["cores"][pkg] = cpuinfo.get_package_cores(package=pkg)
+        params["modules"] = cpuinfo.get_modules()
+        params["dies"] = cpuinfo.get_compute_dies()
 
         yield params
 
@@ -197,6 +203,213 @@ def test_cpuhotplug(params: _TestParamsTypedDict):
 
     try:
         _test_cpuhotplug(params)
+    finally:
+        with contextlib.suppress(Error):
+            _online_all_cpus(pman)
+
+def _test_cpuhotplug_offline_modules(params: _TestParamsTypedDict):
+    """
+    Test CPU offline functionality with module-based targeting.
+
+    Args:
+        params: The test parameters.
+    """
+
+    pman = params["pman"]
+    onl = params["cpuonline"]
+    cpuinfo = params["cpuinfo"]
+    all_cpus = params["cpus"]
+    modules = params["modules"]
+
+    if len(modules) < 2:
+        pytest.skip("Less than 2 modules, cannot test module-based offline targeting")
+
+    # Offline every other module using a comma-separated list.
+    modules_to_offline = modules[::2]
+    modules_str = ",".join(str(m) for m in modules_to_offline)
+    _PropsCommonCmdl.run_pepc(f"cpu-hotplug offline --modules {modules_str}", pman)
+
+    # Make sure the 'info' sub-command works with a mixed online/offline state.
+    _PropsCommonCmdl.run_pepc("cpu-hotplug info", pman)
+
+    # Build the expected offline CPU set. CPU 0 cannot be offlined.
+    offline_set = set(cpuinfo.modules_to_cpus(modules=modules_to_offline)) - {0}
+
+    for cpu in all_cpus:
+        if cpu in offline_set:
+            assert not onl.is_online(cpu)
+        else:
+            assert onl.is_online(cpu)
+
+def test_cpuhotplug_offline_modules(params: _TestParamsTypedDict):
+    """
+    Test the 'pepc cpu-hotplug offline' command with module-based targeting.
+
+    Args:
+        params: The test parameters.
+    """
+
+    pman = params["pman"]
+    _online_all_cpus(pman)
+
+    try:
+        _test_cpuhotplug_offline_modules(params)
+    finally:
+        with contextlib.suppress(Error):
+            _online_all_cpus(pman)
+
+def _test_cpuhotplug_offline_dies(params: _TestParamsTypedDict):
+    """
+    Test CPU offline functionality with die-based targeting.
+
+    Args:
+        params: The test parameters.
+    """
+
+    pman = params["pman"]
+    onl = params["cpuonline"]
+    cpuinfo = params["cpuinfo"]
+    all_cpus = params["cpus"]
+    dies = params["dies"]
+
+    if not any(len(pkg_dies) > 1 for pkg_dies in dies.values()):
+        pytest.skip("No package has more than one die, cannot test die-based offline targeting")
+
+    # For each package, offline every other die using a comma-separated list.
+    offline_cpus: list[int] = []
+    for pkg, pkg_dies in dies.items():
+        if len(pkg_dies) < 2:
+            continue
+        dies_to_offline = pkg_dies[::2]
+        dies_str = ",".join(str(d) for d in dies_to_offline)
+        _PropsCommonCmdl.run_pepc(f"cpu-hotplug offline --packages {pkg} --dies {dies_str}", pman)
+        offline_cpus += cpuinfo.dies_to_cpus(dies=dies_to_offline, packages=(pkg,))
+
+    # Make sure the 'info' sub-command works with a mixed online/offline state.
+    _PropsCommonCmdl.run_pepc("cpu-hotplug info", pman)
+
+    # Build the expected offline CPU set. CPU 0 cannot be offlined.
+    offline_set = set(offline_cpus) - {0}
+
+    for cpu in all_cpus:
+        if cpu in offline_set:
+            assert not onl.is_online(cpu)
+        else:
+            assert onl.is_online(cpu)
+
+def test_cpuhotplug_offline_dies(params: _TestParamsTypedDict):
+    """
+    Test the 'pepc cpu-hotplug offline' command with die-based targeting.
+
+    Args:
+        params: The test parameters.
+    """
+
+    pman = params["pman"]
+    _online_all_cpus(pman)
+
+    try:
+        _test_cpuhotplug_offline_dies(params)
+    finally:
+        with contextlib.suppress(Error):
+            _online_all_cpus(pman)
+
+def _test_cpuhotplug_offline_core_siblings(params: _TestParamsTypedDict):
+    """
+    Test CPU offline functionality with core sibling index targeting.
+
+    Args:
+        params: The test parameters.
+    """
+
+    pman = params["pman"]
+    onl = params["cpuonline"]
+    cpuinfo = params["cpuinfo"]
+    all_cpus = params["cpus"]
+
+    # Determine CPUs with core sibling index 1 (typically hyperthreads). Must be called while all
+    # CPUs are online to ensure the complete sibling index map is available.
+    cpus_to_offline = cpuinfo.select_core_siblings(all_cpus, (1,))
+    if not cpus_to_offline:
+        pytest.skip("No core has more than one CPU, cannot test core sibling offline targeting")
+
+    _PropsCommonCmdl.run_pepc("cpu-hotplug offline --core-siblings 1", pman)
+
+    # Make sure the 'info' sub-command works with a mixed online/offline state.
+    _PropsCommonCmdl.run_pepc("cpu-hotplug info", pman)
+
+    # Build the expected offline CPU set. CPU 0 cannot be offlined.
+    offline_set = set(cpus_to_offline) - {0}
+
+    for cpu in all_cpus:
+        if cpu in offline_set:
+            assert not onl.is_online(cpu)
+        else:
+            assert onl.is_online(cpu)
+
+def test_cpuhotplug_offline_core_siblings(params: _TestParamsTypedDict):
+    """
+    Test the 'pepc cpu-hotplug offline' command with core sibling index targeting.
+
+    Args:
+        params: The test parameters.
+    """
+
+    pman = params["pman"]
+    _online_all_cpus(pman)
+
+    try:
+        _test_cpuhotplug_offline_core_siblings(params)
+    finally:
+        with contextlib.suppress(Error):
+            _online_all_cpus(pman)
+
+def _test_cpuhotplug_offline_module_siblings(params: _TestParamsTypedDict):
+    """
+    Test CPU offline functionality with module sibling index targeting.
+
+    Args:
+        params: The test parameters.
+    """
+
+    pman = params["pman"]
+    onl = params["cpuonline"]
+    cpuinfo = params["cpuinfo"]
+    all_cpus = params["cpus"]
+
+    # Determine CPUs with module sibling index 1. Must be called while all CPUs are online to
+    # ensure the complete sibling index map is available.
+    cpus_to_offline = cpuinfo.select_module_siblings(all_cpus, (1,))
+    if not cpus_to_offline:
+        pytest.skip("No module has more than one CPU, cannot test module sibling offline targeting")
+
+    _PropsCommonCmdl.run_pepc("cpu-hotplug offline --module-siblings 1", pman)
+
+    # Make sure the 'info' sub-command works with a mixed online/offline state.
+    _PropsCommonCmdl.run_pepc("cpu-hotplug info", pman)
+
+    # Build the expected offline CPU set. CPU 0 cannot be offlined.
+    offline_set = set(cpus_to_offline) - {0}
+
+    for cpu in all_cpus:
+        if cpu in offline_set:
+            assert not onl.is_online(cpu)
+        else:
+            assert onl.is_online(cpu)
+
+def test_cpuhotplug_offline_module_siblings(params: _TestParamsTypedDict):
+    """
+    Test the 'pepc cpu-hotplug offline' command with module sibling index targeting.
+
+    Args:
+        params: The test parameters.
+    """
+
+    pman = params["pman"]
+    _online_all_cpus(pman)
+
+    try:
+        _test_cpuhotplug_offline_module_siblings(params)
     finally:
         with contextlib.suppress(Error):
             _online_all_cpus(pman)
