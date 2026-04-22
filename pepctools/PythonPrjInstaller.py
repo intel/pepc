@@ -490,7 +490,7 @@ export MANPATH="$MANPATH:$($VENV_BIN/{self._prjname} --print-man-path)"
         try:
             output_path.parent.mkdir(parents=True, exist_ok=True)
             with output_path.open("wb") as fobj:
-                fobj.write(b"#!/usr/bin/python3\n")
+                fobj.write(b"#!/usr/bin/env python3\n")
                 with zipfile.ZipFile(fobj, "w", compression=zipfile.ZIP_DEFLATED) as zipobj:
                     zipobj.writestr("__main__.py", tool_contents)
                     self._add_packages_to_zip(zipobj=zipobj,
