@@ -110,6 +110,48 @@ def test_cpuhotplug_info(params: _TestParamsTypedDict):
     _online_all_cpus(pman)
     _PropsCommonCmdl.run_pepc("cpu-hotplug info", pman)
 
+def _test_cpuhotplug_offline_all(params: _TestParamsTypedDict):
+    """
+    Test the 'pepc cpu-hotplug offline --cpus all' code path.
+
+    Args:
+        params: The test parameters.
+    """
+
+    pman = params["pman"]
+    onl = params["cpuonline"]
+    all_cpus = params["cpus"]
+
+    # '--cpus all' uses 'skip_unsupported=True' internally, so CPU 0 is silently skipped and
+    # remains online even though it is included in the target set.
+    _PropsCommonCmdl.run_pepc("cpu-hotplug offline --cpus all", pman)
+
+    # Make sure the 'info' sub-command works with a mixed online/offline state.
+    _PropsCommonCmdl.run_pepc("cpu-hotplug info", pman)
+
+    for cpu in all_cpus:
+        if cpu == 0:
+            assert onl.is_online(cpu)
+        else:
+            assert not onl.is_online(cpu)
+
+def test_cpuhotplug_offline_all(params: _TestParamsTypedDict):
+    """
+    Test the 'pepc cpu-hotplug offline --cpus all' command.
+
+    Args:
+        params: The test parameters.
+    """
+
+    pman = params["pman"]
+    _online_all_cpus(pman)
+
+    try:
+        _test_cpuhotplug_offline_all(params)
+    finally:
+        with contextlib.suppress(Error):
+            _online_all_cpus(pman)
+
 def _test_cpuhotplug(params: _TestParamsTypedDict):
     """
     Test CPU online/offline functionality.
