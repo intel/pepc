@@ -42,6 +42,10 @@ Compact reference for AI code generation. Human docs: [CONTRIBUTING.md](../CONTR
 - [ ] Avoid `next()` on generators. Use a `for` loop with `return` and a trailing `raise` for
   single-value extraction; use `for/break/else` when an empty iterator should produce a default.
   If `next()` is unavoidable, either pass a default value or handle `StopIteration` explicitly.
+- [ ] Tests: callee-before-caller ordering. Each private helper `_foo()` immediately precedes
+  its public `test_foo()`. Do not group all helpers at top and all public functions at bottom
+- [ ] Tests: use `pytest.skip("reason")` when a platform/topology condition is not met; never
+  use bare `return` as a silent skip
 
 ---
 

@@ -38,6 +38,9 @@ This document provides guidelines for project coding style and conventions.
   - [Class Layout](#class-layout)
   - [Private vs Public Symbols](#private-vs-public-symbols)
   - [Import Statements](#import-statements)
+- [Tests](#tests)
+  - [Function Ordering](#function-ordering)
+  - [Skipping Tests for Unsupported Features](#skipping-tests-for-unsupported-features)
 - [Type Annotations & Type System](#type-annotations--type-system)
   - [Return Type Annotations](#return-type-annotations)
   - [Guarding Typing Imports with TYPE_CHECKING](#guarding-typing-imports-with-type_checking)
@@ -994,3 +997,53 @@ class Reader(ClassHelpers.SimpleCloseContext):
         # '_close_pman' controls whether 'ClassHelpers.close()' calls 'self._pman.close()'.
         ClassHelpers.close(self, close_attrs=("_pman",))
 ```
+
+## Tests
+
+### Function Ordering
+
+Apply the same callee-before-caller principle as [Class Layout](#class-layout): define a function
+before the functions that call it. For test files this means each private helper `_test_foo()`
+immediately precedes its public `test_foo()`. Do not group all helpers at the top and all public
+functions at the bottom.
+
+```python
+# WRONG: helpers and public functions separated.
+def _test_foo(params): ...
+def _test_bar(params): ...
+def test_foo(params):
+    _test_foo(params)
+def test_bar(params):
+    _test_bar(params)
+
+# RIGHT: each helper immediately precedes its public caller.
+def _test_foo(params): ...
+def test_foo(params):
+    _test_foo(params)
+def _test_bar(params): ...
+def test_bar(params):
+    _test_bar(params)
+```
+
+### Skipping Tests for Unsupported Features
+
+Use `pytest.skip()`, not `return`, when a test cannot run because the platform does not support
+the required feature or topology. This ensures the test shows as **skipped** (with a reason) in the
+report rather than silently **passing**.
+
+```python
+# WRONG: test silently passes, no indication it was skipped.
+def test_foo(params):
+    if not feature_supported:
+        return
+    ...
+
+# RIGHT: test is reported as skipped with a clear reason.
+def test_foo(params):
+    if not feature_supported:
+        pytest.skip("Feature X is not supported on this platform")
+    ...
+```
+
+`pytest.skip()` raises internally, so it works from both public test functions and private helpers
+called by them.
