@@ -500,7 +500,8 @@ def test_cpuhotplug_online_bad(params: _TestParamsTypedDict):
 
     pman = params["pman"]
 
-    bad = ["--cpus -1",
+    bad = ["",
+           "--cpus -1",
            f"--cpus {params['cpus'][-1] + 1}"]
 
     for option in bad:
@@ -508,7 +509,7 @@ def test_cpuhotplug_online_bad(params: _TestParamsTypedDict):
 
 def test_cpuhotplug_offline_bad(params: _TestParamsTypedDict):
     """
-    Test the 'pepc cpu-hotplug offline' sub-command with invalid CPU input options.
+    Test the 'pepc cpu-hotplug offline' sub-command with invalid input options.
 
     Args:
         params: The test parameters.
@@ -518,7 +519,10 @@ def test_cpuhotplug_offline_bad(params: _TestParamsTypedDict):
 
     bad = ["--cpus 0",
            "--cpus -1",
-           f"--cpus {params['cpus'][-1] + 1}"]
+           f"--cpus {params['cpus'][-1] + 1}",
+           "--packages -1",
+           f"--packages {params['packages'][-1] + 1}",
+           "--cores -1"]
 
     for option in bad:
         _PropsCommonCmdl.run_pepc(f"cpu-hotplug offline {option}", pman, exp_exc=Error)
