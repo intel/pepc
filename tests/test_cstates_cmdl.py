@@ -14,7 +14,7 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
 import pytest
-from tests import _Common, _PropsCommonCmdl as PropsCommonCmdl
+from tests import _Common, _PropsCommonCmdl
 from pepclibs.helperlibs.Exceptions import Error, ErrorNotSupported
 from pepclibs import CPUInfo, CPUOnline, CStates
 from pepclibs.CStates import ErrorTryAnotherMechanism
@@ -63,7 +63,7 @@ def get_params(hostspec: str, username: str) -> Generator[PropsCmdlTestParamsTyp
             # complete CPU set regardless of the initial system state.
             cpuonline.online(cpus="all")
         params = _Common.build_params(pman)
-        _params = PropsCommonCmdl.extend_params(params, pobj, cpuinfo)
+        _params = _PropsCommonCmdl.extend_params(params, pobj, cpuinfo)
 
         if typing.TYPE_CHECKING:
             params = cast(TestParamsTypedDict, _params)
@@ -92,17 +92,17 @@ def test_cstates_info(params: TestParamsTypedDict):
 
     pman = params["pman"]
 
-    for opt in PropsCommonCmdl.get_good_optarget_opts(params, sname="package"):
-        PropsCommonCmdl.run_pepc(f"cstates info {opt}", pman)
+    for opt in _PropsCommonCmdl.get_good_optarget_opts(params, sname="package"):
+        _PropsCommonCmdl.run_pepc(f"cstates info {opt}", pman)
 
-    for opt in PropsCommonCmdl.get_bad_optarget_opts(params):
-        PropsCommonCmdl.run_pepc(f"cstates info {opt}", pman, exp_exc=Error)
+    for opt in _PropsCommonCmdl.get_bad_optarget_opts(params):
+        _PropsCommonCmdl.run_pepc(f"cstates info {opt}", pman, exp_exc=Error)
 
     for cstate in params["cstates"]:
-        PropsCommonCmdl.run_pepc(f"cstates info --cpus 0 --cstates {cstate}", pman)
+        _PropsCommonCmdl.run_pepc(f"cstates info --cpus 0 --cstates {cstate}", pman)
 
     # Cover '--list-mechanisms'.
-    PropsCommonCmdl.run_pepc("cstates info --list-mechanisms", pman)
+    _PropsCommonCmdl.run_pepc("cstates info --list-mechanisms", pman)
 
 def _get_good_config_opts(params: TestParamsTypedDict,
                           sname: ScopeNameType = "package") -> Generator[str, None, None]:
@@ -195,23 +195,23 @@ def test_cstates_config_good(params: TestParamsTypedDict):
     pman = params["pman"]
 
     for opt in _get_good_config_opts(params, sname="CPU"):
-        for cpu_opt in PropsCommonCmdl.get_good_optarget_opts(params, sname="CPU"):
-            for mopt in PropsCommonCmdl.get_mechanism_opts(params, allow_readonly=False):
+        for cpu_opt in _PropsCommonCmdl.get_good_optarget_opts(params, sname="CPU"):
+            for mopt in _PropsCommonCmdl.get_mechanism_opts(params, allow_readonly=False):
                 cmd = f"cstates config {opt} {cpu_opt} {mopt}"
-                PropsCommonCmdl.run_pepc(cmd, pman, ignore=_IGNORE)
+                _PropsCommonCmdl.run_pepc(cmd, pman, ignore=_IGNORE)
 
-    for cpu_opt in PropsCommonCmdl.get_good_optarget_opts(params, sname="global"):
+    for cpu_opt in _PropsCommonCmdl.get_good_optarget_opts(params, sname="global"):
         for opt in _get_good_config_opts(params, sname="package"):
-            for mopt in PropsCommonCmdl.get_mechanism_opts(params, allow_readonly=False):
+            for mopt in _PropsCommonCmdl.get_mechanism_opts(params, allow_readonly=False):
                 cmd = f"cstates config {opt} {cpu_opt} {mopt}"
-                PropsCommonCmdl.run_pepc(cmd , pman, ignore=_IGNORE)
+                _PropsCommonCmdl.run_pepc(cmd , pman, ignore=_IGNORE)
         break
 
-    for mopt in PropsCommonCmdl.get_mechanism_opts(params, allow_readonly=False):
+    for mopt in _PropsCommonCmdl.get_mechanism_opts(params, allow_readonly=False):
         for opt in _get_good_config_opts(params, sname="global"):
-            for cpu_opt in PropsCommonCmdl.get_good_optarget_opts(params, sname="global"):
+            for cpu_opt in _PropsCommonCmdl.get_good_optarget_opts(params, sname="global"):
                 cmd = f"cstates config {opt} {cpu_opt} {mopt}"
-                PropsCommonCmdl.run_pepc(cmd , pman, ignore=_IGNORE)
+                _PropsCommonCmdl.run_pepc(cmd , pman, ignore=_IGNORE)
         break
 
 def test_cstates_config_bad(params: TestParamsTypedDict):
@@ -225,13 +225,13 @@ def test_cstates_config_bad(params: TestParamsTypedDict):
     pman = params["pman"]
 
     for opt in _get_bad_config_opts():
-        PropsCommonCmdl.run_pepc(f"cstates config {opt}", pman, exp_exc=Error)
+        _PropsCommonCmdl.run_pepc(f"cstates config {opt}", pman, exp_exc=Error)
 
     for opt in _get_bad_config_opts():
-        for cpu_opt in PropsCommonCmdl.get_good_optarget_opts(params, sname="package"):
-            PropsCommonCmdl.run_pepc(f"cstates config {opt} {cpu_opt}", pman, exp_exc=Error)
+        for cpu_opt in _PropsCommonCmdl.get_good_optarget_opts(params, sname="package"):
+            _PropsCommonCmdl.run_pepc(f"cstates config {opt} {cpu_opt}", pman, exp_exc=Error)
             break
 
-        for cpu_opt in PropsCommonCmdl.get_bad_optarget_opts(params):
-            PropsCommonCmdl.run_pepc(f"cstates config {opt} {cpu_opt}", pman, exp_exc=Error)
+        for cpu_opt in _PropsCommonCmdl.get_bad_optarget_opts(params):
+            _PropsCommonCmdl.run_pepc(f"cstates config {opt} {cpu_opt}", pman, exp_exc=Error)
         break

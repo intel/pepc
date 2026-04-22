@@ -13,7 +13,7 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
 import pytest
-from tests import _Common, _PropsCommonCmdl as PropsCommonCmdl
+from tests import _Common, _PropsCommonCmdl
 from pepclibs.helperlibs.Exceptions import Error
 from pepclibs import CPUInfo, PMQoS
 
@@ -77,8 +77,8 @@ def test_pmqos_info(params: _TestParamsTypedDict):
 
     pman = params["pman"]
 
-    PropsCommonCmdl.run_pepc("pmqos info", pman)
-    PropsCommonCmdl.run_pepc("pmqos info --cpus 0", pman)
+    _PropsCommonCmdl.run_pepc("pmqos info", pman)
+    _PropsCommonCmdl.run_pepc("pmqos info --cpus 0", pman)
 
 def _get_good_config_opts(params: _TestParamsTypedDict) -> Generator[str, None, None]:
     """
@@ -122,7 +122,7 @@ def test_pmqos_config_good(params: _TestParamsTypedDict):
 
     for opt in _get_good_config_opts(params):
         cmd = f"pmqos config {opt} --cpus 0"
-        PropsCommonCmdl.run_pepc(cmd, pman)
+        _PropsCommonCmdl.run_pepc(cmd, pman)
 
 def test_pmqos_config_bad(params: _TestParamsTypedDict):
     """
@@ -135,5 +135,5 @@ def test_pmqos_config_bad(params: _TestParamsTypedDict):
     pman = params["pman"]
 
     for opt in _get_bad_config_opts():
-        PropsCommonCmdl.run_pepc(f"pmqos config {opt}", pman, exp_exc=Error)
-        PropsCommonCmdl.run_pepc(f"pmqos config --cpus 0 {opt}", pman, exp_exc=Error)
+        _PropsCommonCmdl.run_pepc(f"pmqos config {opt}", pman, exp_exc=Error)
+        _PropsCommonCmdl.run_pepc(f"pmqos config --cpus 0 {opt}", pman, exp_exc=Error)

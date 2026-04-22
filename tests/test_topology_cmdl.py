@@ -19,7 +19,7 @@ from pepclibs.helperlibs import Trivial
 from pepclibs.helperlibs.Exceptions import Error
 from pepctools import _PepcTopology
 
-from tests import _Common, _PropsCommonCmdl as PropsCommonCmdl
+from tests import _Common, _PropsCommonCmdl
 
 if typing.TYPE_CHECKING:
     from typing import Generator, cast, Sequence
@@ -119,20 +119,20 @@ def test_columns(params: _TestParamsTypedDict, caplog: pytest.LogCaptureFixture)
         cmd = "topology info --columns " + ",".join(colnames)
 
         caplog.clear()
-        PropsCommonCmdl.run_pepc(cmd, params["pman"])
+        _PropsCommonCmdl.run_pepc(cmd, params["pman"])
         _check_columns(colnames, caplog, cmd)
 
         # Reverse the column order and test again.
         colnames.reverse()
         cmd = "topology info --columns " + ",".join(colnames)
         caplog.clear()
-        PropsCommonCmdl.run_pepc(cmd, params["pman"])
+        _PropsCommonCmdl.run_pepc(cmd, params["pman"])
         _check_columns(colnames, caplog, cmd)
 
     # Test that capitalization is ignored.
     cap_colnames = [colname.upper() for colname in _PepcTopology.COLNAMES]
     cmd = "topology info --columns " + ",".join(cap_colnames)
-    PropsCommonCmdl.run_pepc(cmd, params["pman"])
+    _PropsCommonCmdl.run_pepc(cmd, params["pman"])
 
 def test_invalid_columns(params: _TestParamsTypedDict):
     """
@@ -145,19 +145,19 @@ def test_invalid_columns(params: _TestParamsTypedDict):
     # Test invalid column name.
     colname = "INVALID_COLUMN"
     option = "--columns " + colname
-    PropsCommonCmdl.run_pepc(f"topology info {option}", params["pman"], exp_exc=Error)
+    _PropsCommonCmdl.run_pepc(f"topology info {option}", params["pman"], exp_exc=Error)
 
     # Test no column name.
     option = "--columns"
-    PropsCommonCmdl.run_pepc(f"topology info {option}", params["pman"], exp_exc=Error)
+    _PropsCommonCmdl.run_pepc(f"topology info {option}", params["pman"], exp_exc=Error)
 
     # Test that 'hybrid' column cannot be used without the 'CPU' column.
     option = "--columns hybrid,package"
-    PropsCommonCmdl.run_pepc(f"topology info {option}", params["pman"], exp_exc=Error)
+    _PropsCommonCmdl.run_pepc(f"topology info {option}", params["pman"], exp_exc=Error)
 
     # Test that 'dtype' column cannot be used without the 'die' column.
     option = "--columns dtype,cpu"
-    PropsCommonCmdl.run_pepc(f"topology info {option}", params["pman"], exp_exc=Error)
+    _PropsCommonCmdl.run_pepc(f"topology info {option}", params["pman"], exp_exc=Error)
 
 def _fetch_topology_from_output(caplog: pytest.LogCaptureFixture,
                                 drop_na: bool = True) -> list[dict[str, int | str]]:
@@ -291,18 +291,18 @@ def test_order(params: _TestParamsTypedDict, caplog: pytest.LogCaptureFixture):
         cmd = f"topology info --order {order} --columns " + ",".join(colnames)
 
         caplog.clear()
-        PropsCommonCmdl.run_pepc(cmd, params["pman"])
+        _PropsCommonCmdl.run_pepc(cmd, params["pman"])
         _check_order(order, caplog, cmd)
 
     # Test ordering by a column that is not in the list of columns to print. For example, order by
     # CPU, but CPU is not in '--columns'. Verify that this does not fail.
     order = "CPU"
     cmd = f"topology info --order {order} --columns Core,Package"
-    PropsCommonCmdl.run_pepc(cmd, params["pman"])
+    _PropsCommonCmdl.run_pepc(cmd, params["pman"])
 
     # Test that capitalization is ignored.
     cmd = "topology info --order cPu --columns " + ",".join(colnames)
-    PropsCommonCmdl.run_pepc(cmd, params["pman"])
+    _PropsCommonCmdl.run_pepc(cmd, params["pman"])
 
 def test_invalid_order(params: _TestParamsTypedDict):
     """
@@ -315,15 +315,15 @@ def test_invalid_order(params: _TestParamsTypedDict):
     # Test invalid order name.
     order = "INVALID_ORDER"
     option = f"--order {order}"
-    PropsCommonCmdl.run_pepc(f"topology info {option}", params["pman"], exp_exc=Error)
+    _PropsCommonCmdl.run_pepc(f"topology info {option}", params["pman"], exp_exc=Error)
 
     # Test no order name.
     option = "--order"
-    PropsCommonCmdl.run_pepc(f"topology info {option}", params["pman"], exp_exc=Error)
+    _PropsCommonCmdl.run_pepc(f"topology info {option}", params["pman"], exp_exc=Error)
 
     # Test that "hybrid" cannot be used as an order.
     option = "--order hybrid"
-    PropsCommonCmdl.run_pepc(f"topology info {option}", params["pman"], exp_exc=Error)
+    _PropsCommonCmdl.run_pepc(f"topology info {option}", params["pman"], exp_exc=Error)
 
 def _check_limited_target_cpus(caplog: pytest.LogCaptureFixture,
                                target_cpus: list[int],
@@ -372,7 +372,7 @@ def test_limited_target_cpus(params: _TestParamsTypedDict, caplog: pytest.LogCap
                     "tests")
 
     caplog.clear()
-    PropsCommonCmdl.run_pepc(cmd, params["pman"])
+    _PropsCommonCmdl.run_pepc(cmd, params["pman"])
     _check_limited_target_cpus(caplog, list(range(0, mid_cpu + 1)), cmd)
 
     # Test with the last CPU only.
@@ -380,13 +380,13 @@ def test_limited_target_cpus(params: _TestParamsTypedDict, caplog: pytest.LogCap
     cmd = f"topology info --cpus {last_cpu}"
 
     caplog.clear()
-    PropsCommonCmdl.run_pepc(cmd, params["pman"])
+    _PropsCommonCmdl.run_pepc(cmd, params["pman"])
     _check_limited_target_cpus(caplog, [last_cpu], cmd)
 
     # Test with first and last CPUs.
     cmd = f"topology info --cpus 0,{last_cpu}"
     caplog.clear()
-    PropsCommonCmdl.run_pepc(cmd, params["pman"])
+    _PropsCommonCmdl.run_pepc(cmd, params["pman"])
     _check_limited_target_cpus(caplog, [0, last_cpu], cmd)
 
 def _check_limited_target_cores(caplog: pytest.LogCaptureFixture,
@@ -472,13 +472,13 @@ def test_limited_target_cores(params: _TestParamsTypedDict, caplog: pytest.LogCa
     cmd = f"topology info --package 0 --cores {cores_opt}"
 
     caplog.clear()
-    PropsCommonCmdl.run_pepc(cmd, params["pman"])
+    _PropsCommonCmdl.run_pepc(cmd, params["pman"])
     _check_limited_target_cores(caplog, {0: target_cores[0]}, cmd)
 
     # Use a custom columns list.
     cmd += " --columns package,core,die"
     caplog.clear()
-    PropsCommonCmdl.run_pepc(cmd, params["pman"])
+    _PropsCommonCmdl.run_pepc(cmd, params["pman"])
     _check_limited_target_cores(caplog, {0: target_cores[0]}, cmd)
 
     # Specify more than one package.
@@ -495,7 +495,7 @@ def test_limited_target_cores(params: _TestParamsTypedDict, caplog: pytest.LogCa
         cmd = f"topology info --packages {packages_opt} --cores {cores_opt}"
 
         caplog.clear()
-        PropsCommonCmdl.run_pepc(cmd, params["pman"])
+        _PropsCommonCmdl.run_pepc(cmd, params["pman"])
         _check_limited_target_cores(caplog, target_cores, cmd)
 
 def _get_target_dies(all_dies: dict[int, list[int]],
@@ -580,13 +580,13 @@ def test_limited_target_dies(params: _TestParamsTypedDict, caplog: pytest.LogCap
     cmd = f"topology info --package 0 --dies {dies_opt}"
 
     caplog.clear()
-    PropsCommonCmdl.run_pepc(cmd, params["pman"])
+    _PropsCommonCmdl.run_pepc(cmd, params["pman"])
     _check_limited_target_dies(caplog, {0: target_dies[0]}, cmd)
 
     # Use a custom columns list.
     cmd += " --columns cpu,package,die,hybrid"
     caplog.clear()
-    PropsCommonCmdl.run_pepc(cmd, params["pman"])
+    _PropsCommonCmdl.run_pepc(cmd, params["pman"])
     _check_limited_target_dies(caplog, {0: target_dies[0]}, cmd)
 
     # Specify more than one package.
@@ -603,7 +603,7 @@ def test_limited_target_dies(params: _TestParamsTypedDict, caplog: pytest.LogCap
         cmd = f"topology info --packages {packages_opt} --dies {dies_opt}"
 
         caplog.clear()
-        PropsCommonCmdl.run_pepc(cmd, params["pman"])
+        _PropsCommonCmdl.run_pepc(cmd, params["pman"])
         _check_limited_target_dies(caplog, target_dies, cmd)
 
 def _check_offline_cpus(caplog: pytest.LogCaptureFixture,
@@ -679,7 +679,7 @@ def test_offline_cpus(params: _TestParamsTypedDict, caplog: pytest.LogCaptureFix
     # Verify that the offline CPU is present in the output with proper markings.
     cmd = "topology info"
     caplog.clear()
-    PropsCommonCmdl.run_pepc(cmd, params["pman"])
+    _PropsCommonCmdl.run_pepc(cmd, params["pman"])
     _check_offline_cpus(caplog, [mid_cpu], cmd)
 
     # Offline the first half of the CPUs (excluding CPU 0) if there are at least four CPUs.
@@ -691,7 +691,7 @@ def test_offline_cpus(params: _TestParamsTypedDict, caplog: pytest.LogCaptureFix
 
     cmd = "topology info"
     caplog.clear()
-    PropsCommonCmdl.run_pepc(cmd, params["pman"])
+    _PropsCommonCmdl.run_pepc(cmd, params["pman"])
     _check_offline_cpus(caplog, offline_cpus, cmd)
 
     # Online all CPUs back.
@@ -820,19 +820,19 @@ def test_noncomp_dies(params: _TestParamsTypedDict, caplog: pytest.LogCaptureFix
     # Verify that non-compute dies are present in the output with proper markings.
     cmd = "topology info"
     caplog.clear()
-    PropsCommonCmdl.run_pepc(cmd, params["pman"])
+    _PropsCommonCmdl.run_pepc(cmd, params["pman"])
     _check_noncomp_dies(caplog, noncomp_dies_sets, cmd)
 
     # Verify with all dies and all packages.
     cmd = "topology info --dies all --packages all"
     caplog.clear()
-    PropsCommonCmdl.run_pepc(cmd, params["pman"])
+    _PropsCommonCmdl.run_pepc(cmd, params["pman"])
     _check_noncomp_dies(caplog, noncomp_dies_sets, cmd)
 
     # Verify with package 0 only.
     cmd = "topology info --package 0"
     caplog.clear()
-    PropsCommonCmdl.run_pepc(cmd, params["pman"])
+    _PropsCommonCmdl.run_pepc(cmd, params["pman"])
     _check_noncomp_dies(caplog, {0: noncomp_dies_sets[0]}, cmd)
 
     # Verify with only a subset of non-compute dies: all but the first one.
@@ -841,7 +841,7 @@ def test_noncomp_dies(params: _TestParamsTypedDict, caplog: pytest.LogCaptureFix
         dies_opt = Trivial.rangify(test_dies)
         cmd = f"topology info --package 0 --dies {dies_opt}"
         caplog.clear()
-        PropsCommonCmdl.run_pepc(cmd, params["pman"])
+        _PropsCommonCmdl.run_pepc(cmd, params["pman"])
         _check_noncomp_dies(caplog, {0: set(test_dies)}, cmd)
 
     # When selecting only CPUs, cores, or modules, without specifying non-compute dies, non-compute
@@ -850,23 +850,23 @@ def test_noncomp_dies(params: _TestParamsTypedDict, caplog: pytest.LogCaptureFix
     # Verify with CPU 0 only.
     cmd = "topology info --cpus 0"
     caplog.clear()
-    PropsCommonCmdl.run_pepc(cmd, params["pman"])
+    _PropsCommonCmdl.run_pepc(cmd, params["pman"])
     _check_no_noncomp_dies(caplog, cmd)
 
     # Verify with '--cpus all'.
     cmd = "topology info --cpus all"
     caplog.clear()
-    PropsCommonCmdl.run_pepc(cmd, params["pman"])
+    _PropsCommonCmdl.run_pepc(cmd, params["pman"])
     _check_no_noncomp_dies(caplog, cmd)
 
     # Verify with all cores.
     cmd = "topology info --cores all --packages all"
     caplog.clear()
-    PropsCommonCmdl.run_pepc(cmd, params["pman"])
+    _PropsCommonCmdl.run_pepc(cmd, params["pman"])
     _check_no_noncomp_dies(caplog, cmd)
 
     # Verify with all modules.
     cmd = "topology info --modules all --packages all"
     caplog.clear()
-    PropsCommonCmdl.run_pepc(cmd, params["pman"])
+    _PropsCommonCmdl.run_pepc(cmd, params["pman"])
     _check_no_noncomp_dies(caplog, cmd)
