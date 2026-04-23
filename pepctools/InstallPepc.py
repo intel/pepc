@@ -47,10 +47,7 @@ if typing.TYPE_CHECKING:
             src_path: The path to install 'pepc' from (a filesystem path or a Git URL).
             no_pkg_install: Do not install missing OS packages.
             no_rcfile: Do not modify the user's shell RC file (e.g. '.bashrc').
-            force_sudo_alias: Force adding the 'sudo' alias, skipping the automatic privilege
-                              checks.
-            no_sudo_alias: Prevent adding the 'sudo' alias, skipping the automatic privilege
-                           checks.
+            no_sudo_alias: Prevent adding the 'sudo' alias to the shell RC file.
             sudo_alias_style: The style of the 'sudo' alias to add. One of 'refresh' or 'wrap'.
         """
 
@@ -58,7 +55,6 @@ if typing.TYPE_CHECKING:
         src_path: str
         no_pkg_install: bool
         no_rcfile: bool
-        force_sudo_alias: bool
         no_sudo_alias: bool
         sudo_alias_style: SudoAliasStyle
 
@@ -114,18 +110,10 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
               adds a line to the shell RC file to set up the 'pepc' environment."""
     parser.add_argument("--no-rcfile", action="store_true", help=text)
 
-    text = """By default, the installer checks whether a 'sudo' alias is needed: if the target
-              host is accessible with 'root' privileges or passwordless 'sudo', no alias is added
-              (pepc handles privilege escalation internally). Otherwise, 'alias pepc="sudo pepc"'
-              is added to the shell RC file so that 'pepc' commands always run with the required
-              privileges."""
-    text_on = f"""{text} Use this option to force adding the alias, skipping the automatic
-                  checks."""
-    parser.add_argument("--force-sudo-alias", action="store_true", help=text_on)
-
-    text_off = f"""{text} Use this option to prevent adding the alias, skipping the automatic
-                   checks."""
-    parser.add_argument("--no-sudo-alias", action="store_true", help=text_off)
+    text = """By default, the installer adds 'alias pepc="sudo -v && pepc"' to the shell RC file
+              so that 'pepc' commands always run with the required privileges. Use this option to
+              prevent adding the alias."""
+    parser.add_argument("--no-sudo-alias", action="store_true", help=text)
 
     text = """The style of the 'sudo' alias to add when one is needed. 'refresh' pre-authorizes
               'sudo' credentials before each invocation and lets 'pepc' escalate privileges
@@ -174,7 +162,6 @@ def _get_cmdline_args(args: argparse.Namespace) -> _CmdlineArgsTypedDict:
 
     cmdl["no_pkg_install"] = args.no_pkg_install
     cmdl["no_rcfile"] = args.no_rcfile
-    cmdl["force_sudo_alias"] = args.force_sudo_alias
     cmdl["no_sudo_alias"] = args.no_sudo_alias
 
     sudo_alias_style = args.sudo_alias_style
@@ -182,14 +169,8 @@ def _get_cmdline_args(args: argparse.Namespace) -> _CmdlineArgsTypedDict:
         raise Error("The '--no-sudo-alias' and '--sudo-alias-style' options are mutually "
                     "exclusive")
 
-    for optname in ("force_sudo_alias", "no_sudo_alias"):
-        if cmdl["no_rcfile"] and cmdl[optname]:
-            raise Error(f"The '--{optname.replace('_', '-')}' and '--no-rcfile' options are "
-                        f"mutually exclusive")
-
-    if cmdl["force_sudo_alias"] and cmdl["no_sudo_alias"]:
-        raise Error("The '--force-sudo-alias' and '--no-sudo-alias' options are mutually "
-                    "exclusive")
+    if cmdl["no_rcfile"] and cmdl["no_sudo_alias"]:
+        raise Error("The '--no-sudo-alias' and '--no-rcfile' options are mutually exclusive")
 
     cmdl["sudo_alias_style"] = sudo_alias_style or "refresh"
 
@@ -200,7 +181,6 @@ def install_pepc(pman: ProcessManagerType,
                  install_path: Path = PythonPrjInstaller.DEFAULT_INSTALL_PATH,
                  no_pkg_install: bool = False,
                  no_rcfile: bool = False,
-                 force_sudo_alias: bool = False,
                  no_sudo_alias: bool = False,
                  sudo_alias_style: SudoAliasStyle = "refresh") -> None:
     """
@@ -212,7 +192,6 @@ def install_pepc(pman: ProcessManagerType,
         install_path: Installation directory on the target host.
         no_pkg_install: Do not install missing OS packages.
         no_rcfile: Do not modify the user's shell RC file.
-        force_sudo_alias: Force adding a 'sudo' alias to the RC file.
         no_sudo_alias: Prevent adding a 'sudo' alias to the RC file.
         sudo_alias_style: The style of the 'sudo' alias ('refresh' or 'wrap').
     """
@@ -226,10 +205,7 @@ def install_pepc(pman: ProcessManagerType,
     installer.create_rc_file()
 
     if not no_rcfile and not no_sudo_alias:
-        if force_sudo_alias:
-            installer.add_sudo_aliases(("pepc",), style=sudo_alias_style)
-        elif not pman.is_superuser() and not pman.has_passwdless_sudo():
-            installer.add_sudo_aliases(("pepc",), style=sudo_alias_style)
+        installer.add_sudo_aliases(("pepc",), style=sudo_alias_style)
 
     if not no_rcfile:
         installer.hookup_rc_file()
@@ -249,7 +225,6 @@ def _main(pman: ProcessManagerType, cmdl: _CmdlineArgsTypedDict):
     install_pepc(pman, cmdl["src_path"], install_path=cmdl["install_path"],
                  no_pkg_install=cmdl["no_pkg_install"],
                  no_rcfile=cmdl["no_rcfile"],
-                 force_sudo_alias=cmdl["force_sudo_alias"],
                  no_sudo_alias=cmdl["no_sudo_alias"],
                  sudo_alias_style=cmdl["sudo_alias_style"])
 
