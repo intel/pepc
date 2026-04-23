@@ -66,7 +66,7 @@ Run `tools/install-pepc` without arguments. It fetches and installs the latest `
 directly from GitHub. The local clone is only used to run the script.
 
 ```bash
-./tools/install-pepc
+sudo -v && ./tools/install-pepc
 ```
 
 **Install from a local clone**
@@ -74,17 +74,29 @@ directly from GitHub. The local clone is only used to run the script.
 Use `--src-path` to install from the local clone instead.
 
 ```bash
-./tools/install-pepc --src-path .
+sudo -v && ./tools/install-pepc --src-path .
 ```
 
-The script adds `pepc` configuration to your `~/.bashrc`. Re-login or source `~/.bashrc` to apply
-the changes.
+**Note**: the script runs most steps as the current user, but it requires `sudo` for installing OS
+dependencies. The `sudo -v` pre-authorizes `sudo` credentials so the script can install
+dependencies without prompting for a password.
 
-```bash
-. ~/.bashrc
-```
+**What the script does**
 
-`tools/install-pepc` has additional options to tune the installation (e.g. the installation
+The script performs the steps described below in the [Manual Installation](#manual-installation)
+section. Here is a high-level overview:
+
+- Install OS dependencies using the system package manager (`dnf` or `apt`).
+- Create a Python virtual environment in `~/.pmtools` and install `pepc` and its Python
+  dependencies there.
+- Create `~/.pmtools/.pepc-rc.sh` with all the necessary `pepc` configuration and add a line to
+  `~/.bashrc` to source it. The configuration includes the following:
+  - Add `~/.pmtools/bin` to `PATH`.
+  - Configure tab completions.
+  - Configure manual pages.
+  - Create a `sudo` alias for `pepc`.
+
+`tools/install-pepc` has additional options to tune the installation (e.g., the installation
 path), install `pepc` on a remote host over SSH, and control `sudo` alias creation and style.
 See [guide-main.md](guide-main.md) for a discussion of `sudo` usage with `pepc`. Run
 `./tools/install-pepc --help` to see all available options.
@@ -95,12 +107,12 @@ The `tools/make-standalone` script creates a standalone `pepc` zipapp: a single 
 executable file that bundles `pepc` and all its Python dependencies. No installation, virtual
 environment, or `PATH` changes are required to run it.
 
-This is useful when you want to copy `pepc` to a machine without setting up a Python environment,
-or when you want a portable snapshot of a specific `pepc` version.
+This is useful when you want to copy `pepc` to a machine without setting up a Python virtual
+environment, or when you want a portable snapshot of a specific `pepc` version.
 
-Like running from source, the standalone executable does not configure shell tab completions or man
-pages, so `man pepc-cstates` and tab completion will not work. It is best suited for short-term or
-one-off use. For regular use, a proper installation is recommended.
+Like when running from source, the standalone executable does not have tab completions or man pages
+configured. It is best suited for short-term or one-off use. For regular use, a proper installation
+is recommended.
 
 Clone the repository and run `tools/make-standalone` to create the executable.
 
