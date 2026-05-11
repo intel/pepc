@@ -420,14 +420,14 @@ CPU load and other factors.
 Writes to
 \f[CR]/sys/devices/system/cpu/cpufreq/policy<N>/scaling_governor\f[R].
 .TP
-\f[B]\-\-hwp\-min\-perf\f[R] \f[I][HWP_MIN_PERF]\f[R]
+\f[B]\-\-hwp\-min\-perf\f[R] \f[I][HWP\f[R]MIN\f[I]PERF]\f[R]
 Set the minimum HWP performance level for specified CPUs.
 Writes to \f[CR]MSR_HWP_REQUEST\f[R] (0x774), bits 7:0.
-If package\-level control is enabled, it is overridden to allow
-per\-CPU control.
+If package\-level control is enabled, it is overridden to allow per\-CPU
+control.
 .TP
-\f[B]\-\-hwp\-max\-perf\f[R] \f[I][HWP_MAX_PERF]\f[R]
+\f[B]\-\-hwp\-max\-perf\f[R] \f[I][HWP\f[R]MAX\f[I]PERF]\f[R]
 Set the maximum HWP performance level for specified CPUs.
 Writes to \f[CR]MSR_HWP_REQUEST\f[R] (0x774), bits 15:8.
-If package\-level control is enabled, it is overridden to allow
-per\-CPU control.
+If package\-level control is enabled, it is overridden to allow per\-CPU
+control.

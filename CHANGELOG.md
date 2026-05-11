@@ -6,6 +6,12 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
 ### Added
+### Removed
+### Changed
+
+## [2.0.2] - 2026-05-11
+### Fixed
+### Added
  - Add '--hwp-min-perf' and '--hwp-max-perf' options for reading and setting
    HWP min/max performance levels via MSR.
 ### Removed
