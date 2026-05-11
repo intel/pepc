@@ -346,7 +346,7 @@ for cpu, cpus_info in transaction_buffer.items():
 
         for cpu, cpus_info in self._transaction_buffer.items():
             path = self.format_msr_device_path(cpu)
-            with self._pman.openb(path, "r+") as fobj:
+            with self._pman.openb(path, "r+b") as fobj:
                 for regaddr, regval_info in cpus_info.items():
                     regval = regval_info["regval"]
                     _LOG.debug("Transaction: Emulation: Write: CPU%d: MSR 0x%x: 0x%x to '%s'%s",
