@@ -32,7 +32,7 @@ _PERF_LEVEL_NAMES: Final[frozenset[PerfLevelNameType]] = frozenset({
 
 _LOG = Logging.getLogger(f"{Logging.MAIN_LOGGER_NAME}.pepc.{__name__}")
 
-class HWPMSR(ClassHelpers.SimpleCloseContext):
+class HWPCapMSR(ClassHelpers.SimpleCloseContext):
     """
     Provide a capability to read HWP performance levels from 'MSR_HWP_CAPABILITIES'.
 

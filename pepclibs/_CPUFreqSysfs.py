@@ -27,7 +27,7 @@ from pepclibs.helperlibs.Exceptions import ErrorOutOfRange, ErrorBadOrder
 
 if typing.TYPE_CHECKING:
     from typing import Generator, Literal, Sequence
-    from pepclibs import _HWPMSR
+    from pepclibs import _HWPCapMSR
     from pepclibs.msr import MSR
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
 
@@ -107,7 +107,7 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
         self._close_msr = msr is None
         self._close_sysfs_io = sysfs_io is None
 
-        self._hwp_msr_obj: _HWPMSR.HWPMSR | None = None
+        self._hwp_msr_obj: _HWPCapMSR.HWPCapMSR | None = None
 
         self._sysfs_base = Path("/sys/devices/system/cpu")
 
@@ -198,21 +198,22 @@ class CPUFreqSysfs(ClassHelpers.SimpleCloseContext):
 
         return self._msr
 
-    def _get_hwp_msr_obj(self) -> _HWPMSR.HWPMSR:
+    def _get_hwp_msr_obj(self) -> _HWPCapMSR.HWPCapMSR:
         """
-        Get an 'HWPMSR' object.
+        Get an 'HWPCapMSR' object.
 
         Returns:
-            An instance of '_HWPMSR.HWPMSR'.
+            An instance of '_HWPCapMSR.HWPCapMSR'.
         """
 
         if not self._hwp_msr_obj:
             # pylint: disable-next=import-outside-toplevel
-            from pepclibs import _HWPMSR
+            from pepclibs import _HWPCapMSR
 
             msr = self._get_msr()
-            self._hwp_msr_obj = _HWPMSR.HWPMSR(cpuinfo=self._cpuinfo, pman=self._pman, msr=msr,
-                                               enable_cache=self._enable_cache)
+            self._hwp_msr_obj = _HWPCapMSR.HWPCapMSR(cpuinfo=self._cpuinfo, pman=self._pman,
+                                                     msr=msr,
+                                                     enable_cache=self._enable_cache)
         return self._hwp_msr_obj
 
     def _extract_cpu_from_path(self, path: Path, basename: str) -> int:

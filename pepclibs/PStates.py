@@ -27,7 +27,7 @@ from pepclibs._PropsClassBase import ErrorTryAnotherMechanism
 if typing.TYPE_CHECKING:
     from typing import Generator, cast, Sequence, NoReturn, Union
     from pepclibs.msr import MSR, FSBFreq, PlatformInfo
-    from pepclibs import _CPUFreqSysfs, _CPPCSysfs, _HWPMSR
+    from pepclibs import _CPUFreqSysfs, _CPPCSysfs, _HWPCapMSR
     from pepclibs import _SysfsIO, EPP, EPB, CPUInfo
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepclibs._PropsTypes import PropertyValueType, MechanismNameType
@@ -59,7 +59,7 @@ class PStates(_PropsClassBase.PropsClassBase):
 
         self._cpufreq_sysfs_obj: _CPUFreqSysfs.CPUFreqSysfs | None = None
         self._cppc_sysfs_obj: _CPPCSysfs.CPPCSysfs | None = None
-        self._hwp_msr_obj: _HWPMSR.HWPMSR | None = None
+        self._hwp_msr_obj: _HWPCapMSR.HWPCapMSR | None = None
 
         self._perf2freq: dict[int, int] = {}
 
@@ -183,21 +183,22 @@ class PStates(_PropsClassBase.PropsClassBase):
                                                         enable_cache=self._enable_cache)
         return self._cppc_sysfs_obj
 
-    def _get_hwp_msr_obj(self) -> _HWPMSR.HWPMSR:
+    def _get_hwp_msr_obj(self) -> _HWPCapMSR.HWPCapMSR:
         """
-        Get an 'HWPMSR' object.
+        Get an 'HWPCapMSR' object.
 
         Returns:
-            An instance of '_HWPMSR.HWPMSR'.
+            An instance of '_HWPCapMSR.HWPCapMSR'.
         """
 
         if not self._hwp_msr_obj:
             # pylint: disable-next=import-outside-toplevel
-            from pepclibs import _HWPMSR
+            from pepclibs import _HWPCapMSR
 
             msr = self._get_msr()
-            self._hwp_msr_obj = _HWPMSR.HWPMSR(cpuinfo=self._cpuinfo, pman=self._pman, msr=msr,
-                                               enable_cache=self._enable_cache)
+            self._hwp_msr_obj = _HWPCapMSR.HWPCapMSR(cpuinfo=self._cpuinfo, pman=self._pman,
+                                                     msr=msr,
+                                                     enable_cache=self._enable_cache)
         return self._hwp_msr_obj
 
     def _get_bclks_cpus(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
