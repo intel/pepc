@@ -27,7 +27,7 @@ from pepclibs._PropsClassBase import ErrorTryAnotherMechanism
 if typing.TYPE_CHECKING:
     from typing import Generator, cast, Sequence, NoReturn, Union
     from pepclibs.msr import MSR, FSBFreq, PlatformInfo
-    from pepclibs import _CPUFreqSysfs, _CPPCSysfs, _HWPCapMSR
+    from pepclibs import _CPUFreqSysfs, _CPPCSysfs, _HWPCapMSR, _HWPPerf
     from pepclibs import _SysfsIO, EPP, EPB, CPUInfo
     from pepclibs.helperlibs.ProcessManager import ProcessManagerType
     from pepclibs._PropsTypes import PropertyValueType, MechanismNameType
@@ -60,6 +60,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         self._cpufreq_sysfs_obj: _CPUFreqSysfs.CPUFreqSysfs | None = None
         self._cppc_sysfs_obj: _CPPCSysfs.CPPCSysfs | None = None
         self._hwp_msr_obj: _HWPCapMSR.HWPCapMSR | None = None
+        self._hwp_perf_obj: _HWPPerf.HWPPerf | None = None
 
         self._perf2freq: dict[int, int] = {}
 
@@ -69,7 +70,7 @@ class PStates(_PropsClassBase.PropsClassBase):
         """Uninitialize the class instance."""
 
         close_attrs = ("_eppobj", "_epbobj", "_platinfo", "_fsbfreq", "_cpufreq_sysfs_obj",
-                       "_cppc_sysfs_obj", "_hwp_msr_obj")
+                       "_cppc_sysfs_obj", "_hwp_msr_obj", "_hwp_perf_obj")
         ClassHelpers.close(self, close_attrs=close_attrs)
 
         super().close()
@@ -200,6 +201,23 @@ class PStates(_PropsClassBase.PropsClassBase):
                                                      msr=msr,
                                                      enable_cache=self._enable_cache)
         return self._hwp_msr_obj
+
+    def _get_hwp_perf_obj(self) -> _HWPPerf.HWPPerf:
+        """
+        Get an 'HWPPerf' object.
+
+        Returns:
+            An instance of '_HWPPerf.HWPPerf'.
+        """
+
+        if not self._hwp_perf_obj:
+            # pylint: disable-next=import-outside-toplevel
+            from pepclibs import _HWPPerf
+
+            msr = self._get_msr()
+            self._hwp_perf_obj = _HWPPerf.HWPPerf(cpuinfo=self._cpuinfo, pman=self._pman,
+                                                   msr=msr, enable_cache=self._enable_cache)
+        return self._hwp_perf_obj
 
     def _get_bclks_cpus(self, cpus: AbsNumsType) -> Generator[tuple[int, int], None, None]:
         """
@@ -641,6 +659,35 @@ class PStates(_PropsClassBase.PropsClassBase):
         else:
             raise Error(f"BUG: Unexpected HWP property '{pname}'")
 
+    def _get_hwp_min_max_perf(self,
+                              pname: str,
+                              cpus: AbsNumsType,
+                              mname: MechanismNameType) -> Generator[tuple[int, int], None, None]:
+        """
+        Retrieve and yield the HWP min/max performance level for the specified CPUs.
+
+        Args:
+            pname: Name of the property to retrieve ("hwp_min_perf" or "hwp_max_perf").
+            cpus: CPU numbers to retrieve the performance level for.
+            mname: Name of the mechanism to use (must be "msr").
+
+        Yields:
+            Tuples of (cpu, val), where 'cpu' is the CPU number and 'val' is its HWP performance
+            level.
+        """
+
+        if mname != "msr":
+            raise Error(f"BUG: Unexpected mechanism '{mname}' for property '{pname}'")
+
+        hwp_perf_obj = self._get_hwp_perf_obj()
+
+        if pname == "hwp_min_perf":
+            yield from hwp_perf_obj.get_min_perf(cpus)
+        elif pname == "hwp_max_perf":
+            yield from hwp_perf_obj.get_max_perf(cpus)
+        else:
+            raise Error(f"BUG: Unexpected HWP min/max perf property '{pname}'")
+
     def _get_turbo(self,
                    cpus: AbsNumsType,
                    mname: MechanismNameType) -> Generator[tuple[int, str], None, None]:
@@ -791,6 +838,8 @@ class PStates(_PropsClassBase.PropsClassBase):
         elif pname in {"hwp_lowest_perf", "hwp_efficient_perf", "hwp_guaranteed_perf",
                        "hwp_highest_perf"}:
             yield from self._get_hwp_perf(pname, cpus, mname)
+        elif pname in {"hwp_min_perf", "hwp_max_perf"}:
+            yield from self._get_hwp_min_max_perf(pname, cpus, mname)
         else:
             raise Error(f"BUG: Unknown property '{pname}'")
 
@@ -992,6 +1041,25 @@ class PStates(_PropsClassBase.PropsClassBase):
             except ErrorVerifyFailedPerCPUPath as err:
                 self._handle_write_and_read_freq_mismatch(err)
 
+    def _set_hwp_min_max_perf(self, pname: str, val: int, cpus: AbsNumsType):
+        """
+        Set the HWP min/max performance level for specified CPUs.
+
+        Args:
+            pname: Name of the property to set ("hwp_min_perf" or "hwp_max_perf").
+            val: The performance level value to set.
+            cpus: CPU numbers to set the performance level for.
+        """
+
+        hwp_perf_obj = self._get_hwp_perf_obj()
+
+        if pname == "hwp_min_perf":
+            hwp_perf_obj.set_min_perf(val, cpus)
+        elif pname == "hwp_max_perf":
+            hwp_perf_obj.set_max_perf(val, cpus)
+        else:
+            raise Error(f"BUG: Unexpected HWP min/max property '{pname}'")
+
     def _improve_epp_error_message(self,
                                    val: str,
                                    mname: MechanismNameType,
@@ -1101,6 +1169,12 @@ class PStates(_PropsClassBase.PropsClassBase):
             else:
                 _freq_val = val
             self._set_cpu_freq(pname, _freq_val, cpus, mname)
+        elif pname in ("hwp_min_perf", "hwp_max_perf"):
+            if typing.TYPE_CHECKING:
+                _perf_val = cast(int, val)
+            else:
+                _perf_val = val
+            self._set_hwp_min_max_perf(pname, _perf_val, cpus)
         else:
             raise Error(f"BUG: Unsupported property '{pname}'")
 

@@ -214,3 +214,76 @@ def test_freq_msr_vs_sysfs(params: PropsTestParamsTypedDict):
             assert base_freq_sysfs == base_freq_msr, \
                 f"'base_freq' ({base_freq_sysfs}) and 'base_freq' ({base_freq_msr})' mismatch " \
                 f"on CPU {cpu}"
+
+def test_hwp_perf_vs_freq(params: PropsTestParamsTypedDict):
+    """
+    Verify that the 'intel_pstate' driver translates CPU frequency values to HWP performance levels
+    correctly. Setting min/max frequency should result in min/max perf = frequency / bus_clock.
+
+    Args:
+        params: The test parameters.
+    """
+
+    pobj = params["pobj"]
+    cpuinfo = params["cpuinfo"]
+
+    # Skip on emulated hosts.
+    if params["pman"].is_emulated:
+        pytest.skip("This test is not supported on emulated hosts")
+
+    # Skip when caching is enabled. Setting frequency via sysfs causes the kernel driver to update
+    # the MSR, which makes our MSR cache stale.
+    if params["pobj"]._enable_cache: # pylint: disable=protected-access
+        pytest.skip("This test is not compatible with MSR caching")
+
+    # Skip if the platform is hybrid.
+    if cpuinfo.is_hybrid():
+        pytest.skip("Hybrid platforms are not supported by this test")
+
+    cpu = 0
+
+    # Skip if HWP is not enabled.
+    try:
+        pvinfo = pobj.get_cpu_prop("hwp", cpu)
+        if not pvinfo["val"]:
+            pytest.skip("HWP is not enabled")
+    except ErrorNotSupported:
+        pytest.skip("HWP is not supported")
+
+    # Skip if the driver is not 'intel_pstate'.
+    pvinfo = pobj.get_cpu_prop("driver", cpu)
+    if pvinfo["val"] != "intel_pstate":
+        pytest.skip("The CPU frequency driver is not 'intel_pstate'")
+
+    # Get bus clock (100 MHz is the typical value).
+    bus_clock = pobj.get_cpu_prop_int("bus_clock", cpu)["val"]
+
+    # Test with minimum frequency. Lower min first, then lower max.
+    pobj.set_prop_cpus("min_freq", "min", cpus=(cpu,))
+    pobj.set_prop_cpus("max_freq", "min", cpus=(cpu,))
+
+    min_freq = pobj.get_cpu_prop_int("min_freq_limit", cpu)["val"]
+    expected_perf = min_freq // bus_clock
+
+    hwp_min_perf = pobj.get_cpu_prop_int("hwp_min_perf", cpu)["val"]
+    hwp_max_perf = pobj.get_cpu_prop_int("hwp_max_perf", cpu)["val"]
+
+    assert hwp_min_perf == expected_perf, \
+           f"'hwp_min_perf' ({hwp_min_perf}) != min_freq / bus_clock ({expected_perf}) on CPU {cpu}"
+    assert hwp_max_perf == expected_perf, \
+           f"'hwp_max_perf' ({hwp_max_perf}) != min_freq / bus_clock ({expected_perf}) on CPU {cpu}"
+
+    # Test with maximum frequency. Raise max first, then raise min.
+    pobj.set_prop_cpus("max_freq", "max", cpus=(cpu,))
+    pobj.set_prop_cpus("min_freq", "max", cpus=(cpu,))
+
+    max_freq = pobj.get_cpu_prop_int("max_freq_limit", cpu)["val"]
+    expected_perf = max_freq // bus_clock
+
+    hwp_min_perf = pobj.get_cpu_prop_int("hwp_min_perf", cpu)["val"]
+    hwp_max_perf = pobj.get_cpu_prop_int("hwp_max_perf", cpu)["val"]
+
+    assert hwp_min_perf == expected_perf, \
+           f"'hwp_min_perf' ({hwp_min_perf}) != max_freq / bus_clock ({expected_perf}) on CPU {cpu}"
+    assert hwp_max_perf == expected_perf, \
+           f"'hwp_max_perf' ({hwp_max_perf}) != max_freq / bus_clock ({expected_perf}) on CPU {cpu}"

@@ -298,6 +298,18 @@ Use target CPU specification options to define a subset of CPUs, cores, dies, or
 :   Retrieve the HWP highest performance level for specified CPUs. Reads `MSR_HWP_CAPABILITIES`
     (0x771), bits 7:0.
 
+**--hwp-min-perf**
+
+:   Retrieve the minimum HWP performance level for specified CPUs. Reads `MSR_HWP_REQUEST`
+    (0x774), bits 7:0. If package-level control is enabled, reads from `MSR_HWP_REQUEST_PKG`
+    (0x772) instead.
+
+**--hwp-max-perf**
+
+:   Retrieve the maximum HWP performance level for specified CPUs. Reads `MSR_HWP_REQUEST`
+    (0x774), bits 15:8. If package-level control is enabled, reads from `MSR_HWP_REQUEST_PKG`
+    (0x772) instead.
+
 **--yaml**
 
 :   Display output in YAML format.
@@ -370,3 +382,13 @@ packages.
 
 :   Set the CPU frequency governor, which determines the P-state based on CPU load and other
     factors. Writes to `/sys/devices/system/cpu/cpufreq/policy<N>/scaling_governor`.
+
+**--hwp-min-perf** *[HWP_MIN_PERF]*
+
+:   Set the minimum HWP performance level for specified CPUs. Writes to `MSR_HWP_REQUEST` (0x774),
+    bits 7:0. If package-level control is enabled, it is overridden to allow per-CPU control.
+
+**--hwp-max-perf** *[HWP_MAX_PERF]*
+
+:   Set the maximum HWP performance level for specified CPUs. Writes to `MSR_HWP_REQUEST` (0x774),
+    bits 15:8. If package-level control is enabled, it is overridden to allow per-CPU control.

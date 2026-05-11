@@ -321,6 +321,18 @@ Reads \f[CR]MSR_HWP_CAPABILITIES\f[R] (0x771), bits 15:8.
 Retrieve the HWP highest performance level for specified CPUs.
 Reads \f[CR]MSR_HWP_CAPABILITIES\f[R] (0x771), bits 7:0.
 .TP
+\f[B]\-\-hwp\-min\-perf\f[R]
+Retrieve the minimum HWP performance level for specified CPUs.
+Reads \f[CR]MSR_HWP_REQUEST\f[R] (0x774), bits 7:0.
+If package\-level control is enabled, reads from
+\f[CR]MSR_HWP_REQUEST_PKG\f[R] (0x772) instead.
+.TP
+\f[B]\-\-hwp\-max\-perf\f[R]
+Retrieve the maximum HWP performance level for specified CPUs.
+Reads \f[CR]MSR_HWP_REQUEST\f[R] (0x774), bits 15:8.
+If package\-level control is enabled, reads from
+\f[CR]MSR_HWP_REQUEST_PKG\f[R] (0x772) instead.
+.TP
 \f[B]\-\-yaml\f[R]
 Display output in YAML format.
 .SS Subcommand \f[I]\[aq]config\[aq]\f[R]
@@ -407,3 +419,15 @@ Set the CPU frequency governor, which determines the P\-state based on
 CPU load and other factors.
 Writes to
 \f[CR]/sys/devices/system/cpu/cpufreq/policy<N>/scaling_governor\f[R].
+.TP
+\f[B]\-\-hwp\-min\-perf\f[R] \f[I][HWP_MIN_PERF]\f[R]
+Set the minimum HWP performance level for specified CPUs.
+Writes to \f[CR]MSR_HWP_REQUEST\f[R] (0x774), bits 7:0.
+If package\-level control is enabled, it is overridden to allow
+per\-CPU control.
+.TP
+\f[B]\-\-hwp\-max\-perf\f[R] \f[I][HWP_MAX_PERF]\f[R]
+Set the maximum HWP performance level for specified CPUs.
+Writes to \f[CR]MSR_HWP_REQUEST\f[R] (0x774), bits 15:8.
+If package\-level control is enabled, it is overridden to allow
+per\-CPU control.

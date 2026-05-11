@@ -223,4 +223,18 @@ PROPS: Final[dict[str, PropertyTypedDict]] = {
         "mnames": ("msr",),
         "writable": False,
     },
+    "hwp_min_perf": {
+        "name": "Min. HWP performance level",
+        "type": "int",
+        "sname": "CPU",
+        "mnames": ("msr",),
+        "writable": True,
+    },
+    "hwp_max_perf": {
+        "name": "Max. HWP performance level",
+        "type": "int",
+        "sname": "CPU",
+        "mnames": ("msr",),
+        "writable": True,
+    },
 }
