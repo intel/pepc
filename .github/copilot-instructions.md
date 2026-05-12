@@ -46,6 +46,8 @@ Compact reference for AI code generation. Human docs: [CONTRIBUTING.md](../CONTR
   its public `test_foo()`. Do not group all helpers at top and all public functions at bottom
 - [ ] Tests: use `pytest.skip("reason")` when a platform/topology condition is not met; never
   use bare `return` as a silent skip
+- [ ] No separator comments (`# ---- Section ----`); needing them signals the file/class is too
+  large and should be split
 
 ---
 
@@ -197,6 +199,10 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 ```
 
 Refer to callables as `'configure()'`, `'close()'`; non-callables as `'outdir'`, `'_pman'`.
+
+Do not use separator/divider comments (e.g., `# ---- Section ----`) to split a file or class into
+sections. If a file or class feels large enough to need visual separators, it should be refactored
+into smaller files or classes instead.
 
 Violation regex: `^\s*#[^#].*[^.]$`
 

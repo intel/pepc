@@ -537,6 +537,22 @@ When referring to a function, method, or other identifier in a comment, use sing
 parentheses for callables: `'configure()'`, `'close()'`. For non-callables, use single quotes
 without parentheses: `'outdir'`, `'_pman'`.
 
+### No Separator Comments
+
+Do not use separator or divider comments to split a file or class into visual sections:
+
+```python
+# WRONG: separator comment.
+# ---------- Set functions ------------------
+
+# WRONG: any variation of a visual divider.
+# ============================================
+# ############################################
+```
+
+If a file or class feels large enough to need such separators, treat it as a signal that the code
+should be refactored into smaller files or classes instead.
+
 ### Messages
 
 #### Small vs Capital Letters in Messages
