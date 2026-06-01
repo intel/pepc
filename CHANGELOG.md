@@ -5,6 +5,12 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
+### Added
+### Removed
+### Changed
+
+## [2.0.3] - 2026-06-01
+### Fixed
  - Fix 'num2si()' function, which lead to incorrect units conversion in some
    cases.
 ### Added
