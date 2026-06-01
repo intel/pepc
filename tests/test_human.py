@@ -198,6 +198,25 @@ _NUM2SI_TEST_DATA: Final[list[_Num2SiTestDataType]] = [
      "unit": "W", "decp": 0, "sep": " ", "strip_zeroes": False, "result": "2 EW"},
     {"value": 1999 * 1000 * 1000 * 1000 * 1000 * 1000,
      "unit": "MW", "decp": 0, "sep": " ", "strip_zeroes": False, "result": "1999000 EW"},
+    # Values in [1, 1000) with an SI-prefixed unit must preserve the prefix.
+    {"value": 444.584,
+     "unit": "us", "decp": 2, "sep": None, "strip_zeroes": False, "result": "444.58us"},
+    {"value": 1.0,
+     "unit": "us", "decp": 2, "sep": None, "strip_zeroes": False, "result": "1.00us"},
+    {"value": 999.0,
+     "unit": "us", "decp": 2, "sep": None, "strip_zeroes": False, "result": "999.00us"},
+    {"value": 1.0,
+     "unit": "ms", "decp": 2, "sep": None, "strip_zeroes": False, "result": "1.00ms"},
+    {"value": 500.0,
+     "unit": "ms", "decp": 2, "sep": " ", "strip_zeroes": False, "result": "500.00 ms"},
+    {"value": 999.0,
+     "unit": "ms", "decp": 2, "sep": " ", "strip_zeroes": False, "result": "999.00 ms"},
+    {"value": 1.0,
+     "unit": "mW", "decp": 2, "sep": " ", "strip_zeroes": False, "result": "1.00 mW"},
+    {"value": 500.0,
+     "unit": "mW", "decp": 1, "sep": " ", "strip_zeroes": True, "result": "500 mW"},
+    {"value": 999.0,
+     "unit": "mW", "decp": 0, "sep": " ", "strip_zeroes": False, "result": "999 mW"},
 ]
 
 def test_num2si():

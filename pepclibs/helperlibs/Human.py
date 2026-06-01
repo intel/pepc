@@ -206,7 +206,8 @@ def num2si(value: int | float,
     sipfx, base_unit = separate_si_prefix(unit)
     value = float(value)
 
-    if abs(value) >= 1 and abs(value) < 1000:
+    # No scaling is needed for values in [1, 1000) with no SI prefix.
+    if not sipfx and abs(value) >= 1 and abs(value) < 1000:
         result = f"{value:.{decp}f}"
         if strip_zeroes and "." in result:
             result = result.rstrip("0").rstrip(".")
