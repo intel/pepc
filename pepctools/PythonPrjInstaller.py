@@ -173,6 +173,15 @@ class PythonPrjInstaller(ClassHelpers.SimpleCloseContext):
 
         with ToolChecker.ToolChecker(self._pman) as tchk:
             tchk.ensure_tools_available(tuple(tools))
+            # Verify that 'python3 -m venv' works. On Ubuntu/Debian it requires the 'python3-venv'
+            # OS package and is not available by default. Install it if the test fails.
+            venv_test_dir = self._pman.mkdtemp(prefix=f"{self._prjname}-venv-test-")
+            try:
+                _, _, exitcode = self._pman.run(f"python3 -m venv '{venv_test_dir}/testvenv'")
+            finally:
+                self._pman.rmtree(venv_test_dir)
+            if exitcode != 0:
+                tchk.ensure_tools_available(("virtualenv",))
 
     def _run_installation(self, src_path: Path | None):
         """

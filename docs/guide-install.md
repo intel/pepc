@@ -152,18 +152,19 @@ your system.
 
 **Tools needed for installation:**
 
-- `pip3` and `virtualenv`: required for `pip`-based installation
-   (see [Installation Using pip](#installation-using-pip)).
-- `uv`: an alternative to `pip3` + `virtualenv` (see [Using uv](#using-uv)). Install one or the other.
+- `pip3` and `python3 -m venv`: required for `pip`-based installation
+  (see [Installation Using pip](#installation-using-pip)). On Ubuntu/Debian, `python3 -m venv`
+  requires the `python3-venv` package; the installer will install it automatically if missing.
+- `uv`: an alternative to `pip3` + `python3 -m venv` (see [Using uv](#using-uv)). Install one or the other.
 - `rsync`: used to copy sources to a temporary directory during installation from a local path.
 
 The commands below install the `pip3`-based tools. If you prefer `uv`, install it instead and skip
-`python3-pip` and `python3-virtualenv`.
+`python3-pip`.
 
-**Fedora / CentOS**
+**Fedora / RHEL / CentOS**
 
 ```bash
-sudo dnf install -y util-linux kmod python3-pip python3-virtualenv rsync
+sudo dnf install -y util-linux kmod python3-pip rsync
 ```
 
 **Ubuntu**

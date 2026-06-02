@@ -55,7 +55,7 @@ _COMMON_PKGINFO: Final[dict[str, str]] = {
     "xargs":     "findutils",
 }
 
-# CentOS, Fedora, RHEL.
+# Fedora.
 _FEDORA_PKGINFO: Final[dict[str, str]] = {
     **_COMMON_PKGINFO,
     "tc":         "iproute-tc",
@@ -67,6 +67,19 @@ _FEDORA_PKGINFO: Final[dict[str, str]] = {
     "ps":         "procps-ng",
     "sch_etf.ko": "kernel-modules-extra",
     "virtualenv": "python3-virtualenv",
+}
+
+# CentOS, RHEL.
+_RHEL_PKGINFO: Final[dict[str, str]] = {
+    **_COMMON_PKGINFO,
+    "tc":         "iproute-tc",
+    "bpftool":    "bpftool",
+    "libbpf":     "libbpf-devel",
+    "kill":       "util-linux",
+    "pgrep":      "procps-ng",
+    "pkill":      "procps-ng",
+    "ps":         "procps-ng",
+    "sch_etf.ko": "kernel-modules-extra",
 }
 
 # Ubuntu.
@@ -102,8 +115,8 @@ _DEBIAN_PKGINFO: Final[dict[str, str]] = {
 #
 _PKGINFO: Final[dict[str, dict[str, str]]] = {
     "fedora": _FEDORA_PKGINFO,
-    "centos": _FEDORA_PKGINFO,
-    "rhel":   _FEDORA_PKGINFO,
+    "centos": _RHEL_PKGINFO,
+    "rhel":   _RHEL_PKGINFO,
     "ubuntu": _UBUNTU_PKGINFO,
     "debian": _DEBIAN_PKGINFO,
 }

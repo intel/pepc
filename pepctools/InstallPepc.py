@@ -69,7 +69,6 @@ PEPC_GIT_INSTALL_SRC: Final[str] = "git+https://github.com/intel/pepc.git@releas
 
 # The tools pepc relies on to be installed and to operate.
 PEPC_DEPENDENCIES: Final[tuple[str, ...]] = (
-    "virtualenv",
     "pip3",
     "cat",
     "dmesg",
