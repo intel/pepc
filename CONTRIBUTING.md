@@ -30,10 +30,19 @@ This document provides guidelines for project coding style and conventions.
   - [Comment Punctuation](#comment-punctuation)
   - [Messages](#messages)
     - [Small vs Capital Letters in Messages](#small-vs-capital-letters-in-messages)
+- [Writing Style](#writing-style)
+  - [Em-Dashes](#em-dashes)
+  - [Semicolons](#semicolons)
+  - [Quotation Mark Punctuation](#quotation-mark-punctuation)
+  - [Sentence Spacing](#sentence-spacing)
 - [Markdown Documentation](#markdown-documentation)
   - [Backtick Usage](#backtick-usage)
   - [Backtick Span Wrapping](#backtick-span-wrapping)
   - [Link Wrapping](#link-wrapping)
+  - [List Formatting](#list-formatting)
+  - [Prose Line Length](#prose-line-length)
+  - [Heading Capitalization](#heading-capitalization)
+  - [Fenced Code Block Languages](#fenced-code-block-languages)
 - [Code Organization](#code-organization)
   - [Class Layout](#class-layout)
   - [Private vs Public Symbols](#private-vs-public-symbols)
@@ -573,6 +582,47 @@ multi-line messages should use periods.
     _LOG.debug("Local: read: CPU%d: msr 0x%x: 0x%x", cpu, regaddr, val)
 ```
 
+## Writing Style
+
+These rules apply to all prose in the project: code comments, docstrings, commit messages, and
+Markdown documentation.
+
+### Em-Dashes
+
+Do not use em-dashes (`—`). Replace with a comma, a period, or restructure the sentence.
+
+**Examples:**
+
+```
+# Wrong.
+The tool reads the register — then writes it back.
+
+# Right.
+The tool reads the register, then writes it back.
+```
+
+### Semicolons
+
+Do not use semicolons (`;`) as sentence punctuation. Use a comma or a period instead.
+
+### Quotation Mark Punctuation
+
+Use logical punctuation: commas and periods go **outside** closing quotation marks, not inside.
+
+**Examples:**
+
+```
+# Wrong (American style).
+Write "SEPT," not "EPC".
+
+# Right (logical punctuation).
+Write "SEPT", not "EPC".
+```
+
+### Sentence Spacing
+
+Use a single space between sentences, not two.
+
 ## Markdown Documentation
 
 ### Backtick Usage
@@ -616,6 +666,78 @@ for details.
 Refer to the [Performance Level to
 Frequency Mapping](#performance-level-to-frequency-mapping) section.
 ```
+
+### List Formatting
+
+Always surround a list with a blank line above and below it.
+
+**Correct:**
+
+```markdown
+Some text.
+
+- Item one.
+- Item two.
+
+More text.
+```
+
+**Incorrect:**
+
+```markdown
+Some text.
+- Item one.
+- Item two.
+More text.
+```
+
+### Prose Line Length
+
+Hard-wrap prose lines at 100 characters. Fill each line as close to 100 characters as possible
+before wrapping to the next line. Do not leave lines short when more text can fit.
+
+Code blocks are excluded: command output and file paths cannot always be wrapped.
+
+### Heading Capitalization
+
+Capitalize section headings in title case.
+
+**Examples:**
+
+```markdown
+# Good.
+### What the MC Checks
+
+# Bad.
+### What the MC checks
+```
+
+### Fenced Code Block Languages
+
+Always specify a language tag on fenced code blocks. Never use a bare ` ``` ` with no tag.
+
+Common tags: `python`, `c`, `bash`, `yaml`, `markdown`, `text`. Use `text` for plain output,
+command examples, or anything that has no better-fitting language.
+
+**Examples:**
+
+````markdown
+# Good.
+```python
+print("hello")
+```
+
+# Good: plain output with no syntax.
+```text
+INFO: Converting: foo.pdf
+Written: foo.md
+```
+
+# Bad: no language tag.
+```
+print("hello")
+```
+````
 
 ## Code Organization
 

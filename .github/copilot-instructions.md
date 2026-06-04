@@ -48,6 +48,15 @@ Compact reference for AI code generation. Human docs: [CONTRIBUTING.md](../CONTR
   use bare `return` as a silent skip
 - [ ] No separator comments (`# ---- Section ----`); needing them signals the file/class is too
   large and should be split
+- [ ] Writing: no em-dashes (`—`); use a comma or period instead
+- [ ] Writing: no semicolons (`;`) as sentence punctuation; use `,` or `.`
+- [ ] Writing: logical punctuation — commas and periods go outside closing quotation marks
+- [ ] Writing: single space between sentences, not double
+- [ ] Markdown: surround lists with blank lines above and below
+- [ ] Markdown: hard-wrap prose at 100 chars; fill each line to near 100 before wrapping
+- [ ] Markdown: capitalize section headings in title case
+- [ ] Markdown: fenced code blocks must specify a language tag (e.g., ` ```python `, ` ```c `,
+  ` ```text `); never use a bare ` ``` `
 
 ---
 
@@ -318,3 +327,24 @@ Spaces AFTER `:`, never before. Extra spaces after `:` for alignment OK.
 {"key":  value}         # RIGHT (aligned)
 {"key" : value}         # WRONG
 ```
+
+---
+
+## Writing & Markdown Style
+
+These rules apply to all prose: code comments, docstrings, commit messages, and documentation.
+
+### Writing Rules
+
+- No em-dashes (`—`). Rewrite with a comma, period, or separate sentence.
+- No semicolons (`;`) as sentence punctuation. Use a comma or period.
+- Logical punctuation: commas and periods go **outside** closing quotation marks.
+  Write `"SEPT"`, not `"SEPT,"`.
+- Single space between sentences, not double.
+
+### Markdown Rules
+
+- Surround every list with a blank line above and below.
+- Hard-wrap lines at 100 characters. Fill each line close to 100 before wrapping.
+- Capitalize section headings in title case: `### What the MC Checks`, not
+  `### What the MC checks`.
