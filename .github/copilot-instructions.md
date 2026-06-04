@@ -20,6 +20,7 @@ Compact reference for AI code generation. Human docs: [CONTRIBUTING.md](../CONTR
 - [ ] TypedDict: `total=False` when building key-by-key
 - [ ] Module constants: `frozenset()`/`tuple()`, not `set()`/`list()`; prefer immutable
   collections generally
+- [ ] Class attributes: `snake_case`, not `ALL_CAPS`; `ALL_CAPS` is for module-level constants only
 - [ ] pepclibs file I/O: `_sysfs_io` methods only
 - [ ] Blank line after multi-line docstring before body
 - [ ] One blank line between class methods

@@ -593,7 +593,7 @@ Do not use em-dashes (`—`). Replace with a comma, a period, or restructure the
 
 **Examples:**
 
-```
+```text
 # Wrong.
 The tool reads the register — then writes it back.
 
@@ -611,7 +611,7 @@ Use logical punctuation: commas and periods go **outside** closing quotation mar
 
 **Examples:**
 
-```
+```text
 # Wrong (American style).
 Write "SEPT," not "EPC".
 
@@ -775,6 +775,22 @@ if typing.TYPE_CHECKING:
         """
 # Public constant
 MAX_RETRIES = 5
+```
+
+### Class Attribute Naming
+
+Class attributes follow the same naming convention as instance attributes: `snake_case`. Do not use
+`ALL_CAPS` for class attributes, even if they are conceptually constant. `ALL_CAPS` is reserved for
+module-level constants.
+
+```python
+# Wrong: ALL_CAPS class attribute.
+class _PDFConverter:
+    EXTENSIONS = frozenset({".pdf"})
+
+# Right: snake_case class attribute.
+class _PDFConverter:
+    extensions = frozenset({".pdf"})
 ```
 
 ### Import Statements
