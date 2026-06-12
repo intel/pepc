@@ -28,6 +28,7 @@ This document provides guidelines for project coding style and conventions.
   - [Docstring Continuation Line Alignment](#docstring-continuation-line-alignment)
   - [Imperative Voice](#imperative-voice)
   - [Comment Punctuation](#comment-punctuation)
+  - [Comment Style](#comment-style)
   - [Messages](#messages)
     - [Small vs Capital Letters in Messages](#small-vs-capital-letters-in-messages)
 - [Writing Style](#writing-style)
@@ -521,6 +522,8 @@ Use imperative voice in docstrings and comments. Start with verbs like "Provide"
 
 All comments should end with a period (`.`). Do not use semicolons (`;`) as punctuation in
 comments or messages. Use a comma (`,`) or a period (`.`) instead.
+
+### Comment Style
 
 Comments should explain **why**, not **what**. The code itself shows what happens. Only describe
 the how when it is non-obvious.
