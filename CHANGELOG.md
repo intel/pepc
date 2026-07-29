@@ -8,6 +8,12 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Added
 ### Removed
 ### Changed
+
+## [2.0.5] - 2026-07-29
+### Fixed
+### Added
+### Removed
+### Changed
  - Accept hexadecimal --vfm values in 'pepc tpmi' commands.
 
 ## [2.0.4] - 2026-06-02
