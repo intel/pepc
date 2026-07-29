@@ -14,44 +14,28 @@ Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 ## Table of Contents
 
-- [Pepc Packages](#pepc-packages)
-- [Running From Source](#running-from-source)
-- [Installation Script](#installation-script)
-- [Standalone Executable](#standalone-executable)
-- [Manual Installation](#manual-installation)
-  - [Pepc Package Dependencies](#pepc-package-dependencies)
-  - [Installation Using pip](#installation-using-pip)
-  - [Using uv](#using-uv)
-  - [Sudo Configuration](#sudo-configuration)
-  - [Tab completions](#tab-completions)
-  - [Man pages](#man-pages)
-  - [Example of .bashrc](#example-of-bashrc)
-
-## Pepc Packages
-
-Some Linux distributions provide `pepc` as an installable package. However, these packages are
-out of date, do not use them.
-
-## Running From Source
-
-You can run `pepc` directly from the source code without installation. Clone the repository, change
-to the cloned directory, and run `pepc` from there.
-
-```bash
-git clone https://github.com/intel/pepc.git
-cd pepc
-./pepc --help
-```
-
-This method is not recommended for regular use. For regular use, a proper installation is
-recommended: it configures shell tab completions and man pages, so commands like
-`man pepc-cstates` work out of the box.
+- [Installation Guide](#installation-guide)
+  - [Table of Contents](#table-of-contents)
+  - [Installation Script](#installation-script)
+  - [Standalone Executable](#standalone-executable)
+  - [Manual Installation](#manual-installation)
+    - [Pepc Package Dependencies](#pepc-package-dependencies)
+    - [Installation Using pip](#installation-using-pip)
+    - [Using uv](#using-uv)
+    - [Sudo Configuration](#sudo-configuration)
+    - [Tab completions](#tab-completions)
+    - [Man pages](#man-pages)
+    - [Example of .bashrc](#example-of-bashrc)
+  - [Running From Source](#running-from-source)
 
 ## Installation Script
 
 The `tools/install-pepc` script is the simplest way to install `pepc`. It takes care of
 everything: installing OS dependencies, creating the Python virtual environment, configuring
 shell tab completions, man pages, and adding a `sudo` alias if needed.
+
+**Note**: Some Linux distributions provide `pepc` as an installable package, but those packages
+are out of date. Do not use them.
 
 Clone the repository to get the installation script:
 
@@ -296,3 +280,18 @@ eval "$($VENV_BIN/register-python-argcomplete pepc)"
 export MANPATH="$MANPATH:$($VENV_BIN/pepc --print-man-path)"
 # === end of pepc settings ===
 ```
+
+## Running From Source
+
+You can run `pepc` directly from the source code without installation. Clone the repository, change
+to the cloned directory, and run `pepc` from there.
+
+```bash
+git clone https://github.com/intel/pepc.git
+cd pepc
+./pepc --help
+```
+
+This method is not recommended for regular use. For regular use, a proper installation is
+recommended: it configures shell tab completions and man pages, so commands like
+`man pepc-cstates` work out of the box.
