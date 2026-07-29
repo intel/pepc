@@ -29,14 +29,12 @@ from pepctools import ReleaseHelpers
 if typing.TYPE_CHECKING:
     import argparse
     from typing import Final, Literal, cast
-    from pepclibs.helperlibs.ArgParse import SSHArgsTypedDict
 
     _SkippableStepsType = Literal["branch-check", "remotes-check", "uncommitted-check"]
 
-    class _CmdlineArgsTypedDict(SSHArgsTypedDict, total=False):
+    class _CmdlineArgsTypedDict(typing.TypedDict, total=False):
         """
-        A typed dictionary for command-line arguments of this tool. Includes all attributes from
-        'SSHArgsTypedDict', plus the following:
+        A typed dictionary for command-line arguments of this tool.
 
         Attributes:
             src_path: Path to 'pepc' project git repository to make a release from (default is the
@@ -71,7 +69,6 @@ def _build_arguments_parser() -> ArgParse.ArgsParser:
 
     text = f"""{_TOOLNAME} - make a new 'pepc' project release."""
     parser = ArgParse.ArgsParser(description=text, prog=_TOOLNAME, ver=_VERSION)
-    ArgParse.add_ssh_options(parser)
 
     text = """Path to the 'pepc' project git repository to make a release from (default is the
               current directory)."""
@@ -125,7 +122,7 @@ def _get_cmdline_args(args: argparse.Namespace) -> _CmdlineArgsTypedDict:
         A dictionary containing the parsed command-line arguments.
     """
 
-    cmdl: _CmdlineArgsTypedDict = {**ArgParse.format_ssh_args(args)}
+    cmdl: _CmdlineArgsTypedDict = {}
 
     src_path: Path = args.src_path
     cmdl["src_path"] = src_path.resolve()
