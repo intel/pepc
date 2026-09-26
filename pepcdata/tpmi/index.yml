@@ -36,7 +36,6 @@ vfms:
   0x6dd:
     subdir: "gnr"
     platform_name: "Clearwater Forest Xeon" # (family=6, model=0xDD)
-  # TPMI spec files for DMR are not publically available yet, so use GNR spec files for now.
   0x1301:
-    subdir: "gnr"
+    subdir: "dmr"
     platform_name: "Diamond Rapids Xeon" # (family=19, model=0x1)

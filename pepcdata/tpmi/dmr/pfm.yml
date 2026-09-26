@@ -1,0 +1,94 @@
+name: "pfm"
+desc: >-
+    Proactive Frequency Management
+feature_id: 0x10
+
+registers:
+    PFM_HEADER:
+        offset: 0
+        width: 64
+        fields:
+            INTERFACE_VERSION:
+                bits: "7:0"
+                readonly: true
+                desc: >-
+                    Version number for this interface. Bit[7:5] denotes Major Version and bit[4:0]
+                    for Minor Version
+            RSVD:
+                bits: "63:8"
+                readonly: true
+                desc: >-
+                    reserved
+    PFM_CONTROL:
+        offset: 8
+        width: 64
+        fields:
+            PFM_SOC_MAX_POLICY_OVRD:
+                bits: "3:0"
+                readonly: false
+                desc: >-
+                    Configure the max PFM_SOC policy. Only valid for Hub die
+            RSVD1:
+                bits: "7:4"
+                readonly: false
+                desc: >-
+                    Reserved
+            PFM_SOC_MIN_POLICY_OVRD:
+                bits: "11:8"
+                readonly: false
+                desc: >-
+                    Configure the min PFM_SOC policy. Only valid for Hub die
+            RSVD2:
+                bits: "15:12"
+                readonly: false
+                desc: >-
+                    Reserved
+            PFM_CBB_MODE:
+                bits: "17:16"
+                readonly: false
+                desc: >-
+                    Configure PFM_CBB mode. Only valid for CBB die. 2'b00: PFM_CBB is disabled
+                    (default). 2'b01: PFM_CBB enabled, with CBB Fabric Freq clipped (Core allowed
+                    full P0n). 2'b10: PFM_CBB enabled, with Core Freq clipped (CBB Fabric allowed
+                    full P0n). 2'b11: PFM_CBB enabled, dynamic switching between Core vs. CBB Fabric
+                    P0n
+            RSVD3:
+                bits: "63:18"
+                readonly: false
+                desc: >-
+                    Reserved
+    PFM_STATUS:
+        offset: 16
+        width: 64
+        fields:
+            PFM_SOC_NUM_POLICIES:
+                bits: "3:0"
+                readonly: true
+                desc: >-
+                    Reflects number of supported PFM_SOC policies
+            RSVD1:
+                bits: "7:4"
+                readonly: true
+                desc: >-
+                    Reserved
+            PFM_SOC_CURRENT_POLICY:
+                bits: "11:8"
+                readonly: true
+                desc: >-
+                    Reflects current PFM_SOC policy in effect
+            RSVD2:
+                bits: "15:12"
+                readonly: true
+                desc: >-
+                    Reserved
+            PFM_CBB_STATUS:
+                bits: "16:16"
+                readonly: true
+                desc: >-
+                    Reflects current resolved value of PFM_CBB_Mode. Only valid for CBB die. Hub
+                    dies report zeros in this field always
+            RSVD3:
+                bits: "63:17"
+                readonly: true
+                desc: >-
+                    Reserved

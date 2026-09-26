@@ -1,0 +1,246 @@
+name: "rit"
+desc: >-
+    Resource Isolation Technology
+feature_id: 0x8
+
+registers:
+    RIT_HEADER:
+        offset: 0
+        width: 64
+        fields:
+            INTERFACE_VERSION:
+                bits: "7:0"
+                readonly: true
+                desc: >-
+                    Version number for this interface. Bit[7:5] denotes Major Version and bit[4:0]
+                    for Minor Version
+            RIT_CAPABILITY_MASK:
+                bits: "11:8"
+                readonly: true
+                desc: >-
+                    0001 : Support Frequency Isolation technology. All others: Reserved
+            NUM_FIT_CONFIGS:
+                bits: "13:12"
+                readonly: true
+                desc: >-
+                    Indicate how many FIT_CONFIG_x registers are valid
+            RATIO_UNIT:
+                bits: "15:14"
+                readonly: true
+                desc: >-
+                    Core frequency ratio unit. 00: 100MHz. All others : Reserved. Default=0
+            RSVD:
+                bits: "63:16"
+                readonly: true
+                desc: >-
+                    Reserved
+    FIT_INFO_0:
+        offset: 8
+        width: 64
+        fields:
+            TRL_LEVEL_0:
+                bits: "7:0"
+                readonly: true
+                desc: >-
+                    All core turbo frequency of TRL level 0 of the current SSTPP level
+            TRL_LEVEL_1:
+                bits: "15:8"
+                readonly: true
+                desc: >-
+                    All core turbo frequency of TRL level 1 of the current SSTPP level
+            TRL_LEVEL_2:
+                bits: "23:16"
+                readonly: true
+                desc: >-
+                    All core turbo frequency of TRL level 2 of the current SSTPP level
+            TRL_LEVEL_3:
+                bits: "31:24"
+                readonly: true
+                desc: >-
+                    All core turbo frequency of TRL level 3 of the current SSTPP level
+            TRL_LEVEL_4:
+                bits: "39:32"
+                readonly: true
+                desc: >-
+                    All core turbo frequency of TRL level 4 of the current SSTPP level
+            TRL_LEVEL_5:
+                bits: "47:40"
+                readonly: true
+                desc: >-
+                    All core turbo frequency of TRL level 5 of the current SSTPP level
+            RSVD:
+                bits: "63:48"
+                readonly: true
+                desc: >-
+                    Reserved
+    FIT_CONFIG_0:
+        offset: 16
+        width: 64
+        fields:
+            FIT_MODULE0:
+                bits: "3:0"
+                readonly: false
+                desc: >-
+                    Frequency Variability Tolerance for Module 0. SW specifies number of frequency
+                    bins of frequency Variability that it can tolerate relative to SSE P0n (All core
+                    turbo frequency) for the given SLA. The unit of frequency bins is specified in
+                    RATIO_UNIT of FIT_HEADER. E.g. 0x0: Frequency fixed to SSE P0n. 0xF: Legacy Mode
+            FIT_MODULE1:
+                bits: "7:4"
+                readonly: false
+                desc: >-
+                    Frequency Variability Tolerance for Module 1
+            FIT_MODULE2:
+                bits: "11:8"
+                readonly: false
+                desc: >-
+                    Frequency Variability Tolerance for Module 2
+            FIT_MODULE3:
+                bits: "15:12"
+                readonly: false
+                desc: >-
+                    Frequency Variability Tolerance for Module 3
+            FIT_MODULE4:
+                bits: "19:16"
+                readonly: false
+                desc: >-
+                    Frequency Variability Tolerance for Module 4
+            FIT_MODULE5:
+                bits: "23:20"
+                readonly: false
+                desc: >-
+                    Frequency Variability Tolerance for Module 5
+            FIT_MODULE6:
+                bits: "27:24"
+                readonly: false
+                desc: >-
+                    Frequency Variability Tolerance for Module 6
+            FIT_MODULE7:
+                bits: "31:28"
+                readonly: false
+                desc: >-
+                    Frequency Variability Tolerance for Module 7
+            FIT_MODULE8:
+                bits: "35:32"
+                readonly: false
+                desc: >-
+                    Frequency Variability Tolerance for Module 8
+            FIT_MODULE9:
+                bits: "39:36"
+                readonly: false
+                desc: >-
+                    Frequency Variability Tolerance for Module 9
+            FIT_MODULE10:
+                bits: "43:40"
+                readonly: false
+                desc: >-
+                    Frequency Variability Tolerance for Module 10
+            FIT_MODULE11:
+                bits: "47:44"
+                readonly: false
+                desc: >-
+                    Frequency Variability Tolerance for Module 11
+            FIT_MODULE12:
+                bits: "51:48"
+                readonly: false
+                desc: >-
+                    Frequency Variability Tolerance for Module 12
+            FIT_MODULE13:
+                bits: "55:52"
+                readonly: false
+                desc: >-
+                    Frequency Variability Tolerance for Module 13
+            FIT_MODULE14:
+                bits: "59:56"
+                readonly: false
+                desc: >-
+                    Frequency Variability Tolerance for Module 14
+            FIT_MODULE15:
+                bits: "63:60"
+                readonly: false
+                desc: >-
+                    Frequency Variability Tolerance for Module 15
+    FIT_CONFIG_1:
+        offset: 24
+        width: 64
+        fields:
+            FIT_MODULE16:
+                bits: "3:0"
+                readonly: false
+                desc: >-
+                    Frequency Variability Tolerance for Module 16
+            FIT_MODULE17:
+                bits: "7:4"
+                readonly: false
+                desc: >-
+                    Frequency Variability Tolerance for Module 17
+            FIT_MODULE18:
+                bits: "11:8"
+                readonly: false
+                desc: >-
+                    Frequency Variability Tolerance for Module 18
+            FIT_MODULE19:
+                bits: "15:12"
+                readonly: false
+                desc: >-
+                    Frequency Variability Tolerance for Module 19
+            FIT_MODULE20:
+                bits: "19:16"
+                readonly: false
+                desc: >-
+                    Frequency Variability Tolerance for Module 20
+            FIT_MODULE21:
+                bits: "23:20"
+                readonly: false
+                desc: >-
+                    Frequency Variability Tolerance for Module 21
+            FIT_MODULE22:
+                bits: "27:24"
+                readonly: false
+                desc: >-
+                    Frequency Variability Tolerance for Module 22
+            FIT_MODULE23:
+                bits: "31:28"
+                readonly: false
+                desc: >-
+                    Frequency Variability Tolerance for Module 23
+            FIT_MODULE24:
+                bits: "35:32"
+                readonly: false
+                desc: >-
+                    Frequency Variability Tolerance for Module 24
+            FIT_MODULE25:
+                bits: "39:36"
+                readonly: false
+                desc: >-
+                    Frequency Variability Tolerance for Module 25
+            FIT_MODULE26:
+                bits: "43:40"
+                readonly: false
+                desc: >-
+                    Frequency Variability Tolerance for Module 26
+            FIT_MODULE27:
+                bits: "47:44"
+                readonly: false
+                desc: >-
+                    Frequency Variability Tolerance for Module 27
+            FIT_MODULE28:
+                bits: "51:48"
+                readonly: false
+                desc: >-
+                    Frequency Variability Tolerance for Module 28
+            FIT_MODULE29:
+                bits: "55:52"
+                readonly: false
+                desc: >-
+                    Frequency Variability Tolerance for Module 29
+            FIT_MODULE30:
+                bits: "59:56"
+                readonly: false
+                desc: >-
+                    Frequency Variability Tolerance for Module 30
+            FIT_MODULE31:
+                bits: "63:60"
+                readonly: false
+                desc: >-
+                    Frequency Variability Tolerance for Module 31

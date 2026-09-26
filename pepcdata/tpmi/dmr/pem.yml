@@ -1,0 +1,272 @@
+name: "pem"
+desc: >-
+    Power and Performance Excursion Monitors
+feature_id: 0x1
+
+registers:
+    PEM_HEADER:
+        offset: 0
+        width: 64
+        fields:
+            INTERFACE_VERSION:
+                bits: "7:0"
+                readonly: true
+                desc: >-
+                    Version number for this interface. Bit[7:5] denotes Major Version and bit[4:0]
+                    for Minor Version
+            OFFSET_PMT_INFO:
+                bits: "15:8"
+                readonly: true
+                desc: >-
+                    Qword (8 bytes) offset to the PMT Info Register. 0x0 = no PMT Info register.
+                    Non-zero: Pointing to the PMT Info Register that provides PMT GUID, sample ID
+                    and count for SW to access PEM counters
+            RSVD:
+                bits: "63:16"
+                readonly: true
+                desc: >-
+                    Reserved
+    PEM_CONTROL:
+        offset: 8
+        width: 64
+        fields:
+            FET:
+                bits: "7:0"
+                readonly: false
+                desc: >-
+                    Specify the Frequency Excursion Threshold. It is the ratio of the core
+                    frequency. Pm <= FET <= P01
+            TW:
+                bits: "14:8"
+                readonly: false
+                desc: >-
+                    Specify time window to be about 2.3*(2^TW) ms. Time window may become inaccurate
+                    for TW < 5. Valid TW range is 0 to 17. I.e. Max time window is about 302 seconds
+            RSVD1:
+                bits: "30:15"
+                readonly: false
+                desc: >-
+                    Reserved
+            ENABLE_PEM:
+                bits: "31:31"
+                readonly: false
+                desc: >-
+                    0 (Default): Disable PEM. 1: Enable PEM
+            RSVD2:
+                bits: "63:32"
+                readonly: false
+                desc: >-
+                    Reserved
+    PEM_STATUS:
+        offset: 16
+        width: 64
+        fields:
+            ANY:
+                bits: "0:0"
+                readonly: false
+                desc: >-
+                    ANY Excursion occurred due to any (listed or unlisted) reason. When read, return
+                    the current PEM Status register. When write, Software provides value to override
+                    PEM Status register
+            RSVD0:
+                bits: "5:1"
+                readonly: false
+                desc: >-
+                    Reserved When read, return the current PEM Status register. When write, Software
+                    provides value to override PEM Status register
+            FCT:
+                bits: "6:6"
+                readonly: false
+                desc: >-
+                    The frequency is limited due to FCT When read, return the current PEM Status
+                    register. When write, Software provides value to override PEM Status register
+            PCS_TRL:
+                bits: "7:7"
+                readonly: false
+                desc: >-
+                    PCS_TRL TRL from out of band (OOB) TRL override coming from OOB software is
+                    limiting core frequency When read, return the current PEM Status register. When
+                    write, Software provides value to override PEM Status register
+            MTPMAX:
+                bits: "8:8"
+                readonly: false
+                desc: >-
+                    The frequency is limited due to consumed power exceeds Pmax.app limit When read,
+                    return the current PEM Status register. When write, Software provides value to
+                    override PEM Status register
+            FAST_RAPL:
+                bits: "9:9"
+                readonly: false
+                desc: >-
+                    The frequency is limited due to FAST RAPL firing When read, return the current
+                    PEM Status register. When write, Software provides value to override PEM Status
+                    register
+            PKG_PL1_INBAND:
+                bits: "10:10"
+                readonly: false
+                desc: >-
+                    frequency is limited due to package RAPL PL1 input from OS/SW When read, return
+                    the current PEM Status register. When write, Software provides value to override
+                    PEM Status register
+            PKG_PL1_CSR:
+                bits: "11:11"
+                readonly: false
+                desc: >-
+                    frequency is limited due to package RAPL PL1 input from BIOS When read, return
+                    the current PEM Status register. When write, Software provides value to override
+                    PEM Status register
+            PKG_PL1_OOB:
+                bits: "12:12"
+                readonly: false
+                desc: >-
+                    frequency is limited due to Package RAPL PL1 input from OOB SW When read, return
+                    the current PEM Status register. When write, Software provides value to override
+                    PEM Status register
+            PKG_PL2_INBAND:
+                bits: "13:13"
+                readonly: false
+                desc: >-
+                    frequency is limited due to package RAPL PL2 input from OS/SW When read, return
+                    the current PEM Status register. When write, Software provides value to override
+                    PEM Status register
+            PKG_PL2_CSR:
+                bits: "14:14"
+                readonly: false
+                desc: >-
+                    frequency is limited due to package RAPL PL2 input from BIOS When read, return
+                    the current PEM Status register. When write, Software provides value to override
+                    PEM Status register
+            PKG_PL2_OOB:
+                bits: "15:15"
+                readonly: false
+                desc: >-
+                    frequency is limited due to Package RAPL PL2 input from OOB SW When read, return
+                    the current PEM Status register. When write, Software provides value to override
+                    PEM Status register
+            PLATFORM_PL1_INBAND:
+                bits: "16:16"
+                readonly: false
+                desc: >-
+                    frequency is limited due to platform RAPL PL1 input from OS/SW When read, return
+                    the current PEM Status register. When write, Software provides value to override
+                    PEM Status register
+            PLATFORM_PL1_CSR:
+                bits: "17:17"
+                readonly: false
+                desc: >-
+                    frequency is limited due to platform RAPL PL1 input from BIOS When read, return
+                    the current PEM Status register. When write, Software provides value to override
+                    PEM Status register
+            PLATFORM_PL1_OOB:
+                bits: "18:18"
+                readonly: false
+                desc: >-
+                    frequency is limited due to platform RAPL PL1 input from OOB SW When read,
+                    return the current PEM Status register. When write, Software provides value to
+                    override PEM Status register
+            PLATFORM_PL2_INBAND:
+                bits: "19:19"
+                readonly: false
+                desc: >-
+                    frequency is limited due to platform RAPL PL2 input from OS/SW When read, return
+                    the current PEM Status register. When write, Software provides value to override
+                    PEM Status register
+            PLATFORM_PL2_CSR:
+                bits: "20:20"
+                readonly: false
+                desc: >-
+                    frequency is limited due to platform RAPL PL2 input from BIOS When read, return
+                    the current PEM Status register. When write, Software provides value to override
+                    PEM Status register
+            PLATFORM_PL2_OOB:
+                bits: "21:21"
+                readonly: false
+                desc: >-
+                    frequency is limited due to platform RAPL PL2 input from OOB SW When read,
+                    return the current PEM Status register. When write, Software provides value to
+                    override PEM Status register
+            RACL:
+                bits: "22:22"
+                readonly: false
+                desc: >-
+                    The frequency is limited due to RACL condition When read, return the current PEM
+                    Status register. When write, Software provides value to override PEM Status
+                    register
+            PER_CORE_THERMAL:
+                bits: "23:23"
+                readonly: false
+                desc: >-
+                    Thermal throttling frequency is limited due to core temperature exceeds
+                    temperature threshold When read, return the current PEM Status register. When
+                    write, Software provides value to override PEM Status register
+            ICCMAX:
+                bits: "24:24"
+                readonly: false
+                desc: >-
+                    Dynamic frequency capping due to DFC/SIMPL When read, return the current PEM
+                    Status register. When write, Software provides value to override PEM Status
+                    register
+            XXPROCHOT:
+                bits: "25:25"
+                readonly: false
+                desc: >-
+                    Platform prochot input pin is triggered and is limiting the frequency When read,
+                    return the current PEM Status register. When write, Software provides value to
+                    override PEM Status register
+            HOT_VR:
+                bits: "26:26"
+                readonly: false
+                desc: >-
+                    Platform VR_HOT input pin is triggered and is limiting the frequency When read,
+                    return the current PEM Status register. When write, Software provides value to
+                    override PEM Status register
+            RESERVED1:
+                bits: "28:27"
+                readonly: false
+                desc: >-
+                    RESERVED When read, return the current PEM Status register. When write, Software
+                    provides value to override PEM Status register
+            PCS_PSTATE_NOT_SUPPORTED:
+                bits: "29:29"
+                readonly: false
+                desc: >-
+                    Not Supported. Pstate override coming from out-of-band (OOB) SW and is limiting
+                    the frequency When read, return the current PEM Status register. When write,
+                    Software provides value to override PEM Status register
+            RAS:
+                bits: "30:30"
+                readonly: false
+                desc: >-
+                    The frequency is limited due to RAS limit When read, return the current PEM
+                    Status register. When write, Software provides value to override PEM Status
+                    register
+            RESERVED2:
+                bits: "31:31"
+                readonly: false
+                desc: >-
+                    RESERVED When read, return the current PEM Status register. When write, Software
+                    provides value to override PEM Status register
+            RSVD:
+                bits: "63:32"
+                readonly: false
+                desc: >-
+                    The reserved bits in PEM_STATUS are ignored by pcode
+    PEM_PMT_INFO:
+        offset: 24
+        width: 64
+        fields:
+            GUID:
+                bits: "31:0"
+                readonly: true
+                desc: >-
+                    PMT GUID. SW should ignore this register if GUID = 0 (invalid entry)
+            SAMPLE_ID:
+                bits: "47:32"
+                readonly: true
+                desc: >-
+                    PMT Sample ID
+            SAMPLE_COUNT:
+                bits: "63:48"
+                readonly: true
+                desc: >-
+                    Number of PEM counters

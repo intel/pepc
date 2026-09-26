@@ -1,0 +1,67 @@
+name: "fhm"
+desc: >-
+    FIVR Health Monitor
+feature_id: 0xa
+
+registers:
+    FHM_HEADER:
+        offset: 0
+        width: 64
+        fields:
+            INTERFACE_VERSION:
+                bits: "7:0"
+                readonly: true
+                desc: >-
+                    Version number for this interface. Bit[7:5] denotes Major Version and bit[4:0]
+                    for Minor Version
+            FLAGS:
+                bits: "15:8"
+                readonly: true
+                desc: >-
+                    Bit mask of the supported domain register. Pcode populates default setting. SW
+                    use it to discover which register is valid in the FHM register bank
+            OFFSET_PMT_INFO:
+                bits: "23:16"
+                readonly: true
+                desc: >-
+                    Qword (8 bytes) offset to the PMT Info Register. 0x0 = no PMT Info register.
+                    Non-zero: Pointing to the PMT Info Register that provides PMT GUID, sample ID
+                    and count for SW to access FHM status registers
+            RSVD:
+                bits: "63:24"
+                readonly: true
+                desc: >-
+                    Reserved
+    FHM_CONTROL:
+        offset: 8
+        width: 64
+        fields:
+            FHM_TRIGGER:
+                bits: "0:0"
+                readonly: false
+                desc: >-
+                    SW write to this bit to clear FIVR health indicator status
+            RSVD:
+                bits: "63:1"
+                readonly: false
+                desc: >-
+                    Reserved
+    FHM_PMT_INFO:
+        offset: 16
+        width: 64
+        fields:
+            GUID:
+                bits: "31:0"
+                readonly: true
+                desc: >-
+                    PMT GUID
+            SAMPLE_ID:
+                bits: "47:32"
+                readonly: true
+                desc: >-
+                    PMT Sample ID
+            SAMPLE_COUNT:
+                bits: "63:48"
+                readonly: true
+                desc: >-
+                    Number of FHM status registers

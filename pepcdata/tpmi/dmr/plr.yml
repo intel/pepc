@@ -1,0 +1,333 @@
+name: "plr"
+desc: >-
+    Perf Limit Reason
+feature_id: 0xc
+
+registers:
+    PLR_HEADER:
+        offset: 0
+        width: 64
+        fields:
+            INTERFACE_VERSION:
+                bits: "7:0"
+                readonly: true
+                desc: >-
+                    Version number for this interface. Bit[7:5] denotes Major Version and bit[4:0]
+                    for Minor Version
+            RSVD:
+                bits: "63:8"
+                readonly: true
+                desc: >-
+                    Reserved
+    PLR_MAILBOX_INTERFACE:
+        offset: 8
+        width: 64
+        fields:
+            COMMAND:
+                bits: "7:0"
+                readonly: false
+                desc: >-
+                    0: read, 1: write
+            DOMAIN:
+                bits: "11:8"
+                readonly: false
+                desc: >-
+                    0: core, 1: mesh
+            ID:
+                bits: "19:12"
+                readonly: false
+                desc: >-
+                    PM logical Module ID within the domain
+            RSVD:
+                bits: "62:20"
+                readonly: false
+                desc: >-
+                    PM logical Module ID within the domain
+            RUN_BUSY:
+                bits: "63:63"
+                readonly: false
+                desc: >-
+                    set by SW, cleared by Pcode
+    PLR_MAILBOX_DATA:
+        offset: 16
+        width: 64
+        fields:
+            FREQUENCY:
+                bits: "0:0"
+                readonly: false
+                desc: >-
+                    The frequency is limited due to Cdyn level or FCT
+            CURRENT:
+                bits: "1:1"
+                readonly: false
+                desc: >-
+                    The frequency is limited due to Pmax conditions or Iccmax conditions(RACL)
+            POWER:
+                bits: "2:2"
+                readonly: false
+                desc: >-
+                    The frequency is limited due to Socket and or Platform RAPL and or SST CP
+                    conditions
+            THERMAL:
+                bits: "3:3"
+                readonly: false
+                desc: >-
+                    The frequency is limited due to in die thermal conditions
+            PLATFORM:
+                bits: "4:4"
+                readonly: false
+                desc: >-
+                    Frequency is limited due to XXProchot and or VRHOT condition
+            MCP:
+                bits: "5:5"
+                readonly: false
+                desc: >-
+                    External die based feedback (D lined based arch)
+            RAS:
+                bits: "6:6"
+                readonly: false
+                desc: >-
+                    The frequency is limited due to RAS limit
+            MISC:
+                bits: "7:7"
+                readonly: false
+                desc: >-
+                    Freq limit from out-of-band SW (e.g. BMC)
+            QOS:
+                bits: "8:8"
+                readonly: false
+                desc: >-
+                    The frequency is limited due to Quality of Service constraints. (Reserved)
+            ICCMAX:
+                bits: "9:9"
+                readonly: false
+                desc: >-
+                    The frequency is limited due to ICCMAX (SIMPL/DFC)
+            RESERVED0:
+                bits: "31:10"
+                readonly: false
+                desc: >-
+                    Reserved
+            CDYN0:
+                bits: "32:32"
+                readonly: false
+                desc: >-
+                    TRL level 0 frequency ratio setting is limit the frequency
+            CDYN1:
+                bits: "33:33"
+                readonly: false
+                desc: >-
+                    TRL level 1 frequency ratio setting is limit the frequency
+            CDYN2:
+                bits: "34:34"
+                readonly: false
+                desc: >-
+                    TRL level 2 frequency ratio setting is limit the frequency
+            CDYN3:
+                bits: "35:35"
+                readonly: false
+                desc: >-
+                    TRL level 3 frequency ratio setting is limit the frequency
+            CDYN4:
+                bits: "36:36"
+                readonly: false
+                desc: >-
+                    TRL level 4 frequency ratio setting is limit the frequency
+            CDYN5:
+                bits: "37:37"
+                readonly: false
+                desc: >-
+                    TRL level 5 frequency ratio setting is limit the frequency
+            FCT:
+                bits: "38:38"
+                readonly: false
+                desc: >-
+                    The frequency is limited due to FCT
+            PCS_TRL:
+                bits: "39:39"
+                readonly: false
+                desc: >-
+                    TRL from out of band (OOB) TRL override coming from OOB. software is limiting
+                    core frequency
+            MTPMAX:
+                bits: "40:40"
+                readonly: false
+                desc: >-
+                    The frequency is limited due to consumed power exceeds Pmax.app limit
+            FAST_RAPL:
+                bits: "41:41"
+                readonly: false
+                desc: >-
+                    The frequency is limited due to FAST RAPL firing
+            PKG_PL1_INBAND:
+                bits: "42:42"
+                readonly: false
+                desc: >-
+                    frequency is limited due to package RAPL PL1 input from OS/SW
+            PKG_PL1_CSR:
+                bits: "43:43"
+                readonly: false
+                desc: >-
+                    frequency is limited due to package RAPL PL1 input from BIOS
+            PKG_PL1_OOB:
+                bits: "44:44"
+                readonly: false
+                desc: >-
+                    frequency is limited due to Package RAPL PL1 input from OOB SW
+            PKG_PL2_INBAND:
+                bits: "45:45"
+                readonly: false
+                desc: >-
+                    frequency is limited due to package RAPL PL2 input from OS/SW
+            PKG_PL2_CSR:
+                bits: "46:46"
+                readonly: false
+                desc: >-
+                    frequency is limited due to package RAPL PL2 input from BIOS
+            PKG_PL2_OOB:
+                bits: "47:47"
+                readonly: false
+                desc: >-
+                    frequency is limited due to Package RAPL PL2 input from OOB SW
+            PLATFORM_PL1_INBAND:
+                bits: "48:48"
+                readonly: false
+                desc: >-
+                    frequency is limited due to platform RAPL PL1 input from OS/SW
+            PLATFORM_PL1_CSR:
+                bits: "49:49"
+                readonly: false
+                desc: >-
+                    frequency is limited due to platform RAPL PL1 input from BIOS
+            PLATFORM_PL1_OOB:
+                bits: "50:50"
+                readonly: false
+                desc: >-
+                    frequency is limited due to platform RAPL PL1 input from OOB SW
+            PLATFORM_PL2_INBAND:
+                bits: "51:51"
+                readonly: false
+                desc: >-
+                    frequency is limited due to platform RAPL PL2 input from OS/SW
+            PLATFORM_PL2_CSR:
+                bits: "52:52"
+                readonly: false
+                desc: >-
+                    frequency is limited due to platform RAPL PL2 input from BIOS
+            PLATFORM_PL2_OOB:
+                bits: "53:53"
+                readonly: false
+                desc: >-
+                    frequency is limited due to platform RAPL PL2 input from OOB SW
+            RACL:
+                bits: "54:54"
+                readonly: false
+                desc: >-
+                    The frequency is limited due to RACL condition
+            PER_CORE_THERMAL:
+                bits: "55:55"
+                readonly: false
+                desc: >-
+                    Thermal throttling frequency is limited due to core temperature exceeds
+                    temperature threshold
+            ICCMAX_MODULE_LEVEL:
+                bits: "56:56"
+                readonly: false
+                desc: >-
+                    Dynamic frequency capping due to DFC/SIMPL
+            XXPROCHOT:
+                bits: "57:57"
+                readonly: false
+                desc: >-
+                    Platform prochot input pin is triggered and is limiting the frequency
+            HOT_VR:
+                bits: "58:58"
+                readonly: false
+                desc: >-
+                    Platform VR_HOT input pin is triggered and is limiting the frequency
+            RESERVED1:
+                bits: "59:59"
+                readonly: false
+                desc: >-
+                    Reserved
+            RESERVED2:
+                bits: "60:60"
+                readonly: false
+                desc: >-
+                    Reserved
+            PCS_PSTATE_NOT_SUPPORTED:
+                bits: "61:61"
+                readonly: false
+                desc: >-
+                    Not supported. Pstate override coming from out-of-band (OOB) SW and is limiting
+                    the frequency
+            RAS_MODULE_LEVEL:
+                bits: "62:62"
+                readonly: false
+                desc: >-
+                    The frequency is limited due to RAS limit in the module level
+            RESERVED3:
+                bits: "63:63"
+                readonly: false
+                desc: >-
+                    Reserved
+    PLR_DIE_LEVEL:
+        offset: 24
+        width: 64
+        fields:
+            FREQUENCY:
+                bits: "0:0"
+                readonly: false
+                desc: >-
+                    The frequency is limited due to Cdyn level or FCT
+            CURRENT:
+                bits: "1:1"
+                readonly: false
+                desc: >-
+                    The frequency is limited due to Pmax conditions or Iccmax conditions(RACL)
+            POWER:
+                bits: "2:2"
+                readonly: false
+                desc: >-
+                    The frequency is limited due to Socket and or Platform RAPL and or SST CP
+                    conditions
+            THERMAL:
+                bits: "3:3"
+                readonly: false
+                desc: >-
+                    The frequency is limited due to in die thermal conditions
+            PLATFORM:
+                bits: "4:4"
+                readonly: false
+                desc: >-
+                    Frequency is limited due to XXProchot and or VRHOT condition
+            MCP:
+                bits: "5:5"
+                readonly: false
+                desc: >-
+                    External die based feedback (D lined based arch)
+            RAS:
+                bits: "6:6"
+                readonly: false
+                desc: >-
+                    The frequency is limited due to RAS limit
+            MISC:
+                bits: "7:7"
+                readonly: false
+                desc: >-
+                    Freq limit from out-of-band SW (e.g. BMC)
+            QOS:
+                bits: "8:8"
+                readonly: false
+                desc: >-
+                    The frequency is limited due to Quality of Service constraints. (Reserved)
+            ICCMAX:
+                bits: "9:9"
+                readonly: false
+                desc: >-
+                    The frequency is limited due to ICCMAX (SIMPL/DFC)
+            RESERVED:
+                bits: "63:10"
+                readonly: false
+                desc: >-
+                    die scope perf limit reasons data

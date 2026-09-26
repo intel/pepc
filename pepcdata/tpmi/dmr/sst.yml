@@ -1,0 +1,1852 @@
+name: "sst"
+desc: >-
+    Intel Speed Select Technology (SST) control
+feature_id: 0x5
+
+registers:
+    SST_HEADER:
+        offset: 0
+        width: 64
+        fields:
+            INTERFACE_VERSION:
+                bits: "7:0"
+                readonly: true
+                desc: >-
+                    Version number for this interface. Bit[7:5] denotes Major Version and bit[4:0]
+                    for Minor Version
+            CAPABILITY_MASK:
+                bits: "15:8"
+                readonly: true
+                desc: >-
+                    bitmask of the supported sub features. 1=the sub feature is enabled. 0=disabled.
+                    Pcode populates the HW capability setting during early reset. SW uses this field
+                    to discover SST sub features. Bit[8]= SST_CP enable (1), disable (0) bit[9]=
+                    SST_PP enable (1), disable (0)
+            SST_CP_OFFSET:
+                bits: "23:16"
+                readonly: true
+                desc: >-
+                    Qword (8 bytes) offset to the SST_CP register bank
+            SST_PP_OFFSET:
+                bits: "31:24"
+                readonly: true
+                desc: >-
+                    Qword (8 bytes) offset to the SST_PP register bank
+            RSVD:
+                bits: "63:32"
+                readonly: true
+                desc: >-
+                    reserved offset for new features
+    SST_CP_HEADER:
+        offset: 8
+        width: 64
+        fields:
+            SST_FEATURE_ID:
+                bits: "3:0"
+                readonly: true
+                desc: >-
+                    0=SST-CP, 1=SST-PP, 2=SST-BF, 3=SST-TF, 4-15 = reserved
+            FEATURE_REVISION:
+                bits: "11:4"
+                readonly: true
+                desc: >-
+                    Interface Version number for this SST feature
+            RATIO_UNIT:
+                bits: "13:12"
+                readonly: true
+                desc: >-
+                    Frequency ratio unit. 00: 100MHz. All others : Reserved. Default=0
+            RSVD:
+                bits: "63:14"
+                readonly: true
+                desc: >-
+                    Reserved
+    SST_CP_CONTROL:
+        offset: 16
+        width: 64
+        fields:
+            SST_CP_ENABLE:
+                bits: "0:0"
+                readonly: false
+                desc: >-
+                    1: Enable SST-CP. 0: Disable SST-CP
+            SST_CP_PRIORITY_TYPE:
+                bits: "1:1"
+                readonly: false
+                desc: >-
+                    0x0 (Default) =Proportional. 0x1=Ordered Throttling
+            RSVD1:
+                bits: "7:2"
+                readonly: false
+                desc: >-
+                    Reserved
+            RESET_EXCURSION_TO_MIN:
+                bits: "11:8"
+                readonly: false
+                desc: >-
+                    Bitmask for the CLOS groups. SW clears SST_CP_STATUS.EXCURSION_TO_MIN bits by
+                    writing zero (0) to the respective RESET_EXCURSIONS bit here. Pcode ignores the
+                    bit that SW writes 1 to. Bit8=CLOS0, bit9=CLOS9, etc
+            RSVD2:
+                bits: "63:12"
+                readonly: false
+                desc: >-
+                    Reserved
+    SST_CP_STATUS:
+        offset: 24
+        width: 64
+        fields:
+            SST_CP_ENABLE:
+                bits: "0:0"
+                readonly: true
+                desc: >-
+                    Returns 1 if SST-CP is enabled
+            SST_CP_PRIORITY_TYPE:
+                bits: "1:1"
+                readonly: true
+                desc: >-
+                    Returns current prioritization type. 0x0 (Default) =Proportional. 0x1=Ordered
+                    Throttling
+            ERROR_TYPE:
+                bits: "5:2"
+                readonly: true
+                desc: >-
+                    Returns the type of last error in this feature. 0x0: no error 0x1: SST-CP is not
+                    supported by the hardware. all others: reserved
+            RSVD1:
+                bits: "7:6"
+                readonly: true
+                desc: >-
+                    Reserved
+            EXCURSION_TO_MIN:
+                bits: "11:8"
+                readonly: true
+                desc: >-
+                    Bitmask for the CLOS groups. If set (1), an excursion to Minimum Performance has
+                    occurred for the CLOS. Bit8=CLOS0, bit9=CLOS9, etc
+            RSVD2:
+                bits: "63:12"
+                readonly: true
+                desc: >-
+                    Reserved
+    SST_CLOS_CONFIG_0:
+        offset: 32
+        width: 64
+        fields:
+            RSVD1:
+                bits: "3:0"
+                readonly: false
+                desc: >-
+                    Reserved
+            PROPORTIONAL_PRIORITY:
+                bits: "7:4"
+                readonly: false
+                desc: >-
+                    Used to set frequency weight when CLOS_PRIORITY_TYPE is set to Proportional.
+                    (freq_weight = 0xf -CLOS_PROPORTIONAL_PRIORITY) 0x0 = Max Perf (highest
+                    priority) 0xF = Min Perf (lowest priority)
+            MIN:
+                bits: "15:8"
+                readonly: false
+                desc: >-
+                    Hold the minimum PM CLOS frequency ratio (100MHz bins) for this CLOS group
+            MAX:
+                bits: "23:16"
+                readonly: false
+                desc: >-
+                    Hold the maximum PM CLOS frequency ratio (100MHz bins) for this CLOS group
+            RSVD2:
+                bits: "63:24"
+                readonly: false
+                desc: >-
+                    Reserved
+    SST_CLOS_CONFIG_1:
+        offset: 40
+        width: 64
+        fields:
+            RSVD1:
+                bits: "3:0"
+                readonly: false
+                desc: >-
+                    Reserved
+            PROPORTIONAL_PRIORITY:
+                bits: "7:4"
+                readonly: false
+                desc: >-
+                    Used to set frequency weight when CLOS_PRIORITY_TYPE is set to Proportional.
+                    (freq_weight = 0xf -CLOS_PROPORTIONAL_PRIORITY) 0x0 = Max Perf (highest
+                    priority) 0xF = Min Perf (lowest priority)
+            MIN:
+                bits: "15:8"
+                readonly: false
+                desc: >-
+                    Hold the minimum PM CLOS frequency ratio (100MHz bins) for this CLOS group
+            MAX:
+                bits: "23:16"
+                readonly: false
+                desc: >-
+                    Hold the maximum PM CLOS frequency ratio (100MHz bins) for this CLOS group
+            RSVD2:
+                bits: "63:24"
+                readonly: false
+                desc: >-
+                    Reserved
+    SST_CLOS_CONFIG_2:
+        offset: 48
+        width: 64
+        fields:
+            RSVD1:
+                bits: "3:0"
+                readonly: false
+                desc: >-
+                    Reserved
+            PROPORTIONAL_PRIORITY:
+                bits: "7:4"
+                readonly: false
+                desc: >-
+                    Used to set frequency weight when CLOS_PRIORITY_TYPE is set to Proportional.
+                    (freq_weight = 0xf -CLOS_PROPORTIONAL_PRIORITY) 0x0 = Max Perf (highest
+                    priority) 0xF = Min Perf (lowest priority)
+            MIN:
+                bits: "15:8"
+                readonly: false
+                desc: >-
+                    Hold the minimum PM CLOS frequency ratio (100MHz bins) for this CLOS group
+            MAX:
+                bits: "23:16"
+                readonly: false
+                desc: >-
+                    Hold the maximum PM CLOS frequency ratio (100MHz bins) for this CLOS group
+            RSVD2:
+                bits: "63:24"
+                readonly: false
+                desc: >-
+                    Reserved
+    SST_CLOS_CONFIG_3:
+        offset: 56
+        width: 64
+        fields:
+            RSVD1:
+                bits: "3:0"
+                readonly: false
+                desc: >-
+                    Reserved
+            PROPORTIONAL_PRIORITY:
+                bits: "7:4"
+                readonly: false
+                desc: >-
+                    Used to set frequency weight when CLOS_PRIORITY_TYPE is set to Proportional.
+                    (freq_weight = 0xf -CLOS_PROPORTIONAL_PRIORITY) 0x0 = Max Perf (highest
+                    priority) 0xF = Min Perf (lowest priority)
+            MIN:
+                bits: "15:8"
+                readonly: false
+                desc: >-
+                    Hold the minimum PM CLOS frequency ratio (100MHz bins) for this CLOS group
+            MAX:
+                bits: "23:16"
+                readonly: false
+                desc: >-
+                    Hold the maximum PM CLOS frequency ratio (100MHz bins) for this CLOS group
+            RSVD2:
+                bits: "63:24"
+                readonly: false
+                desc: >-
+                    Reserved
+    SST_CLOS_ASSOC_0:
+        offset: 64
+        width: 64
+        fields:
+            CLOS_ID_MODULE0:
+                bits: "3:0"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 0
+            CLOS_ID_MODULE1:
+                bits: "7:4"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 1
+            CLOS_ID_MODULE2:
+                bits: "11:8"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 2
+            CLOS_ID_MODULE3:
+                bits: "15:12"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 3
+            CLOS_ID_MODULE4:
+                bits: "19:16"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 4
+            CLOS_ID_MODULE5:
+                bits: "23:20"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 5
+            CLOS_ID_MODULE6:
+                bits: "27:24"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 6
+            CLOS_ID_MODULE7:
+                bits: "31:28"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 7
+            CLOS_ID_MODULE8:
+                bits: "35:32"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 8
+            CLOS_ID_MODULE9:
+                bits: "39:36"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 9
+            CLOS_ID_MODULE10:
+                bits: "43:40"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 10
+            CLOS_ID_MODULE11:
+                bits: "47:44"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 11
+            CLOS_ID_MODULE12:
+                bits: "51:48"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 12
+            CLOS_ID_MODULE13:
+                bits: "55:52"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 13
+            CLOS_ID_MODULE14:
+                bits: "59:56"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 14
+            CLOS_ID_MODULE15:
+                bits: "63:60"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 15
+    SST_CLOS_ASSOC_1:
+        offset: 72
+        width: 64
+        fields:
+            CLOS_ID_MODULE16:
+                bits: "3:0"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 16
+            CLOS_ID_MODULE17:
+                bits: "7:4"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 17
+            CLOS_ID_MODULE18:
+                bits: "11:8"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 18
+            CLOS_ID_MODULE19:
+                bits: "15:12"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 19
+            CLOS_ID_MODULE20:
+                bits: "19:16"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 20
+            CLOS_ID_MODULE21:
+                bits: "23:20"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 21
+            CLOS_ID_MODULE22:
+                bits: "27:24"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 22
+            CLOS_ID_MODULE23:
+                bits: "31:28"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 23
+            CLOS_ID_MODULE24:
+                bits: "35:32"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 24
+            CLOS_ID_MODULE25:
+                bits: "39:36"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 25
+            CLOS_ID_MODULE26:
+                bits: "43:40"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 26
+            CLOS_ID_MODULE27:
+                bits: "47:44"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 27
+            CLOS_ID_MODULE28:
+                bits: "51:48"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 28
+            CLOS_ID_MODULE29:
+                bits: "55:52"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 29
+            CLOS_ID_MODULE30:
+                bits: "59:56"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 30
+            CLOS_ID_MODULE31:
+                bits: "63:60"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 31
+    SST_CLOS_ASSOC_2:
+        offset: 80
+        width: 64
+        fields:
+            CLOS_ID_MODULE32:
+                bits: "3:0"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 32
+            CLOS_ID_MODULE33:
+                bits: "7:4"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 33
+            CLOS_ID_MODULE34:
+                bits: "11:8"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 34
+            CLOS_ID_MODULE35:
+                bits: "15:12"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 35
+            CLOS_ID_MODULE36:
+                bits: "19:16"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 36
+            CLOS_ID_MODULE37:
+                bits: "23:20"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 37
+            CLOS_ID_MODULE38:
+                bits: "27:24"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 38
+            CLOS_ID_MODULE39:
+                bits: "31:28"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 39
+            CLOS_ID_MODULE40:
+                bits: "35:32"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 40
+            CLOS_ID_MODULE41:
+                bits: "39:36"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 41
+            CLOS_ID_MODULE42:
+                bits: "43:40"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 42
+            CLOS_ID_MODULE43:
+                bits: "47:44"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 43
+            CLOS_ID_MODULE44:
+                bits: "51:48"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 44
+            CLOS_ID_MODULE45:
+                bits: "55:52"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 45
+            CLOS_ID_MODULE46:
+                bits: "59:56"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 46
+            CLOS_ID_MODULE47:
+                bits: "63:60"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 47
+    SST_CLOS_ASSOC_3:
+        offset: 88
+        width: 64
+        fields:
+            CLOS_ID_MODULE48:
+                bits: "3:0"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 48
+            CLOS_ID_MODULE49:
+                bits: "7:4"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 49
+            CLOS_ID_MODULE50:
+                bits: "11:8"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 50
+            CLOS_ID_MODULE51:
+                bits: "15:12"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 51
+            CLOS_ID_MODULE52:
+                bits: "19:16"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 52
+            CLOS_ID_MODULE53:
+                bits: "23:20"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 53
+            CLOS_ID_MODULE54:
+                bits: "27:24"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 54
+            CLOS_ID_MODULE55:
+                bits: "31:28"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 55
+            CLOS_ID_MODULE56:
+                bits: "35:32"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 56
+            CLOS_ID_MODULE57:
+                bits: "39:36"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 57
+            CLOS_ID_MODULE58:
+                bits: "43:40"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 58
+            CLOS_ID_MODULE59:
+                bits: "47:44"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 59
+            CLOS_ID_MODULE60:
+                bits: "51:48"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 60
+            CLOS_ID_MODULE61:
+                bits: "55:52"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 61
+            CLOS_ID_MODULE62:
+                bits: "59:56"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 62
+            CLOS_ID_MODULE63:
+                bits: "63:60"
+                readonly: false
+                desc: >-
+                    CLOS_ID for Module 63
+    SST_PP_HEADER:
+        offset: 96
+        width: 64
+        fields:
+            SST_FEATURE_ID:
+                bits: "3:0"
+                readonly: true
+                desc: >-
+                    0=SST-CP, 1=SST-PP, 2=SST-BF, 3=SST-TF, 4-15 = reserved
+            FEATURE_REVISION:
+                bits: "11:4"
+                readonly: true
+                desc: >-
+                    Interface Version number for this SST feature
+            SST_PP_LEVEL_EN_MASK:
+                bits: "19:12"
+                readonly: true
+                desc: >-
+                    SST-PP level enable/disable fuse mask. SoftSKU can toggle fuse bit to
+                    enable/disable a specific level
+            ALLOWED_LEVEL_MASK:
+                bits: "27:20"
+                readonly: true
+                desc: >-
+                    Allowed level mask used for dynamic config level switching. Pcode programs the
+                    mask based on fuse and the current boot config
+            RSVD1:
+                bits: "31:28"
+                readonly: true
+                desc: >-
+                    Reserved
+            RATIO_UNIT:
+                bits: "33:32"
+                readonly: true
+                desc: >-
+                    Core Frequency ratio unit. 00: 100MHz. All others : Reserved
+            PP_BLOCK_SIZE:
+                bits: "41:34"
+                readonly: true
+                desc: >-
+                    Size of PP block (stride) in Qword unit (8 bytes)
+            DYNAMIC_SWITCHING:
+                bits: "42:42"
+                readonly: true
+                desc: >-
+                    If set (1), dynamic switching of SST power profiles is supported, else, not
+            MEMORY_RATIO_UNIT:
+                bits: "44:43"
+                readonly: true
+                desc: >-
+                    Memory Controller Frequency ratio unit. 00: 100MHz. 01: 200MHz. All others :
+                    Reserved
+            RSVD2:
+                bits: "63:45"
+                readonly: true
+                desc: >-
+                    Reserved
+    SST_PP_OFFSET_0:
+        offset: 104
+        width: 64
+        fields:
+            SST_PP_OFFSET:
+                bits: "7:0"
+                readonly: true
+                desc: >-
+                    Qword offset within PP level for the SST_PP register bank
+            SST_BF_OFFSET:
+                bits: "15:8"
+                readonly: true
+                desc: >-
+                    Qword offset within PP level for the SST_BF register bank
+            SST_TF_OFFSET:
+                bits: "23:16"
+                readonly: true
+                desc: >-
+                    Qword offset within PP level for the SST_TF register bank
+            RSVD:
+                bits: "63:24"
+                readonly: true
+                desc: >-
+                    Reserved
+    SST_PP_OFFSET_1:
+        offset: 112
+        width: 64
+        fields:
+            PP_OFFSET_0:
+                bits: "7:0"
+                readonly: true
+                desc: >-
+                    Qword offset to the register block (stride) of PP level 0
+            PP_OFFSET_1:
+                bits: "15:8"
+                readonly: true
+                desc: >-
+                    Qword offset to the register block (stride) of PP level 1
+            PP_OFFSET_2:
+                bits: "23:16"
+                readonly: true
+                desc: >-
+                    Qword offset to the register block (stride) of PP level 2
+            PP_OFFSET_3:
+                bits: "31:24"
+                readonly: true
+                desc: >-
+                    Qword offset to the register block (stride) of PP level 3
+            PP_OFFSET_4:
+                bits: "39:32"
+                readonly: true
+                desc: >-
+                    Qword offset to the register block (stride) of PP level 4
+            RSVD:
+                bits: "63:40"
+                readonly: true
+                desc: >-
+                    Reserved
+    SST_PP_CONTROL:
+        offset: 120
+        width: 64
+        fields:
+            SST_PP_LEVEL:
+                bits: "2:0"
+                readonly: false
+                desc: >-
+                    A SST-PP level that SW intends to switch to. SW must program PP level setting to
+                    each SST instance per their instance-ID order. I.e. program instance 0 first,
+                    and follow by 1, 2, 3, etc. SW must check status and confirm PP switching is
+                    complete before proceeding to next SST instance
+            SST_PP_LOCK:
+                bits: "3:3"
+                readonly: false
+                desc: >-
+                    SST-PP level select lock. 0 - unlocked. 1 - locked till next reset
+            RSVD0:
+                bits: "7:4"
+                readonly: false
+                desc: >-
+                    Reserved
+            FEATURE_STATE:
+                bits: "15:8"
+                readonly: false
+                desc: >-
+                    Bit mask to control the enable(1)/disable(0) state of each feature of the
+                    current PP level. bit 0 = BF, bit 1 = TF, bit 2-7 = reserved
+            RSVD1:
+                bits: "63:16"
+                readonly: false
+                desc: >-
+                    Reserved
+    SST_PP_STATUS:
+        offset: 128
+        width: 64
+        fields:
+            SST_PP_LEVEL:
+                bits: "2:0"
+                readonly: true
+                desc: >-
+                    Returns the current SST-PP level
+            SST_PP_LOCK:
+                bits: "3:3"
+                readonly: true
+                desc: >-
+                    Returns the lock bit setting in SST_CONTROL.SST_PP_LOCK
+            SST_PP_ERROR_TYPE:
+                bits: "7:4"
+                readonly: true
+                desc: >-
+                    Returns last error of SST-PP control. 0x0: no error 0x1: dynamic PP switch is
+                    not allowed. 0x2..0xF: reserved
+            FEATURE_STATE:
+                bits: "15:8"
+                readonly: true
+                desc: >-
+                    Bit mask to indicate the enable(1)/disable(0) state of each feature of the
+                    current PP level. bit 0 = BF, bit 1 = TF, bit 2-7 = reserved
+            RSVD0:
+                bits: "31:16"
+                readonly: true
+                desc: >-
+                    Reserved
+            FEATURE_ERROR_TYPE:
+                bits: "55:32"
+                readonly: true
+                desc: >-
+                    Returns last error of the specific feature. Three error_type bits per feature.
+                    i.e. ERROR_TYPE[2:0] for BF, ERROR_TYPE[5:3] for TF, etc. 0x0: no error 0x1: The
+                    specific feature is not supported by the hardware. 0x2-0x6: Reserved 0x7:
+                    feature state change is not allowed
+            RSVD1:
+                bits: "63:56"
+                readonly: true
+                desc: >-
+                    Reserved
+    SST_PP_MISC_CONTROL:
+        offset: 136
+        width: 64
+        fields:
+            MODULE_TURBO_CONTROL:
+                bits: "0:0"
+                readonly: false
+                desc: >-
+                    Module Turbo allows you to run the Core at a higher frequency when only one
+                    active core is running per module (or when there are fewer active cores than all
+                    active cores in the module). This bit controls Module Turbo capability. 1'b0:
+                    Disable module turbo. A Core is NOT allowed to run at a higher turbo frequency
+                    when some of the Cores in a module are not active. 1'b1: Enable module turbo. A
+                    Core is allowed to run at a higher turbo frequency when some of the Cores in a
+                    module are not active
+            RSVD:
+                bits: "63:1"
+                readonly: false
+                desc: >-
+                    Reserved
+    SST_PP_MISC_STATUS:
+        offset: 144
+        width: 64
+        fields:
+            MODULE_TURBO_CAPABILITY:
+                bits: "0:0"
+                readonly: true
+                desc: >-
+                    Module Turbo allows you to run the Core at a higher frequency when only one
+                    active core is running per module (or when there are fewer active cores than all
+                    active cores in the module). This bit specifies whether this part supports
+                    Module Turbo capability. 1'b0: Module Turbo is not supported on this part 1'b1:
+                    Module Turbo is supported on this part
+            MODULE_TURBO_STATUS:
+                bits: "1:1"
+                readonly: true
+                desc: >-
+                    1'b0: Module Turbo is not activated 1'b1: Module Turbo is activated If
+                    MODULE_TURBO_CAPABILITY=0, SW write to SST_PP_MISC_CONTROL.MODULE_TURBO_CONTROL
+                    are ignored
+            RSVD:
+                bits: "63:2"
+                readonly: true
+                desc: >-
+                    Reserved
+    SST_PP_INFO_0:
+        offset: 152
+        width: 64
+        fields:
+            P1_SSE:
+                bits: "7:0"
+                readonly: true
+                desc: >-
+                    Base frequency ratio of the TDP workload, a.k.a. SSE P1
+            P1_AVX2:
+                bits: "15:8"
+                readonly: true
+                desc: >-
+                    P1 frequency ratio of the AVX2 representative workload
+            P1_AVX512:
+                bits: "23:16"
+                readonly: true
+                desc: >-
+                    P1 frequency ratio of the AVX512 representative workload
+            P1_AMX:
+                bits: "31:24"
+                readonly: true
+                desc: >-
+                    P1 frequency ratio of the AMX representative workload
+            RSVD:
+                bits: "63:32"
+                readonly: true
+                desc: >-
+                    Reserved
+    SST_PP_INFO_1:
+        offset: 160
+        width: 64
+        fields:
+            FUSED_MODULE_COUNT:
+                bits: "7:0"
+                readonly: true
+                desc: >-
+                    Module Count of the fuse enabled modules
+            RESOLVED_MODULE_COUNT:
+                bits: "15:8"
+                readonly: true
+                desc: >-
+                    Module count of Pcode's resolved modules
+            FUSED_LLC_COUNT:
+                bits: "23:16"
+                readonly: true
+                desc: >-
+                    LLC Count of the fuse enabled LLC slices
+            RSVD0:
+                bits: "31:24"
+                readonly: true
+                desc: >-
+                    Reserved
+            TDP:
+                bits: "46:32"
+                readonly: true
+                desc: >-
+                    Power for this TDP level. In 1/8 W unit
+            T_PROCHOT:
+                bits: "54:47"
+                readonly: true
+                desc: >-
+                    Provides the DTS max or external Prochot for the specific configuration
+            MAX_MEMORY_FREQ:
+                bits: "61:55"
+                readonly: true
+                desc: >-
+                    The max allowed memory controller frequency ratio for this config level. The
+                    ratio unit in defined in SST_PP_HEADER.memory_ratio_unit
+            COOLING_TYPE:
+                bits: "63:62"
+                readonly: true
+                desc: >-
+                    Cooling Type
+    SST_PP_INFO_2:
+        offset: 168
+        width: 64
+        fields:
+            RESOLVED_MODULE_MASK:
+                bits: "63:0"
+                readonly: true
+                desc: >-
+                    This is the logical moddule ID mask containing the functional (enabled in SKU)
+                    and non-defeatured (not in BIST failure or BIOS disables) modules. 1=enabled
+                    module, 0=disabled module
+    SST_PP_INFO_3:
+        offset: 176
+        width: 64
+        fields:
+            RSVD:
+                bits: "63:0"
+                readonly: true
+                desc: >-
+                    RESERVED
+    SST_PP_INFO_4:
+        offset: 184
+        width: 64
+        fields:
+            RATIO_0:
+                bits: "7:0"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 0 of the specific cdyn level. (Note: Ratio of
+                    0x0 in the TRL registers implies that particular turbo limit level is not
+                    supported.)
+            RATIO_1:
+                bits: "15:8"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 1 of the specific cdyn level
+            RATIO_2:
+                bits: "23:16"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 2 of the specific cdyn level
+            RATIO_3:
+                bits: "31:24"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 3 of the specific cdyn level
+            RATIO_4:
+                bits: "39:32"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 4 of the specific cdyn level
+            RATIO_5:
+                bits: "47:40"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 5 of the specific cdyn level
+            RATIO_6:
+                bits: "55:48"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 6 of the specific cdyn level
+            RATIO_7:
+                bits: "63:56"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 7 of the specific cdyn level
+    SST_PP_INFO_5:
+        offset: 192
+        width: 64
+        fields:
+            RATIO_0:
+                bits: "7:0"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 0 of the specific cdyn level. (Note: Ratio of
+                    0x0 in the TRL registers implies that particular turbo limit level is not
+                    supported.)
+            RATIO_1:
+                bits: "15:8"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 1 of the specific cdyn level
+            RATIO_2:
+                bits: "23:16"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 2 of the specific cdyn level
+            RATIO_3:
+                bits: "31:24"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 3 of the specific cdyn level
+            RATIO_4:
+                bits: "39:32"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 4 of the specific cdyn level
+            RATIO_5:
+                bits: "47:40"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 5 of the specific cdyn level
+            RATIO_6:
+                bits: "55:48"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 6 of the specific cdyn level
+            RATIO_7:
+                bits: "63:56"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 7 of the specific cdyn level
+    SST_PP_INFO_6:
+        offset: 200
+        width: 64
+        fields:
+            RATIO_0:
+                bits: "7:0"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 0 of the specific cdyn level. (Note: Ratio of
+                    0x0 in the TRL registers implies that particular turbo limit level is not
+                    supported.)
+            RATIO_1:
+                bits: "15:8"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 1 of the specific cdyn level
+            RATIO_2:
+                bits: "23:16"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 2 of the specific cdyn level
+            RATIO_3:
+                bits: "31:24"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 3 of the specific cdyn level
+            RATIO_4:
+                bits: "39:32"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 4 of the specific cdyn level
+            RATIO_5:
+                bits: "47:40"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 5 of the specific cdyn level
+            RATIO_6:
+                bits: "55:48"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 6 of the specific cdyn level
+            RATIO_7:
+                bits: "63:56"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 7 of the specific cdyn level
+    SST_PP_INFO_7:
+        offset: 208
+        width: 64
+        fields:
+            RATIO_0:
+                bits: "7:0"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 0 of the specific cdyn level. (Note: Ratio of
+                    0x0 in the TRL registers implies that particular turbo limit level is not
+                    supported.)
+            RATIO_1:
+                bits: "15:8"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 1 of the specific cdyn level
+            RATIO_2:
+                bits: "23:16"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 2 of the specific cdyn level
+            RATIO_3:
+                bits: "31:24"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 3 of the specific cdyn level
+            RATIO_4:
+                bits: "39:32"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 4 of the specific cdyn level
+            RATIO_5:
+                bits: "47:40"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 5 of the specific cdyn level
+            RATIO_6:
+                bits: "55:48"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 6 of the specific cdyn level
+            RATIO_7:
+                bits: "63:56"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 7 of the specific cdyn level
+    SST_PP_INFO_8:
+        offset: 216
+        width: 64
+        fields:
+            RATIO_0:
+                bits: "7:0"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 0 of the specific cdyn level. (Note: Ratio of
+                    0x0 in the TRL registers implies that particular turbo limit level is not
+                    supported.)
+            RATIO_1:
+                bits: "15:8"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 1 of the specific cdyn level
+            RATIO_2:
+                bits: "23:16"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 2 of the specific cdyn level
+            RATIO_3:
+                bits: "31:24"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 3 of the specific cdyn level
+            RATIO_4:
+                bits: "39:32"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 4 of the specific cdyn level
+            RATIO_5:
+                bits: "47:40"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 5 of the specific cdyn level
+            RATIO_6:
+                bits: "55:48"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 6 of the specific cdyn level
+            RATIO_7:
+                bits: "63:56"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 7 of the specific cdyn level
+    SST_PP_INFO_9:
+        offset: 224
+        width: 64
+        fields:
+            RATIO_0:
+                bits: "7:0"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 0 of the specific cdyn level. (Note: Ratio of
+                    0x0 in the TRL registers implies that particular turbo limit level is not
+                    supported.)
+            RATIO_1:
+                bits: "15:8"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 1 of the specific cdyn level
+            RATIO_2:
+                bits: "23:16"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 2 of the specific cdyn level
+            RATIO_3:
+                bits: "31:24"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 3 of the specific cdyn level
+            RATIO_4:
+                bits: "39:32"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 4 of the specific cdyn level
+            RATIO_5:
+                bits: "47:40"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 5 of the specific cdyn level
+            RATIO_6:
+                bits: "55:48"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 6 of the specific cdyn level
+            RATIO_7:
+                bits: "63:56"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 7 of the specific cdyn level
+    SST_PP_INFO_10:
+        offset: 232
+        width: 64
+        fields:
+            NUM_CORE_0:
+                bits: "7:0"
+                readonly: true
+                desc: >-
+                    TRL num_core defines the active core ranges for TRL bucket 0
+            NUM_CORE_1:
+                bits: "15:8"
+                readonly: true
+                desc: >-
+                    TRL num_core defines the active core ranges for TRL bucket 1
+            NUM_CORE_2:
+                bits: "23:16"
+                readonly: true
+                desc: >-
+                    TRL num_core defines the active core ranges for TRL bucket 2
+            NUM_CORE_3:
+                bits: "31:24"
+                readonly: true
+                desc: >-
+                    TRL num_core defines the active core ranges for TRL bucket 3
+            NUM_CORE_4:
+                bits: "39:32"
+                readonly: true
+                desc: >-
+                    TRL num_core defines the active core ranges for TRL bucket 4
+            NUM_CORE_5:
+                bits: "47:40"
+                readonly: true
+                desc: >-
+                    TRL num_core defines the active core ranges for TRL bucket 5
+            NUM_CORE_6:
+                bits: "55:48"
+                readonly: true
+                desc: >-
+                    TRL num_core defines the active core ranges for TRL bucket 6
+            NUM_CORE_7:
+                bits: "63:56"
+                readonly: true
+                desc: >-
+                    TRL num_core defines the active core ranges for TRL bucket 7
+    SST_PP_INFO_11:
+        offset: 240
+        width: 64
+        fields:
+            P0_CORE_RATIO:
+                bits: "7:0"
+                readonly: true
+                desc: >-
+                    Core maximum frequency ratio limit
+            P1_CORE_RATIO:
+                bits: "15:8"
+                readonly: true
+                desc: >-
+                    Core TDP frequency ratio
+            PN_CORE_RATIO:
+                bits: "23:16"
+                readonly: true
+                desc: >-
+                    Core maximum efficiency frequency ratio
+            PM_CORE_RATIO:
+                bits: "31:24"
+                readonly: true
+                desc: >-
+                    Core minimum frequency ratio
+            P0_FABRIC_RATIO:
+                bits: "39:32"
+                readonly: true
+                desc: >-
+                    Fabric (Uncore) maximum frequency ratio limit
+            P1_FABRIC_RATIO:
+                bits: "47:40"
+                readonly: true
+                desc: >-
+                    Fabric (Uncore) TDP frequency ratio
+            PM_FABRIC_RATIO:
+                bits: "55:48"
+                readonly: true
+                desc: >-
+                    Fabric (Uncore) minimum frequency ratio
+            RSVD:
+                bits: "63:56"
+                readonly: true
+                desc: >-
+                    Reserved
+    SST_PP_INFO_12:
+        offset: 248
+        width: 64
+        fields:
+            P0_FABRIC_1_RATIO:
+                bits: "7:0"
+                readonly: true
+                desc: >-
+                    2nd Fabric (Uncore) maximum frequency ratio limit
+            P1_FABRIC_1_RATIO:
+                bits: "15:8"
+                readonly: true
+                desc: >-
+                    2nd Fabric (Uncore) TDP frequency ratio
+            PM_FABRIC_1_RATIO:
+                bits: "23:16"
+                readonly: true
+                desc: >-
+                    2nd Fabric (Uncore) minimum frequency ratio
+            RSVD:
+                bits: "63:24"
+                readonly: true
+                desc: >-
+                    Reserved
+    SST_PP_INFO_13:
+        offset: 256
+        width: 64
+        fields:
+            RATIO_0:
+                bits: "7:0"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 0 of cdyn level 0 when all cores in a module
+                    are active
+            RATIO_1:
+                bits: "15:8"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 0 of cdyn level 1 when all cores in a module
+                    are active
+            RATIO_2:
+                bits: "23:16"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 0 of cdyn level 2 when all cores in a module
+                    are active
+            RATIO_3:
+                bits: "31:24"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 0 of cdyn level 3 when all cores in a module
+                    are active
+            RATIO_4:
+                bits: "39:32"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 0 of cdyn level 4 when all cores in a module
+                    are active
+            RATIO_5:
+                bits: "47:40"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 0 of cdyn level 5 when all cores in a module
+                    are active
+            RESERVED:
+                bits: "63:48"
+                readonly: true
+                desc: >-
+                    Reserved
+    SST_BF_INFO_0:
+        offset: 264
+        width: 64
+        fields:
+            SST_FEATURE_ID:
+                bits: "3:0"
+                readonly: true
+                desc: >-
+                    0=SST-CP, 1=SST-PP, 2=SST-BF, 3=SST-TF, 4-15 = reserved
+            FEATURE_REVISION:
+                bits: "11:4"
+                readonly: true
+                desc: >-
+                    Interface Version number for this SST feature
+            FEATURE_SUPPORTED:
+                bits: "12:12"
+                readonly: true
+                desc: >-
+                    1: This SST feature is supported in this PP level. 0: This SST feature is not
+                    supported
+            P1_HI:
+                bits: "20:13"
+                readonly: true
+                desc: >-
+                    base frequency for high priority cores
+            P1_LO:
+                bits: "28:21"
+                readonly: true
+                desc: >-
+                    base frequency for low priority cores
+            RSVD0:
+                bits: "31:29"
+                readonly: true
+                desc: >-
+                    Reserved
+            T_CONTROL:
+                bits: "37:32"
+                readonly: true
+                desc: >-
+                    Fan Temperature Target Offset
+            T_PROCHOT:
+                bits: "45:38"
+                readonly: true
+                desc: >-
+                    Provides the DTS max or external Prochot for the specific configuration
+            TDP:
+                bits: "60:46"
+                readonly: true
+                desc: >-
+                    Pcode returns the resolved TDP in this configuration. In 1/8 W units
+            RSVD1:
+                bits: "63:61"
+                readonly: true
+                desc: >-
+                    Reserved
+    SST_BF_INFO_1:
+        offset: 272
+        width: 64
+        fields:
+            P1_HI_MODULE_MASK:
+                bits: "63:0"
+                readonly: true
+                desc: >-
+                    This is a logical module ID mask. Bitmask polarity: 1=high priority module,
+                    0=low priority module
+    SST_TF_INFO_0:
+        offset: 280
+        width: 64
+        fields:
+            SST_FEATURE_ID:
+                bits: "3:0"
+                readonly: true
+                desc: >-
+                    0=SST-CP, 1=SST-PP, 2=SST-BF, 3=SST-TF, 4-15 = reserved
+            FEATURE_REVISION:
+                bits: "11:4"
+                readonly: true
+                desc: >-
+                    Interface Version number for this SST feature
+            FEATURE_SUPPORTED:
+                bits: "12:12"
+                readonly: true
+                desc: >-
+                    1: This SST feature is supported in this PP level. 0: This SST feature is not
+                    supported
+            RSVD1:
+                bits: "15:13"
+                readonly: true
+                desc: >-
+                    Reserved
+            LP_CLIP_RATIO_0:
+                bits: "23:16"
+                readonly: true
+                desc: >-
+                    Low priority cores frequency clipping ratio level 0
+            LP_CLIP_RATIO_1:
+                bits: "31:24"
+                readonly: true
+                desc: >-
+                    Low priority cores frequency clipping ratio level 1
+            LP_CLIP_RATIO_2:
+                bits: "39:32"
+                readonly: true
+                desc: >-
+                    Low priority cores frequency clipping ratio level 2
+            LP_CLIP_RATIO_3:
+                bits: "47:40"
+                readonly: true
+                desc: >-
+                    Low priority cores frequency clipping ratio level 3
+            LP_CLIP_RATIO_4:
+                bits: "55:48"
+                readonly: true
+                desc: >-
+                    Low priority cores frequency clipping ratio level 4
+            LP_CLIP_RATIO_5:
+                bits: "63:56"
+                readonly: true
+                desc: >-
+                    Low priority cores frequency clipping ratio level 5
+    SST_TF_INFO_1:
+        offset: 288
+        width: 64
+        fields:
+            NUM_CORE_0:
+                bits: "7:0"
+                readonly: true
+                desc: >-
+                    High Priority core count for bucket 0
+            NUM_CORE_1:
+                bits: "15:8"
+                readonly: true
+                desc: >-
+                    High Priority core count for bucket 1
+            NUM_CORE_2:
+                bits: "23:16"
+                readonly: true
+                desc: >-
+                    High Priority core count for bucket 2
+            NUM_CORE_3:
+                bits: "31:24"
+                readonly: true
+                desc: >-
+                    High Priority core count for bucket 3
+            NUM_CORE_4:
+                bits: "39:32"
+                readonly: true
+                desc: >-
+                    High Priority core count for bucket 4
+            NUM_CORE_5:
+                bits: "47:40"
+                readonly: true
+                desc: >-
+                    High Priority core count for bucket 5
+            NUM_CORE_6:
+                bits: "55:48"
+                readonly: true
+                desc: >-
+                    High Priority core count for bucket 6
+            NUM_CORE_7:
+                bits: "63:56"
+                readonly: true
+                desc: >-
+                    High Priority core count for bucket 7
+    SST_TF_INFO_2:
+        offset: 296
+        width: 64
+        fields:
+            RATIO_0:
+                bits: "7:0"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 0 of the specific cdyn level
+            RATIO_1:
+                bits: "15:8"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 1 of the specific cdyn level
+            RATIO_2:
+                bits: "23:16"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 2 of the specific cdyn level
+            RATIO_3:
+                bits: "31:24"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 3 of the specific cdyn level
+            RATIO_4:
+                bits: "39:32"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 4 of the specific cdyn level
+            RATIO_5:
+                bits: "47:40"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 5 of the specific cdyn level
+            RATIO_6:
+                bits: "55:48"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 6 of the specific cdyn level
+            RATIO_7:
+                bits: "63:56"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 7 of the specific cdyn level
+    SST_TF_INFO_3:
+        offset: 304
+        width: 64
+        fields:
+            RATIO_0:
+                bits: "7:0"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 0 of the specific cdyn level
+            RATIO_1:
+                bits: "15:8"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 1 of the specific cdyn level
+            RATIO_2:
+                bits: "23:16"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 2 of the specific cdyn level
+            RATIO_3:
+                bits: "31:24"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 3 of the specific cdyn level
+            RATIO_4:
+                bits: "39:32"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 4 of the specific cdyn level
+            RATIO_5:
+                bits: "47:40"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 5 of the specific cdyn level
+            RATIO_6:
+                bits: "55:48"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 6 of the specific cdyn level
+            RATIO_7:
+                bits: "63:56"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 7 of the specific cdyn level
+    SST_TF_INFO_4:
+        offset: 312
+        width: 64
+        fields:
+            RATIO_0:
+                bits: "7:0"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 0 of the specific cdyn level
+            RATIO_1:
+                bits: "15:8"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 1 of the specific cdyn level
+            RATIO_2:
+                bits: "23:16"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 2 of the specific cdyn level
+            RATIO_3:
+                bits: "31:24"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 3 of the specific cdyn level
+            RATIO_4:
+                bits: "39:32"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 4 of the specific cdyn level
+            RATIO_5:
+                bits: "47:40"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 5 of the specific cdyn level
+            RATIO_6:
+                bits: "55:48"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 6 of the specific cdyn level
+            RATIO_7:
+                bits: "63:56"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 7 of the specific cdyn level
+    SST_TF_INFO_5:
+        offset: 320
+        width: 64
+        fields:
+            RATIO_0:
+                bits: "7:0"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 0 of the specific cdyn level
+            RATIO_1:
+                bits: "15:8"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 1 of the specific cdyn level
+            RATIO_2:
+                bits: "23:16"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 2 of the specific cdyn level
+            RATIO_3:
+                bits: "31:24"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 3 of the specific cdyn level
+            RATIO_4:
+                bits: "39:32"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 4 of the specific cdyn level
+            RATIO_5:
+                bits: "47:40"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 5 of the specific cdyn level
+            RATIO_6:
+                bits: "55:48"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 6 of the specific cdyn level
+            RATIO_7:
+                bits: "63:56"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 7 of the specific cdyn level
+    SST_TF_INFO_6:
+        offset: 328
+        width: 64
+        fields:
+            RATIO_0:
+                bits: "7:0"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 0 of the specific cdyn level
+            RATIO_1:
+                bits: "15:8"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 1 of the specific cdyn level
+            RATIO_2:
+                bits: "23:16"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 2 of the specific cdyn level
+            RATIO_3:
+                bits: "31:24"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 3 of the specific cdyn level
+            RATIO_4:
+                bits: "39:32"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 4 of the specific cdyn level
+            RATIO_5:
+                bits: "47:40"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 5 of the specific cdyn level
+            RATIO_6:
+                bits: "55:48"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 6 of the specific cdyn level
+            RATIO_7:
+                bits: "63:56"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 7 of the specific cdyn level
+    SST_TF_INFO_7:
+        offset: 336
+        width: 64
+        fields:
+            RATIO_0:
+                bits: "7:0"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 0 of the specific cdyn level
+            RATIO_1:
+                bits: "15:8"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 1 of the specific cdyn level
+            RATIO_2:
+                bits: "23:16"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 2 of the specific cdyn level
+            RATIO_3:
+                bits: "31:24"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 3 of the specific cdyn level
+            RATIO_4:
+                bits: "39:32"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 4 of the specific cdyn level
+            RATIO_5:
+                bits: "47:40"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 5 of the specific cdyn level
+            RATIO_6:
+                bits: "55:48"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 6 of the specific cdyn level
+            RATIO_7:
+                bits: "63:56"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for SST-TF bucket 7 of the specific cdyn level
+    SST_TF_INFO_8:
+        offset: 344
+        width: 64
+        fields:
+            NUM_CORE_0:
+                bits: "15:0"
+                readonly: true
+                desc: >-
+                    High Priority core count for bucket 0
+            NUM_CORE_1:
+                bits: "31:16"
+                readonly: true
+                desc: >-
+                    High Priority core count for bucket 1
+            NUM_CORE_2:
+                bits: "47:32"
+                readonly: true
+                desc: >-
+                    High Priority core count for bucket 2
+            RESERVED:
+                bits: "63:48"
+                readonly: true
+                desc: >-
+                    Reserved
+    SST_TF_INFO_9:
+        offset: 352
+        width: 64
+        fields:
+            RATIO_0:
+                bits: "7:0"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 0 of cdyn level 0 when all cores in a module
+                    are active
+            RATIO_1:
+                bits: "15:8"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 0 of cdyn level 1 when all cores in a module
+                    are active
+            RATIO_2:
+                bits: "23:16"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 0 of cdyn level 2 when all cores in a module
+                    are active
+            RATIO_3:
+                bits: "31:24"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 0 of cdyn level 3 when all cores in a module
+                    are active
+            RATIO_4:
+                bits: "39:32"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 0 of cdyn level 4 when all cores in a module
+                    are active
+            RATIO_5:
+                bits: "47:40"
+                readonly: true
+                desc: >-
+                    Turbo ratio limit value for bucket 0 of cdyn level 5 when all cores in a module
+                    are active
+            RESERVED:
+                bits: "63:48"
+                readonly: true
+                desc: >-
+                    Reserved
