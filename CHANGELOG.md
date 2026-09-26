@@ -6,10 +6,13 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
 ### Added
- - Add DMR TPMI files.
- - Add more GNR TPMI files.
 ### Removed
 ### Changed
+
+## [2.0.6] - 2026-09-26
+### Added
+ - Add DMR TPMI files.
+ - Add more GNR TPMI files.
 
 ## [2.0.5] - 2026-07-29
 ### Changed
