@@ -43,6 +43,40 @@ _FUTURE_RELEASE_SECTION = """\
 ### Changed
 """
 
+def _drop_empty_sections(lines: list[str]) -> list[str]:
+    """
+    Remove empty '### ' sub-sections (those with no bullet items) from 'lines'.
+
+    Args:
+        lines: Lines of a single changelog release entry, including the leading '## ' header.
+
+    Returns:
+        The 'lines' with empty '### ' sub-sections removed.
+    """
+
+    result = [lines[0]]
+
+    idx = 1
+    while idx < len(lines):
+        line = lines[idx]
+        if not line.startswith("### "):
+            result.append(line)
+            idx += 1
+            continue
+
+        # Collect the sub-section body, up to the next '### ' header or the end.
+        body = []
+        idx += 1
+        while idx < len(lines) and not lines[idx].startswith("### "):
+            body.append(lines[idx])
+            idx += 1
+
+        if body:
+            result.append(line)
+            result.extend(body)
+
+    return result
+
 # Standard branches used for publishing a release.
 _BRANCHES = ("main", "release")
 
@@ -204,6 +238,7 @@ def prepare_changelog(src_path: Path,
     upcoming_ver_str = f"{upcoming_version[0]}.{upcoming_version[1]}.{upcoming_version[2]}"
     today = date.today().strftime("%Y-%m-%d")
     upcoming_lines[0] = f"## [{upcoming_ver_str}] - {today}"
+    upcoming_lines = _drop_empty_sections(upcoming_lines)
 
     _LOG.info("Upcoming release changelog:\n%s", "\n".join(upcoming_lines))
 

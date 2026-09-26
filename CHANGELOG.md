@@ -6,45 +6,32 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
 ### Added
+ - Add DMR TPMI files.
+ - Add more GNR TPMI files.
 ### Removed
 ### Changed
 
 ## [2.0.5] - 2026-07-29
-### Fixed
-### Added
-### Removed
 ### Changed
  - Accept hexadecimal --vfm values in 'pepc tpmi' commands.
 
 ## [2.0.4] - 2026-06-02
 ### Fixed
  - Fix installation on RHEL.
-### Added
-### Removed
-### Changed
 
 ## [2.0.3] - 2026-06-01
 ### Fixed
  - Fix 'num2si()' function, which lead to incorrect units conversion in some
    cases.
-### Added
-### Removed
-### Changed
 
 ## [2.0.2] - 2026-05-11
-### Fixed
 ### Added
  - Add '--hwp-min-perf' and '--hwp-max-perf' options for reading and setting
    HWP min/max performance levels via MSR.
-### Removed
-### Changed
 
 ## [2.0.1] - 2026-04-20
 ### Fixed
  - Fix crash with python 3.10 due to missing import.
-### Added
-### Removed
-### Changed
 
 ## [2.0.0] - 2026-04-20
 ### Fixed
@@ -55,7 +42,6 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
  - Add 'install-pepc' tool, replacing old script.
  - Add 'make-standalone' tool.
  - Add built-in sudo support.
-### Removed
 ### Changed
  - Improve speed in case of remote systems.
  - Improve documentation.
