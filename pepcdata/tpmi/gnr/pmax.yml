@@ -1,0 +1,86 @@
+name: "pmax"
+desc: >-
+    Management of maximum power limits
+feature_id: 0x3
+
+registers:
+    PMAX_HEADER:
+        offset: 0
+        width: 64
+        fields:
+            INTERFACE_VERSION:
+                bits: "7:0"
+                readonly: true
+                desc: >-
+                    Version number for this interface
+            RSVD:
+                bits: "63:8"
+                readonly: true
+                desc: >-
+                    Reserved
+    PMAX_CONTROL:
+        offset: 8
+        width: 64
+        fields:
+            PMAX_VTRIP_0_OFFSET:
+                bits: "6:0"
+                readonly: true
+                desc: >-
+                    Default = 0 Write PMAX Vtrip 0 Offset. Bit 6 is signed bit
+            RSVD1:
+                bits: "31:7"
+                readonly: true
+                desc: >-
+                    Reserved
+            PMAX_GPIO_TRANSMITTER_ENABLE:
+                bits: "32:32"
+                readonly: true
+                desc: >-
+                    When this bit is set to 1, CPU detected pmax event will be propogated to the
+                    platform by asserting xxPMAX_TRIGGER_IO GPIO pin
+            PMAX_GPIO_TRIGGER_ENABLE:
+                bits: "33:33"
+                readonly: true
+                desc: >-
+                    When this bit is set to 1, platform can trigger a pmax event to the CPU by
+                    asserting xxPMAX_TRIGGER_IO GPIO pin
+            PMAX_DISABLE_MASK:
+                bits: "35:34"
+                readonly: true
+                desc: >-
+                    00: Multi-Threshold PMAX Enabled (default) 01: Disable hard throttle. Enable
+                    soft throttle (early thresholds) 10: Disable soft throttle (early thresholds).
+                    Enable hard throttle 11: Multi-Threshold PMAX Disabled (both hard and soft
+                    throttle disabled)
+            RSVD2:
+                bits: "62:36"
+                readonly: true
+                desc: >-
+                    Reserved
+            LOCK:
+                bits: "63:63"
+                readonly: true
+                desc: >-
+                    When set, all settings in this register are locked and are treated as Read Only.
+                    This bit will typically set by BIOS during boot time
+    PMAX_STATUS:
+        offset: 16
+        width: 64
+        fields:
+            PMAX_CONFIG_STATUS:
+                bits: "31:0"
+                readonly: true
+                desc: >-
+                    Default = 0. Pcode will populate this with calibration error status after Pcode
+                    reads CAL_ERR from PMAX IP in Phase 5
+            VALID:
+                bits: "32:32"
+                readonly: true
+                desc: >-
+                    Default = 0. Pcode will set it to 1 when it updates PMAX Config Status with
+                    valid CAL_ERR info
+            RSVD:
+                bits: "63:33"
+                readonly: true
+                desc: >-
+                    Reserved

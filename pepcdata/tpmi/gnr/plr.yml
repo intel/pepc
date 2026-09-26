@@ -1,0 +1,67 @@
+name: "plr"
+desc: >-
+    Perf Limit Reason
+feature_id: 0xc
+
+registers:
+    PLR_HEADER:
+        offset: 0
+        width: 64
+        fields:
+            INTERFACE_VERSION:
+                bits: "7:0"
+                readonly: true
+                desc: >-
+                    Version number for this interface
+            RSVD:
+                bits: "63:8"
+                readonly: true
+                desc: >-
+                    Reserved
+    PLR_MAILBOX_INTERFACE:
+        offset: 8
+        width: 64
+        fields:
+            COMMAND:
+                bits: "7:0"
+                readonly: false
+                desc: >-
+                    0: read, 1: write
+            DOMAIN:
+                bits: "11:8"
+                readonly: false
+                desc: >-
+                    0: core, 1: mesh
+            ID:
+                bits: "19:12"
+                readonly: false
+                desc: >-
+                    PM logical Module ID within the domain
+            RSVD:
+                bits: "62:20"
+                readonly: false
+                desc: >-
+                    PM logical Module ID within the domain
+            RUN_BUSY:
+                bits: "63:63"
+                readonly: false
+                desc: >-
+                    set by SW, cleared by Pcode
+    PLR_MAILBOX_DATA:
+        offset: 16
+        width: 64
+        fields:
+            DATA:
+                bits: "63:0"
+                readonly: false
+                desc: >-
+                    perf limit reasons data
+    PLR_DIE_LEVEL:
+        offset: 24
+        width: 64
+        fields:
+            DATA:
+                bits: "63:0"
+                readonly: false
+                desc: >-
+                    die scope perf limit reasons data

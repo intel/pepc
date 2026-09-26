@@ -1,0 +1,93 @@
+name: "pem"
+desc: >-
+    Power and Performance Excursion Monitors
+feature_id: 0x1
+
+registers:
+    PEM_HEADER:
+        offset: 0
+        width: 64
+        fields:
+            INTERFACE_VERSION:
+                bits: "7:0"
+                readonly: true
+                desc: >-
+                    Version number for this interface
+            OFFSET_PMT_INFO:
+                bits: "15:8"
+                readonly: true
+                desc: >-
+                    Qword (8 bytes) offset to the PMT Info Register. 0x0 = no PMT Info register.
+                    Non-zero: Pointing to the PMT Info Register that provides PMT GUID, sample ID
+                    and count for SW to access PEM counters
+            RSVD:
+                bits: "63:16"
+                readonly: true
+                desc: >-
+                    Reserved
+    PEM_CONTROL:
+        offset: 8
+        width: 64
+        fields:
+            FET:
+                bits: "7:0"
+                readonly: false
+                desc: >-
+                    Specify the Frequency Excursion Threshold. It is the ratio of the core
+                    frequency. Pm <= FET <= P01
+            TW:
+                bits: "14:8"
+                readonly: false
+                desc: >-
+                    Specify time window to be about 2.3*(2^TW) ms. Time window may become inaccurate
+                    for TW < 5. Valid TW range is 0 to 17. I.e. Max time window is about 302 seconds
+            RSVD1:
+                bits: "30:15"
+                readonly: false
+                desc: >-
+                    Reserved
+            ENABLE_PEM:
+                bits: "31:31"
+                readonly: false
+                desc: >-
+                    0 (Default): Disable PEM. 1: Enable PEM
+            RSVD2:
+                bits: "63:32"
+                readonly: false
+                desc: >-
+                    Reserved
+    PEM_STATUS:
+        offset: 16
+        width: 64
+        fields:
+            PEM_STATUS:
+                bits: "31:0"
+                readonly: false
+                desc: >-
+                    When read, return the current PEM Status register. When write, Software provides
+                    value to override PEM Status register. The reserved bits in PEM_STATUS are
+                    ignored by pcode
+            RSVD:
+                bits: "63:32"
+                readonly: false
+                desc: >-
+                    Reserved
+    PEM_PMT_INFO:
+        offset: 24
+        width: 64
+        fields:
+            GUID:
+                bits: "31:0"
+                readonly: true
+                desc: >-
+                    PMT GUID. SW should ignore this register if GUID = 0 (invalid entry)
+            SAMPLE_ID:
+                bits: "47:32"
+                readonly: true
+                desc: >-
+                    PMT Sample ID
+            SAMPLE_COUNT:
+                bits: "63:48"
+                readonly: true
+                desc: >-
+                    Number of PEM counters

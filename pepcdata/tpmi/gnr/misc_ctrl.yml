@@ -1,0 +1,108 @@
+name: "misc_ctrl"
+desc: >-
+    Misc control and status registers - root instance
+feature_id: 0x6
+
+registers:
+    MISC_CTRL_HEADER:
+        offset: 0
+        width: 64
+        fields:
+            INTERFACE_VERSION:
+                bits: "7:0"
+                readonly: true
+                desc: >-
+                    Version number for this interface
+            RSVD:
+                bits: "55:8"
+                readonly: true
+                desc: >-
+                    Reserved
+            PTR_FIRST_DESC:
+                bits: "63:56"
+                readonly: true
+                desc: >-
+                    Qword (8 bytes) offset to the first misc_ctrl_desc register from
+                    misc_ctrl_header. 0 = invalid header
+    MISC_CTRL_DESC:
+        offset: 8
+        width: 64
+        fields:
+            OFFSET_0:
+                bits: "7:0"
+                readonly: true
+                desc: >-
+                    Qword offset to the feature register bank from misc_ctrl_header. 0 = invalid
+                    offset
+            FEATURE_ID_0:
+                bits: "12:8"
+                readonly: true
+                desc: >-
+                    Misc Ctrl feature ID
+            RSVD0:
+                bits: "15:13"
+                readonly: true
+                desc: >-
+                    Reserved
+            OFFSET_1:
+                bits: "23:16"
+                readonly: true
+                desc: >-
+                    Qword offset to the feature register bank from misc_ctrl_header. 0 = invalid
+                    offset
+            FEATURE_ID_1:
+                bits: "28:24"
+                readonly: true
+                desc: >-
+                    Misc Ctrl feature ID
+            RSVD1:
+                bits: "31:29"
+                readonly: true
+                desc: >-
+                    Reserved
+            OFFSET_2:
+                bits: "39:32"
+                readonly: true
+                desc: >-
+                    Qword offset to the feature register bank from misc_ctrl_header. 0 = invalid
+                    offset
+            FEATURE_ID_2:
+                bits: "44:40"
+                readonly: true
+                desc: >-
+                    Misc Ctrl feature ID
+            RSVD2:
+                bits: "47:45"
+                readonly: true
+                desc: >-
+                    Reserved
+            PTR_NEXT_DESC:
+                bits: "55:48"
+                readonly: true
+                desc: >-
+                    Qword offset to the next misc_ctrl_desc register. 0 = end of the chain
+            RSVD:
+                bits: "63:56"
+                readonly: true
+                desc: >-
+                    Reserved
+    PROCHOT_RESPONSE_POWER:
+        offset: 16
+        width: 64
+        fields:
+            PROCHOT_RESPONSE_POWER:
+                bits: "14:0"
+                readonly: true
+                desc: >-
+                    Indicates the power limit that pCode has to maintain while xxPROCHOT is
+                    asserted. Unit = 0.125 W
+            RSVD:
+                bits: "62:15"
+                readonly: true
+                desc: >-
+                    Reserved
+            LOCK:
+                bits: "63:63"
+                readonly: true
+                desc: >-
+                    Lock until next reset as needed
