@@ -554,7 +554,8 @@ def parse_human_range(rng: str,
                       target_unit: str | None = None,
                       integer: bool = True,
                       sep: str = ",",
-                      what: str | None = None) -> tuple[int | float, int | float]:
+                      what: str | None = None,
+                      allow_equal: bool = False) -> tuple[int | float, int | float]:
     """
     Convert a user-provided range  'rng' into a pair of an integer or float numbers, taking into
     account the unit. The range is expected to be in the form of two numbers separated by 'sep'.
@@ -569,6 +570,7 @@ def parse_human_range(rng: str,
         sep: The separator used in the range string.
         what: An optional name associated with the values in 'rng', used only in case of an error
         for formatting a nicer message.
+        allow_equal: Whether to allow equal range bounds.
 
     Returns:
         A tuple containing the parsed range.
@@ -594,7 +596,7 @@ def parse_human_range(rng: str,
         if vals[1] - vals[0] < 0:
             raise Error(f"Bad {what} range '{rng}', first number cannot be greater than the second "
                         f"number")
-        if vals[0] == vals[1]:
+        if not allow_equal and vals[0] == vals[1]:
             raise Error(f"Bad {what} range '{rng}', first number cannot be the same as the second "
                         f"number")
 
@@ -606,13 +608,15 @@ def parse_human_range_int(rng: str,
                           unit: str,
                           target_unit: str | None = None,
                           sep: str = ",",
-                          what: str | None = None) -> tuple[int, int]:
+                          what: str | None = None,
+                          allow_equal: bool = False) -> tuple[int, int]:
     """
     Same as 'parse_human_range()', but verifies that the resulting tuple contains integers and
     returns them as 'int' types.
     """
 
-    result = parse_human_range(rng, unit, target_unit, integer=False, sep=sep, what=what)
+    result = parse_human_range(rng, unit=unit, target_unit=target_unit, integer=False, sep=sep,
+                               what=what, allow_equal=allow_equal)
 
     if not result[0].is_integer() or not result[1].is_integer():
         what = what if what else ""
@@ -624,12 +628,14 @@ def parse_human_range_float(rng: str,
                             unit: str,
                             target_unit: str | None = None,
                             sep: str = ",",
-                            what: str | None = None) -> tuple[float, float]:
+                            what: str | None = None,
+                            allow_equal: bool = False) -> tuple[float, float]:
     """
     Same as 'parse_human_range()', but returns the resulting tuple as floats.
     """
 
-    result = parse_human_range(rng, unit, target_unit, integer=False, sep=sep, what=what)
+    result = parse_human_range(rng, unit=unit, target_unit=target_unit, integer=False, sep=sep,
+                               what=what, allow_equal=allow_equal)
 
     if typing.TYPE_CHECKING:
         return cast(tuple[float, float], result)

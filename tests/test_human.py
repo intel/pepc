@@ -14,6 +14,7 @@ from __future__ import annotations # Remove when switching to Python 3.10+.
 
 import typing
 from pepclibs.helperlibs import Human
+from pepclibs.helperlibs.Exceptions import Error
 
 if typing.TYPE_CHECKING:
     from typing import TypedDict, Final
@@ -375,6 +376,33 @@ def test_parse_human_range():
                f"Bad result of parse_human_range('{hval}', '{unit}', " \
                f"target_unit='{target_unit}', integer={integer}, sep='{sep}):\n" \
                f"expected '{expected}', got '{result}'"
+
+    # Verify that equal bounds are rejected unless equality is explicitly allowed.
+    for rng, expected in (("1000,1000", (1000000, 1000000)),
+                          ("1ms,1000us", (1000000, 1000000)), ("0,0", (0, 0))):
+        for use_default in (True, False):
+            try:
+                if use_default:
+                    Human.parse_human_range(rng, unit="us", target_unit="ns")
+                else:
+                    Human.parse_human_range(rng, unit="us", target_unit="ns", allow_equal=False)
+            except Error:
+                pass
+            else:
+                assert False, f"'parse_human_range()' accepted equal bounds '{rng}'"
+
+        result = Human.parse_human_range(rng, unit="us", target_unit="ns", allow_equal=True)
+        assert result == expected, \
+               f"Bad result of 'parse_human_range()': Expected '{expected}', got '{result}'"
+
+    # Verify that reversed bounds are rejected regardless of the equality policy.
+    for allow_equal in (False, True):
+        try:
+            Human.parse_human_range("2,1", unit="us", target_unit="ns", allow_equal=allow_equal)
+        except Error:
+            pass
+        else:
+            assert False, "'parse_human_range()' accepted reversed bounds"
 
 _CAPITALIZE_TEST_DATA: Final = [
     {"sentence": "hello, world!", "result": "Hello, world!"},
