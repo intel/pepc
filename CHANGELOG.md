@@ -6,10 +6,13 @@ Versioning practices: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ## [ADD NEW VERSION HERE] - ADD DATE HERE
 ### Fixed
 ### Added
- - Improve shared library range verify function to allow for equal ranges.
-   Needed for the wult project.
 ### Removed
 ### Changed
+
+## [2.0.8] - 2026-10-20
+### Added
+ - Improve shared library range verify function to allow for equal ranges.
+   Needed for the wult project.
 
 ## [2.0.7] - 2026-09-28
 ### Fixed
