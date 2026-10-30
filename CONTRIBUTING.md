@@ -36,8 +36,17 @@ This document provides guidelines for project coding style and conventions.
   - [Semicolons](#semicolons)
   - [Quotation Mark Punctuation](#quotation-mark-punctuation)
   - [Sentence Spacing](#sentence-spacing)
+  - [Simple, Direct Wording](#simple-direct-wording)
+  - [Hyphenated Compound Modifiers](#hyphenated-compound-modifiers)
+  - [Possessive Avoidance](#possessive-avoidance)
+  - [Plural Subjects](#plural-subjects)
+  - [Established Terminology](#established-terminology)
+- [Paragraph Structure](#paragraph-structure)
 - [Markdown Documentation](#markdown-documentation)
   - [Backtick Usage](#backtick-usage)
+  - [Backtick Restrictions](#backtick-restrictions)
+  - [Bold Punctuation Placement](#bold-punctuation-placement)
+  - [ASCII-Only Pseudo-Graphics](#ascii-only-pseudo-graphics)
   - [Backtick Span Wrapping](#backtick-span-wrapping)
   - [Link Wrapping](#link-wrapping)
   - [List Formatting](#list-formatting)
@@ -626,6 +635,87 @@ Write "SEPT", not "EPC".
 
 Use a single space between sentences, not two.
 
+### Simple, Direct Wording
+
+Use simple, direct wording. Prefer precise terms over vague language. State the exact component,
+event, condition, or behavior instead of a broad claim.
+
+Avoid filler words such as "generally", "basically", "roughly", "seems", or "typically" unless the
+statement is truly uncertain.
+
+**Examples:**
+
+```text
+# Wrong.
+The driver basically retries the operation a few times.
+
+# Right.
+The driver retries the operation up to 3 times.
+```
+
+### Hyphenated Compound Modifiers
+
+Avoid unnecessary hyphenated compound modifiers when the meaning is clear without the hyphen.
+Preserve established terms such as P-state.
+
+**Examples:**
+
+```text
+# Wrong.
+The tool reads the device-state before applying the change.
+
+# Right.
+The tool reads the device state before applying the change.
+```
+
+### Possessive Avoidance
+
+Prefer avoiding the possessive 's for inanimate subjects, such as hardware, software, protocols,
+and components, when a rephrase reads well. This is a preference, not a hard rule, so keep the
+possessive when the alternative is noticeably longer or more awkward. The possessive remains fine
+for people, organizations, and named roles.
+
+**Examples:**
+
+```text
+# Wrong.
+Check the CPU's turbo ratio limits.
+
+# Right.
+Check the turbo ratio limits of the CPU.
+```
+
+### Plural Subjects
+
+Prefer plural subjects for general statements. This is a preference, not a hard rule.
+
+**Examples:**
+
+```text
+# Wrong.
+Each uncore domain exposes its own frequency file.
+
+# Right.
+Uncore domains expose their own frequency files.
+```
+
+### Established Terminology
+
+Use the terms already used in this repository. Prefer established project terminology over new
+wording, and do not invent new terms unless the project already uses them or the term is necessary
+for clarity.
+
+## Paragraph Structure
+
+Write one idea per paragraph. Multiple ideas are fine only if they are very closely related.
+
+Keep paragraphs short. The preferred maximum is 7 lines of up to 100 characters each. Split longer
+paragraphs, usually at an idea boundary.
+
+Bridge paragraphs. A paragraph should not switch topics abruptly. Start it with a sentence that
+links to the previous one, or end the previous one with a pointer to the next topic. Bridging is
+not always possible or needed. Skip it when adjacent paragraphs discuss very related things.
+
 ## Markdown Documentation
 
 ### Backtick Usage
@@ -638,8 +728,33 @@ Use backticks for:
 - **File and directory paths**: `~/.bashrc`, `tests/emul-data/`, `/sys/devices/...`.
 - **Environment variable names**: `PATH`, `MANPATH`.
 - **Code identifiers**: function names, class names, and similar symbols, e.g., `read_msr()`,
-
   `ErrorNotFound`.
+- **CPU instructions and registers**: `RDMSR`, `WRMSR`, `CPUID`. Do not backtick mechanisms or
+  concepts, e.g., write TPMI, not `TPMI`.
+
+### Backtick Restrictions
+
+Do not use backticks inside headings, inside link text, or inside bold spans, to avoid nested
+formatting.
+
+### Bold Punctuation Placement
+
+When bolding a phrase with punctuation, leave the punctuation outside the bold markers.
+
+**Examples:**
+
+```text
+# Wrong.
+**MSR accesses.**
+
+# Right.
+**MSR accesses**.
+```
+
+### ASCII-Only Pseudo-Graphics
+
+In pseudo-graphics (ASCII diagrams, trees, flow sketches), use ASCII-only symbols. Avoid
+non-ASCII box-drawing or arrow characters for mobile compatibility.
 
 ### Backtick Span Wrapping
 

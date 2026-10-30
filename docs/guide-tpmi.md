@@ -55,7 +55,7 @@ server platforms starting from Granite Rapids and Sierra Forest Xeon.
 
 TPMI has advantages over the traditional MSR mechanism: it is enumerable and MMIO-based. This means
 any CPU can read and write TPMI registers of any uncore domain. In contrast, MSRs require executing
-'RDMSR' or 'WRMSR' instructions on a CPU belonging to the target uncore domain, which is impossible
+`RDMSR` or `WRMSR` instructions on a CPU belonging to the target uncore domain, which is impossible
 for non-compute dies that have no CPUs.
 
 **Note:** For managing uncore frequency scaling (the UFS feature), use the `pepc uncore` command

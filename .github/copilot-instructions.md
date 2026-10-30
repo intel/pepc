@@ -53,11 +53,24 @@ Compact reference for AI code generation. Human docs: [CONTRIBUTING.md](../CONTR
 - [ ] Writing: no semicolons (`;`) as sentence punctuation; use `,` or `.`
 - [ ] Writing: logical punctuation — commas and periods go outside closing quotation marks
 - [ ] Writing: single space between sentences, not double
+- [ ] Writing: simple, direct wording; state the exact component, event, condition, or behavior;
+  avoid filler words ("generally", "basically", "roughly", "seems", "typically")
+- [ ] Writing: avoid unnecessary hyphenated compound modifiers when meaning is clear; preserve
+  established terms (e.g., P-state)
+- [ ] Writing: prefer avoiding possessive 's for inanimate subjects when a rephrase reads well
+- [ ] Writing: prefer plural subjects for general statements
+- [ ] Writing: use established project terminology; do not invent new terms
+- [ ] Paragraphs: one idea per paragraph, max ~7 lines of up to 100 chars, bridge adjacent
+  paragraphs
 - [ ] Markdown: surround lists with blank lines above and below
 - [ ] Markdown: hard-wrap prose at 100 chars; fill each line to near 100 before wrapping
 - [ ] Markdown: capitalize section headings in title case
 - [ ] Markdown: fenced code blocks must specify a language tag (e.g., ` ```python `, ` ```c `,
   ` ```text `); never use a bare ` ``` `
+- [ ] Markdown: backticks for CPU instructions/registers and API/tool names; no backticks for
+  mechanisms/concepts, inside headings, inside link text, or inside bold spans
+- [ ] Markdown: bold phrase punctuation goes outside the bold markers (`**text**.`)
+- [ ] Markdown: ASCII-only symbols in pseudo-graphics (diagrams, trees, flow sketches)
 
 ---
 
@@ -342,6 +355,21 @@ These rules apply to all prose: code comments, docstrings, commit messages, and 
 - Logical punctuation: commas and periods go **outside** closing quotation marks.
   Write `"SEPT"`, not `"SEPT,"`.
 - Single space between sentences, not double.
+- Simple, direct wording. State the exact component, event, condition, or behavior. Avoid filler
+  words ("generally", "basically", "roughly", "seems", "typically") unless truly uncertain.
+- Avoid unnecessary hyphenated compound modifiers when the meaning is clear (`device state`, not
+  `device-state`). Preserve established terms (e.g., P-state).
+- Prefer avoiding the possessive 's for inanimate subjects when a rephrase reads well (`the
+  turbo ratio of the CPU`, not `the CPU's turbo ratio`). Possessive is fine for people,
+  organizations, and named roles.
+- Prefer plural subjects for general statements.
+- Use established project terminology. Do not invent new terms unless necessary for clarity.
+
+### Paragraph Rules
+
+- One idea per paragraph. Max ~7 lines of up to 100 chars.
+- Bridge adjacent paragraphs with a linking sentence, unless they already discuss closely
+  related things.
 
 ### Markdown Rules
 
@@ -349,3 +377,10 @@ These rules apply to all prose: code comments, docstrings, commit messages, and 
 - Hard-wrap lines at 100 characters. Fill each line close to 100 before wrapping.
 - Capitalize section headings in title case: `### What the MC Checks`, not
   `### What the MC checks`.
+- Backticks for CPU instructions/registers and API/tool names (`RDMSR`, `CPUID`, `pepc`); no
+  backticks for mechanisms/concepts (TPMI), inside headings, inside link text, or inside bold
+  spans.
+- Bold phrase punctuation goes outside the bold markers: `**MSR accesses**.`, not
+  `**MSR accesses.**`.
+- ASCII-only symbols in pseudo-graphics (diagrams, trees, flow sketches).
+
