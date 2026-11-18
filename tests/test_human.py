@@ -199,6 +199,12 @@ _NUM2SI_TEST_DATA: Final[list[_Num2SiTestDataType]] = [
      "unit": "W", "decp": 0, "sep": " ", "strip_zeroes": False, "result": "2 EW"},
     {"value": 1999 * 1000 * 1000 * 1000 * 1000 * 1000,
      "unit": "MW", "decp": 0, "sep": " ", "strip_zeroes": False, "result": "1999000 EW"},
+    {"value": 1000,
+     "unit": "ms", "decp": 2, "sep": None, "strip_zeroes": True, "result": "1s"},
+    {"value": -1500,
+     "unit": "ms", "decp": 2, "sep": " ", "strip_zeroes": True, "result": "-1.5 s"},
+    {"value": 0.5,
+     "unit": "kW", "decp": 0, "sep": " ", "strip_zeroes": False, "result": "500 W"},
     # Values in [1, 1000) with an SI-prefixed unit must preserve the prefix.
     {"value": 444.584,
      "unit": "us", "decp": 2, "sep": None, "strip_zeroes": False, "result": "444.58us"},
