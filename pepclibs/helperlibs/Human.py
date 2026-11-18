@@ -217,6 +217,7 @@ def num2si(value: int | float,
         factor = _SIPFX_SCALERS[sipfx]
         if abs(value) >= 500 or abs(value) < 1:
             value *= factor
+            sipfx = None
 
     pfx = None
     if abs(value) > 500:
